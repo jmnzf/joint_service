@@ -72,7 +72,52 @@ class Helpers extends REST_Controller {
         $this->response($respuesta);
 	}
 
+  
+  // OBTENER DATOS DE EMPLEADO DE DEPARTAMENTO DE VENTA 
+  public function getVendorData_post(){
 
+    $Data = $this->post();
+
+    if(!isset($Data['mev_id'])){
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' =>'El empleado del departamento de venta NO EXISTE'
+      );
+
+      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+      return;
+    }
+
+    $sqlSelect = "SELECT v.mev_id, v.mev_prc_code, v.mev_dpj_pj_code, v.mev_dun_un_code,  v.mev_whs_code
+    FROM pgus u
+    inner join dmev v
+    on u.pgu_id_vendor = v.mev_id where u.pgu_id_usuario = :iduservendor"
+    
+
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(':iduservendor'=> $data['mev_id']));
+
+    if(isset($resSelect[0])){
+
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
+
+    }else{
+
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje'	=> 'busqueda sin resultados'
+        );
+
+    }
+
+    $this->response($respuesta);
+}
 
 
 }
