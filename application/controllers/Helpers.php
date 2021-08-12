@@ -94,10 +94,10 @@ class Helpers extends REST_Controller {
     $sqlSelect = "SELECT v.mev_id, v.mev_prc_code, v.mev_dpj_pj_code, v.mev_dun_un_code,  v.mev_whs_code
     FROM pgus u
     inner join dmev v
-    on u.pgu_id_vendor = v.mev_id where u.pgu_id_usuario = :iduservendor"
+    on u.pgu_id_vendor = v.mev_id where u.pgu_id_usuario = :iduservendor";
     
 
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array(':iduservendor'=> $data['mev_id']));
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(':iduservendor'=> $Data['mev_id']));
 
     if(isset($resSelect[0])){
 
