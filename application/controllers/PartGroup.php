@@ -102,7 +102,7 @@ class PartGroup extends REST_Controller {
 	
 
   //ACTUALIZAR LISTA DE PRECIOS
-  public function updateItemGroup_post(){
+  public function updatePartGroup_post(){
 
       $Data = $this->post();
 
