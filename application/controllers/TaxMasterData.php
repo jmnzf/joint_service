@@ -31,6 +31,7 @@ class TaxMasterData extends REST_Controller {
          !isset($Data['dmi_name_tax']) OR
          !isset($Data['dmi_rate_tax']) OR
          !isset($Data['dmi_type']) OR
+         !isset($Data['dmi_acctcode']) OR
          !isset($Data['dmi_enable'])){
 
         $respuesta = array(
@@ -44,8 +45,8 @@ class TaxMasterData extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dmtx(dmi_code, dmi_name_tax, dmi_rate_tax, dmi_type, dmi_enable)
-                      VALUES(:dmi_code, :dmi_name_tax, :dmi_rate_tax, :dmi_type, :dmi_enable)";
+        $sqlInsert = "INSERT INTO dmtx(dmi_code, dmi_name_tax, dmi_rate_tax, dmi_type, dmi_enable, dmi_acctcode)
+                      VALUES(:dmi_code, :dmi_name_tax, :dmi_rate_tax, :dmi_type, :dmi_enable, :dmi_acctcode)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -53,7 +54,8 @@ class TaxMasterData extends REST_Controller {
               ':dmi_name_tax' => $Data['dmi_name_tax'],
               ':dmi_rate_tax' => $Data['dmi_rate_tax'],
               ':dmi_type' => $Data['dmi_type'],
-              ':dmi_enable' => $Data['dmi_enable']
+              ':dmi_enable' => $Data['dmi_enable'],
+              ':dmi_acctcode' => $Data['dmi_acctcode']
 
         ));
 
@@ -89,6 +91,7 @@ class TaxMasterData extends REST_Controller {
          !isset($Data['dmi_rate_tax']) OR
          !isset($Data['dmi_type']) OR
          !isset($Data['dmi_enable']) OR
+         !isset($Data['dmi_acctcode']) OR
          !isset($Data['dmi_id'])){
 
         $respuesta = array(
@@ -102,7 +105,7 @@ class TaxMasterData extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE dmtx SET dmi_code = :dmi_code, dmi_name_tax = :dmi_name_tax, dmi_rate_tax = :dmi_rate_tax, dmi_type = :dmi_type,
+      $sqlUpdate = "UPDATE dmtx SET  dmi_acctcode = :dmi_acctcode, dmi_code = :dmi_code, dmi_name_tax = :dmi_name_tax, dmi_rate_tax = :dmi_rate_tax, dmi_type = :dmi_type,
                     dmi_enable = :dmi_enable WHERE dmi_id = :dmi_id";
 
 
@@ -112,6 +115,7 @@ class TaxMasterData extends REST_Controller {
             ':dmi_rate_tax' => $Data['dmi_rate_tax'],
             ':dmi_type' => $Data['dmi_type'],
             ':dmi_enable' => $Data['dmi_enable'],
+            ':dmi_acctcode' => $Data['dmi_acctcode'],
             ':dmi_id' => $Data['dmi_id']
       ));
 
