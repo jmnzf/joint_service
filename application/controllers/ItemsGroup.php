@@ -90,7 +90,7 @@ class ItemsGroup extends REST_Controller {
               ':mga_acct_redu'    => $Data['mga_acct_redu'],
               ':mga_acct_amp'  => $Data['mga_acct_amp'],
               ':mga_acct_cost'  => $Data['mga_acct_cost'],
-              ':mga_enabled'  => $Data['mga_enabled'],
+              ':mga_enabled'  => $Data['mga_enabled']
         ));
 
         if($resInsert > 0 ){
@@ -172,7 +172,7 @@ class ItemsGroup extends REST_Controller {
         ':mga_acct_amp'  => $Data['mga_acct_amp'],
         ':mga_acct_cost'  => $Data['mga_acct_cost'],
         ':mga_enabled'  => $Data['mga_enabled'],
-        ':mga_id'  => $Data['mga_id'],
+        ':mga_id'  => $Data['mga_id']
       ));
 
       
