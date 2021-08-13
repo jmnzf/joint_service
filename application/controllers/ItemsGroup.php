@@ -79,7 +79,6 @@ class ItemsGroup extends REST_Controller {
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-              ':mga_id' => $Data['mga_id'],
               ':mga_code'    => $Data['mga_code'],
               ':mga_name'    => $Data['mga_name'],
               ':mga_acctin'    => $Data['mga_acctin'],
@@ -90,7 +89,7 @@ class ItemsGroup extends REST_Controller {
               ':mga_acct_redu'    => $Data['mga_acct_redu'],
               ':mga_acct_amp'  => $Data['mga_acct_amp'],
               ':mga_acct_cost'  => $Data['mga_acct_cost'],
-              ':mga_enabled'  => $Data['mga_enabled'],
+              ':mga_enabled'  => $Data['mga_enabled']
         ));
 
         if($resInsert > 0 ){
@@ -149,8 +148,8 @@ class ItemsGroup extends REST_Controller {
                                     mga_acctin = :mga_acctin,
                                     mga_acct_out = :mga_acct_out,
                                     mga_acct_inv = :mga_acct_inv,
-                                    mga_acct_stockp = :mga_acct_stockp,
                                     mga_acct_stockn = :mga_acct_stockn,
+                                    mga_acct_stockp = :mga_acct_stockp,
                                     mga_acct_redu = :mga_acct_redu,
                                     mga_acct_amp = :mga_acct_amp,
                                     mga_acct_cost = :mga_acct_cost,
@@ -172,6 +171,7 @@ class ItemsGroup extends REST_Controller {
         ':mga_acct_amp'  => $Data['mga_acct_amp'],
         ':mga_acct_cost'  => $Data['mga_acct_cost'],
         ':mga_enabled'  => $Data['mga_enabled'],
+        ':mga_id'  => $Data['mga_id']
       ));
 
       
