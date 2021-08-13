@@ -79,7 +79,6 @@ class ItemsGroup extends REST_Controller {
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-              ':mga_id' => $Data['mga_id'],
               ':mga_code'    => $Data['mga_code'],
               ':mga_name'    => $Data['mga_name'],
               ':mga_acctin'    => $Data['mga_acctin'],
