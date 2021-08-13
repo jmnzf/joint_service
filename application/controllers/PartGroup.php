@@ -135,6 +135,7 @@ class PartGroup extends REST_Controller {
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
 
+        ':mgs_id'    => $Data['mgs_id'],
         ':mgs_type'    => $Data['mgs_type'],
         ':mgs_code'    => $Data['mgs_code'],
         ':mgs_name'    => $Data['mgs_name'],
