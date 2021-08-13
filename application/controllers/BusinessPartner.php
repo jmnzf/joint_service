@@ -162,6 +162,7 @@ class BusinessPartner extends REST_Controller {
          !isset($Data['dms_price_list']) OR
          !isset($Data['dms_acct_sn']) OR
          !isset($Data['dms_acct_asn']) OR
+         !isset($Data['dms_enabled']) OR
          !isset($Data['dms_id'])){
 
         $respuesta = array(
@@ -199,7 +200,7 @@ class BusinessPartner extends REST_Controller {
 
       }
 
-      $sqlUpdate = "UPDATE dmsn SET dms_card_code = :dms_card_code, dms_card_name = :dms_card_name, dms_card_type = :dms_card_type,
+      $sqlUpdate = "UPDATE dmsn SET dms_enabled = :dms_enabled, dms_card_code = :dms_card_code, dms_card_name = :dms_card_name, dms_card_type = :dms_card_type,
                    dms_short_name = :dms_short_name, dms_phone1 = :dms_phone1, dms_phone2 = :dms_phone2, dms_cel = :dms_cel,
                    dms_email = :dms_email, dms_inv_mail = :dms_inv_mail, dms_group_num = :dms_group_num, dms_web_site = :dms_web_site,
                    dms_sip_code = :dms_sip_code, dms_agent = :dms_agent, dms_pay_type = :dms_pay_type, dms_limit_cred = :dms_limit_cred,
@@ -229,7 +230,8 @@ class BusinessPartner extends REST_Controller {
             ':dms_acct_sn' => $Data['dms_acct_sn'],
             ':dms_acct_asn' => $Data['dms_acct_asn'],
             ':dms_card_last_name' => $Data['dms_card_last_name'],
-            ':dms_id' => $Data['dms_id']
+            ':dms_id' => $Data['dms_id'],
+            ':dms_enabled' => $Data['dms_enabled']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
