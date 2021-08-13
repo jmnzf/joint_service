@@ -74,8 +74,8 @@ class ItemsGroup extends REST_Controller {
     }
       
 
-        $sqlInsert = "INSERT INTO dmga(mga_id, mga_code, mga_name, mga_acctin, mga_acct_out, mga_acct_inv, mga_acct_stockn, mga_acct_stockp, mga_acct_redu, mga_acct_amp, mga_acct_cost, mga_enabled)
-                      VALUES(:mga_id, :mga_code, :mga_name, :mga_acctin, :mga_acct_out, :mga_acct_inv, :mga_acct_stockn, :mga_acct_stockp, :mga_acct_redu, :mga_acct_amp, :mga_acct_cost, :mga_enabled)";
+        $sqlInsert = "INSERT INTO dmgamga_code, mga_name, mga_acctin, mga_acct_out, mga_acct_inv, mga_acct_stockn, mga_acct_stockp, mga_acct_redu, mga_acct_amp, mga_acct_cost, mga_enabled)
+                      VALUES(:mga_code, :mga_name, :mga_acctin, :mga_acct_out, :mga_acct_inv, :mga_acct_stockn, :mga_acct_stockp, :mga_acct_redu, :mga_acct_amp, :mga_acct_cost, :mga_enabled)";
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
