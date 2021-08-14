@@ -43,7 +43,7 @@ class User extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM pgus WHERE pgu_code_user = :Pgu_CodeUser";
+				$sqlSelect = " SELECT * FROM pgus WHERE UPPER(pgu_code_user) = UPPER(:Pgu_CodeUser)";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':Pgu_CodeUser' => $DataUser['Pgu_CodeUser']));
 
