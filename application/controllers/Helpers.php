@@ -46,12 +46,12 @@ class Helpers extends REST_Controller {
         }
 
 				$filtro = "";
-        $limit = "";
+        $limite = "";
 				if(isset($Data['filter'])){$filtro = $Data['filter'];}
 
-        if(isset($Data['limit'])){$limit = $Data['limit'];}
+        if(isset($Data['limit'])){$limite = $Data['limit'];}
 
-        $sqlSelect = " SELECT ".$Data['table_camps']." FROM ".$Data['table_name']." WHERE 1=1 ".$filtro. " ORDER BY ".$Data['camps_order']." ".$Data['order']." ".$limit." ";
+        $sqlSelect = " SELECT ".$Data['table_camps']." FROM ".$Data['table_name']." WHERE 1=1 ".$filtro. " ORDER BY ".$Data['camps_order']." ".$Data['order']." ".$limite." ";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
