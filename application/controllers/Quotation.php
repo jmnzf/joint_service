@@ -179,7 +179,7 @@ class Quotation extends REST_Controller {
 				 !isset($Data['dvc_basetype']) OR !isset($Data['dvc_doctype']) OR
 				 !isset($Data['dvc_idadd']) OR !isset($Data['dvc_adress']) OR
 				 !isset($Data['dvc_paytype']) OR !isset($Data['dvc_attch']) OR
-				 !isset($Data['detail']) OR !isset($Data['dvc_id'])){
+				 !isset($Data['detail'])){
 
         $respuesta = array(
           'error' => true,
@@ -208,18 +208,16 @@ class Quotation extends REST_Controller {
           return;
       }
 
-      $sqlUpdate = "UPDATE dvct	SET dvc_docentry=:dvc_docentry, dvc_docnum=:dvc_docnum, dvc_docdate=:dvc_docdate,
+      $sqlUpdate = "UPDATE dvct	SET dvc_docnum=:dvc_docnum, dvc_docdate=:dvc_docdate,
 			 							dvc_duedate=:dvc_duedate, dvc_duedev=:dvc_duedev, dvc_pricelist=:dvc_pricelist, dvc_cardcode=:dvc_cardcode,
 			  						dvc_cardname=:dvc_cardname, dvc_currency=:dvc_currency, dvc_contacid=:dvc_contacid, dvc_slpcode=:dvc_slpcode,
 										dvc_empid=:dvc_empid, dvc_comment=:dvc_comment, dvc_doctotal=:dvc_doctotal, dvc_baseamnt=:dvc_baseamnt,
 										dvc_taxtotal=:dvc_taxtotal, dvc_discprofit=:dvc_discprofit, dvc_discount=:dvc_discount, dvc_createat=:dvc_createat,
 										dvc_baseentry=:dvc_baseentry, dvc_basetype=:dvc_basetype, dvc_doctype=:dvc_doctype, dvc_idadd=:dvc_idadd,
-										dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype, dvc_attch=:dvc_attch WHERE dvc_id=:dvc_id";
+										dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype, dvc_attch=:dvc_attch WHERE dvc_docentry=:dvc_docentry";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-
-							':dvc_docentry' => $Data['dvc_docentry'],
 							':dvc_docnum' => $Data['dvc_docnum'],
 							':dvc_docdate' => $Data['dvc_docdate'],
 							':dvc_duedate' => $Data['dvc_duedate'],
@@ -245,7 +243,7 @@ class Quotation extends REST_Controller {
 							':dvc_adress' => $Data['dvc_adress'],
 							':dvc_paytype' => $Data['dvc_paytype'],
 							':dvc_attch' => $this->getUrl($Data['dvc_attch']),
-							':dvc_id' => $Data['dvc_id'],
+							':dvc_id' => $Data['dvc_docentry'],
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -337,7 +335,7 @@ class Quotation extends REST_Controller {
 
 				$Data = $this->get();
 
-				if(!isset($Data['dvc_id'])){
+				if(!isset($Data['dvc_docentry'])){
 
 					$respuesta = array(
 						'error' => true,
@@ -350,9 +348,9 @@ class Quotation extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dvct WHERE dvc_id =:dvc_id";
+				$sqlSelect = " SELECT * FROM dvct WHERE dvc_docentry =:dvc_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_id" => $Data['dvc_id']));
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_docentry" => $Data['dvc_docentry']));
 
 				if(isset($resSelect[0])){
 
