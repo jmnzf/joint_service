@@ -125,7 +125,7 @@ class Pedeo {
 		if ($result->execute($params)){
 			return $this->pdo->lastInsertId();
 		}else{
-			 return $result->errorInfo();
+			return $result->errorInfo();
 		}
 	}
 
