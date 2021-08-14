@@ -27,7 +27,7 @@ class Quotation extends REST_Controller {
 
       $Data = $this->post();
 
-      if(!isset($Data['dvc_docentry']) OR !isset($Data['dvc_docnum']) OR
+      if(!isset($Data['dvc_docnum']) OR
          !isset($Data['dvc_docdate']) OR !isset($Data['dvc_duedate']) OR
          !isset($Data['dvc_duedev']) OR !isset($Data['dvc_pricelist']) OR
          !isset($Data['dvc_cardcode']) OR !isset($Data['dvc_cardname']) OR
@@ -107,7 +107,7 @@ class Quotation extends REST_Controller {
 
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
 
           foreach ($ContenidoDetalle as $key => $detail) {
@@ -152,7 +152,7 @@ class Quotation extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' => $resInsert,
                 'mensaje'	=> 'No se pudo registrar la cotización'
               );
 
