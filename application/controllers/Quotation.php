@@ -69,16 +69,16 @@ class Quotation extends REST_Controller {
           return;
       }
 
-        $sqlInsert = "INSERT INTO dvct(dvc_docentry, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
+        $sqlInsert = "INSERT INTO dvct(dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                      dvc_attch)VALUES(:dvc_docentry, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
+                      dvc_attch)VALUES(:dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
                       :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
                       :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype, :dvc_attch)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':dvc_docentry' => $Data['dvc_docentry'],
+              
               ':dvc_docnum' => $Data['dvc_docnum'],
               ':dvc_docdate' => $Data['dvc_docdate'],
               ':dvc_duedate' => $Data['dvc_duedate'],
@@ -208,8 +208,7 @@ class Quotation extends REST_Controller {
           return;
       }
 
-      $sqlUpdate = "UPDATE dvct	SET dvc_docnum=:dvc_docnum, dvc_docdate=:dvc_docdate,
-			 							dvc_duedate=:dvc_duedate, dvc_duedev=:dvc_duedev, dvc_pricelist=:dvc_pricelist, dvc_cardcode=:dvc_cardcode,
+      $sqlUpdate = "UPDATE dvct	SET dvc_docdate=:dvc_docdate,dvc_duedate=:dvc_duedate, dvc_duedev=:dvc_duedev, dvc_pricelist=:dvc_pricelist, dvc_cardcode=:dvc_cardcode,
 			  						dvc_cardname=:dvc_cardname, dvc_currency=:dvc_currency, dvc_contacid=:dvc_contacid, dvc_slpcode=:dvc_slpcode,
 										dvc_empid=:dvc_empid, dvc_comment=:dvc_comment, dvc_doctotal=:dvc_doctotal, dvc_baseamnt=:dvc_baseamnt,
 										dvc_taxtotal=:dvc_taxtotal, dvc_discprofit=:dvc_discprofit, dvc_discount=:dvc_discount, dvc_createat=:dvc_createat,
@@ -243,7 +242,7 @@ class Quotation extends REST_Controller {
 							':dvc_adress' => $Data['dvc_adress'],
 							':dvc_paytype' => $Data['dvc_paytype'],
 							':dvc_attch' => $this->getUrl($Data['dvc_attch']),
-							':dvc_id' => $Data['dvc_docentry'],
+							':dvc_docentry' => $Data['dvc_docentry'],
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
