@@ -104,7 +104,7 @@ class DeliverySale extends REST_Controller {
 
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
 
           foreach ($ContenidoDetalle as $key => $detail) {
@@ -151,7 +151,7 @@ class DeliverySale extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar la entrega'
               );
 

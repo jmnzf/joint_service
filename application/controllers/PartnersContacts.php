@@ -65,12 +65,12 @@ class PartnersContacts extends REST_Controller {
 
       ));
 
-      if($resInsert > 0 ){
+      if(is_numeric($resInsert) && $resInsert > 0){
 
 
             $respuesta = array(
-              'error' => false,
-              'data' => $resInsert,
+              'error' 	=> false,
+              'data' 		=> $resInsert,
               'mensaje' =>'Contacto registrado con exito'
             );
 
@@ -79,7 +79,7 @@ class PartnersContacts extends REST_Controller {
 
             $respuesta = array(
               'error'   => true,
-              'data' => array(),
+              'data' 		=> $resInsert,
               'mensaje'	=> 'No se pudo registrar el contacto'
             );
 

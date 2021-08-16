@@ -71,11 +71,11 @@ class Warehouse extends REST_Controller {
               ':dws_acct_inv' => $Data['dws_acct_inv']
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
               $respuesta = array(
-                'error' => false,
-                'data' => $resInsert,
+                'error' 	=> false,
+                'data' 		=> $resInsert,
                 'mensaje' =>'Almacen registrado con exito'
               );
 
@@ -84,7 +84,7 @@ class Warehouse extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar el almacen'
               );
 
@@ -132,7 +132,7 @@ class Warehouse extends REST_Controller {
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-        
+
               ':dws_code' => $Data['dws_code'],
               ':dws_name' => $Data['dws_name'],
               ':dws_acctin' => $Data['dws_acctin'],

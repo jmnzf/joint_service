@@ -74,7 +74,7 @@ class AccountingAccounts extends REST_Controller {
               ':acc_enabled' => $Data['acc_enabled']
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0 ){
 
               $respuesta = array(
                 'error' => false,

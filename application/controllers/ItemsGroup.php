@@ -72,7 +72,7 @@ class ItemsGroup extends REST_Controller {
         return;
 
     }
-      
+
 
         $sqlInsert = "INSERT INTO dmga (mga_code, mga_name, mga_acctin, mga_acct_out, mga_acct_inv, mga_acct_stockn, mga_acct_stockp, mga_acct_redu, mga_acct_amp, mga_acct_cost, mga_enabled)
                       VALUES(:mga_code, :mga_name, :mga_acctin, :mga_acct_out, :mga_acct_inv, :mga_acct_stockn, :mga_acct_stockp, :mga_acct_redu, :mga_acct_amp, :mga_acct_cost, :mga_enabled)";
@@ -92,26 +92,30 @@ class ItemsGroup extends REST_Controller {
               ':mga_enabled'  => $Data['mga_enabled']
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
+
             $respuesta = array(
-              'error' => false,
-              'data' => $resInsert,
+              'error'		=> false,
+              'data' 		=> $resInsert,
               'mensaje' =>'Grupo de articulo registrado con exito'
             );
+
          }else{
-   
+
            $respuesta = array(
              'error'   => true,
-             'data' => array(),
+             'data' 	 => $resInsert,
              'mensaje' => 'No se pudo registrar el grupo de articulo'
            );
-   
-         }
-         $this->response($respuesta);
-        }
 
-        
-	
+         }
+
+         $this->response($respuesta);
+
+ }
+
+
+
 
   //ACTUALIZAR LISTA DE PRECIOS
   public function updateItemGroup_post(){
@@ -143,8 +147,8 @@ class ItemsGroup extends REST_Controller {
       }
 
 
-      $sqlUpdate = "UPDATE dmga SET mga_code = :mga_code, 
-                                    mga_name = :mga_name, 
+      $sqlUpdate = "UPDATE dmga SET mga_code = :mga_code,
+                                    mga_name = :mga_name,
                                     mga_acctin = :mga_acctin,
                                     mga_acct_out = :mga_acct_out,
                                     mga_acct_inv = :mga_acct_inv,
@@ -174,7 +178,7 @@ class ItemsGroup extends REST_Controller {
         ':mga_id'  => $Data['mga_id']
       ));
 
-      
+
       if(is_numeric($resUpdate) && $resUpdate == 1){
 
         $respuesta = array(
@@ -195,7 +199,7 @@ class ItemsGroup extends REST_Controller {
   }
 
    $this->response($respuesta);
-  
+
   }
 
 

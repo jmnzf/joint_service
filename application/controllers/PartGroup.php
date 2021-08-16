@@ -66,7 +66,7 @@ class PartGroup extends REST_Controller {
         return;
 
     }
-      
+
 
         $sqlInsert = "INSERT INTO dmgs (mgs_type, mgs_code, mgs_name, mgs_acct, mgs_enabled)
                       VALUES(:mgs_type, :mgs_code, :mgs_name, :mgs_acct, :mgs_enabled)";
@@ -80,26 +80,26 @@ class PartGroup extends REST_Controller {
               ':mgs_enabled'    => $Data['mgs_enabled']
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
             $respuesta = array(
-              'error' => false,
-              'data' => $resInsert,
+              'error'		=> false,
+              'data' 		=> $resInsert,
               'mensaje' =>'Grupo de SN registrado con exito'
             );
          }else{
-   
+
            $respuesta = array(
              'error'   => true,
-             'data' => array(),
+             'data' 	 => $resInsert,
              'mensaje' => 'No se pudo registrar el grupo de SN'
            );
-   
+
          }
          $this->response($respuesta);
         }
 
-        
-	
+
+
 
   //ACTUALIZAR LISTA DE PRECIOS
   public function updatePartGroup_post(){
@@ -124,8 +124,8 @@ class PartGroup extends REST_Controller {
       }
 
 
-      $sqlUpdate = "UPDATE dmgs SET mgs_type = :mgs_type, 
-                                    mgs_code = :mgs_code, 
+      $sqlUpdate = "UPDATE dmgs SET mgs_type = :mgs_type,
+                                    mgs_code = :mgs_code,
                                     mgs_name = :mgs_name,
                                     mgs_acct = :mgs_acct,
                                     mgs_enabled = :mgs_enabled
@@ -143,7 +143,7 @@ class PartGroup extends REST_Controller {
         ':mgs_enabled'    => $Data['mgs_enabled']
       ));
 
-      
+
       if(is_numeric($resUpdate) && $resUpdate == 1){
 
         $respuesta = array(
@@ -164,7 +164,7 @@ class PartGroup extends REST_Controller {
   }
 
    $this->response($respuesta);
-  
+
   }
 
 

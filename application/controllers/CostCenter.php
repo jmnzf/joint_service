@@ -54,7 +54,7 @@ class CostCenter extends REST_Controller {
               ':dcc_prc_end_date' => $Data['dcc_prc_end_date']
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
               $respuesta = array(
                 'error' => false,
@@ -67,7 +67,7 @@ class CostCenter extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar el centro de costo'
               );
 
