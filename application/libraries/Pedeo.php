@@ -156,6 +156,22 @@ class Pedeo {
 		else return 0;
 	}
 
+
+
+	public function trans_begin(){
+		return $this->pdo->beginTransaction();
+	}
+
+	public function trans_rollback(){
+		return $this->pdo->rollBack();
+	}
+
+	public function trans_commit(){
+		return $this->pdo->commit();
+	}
+
+
+
 	//----------------------------------------------
 	// STATIC
 
