@@ -30,23 +30,21 @@ class InventoryConcepts extends REST_Controller
 
     $Data = $this->post();
 
-    if (
-      !isset($Data['icm_name ']) or
-      !isset($Data['icm_description'])  or
-      !isset($Data['icm_acctcode']) or
-      !isset($Data['icm_enabled']) or
-      !isset($Data['icm_type'])
-    ) {
+    if (!isset($Data['icm_name']) OR
+        !isset($Data['icm_description'])  OR
+        !isset($Data['icm_acctcode']) OR
+        !isset($Data['icm_enabled']) OR
+        !isset($Data['icm_type'])) {
 
-      $respuesta = array(
-        'error' => true,
-        'data'  => array(),
-        'mensaje' => 'La informacion enviada no es valida'
-      );
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' => 'La informacion enviada no es valida'
+        );
 
-      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-      return;
+        return;
     }
 
 
@@ -130,8 +128,8 @@ class InventoryConcepts extends REST_Controller
     }
 
 
-    $sqlUpdate = "UPDATE micm SET icm_name = :icm_name, 
-                                    icm_description = :icm_description, 
+    $sqlUpdate = "UPDATE micm SET icm_name = :icm_name,
+                                    icm_description = :icm_description,
                                     icm_acctcode = :icm_acctcode,
                                     icm_enabled = :icm_enabled,
                                     icm_type = :icm_type
