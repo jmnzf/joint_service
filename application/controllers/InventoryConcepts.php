@@ -31,7 +31,7 @@ class InventoryConcepts extends REST_Controller
     $Data = $this->post();
 
     if (
-      !isset($Data['icm_name ']) or
+      !isset($Data['icm_name']) or
       !isset($Data['icm_description'])  or
       !isset($Data['icm_acctcode']) or
       !isset($Data['icm_enabled']) or
