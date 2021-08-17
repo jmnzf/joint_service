@@ -50,11 +50,11 @@ class InventoryConcepts extends REST_Controller
     }
 
 
-    $sqlSelect = "SELECT mgs_code FROM dmgs WHERE mgs_code = :mgs_code";
+    $sqlSelect = "SELECT icm_name FROM micm WHERE icm_name = :icm_name";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array(
 
-      ':mgs_code' => $Data['mgs_code']
+      ':icm_name' => $Data['icm_name']
 
     ));
 
