@@ -157,7 +157,6 @@ class Pedeo {
 	}
 
 
-
 	public function trans_begin(){
 		return $this->pdo->beginTransaction();
 	}

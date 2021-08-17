@@ -27,24 +27,8 @@ class Quotation extends REST_Controller {
 
       $Data = $this->post();
 
-<<<<<<< HEAD
+
       if(!isset($Data['detail'])){
-=======
-      if(!isset($Data['dvc_docdate']) OR !isset($Data['dvc_duedate']) OR
-         !isset($Data['dvc_duedev']) OR !isset($Data['dvc_pricelist']) OR
-         !isset($Data['dvc_cardcode']) OR !isset($Data['dvc_cardname']) OR
-         !isset($Data['dvc_currency']) OR !isset($Data['dvc_contacid']) OR
-         !isset($Data['dvc_slpcode']) OR !isset($Data['dvc_empid']) OR
-         !isset($Data['dvc_comment']) OR !isset($Data['dvc_doctotal']) OR
-         !isset($Data['dvc_baseamnt']) OR !isset($Data['dvc_taxtotal']) OR
-         !isset($Data['dvc_discprofit']) OR !isset($Data['dvc_discount']) OR
-         !isset($Data['dvc_createat']) OR !isset($Data['dvc_baseentry']) OR
-         !isset($Data['dvc_basetype']) OR !isset($Data['dvc_doctype']) OR
-         !isset($Data['dvc_idadd']) OR !isset($Data['dvc_adress']) OR
-         !isset($Data['dvc_paytype']) OR !isset($Data['dvc_attch']) OR
-         !isset($Data['detail'])
-       ){
->>>>>>> babdd59be34f980a041d6b1c4449ced718c7144f
 
         $respuesta = array(
           'error' => true,
@@ -72,11 +56,7 @@ class Quotation extends REST_Controller {
           return;
       }
 
-<<<<<<< HEAD
         $sqlInsert = "INSERT INTO dvct(dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
-=======
-        $sqlInsert = "INSERT INTO dvct (dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
->>>>>>> babdd59be34f980a041d6b1c4449ced718c7144f
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
                       dvc_attch)VALUES(:dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
@@ -85,8 +65,6 @@ class Quotation extends REST_Controller {
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-<<<<<<< HEAD
-              
               ':dvc_docnum' => isset($Data['dvc_docnum'])?$Data['dvc_docnum']:NULL,
               ':dvc_docdate' => isset($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
               ':dvc_duedate' => isset($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
@@ -112,35 +90,7 @@ class Quotation extends REST_Controller {
               ':dvc_adress' => isset($Data['dvc_adress'])?$Data['dvc_adress']:NULL,
               ':dvc_paytype' => isset($Data['dvc_paytype'])?$Data['dvc_paytype']:NULL,
               ':dvc_attch' => $this->getUrl(isset($Data['dvc_attch'])?$Data['dvc_attch']:NULL)
-=======
-              ':dvc_docnum' => isset($Data['dvc_docnum']) ? $Data['dvc_docnum'] : 12,
-              ':dvc_docdate' => $Data['dvc_docdate'],
-              ':dvc_duedate' => $Data['dvc_duedate'],
-              ':dvc_duedev' => $Data['dvc_duedev'],
-              ':dvc_pricelist' => $Data['dvc_pricelist'],
-              ':dvc_cardcode' => $Data['dvc_cardcode'],
-              ':dvc_cardname' => $Data['dvc_cardname'],
-              ':dvc_currency' => $Data['dvc_currency'],
-              ':dvc_contacid' => $Data['dvc_contacid'],
-              ':dvc_slpcode' => $Data['dvc_slpcode'],
-              ':dvc_empid' => $Data['dvc_empid'],
-              ':dvc_comment' => $Data['dvc_comment'],
-              ':dvc_doctotal' => $Data['dvc_doctotal'],
-              ':dvc_baseamnt' => $Data['dvc_baseamnt'],
-              ':dvc_taxtotal' => $Data['dvc_taxtotal'],
-              ':dvc_discprofit' => $Data['dvc_discprofit'],
-              ':dvc_discount' => $Data['dvc_discount'],
-              ':dvc_createat' => $Data['dvc_createat'],
-              ':dvc_baseentry' => $Data['dvc_baseentry'],
-              ':dvc_basetype' => $Data['dvc_basetype'],
-              ':dvc_doctype' => $Data['dvc_doctype'],
-              ':dvc_idadd' => $Data['dvc_idadd'],
-              ':dvc_adress' => $Data['dvc_adress'],
-              ':dvc_paytype' => $Data['dvc_paytype'],
-              ':dvc_attch' => $this->getUrl($Data['dvc_attch'])
->>>>>>> babdd59be34f980a041d6b1c4449ced718c7144f
-
-        ));
+						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
 
@@ -458,7 +408,7 @@ class Quotation extends REST_Controller {
 
   private function getUrl($data){
       $url = "";
-      
+
       if ($data == NULL){
 
         return $url;
@@ -467,7 +417,7 @@ class Quotation extends REST_Controller {
 
       $ruta = '/var/www/html/serpent/assets/img/anexos/';
       $milliseconds = round(microtime(true) * 1000);
-     
+
 
       $nombreArchivo = $milliseconds.".pdf";
 
