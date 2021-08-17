@@ -77,7 +77,7 @@ class Quotation extends REST_Controller {
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':dvc_docnum' => isset($Data['dvc_docnum']) ? $Data['dvc_docnum'] : 122,
+              ':dvc_docnum' => isset($Data['dvc_docnum']) ? $Data['dvc_docnum'] : 12,
               ':dvc_docdate' => $Data['dvc_docdate'],
               ':dvc_duedate' => $Data['dvc_duedate'],
               ':dvc_duedev' => $Data['dvc_duedev'],
