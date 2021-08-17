@@ -27,8 +27,7 @@ class Quotation extends REST_Controller {
 
       $Data = $this->post();
 
-      if(!isset($Data['dvc_docentry']) OR !isset($Data['dvc_docnum']) OR
-         !isset($Data['dvc_docdate']) OR !isset($Data['dvc_duedate']) OR
+      if(!isset($Data['dvc_docdate']) OR !isset($Data['dvc_duedate']) OR
          !isset($Data['dvc_duedev']) OR !isset($Data['dvc_pricelist']) OR
          !isset($Data['dvc_cardcode']) OR !isset($Data['dvc_cardname']) OR
          !isset($Data['dvc_currency']) OR !isset($Data['dvc_contacid']) OR
@@ -69,7 +68,7 @@ class Quotation extends REST_Controller {
           return;
       }
 
-        $sqlInsert = "INSERT INTO dvct(dvc_docentry, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
+        $sqlInsert = "INSERT INTO dvct(dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
                       dvc_attch)VALUES(:dvc_docentry, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
@@ -78,8 +77,7 @@ class Quotation extends REST_Controller {
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':dvc_docentry' => $Data['dvc_docentry'],
-              ':dvc_docnum' => $Data['dvc_docnum'],
+              ':dvc_docnum' => isset($Data['dvc_docnum']) ? $Data['dvc_docnum'] : 122,
               ':dvc_docdate' => $Data['dvc_docdate'],
               ':dvc_duedate' => $Data['dvc_duedate'],
               ':dvc_duedev' => $Data['dvc_duedev'],
