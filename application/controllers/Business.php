@@ -84,19 +84,22 @@ class Business extends REST_Controller {
          ':Pge_AccType' => $DataCompany['Pge_AccType']
       ));
 
-      $respuesta = array(
-        'error'   => true,
-        'data' => array(),
-        'mensaje' => 'No se pudo registrar la empresa'
-      );
 
-      if($resInsert > 0 ){
+      if(is_numeric($resInsert) && $resInsert > 0){
          $respuesta = array(
-           'error' => false,
-           'data' => $resInsert,
+           'error'	 => false,
+           'data' 	 => $resInsert,
            'mensaje' =>'Empresa registrada con exito'
          );
-      }
+      }else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' 		=> $resInsert,
+					'mensaje' => 'No se pudo registrar la empresa'
+				);
+
+			}
 
       $this->response($respuesta);
 	}

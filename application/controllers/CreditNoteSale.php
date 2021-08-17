@@ -104,7 +104,7 @@ class CreditNoteSale extends REST_Controller {
 
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
 
           foreach ($ContenidoDetalle as $key => $detail) {
@@ -138,6 +138,8 @@ class CreditNoteSale extends REST_Controller {
                         ':nc1_inventory' => $Data['nc1_inventory'],
                         ':nc1_item_name' => $Data['nc1_item_name']
                 ));
+
+								
           }
 
           $respuesta = array(
@@ -151,7 +153,7 @@ class CreditNoteSale extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar la nota de credito'
               );
 

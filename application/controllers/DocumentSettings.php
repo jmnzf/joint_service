@@ -54,11 +54,11 @@ class DocumentSettings extends REST_Controller {
               ':cdm_legal_num' => $Data['cdm_legal_num']
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
               $respuesta = array(
-                'error' => false,
-                'data' => $resInsert,
+                'error' 	=> false,
+                'data' 		=> $resInsert,
                 'mensaje' =>'Configuración de documento registrada con exito'
               );
 
@@ -67,7 +67,7 @@ class DocumentSettings extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar el unidad de negocio'
               );
 

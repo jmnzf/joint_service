@@ -54,11 +54,11 @@ class Project extends REST_Controller {
               ':dpj_pj_end_date' => $Data['dpj_pj_end_date']
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
               $respuesta = array(
-                'error' => false,
-                'data' => $resInsert,
+	              'error'	  => false,
+                'data' 		=> $resInsert,
                 'mensaje' =>'Proyecto registrado con exito'
               );
 
@@ -67,7 +67,7 @@ class Project extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar el proyecto'
               );
 

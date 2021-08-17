@@ -51,7 +51,7 @@ class Branch extends REST_Controller {
 
         return;
       }
-      
+
       $sqlInsert = "INSERT INTO pges(pgs_company_id, pgs_name_soc, pgs_small_name, pgs_add_soc, pgs_state_soc, pgs_city_soc, pgs_cou_soc, pgs_id_soc, pgs_id_type, pgs_web_site, pgs_phone1, pgs_phone2, pgs_cel, pgs_mail)
                    VALUES(:Pgs_CompanyID,  :Pgs_NameSoc,  :Pgs_SmallName,  :Pgs_AddSoc,  :Pgs_StateSoc,  :Pgs_CitySoc,  :Pgs_CouSoc,  :Pgs_IdSoc, :Pgs_IdType,  :Pgs_WebSite, :Pgs_Phone1,  :Pgs_Phone2,  :Pgs_Cel,  :Pgs_Mail)";
 
@@ -73,7 +73,7 @@ class Branch extends REST_Controller {
             ':Pgs_Mail'  => $DataBranch['Pgs_Mail']
       ));
 
-      if($resInsert > 0 ){
+      if(is_numeric($resInsert) && $resInsert > 0){
 
             $respuesta = array(
               'error' => false,
@@ -86,7 +86,7 @@ class Branch extends REST_Controller {
 
             $respuesta = array(
               'error'   => true,
-              'data' => array(),
+              'data' 		=> $resInsert,
               'mensaje'	=> 'No se pudo registrar la sucursal'
             );
 

@@ -52,11 +52,11 @@ class Currency extends REST_Controller {
             ':Pgm_Enabled'    => 1
       ));
 
-      if($resInsert > 0 ){
+      if(is_numeric($resInsert) && $resInsert > 0){
 
             $respuesta = array(
-              'error' => false,
-              'data' => $resInsert,
+              'error'		=> false,
+              'data' 		=> $resInsert,
               'mensaje' =>'Moneda registrada con exito'
             );
 
@@ -65,7 +65,7 @@ class Currency extends REST_Controller {
 
             $respuesta = array(
               'error'   => true,
-              'data' => array(),
+              'data' 		=> $resInsert,
               'mensaje'	=> 'No se pudo registrar la moneda'
             );
 

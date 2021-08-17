@@ -46,28 +46,26 @@ class CostCenter extends REST_Controller {
                       VALUES (:dcc_prc_code, :dcc_prc_name, :dcc_prc_date_ini, :dcc_prc_end_date)";
 
 
-        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+				  $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-              ':dcc_prc_code' => $Data['dcc_prc_code'],
-              ':dcc_prc_name' => $Data['dcc_prc_name'],
-              ':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
-              ':dcc_prc_end_date' => $Data['dcc_prc_end_date']
-        ));
+				 			 ':dcc_prc_code' => $Data['dcc_prc_code'],
+				 			 ':dcc_prc_name' => $Data['dcc_prc_name'],
+				 			 ':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
+				 			 ':dcc_prc_end_date' => $Data['dcc_prc_end_date']
+				  ));
 
-        if($resInsert > 0 ){
-
+        if(is_numeric($resInsert) && $resInsert > 0){
+					
               $respuesta = array(
                 'error' => false,
                 'data' => $resInsert,
                 'mensaje' =>'Centro de costo registrado con exito'
               );
-
-
         }else{
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar el centro de costo'
               );
 
