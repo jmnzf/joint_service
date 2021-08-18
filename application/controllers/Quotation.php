@@ -64,32 +64,40 @@ class Quotation extends REST_Controller {
                       :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype, :dvc_attch)";
 
 
+				// Se Inicia la transaccion,
+				// Todas las consultas de modificacion siguientes
+				// aplicaran solo despues que se confirme la transaccion,
+				// de lo contrario no se aplicaran los cambios y se devolvera
+				// la base de datos a su estado original.
+
+			  $this->pedeo->trans_begin();
+
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':dvc_docnum' => isset($Data['dvc_docnum'])?$Data['dvc_docnum']:NULL,
-              ':dvc_docdate' => isset($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-              ':dvc_duedate' => isset($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
-              ':dvc_duedev' => isset($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
-              ':dvc_pricelist' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
+              ':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
+              ':dvc_docdate' => validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
+              ':dvc_duedate' => validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+              ':dvc_duedev' => validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
+              ':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
               ':dvc_cardcode' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
               ':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
-              ':dvc_currency' => isset($Data['dvc_currency'])?$Data['dvc_currency']:NULL,
+              ':dvc_currency' => is_numeric($Data['dvc_currency'])?$Data['dvc_currency']:0,
               ':dvc_contacid' => isset($Data['dvc_contacid'])?$Data['dvc_contacid']:NULL,
-              ':dvc_slpcode' => isset($Data['dvc_slpcode'])?$Data['dvc_slpcode']:NULL,
-              ':dvc_empid' => isset($Data['dvc_empid'])?$Data['dvc_empid']:NULL,
+              ':dvc_slpcode' => is_numeric($Data['dvc_slpcode'])?$Data['dvc_slpcode']:0,
+              ':dvc_empid' => is_numeric($Data['dvc_empid'])?$Data['dvc_empid']:0,
               ':dvc_comment' => isset($Data['dvc_comment'])?$Data['dvc_comment']:NULL,
-              ':dvc_doctotal' => isset($Data['dvc_doctotal'])?$Data['dvc_doctotal']:NULL,
-              ':dvc_baseamnt' => isset($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:NULL,
-              ':dvc_taxtotal' => isset($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:NULL,
-              ':dvc_discprofit' => isset($Data['dvc_discprofit'])?$Data['dvc_discprofit']:NULL,
-              ':dvc_discount' => isset($Data['dvc_discount'])?$Data['dvc_discount']:NULL,
-              ':dvc_createat' => isset($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-              ':dvc_baseentry' => isset($Data['dvc_baseentry'])?$Data['dvc_baseentry']:NULL,
-              ':dvc_basetype' => isset($Data['dvc_basetype'])?$Data['dvc_basetype']:NULL,
-              ':dvc_doctype' => isset($Data['dvc_doctype'])?$Data['dvc_doctype']:NULL,
+              ':dvc_doctotal' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
+              ':dvc_baseamnt' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
+              ':dvc_taxtotal' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
+              ':dvc_discprofit' => is_numeric($Data['dvc_discprofit'])?$Data['dvc_discprofit']:0,
+              ':dvc_discount' => is_numeric($Data['dvc_discount'])?$Data['dvc_discount']:0,
+              ':dvc_createat' => validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
+              ':dvc_baseentry' => is_numeric($Data['dvc_baseentry'])?$Data['dvc_baseentry']:0,
+              ':dvc_basetype' => is_numeric($Data['dvc_basetype'])?$Data['dvc_basetype']:0,
+              ':dvc_doctype' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
               ':dvc_idadd' => isset($Data['dvc_idadd'])?$Data['dvc_idadd']:NULL,
               ':dvc_adress' => isset($Data['dvc_adress'])?$Data['dvc_adress']:NULL,
-              ':dvc_paytype' => isset($Data['dvc_paytype'])?$Data['dvc_paytype']:NULL,
-              ':dvc_attch' => $this->getUrl(isset($Data['dvc_attch'])?$Data['dvc_attch']:NULL)
+              ':dvc_paytype' => is_numeric($Data['dvc_paytype'])?$Data['dvc_paytype']:0,
+              ':dvc_attch' => $this->getUrl(count(trim(($Data['dvc_attch']))) > 0 ? $Data['dvc_attch']:NULL)
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -107,24 +115,49 @@ class Quotation extends REST_Controller {
                         ':vc1_docentry' => $resInsert,
                         ':vc1_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
                         ':vc1_itemname' => isset($detail['vc1_itemname'])?$detail['vc1_itemname']:NULL,
-                        ':vc1_quantity' => isset($detail['vc1_quantity'])?$detail['vc1_quantity']:NULL,
+                        ':vc1_quantity' => is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0,
                         ':vc1_uom' => isset($detail['vc1_uom'])?$detail['vc1_uom']:NULL,
                         ':vc1_whscode' => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-                        ':vc1_price' => isset($detail['vc1_price'])?$detail['vc1_price']:NULL,
-                        ':vc1_vat' => isset($detail['vc1_vat'])?$detail['vc1_vat']:NULL,
-                        ':vc1_vatsum' => isset($detail['vc1_vatsum'])?$detail['vc1_vatsum']:NULL,
-                        ':vc1_discount' => isset($detail['vc1_discount'])?$detail['vc1_discount']:NULL,
-                        ':vc1_linetotal' => isset($detail['vc1_linetotal'])?$detail['vc1_linetotal']:NULL,
+                        ':vc1_price' => is_numeric($detail['vc1_price'])?$detail['vc1_price']:0,
+                        ':vc1_vat' => is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0,
+                        ':vc1_vatsum' => is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0,
+                        ':vc1_discount' => is_numeric($detail['vc1_discount'])?$detail['vc1_discount']:0,
+                        ':vc1_linetotal' => is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0,
                         ':vc1_costcode' => isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL,
                         ':vc1_ubusiness' => isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL,
                         ':vc1_project' => isset($detail['vc1_project'])?$detail['vc1_project']:NULL,
-                        ':vc1_acctcode' => isset($detail['vc1_acctcode'])?$detail['vc1_acctcode']:NULL,
-                        ':vc1_basetype' => isset($detail['vc1_basetype'])?$detail['vc1_basetype']:NULL,
-                        ':vc1_doctype' => isset($detail['vc1_doctype'])?$detail['vc1_doctype']:NULL,
-                        ':vc1_avprice' => isset($detail['vc1_avprice'])?$detail['vc1_avprice']:NULL,
-                        ':vc1_inventory' => isset($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
+                        ':vc1_acctcode' => is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']:0,
+                        ':vc1_basetype' => is_numeric($detail['vc1_basetype'])?$detail['vc1_basetype']:0,
+                        ':vc1_doctype' => is_numeric($detail['vc1_doctype'])?$detail['vc1_doctype']:0,
+                        ':vc1_avprice' => is_numeric($detail['vc1_avprice'])?$detail['vc1_avprice']:0,
+                        ':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
                 ));
+
+								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+										// Se verifica que el detalle no de error insertando //
+								}else{
+
+										// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+										// se retorna el error y se detiene la ejecucion del codigo restante.
+											$this->pedeo->trans_rollback();
+
+											$respuesta = array(
+												'error'   => true,
+												'data' => $resInsert,
+												'mensaje'	=> 'No se pudo registrar la cotización'
+											);
+
+											 $this->response($respuesta);
+
+											 return;
+								}
           }
+
+
+					// Si todo sale bien despues de insertar el detalle de la cotizacion
+					// se confirma la trasaccion  para que los cambios apliquen permanentemente
+					// en la base de datos y se confirma la operacion exitosa.
+					$this->pedeo->trans_commit();
 
           $respuesta = array(
             'error' => false,
@@ -134,6 +167,9 @@ class Quotation extends REST_Controller {
 
 
         }else{
+					// Se devuelven los cambios realizados en la transaccion
+					// si occurre un error  y se muestra devuelve el error.
+							$this->pedeo->trans_rollback();
 
               $respuesta = array(
                 'error'   => true,
@@ -202,32 +238,32 @@ class Quotation extends REST_Controller {
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-							':dvc_docnum' => $Data['dvc_docnum'],
-							':dvc_docdate' => $Data['dvc_docdate'],
-							':dvc_duedate' => $Data['dvc_duedate'],
-							':dvc_duedev' => $Data['dvc_duedev'],
-							':dvc_pricelist' => $Data['dvc_pricelist'],
-							':dvc_cardcode' => $Data['dvc_cardcode'],
-							':dvc_cardname' => $Data['dvc_cardname'],
-							':dvc_currency' => $Data['dvc_currency'],
-							':dvc_contacid' => $Data['dvc_contacid'],
-							':dvc_slpcode' => $Data['dvc_slpcode'],
-							':dvc_empid' => $Data['dvc_empid'],
-							':dvc_comment' => $Data['dvc_comment'],
-							':dvc_doctotal' => $Data['dvc_doctotal'],
-							':dvc_baseamnt' => $Data['dvc_baseamnt'],
-							':dvc_taxtotal' => $Data['dvc_taxtotal'],
-							':dvc_discprofit' => $Data['dvc_discprofit'],
-							':dvc_discount' => $Data['dvc_discount'],
-							':dvc_createat' => $Data['dvc_createat'],
-							':dvc_baseentry' => $Data['dvc_baseentry'],
-							':dvc_basetype' => $Data['dvc_basetype'],
-							':dvc_doctype' => $Data['dvc_doctype'],
-							':dvc_idadd' => $Data['dvc_idadd'],
-							':dvc_adress' => $Data['dvc_adress'],
-							':dvc_paytype' => $Data['dvc_paytype'],
-							':dvc_attch' => $this->getUrl($Data['dvc_attch']),
-							':dvc_docentry' => $Data['dvc_docentry'],
+							':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
+							':dvc_docdate' => validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
+							':dvc_duedate' => validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+							':dvc_duedev' => validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
+							':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
+							':dvc_cardcode' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
+							':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
+							':dvc_currency' => is_numeric($Data['dvc_currency'])?$Data['dvc_currency']:0,
+							':dvc_contacid' => isset($Data['dvc_contacid'])?$Data['dvc_contacid']:NULL,
+							':dvc_slpcode' => is_numeric($Data['dvc_slpcode'])?$Data['dvc_slpcode']:0,
+							':dvc_empid' => is_numeric($Data['dvc_empid'])?$Data['dvc_empid']:0,
+							':dvc_comment' => isset($Data['dvc_comment'])?$Data['dvc_comment']:NULL,
+							':dvc_doctotal' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
+							':dvc_baseamnt' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
+							':dvc_taxtotal' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
+							':dvc_discprofit' => is_numeric($Data['dvc_discprofit'])?$Data['dvc_discprofit']:0,
+							':dvc_discount' => is_numeric($Data['dvc_discount'])?$Data['dvc_discount']:0,
+							':dvc_createat' => validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
+							':dvc_baseentry' => is_numeric($Data['dvc_baseentry'])?$Data['dvc_baseentry']:0,
+							':dvc_basetype' => is_numeric($Data['dvc_basetype'])?$Data['dvc_basetype']:0,
+							':dvc_doctype' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+							':dvc_idadd' => isset($Data['dvc_idadd'])?$Data['dvc_idadd']:NULL,
+							':dvc_adress' => isset($Data['dvc_adress'])?$Data['dvc_adress']:NULL,
+							':dvc_paytype' => is_numeric($Data['dvc_paytype'])?$Data['dvc_paytype']:0,
+							':dvc_attch' => $this->getUrl(count(trim(($Data['dvc_attch']))) > 0 ? $Data['dvc_attch']:NULL),
+							':dvc_docentry' => $Data['dvc_docentry']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -243,25 +279,25 @@ class Quotation extends REST_Controller {
 																			:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-													':vc1_docentry' => $Data['dvc_docentry'],
-												  ':vc1_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
-                          ':vc1_itemname' => isset($detail['vc1_itemname'])?$detail['vc1_itemname']:NULL,
-                          ':vc1_quantity' => isset($detail['vc1_quantity'])?$detail['vc1_quantity']:NULL,
-                          ':vc1_uom' => isset($detail['vc1_uom'])?$detail['vc1_uom']:NULL,
-                          ':vc1_whscode' => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-                          ':vc1_price' => isset($detail['vc1_price'])?$detail['vc1_price']:NULL,
-                          ':vc1_vat' => isset($detail['vc1_vat'])?$detail['vc1_vat']:NULL,
-                          ':vc1_vatsum' => isset($detail['vc1_vatsum'])?$detail['vc1_vatsum']:NULL,
-                          ':vc1_discount' => isset($detail['vc1_discount'])?$detail['vc1_discount']:NULL,
-                          ':vc1_linetotal' => isset($detail['vc1_linetotal'])?$detail['vc1_linetotal']:NULL,
-                          ':vc1_costcode' => isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL,
-                          ':vc1_ubusiness' => isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL,
-                          ':vc1_project' => isset($detail['vc1_project'])?$detail['vc1_project']:NULL,
-                          ':vc1_acctcode' => isset($detail['vc1_acctcode'])?$detail['vc1_acctcode']:NULL,
-                          ':vc1_basetype' => isset($detail['vc1_basetype'])?$detail['vc1_basetype']:NULL,
-                          ':vc1_doctype' => isset($detail['vc1_doctype'])?$detail['vc1_doctype']:NULL,
-                          ':vc1_avprice' => isset($detail['vc1_avprice'])?$detail['vc1_avprice']:NULL,
-                          ':vc1_inventory' => isset($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
+											':vc1_docentry' => $resInsert,
+											':vc1_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
+											':vc1_itemname' => isset($detail['vc1_itemname'])?$detail['vc1_itemname']:NULL,
+											':vc1_quantity' => is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0,
+											':vc1_uom' => isset($detail['vc1_uom'])?$detail['vc1_uom']:NULL,
+											':vc1_whscode' => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
+											':vc1_price' => is_numeric($detail['vc1_price'])?$detail['vc1_price']:0,
+											':vc1_vat' => is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0,
+											':vc1_vatsum' => is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0,
+											':vc1_discount' => is_numeric($detail['vc1_discount'])?$detail['vc1_discount']:0,
+											':vc1_linetotal' => is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0,
+											':vc1_costcode' => isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL,
+											':vc1_ubusiness' => isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL,
+											':vc1_project' => isset($detail['vc1_project'])?$detail['vc1_project']:NULL,
+											':vc1_acctcode' => is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']:0,
+											':vc1_basetype' => is_numeric($detail['vc1_basetype'])?$detail['vc1_basetype']:0,
+											':vc1_doctype' => is_numeric($detail['vc1_doctype'])?$detail['vc1_doctype']:0,
+											':vc1_avprice' => is_numeric($detail['vc1_avprice'])?$detail['vc1_avprice']:0,
+											':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
 									));
 						}
 
@@ -436,6 +472,11 @@ class Quotation extends REST_Controller {
 
       return $url;
   }
+
+	private function validateDate($date, $format = 'Y-m-d H:i:s'){
+	    $d = DateTime::createFromFormat($format, $date);
+	    return $d && $d->format($format) == $date;
+	}
 
 
 
