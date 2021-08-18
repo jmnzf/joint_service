@@ -30,11 +30,15 @@ class InventoryConcepts extends REST_Controller
 
     $Data = $this->post();
 
-    if (!isset($Data['icm_name']) OR
-        !isset($Data['icm_description'])  OR
-        !isset($Data['icm_acctcode']) OR
-        !isset($Data['icm_enabled']) OR
-        !isset($Data['icm_type'])) {
+
+    if (
+      !isset($Data['icm_name']) or
+      !isset($Data['icm_description'])  or
+      !isset($Data['icm_acctcode']) or
+      !isset($Data['icm_enabled']) or
+      !isset($Data['icm_type'])
+    ) {
+
 
         $respuesta = array(
           'error' => true,
@@ -61,8 +65,8 @@ class InventoryConcepts extends REST_Controller
 
       $respuesta = array(
         'error' => true,
-        'data'  => array($Data['mgs_code'], $Data['mgs_code']),
-        'mensaje' => 'ya existe un grupo con ese código'
+        'data'  => array($Data['icm_name'], $Data['icm_name']),
+        'mensaje' => 'ya existe un Concepto con ese nombre'
       );
 
       $this->response($respuesta);
@@ -87,14 +91,14 @@ class InventoryConcepts extends REST_Controller
       $respuesta = array(
         'error' => false,
         'data' => $resInsert,
-        'mensaje' => 'Concepto de salida registrado con exito'
+        'mensaje' => 'Concepto de inventario registrado con exito'
       );
     } else {
 
       $respuesta = array(
         'error'   => true,
         'data' => array(),
-        'mensaje' => 'No se pudo registrar el concepto de salida'
+        'mensaje' => 'No se pudo registrar el concepto de inventario'
       );
     }
     $this->response($respuesta);
@@ -109,7 +113,7 @@ class InventoryConcepts extends REST_Controller
 
     $Data = $this->post();
     if (
-      !isset($Data['icm_name ']) or
+      !isset($Data['icm_name']) or
       !isset($Data['icm_description'])  or
       !isset($Data['icm_acctcode']) or
       !isset($Data['icm_enabled']) or
