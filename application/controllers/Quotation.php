@@ -236,6 +236,7 @@ class Quotation extends REST_Controller {
 										dvc_baseentry=:dvc_baseentry, dvc_basetype=:dvc_basetype, dvc_doctype=:dvc_doctype, dvc_idadd=:dvc_idadd,
 										dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype, dvc_attch=:dvc_attch WHERE dvc_docentry=:dvc_docentry";
 
+      $this->pedeo->trans_begin();
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 							':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
@@ -299,7 +300,29 @@ class Quotation extends REST_Controller {
 											':vc1_avprice' => is_numeric($detail['vc1_avprice'])?$detail['vc1_avprice']:0,
 											':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
 									));
+
+									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+											// Se verifica que el detalle no de error insertando //
+									}else{
+
+											// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+											// se retorna el error y se detiene la ejecucion del codigo restante.
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resInsert,
+													'mensaje'	=> 'No se pudo registrar la cotización'
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+									}
 						}
+
+
+						$this->pedeo->trans_commit();
 
             $respuesta = array(
               'error' => false,
@@ -309,6 +332,8 @@ class Quotation extends REST_Controller {
 
 
       }else{
+
+						$this->pedeo->trans_rollback();
 
             $respuesta = array(
               'error'   => true,
