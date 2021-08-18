@@ -74,9 +74,9 @@ class Quotation extends REST_Controller {
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
               ':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
-              ':dvc_docdate' => validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-              ':dvc_duedate' => validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
-              ':dvc_duedev' => validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
+              ':dvc_docdate' => $this->validateDate($Data['dvc_docdate'].' '."00:00:00")?$Data['dvc_docdate']:NULL,
+              ':dvc_duedate' => $this->validateDate($Data['dvc_duedate'].' '."00:00:00")?$Data['dvc_duedate']:NULL,
+              ':dvc_duedev' => $this->validateDate($Data['dvc_duedev'].' '."00:00:00")?$Data['dvc_duedev']:NULL,
               ':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
               ':dvc_cardcode' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
               ':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
@@ -90,7 +90,7 @@ class Quotation extends REST_Controller {
               ':dvc_taxtotal' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
               ':dvc_discprofit' => is_numeric($Data['dvc_discprofit'])?$Data['dvc_discprofit']:0,
               ':dvc_discount' => is_numeric($Data['dvc_discount'])?$Data['dvc_discount']:0,
-              ':dvc_createat' => validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
+              ':dvc_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
               ':dvc_baseentry' => is_numeric($Data['dvc_baseentry'])?$Data['dvc_baseentry']:0,
               ':dvc_basetype' => is_numeric($Data['dvc_basetype'])?$Data['dvc_basetype']:0,
               ':dvc_doctype' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
@@ -240,9 +240,9 @@ class Quotation extends REST_Controller {
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 							':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
-							':dvc_docdate' => validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-							':dvc_duedate' => validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
-							':dvc_duedev' => validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
+							':dvc_docdate' => $this->validateDate($Data['dvc_docdate'.' '."00:00:00"])?$Data['dvc_docdate']:NULL,
+							':dvc_duedate' => $this->validateDate($Data['dvc_duedate'.' '."00:00:00"])?$Data['dvc_duedate']:NULL,
+							':dvc_duedev' => $this->validateDate($Data['dvc_duedev'.' '."00:00:00"])?$Data['dvc_duedev']:NULL,
 							':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
 							':dvc_cardcode' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
 							':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
@@ -256,7 +256,7 @@ class Quotation extends REST_Controller {
 							':dvc_taxtotal' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
 							':dvc_discprofit' => is_numeric($Data['dvc_discprofit'])?$Data['dvc_discprofit']:0,
 							':dvc_discount' => is_numeric($Data['dvc_discount'])?$Data['dvc_discount']:0,
-							':dvc_createat' => validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
+							':dvc_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
 							':dvc_baseentry' => is_numeric($Data['dvc_baseentry'])?$Data['dvc_baseentry']:0,
 							':dvc_basetype' => is_numeric($Data['dvc_basetype'])?$Data['dvc_basetype']:0,
 							':dvc_doctype' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
