@@ -75,9 +75,9 @@ class Quotation extends REST_Controller {
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
               ':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
               ':dvc_series' => is_numeric($Data['dvc_series'])?$Data['dvc_series']:0,
-              ':dvc_docdate' => $this->validateDate($Data['dvc_docdate'].' '."00:00:00")?$Data['dvc_docdate']:NULL,
-              ':dvc_duedate' => $this->validateDate($Data['dvc_duedate'].' '."00:00:00")?$Data['dvc_duedate']:NULL,
-              ':dvc_duedev' => $this->validateDate($Data['dvc_duedev'].' '."00:00:00")?$Data['dvc_duedev']:NULL,
+              ':dvc_docdate' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
+              ':dvc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+              ':dvc_duedev' => $this->validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
               ':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
               ':dvc_cardcode' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
               ':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
@@ -277,9 +277,9 @@ class Quotation extends REST_Controller {
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 							':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
-							':dvc_docdate' => $this->validateDate($Data['dvc_docdate'.' '."00:00:00"])?$Data['dvc_docdate']:NULL,
-							':dvc_duedate' => $this->validateDate($Data['dvc_duedate'.' '."00:00:00"])?$Data['dvc_duedate']:NULL,
-							':dvc_duedev' => $this->validateDate($Data['dvc_duedev'.' '."00:00:00"])?$Data['dvc_duedev']:NULL,
+							':dvc_docdate' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
+							':dvc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+							':dvc_duedev' => $this->validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
 							':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
 							':dvc_cardcode' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
 							':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
@@ -535,9 +535,15 @@ class Quotation extends REST_Controller {
       return $url;
   }
 
-	private function validateDate($date, $format = 'Y-m-d H:i:s'){
-	    $d = DateTime::createFromFormat($format, $date);
-	    return $d && $d->format($format) == $date;
+	// private function validateDate($date, $format = 'Y-m-d H:i:s'){
+	//     $d = DateTime::createFromFormat($format, $date);
+	//     return $d && $d->format($format) == $date;
+	// }
+
+	private function validateDate($fecha){
+			$valores = explode('-', $fecha);
+			if(count($valores) >= 3 && checkdate($valores[1], $valores[0], $valores[2])){return true;}
+			return false;
 	}
 
 
