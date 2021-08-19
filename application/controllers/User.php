@@ -318,7 +318,7 @@ class User extends REST_Controller {
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':Pgu_CodeUser' => $DataUser['Pgu_CodeUser'],':pgu_enabled' => 1));
 
-				if( isset($resSelect[0]) ){
+				if( isset($resSelect[0]) ){ 
 
 					if(password_verify($DataUser['Pgu_Pass'], $resSelect[0]['pgu_pass'])){
 							unset($resSelect[0]['Pgu_Pass']);
