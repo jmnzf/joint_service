@@ -56,10 +56,10 @@ class Quotation extends REST_Controller {
           return;
       }
 
-        $sqlInsert = "INSERT INTO dvct(dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
+        $sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                      dvc_attch)VALUES(:dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
+                      dvc_attch)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
                       :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
                       :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype, :dvc_attch)";
 
@@ -74,6 +74,7 @@ class Quotation extends REST_Controller {
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
               ':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
+              ':dvc_series' => is_numeric($Data['dvc_series'])?$Data['dvc_docnum']:0,
               ':dvc_docdate' => $this->validateDate($Data['dvc_docdate'].' '."00:00:00")?$Data['dvc_docdate']:NULL,
               ':dvc_duedate' => $this->validateDate($Data['dvc_duedate'].' '."00:00:00")?$Data['dvc_duedate']:NULL,
               ':dvc_duedev' => $this->validateDate($Data['dvc_duedev'].' '."00:00:00")?$Data['dvc_duedev']:NULL,
