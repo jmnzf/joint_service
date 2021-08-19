@@ -310,7 +310,7 @@ class User extends REST_Controller {
 						 return;
 				}
 
-				$sqlSelect = "SELECT pgu_id_usuario,pgu_name_user,pgu_lname_user,
+				$sqlSelect = "SELECT pgu_code_user, pgu_id_usuario,pgu_name_user,pgu_lname_user,
 											pgu_name_user || ' ' || pgu_lname_user AS NameC ,
 											pgu_email,pgu_role,pgu_pass,pgu_id_vendor
 											FROM pgus WHERE pgu_code_user = :Pgu_CodeUser AND pgu_enabled = :pgu_enabled";
@@ -318,7 +318,7 @@ class User extends REST_Controller {
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':Pgu_CodeUser' => $DataUser['Pgu_CodeUser'],':pgu_enabled' => 1));
 
-				if( isset($resSelect[0]) ){
+				if( isset($resSelect[0]) ){ 
 
 					if(password_verify($DataUser['Pgu_Pass'], $resSelect[0]['pgu_pass'])){
 							unset($resSelect[0]['Pgu_Pass']);
@@ -332,7 +332,7 @@ class User extends REST_Controller {
 							$respuesta = array(
 								'error'   => true,
 								'data' => array(),
-								'mensaje'	=> 'usuario y/o password invalidos'
+								'mensaje'	=> 'usuario y/o password inválidos'
 							);
 					}
 

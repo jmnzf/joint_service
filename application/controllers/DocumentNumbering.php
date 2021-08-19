@@ -222,7 +222,11 @@ class DocumentNumbering extends REST_Controller {
   public function getDocumentNumbering_get(){
 
         // $sqlSelect = " SELECT * FROM pgdn";
+<<<<<<< HEAD
         $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel,
+=======
+        $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, 
+>>>>>>> e324e17d5cd70a979fbe6ebe6a871f128c7362e9
         pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, coalesce((select max(dvc_docnum) ultimo_numero from dvct t0 where t0.dvc_series = pgs_id), pgs_first_num) as ultimo_numero FROM pgdn";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
