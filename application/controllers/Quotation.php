@@ -161,7 +161,7 @@ class Quotation extends REST_Controller {
 								$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 										 ':bmi_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
-										 ':bmi_quantity' => is_numeric($detail['vc1_quantity'])? $detail['vc1_quantity'] * $Data['invtype':0,
+										 ':bmi_quantity' => is_numeric($detail['vc1_quantity'])? $detail['vc1_quantity'] * $Data['invtype']:0,
 										 ':bmi_whscode'  => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
 										 ':bmi_createat' => date("Y-m-d"),
 										 ':bmi_createby' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
