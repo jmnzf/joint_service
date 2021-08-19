@@ -541,9 +541,11 @@ class Quotation extends REST_Controller {
 	// }
 
 	private function validateDate($fecha){
-			$valores = explode('-', $fecha);
-			if(count($valores) >= 3 && checkdate($valores[1], $valores[0], $valores[2])){return true;}
-			return false;
+			if(strlen($fecha) == 10 OR strlen($fecha) > 10){
+				return true;
+			}else{
+				return false;
+			}
 	}
 
 
