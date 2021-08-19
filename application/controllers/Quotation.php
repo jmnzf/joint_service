@@ -59,9 +59,9 @@ class Quotation extends REST_Controller {
         $sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                      dvc_attch)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
+                      dvc_attch,dvc_createby)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
                       :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
-                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype, :dvc_attch)";
+                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype, :dvc_attch,:dvc_createby)";
 
 
 				// Se Inicia la transaccion,
@@ -98,6 +98,7 @@ class Quotation extends REST_Controller {
               ':dvc_idadd' => isset($Data['dvc_idadd'])?$Data['dvc_idadd']:NULL,
               ':dvc_adress' => isset($Data['dvc_adress'])?$Data['dvc_adress']:NULL,
               ':dvc_paytype' => is_numeric($Data['dvc_paytype'])?$Data['dvc_paytype']:0,
+							':dvc_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
               ':dvc_attch' => $this->getUrl(count(trim(($Data['dvc_attch']))) > 0 ? $Data['dvc_attch']:NULL)
 						));
 
@@ -152,8 +153,43 @@ class Quotation extends REST_Controller {
 
 											 return;
 								}
-          }
 
+								//Se aplica el movimiento de inventario
+								$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
+																			 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
+
+								$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+
+										 ':bmi_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
+										 ':bmi_quantity' => is_numeric($detail['vc1_quantity'])? $detail['vc1_quantity'] * $Data['invtype']:0,
+										 ':bmi_whscode'  => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
+										 ':bmi_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
+										 ':bmi_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+										 ':bmy_doctype'  => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+										 ':bmy_baseentry' => $resInsert
+
+								));
+
+								if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
+										// Se verifica que el detalle no de error insertando //
+								}else{
+
+										// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+										// se retorna el error y se detiene la ejecucion del codigo restante.
+											$this->pedeo->trans_rollback();
+
+											$respuesta = array(
+												'error'   => true,
+												'data' => $sqlInserMovimiento,
+												'mensaje'	=> 'No se pudo registrar la cotización'
+											);
+
+											 $this->response($respuesta);
+
+											 return;
+								}
+
+          }
 
 					// Si todo sale bien despues de insertar el detalle de la cotizacion
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
