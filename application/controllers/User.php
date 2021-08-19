@@ -306,7 +306,7 @@ class User extends REST_Controller {
 						'data'  => array(),
 						'mensaje' => 'este usuario no esta registrado');
 
-						 $this->response($respuesta);
+						 $this->response($respuesta); 
 						 return;
 				}
 
