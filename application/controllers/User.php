@@ -332,7 +332,7 @@ class User extends REST_Controller {
 							$respuesta = array(
 								'error'   => true,
 								'data' => array(),
-								'mensaje'	=> 'usuario y/o password invalidos'
+								'mensaje'	=> 'usuario y/o password inválidos'
 							);
 					}
 
