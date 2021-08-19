@@ -163,8 +163,8 @@ class Quotation extends REST_Controller {
 										 ':bmi_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
 										 ':bmi_quantity' => is_numeric($detail['vc1_quantity'])? $detail['vc1_quantity'] * $Data['invtype']:0,
 										 ':bmi_whscode'  => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-										 ':bmi_createat' => date("Y-m-d"),
-										 ':bmi_createby' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
+										 ':bmi_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
+										 ':bmi_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
 										 ':bmy_doctype'  => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
 										 ':bmy_baseentry' => $resInsert
 
