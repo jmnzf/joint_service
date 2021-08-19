@@ -310,7 +310,7 @@ class User extends REST_Controller {
 						 return;
 				}
 
-				$sqlSelect = "SELECT pgu_id_usuario,pgu_name_user,pgu_lname_user,
+				$sqlSelect = "SELECT pgu_code_user, pgu_id_usuario,pgu_name_user,pgu_lname_user,
 											pgu_name_user || ' ' || pgu_lname_user AS NameC ,
 											pgu_email,pgu_role,pgu_pass,pgu_id_vendor
 											FROM pgus WHERE pgu_code_user = :Pgu_CodeUser AND pgu_enabled = :pgu_enabled";
