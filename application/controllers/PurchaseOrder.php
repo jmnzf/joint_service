@@ -23,7 +23,7 @@ class PurchaseOrder extends REST_Controller {
 	}
 
   //CREAR NUEVA COTIZACION
-	public function createQuotation_post(){
+	public function createPurchaseOrder_post(){
 
       $Data = $this->post();
 
@@ -306,11 +306,11 @@ class PurchaseOrder extends REST_Controller {
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
 
-						$this->pedeo->queryTable("DELETE FROM vct1 WHERE po1_docentry=:po1_docentry", array(':po1_docentry' => $Data['dpo_docentry']));
+						$this->pedeo->queryTable("DELETE FROM cpo1 WHERE po1_docentry=:po1_docentry", array(':po1_docentry' => $Data['dpo_docentry']));
 
 						foreach ($ContenidoDetalle as $key => $detail) {
 
-									$sqlInsertDetail = "INSERT INTO vct1(po1_docentry, po1_itemcode, po1_itemname, po1_quantity, po1_uom, po1_whscode,
+									$sqlInsertDetail = "INSERT INTO cpo1(po1_docentry, po1_itemcode, po1_itemname, po1_quantity, po1_uom, po1_whscode,
 																			po1_price, po1_vat, po1_vatsum, po1_discount, po1_linetotal, po1_costcode, po1_ubusiness, po1_project,
 																			po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory)VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,
 																			:po1_uom, :po1_whscode,:po1_price, :po1_vat, :po1_vatsum, :po1_discount, :po1_linetotal, :po1_costcode, :po1_ubusiness, :po1_project,
@@ -385,7 +385,7 @@ class PurchaseOrder extends REST_Controller {
 
 
   //OBTENER COTIZACIONES
-  public function getQuotation_get(){
+  public function getPurchaseOrder_get(){
 
         $sqlSelect = " SELECT * FROM dcpo ";
 
@@ -473,7 +473,7 @@ class PurchaseOrder extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM vct1 WHERE po1_docentry =:po1_docentry";
+				$sqlSelect = " SELECT * FROM cpo1 WHERE po1_docentry =:po1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":po1_docentry" => $Data['po1_docentry']));
 
