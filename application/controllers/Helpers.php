@@ -75,6 +75,48 @@ class Helpers extends REST_Controller {
         $this->response($respuesta);
 	}
 
+  public function get_Query_post(){
+
+    $Data = $this->post();
+
+    if(!isset($Data['tabla']) OR
+       !isset($Data['campos']) OR
+       !isset($Data['where'])){
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' =>'La informacion enviada no es valida'
+      );
+
+      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+      return;
+    }
+
+    $sqlSelect = " SELECT ".$Data['table_camps']." FROM ".$Data['table_name']." WHERE ".$Data['where']." ";
+
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+    if(isset($resSelect[0])){
+
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
+
+    }else{
+
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje'	=> 'busqueda sin resultados'
+        );
+
+    }
+
+    $this->response($respuesta);
+}
   
   // OBTENER DATOS DE EMPLEADO DE DEPARTAMENTO DE VENTA 
   public function getVendorData_post(){
