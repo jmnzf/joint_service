@@ -188,8 +188,65 @@ class Quotation extends REST_Controller {
 
 											 return;
 								}
-
           }
+
+
+				  //Se agregan los asientos contables*/*******
+
+					$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
+															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+
+
+					$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
+
+							':mac_doc_num' => 1,
+							':mac_status' => 1,
+							':mac_base_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+							':mac_base_entry' => $resInsert,
+							':mac_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
+							':mac_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+							':mac_legal_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
+							':mac_ref1' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+							':mac_ref2' => "",
+							':mac_ref3' => "",
+							':mac_loc_total' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
+							':mac_fc_total' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
+							':mac_sys_total' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
+							':mac_trans_dode' => 1,
+							':mac_beline_nume' => 1,
+							':mac_vat_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
+							':mac_serie' => 1,
+							':mac_number' => 1,
+							':mac_bammntsys' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
+							':mac_bammnt' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
+							':mac_wtsum' => 1,
+							':mac_vatsum' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
+							':mac_comments' => isset($Data['dvc_comment'])?$Data['dvc_comment']:NULL,
+							':mac_create_date' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
+							':mac_made_usuer' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+							':mac_update_date' => date("Y-m-d"),
+							':mac_update_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL
+					));
+
+
+					if(is_numeric($resInsertAsiento) && $resInsertAsiento > 0){
+							// Se verifica que el detalle no de error insertando //
+					}else{
+
+							// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+							// se retorna el error y se detiene la ejecucion del codigo restante.
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resInsertAsiento,
+									'mensaje'	=> 'No se pudo registrar la cotización'
+								);
+
+								 $this->response($respuesta);
+
+								 return;
+					}
 
 					// Si todo sale bien despues de insertar el detalle de la cotizacion
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
