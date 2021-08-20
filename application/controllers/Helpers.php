@@ -94,7 +94,7 @@ class Helpers extends REST_Controller {
       return;
     }
 
-    $sqlSelect = " SELECT ".$Data['table_camps']." FROM ".$Data['table_name']." WHERE ".$Data['where']." ";
+    $sqlSelect = " SELECT ".$Data['campos']." FROM ".$Data['tabla']." WHERE ".$Data['where']." ";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
