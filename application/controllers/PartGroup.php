@@ -31,6 +31,7 @@ class PartGroup extends REST_Controller {
          !isset($Data['mgs_code']) OR
          !isset($Data['mgs_name']) OR
          !isset($Data['mgs_acct']) OR
+         !isset($Data['mgs_acctp']) OR
          !isset($Data['mgs_enabled'])){
 
         $respuesta = array(
@@ -68,8 +69,8 @@ class PartGroup extends REST_Controller {
     }
 
 
-        $sqlInsert = "INSERT INTO dmgs (mgs_type, mgs_code, mgs_name, mgs_acct, mgs_enabled)
-                      VALUES(:mgs_type, :mgs_code, :mgs_name, :mgs_acct, :mgs_enabled)";
+        $sqlInsert = "INSERT INTO dmgs (mgs_type, mgs_code, mgs_name, mgs_acct, mgs_acctp, mgs_enabled)
+                      VALUES(:mgs_type, :mgs_code, :mgs_name, :mgs_acct, :mgs_acctp, :mgs_enabled)";
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -77,6 +78,7 @@ class PartGroup extends REST_Controller {
               ':mgs_code'    => $Data['mgs_code'],
               ':mgs_name'    => $Data['mgs_name'],
               ':mgs_acct'    => $Data['mgs_acct'],
+              ':mgs_acctp'    => $Data['mgs_acctp'],
               ':mgs_enabled'    => $Data['mgs_enabled']
         ));
 
@@ -110,6 +112,7 @@ class PartGroup extends REST_Controller {
          !isset($Data['mgs_code']) OR
          !isset($Data['mgs_name']) OR
          !isset($Data['mgs_acct']) OR
+         !isset($Data['mgs_acctp']) OR
          !isset($Data['mgs_enabled'])){
 
         $respuesta = array(
@@ -128,6 +131,7 @@ class PartGroup extends REST_Controller {
                                     mgs_code = :mgs_code,
                                     mgs_name = :mgs_name,
                                     mgs_acct = :mgs_acct,
+                                    mgs_acctp = :mgs_acctp,
                                     mgs_enabled = :mgs_enabled
                                     WHERE mgs_id = :mgs_id";
 
@@ -140,6 +144,7 @@ class PartGroup extends REST_Controller {
         ':mgs_code'    => $Data['mgs_code'],
         ':mgs_name'    => $Data['mgs_name'],
         ':mgs_acct'    => $Data['mgs_acct'],
+        ':mgs_acctp'    => $Data['mgs_acctp'],
         ':mgs_enabled'    => $Data['mgs_enabled']
       ));
 
