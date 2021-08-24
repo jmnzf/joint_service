@@ -246,7 +246,10 @@ class PdfDocument extends REST_Controller {
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
 
 
-        $mpdf->Output();
+        $mpdf->Output('Doc.pdf', 'D');
+
+				header('Content-type: application/force-download');
+				header('Content-Disposition: attachment; filename='.$filename);
 
 
 	}
