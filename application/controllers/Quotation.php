@@ -966,7 +966,7 @@ class Quotation extends REST_Controller {
 					}
 				 //FIN Procedimiento para llenar costo costo
 
-				//Procedimiento para llenar cuentas por pagar
+				//Procedimiento para llenar cuentas por cobrar
 
 					$sqlcuentaCxP = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 													 JOIN dmgs  AS f2
@@ -1079,7 +1079,7 @@ class Quotation extends REST_Controller {
 
 								 return;
 					}
-					//FIN Procedimiento para llenar cuentas por pagar
+					//FIN Procedimiento para llenar cuentas por cobrar
 
 					// Si todo sale bien despues de insertar el detalle de la cotizacion
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
