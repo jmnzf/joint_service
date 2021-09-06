@@ -48,6 +48,7 @@ class Quotation extends REST_Controller {
 			$posicionCostoCosto = 0;
 			$codigoCuenta = ""; //para saber la naturaleza
 			$grantotalCostoInventario = 0;
+			$DocNumVerificado = 0;
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -90,6 +91,46 @@ class Quotation extends REST_Controller {
           return;
       }
 
+			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+
+				$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['dvc_series']));
+
+				if(isset($resNumeracion[0])){
+
+						$numeroActual = $resNumeracion[0]['pgs_nextnum'];
+						$numeroFinal  = $resNumeracion[0]['pgs_last_num'];
+						$numeroSiguiente = ($numeroActual + 1);
+
+						if( $numeroSiguiente <= $numeroFinal ){
+
+								$DocNumVerificado = $numeroSiguiente;
+
+						}	else {
+
+								$respuesta = array(
+									'error' => true,
+									'data'  => array(),
+									'mensaje' =>'La serie de la numeración esta llena'
+								);
+
+								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+								return;
+						}
+
+				}else{
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encontro la serie de numeración para el documento'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
         $sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
@@ -107,7 +148,7 @@ class Quotation extends REST_Controller {
 			  $this->pedeo->trans_begin();
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
+              ':dvc_docnum' => $DocNumVerificado,
               ':dvc_series' => is_numeric($Data['dvc_series'])?$Data['dvc_series']:0,
               ':dvc_docdate' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
               ':dvc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
@@ -137,6 +178,33 @@ class Quotation extends REST_Controller {
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
+
+					// Se actualiza la serie de la numeracion del documento
+
+					$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+																			 WHERE pgs_id = :pgs_id";
+					$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+							':pgs_nextnum' => $DocNumVerificado,
+							':pgs_id'      => $Data['dvc_series']
+					));
+
+
+					if(is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1){
+
+					}else{
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resActualizarNumeracion,
+									'mensaje'	=> 'No se pudo crear la cotización'
+								);
+
+								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+								return;
+					}
+					// Fin de la actualizacion de la numeracion del documento
 
 
 					//Se agregan los asientos contables*/*******
@@ -246,40 +314,122 @@ class Quotation extends REST_Controller {
 											 return;
 								}
 
-								//Se aplica el movimiento de inventario
-								$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
-																			 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
+								// si el item es inventariable
+								if( $detail['vc1_articleInv'] == 1 || $detail['vc1_articleInv'] == "1" ){
+										//Se aplica el movimiento de inventario
+										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
+																					 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
 
-								$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+										$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-										 ':bmi_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
-										 ':bmi_quantity' => is_numeric($detail['vc1_quantity'])? $detail['vc1_quantity'] * $Data['invtype']:0,
-										 ':bmi_whscode'  => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-										 ':bmi_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-										 ':bmi_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
-										 ':bmy_doctype'  => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
-										 ':bmy_baseentry' => $resInsert
+												 ':bmi_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
+												 ':bmi_quantity' => is_numeric($detail['vc1_quantity'])? $detail['vc1_quantity'] * $Data['invtype']:0,
+												 ':bmi_whscode'  => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
+												 ':bmi_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
+												 ':bmi_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+												 ':bmy_doctype'  => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+												 ':bmy_baseentry' => $resInsert
 
-								));
+										));
 
-								if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
-										// Se verifica que el detalle no de error insertando //
-								}else{
+										if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
+												// Se verifica que el detalle no de error insertando //
+										}else{
 
-										// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
-										// se retorna el error y se detiene la ejecucion del codigo restante.
-											$this->pedeo->trans_rollback();
+												// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+												// se retorna el error y se detiene la ejecucion del codigo restante.
+													$this->pedeo->trans_rollback();
 
-											$respuesta = array(
-												'error'   => true,
-												'data' => $sqlInserMovimiento,
-												'mensaje'	=> 'No se pudo registrar la cotización'
-											);
+													$respuesta = array(
+														'error'   => true,
+														'data' => $sqlInserMovimiento,
+														'mensaje'	=> 'No se pudo registrar la cotización'
+													);
 
-											 $this->response($respuesta);
+													 $this->response($respuesta);
 
-											 return;
+													 return;
+										}
+
+											//FIN aplicacion de movimiento de inventario
+
+
+											//Se Aplica el movimiento en stock ***************
+											// Buscando item en el stock
+											$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+																						FROM tbdi
+																						WHERE bdi_itemcode = :bdi_itemcode
+																						AND bdi_whscode = :bdi_whscode";
+
+											$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+														':bdi_itemcode' => $detail['vc1_itemcode'],
+														':bdi_whscode'  => $detail['vc1_whscode']
+											));
+
+											if(isset($resCostoCantidad[0])){
+
+												if($resCostoCantidad[0]['bdi_quantity'] > 0){
+
+														 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+														 $CantidadNueva = $detail['vc1_quantity'];
+
+
+														 $CantidadTotal = ($CantidadActual - $CantidadNueva);
+
+														 $sqlUpdateCostoCantidad =  "UPDATE tbdi
+																												 SET bdi_quantity = :bdi_quantity
+																												 WHERE  bdi_id = :bdi_id";
+
+														 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+																	 ':bdi_quantity' => $CantidadTotal,
+																	 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+														 ));
+
+														 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+
+														 }else{
+
+																 $this->pedeo->trans_rollback();
+
+																 $respuesta = array(
+																	 'error'   => true,
+																	 'data'    => $resUpdateCostoCantidad,
+																	 'mensaje'	=> 'No se pudo crear la cotizacion'
+																 );
+														 }
+
+												}else{
+
+																 $this->pedeo->trans_rollback();
+
+																 $respuesta = array(
+																	 'error'   => true,
+																	 'data'    => $resUpdateCostoCantidad,
+																	 'mensaje' => 'No hay existencia para el item: '.$detail['vc1_itemcode']
+																 );
+												}
+
+											}else{
+
+														$this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data' 		=> $resInsertCostoCantidad,
+															'mensaje'	=> 'El item no existe en el stock '.$detail['vc1_itemcode']
+														);
+
+														 $this->response($respuesta);
+
+														 return;
+											}
+
+												//FIN de  Aplicacion del movimiento en stock
 								}
+
+
 
 
 								//LLENANDO DETALLE ASIENTO CONTABLES
@@ -315,6 +465,8 @@ class Quotation extends REST_Controller {
 								$DetalleAsientoIva->vc1_price = is_numeric($detail['vc1_price'])?$detail['vc1_price']:0;
 								$DetalleAsientoIva->vc1_itemcode = isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL;
 								$DetalleAsientoIva->vc1_quantity = is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0;
+								$DetalleAsientoIva->vc1_cuentaIva = is_numeric($detail['vc1_cuentaIva'])?$detail['vc1_cuentaIva']:NULL;
+
 
 
 								// se busca la cuenta contable del costoInventario y costoCosto
@@ -607,10 +759,11 @@ class Quotation extends REST_Controller {
 										$granTotalIva = $granTotalIva + $value->vc1_vatsum;
 							}
 
+
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => 240805,
+									':ac1_account' => $value->vc1_cuentaIva,
 									':ac1_debit' => 0,
 									':ac1_credit' => $granTotalIva,
 									':ac1_debit_sys' => 0,

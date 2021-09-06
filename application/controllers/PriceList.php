@@ -59,6 +59,14 @@ class PriceList extends REST_Controller {
             return;
         }
 
+
+				// Se Inicia la transaccion,
+				// Todas las consultas de modificacion siguientes
+				// aplicaran solo despues que se confirme la transaccion,
+				// de lo contrario no se aplicaran los cambios y se devolvera
+				// la base de datos a su estado original.
+				$this->pedeo->trans_begin();
+
         $sqlInsert = "INSERT INTO dmpl(dmlp_name_list, dmlp_profit, dmlp_baselist)
                       VALUES(:dmlp_name_list, :dmlp_profit, :dmlp_baselist)";
 
@@ -107,7 +115,7 @@ class PriceList extends REST_Controller {
                       }
                 }
 
-                $this->pedeo->insertRow($sqlDetail, array(
+                $resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
 
                       ':pl1_id_price_list' => $resInsert,
                       ':pl1_item_code' => $prod['dma_item_code'],
@@ -117,7 +125,32 @@ class PriceList extends REST_Controller {
                 ));
 
 
+						    if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+
+								}else{
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' 		=> $resInsert,
+										'mensaje'	=> 'No se pudo registrar la lista'
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+
+
               }
+
+
+
+							// Si todo sale bien despues de insertar el detalle de la cotizacion
+							// se confirma la trasaccion  para que los cambios apliquen permanentemente
+							// en la base de datos y se confirma la operacion exitosa.
+							$this->pedeo->trans_commit();
 
               $respuesta = array(
                 'error' => false,

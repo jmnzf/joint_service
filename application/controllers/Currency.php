@@ -28,7 +28,8 @@ class Currency extends REST_Controller {
 
       if(!isset($DataCurrency['Pgm_NameMoneda']) OR
          !isset($DataCurrency['Pgm_Symbol']) OR
-         !isset($DataCurrency['Pgm_Enabled'])){
+         !isset($DataCurrency['Pgm_Enabled']) OR
+			   !isset($DataCurrency['pgm_principal'])){
 
         $respuesta = array(
           'error' => true,
@@ -41,15 +42,37 @@ class Currency extends REST_Controller {
         return;
       }
 
-      $sqlInsert = "INSERT INTO pgec(pgm_name_moneda,  pgm_symbol,  pgm_enabled)
-                   VALUES(:Pgm_NameMoneda, :Pgm_Symbol, :Pgm_Enabled)";
+			if(isset($Data['pgm_principal']) && $Data['pgm_principal'] == 1 OR $Data['pgm_principal'] == "1" ){
+
+					$sqlValidarPrincipal = " SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal ";
+
+					$resValidarPricipal = $this->pedeo->queryTable($sqlValidarPrincipal, array(
+
+										':pgm_principal' => 1
+					));
+
+					if(isset($resValidarPricipal[0])){
+
+							$respuesta = array(
+								'error'   => true,
+								'data' 		=> $resValidarPricipal[0]['pgm_id_moneda'],
+								'mensaje'	=> 'No se puede insertar una moneda como principal si ya existe una.'
+							);
+
+					}
+			}
+
+
+      $sqlInsert = "INSERT INTO pgec(pgm_name_moneda,  pgm_symbol,  pgm_enabled, pgm_principal)
+                    VALUES(:Pgm_NameMoneda, :Pgm_Symbol, :Pgm_Enabled, :pgm_principal)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
             ':Pgm_NameMoneda' => $DataCurrency['Pgm_NameMoneda'],
             ':Pgm_Symbol'     => $DataCurrency['Pgm_Symbol'],
-            ':Pgm_Enabled'    => 1
+            ':Pgm_Enabled'    => 1,
+						':pgm_principal'  => $DataCurrency['pgm_principal']
       ));
 
       if(is_numeric($resInsert) && $resInsert > 0){
@@ -82,7 +105,8 @@ class Currency extends REST_Controller {
       if(!isset($DataCurrency['Pgm_NameMoneda']) OR
          !isset($DataCurrency['Pgm_Symbol']) OR
          !isset($DataCurrency['Pgm_Enabled']) OR
-         !isset($DataCurrency['Pgm_IdMoneda'])){
+         !isset($DataCurrency['Pgm_IdMoneda']) OR
+			   !isset($DataCurrency['pgm_principal'])){
 
         $respuesta = array(
           'error' => true,
@@ -95,7 +119,34 @@ class Currency extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE pgec SET pgm_name_moneda = :Pgm_NameMoneda, pgm_symbol = :Pgm_Symbol, pgm_enabled = :Pgm_Enabled WHERE pgm_id_moneda = :Pgm_IdMoneda";
+
+			if(isset($Data['pgm_principal']) && $Data['pgm_principal'] == 1 OR $Data['pgm_principal'] == "1" ){
+
+					$sqlValidarPrincipal = " SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal AND pgm_id_moneda = :pgm_id_moneda";
+
+					$resValidarPricipal = $this->pedeo->queryTable($sqlValidarPrincipal, array(
+
+										':pgm_principal' => 1,
+										':pgm_id_moneda' => $DataCurrency['pgm_id_moneda']
+					));
+
+					if(isset($resValidarPricipal[0])){
+					}else{
+
+						$respuesta = array(
+							'error'   => true,
+							'data' 		=> $resValidarPricipal[0]['pgm_id_moneda'],
+							'mensaje'	=> 'No se puede actualizar una moneda como principal si ya existe una.'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+
+					}
+			}
+
+      $sqlUpdate = "UPDATE pgec SET pgm_name_moneda = :Pgm_NameMoneda, pgm_symbol = :Pgm_Symbol, pgm_enabled = :Pgm_Enabled, pgm_principal = :pgm_principal WHERE pgm_id_moneda = :Pgm_IdMoneda";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -103,7 +154,8 @@ class Currency extends REST_Controller {
             ':Pgm_NameMoneda' => $DataCurrency['Pgm_NameMoneda'],
             ':Pgm_Symbol'     => $DataCurrency['Pgm_Symbol'],
             ':Pgm_Enabled'    => $DataCurrency['Pgm_Enabled'],
-            ':Pgm_IdMoneda'   => $DataCurrency['Pgm_IdMoneda']
+            ':Pgm_IdMoneda'   => $DataCurrency['Pgm_IdMoneda'],
+						':pgm_principal'  => $DataCurrency['pgm_principal']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
