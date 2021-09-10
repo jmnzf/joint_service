@@ -90,7 +90,7 @@ class Quotation extends REST_Controller {
 
           return;
       }
-
+				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
 				$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['dvc_series']));
@@ -124,6 +124,29 @@ class Quotation extends REST_Controller {
 							'error' => true,
 							'data'  => array(),
 							'mensaje' =>'No se encontro la serie de numeración para el documento'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
+
+				$sqlMonedaSys = "SELECT tasa.tsa_value
+													FROM  pgec
+													INNER JOIN tasa
+													ON trim(tasa.tsa_currd) = trim(pgec.pgm_symbol)
+													WHERE pgec.pgm_system = :pgm_system AND tasa.tsa_date = :tsa_date";
+
+				$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1, ':tsa_date' => $Data['dvc_docdate']));
+
+				if(isset($resMonedaSys[0])){
+
+				}else{
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encontro la moneda de sistema para el documento'
 						);
 
 						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -650,34 +673,43 @@ class Quotation extends REST_Controller {
 
 							$debito = 0;
 							$credito = 0;
+							$MontoSysDB = 0;
+							$MontoSysCR = 0;
 
 							switch ($codigoCuentaIngreso) {
 								case 1:
 									$debito = $granTotalIngreso;
+									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
 									break;
 
 								case 2:
 									$credito = $granTotalIngreso;
+									$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
 									break;
 
 								case 3:
 									$credito = $granTotalIngreso;
+									$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
 									break;
 
 								case 4:
 									$credito = $granTotalIngreso;
+									$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
 									break;
 
 								case 5:
 									$debito = $granTotalIngreso;
+									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
 									break;
 
 								case 6:
 									$debito = $granTotalIngreso;
+									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
 									break;
 
 								case 7:
 									$debito = $granTotalIngreso;
+									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
 									break;
 							}
 
@@ -688,8 +720,8 @@ class Quotation extends REST_Controller {
 									':ac1_account' => $cuenta,
 									':ac1_debit' => $debito,
 									':ac1_credit' => $credito,
-									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' => 0,
+									':ac1_debit_sys' => round($MontoSysDB,2),
+									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
@@ -759,6 +791,8 @@ class Quotation extends REST_Controller {
 										$granTotalIva = $granTotalIva + $value->vc1_vatsum;
 							}
 
+							$MontoSysDB = ($granTotalIva / $resMonedaSys[0]['tsa_value']);
+
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -767,7 +801,7 @@ class Quotation extends REST_Controller {
 									':ac1_debit' => 0,
 									':ac1_credit' => $granTotalIva,
 									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' => 0,
+									':ac1_credit_sys' => round($MontoSysDB,2),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
@@ -842,6 +876,9 @@ class Quotation extends REST_Controller {
 												$dbito = 0;
 												$cdito = 0;
 
+												$MontoSysDB = 0;
+												$MontoSysCR = 0;
+
 												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
 
 												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->vc1_itemcode));
@@ -891,18 +928,25 @@ class Quotation extends REST_Controller {
 
 							if( $codigo3 == 1 || $codigo3 == "1" ){
 									$cdito = $grantotalCostoInventario;
+									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
 							}else if( $codigo3 == 2 || $codigo3 == "2" ){
 									$cdito = $grantotalCostoInventario;
+									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
 							}else if( $codigo3 == 3 || $codigo3 == "3" ){
 									$cdito = $grantotalCostoInventario;
+									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
 							}else if( $codigo3 == 4 || $codigo3 == "4" ){
 									$cdito = $grantotalCostoInventario;
+									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
 							}else if( $codigo3 == 5  || $codigo3 == "5" ){
 									$dbito = $grantotalCostoInventario;
+									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
 							}else if( $codigo3 == 6 || $codigo3 == "6" ){
 									$dbito = $grantotalCostoInventario;
+									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
 							}else if( $codigo3 == 7 || $codigo3 == "7" ){
 									$dbito = $grantotalCostoInventario;
+									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
 							}
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -911,8 +955,8 @@ class Quotation extends REST_Controller {
 									':ac1_account' => $cuentaInventario,
 									':ac1_debit' => $dbito,
 									':ac1_credit' => $cdito,
-									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' => 0,
+									':ac1_debit_sys' => round($MontoSysDB,2),
+									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
@@ -988,6 +1032,8 @@ class Quotation extends REST_Controller {
 										if(isset($resArticulo[0])){
 												$dbito = 0;
 												$cdito = 0;
+												$MontoSysDB = 0;
+												$MontoSysCR = 0;
 
 												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
 
@@ -1038,18 +1084,25 @@ class Quotation extends REST_Controller {
 
 								if( $codigo3 == 1 || $codigo3 == "1" ){
 									$dbito = 	$grantotalCostoCosto;
+									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo3 == 2 || $codigo3 == "2" ){
 									$cdito = 	$grantotalCostoCosto;
+									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo3 == 3 || $codigo3 == "3" ){
 									$cdito = 	$grantotalCostoCosto;
+									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo3 == 4 || $codigo3 == "4" ){
 									$cdito = 	$grantotalCostoCosto;
+									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo3 == 5  || $codigo3 == "5" ){
 									$dbito = 	$grantotalCostoCosto;
+									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo3 == 6 || $codigo3 == "6" ){
 									$dbito = 	$grantotalCostoCosto;
+									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo3 == 7 || $codigo3 == "7" ){
 									$dbito = 	$grantotalCostoCosto;
+									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
 								}
 
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1058,8 +1111,8 @@ class Quotation extends REST_Controller {
 								':ac1_account' => $cuentaCosto,
 								':ac1_debit' => $dbito,
 								':ac1_credit' => $cdito,
-								':ac1_debit_sys' => 0,
-								':ac1_credit_sys' => 0,
+								':ac1_debit_sys' => round($MontoSysDB,2),
+								':ac1_credit_sys' => round($MontoSysCR,2),
 								':ac1_currex' => 0,
 								':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
 								':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
@@ -1134,6 +1187,8 @@ class Quotation extends REST_Controller {
 
 								$debitoo = 0;
 								$creditoo = 0;
+								$MontoSysDB = 0;
+								$MontoSysCR = 0;
 
 								$cuentaCxP = $rescuentaCxP[0]['mgs_acct'];
 
@@ -1142,18 +1197,25 @@ class Quotation extends REST_Controller {
 
 								if( $codigo2 == 1 || $codigo2 == "1" ){
 										$debitoo = $Data['dvc_doctotal'];
+										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 2 || $codigo2 == "2" ){
 										$creditoo = $Data['dvc_doctotal'];
+										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 3 || $codigo2 == "3" ){
 										$creditoo = $Data['dvc_doctotal'];
+										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 4 || $codigo2 == "4" ){
 									  $creditoo = $Data['dvc_doctotal'];
+										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 5  || $codigo2 == "5" ){
 									  $debitoo = $Data['dvc_doctotal'];
+										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 6 || $codigo2 == "6" ){
 									  $debitoo = $Data['dvc_doctotal'];
+										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 7 || $codigo2 == "7" ){
 									  $debitoo = $Data['dvc_doctotal'];
+										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}
 
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1162,8 +1224,8 @@ class Quotation extends REST_Controller {
 										':ac1_account' => $cuentaCxP,
 										':ac1_debit' => $debitoo,
 										':ac1_credit' => $creditoo,
-										':ac1_debit_sys' => 0,
-										':ac1_credit_sys' => 0,
+										':ac1_debit_sys' => round($MontoSysDB,2),
+										':ac1_credit_sys' => round($MontoSysCR,2),
 										':ac1_currex' => 0,
 										':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
 										':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,

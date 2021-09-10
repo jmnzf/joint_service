@@ -39,6 +39,8 @@ class Auth extends REST_Controller {
 		}
 
 		$result = $this->pedeo->queryTable("SELECT menu.men_id,menu.men_nombre,menu.men_icon,menu.men_controller,menu.men_action,menu.men_sub_menu,menu.men_id_menu FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_menu = :idmenu AND menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol ORDER BY menu.men_id", array(':idmenu' => 0,':idestado' => 1,':idrol' => $request['Pgu_Role']));
+		// 
+		$controller = $this->pedeo->queryTable("SELECT menu.men_controller, menu.men_action FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol", array(':idestado' => 1, ':idrol' => $request['Pgu_Role']));
 		//
 		$resultSet = array();
 		// RESPUESTA POR DEFECTO.
@@ -73,7 +75,48 @@ class Auth extends REST_Controller {
 			$respuesta = array(
 				'error'  => false,
 				'data'   => $resultSet,
+				'ctr'    => $controller,
 	    		'mensaje'=> ''
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function session_post() {
+
+		$request = $this->post();
+
+		if(!isset($request['sessionId'])){
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' =>'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$resSelect = $this->pedeo->queryTable("SELECT log_id_usuario FROM logeo WHERE log_id = :log_id AND log_id_estado = :statusId", array(
+			':log_id'   => $request['sessionId'],
+			':statusId' => 1
+		));
+
+		$respuesta = array(
+			'error'  => true,
+			'data'   => false,
+			'mensaje'=> ''
+		);
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error'  => false,
+				'data'   => true,
+				'mensaje'=> ''
 			);
 		}
 

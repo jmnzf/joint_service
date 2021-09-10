@@ -42,7 +42,7 @@ class Currency extends REST_Controller {
         return;
       }
 
-			if(isset($Data['pgm_principal']) && $Data['pgm_principal'] == 1 OR $Data['pgm_principal'] == "1" ){
+			if($DataCurrency['pgm_principal'] == 1){
 
 					$sqlValidarPrincipal = " SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal ";
 
@@ -58,6 +58,10 @@ class Currency extends REST_Controller {
 								'data' 		=> $resValidarPricipal[0]['pgm_id_moneda'],
 								'mensaje'	=> 'No se puede insertar una moneda como principal si ya existe una.'
 							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
 
 					}
 			}
@@ -120,22 +124,23 @@ class Currency extends REST_Controller {
       }
 
 
-			if(isset($Data['pgm_principal']) && $Data['pgm_principal'] == 1 OR $Data['pgm_principal'] == "1" ){
+			if($DataCurrency['pgm_principal'] == 1){
 
 					$sqlValidarPrincipal = " SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal AND pgm_id_moneda = :pgm_id_moneda";
 
 					$resValidarPricipal = $this->pedeo->queryTable($sqlValidarPrincipal, array(
 
 										':pgm_principal' => 1,
-										':pgm_id_moneda' => $DataCurrency['pgm_id_moneda']
+										':pgm_id_moneda' => $DataCurrency['Pgm_IdMoneda']
 					));
+
 
 					if(isset($resValidarPricipal[0])){
 					}else{
 
 						$respuesta = array(
 							'error'   => true,
-							'data' 		=> $resValidarPricipal[0]['pgm_id_moneda'],
+							'data' 		=> $DataCurrency['Pgm_IdMoneda'],
 							'mensaje'	=> 'No se puede actualizar una moneda como principal si ya existe una.'
 						);
 

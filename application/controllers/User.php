@@ -321,19 +321,38 @@ class User extends REST_Controller {
 				if( isset($resSelect[0]) ){ 
 
 					if(password_verify($DataUser['Pgu_Pass'], $resSelect[0]['pgu_pass'])){
-							unset($resSelect[0]['Pgu_Pass']);
-							$respuesta = array(
-								'error'   => false,
-								'data'    => $resSelect,
-								'mensaje' => ''
-							);
-					}else{
+						// 
+						$this->pedeo->updateRow("UPDATE logeo SET log_id_estado = :log_id_estado, log_date_end = :log_date_end WHERE log_id_usuario = :log_id_usuario AND log_id_estado = :statusId", array(
+							':log_id_estado' => 0,
+							':log_date_end' => date('Y-m-d H:i:s'),
+							':log_id_usuario' => $resSelect[0]['pgu_id_usuario'],
+							':statusId' => 1
+					    ));
+						// 
+						$sessionId = $this->pedeo->insertRow("INSERT INTO logeo (log_id_usuario, log_date_init, log_date_end, log_id_estado) VALUES (:log_id_usuario, :log_date_init, :log_date_end, :log_id_estado)",
+							array(
+								':log_id_usuario' => $resSelect[0]['pgu_id_usuario'],
+								':log_date_init' => date('Y-m-d H:i:s'),
+								':log_date_end'  => NULL,
+								':log_id_estado' => 1
+							)
+						);
 
-							$respuesta = array(
-								'error'   => true,
-								'data' => array(),
-								'mensaje'	=> 'usuario y/o password inválidos'
-							);
+						unset($resSelect[0]['Pgu_Pass']);
+
+						$respuesta = array(
+							'error'   => false,
+							'data'    => $resSelect,
+							'sessionId' => $sessionId,
+							'mensaje' => ''
+						);
+					}else{
+						// 
+						$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'	=> 'usuario y/o password inválidos'
+						);
 					}
 
 				} else {

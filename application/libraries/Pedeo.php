@@ -149,11 +149,15 @@ class Pedeo {
 	/*
 		Borrar un registro en una tabla
 	*/
-	public function deleteRow($sql, $id) {
+	public function deleteRow($sql, $params) {
 		$result = $this->pdo->prepare($sql);
-		if ($result->execute(array($id)))
-		return $result->rowCount();
-		else return 0;
+		
+		if ($result->execute($params)){
+
+			return $result->rowCount();
+		}else{
+			 return $result->errorInfo();
+		}
 	}
 
 
