@@ -77,8 +77,8 @@ class DocumentNumbering extends REST_Controller {
           return;
       }
 
-      $sqlInsert = "INSERT INTO pgdn(pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, pgs_is_due, pgs_doc_date,  pgs_doc_due_date, pgs_enabled)
-                    VALUES(:Pgs_IdDocType,  :Pgs_NumName,  :Pgs_FirstNum,  :Pgs_LastNum,  :Pgs_PrefNum,  :Pgs_Cancel,  :Pgs_IsDue,  :Pgs_DocDate,  :Pgs_DocDueDate,  :Pgs_Enabled)";
+      $sqlInsert = "INSERT INTO pgdn(pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, pgs_is_due, pgs_doc_date,  pgs_doc_due_date, pgs_enabled, pgs_nextnum)
+                    VALUES(:Pgs_IdDocType,  :Pgs_NumName,  :Pgs_FirstNum,  :Pgs_LastNum,  :Pgs_PrefNum,  :Pgs_Cancel,  :Pgs_IsDue,  :Pgs_DocDate,  :Pgs_DocDueDate,  :Pgs_Enabled, :pgs_nextnum)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -92,7 +92,8 @@ class DocumentNumbering extends REST_Controller {
             ':Pgs_IsDue'      => $Data['Pgs_IsDue'],
             ':Pgs_DocDate'    => $Data['Pgs_DocDate'],
             ':Pgs_DocDueDate' => $Data['Pgs_DocDueDate'],
-            ':Pgs_Enabled'    => $Data['Pgs_Enabled']
+            ':Pgs_Enabled'    => $Data['Pgs_Enabled'],
+						':pgs_nextnum'	  => 0
 
       ));
 
@@ -222,7 +223,7 @@ class DocumentNumbering extends REST_Controller {
   public function getDocumentNumbering_get(){
 
         // $sqlSelect = " SELECT * FROM pgdn";
-        $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, 
+        $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel,
         pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, coalesce((select max(dvc_docnum) ultimo_numero from dvct t0 where t0.dvc_series = pgs_id), pgs_first_num) as ultimo_numero FROM pgdn";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
