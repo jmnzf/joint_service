@@ -1490,7 +1490,7 @@ class SalesOrder extends REST_Controller {
 
 
   //OBTENER COTIZACIONES
-  public function getQuotation_get(){
+  public function getSalesOrder_get(){
 
         $sqlSelect = " SELECT * FROM dvov";
 
