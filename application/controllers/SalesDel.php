@@ -1,11 +1,11 @@
 <?php
-// COTIZACIONES
+// Entrega de VentasES
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 
-class SalesOrder extends REST_Controller {
+class SalesDel extends REST_Controller {
 
 	private $pdo;
 
@@ -22,8 +22,8 @@ class SalesOrder extends REST_Controller {
 
 	}
 
-  //CREAR NUEVA COTIZACION
-	public function createSalesOrder_post(){
+  //CREAR NUEVA Entrega de Ventas
+	public function createSalesDel_post(){
 
       $Data = $this->post();
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
@@ -83,7 +83,7 @@ class SalesOrder extends REST_Controller {
           $respuesta = array(
             'error' => true,
             'data'  => array(),
-            'mensaje' =>'No se encontro el detalle de la cotización'
+            'mensaje' =>'No se encontro el detalle de la Entrega de ventas'
           );
 
           $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -93,7 +93,7 @@ class SalesOrder extends REST_Controller {
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
-				$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['dvc_series']));
+				$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['vem_series']));
 
 				if(isset($resNumeracion[0])){
 
@@ -138,7 +138,7 @@ class SalesOrder extends REST_Controller {
 													ON trim(tasa.tsa_currd) = trim(pgec.pgm_symbol)
 													WHERE pgec.pgm_system = :pgm_system AND tasa.tsa_date = :tsa_date";
 
-				$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1, ':tsa_date' => $Data['dvc_docdate']));
+				$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1, ':tsa_date' => $Data['vem_docdate']));
 
 				if(isset($resMonedaSys[0])){
 
@@ -154,12 +154,12 @@ class SalesOrder extends REST_Controller {
 						return;
 				}
 
-        $sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
-                      dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
-                      dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                      dvc_attch,dvc_createby)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
-                      :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
-                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype, :dvc_attch,:dvc_createby)";
+        $sqlInsert = "INSERT INTO dvem(vem_series, vem_docnum, vem_docdate, vem_duedate, vem_duedev, vem_pricelist, vem_cardcode,
+                      vem_cardname, vem_currency, vem_contacid, vem_slpcode, vem_empid, vem_comment, vem_doctotal, vem_baseamnt, vem_taxtotal,
+                      vem_discprofit, vem_discount, vem_createat, vem_baseentry, vem_basetype, vem_doctype, vem_idadd, vem_adress, vem_paytype,
+                      vem_attch,vem_createby)VALUES(:vem_series, :vem_docnum, :vem_docdate, :vem_duedate, :vem_duedev, :vem_pricelist, :vem_cardcode, :vem_cardname,
+                      :vem_currency, :vem_contacid, :vem_slpcode, :vem_empid, :vem_comment, :vem_doctotal, :vem_baseamnt, :vem_taxtotal, :vem_discprofit, :vem_discount,
+                      :vem_createat, :vem_baseentry, :vem_basetype, :vem_doctype, :vem_idadd, :vem_adress, :vem_paytype, :vem_attch,:vem_createby)";
 
 
 				// Se Inicia la transaccion,
@@ -171,33 +171,33 @@ class SalesOrder extends REST_Controller {
 			  $this->pedeo->trans_begin();
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':dvc_docnum' => $DocNumVerificado,
-              ':dvc_series' => is_numeric($Data['dvc_series'])?$Data['dvc_series']:0,
-              ':dvc_docdate' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-              ':dvc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
-              ':dvc_duedev' => $this->validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
-              ':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
-              ':dvc_cardcode' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
-              ':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
-              ':dvc_currency' => is_numeric($Data['dvc_currency'])?$Data['dvc_currency']:0,
-              ':dvc_contacid' => isset($Data['dvc_contacid'])?$Data['dvc_contacid']:NULL,
-              ':dvc_slpcode' => is_numeric($Data['dvc_slpcode'])?$Data['dvc_slpcode']:0,
-              ':dvc_empid' => is_numeric($Data['dvc_empid'])?$Data['dvc_empid']:0,
-              ':dvc_comment' => isset($Data['dvc_comment'])?$Data['dvc_comment']:NULL,
-              ':dvc_doctotal' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
-              ':dvc_baseamnt' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
-              ':dvc_taxtotal' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
-              ':dvc_discprofit' => is_numeric($Data['dvc_discprofit'])?$Data['dvc_discprofit']:0,
-              ':dvc_discount' => is_numeric($Data['dvc_discount'])?$Data['dvc_discount']:0,
-              ':dvc_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-              ':dvc_baseentry' => is_numeric($Data['dvc_baseentry'])?$Data['dvc_baseentry']:0,
-              ':dvc_basetype' => is_numeric($Data['dvc_basetype'])?$Data['dvc_basetype']:0,
-              ':dvc_doctype' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
-              ':dvc_idadd' => isset($Data['dvc_idadd'])?$Data['dvc_idadd']:NULL,
-              ':dvc_adress' => isset($Data['dvc_adress'])?$Data['dvc_adress']:NULL,
-              ':dvc_paytype' => is_numeric($Data['dvc_paytype'])?$Data['dvc_paytype']:0,
-							':dvc_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
-              ':dvc_attch' => $this->getUrl(count(trim(($Data['dvc_attch']))) > 0 ? $Data['dvc_attch']:NULL)
+              ':vem_docnum' => $DocNumVerificado,
+              ':vem_series' => is_numeric($Data['vem_series'])?$Data['vem_series']:0,
+              ':vem_docdate' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+              ':vem_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
+              ':vem_duedev' => $this->validateDate($Data['vem_duedev'])?$Data['vem_duedev']:NULL,
+              ':vem_pricelist' => is_numeric($Data['vem_pricelist'])?$Data['vem_pricelist']:0,
+              ':vem_cardcode' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
+              ':vem_cardname' => isset($Data['vem_cardname'])?$Data['vem_cardname']:NULL,
+              ':vem_currency' => is_numeric($Data['vem_currency'])?$Data['vem_currency']:0,
+              ':vem_contacid' => isset($Data['vem_contacid'])?$Data['vem_contacid']:NULL,
+              ':vem_slpcode' => is_numeric($Data['vem_slpcode'])?$Data['vem_slpcode']:0,
+              ':vem_empid' => is_numeric($Data['vem_empid'])?$Data['vem_empid']:0,
+              ':vem_comment' => isset($Data['vem_comment'])?$Data['vem_comment']:NULL,
+              ':vem_doctotal' => is_numeric($Data['vem_doctotal'])?$Data['vem_doctotal']:0,
+              ':vem_baseamnt' => is_numeric($Data['vem_baseamnt'])?$Data['vem_baseamnt']:0,
+              ':vem_taxtotal' => is_numeric($Data['vem_taxtotal'])?$Data['vem_taxtotal']:0,
+              ':vem_discprofit' => is_numeric($Data['vem_discprofit'])?$Data['vem_discprofit']:0,
+              ':vem_discount' => is_numeric($Data['vem_discount'])?$Data['vem_discount']:0,
+              ':vem_createat' => $this->validateDate($Data['vem_createat'])?$Data['vem_createat']:NULL,
+              ':vem_baseentry' => is_numeric($Data['vem_baseentry'])?$Data['vem_baseentry']:0,
+              ':vem_basetype' => is_numeric($Data['vem_basetype'])?$Data['vem_basetype']:0,
+              ':vem_doctype' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
+              ':vem_idadd' => isset($Data['vem_idadd'])?$Data['vem_idadd']:NULL,
+              ':vem_adress' => isset($Data['vem_adress'])?$Data['vem_adress']:NULL,
+              ':vem_paytype' => is_numeric($Data['vem_paytype'])?$Data['vem_paytype']:0,
+							':vem_createby' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
+              ':vem_attch' => $this->getUrl(count(trim(($Data['vem_attch']))) > 0 ? $Data['vem_attch']:NULL)
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -208,7 +208,7 @@ class SalesOrder extends REST_Controller {
 																			 WHERE pgs_id = :pgs_id";
 					$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
 							':pgs_nextnum' => $DocNumVerificado,
-							':pgs_id'      => $Data['dvc_series']
+							':pgs_id'      => $Data['vem_series']
 					));
 
 
@@ -220,7 +220,7 @@ class SalesOrder extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'    => $resActualizarNumeracion,
-									'mensaje'	=> 'No se pudo crear la cotización'
+									'mensaje'	=> 'No se pudo crear la Entrega de ventas'
 								);
 
 								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -240,31 +240,31 @@ class SalesOrder extends REST_Controller {
 
 							':mac_doc_num' => 1,
 							':mac_status' => 1,
-							':mac_base_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+							':mac_base_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
 							':mac_base_entry' => $resInsert,
-							':mac_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-							':mac_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
-							':mac_legal_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-							':mac_ref1' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+							':mac_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+							':mac_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
+							':mac_legal_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+							':mac_ref1' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
 							':mac_ref2' => "",
 							':mac_ref3' => "",
-							':mac_loc_total' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
-							':mac_fc_total' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
-							':mac_sys_total' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
+							':mac_loc_total' => is_numeric($Data['vem_doctotal'])?$Data['vem_doctotal']:0,
+							':mac_fc_total' => is_numeric($Data['vem_doctotal'])?$Data['vem_doctotal']:0,
+							':mac_sys_total' => is_numeric($Data['vem_doctotal'])?$Data['vem_doctotal']:0,
 							':mac_trans_dode' => 1,
 							':mac_beline_nume' => 1,
-							':mac_vat_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
+							':mac_vat_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
 							':mac_serie' => 1,
 							':mac_number' => 1,
-							':mac_bammntsys' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
-							':mac_bammnt' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
+							':mac_bammntsys' => is_numeric($Data['vem_baseamnt'])?$Data['vem_baseamnt']:0,
+							':mac_bammnt' => is_numeric($Data['vem_baseamnt'])?$Data['vem_baseamnt']:0,
 							':mac_wtsum' => 1,
-							':mac_vatsum' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
-							':mac_comments' => isset($Data['dvc_comment'])?$Data['dvc_comment']:NULL,
-							':mac_create_date' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-							':mac_made_usuer' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+							':mac_vatsum' => is_numeric($Data['vem_taxtotal'])?$Data['vem_taxtotal']:0,
+							':mac_comments' => isset($Data['vem_comment'])?$Data['vem_comment']:NULL,
+							':mac_create_date' => $this->validateDate($Data['vem_createat'])?$Data['vem_createat']:NULL,
+							':mac_made_usuer' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
 							':mac_update_date' => date("Y-m-d"),
-							':mac_update_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL
+							':mac_update_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL
 					));
 
 
@@ -272,14 +272,14 @@ class SalesOrder extends REST_Controller {
 							// Se verifica que el detalle no de error insertando //
 					}else{
 
-							// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+							// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 							// se retorna el error y se detiene la ejecucion del codigo restante.
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resInsertAsiento,
-									'mensaje'	=> 'No se pudo registrar la cotización'
+									'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 								);
 
 								 $this->response($respuesta);
@@ -290,46 +290,46 @@ class SalesOrder extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
-                $sqlInsertDetail = "INSERT INTO vct1(vc1_docentry, vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
-                                    vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
-                                    vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
-                                    :vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, :vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,
-                                    :vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory)";
+                $sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
+                                    em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
+                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
+                                    :em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
+                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-                        ':vc1_docentry' => $resInsert,
-                        ':vc1_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
-                        ':vc1_itemname' => isset($detail['vc1_itemname'])?$detail['vc1_itemname']:NULL,
-                        ':vc1_quantity' => is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0,
-                        ':vc1_uom' => isset($detail['vc1_uom'])?$detail['vc1_uom']:NULL,
-                        ':vc1_whscode' => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-                        ':vc1_price' => is_numeric($detail['vc1_price'])?$detail['vc1_price']:0,
-                        ':vc1_vat' => is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0,
-                        ':vc1_vatsum' => is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0,
-                        ':vc1_discount' => is_numeric($detail['vc1_discount'])?$detail['vc1_discount']:0,
-                        ':vc1_linetotal' => is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0,
-                        ':vc1_costcode' => isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL,
-                        ':vc1_ubusiness' => isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL,
-                        ':vc1_project' => isset($detail['vc1_project'])?$detail['vc1_project']:NULL,
-                        ':vc1_acctcode' => is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']:0,
-                        ':vc1_basetype' => is_numeric($detail['vc1_basetype'])?$detail['vc1_basetype']:0,
-                        ':vc1_doctype' => is_numeric($detail['vc1_doctype'])?$detail['vc1_doctype']:0,
-                        ':vc1_avprice' => is_numeric($detail['vc1_avprice'])?$detail['vc1_avprice']:0,
-                        ':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
+                        ':em1_docentry' => $resInsert,
+                        ':em1_itemcode' => isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
+                        ':em1_itemname' => isset($detail['em1_itemname'])?$detail['em1_itemname']:NULL,
+                        ':em1_quantity' => is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0,
+                        ':em1_uom' => isset($detail['em1_uom'])?$detail['em1_uom']:NULL,
+                        ':em1_whscode' => isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
+                        ':em1_price' => is_numeric($detail['em1_price'])?$detail['em1_price']:0,
+                        ':em1_vat' => is_numeric($detail['em1_vat'])?$detail['em1_vat']:0,
+                        ':em1_vatsum' => is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0,
+                        ':em1_discount' => is_numeric($detail['em1_discount'])?$detail['em1_discount']:0,
+                        ':em1_linetotal' => is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0,
+                        ':em1_costcode' => isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL,
+                        ':em1_ubusiness' => isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL,
+                        ':em1_project' => isset($detail['em1_project'])?$detail['em1_project']:NULL,
+                        ':em1_acctcode' => is_numeric($detail['em1_acctcode'])?$detail['em1_acctcode']:0,
+                        ':em1_basetype' => is_numeric($detail['em1_basetype'])?$detail['em1_basetype']:0,
+                        ':em1_doctype' => is_numeric($detail['em1_doctype'])?$detail['em1_doctype']:0,
+                        ':em1_avprice' => is_numeric($detail['em1_avprice'])?$detail['em1_avprice']:0,
+                        ':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
 										// Se verifica que el detalle no de error insertando //
 								}else{
 
-										// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+										// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 										// se retorna el error y se detiene la ejecucion del codigo restante.
 											$this->pedeo->trans_rollback();
 
 											$respuesta = array(
 												'error'   => true,
 												'data' => $resInsert,
-												'mensaje'	=> 'No se pudo registrar la cotización'
+												'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 											);
 
 											 $this->response($respuesta);
@@ -338,19 +338,19 @@ class SalesOrder extends REST_Controller {
 								}
 
 								// si el item es inventariable
-								if( $detail['vc1_articleInv'] == 1 || $detail['vc1_articleInv'] == "1" ){
+								if( $detail['em1_articleInv'] == 1 || $detail['em1_articleInv'] == "1" ){
 										//Se aplica el movimiento de inventario
 										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
 																					 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
 
 										$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-												 ':bmi_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
-												 ':bmi_quantity' => is_numeric($detail['vc1_quantity'])? $detail['vc1_quantity'] * $Data['invtype']:0,
-												 ':bmi_whscode'  => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-												 ':bmi_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-												 ':bmi_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
-												 ':bmy_doctype'  => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+												 ':bmi_itemcode' => isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
+												 ':bmi_quantity' => is_numeric($detail['em1_quantity'])? $detail['em1_quantity'] * $Data['invtype']:0,
+												 ':bmi_whscode'  => isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
+												 ':bmi_createat' => $this->validateDate($Data['vem_createat'])?$Data['vem_createat']:NULL,
+												 ':bmi_createby' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
+												 ':bmy_doctype'  => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
 												 ':bmy_baseentry' => $resInsert
 
 										));
@@ -359,14 +359,14 @@ class SalesOrder extends REST_Controller {
 												// Se verifica que el detalle no de error insertando //
 										}else{
 
-												// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+												// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 												// se retorna el error y se detiene la ejecucion del codigo restante.
 													$this->pedeo->trans_rollback();
 
 													$respuesta = array(
 														'error'   => true,
 														'data' => $sqlInserMovimiento,
-														'mensaje'	=> 'No se pudo registrar la cotización'
+														'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 													);
 
 													 $this->response($respuesta);
@@ -386,8 +386,8 @@ class SalesOrder extends REST_Controller {
 
 											$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
-														':bdi_itemcode' => $detail['vc1_itemcode'],
-														':bdi_whscode'  => $detail['vc1_whscode']
+														':bdi_itemcode' => $detail['em1_itemcode'],
+														':bdi_whscode'  => $detail['em1_whscode']
 											));
 
 											if(isset($resCostoCantidad[0])){
@@ -395,7 +395,7 @@ class SalesOrder extends REST_Controller {
 												if($resCostoCantidad[0]['bdi_quantity'] > 0){
 
 														 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-														 $CantidadNueva = $detail['vc1_quantity'];
+														 $CantidadNueva = $detail['em1_quantity'];
 
 
 														 $CantidadTotal = ($CantidadActual - $CantidadNueva);
@@ -419,7 +419,7 @@ class SalesOrder extends REST_Controller {
 																 $respuesta = array(
 																	 'error'   => true,
 																	 'data'    => $resUpdateCostoCantidad,
-																	 'mensaje'	=> 'No se pudo crear la cotizacion'
+																	 'mensaje'	=> 'No se pudo crear la Entrega de Ventas'
 																 );
 														 }
 
@@ -430,7 +430,7 @@ class SalesOrder extends REST_Controller {
 																 $respuesta = array(
 																	 'error'   => true,
 																	 'data'    => $resUpdateCostoCantidad,
-																	 'mensaje' => 'No hay existencia para el item: '.$detail['vc1_itemcode']
+																	 'mensaje' => 'No hay existencia para el item: '.$detail['em1_itemcode']
 																 );
 												}
 
@@ -441,7 +441,7 @@ class SalesOrder extends REST_Controller {
 														$respuesta = array(
 															'error'   => true,
 															'data' 		=> $resInsertCostoCantidad,
-															'mensaje'	=> 'El item no existe en el stock '.$detail['vc1_itemcode']
+															'mensaje'	=> 'El item no existe en el stock '.$detail['em1_itemcode']
 														);
 
 														 $this->response($respuesta);
@@ -465,37 +465,37 @@ class SalesOrder extends REST_Controller {
 								$DetalleCostoCosto = new stdClass();
 
 
-								$DetalleAsientoIngreso->ac1_account = is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']: 0;
-								$DetalleAsientoIngreso->ac1_prc_code = isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL;
-								$DetalleAsientoIngreso->ac1_uncode = isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL;
-								$DetalleAsientoIngreso->ac1_prj_code = isset($detail['vc1_project'])?$detail['vc1_project']:NULL;
-								$DetalleAsientoIngreso->vc1_linetotal = is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0;
-								$DetalleAsientoIngreso->vc1_vat = is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0;
-								$DetalleAsientoIngreso->vc1_vatsum = is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0;
-								$DetalleAsientoIngreso->vc1_price = is_numeric($detail['vc1_price'])?$detail['vc1_price']:0;
-								$DetalleAsientoIngreso->vc1_itemcode = isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL;
-								$DetalleAsientoIngreso->vc1_quantity = is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0;
+								$DetalleAsientoIngreso->ac1_account = is_numeric($detail['em1_acctcode'])?$detail['em1_acctcode']: 0;
+								$DetalleAsientoIngreso->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
+								$DetalleAsientoIngreso->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
+								$DetalleAsientoIngreso->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
+								$DetalleAsientoIngreso->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
+								$DetalleAsientoIngreso->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
+								$DetalleAsientoIngreso->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
+								$DetalleAsientoIngreso->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
+								$DetalleAsientoIngreso->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
+								$DetalleAsientoIngreso->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
 
 
 
-								$DetalleAsientoIva->ac1_account = is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']: 0;
-								$DetalleAsientoIva->ac1_prc_code = isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL;
-								$DetalleAsientoIva->ac1_uncode = isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL;
-								$DetalleAsientoIva->ac1_prj_code = isset($detail['vc1_project'])?$detail['vc1_project']:NULL;
-								$DetalleAsientoIva->vc1_linetotal = is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0;
-								$DetalleAsientoIva->vc1_vat = is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0;
-								$DetalleAsientoIva->vc1_vatsum = is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0;
-								$DetalleAsientoIva->vc1_price = is_numeric($detail['vc1_price'])?$detail['vc1_price']:0;
-								$DetalleAsientoIva->vc1_itemcode = isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL;
-								$DetalleAsientoIva->vc1_quantity = is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0;
-								$DetalleAsientoIva->vc1_cuentaIva = is_numeric($detail['vc1_cuentaIva'])?$detail['vc1_cuentaIva']:NULL;
+								$DetalleAsientoIva->ac1_account = is_numeric($detail['em1_acctcode'])?$detail['em1_acctcode']: 0;
+								$DetalleAsientoIva->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
+								$DetalleAsientoIva->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
+								$DetalleAsientoIva->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
+								$DetalleAsientoIva->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
+								$DetalleAsientoIva->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
+								$DetalleAsientoIva->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
+								$DetalleAsientoIva->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
+								$DetalleAsientoIva->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
+								$DetalleAsientoIva->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+								$DetalleAsientoIva->em1_cuentaIva = is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:NULL;
 
 
 
 								// se busca la cuenta contable del costoInventario y costoCosto
 								$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-								$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['vc1_itemcode']));
+								$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['em1_itemcode']));
 
 								if(!isset($resArticulo[0])){
 
@@ -504,7 +504,7 @@ class SalesOrder extends REST_Controller {
 											$respuesta = array(
 												'error'   => true,
 												'data' => $resArticulo,
-												'mensaje'	=> 'No se pudo registrar la cotización'
+												'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 											);
 
 											 $this->response($respuesta);
@@ -514,27 +514,27 @@ class SalesOrder extends REST_Controller {
 
 
 								$DetalleCostoInventario->ac1_account = $resArticulo[0]['mga_acct_inv'];
-								$DetalleCostoInventario->ac1_prc_code = isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL;
-								$DetalleCostoInventario->ac1_uncode = isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL;
-								$DetalleCostoInventario->ac1_prj_code = isset($detail['vc1_project'])?$detail['vc1_project']:NULL;
-								$DetalleCostoInventario->vc1_linetotal = is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0;
-								$DetalleCostoInventario->vc1_vat = is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0;
-								$DetalleCostoInventario->vc1_vatsum = is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0;
-								$DetalleCostoInventario->vc1_price = is_numeric($detail['vc1_price'])?$detail['vc1_price']:0;
-								$DetalleCostoInventario->vc1_itemcode = isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL;
-								$DetalleCostoInventario->vc1_quantity = is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0;
+								$DetalleCostoInventario->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
+								$DetalleCostoInventario->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
+								$DetalleCostoInventario->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
+								$DetalleCostoInventario->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
+								$DetalleCostoInventario->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
+								$DetalleCostoInventario->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
+								$DetalleCostoInventario->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
+								$DetalleCostoInventario->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
+								$DetalleCostoInventario->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
 
 
 								$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
-								$DetalleCostoCosto->ac1_prc_code = isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL;
-								$DetalleCostoCosto->ac1_uncode = isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL;
-								$DetalleCostoCosto->ac1_prj_code = isset($detail['vc1_project'])?$detail['vc1_project']:NULL;
-								$DetalleCostoCosto->vc1_linetotal = is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0;
-								$DetalleCostoCosto->vc1_vat = is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0;
-								$DetalleCostoCosto->vc1_vatsum = is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0;
-								$DetalleCostoCosto->vc1_price = is_numeric($detail['vc1_price'])?$detail['vc1_price']:0;
-								$DetalleCostoCosto->vc1_itemcode = isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL;
-								$DetalleCostoCosto->vc1_quantity = is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0;
+								$DetalleCostoCosto->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
+								$DetalleCostoCosto->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
+								$DetalleCostoCosto->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
+								$DetalleCostoCosto->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
+								$DetalleCostoCosto->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
+								$DetalleCostoCosto->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
+								$DetalleCostoCosto->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
+								$DetalleCostoCosto->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
+								$DetalleCostoCosto->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
 
 								$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 
@@ -545,7 +545,7 @@ class SalesOrder extends REST_Controller {
 
 
 								$llave = $DetalleAsientoIngreso->ac1_uncode.$DetalleAsientoIngreso->ac1_prc_code.$DetalleAsientoIngreso->ac1_prj_code.$DetalleAsientoIngreso->ac1_account;
-								$llaveIva = $DetalleAsientoIva->vc1_vat;
+								$llaveIva = $DetalleAsientoIva->em1_vat;
 								$llaveCostoInventario = $DetalleCostoInventario->ac1_account;
 								$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
 
@@ -662,7 +662,7 @@ class SalesOrder extends REST_Controller {
 							$prc = "";
 							$unidad = "";
 							foreach ($posicion as $key => $value) {
-										$granTotalIngreso = ( $granTotalIngreso + $value->vc1_linetotal );
+										$granTotalIngreso = ( $granTotalIngreso + $value->em1_linetotal );
 										$codigoCuentaIngreso = $value->codigoCuenta;
 										$prc = $value->ac1_prc_code;
 										$unidad = $value->ac1_uncode;
@@ -723,15 +723,15 @@ class SalesOrder extends REST_Controller {
 									':ac1_debit_sys' => round($MontoSysDB,2),
 									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
 									':ac1_font_key' => $resInsert,
 									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+									':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",
@@ -742,7 +742,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_prj_code' => $proyecto,
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+									':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
@@ -753,7 +753,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_isrti' => 0,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+									':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
 									':ac1_codref' => 1
 						));
 
@@ -762,14 +762,14 @@ class SalesOrder extends REST_Controller {
 						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
 								// Se verifica que el detalle no de error insertando //
 						}else{
-								// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 									$this->pedeo->trans_rollback();
 
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la cotización'
+										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 									);
 
 									 $this->response($respuesta);
@@ -788,7 +788,7 @@ class SalesOrder extends REST_Controller {
 							$granTotalIva = 0;
 
 							foreach ($posicion as $key => $value) {
-										$granTotalIva = $granTotalIva + $value->vc1_vatsum;
+										$granTotalIva = $granTotalIva + $value->em1_vatsum;
 							}
 
 							$MontoSysDB = ($granTotalIva / $resMonedaSys[0]['tsa_value']);
@@ -797,21 +797,21 @@ class SalesOrder extends REST_Controller {
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $value->vc1_cuentaIva,
+									':ac1_account' => $value->em1_cuentaIva,
 									':ac1_debit' => 0,
 									':ac1_credit' => $granTotalIva,
 									':ac1_debit_sys' => 0,
 									':ac1_credit_sys' => round($MontoSysDB,2),
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
 									':ac1_font_key' => $resInsert,
 									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+									':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",
@@ -822,7 +822,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_prj_code' => NULL,
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+									':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
@@ -833,7 +833,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_isrti' => 0,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+									':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
 									':ac1_codref' => 1
 						));
 
@@ -843,14 +843,14 @@ class SalesOrder extends REST_Controller {
 								// Se verifica que el detalle no de error insertando //
 						}else{
 
-								// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 									$this->pedeo->trans_rollback();
 
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la cotización'
+										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 									);
 
 									 $this->response($respuesta);
@@ -870,7 +870,7 @@ class SalesOrder extends REST_Controller {
 
 										$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->vc1_itemcode));
+										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->em1_itemcode));
 
 										if(isset($resArticulo[0])){
 												$dbito = 0;
@@ -881,7 +881,7 @@ class SalesOrder extends REST_Controller {
 
 												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
 
-												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->vc1_itemcode));
+												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->em1_itemcode));
 
 												if( isset( $resCosto[0] ) ){
 
@@ -889,7 +889,7 @@ class SalesOrder extends REST_Controller {
 
 
 															$costoArticulo = $resCosto[0]['bdi_avgprice'];
-															$cantidadArticulo = $value->vc1_quantity;
+															$cantidadArticulo = $value->em1_quantity;
 															$grantotalCostoInventario = ($grantotalCostoInventario + ($costoArticulo * $cantidadArticulo));
 
 												}else{
@@ -899,7 +899,7 @@ class SalesOrder extends REST_Controller {
 															$respuesta = array(
 																'error'   => true,
 																'data'	  => $resArticulo,
-																'mensaje'	=> 'No se encontro el costo para el item: '.$value->vc1_itemcode
+																'mensaje'	=> 'No se encontro el costo para el item: '.$value->em1_itemcode
 															);
 
 															 $this->response($respuesta);
@@ -908,14 +908,14 @@ class SalesOrder extends REST_Controller {
 												}
 
 										}else{
-												// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+												// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 												// se retorna el error y se detiene la ejecucion del codigo restante.
 												$this->pedeo->trans_rollback();
 
 												$respuesta = array(
 													'error'   => true,
 													'data'	  => $resArticulo,
-													'mensaje'	=> 'No se encontro la cuenta de inventario y costo para el item '.$value->vc1_itemcode
+													'mensaje'	=> 'No se encontro la cuenta de inventario y costo para el item '.$value->em1_itemcode
 												);
 
 												 $this->response($respuesta);
@@ -958,15 +958,15 @@ class SalesOrder extends REST_Controller {
 									':ac1_debit_sys' => round($MontoSysDB,2),
 									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
 									':ac1_font_key' => $resInsert,
 									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+									':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",
@@ -977,7 +977,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_prj_code' => NULL,
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+									':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
@@ -988,7 +988,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_isrti' => 0,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+									':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
 									':ac1_codref' => 1
 						));
 
@@ -996,14 +996,14 @@ class SalesOrder extends REST_Controller {
 								// Se verifica que el detalle no de error insertando //
 						}else{
 
-								// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 									$this->pedeo->trans_rollback();
 
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la cotización'
+										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 									);
 
 									 $this->response($respuesta);
@@ -1027,7 +1027,7 @@ class SalesOrder extends REST_Controller {
 
 										$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->vc1_itemcode));
+										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->em1_itemcode));
 
 										if(isset($resArticulo[0])){
 												$dbito = 0;
@@ -1037,7 +1037,7 @@ class SalesOrder extends REST_Controller {
 
 												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
 
-												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->vc1_itemcode));
+												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->em1_itemcode));
 
 												if( isset( $resCosto[0] ) ){
 
@@ -1045,7 +1045,7 @@ class SalesOrder extends REST_Controller {
 
 
 															$costoArticulo = $resCosto[0]['bdi_avgprice'];
-															$cantidadArticulo = $value->vc1_quantity;
+															$cantidadArticulo = $value->em1_quantity;
 															$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
 
 												}else{
@@ -1055,7 +1055,7 @@ class SalesOrder extends REST_Controller {
 															$respuesta = array(
 																'error'   => true,
 																'data'	  => $resArticulo,
-																'mensaje'	=> 'No se encontro el costo para el item: '.$value->vc1_itemcode
+																'mensaje'	=> 'No se encontro el costo para el item: '.$value->em1_itemcode
 															);
 
 															 $this->response($respuesta);
@@ -1064,14 +1064,14 @@ class SalesOrder extends REST_Controller {
 												}
 
 										}else{
-												// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+												// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 												// se retorna el error y se detiene la ejecucion del codigo restante.
 												$this->pedeo->trans_rollback();
 
 												$respuesta = array(
 													'error'   => true,
 													'data'	  => $resArticulo,
-													'mensaje'	=> 'No se encontro el costo para el item '.$value->vc1_itemcode
+													'mensaje'	=> 'No se encontro el costo para el item '.$value->em1_itemcode
 												);
 
 												 $this->response($respuesta);
@@ -1114,15 +1114,15 @@ class SalesOrder extends REST_Controller {
 								':ac1_debit_sys' => round($MontoSysDB,2),
 								':ac1_credit_sys' => round($MontoSysCR,2),
 								':ac1_currex' => 0,
-								':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-								':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+								':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+								':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
 								':ac1_debit_import' => 0,
 								':ac1_credit_import' => 0,
 								':ac1_debit_importsys' => 0,
 								':ac1_credit_importsys' => 0,
 								':ac1_font_key' => $resInsert,
 								':ac1_font_line' => 1,
-								':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+								':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
 								':ac1_accountvs' => 1,
 								':ac1_doctype' => 18,
 								':ac1_ref1' => "",
@@ -1133,7 +1133,7 @@ class SalesOrder extends REST_Controller {
 								':ac1_prj_code' => $value->ac1_prj_code,
 								':ac1_rescon_date' => NULL,
 								':ac1_recon_total' => 0,
-								':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+								':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
 								':ac1_accperiod' => 1,
 								':ac1_close' => 0,
 								':ac1_cord' => 0,
@@ -1144,7 +1144,7 @@ class SalesOrder extends REST_Controller {
 								':ac1_isrti' => 0,
 								':ac1_basert' => 0,
 								':ac1_mmcode' => 0,
-								':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+								':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
 								':ac1_codref' => 1
 								));
 
@@ -1152,14 +1152,14 @@ class SalesOrder extends REST_Controller {
 								// Se verifica que el detalle no de error insertando //
 								}else{
 
-								// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la cotización'
+									'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 								);
 
 								 $this->response($respuesta);
@@ -1179,7 +1179,7 @@ class SalesOrder extends REST_Controller {
 													 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
 													 WHERE  f1.dms_card_code = :dms_card_code";
 
-					$rescuentaCxP = $this->pedeo->queryTable($sqlcuentaCxP, array(":dms_card_code" => $Data['dvc_cardcode']));
+					$rescuentaCxP = $this->pedeo->queryTable($sqlcuentaCxP, array(":dms_card_code" => $Data['vem_cardcode']));
 
 
 
@@ -1196,25 +1196,25 @@ class SalesOrder extends REST_Controller {
 
 
 								if( $codigo2 == 1 || $codigo2 == "1" ){
-										$debitoo = $Data['dvc_doctotal'];
+										$debitoo = $Data['vem_doctotal'];
 										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 2 || $codigo2 == "2" ){
-										$creditoo = $Data['dvc_doctotal'];
+										$creditoo = $Data['vem_doctotal'];
 										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 3 || $codigo2 == "3" ){
-										$creditoo = $Data['dvc_doctotal'];
+										$creditoo = $Data['vem_doctotal'];
 										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 4 || $codigo2 == "4" ){
-									  $creditoo = $Data['dvc_doctotal'];
+									  $creditoo = $Data['vem_doctotal'];
 										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 5  || $codigo2 == "5" ){
-									  $debitoo = $Data['dvc_doctotal'];
+									  $debitoo = $Data['vem_doctotal'];
 										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 6 || $codigo2 == "6" ){
-									  $debitoo = $Data['dvc_doctotal'];
+									  $debitoo = $Data['vem_doctotal'];
 										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 7 || $codigo2 == "7" ){
-									  $debitoo = $Data['dvc_doctotal'];
+									  $debitoo = $Data['vem_doctotal'];
 										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}
 
@@ -1227,15 +1227,15 @@ class SalesOrder extends REST_Controller {
 										':ac1_debit_sys' => round($MontoSysDB,2),
 										':ac1_credit_sys' => round($MontoSysCR,2),
 										':ac1_currex' => 0,
-										':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-										':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+										':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+										':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
 										':ac1_debit_import' => 0,
 										':ac1_credit_import' => 0,
 										':ac1_debit_importsys' => 0,
 										':ac1_credit_importsys' => 0,
 										':ac1_font_key' => $resInsert,
 										':ac1_font_line' => 1,
-										':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+										':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
 										':ac1_accountvs' => 1,
 										':ac1_doctype' => 18,
 										':ac1_ref1' => "",
@@ -1246,7 +1246,7 @@ class SalesOrder extends REST_Controller {
 										':ac1_prj_code' => NULL,
 										':ac1_rescon_date' => NULL,
 										':ac1_recon_total' => 0,
-										':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+										':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
 										':ac1_accperiod' => 1,
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
@@ -1257,7 +1257,7 @@ class SalesOrder extends REST_Controller {
 										':ac1_isrti' => 0,
 										':ac1_basert' => 0,
 										':ac1_mmcode' => 0,
-										':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+										':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
 										':ac1_codref' => 1
 							));
 
@@ -1265,14 +1265,14 @@ class SalesOrder extends REST_Controller {
 									// Se verifica que el detalle no de error insertando //
 							}else{
 
-									// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+									// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 									// se retorna el error y se detiene la ejecucion del codigo restante.
 										$this->pedeo->trans_rollback();
 
 										$respuesta = array(
 											'error'   => true,
 											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la cotización'
+											'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 										);
 
 										 $this->response($respuesta);
@@ -1287,7 +1287,7 @@ class SalesOrder extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la cotización, el tercero no tiene cuenta asociada'
+									'mensaje'	=> 'No se pudo registrar la Entrega de ventas, el tercero no tiene cuenta asociada'
 								);
 
 								 $this->response($respuesta);
@@ -1296,7 +1296,7 @@ class SalesOrder extends REST_Controller {
 					}
 					//FIN Procedimiento para llenar cuentas por cobrar
 
-					// Si todo sale bien despues de insertar el detalle de la cotizacion
+					// Si todo sale bien despues de insertar el detalle de la Entrega de Ventas
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.
 					$this->pedeo->trans_commit();
@@ -1304,7 +1304,7 @@ class SalesOrder extends REST_Controller {
           $respuesta = array(
             'error' => false,
             'data' => $resInsert,
-            'mensaje' =>'Cotización registrada con exito'
+            'mensaje' =>'Entrega de ventas registrada con exito'
           );
 
 
@@ -1316,7 +1316,7 @@ class SalesOrder extends REST_Controller {
               $respuesta = array(
                 'error'   => true,
                 'data' => $resInsert,
-                'mensaje'	=> 'No se pudo registrar la cotización'
+                'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
               );
 
         }
@@ -1324,24 +1324,24 @@ class SalesOrder extends REST_Controller {
          $this->response($respuesta);
 	}
 
-  //ACTUALIZAR COTIZACION
-  public function updateQuotation_post(){
+  //ACTUALIZAR Entrega de Ventas
+  public function updateSalesDel_post(){
 
       $Data = $this->post();
 
-			if(!isset($Data['dvc_docentry']) OR !isset($Data['dvc_docnum']) OR
-				 !isset($Data['dvc_docdate']) OR !isset($Data['dvc_duedate']) OR
-				 !isset($Data['dvc_duedev']) OR !isset($Data['dvc_pricelist']) OR
-				 !isset($Data['dvc_cardcode']) OR !isset($Data['dvc_cardname']) OR
-				 !isset($Data['dvc_currency']) OR !isset($Data['dvc_contacid']) OR
-				 !isset($Data['dvc_slpcode']) OR !isset($Data['dvc_empid']) OR
-				 !isset($Data['dvc_comment']) OR !isset($Data['dvc_doctotal']) OR
-				 !isset($Data['dvc_baseamnt']) OR !isset($Data['dvc_taxtotal']) OR
-				 !isset($Data['dvc_discprofit']) OR !isset($Data['dvc_discount']) OR
-				 !isset($Data['dvc_createat']) OR !isset($Data['dvc_baseentry']) OR
-				 !isset($Data['dvc_basetype']) OR !isset($Data['dvc_doctype']) OR
-				 !isset($Data['dvc_idadd']) OR !isset($Data['dvc_adress']) OR
-				 !isset($Data['dvc_paytype']) OR !isset($Data['dvc_attch']) OR
+			if(!isset($Data['vem_docentry']) OR !isset($Data['vem_docnum']) OR
+				 !isset($Data['vem_docdate']) OR !isset($Data['vem_duedate']) OR
+				 !isset($Data['vem_duedev']) OR !isset($Data['vem_pricelist']) OR
+				 !isset($Data['vem_cardcode']) OR !isset($Data['vem_cardname']) OR
+				 !isset($Data['vem_currency']) OR !isset($Data['vem_contacid']) OR
+				 !isset($Data['vem_slpcode']) OR !isset($Data['vem_empid']) OR
+				 !isset($Data['vem_comment']) OR !isset($Data['vem_doctotal']) OR
+				 !isset($Data['vem_baseamnt']) OR !isset($Data['vem_taxtotal']) OR
+				 !isset($Data['vem_discprofit']) OR !isset($Data['vem_discount']) OR
+				 !isset($Data['vem_createat']) OR !isset($Data['vem_baseentry']) OR
+				 !isset($Data['vem_basetype']) OR !isset($Data['vem_doctype']) OR
+				 !isset($Data['vem_idadd']) OR !isset($Data['vem_adress']) OR
+				 !isset($Data['vem_paytype']) OR !isset($Data['vem_attch']) OR
 				 !isset($Data['detail'])){
 
         $respuesta = array(
@@ -1363,7 +1363,7 @@ class SalesOrder extends REST_Controller {
           $respuesta = array(
             'error' => true,
             'data'  => array(),
-            'mensaje' =>'No se encontro el detalle de la cotización'
+            'mensaje' =>'No se encontro el detalle de la Entrega de ventas'
           );
 
           $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -1371,90 +1371,90 @@ class SalesOrder extends REST_Controller {
           return;
       }
 
-      $sqlUpdate = "UPDATE dvct	SET dvc_docdate=:dvc_docdate,dvc_duedate=:dvc_duedate, dvc_duedev=:dvc_duedev, dvc_pricelist=:dvc_pricelist, dvc_cardcode=:dvc_cardcode,
-			  						dvc_cardname=:dvc_cardname, dvc_currency=:dvc_currency, dvc_contacid=:dvc_contacid, dvc_slpcode=:dvc_slpcode,
-										dvc_empid=:dvc_empid, dvc_comment=:dvc_comment, dvc_doctotal=:dvc_doctotal, dvc_baseamnt=:dvc_baseamnt,
-										dvc_taxtotal=:dvc_taxtotal, dvc_discprofit=:dvc_discprofit, dvc_discount=:dvc_discount, dvc_createat=:dvc_createat,
-										dvc_baseentry=:dvc_baseentry, dvc_basetype=:dvc_basetype, dvc_doctype=:dvc_doctype, dvc_idadd=:dvc_idadd,
-										dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype, dvc_attch=:dvc_attch WHERE dvc_docentry=:dvc_docentry";
+      $sqlUpdate = "UPDATE dvem	SET vem_docdate=:vem_docdate,vem_duedate=:vem_duedate, vem_duedev=:vem_duedev, vem_pricelist=:vem_pricelist, vem_cardcode=:vem_cardcode,
+			  						vem_cardname=:vem_cardname, vem_currency=:vem_currency, vem_contacid=:vem_contacid, vem_slpcode=:vem_slpcode,
+										vem_empid=:vem_empid, vem_comment=:vem_comment, vem_doctotal=:vem_doctotal, vem_baseamnt=:vem_baseamnt,
+										vem_taxtotal=:vem_taxtotal, vem_discprofit=:vem_discprofit, vem_discount=:vem_discount, vem_createat=:vem_createat,
+										vem_baseentry=:vem_baseentry, vem_basetype=:vem_basetype, vem_doctype=:vem_doctype, vem_idadd=:vem_idadd,
+										vem_adress=:vem_adress, vem_paytype=:vem_paytype, vem_attch=:vem_attch WHERE vem_docentry=:vem_docentry";
 
       $this->pedeo->trans_begin();
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-							':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
-							':dvc_docdate' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-							':dvc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
-							':dvc_duedev' => $this->validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
-							':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
-							':dvc_cardcode' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
-							':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
-							':dvc_currency' => is_numeric($Data['dvc_currency'])?$Data['dvc_currency']:0,
-							':dvc_contacid' => isset($Data['dvc_contacid'])?$Data['dvc_contacid']:NULL,
-							':dvc_slpcode' => is_numeric($Data['dvc_slpcode'])?$Data['dvc_slpcode']:0,
-							':dvc_empid' => is_numeric($Data['dvc_empid'])?$Data['dvc_empid']:0,
-							':dvc_comment' => isset($Data['dvc_comment'])?$Data['dvc_comment']:NULL,
-							':dvc_doctotal' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
-							':dvc_baseamnt' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
-							':dvc_taxtotal' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
-							':dvc_discprofit' => is_numeric($Data['dvc_discprofit'])?$Data['dvc_discprofit']:0,
-							':dvc_discount' => is_numeric($Data['dvc_discount'])?$Data['dvc_discount']:0,
-							':dvc_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-							':dvc_baseentry' => is_numeric($Data['dvc_baseentry'])?$Data['dvc_baseentry']:0,
-							':dvc_basetype' => is_numeric($Data['dvc_basetype'])?$Data['dvc_basetype']:0,
-							':dvc_doctype' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
-							':dvc_idadd' => isset($Data['dvc_idadd'])?$Data['dvc_idadd']:NULL,
-							':dvc_adress' => isset($Data['dvc_adress'])?$Data['dvc_adress']:NULL,
-							':dvc_paytype' => is_numeric($Data['dvc_paytype'])?$Data['dvc_paytype']:0,
-							':dvc_attch' => $this->getUrl(count(trim(($Data['dvc_attch']))) > 0 ? $Data['dvc_attch']:NULL),
-							':dvc_docentry' => $Data['dvc_docentry']
+							':vem_docnum' => is_numeric($Data['vem_docnum'])?$Data['vem_docnum']:0,
+							':vem_docdate' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+							':vem_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
+							':vem_duedev' => $this->validateDate($Data['vem_duedev'])?$Data['vem_duedev']:NULL,
+							':vem_pricelist' => is_numeric($Data['vem_pricelist'])?$Data['vem_pricelist']:0,
+							':vem_cardcode' => isset($Data['vem_pricelist'])?$Data['vem_pricelist']:NULL,
+							':vem_cardname' => isset($Data['vem_cardname'])?$Data['vem_cardname']:NULL,
+							':vem_currency' => is_numeric($Data['vem_currency'])?$Data['vem_currency']:0,
+							':vem_contacid' => isset($Data['vem_contacid'])?$Data['vem_contacid']:NULL,
+							':vem_slpcode' => is_numeric($Data['vem_slpcode'])?$Data['vem_slpcode']:0,
+							':vem_empid' => is_numeric($Data['vem_empid'])?$Data['vem_empid']:0,
+							':vem_comment' => isset($Data['vem_comment'])?$Data['vem_comment']:NULL,
+							':vem_doctotal' => is_numeric($Data['vem_doctotal'])?$Data['vem_doctotal']:0,
+							':vem_baseamnt' => is_numeric($Data['vem_baseamnt'])?$Data['vem_baseamnt']:0,
+							':vem_taxtotal' => is_numeric($Data['vem_taxtotal'])?$Data['vem_taxtotal']:0,
+							':vem_discprofit' => is_numeric($Data['vem_discprofit'])?$Data['vem_discprofit']:0,
+							':vem_discount' => is_numeric($Data['vem_discount'])?$Data['vem_discount']:0,
+							':vem_createat' => $this->validateDate($Data['vem_createat'])?$Data['vem_createat']:NULL,
+							':vem_baseentry' => is_numeric($Data['vem_baseentry'])?$Data['vem_baseentry']:0,
+							':vem_basetype' => is_numeric($Data['vem_basetype'])?$Data['vem_basetype']:0,
+							':vem_doctype' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
+							':vem_idadd' => isset($Data['vem_idadd'])?$Data['vem_idadd']:NULL,
+							':vem_adress' => isset($Data['vem_adress'])?$Data['vem_adress']:NULL,
+							':vem_paytype' => is_numeric($Data['vem_paytype'])?$Data['vem_paytype']:0,
+							':vem_attch' => $this->getUrl(count(trim(($Data['vem_attch']))) > 0 ? $Data['vem_attch']:NULL),
+							':vem_docentry' => $Data['vem_docentry']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
 
-						$this->pedeo->queryTable("DELETE FROM vct1 WHERE vc1_docentry=:vc1_docentry", array(':vc1_docentry' => $Data['dvc_docentry']));
+						$this->pedeo->queryTable("DELETE FROM vem1 WHERE em1_docentry=:em1_docentry", array(':em1_docentry' => $Data['vem_docentry']));
 
 						foreach ($ContenidoDetalle as $key => $detail) {
 
-									$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry, vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
-																			vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
-																			vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
-																			:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, :vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,
-																			:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory)";
+									$sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
+																			em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
+																			em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
+																			:em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
+																			:em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-											':vc1_docentry' => $resInsert,
-											':vc1_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
-											':vc1_itemname' => isset($detail['vc1_itemname'])?$detail['vc1_itemname']:NULL,
-											':vc1_quantity' => is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0,
-											':vc1_uom' => isset($detail['vc1_uom'])?$detail['vc1_uom']:NULL,
-											':vc1_whscode' => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-											':vc1_price' => is_numeric($detail['vc1_price'])?$detail['vc1_price']:0,
-											':vc1_vat' => is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0,
-											':vc1_vatsum' => is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0,
-											':vc1_discount' => is_numeric($detail['vc1_discount'])?$detail['vc1_discount']:0,
-											':vc1_linetotal' => is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0,
-											':vc1_costcode' => isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL,
-											':vc1_ubusiness' => isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL,
-											':vc1_project' => isset($detail['vc1_project'])?$detail['vc1_project']:NULL,
-											':vc1_acctcode' => is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']:0,
-											':vc1_basetype' => is_numeric($detail['vc1_basetype'])?$detail['vc1_basetype']:0,
-											':vc1_doctype' => is_numeric($detail['vc1_doctype'])?$detail['vc1_doctype']:0,
-											':vc1_avprice' => is_numeric($detail['vc1_avprice'])?$detail['vc1_avprice']:0,
-											':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
+											':em1_docentry' => $resInsert,
+											':em1_itemcode' => isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
+											':em1_itemname' => isset($detail['em1_itemname'])?$detail['em1_itemname']:NULL,
+											':em1_quantity' => is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0,
+											':em1_uom' => isset($detail['em1_uom'])?$detail['em1_uom']:NULL,
+											':em1_whscode' => isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
+											':em1_price' => is_numeric($detail['em1_price'])?$detail['em1_price']:0,
+											':em1_vat' => is_numeric($detail['em1_vat'])?$detail['em1_vat']:0,
+											':em1_vatsum' => is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0,
+											':em1_discount' => is_numeric($detail['em1_discount'])?$detail['em1_discount']:0,
+											':em1_linetotal' => is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0,
+											':em1_costcode' => isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL,
+											':em1_ubusiness' => isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL,
+											':em1_project' => isset($detail['em1_project'])?$detail['em1_project']:NULL,
+											':em1_acctcode' => is_numeric($detail['em1_acctcode'])?$detail['em1_acctcode']:0,
+											':em1_basetype' => is_numeric($detail['em1_basetype'])?$detail['em1_basetype']:0,
+											':em1_doctype' => is_numeric($detail['em1_doctype'])?$detail['em1_doctype']:0,
+											':em1_avprice' => is_numeric($detail['em1_avprice'])?$detail['em1_avprice']:0,
+											':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
 											// Se verifica que el detalle no de error insertando //
 									}else{
 
-											// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+											// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 											// se retorna el error y se detiene la ejecucion del codigo restante.
 												$this->pedeo->trans_rollback();
 
 												$respuesta = array(
 													'error'   => true,
 													'data' => $resInsert,
-													'mensaje'	=> 'No se pudo registrar la cotización'
+													'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 												);
 
 												 $this->response($respuesta);
@@ -1469,7 +1469,7 @@ class SalesOrder extends REST_Controller {
             $respuesta = array(
               'error' => false,
               'data' => $resUpdate,
-              'mensaje' =>'Cotización actualizada con exito'
+              'mensaje' =>'Entrega de ventas actualizada con exito'
             );
 
 
@@ -1480,7 +1480,7 @@ class SalesOrder extends REST_Controller {
             $respuesta = array(
               'error'   => true,
               'data'    => $resUpdate,
-              'mensaje'	=> 'No se pudo actualizar la cotización'
+              'mensaje'	=> 'No se pudo actualizar la Entrega de ventas'
             );
 
       }
@@ -1489,10 +1489,10 @@ class SalesOrder extends REST_Controller {
   }
 
 
-  //OBTENER COTIZACIONES
-  public function getSalesOrder_get(){
+  //OBTENER Entrega de VentasES
+  public function getSalesDel_get(){
 
-        $sqlSelect = " SELECT * FROM dvct";
+        $sqlSelect = " SELECT * FROM dvem";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1517,12 +1517,12 @@ class SalesOrder extends REST_Controller {
   }
 
 
-	//OBTENER COTIZACION POR ID
-	public function getQuotationById_get(){
+	//OBTENER Entrega de Ventas POR ID
+	public function getSalesDelById_get(){
 
 				$Data = $this->get();
 
-				if(!isset($Data['dvc_docentry'])){
+				if(!isset($Data['vem_docentry'])){
 
 					$respuesta = array(
 						'error' => true,
@@ -1535,9 +1535,9 @@ class SalesOrder extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dvct WHERE dvc_docentry =:dvc_docentry";
+				$sqlSelect = " SELECT * FROM dvem WHERE vem_docentry =:vem_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_docentry" => $Data['dvc_docentry']));
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vem_docentry" => $Data['vem_docentry']));
 
 				if(isset($resSelect[0])){
 
@@ -1560,12 +1560,12 @@ class SalesOrder extends REST_Controller {
 	}
 
 
-	//OBTENER COTIZACION DETALLE POR ID
-	public function getQuotationDetail_get(){
+	//OBTENER Entrega de Ventas DETALLE POR ID
+	public function getSalesDelDetail_get(){
 
 				$Data = $this->get();
 
-				if(!isset($Data['vc1_docentry'])){
+				if(!isset($Data['em1_docentry'])){
 
 					$respuesta = array(
 						'error' => true,
@@ -1578,9 +1578,9 @@ class SalesOrder extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM vct1 WHERE vc1_docentry =:vc1_docentry";
+				$sqlSelect = " SELECT * FROM vem1 WHERE em1_docentry =:em1_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vc1_docentry" => $Data['vc1_docentry']));
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":em1_docentry" => $Data['em1_docentry']));
 
 				if(isset($resSelect[0])){
 
