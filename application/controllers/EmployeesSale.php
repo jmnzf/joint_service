@@ -70,11 +70,11 @@ class EmployeesSale extends REST_Controller {
 
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
               $respuesta = array(
-                'error' => false,
-                'data' => $resInsert,
+                'error'		=> false,
+                'data' 		=> $resInsert,
                 'mensaje' =>'Centro de costo registrado con exito'
               );
 
@@ -83,7 +83,7 @@ class EmployeesSale extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar el centro de costo'
               );
 

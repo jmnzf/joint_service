@@ -54,7 +54,7 @@ class BusinessUnit extends REST_Controller {
               ':dun_un_end_date' => $Data['dun_un_end_date']
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
               $respuesta = array(
                 'error' => false,
@@ -67,7 +67,7 @@ class BusinessUnit extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar el unidad de negocio'
               );
 

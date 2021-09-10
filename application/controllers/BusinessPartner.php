@@ -117,7 +117,7 @@ class BusinessPartner extends REST_Controller {
 
       ));
 
-      if($resInsert > 0 ){
+      if(is_numeric($resInsert) && $resInsert > 0){
 
 
             $respuesta = array(
@@ -131,7 +131,7 @@ class BusinessPartner extends REST_Controller {
 
             $respuesta = array(
               'error'   => true,
-              'data' => array(),
+              'data' 		=> $resInsert,
               'mensaje'	=> 'No se pudo registrar el socio de negocio'
             );
 

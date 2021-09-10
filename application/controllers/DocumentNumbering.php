@@ -96,11 +96,11 @@ class DocumentNumbering extends REST_Controller {
 
       ));
 
-      if($resInsert > 0 ){
+      if(is_numeric($resInsert) && $resInsert > 0){
 
             $respuesta = array(
-              'error' => false,
-              'data' => $resInsert,
+              'error' 	=> false,
+              'data' 		=> $resInsert,
               'mensaje' =>'Numeracion registrada con exito'
             );
 
@@ -109,7 +109,7 @@ class DocumentNumbering extends REST_Controller {
 
             $respuesta = array(
               'error'   => true,
-              'data' => array(),
+              'data' 		=> $resInsert,
               'mensaje'	=> 'No se pudo registrar la numeracion'
             );
 
@@ -221,7 +221,9 @@ class DocumentNumbering extends REST_Controller {
   // Obtener numeracion de documento
   public function getDocumentNumbering_get(){
 
-        $sqlSelect = " SELECT * FROM pgdn";
+        // $sqlSelect = " SELECT * FROM pgdn";
+        $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, 
+        pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, coalesce((select max(dvc_docnum) ultimo_numero from dvct t0 where t0.dvc_series = pgs_id), pgs_first_num) as ultimo_numero FROM pgdn";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

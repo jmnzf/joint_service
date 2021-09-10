@@ -26,8 +26,8 @@ class DocumentType extends REST_Controller {
 
       $DataDocument = $this->post();
 
-      if(!isset($DataDocument['Pgs_NumName']) OR
-         !isset($DataDocument['Pgs_Enabled'])){
+      if(!isset($DataDocument['mdt_doctype']) OR
+         !isset($DataDocument['mdt_docname'])){
 
         $respuesta = array(
           'error' => true,
@@ -39,23 +39,40 @@ class DocumentType extends REST_Controller {
 
         return;
       }
-      
-      $sqlInsert = "INSERT INTO gdct(pgs_num_name, pgs_enabled)
-                   VALUES(:Pgs_NumName, :Pgs_Enabled)";
+
+			$sqlDocument = " SELECT * FROM dmdt WHERE mdt_doctype = :mdt_doctype";
+			$resDocument = $this->pedeo->queryTable($sqlDocument, array(':mdt_doctype' => $DataDocument['mdt_doctype']));
+
+			if(isset($resDocument[0])){
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'Ya existe un documento con este tipo documento '.$DataDocument['mdt_doctype']
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+
+      $sqlInsert = "INSERT INTO dmdt(mdt_doctype, mdt_docname, mdt_enabled)
+                    VALUES(:mdt_doctype, :mdt_docname, :mdt_enabled)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-            ':Pgs_NumName' => $DataDocument['Pgs_NumName'],
-            ':Pgs_Enabled' => 1,
+            ':mdt_doctype' => $DataDocument['mdt_doctype'],
+            ':mdt_docname' => $DataDocument['mdt_docname'],
+						':mdt_enabled' => 1
 
       ));
 
-      if($resInsert > 0 ){
+      if(is_numeric($resInsert) && $resInsert > 0){
 
             $respuesta = array(
-              'error' => false,
-              'data' => $resInsert,
+              'error' 	=> false,
+              'data' 		=> $resInsert,
               'mensaje' =>'Documento registrado con exito'
             );
 
@@ -64,7 +81,7 @@ class DocumentType extends REST_Controller {
 
             $respuesta = array(
               'error'   => true,
-              'data' => array(),
+              'data' 		=> $resInsert,
               'mensaje'	=> 'No se pudo registrar el documento'
             );
 
@@ -78,8 +95,10 @@ class DocumentType extends REST_Controller {
 
       $DataDocument = $this->post();
 
-      if(!isset($DataDocument['Pgs_NumName']) OR
-         !isset($DataDocument['Pgs_Enabled'])){
+      if(!isset($DataDocument['mdt_doctype']) OR
+         !isset($DataDocument['mdt_docname']) OR
+				 !isset($DataDocument['mdt_id']) OR
+			 	 !isset($DataDocument['mdt_enabled'])){
 
         $respuesta = array(
           'error' => true,
@@ -92,15 +111,38 @@ class DocumentType extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE gdct SET pgs_num_name = :Pgs_NumName, pgs_enabled = :Pgs_Enabled
-                    WHERE pgs_id = :Pgs_Id";
+			$sqlDocument = " SELECT * FROM dmdt WHERE mdt_doctype = :mdt_doctype AND mdt_id = :mdt_id";
+			$resDocument = $this->pedeo->queryTable($sqlDocument, array(
+									':mdt_doctype' => $DataDocument['mdt_doctype'],
+									':mdt_id' => $DataDocument['mdt_id']
+			));
+
+
+			if(isset($resDocument[0])){
+
+			}else{
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'No se puede actualizar un documento con un tipo de documento que ya existe en otro.'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+
+      $sqlUpdate = "UPDATE dmdt SET mdt_doctype = :mdt_doctype, mdt_docname = :mdt_docname,
+										mdt_enabled = :mdt_enabled
+                    WHERE mdt_id = :mdt_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-            ':Pgs_NumName' => $DataDocument['Pgs_NumName'],
-            ':Pgs_Enabled' => $DataDocument['Pgs_Enabled'],
-            ':Pgs_Id'      => $DataDocument['Pgs_Id']
+            ':mdt_doctype' => $DataDocument['mdt_doctype'],
+            ':mdt_docname' => $DataDocument['mdt_docname'],
+						':mdt_enabled' => $DataDocument['mdt_enabled'],
+            ':mdt_id'      => $DataDocument['mdt_id']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -128,7 +170,7 @@ class DocumentType extends REST_Controller {
   // Obtener tipo de Documentos
   public function getDocumentType_get(){
 
-        $sqlSelect = "SELECT * FROM gdct";
+        $sqlSelect = "SELECT * FROM dmdt WHERE mdt_enabled = 1";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -170,9 +212,9 @@ class DocumentType extends REST_Controller {
           return;
         }
 
-        $sqlSelect = " SELECT * FROM gdct WHERE pgs_id = :Pgs_Id";
+        $sqlSelect = " SELECT * FROM dmdt WHERE mdt_id = :mdt_id";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':Pgs_Id' => $Data['Pgs_Id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':mdt_id' => $Data['mdt_id']));
 
         if(isset($resSelect[0])){
 
@@ -199,7 +241,7 @@ class DocumentType extends REST_Controller {
 
   	 			$Data = $this->post();
 
-  				if(!isset($Data['Pgs_Id']) OR !isset($Data['Pgs_Enabled'])){
+  				if(!isset($Data['mdt_id']) OR !isset($Data['mdt_enabled'])){
 
   						$respuesta = array(
   							'error' => true,
@@ -211,13 +253,13 @@ class DocumentType extends REST_Controller {
   						return;
   				}
 
-  				$sqlUpdate = "UPDATE gdct SET pgs_enabled = :Pgs_Enabled WHERE pgs_id = :Pgs_Id";
+  				$sqlUpdate = "UPDATE dmdt SET mdt_enabled = :mdt_enabled WHERE mdt_id = :mdt_id";
 
 
   				$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-  											':Pgs_Enabled' => $Data['Pgs_Enabled'],
-  											':Pgs_Id'      => $Data['Pgs_Id']
+  											':mdt_enabled' => $Data['mdt_enabled'],
+  											':mdt_id'      => $Data['mdt_id']
 
   				));
 

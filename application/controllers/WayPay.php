@@ -52,11 +52,11 @@ class WayPay extends REST_Controller {
 
         ));
 
-        if($resInsert > 0 ){
+        if(is_numeric($resInsert) && $resInsert > 0){
 
               $respuesta = array(
-                'error' => false,
-                'data' => $resInsert,
+                'error' 	=> false,
+                'data' 		=> $resInsert,
                 'mensaje' =>'Forma de pago registrada con exito'
               );
 
@@ -65,7 +65,7 @@ class WayPay extends REST_Controller {
 
               $respuesta = array(
                 'error'   => true,
-                'data' => array(),
+                'data' 		=> $resInsert,
                 'mensaje'	=> 'No se pudo registrar la forma de pago'
               );
 

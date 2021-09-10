@@ -125,7 +125,7 @@ class Pedeo {
 		if ($result->execute($params)){
 			return $this->pdo->lastInsertId();
 		}else{
-			 return $result->errorInfo();
+			return $result->errorInfo();
 		}
 	}
 
@@ -149,12 +149,31 @@ class Pedeo {
 	/*
 		Borrar un registro en una tabla
 	*/
-	public function deleteRow($sql, $id) {
+	public function deleteRow($sql, $params) {
 		$result = $this->pdo->prepare($sql);
-		if ($result->execute(array($id)))
-		return $result->rowCount();
-		else return 0;
+		
+		if ($result->execute($params)){
+
+			return $result->rowCount();
+		}else{
+			 return $result->errorInfo();
+		}
 	}
+
+
+	public function trans_begin(){
+		return $this->pdo->beginTransaction();
+	}
+
+	public function trans_rollback(){
+		return $this->pdo->rollBack();
+	}
+
+	public function trans_commit(){
+		return $this->pdo->commit();
+	}
+
+
 
 	//----------------------------------------------
 	// STATIC
