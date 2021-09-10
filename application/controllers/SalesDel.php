@@ -1,5 +1,5 @@
 <?php
-// COTIZACIONES
+// Entrega de VentasES
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
@@ -22,7 +22,7 @@ class SalesDel extends REST_Controller {
 
 	}
 
-  //CREAR NUEVA COTIZACION
+  //CREAR NUEVA Entrega de Ventas
 	public function createSalesDel_post(){
 
       $Data = $this->post();
@@ -83,7 +83,7 @@ class SalesDel extends REST_Controller {
           $respuesta = array(
             'error' => true,
             'data'  => array(),
-            'mensaje' =>'No se encontro el detalle de la cotización'
+            'mensaje' =>'No se encontro el detalle de la Entrega de ventas'
           );
 
           $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -220,7 +220,7 @@ class SalesDel extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'    => $resActualizarNumeracion,
-									'mensaje'	=> 'No se pudo crear la cotización'
+									'mensaje'	=> 'No se pudo crear la Entrega de ventas'
 								);
 
 								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -272,14 +272,14 @@ class SalesDel extends REST_Controller {
 							// Se verifica que el detalle no de error insertando //
 					}else{
 
-							// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+							// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 							// se retorna el error y se detiene la ejecucion del codigo restante.
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resInsertAsiento,
-									'mensaje'	=> 'No se pudo registrar la cotización'
+									'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 								);
 
 								 $this->response($respuesta);
@@ -322,14 +322,14 @@ class SalesDel extends REST_Controller {
 										// Se verifica que el detalle no de error insertando //
 								}else{
 
-										// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+										// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 										// se retorna el error y se detiene la ejecucion del codigo restante.
 											$this->pedeo->trans_rollback();
 
 											$respuesta = array(
 												'error'   => true,
 												'data' => $resInsert,
-												'mensaje'	=> 'No se pudo registrar la cotización'
+												'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 											);
 
 											 $this->response($respuesta);
@@ -359,14 +359,14 @@ class SalesDel extends REST_Controller {
 												// Se verifica que el detalle no de error insertando //
 										}else{
 
-												// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+												// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 												// se retorna el error y se detiene la ejecucion del codigo restante.
 													$this->pedeo->trans_rollback();
 
 													$respuesta = array(
 														'error'   => true,
 														'data' => $sqlInserMovimiento,
-														'mensaje'	=> 'No se pudo registrar la cotización'
+														'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 													);
 
 													 $this->response($respuesta);
@@ -419,7 +419,7 @@ class SalesDel extends REST_Controller {
 																 $respuesta = array(
 																	 'error'   => true,
 																	 'data'    => $resUpdateCostoCantidad,
-																	 'mensaje'	=> 'No se pudo crear la cotizacion'
+																	 'mensaje'	=> 'No se pudo crear la Entrega de Ventas'
 																 );
 														 }
 
@@ -504,7 +504,7 @@ class SalesDel extends REST_Controller {
 											$respuesta = array(
 												'error'   => true,
 												'data' => $resArticulo,
-												'mensaje'	=> 'No se pudo registrar la cotización'
+												'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 											);
 
 											 $this->response($respuesta);
@@ -762,14 +762,14 @@ class SalesDel extends REST_Controller {
 						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
 								// Se verifica que el detalle no de error insertando //
 						}else{
-								// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 									$this->pedeo->trans_rollback();
 
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la cotización'
+										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 									);
 
 									 $this->response($respuesta);
@@ -843,14 +843,14 @@ class SalesDel extends REST_Controller {
 								// Se verifica que el detalle no de error insertando //
 						}else{
 
-								// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 									$this->pedeo->trans_rollback();
 
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la cotización'
+										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 									);
 
 									 $this->response($respuesta);
@@ -908,7 +908,7 @@ class SalesDel extends REST_Controller {
 												}
 
 										}else{
-												// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+												// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 												// se retorna el error y se detiene la ejecucion del codigo restante.
 												$this->pedeo->trans_rollback();
 
@@ -996,14 +996,14 @@ class SalesDel extends REST_Controller {
 								// Se verifica que el detalle no de error insertando //
 						}else{
 
-								// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 									$this->pedeo->trans_rollback();
 
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la cotización'
+										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 									);
 
 									 $this->response($respuesta);
@@ -1064,7 +1064,7 @@ class SalesDel extends REST_Controller {
 												}
 
 										}else{
-												// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+												// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 												// se retorna el error y se detiene la ejecucion del codigo restante.
 												$this->pedeo->trans_rollback();
 
@@ -1152,14 +1152,14 @@ class SalesDel extends REST_Controller {
 								// Se verifica que el detalle no de error insertando //
 								}else{
 
-								// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la cotización'
+									'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 								);
 
 								 $this->response($respuesta);
@@ -1265,14 +1265,14 @@ class SalesDel extends REST_Controller {
 									// Se verifica que el detalle no de error insertando //
 							}else{
 
-									// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+									// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 									// se retorna el error y se detiene la ejecucion del codigo restante.
 										$this->pedeo->trans_rollback();
 
 										$respuesta = array(
 											'error'   => true,
 											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la cotización'
+											'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 										);
 
 										 $this->response($respuesta);
@@ -1287,7 +1287,7 @@ class SalesDel extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la cotización, el tercero no tiene cuenta asociada'
+									'mensaje'	=> 'No se pudo registrar la Entrega de ventas, el tercero no tiene cuenta asociada'
 								);
 
 								 $this->response($respuesta);
@@ -1296,7 +1296,7 @@ class SalesDel extends REST_Controller {
 					}
 					//FIN Procedimiento para llenar cuentas por cobrar
 
-					// Si todo sale bien despues de insertar el detalle de la cotizacion
+					// Si todo sale bien despues de insertar el detalle de la Entrega de Ventas
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.
 					$this->pedeo->trans_commit();
@@ -1304,7 +1304,7 @@ class SalesDel extends REST_Controller {
           $respuesta = array(
             'error' => false,
             'data' => $resInsert,
-            'mensaje' =>'Cotización registrada con exito'
+            'mensaje' =>'Entrega de ventas registrada con exito'
           );
 
 
@@ -1316,7 +1316,7 @@ class SalesDel extends REST_Controller {
               $respuesta = array(
                 'error'   => true,
                 'data' => $resInsert,
-                'mensaje'	=> 'No se pudo registrar la cotización'
+                'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
               );
 
         }
@@ -1324,8 +1324,8 @@ class SalesDel extends REST_Controller {
          $this->response($respuesta);
 	}
 
-  //ACTUALIZAR COTIZACION
-  public function updateQuotation_post(){
+  //ACTUALIZAR Entrega de Ventas
+  public function updateSalesDel_post(){
 
       $Data = $this->post();
 
@@ -1363,7 +1363,7 @@ class SalesDel extends REST_Controller {
           $respuesta = array(
             'error' => true,
             'data'  => array(),
-            'mensaje' =>'No se encontro el detalle de la cotización'
+            'mensaje' =>'No se encontro el detalle de la Entrega de ventas'
           );
 
           $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -1447,14 +1447,14 @@ class SalesDel extends REST_Controller {
 											// Se verifica que el detalle no de error insertando //
 									}else{
 
-											// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+											// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
 											// se retorna el error y se detiene la ejecucion del codigo restante.
 												$this->pedeo->trans_rollback();
 
 												$respuesta = array(
 													'error'   => true,
 													'data' => $resInsert,
-													'mensaje'	=> 'No se pudo registrar la cotización'
+													'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 												);
 
 												 $this->response($respuesta);
@@ -1469,7 +1469,7 @@ class SalesDel extends REST_Controller {
             $respuesta = array(
               'error' => false,
               'data' => $resUpdate,
-              'mensaje' =>'Cotización actualizada con exito'
+              'mensaje' =>'Entrega de ventas actualizada con exito'
             );
 
 
@@ -1480,7 +1480,7 @@ class SalesDel extends REST_Controller {
             $respuesta = array(
               'error'   => true,
               'data'    => $resUpdate,
-              'mensaje'	=> 'No se pudo actualizar la cotización'
+              'mensaje'	=> 'No se pudo actualizar la Entrega de ventas'
             );
 
       }
@@ -1489,8 +1489,8 @@ class SalesDel extends REST_Controller {
   }
 
 
-  //OBTENER COTIZACIONES
-  public function getQuotation_get(){
+  //OBTENER Entrega de VentasES
+  public function getSalesDel_get(){
 
         $sqlSelect = " SELECT * FROM dvem";
 
@@ -1517,8 +1517,8 @@ class SalesDel extends REST_Controller {
   }
 
 
-	//OBTENER COTIZACION POR ID
-	public function getQuotationById_get(){
+	//OBTENER Entrega de Ventas POR ID
+	public function getSalesDelById_get(){
 
 				$Data = $this->get();
 
@@ -1560,8 +1560,8 @@ class SalesDel extends REST_Controller {
 	}
 
 
-	//OBTENER COTIZACION DETALLE POR ID
-	public function getQuotationDetail_get(){
+	//OBTENER Entrega de Ventas DETALLE POR ID
+	public function getSalesDelDetail_get(){
 
 				$Data = $this->get();
 
