@@ -93,7 +93,7 @@ class SalesOrder extends REST_Controller {
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
-				$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['dvc_series']));
+				$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['vov_series']));
 
 				if(isset($resNumeracion[0])){
 
@@ -138,7 +138,7 @@ class SalesOrder extends REST_Controller {
 													ON trim(tasa.tsa_currd) = trim(pgec.pgm_symbol)
 													WHERE pgec.pgm_system = :pgm_system AND tasa.tsa_date = :tsa_date";
 
-				$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1, ':tsa_date' => $Data['dvc_docdate']));
+				$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1, ':tsa_date' => $Data['vov_docdate']));
 
 				if(isset($resMonedaSys[0])){
 
@@ -154,12 +154,12 @@ class SalesOrder extends REST_Controller {
 						return;
 				}
 
-        $sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
-                      dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
-                      dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                      dvc_attch,dvc_createby)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
-                      :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
-                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype, :dvc_attch,:dvc_createby)";
+        $sqlInsert = "INSERT INTO dvov(vov_series, vov_docnum, vov_docdate, vov_duedate, vov_duedev, vov_pricelist, vov_cardcode,
+                      vov_cardname, vov_currency, vov_contacid, vov_slpcode, vov_empid, vov_comment, vov_doctotal, vov_baseamnt, vov_taxtotal,
+                      vov_discprofit, vov_discount, vov_createat, vov_baseentry, vov_basetype, vov_doctype, vov_idadd, vov_adress, vov_paytype,
+                      vov_attch,vov_createby)VALUES(:vov_series, :vov_docnum, :vov_docdate, :vov_duedate, :vov_duedev, :vov_pricelist, :vov_cardcode, :vov_cardname,
+                      :vov_currency, :vov_contacid, :vov_slpcode, :vov_empid, :vov_comment, :vov_doctotal, :vov_baseamnt, :vov_taxtotal, :vov_discprofit, :vov_discount,
+                      :vov_createat, :vov_baseentry, :vov_basetype, :vov_doctype, :vov_idadd, :vov_adress, :vov_paytype, :vov_attch,:vov_createby)";
 
 
 				// Se Inicia la transaccion,
@@ -171,33 +171,33 @@ class SalesOrder extends REST_Controller {
 			  $this->pedeo->trans_begin();
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':dvc_docnum' => $DocNumVerificado,
-              ':dvc_series' => is_numeric($Data['dvc_series'])?$Data['dvc_series']:0,
-              ':dvc_docdate' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-              ':dvc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
-              ':dvc_duedev' => $this->validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
-              ':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
-              ':dvc_cardcode' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
-              ':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
-              ':dvc_currency' => is_numeric($Data['dvc_currency'])?$Data['dvc_currency']:0,
-              ':dvc_contacid' => isset($Data['dvc_contacid'])?$Data['dvc_contacid']:NULL,
-              ':dvc_slpcode' => is_numeric($Data['dvc_slpcode'])?$Data['dvc_slpcode']:0,
-              ':dvc_empid' => is_numeric($Data['dvc_empid'])?$Data['dvc_empid']:0,
-              ':dvc_comment' => isset($Data['dvc_comment'])?$Data['dvc_comment']:NULL,
-              ':dvc_doctotal' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
-              ':dvc_baseamnt' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
-              ':dvc_taxtotal' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
-              ':dvc_discprofit' => is_numeric($Data['dvc_discprofit'])?$Data['dvc_discprofit']:0,
-              ':dvc_discount' => is_numeric($Data['dvc_discount'])?$Data['dvc_discount']:0,
-              ':dvc_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-              ':dvc_baseentry' => is_numeric($Data['dvc_baseentry'])?$Data['dvc_baseentry']:0,
-              ':dvc_basetype' => is_numeric($Data['dvc_basetype'])?$Data['dvc_basetype']:0,
-              ':dvc_doctype' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
-              ':dvc_idadd' => isset($Data['dvc_idadd'])?$Data['dvc_idadd']:NULL,
-              ':dvc_adress' => isset($Data['dvc_adress'])?$Data['dvc_adress']:NULL,
-              ':dvc_paytype' => is_numeric($Data['dvc_paytype'])?$Data['dvc_paytype']:0,
-							':dvc_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
-              ':dvc_attch' => $this->getUrl(count(trim(($Data['dvc_attch']))) > 0 ? $Data['dvc_attch']:NULL)
+              ':vov_docnum' => $DocNumVerificado,
+              ':vov_series' => is_numeric($Data['vov_series'])?$Data['vov_series']:0,
+              ':vov_docdate' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+              ':vov_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
+              ':vov_duedev' => $this->validateDate($Data['vov_duedev'])?$Data['vov_duedev']:NULL,
+              ':vov_pricelist' => is_numeric($Data['vov_pricelist'])?$Data['vov_pricelist']:0,
+              ':vov_cardcode' => isset($Data['vov_cardcode'])?$Data['vov_cardcode']:NULL,
+              ':vov_cardname' => isset($Data['vov_cardname'])?$Data['vov_cardname']:NULL,
+              ':vov_currency' => is_numeric($Data['vov_currency'])?$Data['vov_currency']:0,
+              ':vov_contacid' => isset($Data['vov_contacid'])?$Data['vov_contacid']:NULL,
+              ':vov_slpcode' => is_numeric($Data['vov_slpcode'])?$Data['vov_slpcode']:0,
+              ':vov_empid' => is_numeric($Data['vov_empid'])?$Data['vov_empid']:0,
+              ':vov_comment' => isset($Data['vov_comment'])?$Data['vov_comment']:NULL,
+              ':vov_doctotal' => is_numeric($Data['vov_doctotal'])?$Data['vov_doctotal']:0,
+              ':vov_baseamnt' => is_numeric($Data['vov_baseamnt'])?$Data['vov_baseamnt']:0,
+              ':vov_taxtotal' => is_numeric($Data['vov_taxtotal'])?$Data['vov_taxtotal']:0,
+              ':vov_discprofit' => is_numeric($Data['vov_discprofit'])?$Data['vov_discprofit']:0,
+              ':vov_discount' => is_numeric($Data['vov_discount'])?$Data['vov_discount']:0,
+              ':vov_createat' => $this->validateDate($Data['vov_createat'])?$Data['vov_createat']:NULL,
+              ':vov_baseentry' => is_numeric($Data['vov_baseentry'])?$Data['vov_baseentry']:0,
+              ':vov_basetype' => is_numeric($Data['vov_basetype'])?$Data['vov_basetype']:0,
+              ':vov_doctype' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
+              ':vov_idadd' => isset($Data['vov_idadd'])?$Data['vov_idadd']:NULL,
+              ':vov_adress' => isset($Data['vov_adress'])?$Data['vov_adress']:NULL,
+              ':vov_paytype' => is_numeric($Data['vov_paytype'])?$Data['vov_paytype']:0,
+							':vov_createby' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
+              ':vov_attch' => $this->getUrl(count(trim(($Data['vov_attch']))) > 0 ? $Data['vov_attch']:NULL)
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -208,7 +208,7 @@ class SalesOrder extends REST_Controller {
 																			 WHERE pgs_id = :pgs_id";
 					$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
 							':pgs_nextnum' => $DocNumVerificado,
-							':pgs_id'      => $Data['dvc_series']
+							':pgs_id'      => $Data['vov_series']
 					));
 
 
@@ -240,31 +240,31 @@ class SalesOrder extends REST_Controller {
 
 							':mac_doc_num' => 1,
 							':mac_status' => 1,
-							':mac_base_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+							':mac_base_type' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
 							':mac_base_entry' => $resInsert,
-							':mac_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-							':mac_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
-							':mac_legal_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-							':mac_ref1' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+							':mac_doc_date' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+							':mac_doc_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
+							':mac_legal_date' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+							':mac_ref1' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
 							':mac_ref2' => "",
 							':mac_ref3' => "",
-							':mac_loc_total' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
-							':mac_fc_total' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
-							':mac_sys_total' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
+							':mac_loc_total' => is_numeric($Data['vov_doctotal'])?$Data['vov_doctotal']:0,
+							':mac_fc_total' => is_numeric($Data['vov_doctotal'])?$Data['vov_doctotal']:0,
+							':mac_sys_total' => is_numeric($Data['vov_doctotal'])?$Data['vov_doctotal']:0,
 							':mac_trans_dode' => 1,
 							':mac_beline_nume' => 1,
-							':mac_vat_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
+							':mac_vat_date' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
 							':mac_serie' => 1,
 							':mac_number' => 1,
-							':mac_bammntsys' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
-							':mac_bammnt' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
+							':mac_bammntsys' => is_numeric($Data['vov_baseamnt'])?$Data['vov_baseamnt']:0,
+							':mac_bammnt' => is_numeric($Data['vov_baseamnt'])?$Data['vov_baseamnt']:0,
 							':mac_wtsum' => 1,
-							':mac_vatsum' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
-							':mac_comments' => isset($Data['dvc_comment'])?$Data['dvc_comment']:NULL,
-							':mac_create_date' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-							':mac_made_usuer' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+							':mac_vatsum' => is_numeric($Data['vov_taxtotal'])?$Data['vov_taxtotal']:0,
+							':mac_comments' => isset($Data['vov_comment'])?$Data['vov_comment']:NULL,
+							':mac_create_date' => $this->validateDate($Data['vov_createat'])?$Data['vov_createat']:NULL,
+							':mac_made_usuer' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
 							':mac_update_date' => date("Y-m-d"),
-							':mac_update_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL
+							':mac_update_user' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL
 					));
 
 
@@ -290,32 +290,32 @@ class SalesOrder extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
-                $sqlInsertDetail = "INSERT INTO vct1(vc1_docentry, vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
-                                    vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
-                                    vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
-                                    :vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, :vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,
-                                    :vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory)";
+                $sqlInsertDetail = "INSERT INTO vct1(ov1_docentry, ov1_itemcode, ov1_itemname, ov1_quantity, ov1_uom, ov1_whscode,
+                                    ov1_price, ov1_vat, ov1_vatsum, ov1_discount, ov1_linetotal, ov1_costcode, ov1_ubusiness, ov1_project,
+                                    ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
+                                    :ov1_uom, :ov1_whscode,:ov1_price, :ov1_vat, :ov1_vatsum, :ov1_discount, :ov1_linetotal, :ov1_costcode, :ov1_ubusiness, :ov1_project,
+                                    :ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-                        ':vc1_docentry' => $resInsert,
-                        ':vc1_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
-                        ':vc1_itemname' => isset($detail['vc1_itemname'])?$detail['vc1_itemname']:NULL,
-                        ':vc1_quantity' => is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0,
-                        ':vc1_uom' => isset($detail['vc1_uom'])?$detail['vc1_uom']:NULL,
-                        ':vc1_whscode' => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-                        ':vc1_price' => is_numeric($detail['vc1_price'])?$detail['vc1_price']:0,
-                        ':vc1_vat' => is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0,
-                        ':vc1_vatsum' => is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0,
-                        ':vc1_discount' => is_numeric($detail['vc1_discount'])?$detail['vc1_discount']:0,
-                        ':vc1_linetotal' => is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0,
-                        ':vc1_costcode' => isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL,
-                        ':vc1_ubusiness' => isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL,
-                        ':vc1_project' => isset($detail['vc1_project'])?$detail['vc1_project']:NULL,
-                        ':vc1_acctcode' => is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']:0,
-                        ':vc1_basetype' => is_numeric($detail['vc1_basetype'])?$detail['vc1_basetype']:0,
-                        ':vc1_doctype' => is_numeric($detail['vc1_doctype'])?$detail['vc1_doctype']:0,
-                        ':vc1_avprice' => is_numeric($detail['vc1_avprice'])?$detail['vc1_avprice']:0,
-                        ':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
+                        ':ov1_docentry' => $resInsert,
+                        ':ov1_itemcode' => isset($detail['ov1_itemcode'])?$detail['ov1_itemcode']:NULL,
+                        ':ov1_itemname' => isset($detail['ov1_itemname'])?$detail['ov1_itemname']:NULL,
+                        ':ov1_quantity' => is_numeric($detail['ov1_quantity'])?$detail['ov1_quantity']:0,
+                        ':ov1_uom' => isset($detail['ov1_uom'])?$detail['ov1_uom']:NULL,
+                        ':ov1_whscode' => isset($detail['ov1_whscode'])?$detail['ov1_whscode']:NULL,
+                        ':ov1_price' => is_numeric($detail['ov1_price'])?$detail['ov1_price']:0,
+                        ':ov1_vat' => is_numeric($detail['ov1_vat'])?$detail['ov1_vat']:0,
+                        ':ov1_vatsum' => is_numeric($detail['ov1_vatsum'])?$detail['ov1_vatsum']:0,
+                        ':ov1_discount' => is_numeric($detail['ov1_discount'])?$detail['ov1_discount']:0,
+                        ':ov1_linetotal' => is_numeric($detail['ov1_linetotal'])?$detail['ov1_linetotal']:0,
+                        ':ov1_costcode' => isset($detail['ov1_costcode'])?$detail['ov1_costcode']:NULL,
+                        ':ov1_ubusiness' => isset($detail['ov1_ubusiness'])?$detail['ov1_ubusiness']:NULL,
+                        ':ov1_project' => isset($detail['ov1_project'])?$detail['ov1_project']:NULL,
+                        ':ov1_acctcode' => is_numeric($detail['ov1_acctcode'])?$detail['ov1_acctcode']:0,
+                        ':ov1_basetype' => is_numeric($detail['ov1_basetype'])?$detail['ov1_basetype']:0,
+                        ':ov1_doctype' => is_numeric($detail['ov1_doctype'])?$detail['ov1_doctype']:0,
+                        ':ov1_avprice' => is_numeric($detail['ov1_avprice'])?$detail['ov1_avprice']:0,
+                        ':ov1_inventory' => is_numeric($detail['ov1_inventory'])?$detail['ov1_inventory']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -338,19 +338,19 @@ class SalesOrder extends REST_Controller {
 								}
 
 								// si el item es inventariable
-								if( $detail['vc1_articleInv'] == 1 || $detail['vc1_articleInv'] == "1" ){
+								if( $detail['ov1_articleInv'] == 1 || $detail['ov1_articleInv'] == "1" ){
 										//Se aplica el movimiento de inventario
 										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
 																					 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
 
 										$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-												 ':bmi_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
-												 ':bmi_quantity' => is_numeric($detail['vc1_quantity'])? $detail['vc1_quantity'] * $Data['invtype']:0,
-												 ':bmi_whscode'  => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-												 ':bmi_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-												 ':bmi_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
-												 ':bmy_doctype'  => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+												 ':bmi_itemcode' => isset($detail['ov1_itemcode'])?$detail['ov1_itemcode']:NULL,
+												 ':bmi_quantity' => is_numeric($detail['ov1_quantity'])? $detail['ov1_quantity'] * $Data['invtype']:0,
+												 ':bmi_whscode'  => isset($detail['ov1_whscode'])?$detail['ov1_whscode']:NULL,
+												 ':bmi_createat' => $this->validateDate($Data['vov_createat'])?$Data['vov_createat']:NULL,
+												 ':bmi_createby' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
+												 ':bmy_doctype'  => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
 												 ':bmy_baseentry' => $resInsert
 
 										));
@@ -386,8 +386,8 @@ class SalesOrder extends REST_Controller {
 
 											$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
-														':bdi_itemcode' => $detail['vc1_itemcode'],
-														':bdi_whscode'  => $detail['vc1_whscode']
+														':bdi_itemcode' => $detail['ov1_itemcode'],
+														':bdi_whscode'  => $detail['ov1_whscode']
 											));
 
 											if(isset($resCostoCantidad[0])){
@@ -395,7 +395,7 @@ class SalesOrder extends REST_Controller {
 												if($resCostoCantidad[0]['bdi_quantity'] > 0){
 
 														 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-														 $CantidadNueva = $detail['vc1_quantity'];
+														 $CantidadNueva = $detail['ov1_quantity'];
 
 
 														 $CantidadTotal = ($CantidadActual - $CantidadNueva);
@@ -430,7 +430,7 @@ class SalesOrder extends REST_Controller {
 																 $respuesta = array(
 																	 'error'   => true,
 																	 'data'    => $resUpdateCostoCantidad,
-																	 'mensaje' => 'No hay existencia para el item: '.$detail['vc1_itemcode']
+																	 'mensaje' => 'No hay existencia para el item: '.$detail['ov1_itemcode']
 																 );
 												}
 
@@ -441,7 +441,7 @@ class SalesOrder extends REST_Controller {
 														$respuesta = array(
 															'error'   => true,
 															'data' 		=> $resInsertCostoCantidad,
-															'mensaje'	=> 'El item no existe en el stock '.$detail['vc1_itemcode']
+															'mensaje'	=> 'El item no existe en el stock '.$detail['ov1_itemcode']
 														);
 
 														 $this->response($respuesta);
@@ -465,37 +465,37 @@ class SalesOrder extends REST_Controller {
 								$DetalleCostoCosto = new stdClass();
 
 
-								$DetalleAsientoIngreso->ac1_account = is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']: 0;
-								$DetalleAsientoIngreso->ac1_prc_code = isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL;
-								$DetalleAsientoIngreso->ac1_uncode = isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL;
-								$DetalleAsientoIngreso->ac1_prj_code = isset($detail['vc1_project'])?$detail['vc1_project']:NULL;
-								$DetalleAsientoIngreso->vc1_linetotal = is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0;
-								$DetalleAsientoIngreso->vc1_vat = is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0;
-								$DetalleAsientoIngreso->vc1_vatsum = is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0;
-								$DetalleAsientoIngreso->vc1_price = is_numeric($detail['vc1_price'])?$detail['vc1_price']:0;
-								$DetalleAsientoIngreso->vc1_itemcode = isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL;
-								$DetalleAsientoIngreso->vc1_quantity = is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0;
+								$DetalleAsientoIngreso->ac1_account = is_numeric($detail['ov1_acctcode'])?$detail['ov1_acctcode']: 0;
+								$DetalleAsientoIngreso->ac1_prc_code = isset($detail['ov1_costcode'])?$detail['ov1_costcode']:NULL;
+								$DetalleAsientoIngreso->ac1_uncode = isset($detail['ov1_ubusiness'])?$detail['ov1_ubusiness']:NULL;
+								$DetalleAsientoIngreso->ac1_prj_code = isset($detail['ov1_project'])?$detail['ov1_project']:NULL;
+								$DetalleAsientoIngreso->ov1_linetotal = is_numeric($detail['ov1_linetotal'])?$detail['ov1_linetotal']:0;
+								$DetalleAsientoIngreso->ov1_vat = is_numeric($detail['ov1_vat'])?$detail['ov1_vat']:0;
+								$DetalleAsientoIngreso->ov1_vatsum = is_numeric($detail['ov1_vatsum'])?$detail['ov1_vatsum']:0;
+								$DetalleAsientoIngreso->ov1_price = is_numeric($detail['ov1_price'])?$detail['ov1_price']:0;
+								$DetalleAsientoIngreso->ov1_itemcode = isset($detail['ov1_itemcode'])?$detail['ov1_itemcode']:NULL;
+								$DetalleAsientoIngreso->ov1_quantity = is_numeric($detail['ov1_quantity'])?$detail['ov1_quantity']:0;
 
 
 
-								$DetalleAsientoIva->ac1_account = is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']: 0;
-								$DetalleAsientoIva->ac1_prc_code = isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL;
-								$DetalleAsientoIva->ac1_uncode = isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL;
-								$DetalleAsientoIva->ac1_prj_code = isset($detail['vc1_project'])?$detail['vc1_project']:NULL;
-								$DetalleAsientoIva->vc1_linetotal = is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0;
-								$DetalleAsientoIva->vc1_vat = is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0;
-								$DetalleAsientoIva->vc1_vatsum = is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0;
-								$DetalleAsientoIva->vc1_price = is_numeric($detail['vc1_price'])?$detail['vc1_price']:0;
-								$DetalleAsientoIva->vc1_itemcode = isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL;
-								$DetalleAsientoIva->vc1_quantity = is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0;
-								$DetalleAsientoIva->vc1_cuentaIva = is_numeric($detail['vc1_cuentaIva'])?$detail['vc1_cuentaIva']:NULL;
+								$DetalleAsientoIva->ac1_account = is_numeric($detail['ov1_acctcode'])?$detail['ov1_acctcode']: 0;
+								$DetalleAsientoIva->ac1_prc_code = isset($detail['ov1_costcode'])?$detail['ov1_costcode']:NULL;
+								$DetalleAsientoIva->ac1_uncode = isset($detail['ov1_ubusiness'])?$detail['ov1_ubusiness']:NULL;
+								$DetalleAsientoIva->ac1_prj_code = isset($detail['ov1_project'])?$detail['ov1_project']:NULL;
+								$DetalleAsientoIva->ov1_linetotal = is_numeric($detail['ov1_linetotal'])?$detail['ov1_linetotal']:0;
+								$DetalleAsientoIva->ov1_vat = is_numeric($detail['ov1_vat'])?$detail['ov1_vat']:0;
+								$DetalleAsientoIva->ov1_vatsum = is_numeric($detail['ov1_vatsum'])?$detail['ov1_vatsum']:0;
+								$DetalleAsientoIva->ov1_price = is_numeric($detail['ov1_price'])?$detail['ov1_price']:0;
+								$DetalleAsientoIva->ov1_itemcode = isset($detail['ov1_itemcode'])?$detail['ov1_itemcode']:NULL;
+								$DetalleAsientoIva->ov1_quantity = is_numeric($detail['ov1_quantity'])?$detail['ov1_quantity']:0;
+								$DetalleAsientoIva->ov1_cuentaIva = is_numeric($detail['ov1_cuentaIva'])?$detail['ov1_cuentaIva']:NULL;
 
 
 
 								// se busca la cuenta contable del costoInventario y costoCosto
 								$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-								$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['vc1_itemcode']));
+								$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['ov1_itemcode']));
 
 								if(!isset($resArticulo[0])){
 
@@ -514,27 +514,27 @@ class SalesOrder extends REST_Controller {
 
 
 								$DetalleCostoInventario->ac1_account = $resArticulo[0]['mga_acct_inv'];
-								$DetalleCostoInventario->ac1_prc_code = isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL;
-								$DetalleCostoInventario->ac1_uncode = isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL;
-								$DetalleCostoInventario->ac1_prj_code = isset($detail['vc1_project'])?$detail['vc1_project']:NULL;
-								$DetalleCostoInventario->vc1_linetotal = is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0;
-								$DetalleCostoInventario->vc1_vat = is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0;
-								$DetalleCostoInventario->vc1_vatsum = is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0;
-								$DetalleCostoInventario->vc1_price = is_numeric($detail['vc1_price'])?$detail['vc1_price']:0;
-								$DetalleCostoInventario->vc1_itemcode = isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL;
-								$DetalleCostoInventario->vc1_quantity = is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0;
+								$DetalleCostoInventario->ac1_prc_code = isset($detail['ov1_costcode'])?$detail['ov1_costcode']:NULL;
+								$DetalleCostoInventario->ac1_uncode = isset($detail['ov1_ubusiness'])?$detail['ov1_ubusiness']:NULL;
+								$DetalleCostoInventario->ac1_prj_code = isset($detail['ov1_project'])?$detail['ov1_project']:NULL;
+								$DetalleCostoInventario->ov1_linetotal = is_numeric($detail['ov1_linetotal'])?$detail['ov1_linetotal']:0;
+								$DetalleCostoInventario->ov1_vat = is_numeric($detail['ov1_vat'])?$detail['ov1_vat']:0;
+								$DetalleCostoInventario->ov1_vatsum = is_numeric($detail['ov1_vatsum'])?$detail['ov1_vatsum']:0;
+								$DetalleCostoInventario->ov1_price = is_numeric($detail['ov1_price'])?$detail['ov1_price']:0;
+								$DetalleCostoInventario->ov1_itemcode = isset($detail['ov1_itemcode'])?$detail['ov1_itemcode']:NULL;
+								$DetalleCostoInventario->ov1_quantity = is_numeric($detail['ov1_quantity'])?$detail['ov1_quantity']:0;
 
 
 								$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
-								$DetalleCostoCosto->ac1_prc_code = isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL;
-								$DetalleCostoCosto->ac1_uncode = isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL;
-								$DetalleCostoCosto->ac1_prj_code = isset($detail['vc1_project'])?$detail['vc1_project']:NULL;
-								$DetalleCostoCosto->vc1_linetotal = is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0;
-								$DetalleCostoCosto->vc1_vat = is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0;
-								$DetalleCostoCosto->vc1_vatsum = is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0;
-								$DetalleCostoCosto->vc1_price = is_numeric($detail['vc1_price'])?$detail['vc1_price']:0;
-								$DetalleCostoCosto->vc1_itemcode = isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL;
-								$DetalleCostoCosto->vc1_quantity = is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0;
+								$DetalleCostoCosto->ac1_prc_code = isset($detail['ov1_costcode'])?$detail['ov1_costcode']:NULL;
+								$DetalleCostoCosto->ac1_uncode = isset($detail['ov1_ubusiness'])?$detail['ov1_ubusiness']:NULL;
+								$DetalleCostoCosto->ac1_prj_code = isset($detail['ov1_project'])?$detail['ov1_project']:NULL;
+								$DetalleCostoCosto->ov1_linetotal = is_numeric($detail['ov1_linetotal'])?$detail['ov1_linetotal']:0;
+								$DetalleCostoCosto->ov1_vat = is_numeric($detail['ov1_vat'])?$detail['ov1_vat']:0;
+								$DetalleCostoCosto->ov1_vatsum = is_numeric($detail['ov1_vatsum'])?$detail['ov1_vatsum']:0;
+								$DetalleCostoCosto->ov1_price = is_numeric($detail['ov1_price'])?$detail['ov1_price']:0;
+								$DetalleCostoCosto->ov1_itemcode = isset($detail['ov1_itemcode'])?$detail['ov1_itemcode']:NULL;
+								$DetalleCostoCosto->ov1_quantity = is_numeric($detail['ov1_quantity'])?$detail['ov1_quantity']:0;
 
 								$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 
@@ -545,7 +545,7 @@ class SalesOrder extends REST_Controller {
 
 
 								$llave = $DetalleAsientoIngreso->ac1_uncode.$DetalleAsientoIngreso->ac1_prc_code.$DetalleAsientoIngreso->ac1_prj_code.$DetalleAsientoIngreso->ac1_account;
-								$llaveIva = $DetalleAsientoIva->vc1_vat;
+								$llaveIva = $DetalleAsientoIva->ov1_vat;
 								$llaveCostoInventario = $DetalleCostoInventario->ac1_account;
 								$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
 
@@ -662,7 +662,7 @@ class SalesOrder extends REST_Controller {
 							$prc = "";
 							$unidad = "";
 							foreach ($posicion as $key => $value) {
-										$granTotalIngreso = ( $granTotalIngreso + $value->vc1_linetotal );
+										$granTotalIngreso = ( $granTotalIngreso + $value->ov1_linetotal );
 										$codigoCuentaIngreso = $value->codigoCuenta;
 										$prc = $value->ac1_prc_code;
 										$unidad = $value->ac1_uncode;
@@ -723,15 +723,15 @@ class SalesOrder extends REST_Controller {
 									':ac1_debit_sys' => round($MontoSysDB,2),
 									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
 									':ac1_font_key' => $resInsert,
 									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+									':ac1_font_type' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",
@@ -742,7 +742,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_prj_code' => $proyecto,
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+									':ac1_made_user' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
@@ -753,7 +753,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_isrti' => 0,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+									':ac1_legal_num' => isset($Data['vov_cardcode'])?$Data['vov_cardcode']:NULL,
 									':ac1_codref' => 1
 						));
 
@@ -788,7 +788,7 @@ class SalesOrder extends REST_Controller {
 							$granTotalIva = 0;
 
 							foreach ($posicion as $key => $value) {
-										$granTotalIva = $granTotalIva + $value->vc1_vatsum;
+										$granTotalIva = $granTotalIva + $value->ov1_vatsum;
 							}
 
 							$MontoSysDB = ($granTotalIva / $resMonedaSys[0]['tsa_value']);
@@ -797,21 +797,21 @@ class SalesOrder extends REST_Controller {
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $value->vc1_cuentaIva,
+									':ac1_account' => $value->ov1_cuentaIva,
 									':ac1_debit' => 0,
 									':ac1_credit' => $granTotalIva,
 									':ac1_debit_sys' => 0,
 									':ac1_credit_sys' => round($MontoSysDB,2),
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
 									':ac1_font_key' => $resInsert,
 									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+									':ac1_font_type' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",
@@ -822,7 +822,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_prj_code' => NULL,
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+									':ac1_made_user' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
@@ -833,7 +833,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_isrti' => 0,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+									':ac1_legal_num' => isset($Data['vov_cardcode'])?$Data['vov_cardcode']:NULL,
 									':ac1_codref' => 1
 						));
 
@@ -870,7 +870,7 @@ class SalesOrder extends REST_Controller {
 
 										$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->vc1_itemcode));
+										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->ov1_itemcode));
 
 										if(isset($resArticulo[0])){
 												$dbito = 0;
@@ -881,7 +881,7 @@ class SalesOrder extends REST_Controller {
 
 												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
 
-												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->vc1_itemcode));
+												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->ov1_itemcode));
 
 												if( isset( $resCosto[0] ) ){
 
@@ -889,7 +889,7 @@ class SalesOrder extends REST_Controller {
 
 
 															$costoArticulo = $resCosto[0]['bdi_avgprice'];
-															$cantidadArticulo = $value->vc1_quantity;
+															$cantidadArticulo = $value->ov1_quantity;
 															$grantotalCostoInventario = ($grantotalCostoInventario + ($costoArticulo * $cantidadArticulo));
 
 												}else{
@@ -899,7 +899,7 @@ class SalesOrder extends REST_Controller {
 															$respuesta = array(
 																'error'   => true,
 																'data'	  => $resArticulo,
-																'mensaje'	=> 'No se encontro el costo para el item: '.$value->vc1_itemcode
+																'mensaje'	=> 'No se encontro el costo para el item: '.$value->ov1_itemcode
 															);
 
 															 $this->response($respuesta);
@@ -915,7 +915,7 @@ class SalesOrder extends REST_Controller {
 												$respuesta = array(
 													'error'   => true,
 													'data'	  => $resArticulo,
-													'mensaje'	=> 'No se encontro la cuenta de inventario y costo para el item '.$value->vc1_itemcode
+													'mensaje'	=> 'No se encontro la cuenta de inventario y costo para el item '.$value->ov1_itemcode
 												);
 
 												 $this->response($respuesta);
@@ -958,15 +958,15 @@ class SalesOrder extends REST_Controller {
 									':ac1_debit_sys' => round($MontoSysDB,2),
 									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
 									':ac1_font_key' => $resInsert,
 									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+									':ac1_font_type' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",
@@ -977,7 +977,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_prj_code' => NULL,
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+									':ac1_made_user' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
@@ -988,7 +988,7 @@ class SalesOrder extends REST_Controller {
 									':ac1_isrti' => 0,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+									':ac1_legal_num' => isset($Data['vov_cardcode'])?$Data['vov_cardcode']:NULL,
 									':ac1_codref' => 1
 						));
 
@@ -1027,7 +1027,7 @@ class SalesOrder extends REST_Controller {
 
 										$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->vc1_itemcode));
+										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->ov1_itemcode));
 
 										if(isset($resArticulo[0])){
 												$dbito = 0;
@@ -1037,7 +1037,7 @@ class SalesOrder extends REST_Controller {
 
 												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
 
-												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->vc1_itemcode));
+												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->ov1_itemcode));
 
 												if( isset( $resCosto[0] ) ){
 
@@ -1045,7 +1045,7 @@ class SalesOrder extends REST_Controller {
 
 
 															$costoArticulo = $resCosto[0]['bdi_avgprice'];
-															$cantidadArticulo = $value->vc1_quantity;
+															$cantidadArticulo = $value->ov1_quantity;
 															$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
 
 												}else{
@@ -1055,7 +1055,7 @@ class SalesOrder extends REST_Controller {
 															$respuesta = array(
 																'error'   => true,
 																'data'	  => $resArticulo,
-																'mensaje'	=> 'No se encontro el costo para el item: '.$value->vc1_itemcode
+																'mensaje'	=> 'No se encontro el costo para el item: '.$value->ov1_itemcode
 															);
 
 															 $this->response($respuesta);
@@ -1071,7 +1071,7 @@ class SalesOrder extends REST_Controller {
 												$respuesta = array(
 													'error'   => true,
 													'data'	  => $resArticulo,
-													'mensaje'	=> 'No se encontro el costo para el item '.$value->vc1_itemcode
+													'mensaje'	=> 'No se encontro el costo para el item '.$value->ov1_itemcode
 												);
 
 												 $this->response($respuesta);
@@ -1114,15 +1114,15 @@ class SalesOrder extends REST_Controller {
 								':ac1_debit_sys' => round($MontoSysDB,2),
 								':ac1_credit_sys' => round($MontoSysCR,2),
 								':ac1_currex' => 0,
-								':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-								':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+								':ac1_doc_date' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+								':ac1_doc_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
 								':ac1_debit_import' => 0,
 								':ac1_credit_import' => 0,
 								':ac1_debit_importsys' => 0,
 								':ac1_credit_importsys' => 0,
 								':ac1_font_key' => $resInsert,
 								':ac1_font_line' => 1,
-								':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+								':ac1_font_type' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
 								':ac1_accountvs' => 1,
 								':ac1_doctype' => 18,
 								':ac1_ref1' => "",
@@ -1133,7 +1133,7 @@ class SalesOrder extends REST_Controller {
 								':ac1_prj_code' => $value->ac1_prj_code,
 								':ac1_rescon_date' => NULL,
 								':ac1_recon_total' => 0,
-								':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+								':ac1_made_user' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
 								':ac1_accperiod' => 1,
 								':ac1_close' => 0,
 								':ac1_cord' => 0,
@@ -1144,7 +1144,7 @@ class SalesOrder extends REST_Controller {
 								':ac1_isrti' => 0,
 								':ac1_basert' => 0,
 								':ac1_mmcode' => 0,
-								':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+								':ac1_legal_num' => isset($Data['vov_cardcode'])?$Data['vov_cardcode']:NULL,
 								':ac1_codref' => 1
 								));
 
@@ -1179,7 +1179,7 @@ class SalesOrder extends REST_Controller {
 													 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
 													 WHERE  f1.dms_card_code = :dms_card_code";
 
-					$rescuentaCxP = $this->pedeo->queryTable($sqlcuentaCxP, array(":dms_card_code" => $Data['dvc_cardcode']));
+					$rescuentaCxP = $this->pedeo->queryTable($sqlcuentaCxP, array(":dms_card_code" => $Data['vov_cardcode']));
 
 
 
@@ -1196,25 +1196,25 @@ class SalesOrder extends REST_Controller {
 
 
 								if( $codigo2 == 1 || $codigo2 == "1" ){
-										$debitoo = $Data['dvc_doctotal'];
+										$debitoo = $Data['vov_doctotal'];
 										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 2 || $codigo2 == "2" ){
-										$creditoo = $Data['dvc_doctotal'];
+										$creditoo = $Data['vov_doctotal'];
 										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 3 || $codigo2 == "3" ){
-										$creditoo = $Data['dvc_doctotal'];
+										$creditoo = $Data['vov_doctotal'];
 										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 4 || $codigo2 == "4" ){
-									  $creditoo = $Data['dvc_doctotal'];
+									  $creditoo = $Data['vov_doctotal'];
 										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 5  || $codigo2 == "5" ){
-									  $debitoo = $Data['dvc_doctotal'];
+									  $debitoo = $Data['vov_doctotal'];
 										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 6 || $codigo2 == "6" ){
-									  $debitoo = $Data['dvc_doctotal'];
+									  $debitoo = $Data['vov_doctotal'];
 										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}else if( $codigo2 == 7 || $codigo2 == "7" ){
-									  $debitoo = $Data['dvc_doctotal'];
+									  $debitoo = $Data['vov_doctotal'];
 										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
 								}
 
@@ -1227,15 +1227,15 @@ class SalesOrder extends REST_Controller {
 										':ac1_debit_sys' => round($MontoSysDB,2),
 										':ac1_credit_sys' => round($MontoSysCR,2),
 										':ac1_currex' => 0,
-										':ac1_doc_date' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-										':ac1_doc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
+										':ac1_doc_date' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+										':ac1_doc_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
 										':ac1_debit_import' => 0,
 										':ac1_credit_import' => 0,
 										':ac1_debit_importsys' => 0,
 										':ac1_credit_importsys' => 0,
 										':ac1_font_key' => $resInsert,
 										':ac1_font_line' => 1,
-										':ac1_font_type' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
+										':ac1_font_type' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
 										':ac1_accountvs' => 1,
 										':ac1_doctype' => 18,
 										':ac1_ref1' => "",
@@ -1246,7 +1246,7 @@ class SalesOrder extends REST_Controller {
 										':ac1_prj_code' => NULL,
 										':ac1_rescon_date' => NULL,
 										':ac1_recon_total' => 0,
-										':ac1_made_user' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
+										':ac1_made_user' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
 										':ac1_accperiod' => 1,
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
@@ -1257,7 +1257,7 @@ class SalesOrder extends REST_Controller {
 										':ac1_isrti' => 0,
 										':ac1_basert' => 0,
 										':ac1_mmcode' => 0,
-										':ac1_legal_num' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
+										':ac1_legal_num' => isset($Data['vov_cardcode'])?$Data['vov_cardcode']:NULL,
 										':ac1_codref' => 1
 							));
 
@@ -1325,23 +1325,23 @@ class SalesOrder extends REST_Controller {
 	}
 
   //ACTUALIZAR COTIZACION
-  public function updateQuotation_post(){
+  public function updateSalesOrder_post(){
 
       $Data = $this->post();
 
-			if(!isset($Data['dvc_docentry']) OR !isset($Data['dvc_docnum']) OR
-				 !isset($Data['dvc_docdate']) OR !isset($Data['dvc_duedate']) OR
-				 !isset($Data['dvc_duedev']) OR !isset($Data['dvc_pricelist']) OR
-				 !isset($Data['dvc_cardcode']) OR !isset($Data['dvc_cardname']) OR
-				 !isset($Data['dvc_currency']) OR !isset($Data['dvc_contacid']) OR
-				 !isset($Data['dvc_slpcode']) OR !isset($Data['dvc_empid']) OR
-				 !isset($Data['dvc_comment']) OR !isset($Data['dvc_doctotal']) OR
-				 !isset($Data['dvc_baseamnt']) OR !isset($Data['dvc_taxtotal']) OR
-				 !isset($Data['dvc_discprofit']) OR !isset($Data['dvc_discount']) OR
-				 !isset($Data['dvc_createat']) OR !isset($Data['dvc_baseentry']) OR
-				 !isset($Data['dvc_basetype']) OR !isset($Data['dvc_doctype']) OR
-				 !isset($Data['dvc_idadd']) OR !isset($Data['dvc_adress']) OR
-				 !isset($Data['dvc_paytype']) OR !isset($Data['dvc_attch']) OR
+			if(!isset($Data['vov_docentry']) OR !isset($Data['vov_docnum']) OR
+				 !isset($Data['vov_docdate']) OR !isset($Data['vov_duedate']) OR
+				 !isset($Data['vov_duedev']) OR !isset($Data['vov_pricelist']) OR
+				 !isset($Data['vov_cardcode']) OR !isset($Data['vov_cardname']) OR
+				 !isset($Data['vov_currency']) OR !isset($Data['vov_contacid']) OR
+				 !isset($Data['vov_slpcode']) OR !isset($Data['vov_empid']) OR
+				 !isset($Data['vov_comment']) OR !isset($Data['vov_doctotal']) OR
+				 !isset($Data['vov_baseamnt']) OR !isset($Data['vov_taxtotal']) OR
+				 !isset($Data['vov_discprofit']) OR !isset($Data['vov_discount']) OR
+				 !isset($Data['vov_createat']) OR !isset($Data['vov_baseentry']) OR
+				 !isset($Data['vov_basetype']) OR !isset($Data['vov_doctype']) OR
+				 !isset($Data['vov_idadd']) OR !isset($Data['vov_adress']) OR
+				 !isset($Data['vov_paytype']) OR !isset($Data['vov_attch']) OR
 				 !isset($Data['detail'])){
 
         $respuesta = array(
@@ -1371,76 +1371,76 @@ class SalesOrder extends REST_Controller {
           return;
       }
 
-      $sqlUpdate = "UPDATE dvct	SET dvc_docdate=:dvc_docdate,dvc_duedate=:dvc_duedate, dvc_duedev=:dvc_duedev, dvc_pricelist=:dvc_pricelist, dvc_cardcode=:dvc_cardcode,
-			  						dvc_cardname=:dvc_cardname, dvc_currency=:dvc_currency, dvc_contacid=:dvc_contacid, dvc_slpcode=:dvc_slpcode,
-										dvc_empid=:dvc_empid, dvc_comment=:dvc_comment, dvc_doctotal=:dvc_doctotal, dvc_baseamnt=:dvc_baseamnt,
-										dvc_taxtotal=:dvc_taxtotal, dvc_discprofit=:dvc_discprofit, dvc_discount=:dvc_discount, dvc_createat=:dvc_createat,
-										dvc_baseentry=:dvc_baseentry, dvc_basetype=:dvc_basetype, dvc_doctype=:dvc_doctype, dvc_idadd=:dvc_idadd,
-										dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype, dvc_attch=:dvc_attch WHERE dvc_docentry=:dvc_docentry";
+      $sqlUpdate = "UPDATE dvov	SET vov_docdate=:vov_docdate,vov_duedate=:vov_duedate, vov_duedev=:vov_duedev, vov_pricelist=:vov_pricelist, vov_cardcode=:vov_cardcode,
+			  						vov_cardname=:vov_cardname, vov_currency=:vov_currency, vov_contacid=:vov_contacid, vov_slpcode=:vov_slpcode,
+										vov_empid=:vov_empid, vov_comment=:vov_comment, vov_doctotal=:vov_doctotal, vov_baseamnt=:vov_baseamnt,
+										vov_taxtotal=:vov_taxtotal, vov_discprofit=:vov_discprofit, vov_discount=:vov_discount, vov_createat=:vov_createat,
+										vov_baseentry=:vov_baseentry, vov_basetype=:vov_basetype, vov_doctype=:vov_doctype, vov_idadd=:vov_idadd,
+										vov_adress=:vov_adress, vov_paytype=:vov_paytype, vov_attch=:vov_attch WHERE vov_docentry=:vov_docentry";
 
       $this->pedeo->trans_begin();
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-							':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
-							':dvc_docdate' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
-							':dvc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
-							':dvc_duedev' => $this->validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
-							':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
-							':dvc_cardcode' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
-							':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
-							':dvc_currency' => is_numeric($Data['dvc_currency'])?$Data['dvc_currency']:0,
-							':dvc_contacid' => isset($Data['dvc_contacid'])?$Data['dvc_contacid']:NULL,
-							':dvc_slpcode' => is_numeric($Data['dvc_slpcode'])?$Data['dvc_slpcode']:0,
-							':dvc_empid' => is_numeric($Data['dvc_empid'])?$Data['dvc_empid']:0,
-							':dvc_comment' => isset($Data['dvc_comment'])?$Data['dvc_comment']:NULL,
-							':dvc_doctotal' => is_numeric($Data['dvc_doctotal'])?$Data['dvc_doctotal']:0,
-							':dvc_baseamnt' => is_numeric($Data['dvc_baseamnt'])?$Data['dvc_baseamnt']:0,
-							':dvc_taxtotal' => is_numeric($Data['dvc_taxtotal'])?$Data['dvc_taxtotal']:0,
-							':dvc_discprofit' => is_numeric($Data['dvc_discprofit'])?$Data['dvc_discprofit']:0,
-							':dvc_discount' => is_numeric($Data['dvc_discount'])?$Data['dvc_discount']:0,
-							':dvc_createat' => $this->validateDate($Data['dvc_createat'])?$Data['dvc_createat']:NULL,
-							':dvc_baseentry' => is_numeric($Data['dvc_baseentry'])?$Data['dvc_baseentry']:0,
-							':dvc_basetype' => is_numeric($Data['dvc_basetype'])?$Data['dvc_basetype']:0,
-							':dvc_doctype' => is_numeric($Data['dvc_doctype'])?$Data['dvc_doctype']:0,
-							':dvc_idadd' => isset($Data['dvc_idadd'])?$Data['dvc_idadd']:NULL,
-							':dvc_adress' => isset($Data['dvc_adress'])?$Data['dvc_adress']:NULL,
-							':dvc_paytype' => is_numeric($Data['dvc_paytype'])?$Data['dvc_paytype']:0,
-							':dvc_attch' => $this->getUrl(count(trim(($Data['dvc_attch']))) > 0 ? $Data['dvc_attch']:NULL),
-							':dvc_docentry' => $Data['dvc_docentry']
+							':vov_docnum' => is_numeric($Data['vov_docnum'])?$Data['vov_docnum']:0,
+							':vov_docdate' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+							':vov_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
+							':vov_duedev' => $this->validateDate($Data['vov_duedev'])?$Data['vov_duedev']:NULL,
+							':vov_pricelist' => is_numeric($Data['vov_pricelist'])?$Data['vov_pricelist']:0,
+							':vov_cardcode' => isset($Data['vov_pricelist'])?$Data['vov_pricelist']:NULL,
+							':vov_cardname' => isset($Data['vov_cardname'])?$Data['vov_cardname']:NULL,
+							':vov_currency' => is_numeric($Data['vov_currency'])?$Data['vov_currency']:0,
+							':vov_contacid' => isset($Data['vov_contacid'])?$Data['vov_contacid']:NULL,
+							':vov_slpcode' => is_numeric($Data['vov_slpcode'])?$Data['vov_slpcode']:0,
+							':vov_empid' => is_numeric($Data['vov_empid'])?$Data['vov_empid']:0,
+							':vov_comment' => isset($Data['vov_comment'])?$Data['vov_comment']:NULL,
+							':vov_doctotal' => is_numeric($Data['vov_doctotal'])?$Data['vov_doctotal']:0,
+							':vov_baseamnt' => is_numeric($Data['vov_baseamnt'])?$Data['vov_baseamnt']:0,
+							':vov_taxtotal' => is_numeric($Data['vov_taxtotal'])?$Data['vov_taxtotal']:0,
+							':vov_discprofit' => is_numeric($Data['vov_discprofit'])?$Data['vov_discprofit']:0,
+							':vov_discount' => is_numeric($Data['vov_discount'])?$Data['vov_discount']:0,
+							':vov_createat' => $this->validateDate($Data['vov_createat'])?$Data['vov_createat']:NULL,
+							':vov_baseentry' => is_numeric($Data['vov_baseentry'])?$Data['vov_baseentry']:0,
+							':vov_basetype' => is_numeric($Data['vov_basetype'])?$Data['vov_basetype']:0,
+							':vov_doctype' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
+							':vov_idadd' => isset($Data['vov_idadd'])?$Data['vov_idadd']:NULL,
+							':vov_adress' => isset($Data['vov_adress'])?$Data['vov_adress']:NULL,
+							':vov_paytype' => is_numeric($Data['vov_paytype'])?$Data['vov_paytype']:0,
+							':vov_attch' => $this->getUrl(count(trim(($Data['vov_attch']))) > 0 ? $Data['vov_attch']:NULL),
+							':vov_docentry' => $Data['vov_docentry']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
 
-						$this->pedeo->queryTable("DELETE FROM vct1 WHERE vc1_docentry=:vc1_docentry", array(':vc1_docentry' => $Data['dvc_docentry']));
+						$this->pedeo->queryTable("DELETE FROM vct1 WHERE ov1_docentry=:ov1_docentry", array(':ov1_docentry' => $Data['vov_docentry']));
 
 						foreach ($ContenidoDetalle as $key => $detail) {
 
-									$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry, vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
-																			vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
-																			vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
-																			:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, :vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,
-																			:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory)";
+									$sqlInsertDetail = "INSERT INTO vct1(ov1_docentry, ov1_itemcode, ov1_itemname, ov1_quantity, ov1_uom, ov1_whscode,
+																			ov1_price, ov1_vat, ov1_vatsum, ov1_discount, ov1_linetotal, ov1_costcode, ov1_ubusiness, ov1_project,
+																			ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
+																			:ov1_uom, :ov1_whscode,:ov1_price, :ov1_vat, :ov1_vatsum, :ov1_discount, :ov1_linetotal, :ov1_costcode, :ov1_ubusiness, :ov1_project,
+																			:ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-											':vc1_docentry' => $resInsert,
-											':vc1_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
-											':vc1_itemname' => isset($detail['vc1_itemname'])?$detail['vc1_itemname']:NULL,
-											':vc1_quantity' => is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0,
-											':vc1_uom' => isset($detail['vc1_uom'])?$detail['vc1_uom']:NULL,
-											':vc1_whscode' => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
-											':vc1_price' => is_numeric($detail['vc1_price'])?$detail['vc1_price']:0,
-											':vc1_vat' => is_numeric($detail['vc1_vat'])?$detail['vc1_vat']:0,
-											':vc1_vatsum' => is_numeric($detail['vc1_vatsum'])?$detail['vc1_vatsum']:0,
-											':vc1_discount' => is_numeric($detail['vc1_discount'])?$detail['vc1_discount']:0,
-											':vc1_linetotal' => is_numeric($detail['vc1_linetotal'])?$detail['vc1_linetotal']:0,
-											':vc1_costcode' => isset($detail['vc1_costcode'])?$detail['vc1_costcode']:NULL,
-											':vc1_ubusiness' => isset($detail['vc1_ubusiness'])?$detail['vc1_ubusiness']:NULL,
-											':vc1_project' => isset($detail['vc1_project'])?$detail['vc1_project']:NULL,
-											':vc1_acctcode' => is_numeric($detail['vc1_acctcode'])?$detail['vc1_acctcode']:0,
-											':vc1_basetype' => is_numeric($detail['vc1_basetype'])?$detail['vc1_basetype']:0,
-											':vc1_doctype' => is_numeric($detail['vc1_doctype'])?$detail['vc1_doctype']:0,
-											':vc1_avprice' => is_numeric($detail['vc1_avprice'])?$detail['vc1_avprice']:0,
-											':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
+											':ov1_docentry' => $resInsert,
+											':ov1_itemcode' => isset($detail['ov1_itemcode'])?$detail['ov1_itemcode']:NULL,
+											':ov1_itemname' => isset($detail['ov1_itemname'])?$detail['ov1_itemname']:NULL,
+											':ov1_quantity' => is_numeric($detail['ov1_quantity'])?$detail['ov1_quantity']:0,
+											':ov1_uom' => isset($detail['ov1_uom'])?$detail['ov1_uom']:NULL,
+											':ov1_whscode' => isset($detail['ov1_whscode'])?$detail['ov1_whscode']:NULL,
+											':ov1_price' => is_numeric($detail['ov1_price'])?$detail['ov1_price']:0,
+											':ov1_vat' => is_numeric($detail['ov1_vat'])?$detail['ov1_vat']:0,
+											':ov1_vatsum' => is_numeric($detail['ov1_vatsum'])?$detail['ov1_vatsum']:0,
+											':ov1_discount' => is_numeric($detail['ov1_discount'])?$detail['ov1_discount']:0,
+											':ov1_linetotal' => is_numeric($detail['ov1_linetotal'])?$detail['ov1_linetotal']:0,
+											':ov1_costcode' => isset($detail['ov1_costcode'])?$detail['ov1_costcode']:NULL,
+											':ov1_ubusiness' => isset($detail['ov1_ubusiness'])?$detail['ov1_ubusiness']:NULL,
+											':ov1_project' => isset($detail['ov1_project'])?$detail['ov1_project']:NULL,
+											':ov1_acctcode' => is_numeric($detail['ov1_acctcode'])?$detail['ov1_acctcode']:0,
+											':ov1_basetype' => is_numeric($detail['ov1_basetype'])?$detail['ov1_basetype']:0,
+											':ov1_doctype' => is_numeric($detail['ov1_doctype'])?$detail['ov1_doctype']:0,
+											':ov1_avprice' => is_numeric($detail['ov1_avprice'])?$detail['ov1_avprice']:0,
+											':ov1_inventory' => is_numeric($detail['ov1_inventory'])?$detail['ov1_inventory']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1492,7 +1492,7 @@ class SalesOrder extends REST_Controller {
   //OBTENER COTIZACIONES
   public function getSalesOrder_get(){
 
-        $sqlSelect = " SELECT * FROM dvct";
+        $sqlSelect = " SELECT * FROM dvov";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1518,11 +1518,11 @@ class SalesOrder extends REST_Controller {
 
 
 	//OBTENER COTIZACION POR ID
-	public function getQuotationById_get(){
+	public function getSalesOrderById_get(){
 
 				$Data = $this->get();
 
-				if(!isset($Data['dvc_docentry'])){
+				if(!isset($Data['vov_docentry'])){
 
 					$respuesta = array(
 						'error' => true,
@@ -1535,9 +1535,9 @@ class SalesOrder extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dvct WHERE dvc_docentry =:dvc_docentry";
+				$sqlSelect = " SELECT * FROM dvov WHERE vov_docentry =:vov_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_docentry" => $Data['dvc_docentry']));
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vov_docentry" => $Data['vov_docentry']));
 
 				if(isset($resSelect[0])){
 
@@ -1561,11 +1561,11 @@ class SalesOrder extends REST_Controller {
 
 
 	//OBTENER COTIZACION DETALLE POR ID
-	public function getQuotationDetail_get(){
+	public function getSalesOrderDetail_get(){
 
 				$Data = $this->get();
 
-				if(!isset($Data['vc1_docentry'])){
+				if(!isset($Data['ov1_docentry'])){
 
 					$respuesta = array(
 						'error' => true,
@@ -1578,9 +1578,9 @@ class SalesOrder extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM vct1 WHERE vc1_docentry =:vc1_docentry";
+				$sqlSelect = " SELECT * FROM vct1 WHERE ov1_docentry =:ov1_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vc1_docentry" => $Data['vc1_docentry']));
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ov1_docentry" => $Data['ov1_docentry']));
 
 				if(isset($resSelect[0])){
 
