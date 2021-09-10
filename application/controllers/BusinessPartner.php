@@ -46,6 +46,7 @@ class BusinessPartner extends REST_Controller {
          !isset($Data['dms_inter']) OR
          !isset($Data['dms_price_list']) OR
          !isset($Data['dms_acct_sn']) OR
+         !isset($Data['dms_enabled']) OR
          !isset($Data['dms_acct_asn'])){
 
         $respuesta = array(
@@ -84,10 +85,10 @@ class BusinessPartner extends REST_Controller {
 
       $sqlInsert = "INSERT INTO dmsn(dms_card_code, dms_card_name, dms_card_type, dms_short_name, dms_phone1, dms_phone2,
                     dms_cel, dms_email, dms_inv_mail, dms_group_num, dms_web_site, dms_sip_code, dms_agent, dms_pay_type,
-                    dms_limit_cred, dms_inter, dms_price_list, dms_acct_sn, dms_acct_asn, dms_card_last_name)
+                    dms_limit_cred, dms_inter, dms_price_list, dms_acct_sn, dms_acct_asn, dms_card_last_name, dms_enabled)
 	                  VALUES (:dms_card_code, :dms_card_name, :dms_card_type, :dms_short_name, :dms_phone1, :dms_phone2,
                     :dms_cel, :dms_email, :dms_inv_mail, :dms_group_num, :dms_web_site, :dms_sip_code, :dms_agent, :dms_pay_type,
-                    :dms_limit_cred, :dms_inter, :dms_price_list, :dms_acct_sn, :dms_acct_asn, :dms_card_last_name)";
+                    :dms_limit_cred, :dms_inter, :dms_price_list, :dms_acct_sn, :dms_acct_asn, :dms_card_last_name, :dms_enabled)";
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -110,7 +111,9 @@ class BusinessPartner extends REST_Controller {
              ':dms_price_list' => $Data['dms_price_list'],
              ':dms_acct_sn' => $Data['dms_acct_sn'],
              ':dms_acct_asn' => $Data['dms_acct_asn'],
-             ':dms_card_last_name' =>$Data['dms_card_last_name']
+             ':dms_card_last_name' =>$Data['dms_card_last_name'], 
+             ':dms_enabled' =>$Data['dms_enabled'] 
+             
 
       ));
 
