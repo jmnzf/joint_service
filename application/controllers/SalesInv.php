@@ -1605,6 +1605,50 @@ class SalesInv extends REST_Controller {
 
 
 
+	//OBTENER FACTURA DE VENTA POR ID SOCIO DE NEGOCIO
+	public function getSalesInvoiceBySN_get(){
+
+				$Data = $this->get();
+
+				if(!isset($Data['dms_card_code'])){
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'La informacion enviada no es valida'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+				}
+
+				$sqlSelect = " SELECT * FROM dvfv WHERE dvf_cardcode =:dvf_cardcode";
+
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvf_cardcode" => $Data['dms_card_code']));
+
+				if(isset($resSelect[0])){
+
+					$respuesta = array(
+						'error' => false,
+						'data'  => $resSelect,
+						'mensaje' => '');
+
+				}else{
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'	=> 'busqueda sin resultados'
+						);
+
+				}
+
+				 $this->response($respuesta);
+	}
+
+
+
 
 
 

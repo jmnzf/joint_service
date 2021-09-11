@@ -1604,6 +1604,52 @@ class Quotation extends REST_Controller {
 
 
 
+	//OBTENER COTIZACIONES POR SOCIO DE NEGOCIO
+	public function getQuotationBySN_get(){
+
+				$Data = $this->get();
+
+				if(!isset($Data['dms_card_code'])){
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'La informacion enviada no es valida'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+				}
+
+				$sqlSelect = " SELECT * FROM dvct WHERE dvc_cardcode =:dvc_cardcode";
+
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_cardcode" => $Data['dms_card_code']));
+
+				if(isset($resSelect[0])){
+
+					$respuesta = array(
+						'error' => false,
+						'data'  => $resSelect,
+						'mensaje' => '');
+
+				}else{
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'	=> 'busqueda sin resultados'
+						);
+
+				}
+
+				 $this->response($respuesta);
+	}
+
+
+
+
+
 
 
 

@@ -1605,6 +1605,54 @@ class SalesDel extends REST_Controller {
 
 
 
+	//OBTENER ENTREGA DE VENTAS POR ID DE SOCIO DE NEGOCIO
+	public function getSalesDelBySN_get(){
+
+				$Data = $this->get();
+
+				if(!isset($Data['dms_card_code'])){
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'La informacion enviada no es valida'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+				}
+
+				$sqlSelect = " SELECT * FROM dvem WHERE vem_cardcode =:vem_cardcode";
+
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vem_cardcode" => $Data['dms_card_code']));
+
+				if(isset($resSelect[0])){
+
+					$respuesta = array(
+						'error' => false,
+						'data'  => $resSelect,
+						'mensaje' => '');
+
+				}else{
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'	=> 'busqueda sin resultados'
+						);
+
+				}
+
+				 $this->response($respuesta);
+	}
+
+
+
+
+
+
+
 
 
 

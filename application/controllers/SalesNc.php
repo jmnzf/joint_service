@@ -1604,6 +1604,50 @@ class SalesNc extends REST_Controller {
 
 
 
+	//OBTENER NOTA CREDITO POR ID SOCIO DE NEGOCIO
+	public function getSalesNcBySN_get(){
+
+				$Data = $this->get();
+
+				if(!isset($Data['dms_card_code'])){
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'La informacion enviada no es valida'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+				}
+
+				$sqlSelect = " SELECT * FROM dvnc WHERE vnc_cardcode =:vnc_cardcode";
+
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vnc_cardcode" => $Data['dms_card_code']));
+
+				if(isset($resSelect[0])){
+
+					$respuesta = array(
+						'error' => false,
+						'data'  => $resSelect,
+						'mensaje' => '');
+
+				}else{
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'	=> 'busqueda sin resultados'
+						);
+
+				}
+
+				 $this->response($respuesta);
+	}
+
+
+
 
 
 
