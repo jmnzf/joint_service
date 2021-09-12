@@ -66,6 +66,21 @@ class OrderSale extends REST_Controller {
 
           return;
       }
+				//Obtener Carpeta Principal del Proyecto
+				$sqlMainFolder = " SELECT * FROM params";
+				$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+				if(!isset($resMainFolder[0])){
+						$respuesta = array(
+	            'error' => true,
+	            'data'  => array(),
+	            'mensaje' =>'No se encontro la caperta principal del proyecto'
+	          );
+
+	          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+	          return;
+				}
 
         $sqlInsert = "INSERT INTO dvpv(dvp_doc_num, dvp_doc_date, dvp_doc_duedate, dvp_doc_duedev, dvp_price_list, dvp_card_code, dvp_card_name,
                       dvp_currency, dvp_contacid, dvp_slp_code, dvp_empid, dvp_comment, dvp_doc_total, dvp_base_amnt, dvp_tax_total, dvp_disc_profit,
@@ -100,7 +115,7 @@ class OrderSale extends REST_Controller {
               ':dvp_id_add' => $Data['dvp_id_add'],
               ':dvp_adress' => $Data['dvp_adress'],
               ':dvp_pay_type' => $Data['dvp_pay_type'],
-              ':dvp_attch' => $this->getUrl($Data['dvp_attch'])
+              ':dvp_attch' => $this->getUrl($Data['dvp_attch'], $resMainFolder[0]['main_folder'])
 
         ));
 
@@ -205,6 +220,23 @@ class OrderSale extends REST_Controller {
           return;
       }
 
+
+			//Obtener Carpeta Principal del Proyecto
+			$sqlMainFolder = " SELECT * FROM params";
+			$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+			if(!isset($resMainFolder[0])){
+					$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'No se encontro la caperta principal del proyecto'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+
       $sqlUpdate = "UPDATE dvpv SET  dvp_doc_num = :dvp_doc_num, dvp_doc_date =:dvp_doc_date, dvp_doc_duedate =:dvp_doc_duedate, dvp_doc_duedev =:dvp_doc_duedev,
                     dvp_price_list =:dvp_price_list, dvp_card_code =:dvp_card_code, dvp_card_name =:dvp_card_name, dvp_currency =:dvp_currency,
                     dvp_contacid =:dvp_contacid, dvp_slp_code =:dvp_slp_code, dvp_empid =:dvp_empid, dvp_comment =:dvp_comment, dvp_doc_total =:dvp_doc_total,
@@ -240,8 +272,8 @@ class OrderSale extends REST_Controller {
               ':dvp_id_add' => $Data['dvp_id_add'],
               ':dvp_adress' => $Data['dvp_adress'],
               ':dvp_pay_type' => $Data['dvp_pay_type'],
-              ':dvp_attch' => $this->getUrl($Data['dvp_attch'])
-							':dvp_docentry' => $Data['dvp_docentry'],
+              ':dvp_attch' => $this->getUrl($Data['dvp_attch'], $resMainFolder[0]['main_folder']),
+							':dvp_docentry' => $Data['dvp_docentry']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -420,10 +452,20 @@ class OrderSale extends REST_Controller {
 
 
 
-  private function getUrl($data){
-      $ruta = '/var/www/html/serpent/assets/img/anexos/';
+  private function getUrl($data, $caperta){
+
+			$url = "";
+
+			if ($data == NULL){
+
+				return $url;
+
+			}
+
+			$ruta = '/var/www/html/'.$caperta.'/assets/img/anexos/';
+
       $milliseconds = round(microtime(true) * 1000);
-      $url = "";
+
 
       $nombreArchivo = $milliseconds.".pdf";
 

@@ -154,6 +154,22 @@ class SalesDel extends REST_Controller {
 						return;
 				}
 
+				//Obtener Carpeta Principal del Proyecto
+				$sqlMainFolder = " SELECT * FROM params";
+				$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+				if(!isset($resMainFolder[0])){
+						$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'No se encontro la caperta principal del proyecto'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
         $sqlInsert = "INSERT INTO dvem(vem_series, vem_docnum, vem_docdate, vem_duedate, vem_duedev, vem_pricelist, vem_cardcode,
                       vem_cardname, vem_currency, vem_contacid, vem_slpcode, vem_empid, vem_comment, vem_doctotal, vem_baseamnt, vem_taxtotal,
                       vem_discprofit, vem_discount, vem_createat, vem_baseentry, vem_basetype, vem_doctype, vem_idadd, vem_adress, vem_paytype,
@@ -197,7 +213,7 @@ class SalesDel extends REST_Controller {
               ':vem_adress' => isset($Data['vem_adress'])?$Data['vem_adress']:NULL,
               ':vem_paytype' => is_numeric($Data['vem_paytype'])?$Data['vem_paytype']:0,
 							':vem_createby' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
-              ':vem_attch' => $this->getUrl(count(trim(($Data['vem_attch']))) > 0 ? $Data['vem_attch']:NULL)
+              ':vem_attch' => $this->getUrl(count(trim(($Data['vem_attch']))) > 0 ? $Data['vem_attch']:NULL, $resMainFolder[0]['main_folder'])
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -339,39 +355,66 @@ class SalesDel extends REST_Controller {
 
 								// si el item es inventariable
 								if( $detail['em1_articleInv'] == 1 || $detail['em1_articleInv'] == "1" ){
-										//Se aplica el movimiento de inventario
-										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
-																					 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
 
-										$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+										//se busca el costo del item en el momento de la creacion del documento de venta
+										// para almacenar en el movimiento de inventario
 
-												 ':bmi_itemcode' => isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
-												 ':bmi_quantity' => is_numeric($detail['em1_quantity'])? $detail['em1_quantity'] * $Data['invtype']:0,
-												 ':bmi_whscode'  => isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
-												 ':bmi_createat' => $this->validateDate($Data['vem_createat'])?$Data['vem_createat']:NULL,
-												 ':bmi_createby' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
-												 ':bmy_doctype'  => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
-												 ':bmy_baseentry' => $resInsert
+										$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+										$resCostoMomentoRegistro = $this->pedeo->($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['em1_whscode'], ':bdi_itemcode' => $detail['em1_itemcode']));
 
-										));
 
-										if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
-												// Se verifica que el detalle no de error insertando //
+										if(isset($resCostoMomentoRegistro[0])){
+
+											//Se aplica el movimiento de inventario
+											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost)
+																						 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost)";
+
+											$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+
+													 ':bmi_itemcode'  => isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
+													 ':bmi_quantity'  => is_numeric($detail['em1_quantity'])? $detail['em1_quantity'] * $Data['invtype']:0,
+													 ':bmi_whscode'   => isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
+													 ':bmi_createat'  => $this->validateDate($Data['vem_createat'])?$Data['vem_createat']:NULL,
+													 ':bmi_createby'  => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
+													 ':bmy_doctype'   => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
+													 ':bmy_baseentry' => $resInsert,
+													 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice']
+
+											));
+
+											if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
+													// Se verifica que el detalle no de error insertando //
+											}else{
+
+													// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+													// se retorna el error y se detiene la ejecucion del codigo restante.
+														$this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data' => $sqlInserMovimiento,
+															'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+														);
+
+														 $this->response($respuesta);
+
+														 return;
+											}
+
+
 										}else{
 
-												// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
-												// se retorna el error y se detiene la ejecucion del codigo restante.
-													$this->pedeo->trans_rollback();
+												$this->pedeo->trans_rollback();
 
-													$respuesta = array(
-														'error'   => true,
-														'data' => $sqlInserMovimiento,
-														'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
-													);
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resCostoMomentoRegistro,
+													'mensaje'	=> 'No se pudo registrar la Entrega de ventas, no se encontro el costo del articulo'
+												);
 
-													 $this->response($respuesta);
+												 $this->response($respuesta);
 
-													 return;
+												 return;
 										}
 
 											//FIN aplicacion de movimiento de inventario
@@ -475,6 +518,7 @@ class SalesDel extends REST_Controller {
 								$DetalleAsientoIngreso->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
 								$DetalleAsientoIngreso->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
 								$DetalleAsientoIngreso->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+								$DetalleAsientoIngreso->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
 
 
@@ -489,6 +533,7 @@ class SalesDel extends REST_Controller {
 								$DetalleAsientoIva->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
 								$DetalleAsientoIva->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
 								$DetalleAsientoIva->em1_cuentaIva = is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:NULL;
+								$DetalleAsientoIva->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
 
 
@@ -523,6 +568,7 @@ class SalesDel extends REST_Controller {
 								$DetalleCostoInventario->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
 								$DetalleCostoInventario->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
 								$DetalleCostoInventario->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+								$DetalleCostoInventario->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
 
 								$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
@@ -535,6 +581,7 @@ class SalesDel extends REST_Controller {
 								$DetalleCostoCosto->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
 								$DetalleCostoCosto->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
 								$DetalleCostoCosto->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+								$DetalleCostoCosto->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
 								$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 
@@ -879,9 +926,9 @@ class SalesDel extends REST_Controller {
 												$MontoSysDB = 0;
 												$MontoSysCR = 0;
 
-												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
+												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
 
-												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->em1_itemcode));
+												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->em1_itemcode, ":bdi_whscode" => $value->em1_whscode));
 
 												if( isset( $resCosto[0] ) ){
 
@@ -1015,9 +1062,6 @@ class SalesDel extends REST_Controller {
 
 					//FIN Procedimiento para llenar costo inventario
 
-
-
-
 					// Procedimiento para llenar costo costo
 
 					foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
@@ -1025,9 +1069,12 @@ class SalesDel extends REST_Controller {
 							$cuentaCosto = "";
 							foreach ($posicion as $key => $value) {
 
-										$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+										// $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+										// $resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->em1_itemcode));
 
-										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->em1_itemcode));
+										$sqlArticulo = "SELECT pge_bridge_inv FROM pgem";
+										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array());
+
 
 										if(isset($resArticulo[0])){
 												$dbito = 0;
@@ -1035,13 +1082,14 @@ class SalesDel extends REST_Controller {
 												$MontoSysDB = 0;
 												$MontoSysCR = 0;
 
-												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
+												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
 
-												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->em1_itemcode));
+												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->em1_itemcode, ":bdi_whscode" => $value->em1_whscode));
+
 
 												if( isset( $resCosto[0] ) ){
 
-															$cuentaCosto = $resArticulo[0]['mga_acct_cost'];
+															$cuentaCosto = $resArticulo[0]['pge_bridge_inv']; // En la entrega se coloca la cuenta puente
 
 
 															$costoArticulo = $resCosto[0]['bdi_avgprice'];
@@ -1071,8 +1119,7 @@ class SalesDel extends REST_Controller {
 												$respuesta = array(
 													'error'   => true,
 													'data'	  => $resArticulo,
-													'mensaje'	=> 'No se encontro el costo para el item '.$value->em1_itemcode
-												);
+													'mensaje'	=> 'No se encontro la cuenta puente para costo'
 
 												 $this->response($respuesta);
 
@@ -1371,6 +1418,22 @@ class SalesDel extends REST_Controller {
           return;
       }
 
+			//Obtener Carpeta Principal del Proyecto
+			$sqlMainFolder = " SELECT * FROM params";
+			$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+			if(!isset($resMainFolder[0])){
+					$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'No se encontro la caperta principal del proyecto'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+
       $sqlUpdate = "UPDATE dvem	SET vem_docdate=:vem_docdate,vem_duedate=:vem_duedate, vem_duedev=:vem_duedev, vem_pricelist=:vem_pricelist, vem_cardcode=:vem_cardcode,
 			  						vem_cardname=:vem_cardname, vem_currency=:vem_currency, vem_contacid=:vem_contacid, vem_slpcode=:vem_slpcode,
 										vem_empid=:vem_empid, vem_comment=:vem_comment, vem_doctotal=:vem_doctotal, vem_baseamnt=:vem_baseamnt,
@@ -1405,7 +1468,7 @@ class SalesDel extends REST_Controller {
 							':vem_idadd' => isset($Data['vem_idadd'])?$Data['vem_idadd']:NULL,
 							':vem_adress' => isset($Data['vem_adress'])?$Data['vem_adress']:NULL,
 							':vem_paytype' => is_numeric($Data['vem_paytype'])?$Data['vem_paytype']:0,
-							':vem_attch' => $this->getUrl(count(trim(($Data['vem_attch']))) > 0 ? $Data['vem_attch']:NULL),
+							':vem_attch' => $this->getUrl(count(trim(($Data['vem_attch']))) > 0 ? $Data['vem_attch']:NULL, $resMainFolder[0]['main_folder']),
 							':vem_docentry' => $Data['vem_docentry']
       ));
 
@@ -1657,36 +1720,37 @@ class SalesDel extends REST_Controller {
 
 
 
-  private function getUrl($data){
-      $url = "";
+	private function getUrl($data, $caperta){
+	  $url = "";
 
-      if ($data == NULL){
+	  if ($data == NULL){
 
-        return $url;
+		return $url;
 
-      }
+	  }
 
-      $ruta = '/var/www/html/serpent/assets/img/anexos/';
-      $milliseconds = round(microtime(true) * 1000);
+			$ruta = '/var/www/html/'.$caperta.'/assets/img/anexos/';
+
+	  $milliseconds = round(microtime(true) * 1000);
 
 
-      $nombreArchivo = $milliseconds.".pdf";
+	  $nombreArchivo = $milliseconds.".pdf";
 
-      touch($ruta.$nombreArchivo);
+	  touch($ruta.$nombreArchivo);
 
-      $file = fopen($ruta.$nombreArchivo,"wb");
+	  $file = fopen($ruta.$nombreArchivo,"wb");
 
-      if(!empty($data)){
+	  if(!empty($data)){
 
-        fwrite($file, base64_decode($data));
+		fwrite($file, base64_decode($data));
 
-        fclose($file);
+		fclose($file);
 
-        $url = "assets/img/anexos/".$nombreArchivo;
-      }
+		$url = "assets/img/anexos/".$nombreArchivo;
+	  }
 
-      return $url;
-  }
+	  return $url;
+	}
 
 	private function buscarPosicion($llave, $inArray){
 			$res = 0;
