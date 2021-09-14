@@ -195,7 +195,7 @@ class SalesDel extends REST_Controller {
               ':vem_pricelist' => is_numeric($Data['vem_pricelist'])?$Data['vem_pricelist']:0,
               ':vem_cardcode' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
               ':vem_cardname' => isset($Data['vem_cardname'])?$Data['vem_cardname']:NULL,
-              ':vem_currency' => is_numeric($Data['vem_currency'])?$Data['vem_currency']:0,
+              ':vem_currency' => isset($Data['vem_currency'])?$Data['vem_currency']:NULL,
               ':vem_contacid' => isset($Data['vem_contacid'])?$Data['vem_contacid']:NULL,
               ':vem_slpcode' => is_numeric($Data['vem_slpcode'])?$Data['vem_slpcode']:0,
               ':vem_empid' => is_numeric($Data['vem_empid'])?$Data['vem_empid']:0,
@@ -308,9 +308,9 @@ class SalesDel extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
                                     em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
+                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
                                     :em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
-                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory)";
+                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':em1_docentry' => $resInsert,
@@ -331,7 +331,8 @@ class SalesDel extends REST_Controller {
                         ':em1_basetype' => is_numeric($detail['em1_basetype'])?$detail['em1_basetype']:0,
                         ':em1_doctype' => is_numeric($detail['em1_doctype'])?$detail['em1_doctype']:0,
                         ':em1_avprice' => is_numeric($detail['em1_avprice'])?$detail['em1_avprice']:0,
-                        ':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL
+                        ':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL,
+												':em1_acciva' => is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:0,
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -360,7 +361,7 @@ class SalesDel extends REST_Controller {
 										// para almacenar en el movimiento de inventario
 
 										$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
-										$resCostoMomentoRegistro = $this->pedeo->($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['em1_whscode'], ':bdi_itemcode' => $detail['em1_itemcode']));
+										$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['em1_whscode'], ':bdi_itemcode' => $detail['em1_itemcode']));
 
 
 										if(isset($resCostoMomentoRegistro[0])){
@@ -701,210 +702,210 @@ class SalesDel extends REST_Controller {
 
 					//Procedimiento para llenar Ingreso
 
-					foreach ($DetalleConsolidadoIngreso as $key => $posicion) {
-							$granTotalIngreso = 0;
-							$codigoCuentaIngreso = "";
-							$cuenta = "";
-							$proyecto = "";
-							$prc = "";
-							$unidad = "";
-							foreach ($posicion as $key => $value) {
-										$granTotalIngreso = ( $granTotalIngreso + $value->em1_linetotal );
-										$codigoCuentaIngreso = $value->codigoCuenta;
-										$prc = $value->ac1_prc_code;
-										$unidad = $value->ac1_uncode;
-										$proyecto = $value->ac1_prj_code;
-										$cuenta = $value->ac1_account;
-							}
-
-
-							$debito = 0;
-							$credito = 0;
-							$MontoSysDB = 0;
-							$MontoSysCR = 0;
-
-							switch ($codigoCuentaIngreso) {
-								case 1:
-									$debito = $granTotalIngreso;
-									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
-									break;
-
-								case 2:
-									$credito = $granTotalIngreso;
-									$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
-									break;
-
-								case 3:
-									$credito = $granTotalIngreso;
-									$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
-									break;
-
-								case 4:
-									$credito = $granTotalIngreso;
-									$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
-									break;
-
-								case 5:
-									$debito = $granTotalIngreso;
-									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
-									break;
-
-								case 6:
-									$debito = $granTotalIngreso;
-									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
-									break;
-
-								case 7:
-									$debito = $granTotalIngreso;
-									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
-									break;
-							}
-
-
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $cuenta,
-									':ac1_debit' => $debito,
-									':ac1_credit' => $credito,
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => $prc,
-									':ac1_uncode' => $unidad,
-									':ac1_prj_code' => $proyecto,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
-									':ac1_codref' => 1
-						));
-
-
-
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
-									);
-
-									 $this->response($respuesta);
-
-									 return;
-						}
-					}
+					// foreach ($DetalleConsolidadoIngreso as $key => $posicion) {
+					// 		$granTotalIngreso = 0;
+					// 		$codigoCuentaIngreso = "";
+					// 		$cuenta = "";
+					// 		$proyecto = "";
+					// 		$prc = "";
+					// 		$unidad = "";
+					// 		foreach ($posicion as $key => $value) {
+					// 					$granTotalIngreso = ( $granTotalIngreso + $value->em1_linetotal );
+					// 					$codigoCuentaIngreso = $value->codigoCuenta;
+					// 					$prc = $value->ac1_prc_code;
+					// 					$unidad = $value->ac1_uncode;
+					// 					$proyecto = $value->ac1_prj_code;
+					// 					$cuenta = $value->ac1_account;
+					// 		}
+					//
+					//
+					// 		$debito = 0;
+					// 		$credito = 0;
+					// 		$MontoSysDB = 0;
+					// 		$MontoSysCR = 0;
+					//
+					// 		switch ($codigoCuentaIngreso) {
+					// 			case 1:
+					// 				$debito = $granTotalIngreso;
+					// 				$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
+					// 				break;
+					//
+					// 			case 2:
+					// 				$credito = $granTotalIngreso;
+					// 				$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
+					// 				break;
+					//
+					// 			case 3:
+					// 				$credito = $granTotalIngreso;
+					// 				$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
+					// 				break;
+					//
+					// 			case 4:
+					// 				$credito = $granTotalIngreso;
+					// 				$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
+					// 				break;
+					//
+					// 			case 5:
+					// 				$debito = $granTotalIngreso;
+					// 				$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
+					// 				break;
+					//
+					// 			case 6:
+					// 				$debito = $granTotalIngreso;
+					// 				$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
+					// 				break;
+					//
+					// 			case 7:
+					// 				$debito = $granTotalIngreso;
+					// 				$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
+					// 				break;
+					// 		}
+					//
+					//
+					// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					//
+					// 				':ac1_trans_id' => $resInsertAsiento,
+					// 				':ac1_account' => $cuenta,
+					// 				':ac1_debit' => $debito,
+					// 				':ac1_credit' => $credito,
+					// 				':ac1_debit_sys' => round($MontoSysDB,2),
+					// 				':ac1_credit_sys' => round($MontoSysCR,2),
+					// 				':ac1_currex' => 0,
+					// 				':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+					// 				':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
+					// 				':ac1_debit_import' => 0,
+					// 				':ac1_credit_import' => 0,
+					// 				':ac1_debit_importsys' => 0,
+					// 				':ac1_credit_importsys' => 0,
+					// 				':ac1_font_key' => $resInsert,
+					// 				':ac1_font_line' => 1,
+					// 				':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
+					// 				':ac1_accountvs' => 1,
+					// 				':ac1_doctype' => 18,
+					// 				':ac1_ref1' => "",
+					// 				':ac1_ref2' => "",
+					// 				':ac1_ref3' => "",
+					// 				':ac1_prc_code' => $prc,
+					// 				':ac1_uncode' => $unidad,
+					// 				':ac1_prj_code' => $proyecto,
+					// 				':ac1_rescon_date' => NULL,
+					// 				':ac1_recon_total' => 0,
+					// 				':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
+					// 				':ac1_accperiod' => 1,
+					// 				':ac1_close' => 0,
+					// 				':ac1_cord' => 0,
+					// 				':ac1_ven_debit' => 1,
+					// 				':ac1_ven_credit' => 1,
+					// 				':ac1_fiscal_acct' => 0,
+					// 				':ac1_taxid' => 1,
+					// 				':ac1_isrti' => 0,
+					// 				':ac1_basert' => 0,
+					// 				':ac1_mmcode' => 0,
+					// 				':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
+					// 				':ac1_codref' => 1
+					// 	));
+					//
+					//
+					//
+					// 	if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+					// 			// Se verifica que el detalle no de error insertando //
+					// 	}else{
+					// 			// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+					// 			// se retorna el error y se detiene la ejecucion del codigo restante.
+					// 				$this->pedeo->trans_rollback();
+					//
+					// 				$respuesta = array(
+					// 					'error'   => true,
+					// 					'data'	  => $resDetalleAsiento,
+					// 					'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+					// 				);
+					//
+					// 				 $this->response($respuesta);
+					//
+					// 				 return;
+					// 	}
+					// }
 					//FIN Procedimiento para llenar Ingreso
 
 
 					//Procedimiento para llenar Impuestos
 
-					$granTotalIva = 0;
-
-					foreach ($DetalleConsolidadoIva as $key => $posicion) {
-							$granTotalIva = 0;
-
-							foreach ($posicion as $key => $value) {
-										$granTotalIva = $granTotalIva + $value->em1_vatsum;
-							}
-
-							$MontoSysDB = ($granTotalIva / $resMonedaSys[0]['tsa_value']);
-
-
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $value->em1_cuentaIva,
-									':ac1_debit' => 0,
-									':ac1_credit' => $granTotalIva,
-									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' => round($MontoSysDB,2),
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => NULL,
-									':ac1_uncode' => NULL,
-									':ac1_prj_code' => NULL,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
-									':ac1_codref' => 1
-						));
-
-
-
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-
-								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
-									);
-
-									 $this->response($respuesta);
-
-									 return;
-						}
-					}
+					// $granTotalIva = 0;
+					//
+					// foreach ($DetalleConsolidadoIva as $key => $posicion) {
+					// 		$granTotalIva = 0;
+					//
+					// 		foreach ($posicion as $key => $value) {
+					// 					$granTotalIva = $granTotalIva + $value->em1_vatsum;
+					// 		}
+					//
+					// 		$MontoSysDB = ($granTotalIva / $resMonedaSys[0]['tsa_value']);
+					//
+					//
+					// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					//
+					// 				':ac1_trans_id' => $resInsertAsiento,
+					// 				':ac1_account' => $value->em1_cuentaIva,
+					// 				':ac1_debit' => 0,
+					// 				':ac1_credit' => $granTotalIva,
+					// 				':ac1_debit_sys' => 0,
+					// 				':ac1_credit_sys' => round($MontoSysDB,2),
+					// 				':ac1_currex' => 0,
+					// 				':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+					// 				':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
+					// 				':ac1_debit_import' => 0,
+					// 				':ac1_credit_import' => 0,
+					// 				':ac1_debit_importsys' => 0,
+					// 				':ac1_credit_importsys' => 0,
+					// 				':ac1_font_key' => $resInsert,
+					// 				':ac1_font_line' => 1,
+					// 				':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
+					// 				':ac1_accountvs' => 1,
+					// 				':ac1_doctype' => 18,
+					// 				':ac1_ref1' => "",
+					// 				':ac1_ref2' => "",
+					// 				':ac1_ref3' => "",
+					// 				':ac1_prc_code' => NULL,
+					// 				':ac1_uncode' => NULL,
+					// 				':ac1_prj_code' => NULL,
+					// 				':ac1_rescon_date' => NULL,
+					// 				':ac1_recon_total' => 0,
+					// 				':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
+					// 				':ac1_accperiod' => 1,
+					// 				':ac1_close' => 0,
+					// 				':ac1_cord' => 0,
+					// 				':ac1_ven_debit' => 1,
+					// 				':ac1_ven_credit' => 1,
+					// 				':ac1_fiscal_acct' => 0,
+					// 				':ac1_taxid' => 1,
+					// 				':ac1_isrti' => 0,
+					// 				':ac1_basert' => 0,
+					// 				':ac1_mmcode' => 0,
+					// 				':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
+					// 				':ac1_codref' => 1
+					// 	));
+					//
+					//
+					//
+					// 	if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+					// 			// Se verifica que el detalle no de error insertando //
+					// 	}else{
+					//
+					// 			// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+					// 			// se retorna el error y se detiene la ejecucion del codigo restante.
+					// 				$this->pedeo->trans_rollback();
+					//
+					// 				$respuesta = array(
+					// 					'error'   => true,
+					// 					'data'	  => $resDetalleAsiento,
+					// 					'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+					// 				);
+					//
+					// 				 $this->response($respuesta);
+					//
+					// 				 return;
+					// 	}
+					// }
 
 					//FIN Procedimiento para llenar Impuestos
 
@@ -1119,7 +1120,7 @@ class SalesDel extends REST_Controller {
 												$respuesta = array(
 													'error'   => true,
 													'data'	  => $resArticulo,
-													'mensaje'	=> 'No se encontro la cuenta puente para costo'
+													'mensaje'	=> 'No se encontro la cuenta puente para costo');
 
 												 $this->response($respuesta);
 
@@ -1221,126 +1222,126 @@ class SalesDel extends REST_Controller {
 
 				//Procedimiento para llenar cuentas por cobrar
 
-					$sqlcuentaCxP = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
-													 JOIN dmgs  AS f2
-													 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-													 WHERE  f1.dms_card_code = :dms_card_code";
-
-					$rescuentaCxP = $this->pedeo->queryTable($sqlcuentaCxP, array(":dms_card_code" => $Data['vem_cardcode']));
-
-
-
-					if(isset( $rescuentaCxP[0] )){
-
-								$debitoo = 0;
-								$creditoo = 0;
-								$MontoSysDB = 0;
-								$MontoSysCR = 0;
-
-								$cuentaCxP = $rescuentaCxP[0]['mgs_acct'];
-
-								$codigo2= substr($rescuentaCxP[0]['mgs_acct'], 0, 1);
-
-
-								if( $codigo2 == 1 || $codigo2 == "1" ){
-										$debitoo = $Data['vem_doctotal'];
-										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
-								}else if( $codigo2 == 2 || $codigo2 == "2" ){
-										$creditoo = $Data['vem_doctotal'];
-										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
-								}else if( $codigo2 == 3 || $codigo2 == "3" ){
-										$creditoo = $Data['vem_doctotal'];
-										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
-								}else if( $codigo2 == 4 || $codigo2 == "4" ){
-									  $creditoo = $Data['vem_doctotal'];
-										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
-								}else if( $codigo2 == 5  || $codigo2 == "5" ){
-									  $debitoo = $Data['vem_doctotal'];
-										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
-								}else if( $codigo2 == 6 || $codigo2 == "6" ){
-									  $debitoo = $Data['vem_doctotal'];
-										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
-								}else if( $codigo2 == 7 || $codigo2 == "7" ){
-									  $debitoo = $Data['vem_doctotal'];
-										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
-								}
-
-								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-										':ac1_trans_id' => $resInsertAsiento,
-										':ac1_account' => $cuentaCxP,
-										':ac1_debit' => $debitoo,
-										':ac1_credit' => $creditoo,
-										':ac1_debit_sys' => round($MontoSysDB,2),
-										':ac1_credit_sys' => round($MontoSysCR,2),
-										':ac1_currex' => 0,
-										':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
-										':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
-										':ac1_debit_import' => 0,
-										':ac1_credit_import' => 0,
-										':ac1_debit_importsys' => 0,
-										':ac1_credit_importsys' => 0,
-										':ac1_font_key' => $resInsert,
-										':ac1_font_line' => 1,
-										':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
-										':ac1_accountvs' => 1,
-										':ac1_doctype' => 18,
-										':ac1_ref1' => "",
-										':ac1_ref2' => "",
-										':ac1_ref3' => "",
-										':ac1_prc_code' => NULL,
-										':ac1_uncode' => NULL,
-										':ac1_prj_code' => NULL,
-										':ac1_rescon_date' => NULL,
-										':ac1_recon_total' => 0,
-										':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
-										':ac1_accperiod' => 1,
-										':ac1_close' => 0,
-										':ac1_cord' => 0,
-										':ac1_ven_debit' => 1,
-										':ac1_ven_credit' => 1,
-										':ac1_fiscal_acct' => 0,
-										':ac1_taxid' => 1,
-										':ac1_isrti' => 0,
-										':ac1_basert' => 0,
-										':ac1_mmcode' => 0,
-										':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
-										':ac1_codref' => 1
-							));
-
-							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-									// Se verifica que el detalle no de error insertando //
-							}else{
-
-									// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
-									// se retorna el error y se detiene la ejecucion del codigo restante.
-										$this->pedeo->trans_rollback();
-
-										$respuesta = array(
-											'error'   => true,
-											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
-										);
-
-										 $this->response($respuesta);
-
-										 return;
-							}
-
-					}else{
-
-								$this->pedeo->trans_rollback();
-
-								$respuesta = array(
-									'error'   => true,
-									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la Entrega de ventas, el tercero no tiene cuenta asociada'
-								);
-
-								 $this->response($respuesta);
-
-								 return;
-					}
+					// $sqlcuentaCxP = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
+					// 								 JOIN dmgs  AS f2
+					// 								 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
+					// 								 WHERE  f1.dms_card_code = :dms_card_code";
+					//
+					// $rescuentaCxP = $this->pedeo->queryTable($sqlcuentaCxP, array(":dms_card_code" => $Data['vem_cardcode']));
+					//
+					//
+					//
+					// if(isset( $rescuentaCxP[0] )){
+					//
+					// 			$debitoo = 0;
+					// 			$creditoo = 0;
+					// 			$MontoSysDB = 0;
+					// 			$MontoSysCR = 0;
+					//
+					// 			$cuentaCxP = $rescuentaCxP[0]['mgs_acct'];
+					//
+					// 			$codigo2= substr($rescuentaCxP[0]['mgs_acct'], 0, 1);
+					//
+					//
+					// 			if( $codigo2 == 1 || $codigo2 == "1" ){
+					// 					$debitoo = $Data['vem_doctotal'];
+					// 					$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
+					// 			}else if( $codigo2 == 2 || $codigo2 == "2" ){
+					// 					$creditoo = $Data['vem_doctotal'];
+					// 					$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
+					// 			}else if( $codigo2 == 3 || $codigo2 == "3" ){
+					// 					$creditoo = $Data['vem_doctotal'];
+					// 					$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
+					// 			}else if( $codigo2 == 4 || $codigo2 == "4" ){
+					// 				  $creditoo = $Data['vem_doctotal'];
+					// 					$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
+					// 			}else if( $codigo2 == 5  || $codigo2 == "5" ){
+					// 				  $debitoo = $Data['vem_doctotal'];
+					// 					$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
+					// 			}else if( $codigo2 == 6 || $codigo2 == "6" ){
+					// 				  $debitoo = $Data['vem_doctotal'];
+					// 					$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
+					// 			}else if( $codigo2 == 7 || $codigo2 == "7" ){
+					// 				  $debitoo = $Data['vem_doctotal'];
+					// 					$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
+					// 			}
+					//
+					// 			$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					//
+					// 					':ac1_trans_id' => $resInsertAsiento,
+					// 					':ac1_account' => $cuentaCxP,
+					// 					':ac1_debit' => $debitoo,
+					// 					':ac1_credit' => $creditoo,
+					// 					':ac1_debit_sys' => round($MontoSysDB,2),
+					// 					':ac1_credit_sys' => round($MontoSysCR,2),
+					// 					':ac1_currex' => 0,
+					// 					':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
+					// 					':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
+					// 					':ac1_debit_import' => 0,
+					// 					':ac1_credit_import' => 0,
+					// 					':ac1_debit_importsys' => 0,
+					// 					':ac1_credit_importsys' => 0,
+					// 					':ac1_font_key' => $resInsert,
+					// 					':ac1_font_line' => 1,
+					// 					':ac1_font_type' => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
+					// 					':ac1_accountvs' => 1,
+					// 					':ac1_doctype' => 18,
+					// 					':ac1_ref1' => "",
+					// 					':ac1_ref2' => "",
+					// 					':ac1_ref3' => "",
+					// 					':ac1_prc_code' => NULL,
+					// 					':ac1_uncode' => NULL,
+					// 					':ac1_prj_code' => NULL,
+					// 					':ac1_rescon_date' => NULL,
+					// 					':ac1_recon_total' => 0,
+					// 					':ac1_made_user' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
+					// 					':ac1_accperiod' => 1,
+					// 					':ac1_close' => 0,
+					// 					':ac1_cord' => 0,
+					// 					':ac1_ven_debit' => 1,
+					// 					':ac1_ven_credit' => 1,
+					// 					':ac1_fiscal_acct' => 0,
+					// 					':ac1_taxid' => 1,
+					// 					':ac1_isrti' => 0,
+					// 					':ac1_basert' => 0,
+					// 					':ac1_mmcode' => 0,
+					// 					':ac1_legal_num' => isset($Data['vem_cardcode'])?$Data['vem_cardcode']:NULL,
+					// 					':ac1_codref' => 1
+					// 		));
+					//
+					// 		if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+					// 				// Se verifica que el detalle no de error insertando //
+					// 		}else{
+					//
+					// 				// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+					// 				// se retorna el error y se detiene la ejecucion del codigo restante.
+					// 					$this->pedeo->trans_rollback();
+					//
+					// 					$respuesta = array(
+					// 						'error'   => true,
+					// 						'data'	  => $resDetalleAsiento,
+					// 						'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+					// 					);
+					//
+					// 					 $this->response($respuesta);
+					//
+					// 					 return;
+					// 		}
+					//
+					// }else{
+					//
+					// 			$this->pedeo->trans_rollback();
+					//
+					// 			$respuesta = array(
+					// 				'error'   => true,
+					// 				'data'	  => $resDetalleAsiento,
+					// 				'mensaje'	=> 'No se pudo registrar la Entrega de ventas, el tercero no tiene cuenta asociada'
+					// 			);
+					//
+					// 			 $this->response($respuesta);
+					//
+					// 			 return;
+					// }
 					//FIN Procedimiento para llenar cuentas por cobrar
 
 					// Si todo sale bien despues de insertar el detalle de la Entrega de Ventas
@@ -1451,7 +1452,7 @@ class SalesDel extends REST_Controller {
 							':vem_pricelist' => is_numeric($Data['vem_pricelist'])?$Data['vem_pricelist']:0,
 							':vem_cardcode' => isset($Data['vem_pricelist'])?$Data['vem_pricelist']:NULL,
 							':vem_cardname' => isset($Data['vem_cardname'])?$Data['vem_cardname']:NULL,
-							':vem_currency' => is_numeric($Data['vem_currency'])?$Data['vem_currency']:0,
+							':vem_currency' => isset($Data['vem_currency'])?$Data['vem_currency']:NULL,
 							':vem_contacid' => isset($Data['vem_contacid'])?$Data['vem_contacid']:NULL,
 							':vem_slpcode' => is_numeric($Data['vem_slpcode'])?$Data['vem_slpcode']:0,
 							':vem_empid' => is_numeric($Data['vem_empid'])?$Data['vem_empid']:0,
@@ -1480,9 +1481,9 @@ class SalesDel extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
 																			em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-																			em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
+																			em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory,em1_acciva)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
 																			:em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
-																			:em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory)";
+																			:em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 											':em1_docentry' => $resInsert,
@@ -1503,7 +1504,8 @@ class SalesDel extends REST_Controller {
 											':em1_basetype' => is_numeric($detail['em1_basetype'])?$detail['em1_basetype']:0,
 											':em1_doctype' => is_numeric($detail['em1_doctype'])?$detail['em1_doctype']:0,
 											':em1_avprice' => is_numeric($detail['em1_avprice'])?$detail['em1_avprice']:0,
-											':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL
+											':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL,
+											':em1_acciva' => is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:0
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){

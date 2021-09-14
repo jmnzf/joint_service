@@ -272,7 +272,7 @@ class SalesOrder extends REST_Controller {
          $this->response($respuesta);
 	}
 
-  //ACTUALIZAR COTIZACION
+  //ACTUALIZAR PEDIDO
   public function updateSalesOrder_post(){
 
       $Data = $this->post();
@@ -417,7 +417,7 @@ class SalesOrder extends REST_Controller {
 
 												$respuesta = array(
 													'error'   => true,
-													'data' => $resInsert,
+													'data'    => $resInsert,
 													'mensaje'	=> 'No se pudo registrar la cotización'
 												);
 
