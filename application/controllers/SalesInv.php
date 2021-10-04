@@ -83,7 +83,7 @@ class SalesInv extends REST_Controller {
           $respuesta = array(
             'error' => true,
             'data'  => array(),
-            'mensaje' =>'No se encontro el detalle de la Entrega de ventas'
+            'mensaje' =>'No se encontro el detalle de la factura de ventas'
           );
 
           $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -132,27 +132,6 @@ class SalesInv extends REST_Controller {
 				}
 
 
-				$sqlMonedaSys = "SELECT tasa.tsa_value
-													FROM  pgec
-													INNER JOIN tasa
-													ON trim(tasa.tsa_currd) = trim(pgec.pgm_symbol)
-													WHERE pgec.pgm_system = :pgm_system AND tasa.tsa_date = :tsa_date";
-
-				$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1, ':tsa_date' => $Data['dvf_docdate']));
-
-				if(isset($resMonedaSys[0])){
-
-				}else{
-						$respuesta = array(
-							'error' => true,
-							'data'  => array(),
-							'mensaje' =>'No se encontro la moneda de sistema para el documento'
-						);
-
-						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-						return;
-				}
 
 				//Obtener Carpeta Principal del Proyecto
 				$sqlMainFolder = " SELECT * FROM params";
@@ -169,6 +148,208 @@ class SalesInv extends REST_Controller {
 
 						return;
 				}
+				// FIN PROCESO PARA OBTENER LA CARPETA PRINCIPAL DEL PROYECTO
+
+
+				// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+				// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
+				$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
+				$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
+
+				if(isset($resMonedaLoc[0])){
+
+				}else{
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encontro la moneda local.'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
+				$MONEDALOCAL = trim($resMonedaLoc[0]['pgm_symbol']);
+
+				// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
+				$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
+				$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
+
+				if(isset($resMonedaSys[0])){
+
+				}else{
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encontro la moneda de sistema.'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
+
+				$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
+
+				//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
+				// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
+				$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+				$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['dvf_currency'], ':tsa_date' => $Data['dvf_docdate']));
+
+				if(isset($resBusTasa[0])){
+
+				}else{
+
+						if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['dvf_currency'].' en la actual fecha del documento: '.$Data['dvf_docdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+						}
+				}
+
+
+				$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+				$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['dvf_docdate']));
+
+				if(isset($resBusTasa2[0])){
+
+				}else{
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['dvf_docdate']
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
+				$TasaDocLoc = isset($resBusTasa[0]['tsa_value']) ? $resBusTasa[0]['tsa_value'] : 1;
+				$TasaLocSys = $resBusTasa2[0]['tsa_value'];
+
+				// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+
+
+				// SE VERIFICA SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
+
+				$sqlVerificarAprobacion = "SELECT * FROM tbed WHERE bed_docentry =:bed_docentry AND bed_doctype =:bed_doctype AND bed_status =:bed_status";
+				$resVerificarAprobacion = $this->pedeo->queryTable($sqlVerificarAprobacion, array(
+
+									':bed_docentry' => $Data['dvf_baseentry'],
+									':bed_doctype'  => $Data['dvf_basetype'],
+									':bed_status'   => 4
+				));
+
+				if(!isset($resVerificarAprobacion[0])){
+
+								//VERIFICAR MODELO DE APROBACION
+
+								$sqlDocModelo = " SELECT * FROM tmau inner join mau1 on mau_docentry = au1_docentry where mau_doctype = :mau_doctype";
+								$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(':mau_doctype' => $Data['dvf_doctype']));
+
+								if(isset($resDocModelo[0])){
+
+										$sqlModUser = "SELECT aus_id FROM taus
+																	 INNER JOIN pgus
+																	 ON aus_id_usuario = pgu_id_usuario
+																	 WHERE aus_id_model = :aus_id_model
+																	 AND pgu_code_user = :pgu_code_user";
+
+										$resModUser = $this->pedeo->queryTable($sqlModUser, array(':aus_id_model' =>$resDocModelo[0]['mau_docentry'], ':pgu_code_user' =>$Data['dvf_createby']));
+
+										if(isset($resModUser[0])){
+													// VALIDACION DE APROBACION
+
+													$condicion1 = $resDocModelo[0]['au1_c1']; // ESTO ME DICE SI LA CONDICION DEL DOCTOTAL ES 1 MAYOR 2 MENOR
+													$valorDocTotal = $resDocModelo[0]['au1_doctotal'];
+													$valorSociosNegocio = $resDocModelo[0]['au1_sn'];
+													$TotalDocumento = $Data['dvf_doctotal'];
+
+													if(trim($Data['dvf_currency']) != $TasaDocLoc){
+															$TotalDocumento = ($TotalDocumento * $TasaDocLoc);
+													}
+
+
+
+													if(is_numeric($valorDocTotal) && $valorDocTotal > 0){ //SI HAY UN VALOR Y SI ESTE ES MAYOR A CERO
+
+															if( !empty($valorSociosNegocio ) ){ // CON EL SOCIO DE NEGOCIO
+
+																	if($condicion1 == 1){
+
+																		if( $TotalDocumento >= $valorDocTotal ){
+
+																			if( in_array($Data['dvf_cardcode'], explode(",", $valorSociosNegocio) )){
+
+																					$this->setAprobacion($Data, $ContenidoDetalle,$resMainFolder[0]['main_folder'],'dvf','fv1');
+																			}
+																		}
+																	}else if($condicion1 == 2){
+
+																		if($TotalDocumento <= $valorDocTotal  ){
+																			if( in_array($Data['dvf_cardcode'], explode(",", $valorSociosNegocio) )){
+
+																					 $this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvf','fv1');
+																			}
+																		}
+																	}
+															}else{ // SIN EL SOCIO DE NEGOCIO
+
+
+																		if($condicion1 == 1){
+																			if($TotalDocumento >= $valorDocTotal){
+
+																				 $this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvf','fv1');
+
+																			}
+																		}else if($condicion1 == 2){
+																			if($TotalDocumento <= $valorDocTotal ){
+
+																					$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvf','fv1');
+
+																			}
+																		}
+															}
+													}else{ // SI NO SE COMPARA EL TOTAL DEL DOCUMENTO
+
+															if( !empty($valorSociosNegocio) ){
+
+																if( in_array($Data['dvf_cardcode'], explode(",", $valorSociosNegocio) )){
+
+																					$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvf','fv1');
+																}
+
+															}else{
+
+																		$respuesta = array(
+																			'error' => true,
+																			'data'  => array(),
+																			'mensaje' =>'No se ha encontraro condiciones en el modelo de aprobacion, favor contactar con su administrador del sistema'
+																		);
+
+																		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+																		return;
+															}
+													}
+										}
+								}
+
+							//VERIFICAR MODELO DE PROBACION
+				}
+		  	// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
+
 
         $sqlInsert = "INSERT INTO dvfv(dvf_series, dvf_docnum, dvf_docdate, dvf_duedate, dvf_duedev, dvf_pricelist, dvf_cardcode,
                       dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
@@ -185,6 +366,7 @@ class SalesInv extends REST_Controller {
 				// la base de datos a su estado original.
 
 			  $this->pedeo->trans_begin();
+
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
               ':dvf_docnum' => $DocNumVerificado,
@@ -236,7 +418,7 @@ class SalesInv extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'    => $resActualizarNumeracion,
-									'mensaje'	=> 'No se pudo crear la Entrega de ventas'
+									'mensaje'	=> 'No se pudo crear la factura de ventas'
 								);
 
 								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -244,6 +426,46 @@ class SalesInv extends REST_Controller {
 								return;
 					}
 					// Fin de la actualizacion de la numeracion del documento
+
+
+
+					//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+										':bed_docentry' => $resInsert,
+										':bed_doctype' => $Data['dvf_doctype'],
+										':bed_status' => 1, //ESTADO CERRADO
+										':bed_createby' => $Data['dvf_createby'],
+										':bed_date' => date('Y-m-d'),
+										':bed_baseentry' => NULL,
+										':bed_basetype' => NULL
+					));
+
+
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+					}else{
+
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+					}
+
+					//FIN PROCESO ESTADO DEL DOCUMENTO
 
 
 					//Se agregan los asientos contables*/*******
@@ -288,20 +510,21 @@ class SalesInv extends REST_Controller {
 							// Se verifica que el detalle no de error insertando //
 					}else{
 
-							// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 							// se retorna el error y se detiene la ejecucion del codigo restante.
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resInsertAsiento,
-									'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+									'mensaje'	=> 'No se pudo registrar la factura de ventas'
 								);
 
 								 $this->response($respuesta);
 
 								 return;
 					}
+
 
 
           foreach ($ContenidoDetalle as $key => $detail) {
@@ -339,14 +562,14 @@ class SalesInv extends REST_Controller {
 										// Se verifica que el detalle no de error insertando //
 								}else{
 
-										// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 										// se retorna el error y se detiene la ejecucion del codigo restante.
 											$this->pedeo->trans_rollback();
 
 											$respuesta = array(
 												'error'   => true,
 												'data' => $resInsert,
-												'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+												'mensaje'	=> 'No se pudo registrar la factura de ventas'
 											);
 
 											 $this->response($respuesta);
@@ -391,14 +614,14 @@ class SalesInv extends REST_Controller {
 														// Se verifica que el detalle no de error insertando //
 												}else{
 
-														// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+														// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 														// se retorna el error y se detiene la ejecucion del codigo restante.
 															$this->pedeo->trans_rollback();
 
 															$respuesta = array(
 																'error'   => true,
 																'data' => $sqlInserMovimiento,
-																'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+																'mensaje'	=> 'No se pudo registrar la factura de ventas'
 															);
 
 															 $this->response($respuesta);
@@ -415,7 +638,7 @@ class SalesInv extends REST_Controller {
 													$respuesta = array(
 														'error'   => true,
 														'data' => $resCostoMomentoRegistro,
-														'mensaje'	=> 'No se pudo registrar la Entrega de ventas, no se encontro el costo del articulo'
+														'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro el costo del articulo'
 													);
 
 													 $this->response($respuesta);
@@ -468,8 +691,13 @@ class SalesInv extends REST_Controller {
 																	 $respuesta = array(
 																		 'error'   => true,
 																		 'data'    => $resUpdateCostoCantidad,
-																		 'mensaje'	=> 'No se pudo crear la Entrega de Ventas'
+																		 'mensaje'	=> 'No se pudo crear la factura de Ventas'
 																	 );
+
+
+																	 $this->response($respuesta);
+
+																	 return;
 															 }
 
 													}else{
@@ -481,6 +709,11 @@ class SalesInv extends REST_Controller {
 																		 'data'    => $resUpdateCostoCantidad,
 																		 'mensaje' => 'No hay existencia para el item: '.$detail['fv1_itemcode']
 																	 );
+
+
+																	 $this->response($respuesta);
+
+																	 return;
 													}
 
 												}else{
@@ -552,7 +785,7 @@ class SalesInv extends REST_Controller {
 											$respuesta = array(
 												'error'   => true,
 												'data' => $resArticulo,
-												'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+												'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro la cuenta contable (costo, inventario) del grupo de articulo para el item '.$detail['fv1_itemcode']
 											);
 
 											 $this->response($respuesta);
@@ -702,10 +935,15 @@ class SalesInv extends REST_Controller {
 
           }
 
+					// FIN DETALLE Factura
+
+
 					//Procedimiento para llenar Ingreso
+
 
 					foreach ($DetalleConsolidadoIngreso as $key => $posicion) {
 							$granTotalIngreso = 0;
+							$granTotalIngresoOriginal = 0;
 							$codigoCuentaIngreso = "";
 							$cuenta = "";
 							$proyecto = "";
@@ -725,41 +963,76 @@ class SalesInv extends REST_Controller {
 							$credito = 0;
 							$MontoSysDB = 0;
 							$MontoSysCR = 0;
+							$granTotalIngresoOriginal = $granTotalIngreso;
+
+							if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+									$granTotalIngreso = ($granTotalIngreso * $TasaDocLoc);
+							}
+
+							$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
 
 							switch ($codigoCuentaIngreso) {
 								case 1:
 									$debito = $granTotalIngreso;
-									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysDB = ($debito / $TasaLocSys);
+									}else{
+											$MontoSysDB = $granTotalIngresoOriginal;
+									}
 									break;
 
 								case 2:
 									$credito = $granTotalIngreso;
-									$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysCR = ($credito / $TasaLocSys);
+									}else{
+											$MontoSysCR = $granTotalIngresoOriginal;
+									}
 									break;
 
 								case 3:
 									$credito = $granTotalIngreso;
-									$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysCR = ($credito / $TasaLocSys);
+									}else{
+											$MontoSysCR = $granTotalIngresoOriginal;
+									}
 									break;
 
 								case 4:
 									$credito = $granTotalIngreso;
-									$MontoSysCR = ($credito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysCR = ($credito / $TasaLocSys);
+									}else{
+											$MontoSysCR = $granTotalIngresoOriginal;
+									}
 									break;
 
 								case 5:
 									$debito = $granTotalIngreso;
-									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysDB = ($debito / $TasaLocSys);
+									}else{
+											$MontoSysDB = $granTotalIngresoOriginal;
+									}
 									break;
 
 								case 6:
 									$debito = $granTotalIngreso;
-									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysDB = ($debito / $TasaLocSys);
+									}else{
+											$MontoSysDB = $granTotalIngresoOriginal;
+									}
 									break;
 
 								case 7:
 									$debito = $granTotalIngreso;
-									$MontoSysDB = ($debito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysDB = ($debito / $TasaLocSys);
+									}else{
+											$MontoSysDB = $granTotalIngresoOriginal;
+									}
 									break;
 							}
 
@@ -812,14 +1085,14 @@ class SalesInv extends REST_Controller {
 						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
 								// Se verifica que el detalle no de error insertando //
 						}else{
-								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 									$this->pedeo->trans_rollback();
 
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+										'mensaje'	=> 'No se pudo registrar la factura de ventas'
 									);
 
 									 $this->response($respuesta);
@@ -830,19 +1103,32 @@ class SalesInv extends REST_Controller {
 					//FIN Procedimiento para llenar Ingreso
 
 
+
 					//Procedimiento para llenar Impuestos
+
 
 					$granTotalIva = 0;
 
 					foreach ($DetalleConsolidadoIva as $key => $posicion) {
 							$granTotalIva = 0;
+							$granTotalIvaOriginal = 0;
 
 							foreach ($posicion as $key => $value) {
 										$granTotalIva = $granTotalIva + $value->fv1_vatsum;
 							}
 
-							$MontoSysDB = ($granTotalIva / $resMonedaSys[0]['tsa_value']);
+							$granTotalIvaOriginal = $granTotalIva;
 
+							if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+									$granTotalIva = ($granTotalIva * $TasaDocLoc);
+							}
+
+
+							if(trim($Data['dvf_currency']) != $MONEDASYS ){
+									$MontoSysDB = ($granTotalIva / $TasaLocSys);
+							}else{
+									$MontoSysDB = $granTotalIvaOriginal;
+							}
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -893,14 +1179,14 @@ class SalesInv extends REST_Controller {
 								// Se verifica que el detalle no de error insertando //
 						}else{
 
-								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 								// se retorna el error y se detiene la ejecucion del codigo restante.
 									$this->pedeo->trans_rollback();
 
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+										'mensaje'	=> 'No se pudo registrar la factura de ventas'
 									);
 
 									 $this->response($respuesta);
@@ -911,12 +1197,11 @@ class SalesInv extends REST_Controller {
 
 					//FIN Procedimiento para llenar Impuestos
 
-
-
-					if($Data['dvf_basetype'] != 3){ // solo si el documento no viene de una entrada
+					if($Data['dvf_basetype'] != 3){ // solo si el documento no viene de una entrega
 							//Procedimiento para llenar costo inventario
 							foreach ($DetalleConsolidadoCostoInventario as $key => $posicion) {
 									$grantotalCostoInventario = 0 ;
+									$grantotalCostoInventarioOriginal = 0;
 									$cuentaInventario = "";
 									foreach ($posicion as $key => $value) {
 
@@ -960,7 +1245,7 @@ class SalesInv extends REST_Controller {
 														}
 
 												}else{
-														// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+														// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 														// se retorna el error y se detiene la ejecucion del codigo restante.
 														$this->pedeo->trans_rollback();
 
@@ -978,27 +1263,63 @@ class SalesInv extends REST_Controller {
 
 									$codigo3 = substr($cuentaInventario, 0, 1);
 
+									$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
+
+									if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+											$grantotalCostoInventario = ($grantotalCostoInventario / $TasaLocSys);
+									}
+
 									if( $codigo3 == 1 || $codigo3 == "1" ){
 											$cdito = $grantotalCostoInventario;
-											$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
+											if(trim($Data['dvf_currency']) != $MONEDASYS ){
+													$MontoSysCR = ($cdito / $TasaLocSys);
+											}else{
+													$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+											}
+
 									}else if( $codigo3 == 2 || $codigo3 == "2" ){
 											$cdito = $grantotalCostoInventario;
-											$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
+											if(trim($Data['dvf_currency']) != $MONEDASYS ){
+													$MontoSysCR = ($cdito / $TasaLocSys);
+											}else{
+													$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+											}
 									}else if( $codigo3 == 3 || $codigo3 == "3" ){
 											$cdito = $grantotalCostoInventario;
-											$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
+											if(trim($Data['dvf_currency']) != $MONEDASYS ){
+													$MontoSysCR = ($cdito / $TasaLocSys);
+											}else{
+													$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+											}
 									}else if( $codigo3 == 4 || $codigo3 == "4" ){
 											$cdito = $grantotalCostoInventario;
-											$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
+											if(trim($Data['dvf_currency']) != $MONEDASYS ){
+													$MontoSysCR = ($cdito / $TasaLocSys);
+											}else{
+													$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+											}
 									}else if( $codigo3 == 5  || $codigo3 == "5" ){
 											$dbito = $grantotalCostoInventario;
-											$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
+											if(trim($Data['dvf_currency']) != $MONEDASYS ){
+													$MontoSysDB = ($dbito / $TasaLocSys);
+											}else{
+													$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+											}
 									}else if( $codigo3 == 6 || $codigo3 == "6" ){
 											$dbito = $grantotalCostoInventario;
-											$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
+											if(trim($Data['dvf_currency']) != $MONEDASYS ){
+													$MontoSysDB = ($dbito / $TasaLocSys);
+											}else{
+													$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+											}
 									}else if( $codigo3 == 7 || $codigo3 == "7" ){
 											$dbito = $grantotalCostoInventario;
-											$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
+											if(trim($Data['dvf_currency']) != $MONEDASYS ){
+													$MontoSysDB = ($dbito / $TasaLocSys);
+											}else{
+													$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+											}
 									}
 
 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1048,14 +1369,14 @@ class SalesInv extends REST_Controller {
 										// Se verifica que el detalle no de error insertando //
 								}else{
 
-										// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 										// se retorna el error y se detiene la ejecucion del codigo restante.
 											$this->pedeo->trans_rollback();
 
 											$respuesta = array(
 												'error'   => true,
 												'data'	  => $resDetalleAsiento,
-												'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+												'mensaje'	=> 'No se pudo registrar la factura de ventas'
 											);
 
 											 $this->response($respuesta);
@@ -1072,6 +1393,7 @@ class SalesInv extends REST_Controller {
 					// Procedimiento para llenar costo costo
 					foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
 							$grantotalCostoCosto = 0 ;
+							$grantotalCostoCostoOriginal = 0 ;
 							$cuentaCosto = "";
 							$dbito = 0;
 							$cdito = 0;
@@ -1119,7 +1441,7 @@ class SalesInv extends REST_Controller {
 														}
 
 												}else{
-														// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+														// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 														// se retorna el error y se detiene la ejecucion del codigo restante.
 														$this->pedeo->trans_rollback();
 
@@ -1134,7 +1456,7 @@ class SalesInv extends REST_Controller {
 														 return;
 												}
 
-										}else if($Data['dvf_basetype'] == 3){//Procedimiento cuando sea tipo documento 3
+										}else if($Data['dvf_basetype'] == 3){//Procedimiento cuando sea tipo documento 3 (Entrega)
 
 												$sqlArticulo = "SELECT pge_bridge_inv FROM pgem"; // Cuenta costo puente
 												$resArticulo = $this->pedeo->queryTable($sqlArticulo, array());// Cuenta costo puente
@@ -1144,13 +1466,13 @@ class SalesInv extends REST_Controller {
 														$cdito = 0;
 														$MontoSysDB = 0;
 														$MontoSysCR = 0;
-													// is_numeric($Data['dvf_basetype'])?$Data['dvf_basetype']:0,
-							           // is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+
+
 														$sqlCosto = "SELECT
 																					CASE
 																						WHEN bmi_quantity < 0 THEN bmi_quantity * -1
 																						ELSE bmi_quantity
-																					END AS cantidad, bmi_cost
+																					END AS cantidad, bmi_cost,bmy_baseentry,bmy_doctype
 																				FROM tbmi
 																				WHERE bmy_doctype = :bmy_doctype
 																				AND bmy_baseentry = :bmy_baseentry
@@ -1161,12 +1483,9 @@ class SalesInv extends REST_Controller {
 														if( isset( $resCosto[0] ) ){
 
 																	$cuentaCosto = $resArticulo[0]['pge_bridge_inv'];
-
-
 																	$costoArticulo = $resCosto[0]['bmi_cost'];
 
 																	// SE VALIDA QUE LA CANTIDAD DEL ITEM A FACTURAR NO SUPERE LA CANTIDAD EN EL DOCUMENTO DE ENTREGA
-
 
 																	if($value->fv1_quantity > $resCosto[0]['cantidad']){
 																				//Se devuelve la transaccion
@@ -1175,7 +1494,7 @@ class SalesInv extends REST_Controller {
 																				$respuesta = array(
 																					'error'   => true,
 																					'data'	  => $resArticulo,
-																					'mensaje'	=> 'La cantidad del item facturado supera el documento de entrada '.$value->fv1_itemcode
+																					'mensaje'	=> 'La cantidad a facturar  mayor a la entregada, para el item: '.$value->fv1_itemcode
 																				);
 
 																				 $this->response($respuesta);
@@ -1183,6 +1502,61 @@ class SalesInv extends REST_Controller {
 																				 return;
 																	}
 
+																	//SE VALIDA QUE EL TOTAL FACTURADO NO SUPERE EL TOTAL ENTEGRADO
+
+																	$sqlFacturadoItem = "SELECT coalesce((SUM(fv1_quantity)), 0) AS cantidaditem
+																												FROM dvfv
+																												INNER JOIN vfv1
+																												ON dvf_docentry = fv1_docentry
+																												WHERE dvf_baseentry = :dvf_baseentry
+																												AND fv1_itemcode = :fv1_itemcode
+																												AND dvf_basetype = :dvf_basetype";
+
+
+																	$resFacturadoItem = $this->pedeo->queryTable($sqlFacturadoItem, array(
+
+																					':dvf_baseentry' =>  $resCosto[0]['bmy_baseentry'],
+																					':fv1_itemcode'  =>  $value->fv1_itemcode,
+																					':dvf_basetype'  =>  $resCosto[0]['bmy_doctype']
+																	));
+
+
+																	if ( isset($resFacturadoItem[0]) ){
+
+																			$CantidadOriginal = ($resFacturadoItem[0]['cantidaditem'] - $value->fv1_quantity);
+
+																			if ( $CantidadOriginal >= $resCosto[0]['cantidad'] ){
+																						//Se devuelve la transaccion
+																						$this->pedeo->trans_rollback();
+																						$respuesta = array(
+																							'error'   => true,
+																							'data'	  => $resArticulo,
+																							'mensaje'	=> 'No se puede facturar una cantidad mayor a la entregada, para el item: '.$value->fv1_itemcode
+																						);
+
+																						 $this->response($respuesta);
+
+																						 return;
+																			}else{
+
+																					$resto = ($resCosto[0]['cantidad'] - $CantidadOriginal);
+
+																					if($value->fv1_quantity > $resto){
+
+																							$this->pedeo->trans_rollback();
+																							$respuesta = array(
+																								'error'   => true,
+																								'data'	  => $resArticulo,
+																								'mensaje'	=> 'No se puede facturar una cantidad mayor a la entregada, para el item: '.$value->fv1_itemcode
+																							);
+
+																							 $this->response($respuesta);
+
+																							 return;
+																					}
+
+																			}
+																	}
 
 																	$cantidadArticulo = $value->fv1_quantity;
 																	$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
@@ -1203,7 +1577,7 @@ class SalesInv extends REST_Controller {
 														}
 
 												}else{
-														// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+														// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 														// se retorna el error y se detiene la ejecucion del codigo restante.
 														$this->pedeo->trans_rollback();
 
@@ -1220,33 +1594,69 @@ class SalesInv extends REST_Controller {
 
 										}
 
-
-
 							}
+
+
 
 								$codigo3 = substr($cuentaCosto, 0, 1);
 
+								$grantotalCostoCostoOriginal = $grantotalCostoCosto;
+
+								if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+										$grantotalCostoCosto = ($grantotalCostoCosto / $TasaLocSys);
+								}
+
+
 								if( $codigo3 == 1 || $codigo3 == "1" ){
 									$cdito = 	$grantotalCostoCosto; //Se voltearon las cuenta
-									$MontoSysCR = ($dbito / $resMonedaSys[0]['tsa_value']); //Se voltearon las cuenta
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
+									}else{
+											$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+									}
 								}else if( $codigo3 == 2 || $codigo3 == "2" ){
 									$cdito = 	$grantotalCostoCosto;
-									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
+									}else{
+											$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+									}
 								}else if( $codigo3 == 3 || $codigo3 == "3" ){
 									$cdito = 	$grantotalCostoCosto;
-									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
+									}else{
+											$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+									}
 								}else if( $codigo3 == 4 || $codigo3 == "4" ){
 									$cdito = 	$grantotalCostoCosto;
-									$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
+									}else{
+											$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+									}
 								}else if( $codigo3 == 5  || $codigo3 == "5" ){
 									$dbito = 	$grantotalCostoCosto;
-									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
+									}else{
+											$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+									}
 								}else if( $codigo3 == 6 || $codigo3 == "6" ){
 									$dbito = 	$grantotalCostoCosto;
-									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
+									}else{
+											$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+									}
 								}else if( $codigo3 == 7 || $codigo3 == "7" ){
 									$dbito = 	$grantotalCostoCosto;
-									$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
+									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
+									}else{
+											$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+									}
 								}
 
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1294,21 +1704,22 @@ class SalesInv extends REST_Controller {
 
 								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
 								// Se verifica que el detalle no de error insertando //
+
 								}else{
 
-								// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-								$this->pedeo->trans_rollback();
+										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+										// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
 
-								$respuesta = array(
-									'error'   => true,
-									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
-								);
+										$respuesta = array(
+											'error'   => true,
+											'data'	  => $resDetalleAsiento,
+											'mensaje'	=> 'No se pudo registrar la factura de venta'
+										);
 
-								 $this->response($respuesta);
+										 $this->response($respuesta);
 
-								 return;
+								 	 	 return;
 								}
 
 					}
@@ -1319,6 +1730,7 @@ class SalesInv extends REST_Controller {
 
 						foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
 								$grantotalCostoCosto = 0 ;
+								$grantotalCostoCostoOriginal = 0 ;
 								$cuentaCosto = "";
 								$dbito = 0;
 								$cdito = 0;
@@ -1364,7 +1776,7 @@ class SalesInv extends REST_Controller {
 															}
 
 													}else{
-															// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+															// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 															// se retorna el error y se detiene la ejecucion del codigo restante.
 															$this->pedeo->trans_rollback();
 
@@ -1380,95 +1792,129 @@ class SalesInv extends REST_Controller {
 													}
 
 											}
+
+											$codigo3 = substr($cuentaCosto, 0, 1);
+
+											$grantotalCostoCostoOriginal = $grantotalCostoCosto;
+
+											if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+													$grantotalCostoCosto = ($grantotalCostoCosto / $TasaLocSys);
+											}
+
+											if( $codigo3 == 1 || $codigo3 == "1" ){
+												$dbito = 	$grantotalCostoCosto;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysDB = ($dbito / $TasaLocSys);
+												}else{
+														$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+												}
+											}else if( $codigo3 == 2 || $codigo3 == "2" ){
+												$cdito = 	$grantotalCostoCosto;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysCR = ($cdito / $TasaLocSys);
+												}else{
+														$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+												}
+											}else if( $codigo3 == 3 || $codigo3 == "3" ){
+												$cdito = 	$grantotalCostoCosto;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysCR = ($cdito / $TasaLocSys);
+												}else{
+														$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+												}
+											}else if( $codigo3 == 4 || $codigo3 == "4" ){
+												$cdito = 	$grantotalCostoCosto;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysCR = ($cdito / $TasaLocSys);
+												}else{
+														$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+												}
+											}else if( $codigo3 == 5  || $codigo3 == "5" ){
+												$dbito = 	$grantotalCostoCosto;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysDB = ($dbito / $TasaLocSys);
+												}else{
+														$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+												}
+											}else if( $codigo3 == 6 || $codigo3 == "6" ){
+												$dbito = 	$grantotalCostoCosto;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysDB = ($dbito / $TasaLocSys);
+												}else{
+														$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+												}
+											}else if( $codigo3 == 7 || $codigo3 == "7" ){
+												$dbito = 	$grantotalCostoCosto;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysDB = ($dbito / $TasaLocSys);
+												}else{
+														$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+												}
+											}
+
+											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+											':ac1_trans_id' => $resInsertAsiento,
+											':ac1_account' => $cuentaCosto,
+											':ac1_debit' => $dbito,
+											':ac1_credit' => $cdito,
+											':ac1_debit_sys' => round($MontoSysDB,2),
+											':ac1_credit_sys' => round($MontoSysCR,2),
+											':ac1_currex' => 0,
+											':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+											':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+											':ac1_debit_import' => 0,
+											':ac1_credit_import' => 0,
+											':ac1_debit_importsys' => 0,
+											':ac1_credit_importsys' => 0,
+											':ac1_font_key' => $resInsert,
+											':ac1_font_line' => 1,
+											':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+											':ac1_accountvs' => 1,
+											':ac1_doctype' => 18,
+											':ac1_ref1' => "",
+											':ac1_ref2' => "",
+											':ac1_ref3' => "",
+											':ac1_prc_code' => $value->ac1_prc_code,
+											':ac1_uncode' => $value->ac1_uncode,
+											':ac1_prj_code' => $value->ac1_prj_code,
+											':ac1_rescon_date' => NULL,
+											':ac1_recon_total' => 0,
+											':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+											':ac1_accperiod' => 1,
+											':ac1_close' => 0,
+											':ac1_cord' => 0,
+											':ac1_ven_debit' => 1,
+											':ac1_ven_credit' => 1,
+											':ac1_fiscal_acct' => 0,
+											':ac1_taxid' => 1,
+											':ac1_isrti' => 0,
+											':ac1_basert' => 0,
+											':ac1_mmcode' => 0,
+											':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+											':ac1_codref' => 1
+											));
+
+											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+											// Se verifica que el detalle no de error insertando //
+											}else{
+
+												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+												// se retorna el error y se detiene la ejecucion del codigo restante.
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data'	  => $resDetalleAsiento,
+													'mensaje'	=> 'No se pudo registrar la factura de ventas'
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
 								}
-
-									$codigo3 = substr($cuentaCosto, 0, 1);
-
-									if( $codigo3 == 1 || $codigo3 == "1" ){
-										$dbito = 	$grantotalCostoCosto;
-										$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
-									}else if( $codigo3 == 2 || $codigo3 == "2" ){
-										$cdito = 	$grantotalCostoCosto;
-										$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
-									}else if( $codigo3 == 3 || $codigo3 == "3" ){
-										$cdito = 	$grantotalCostoCosto;
-										$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
-									}else if( $codigo3 == 4 || $codigo3 == "4" ){
-										$cdito = 	$grantotalCostoCosto;
-										$MontoSysCR = ($cdito / $resMonedaSys[0]['tsa_value']);
-									}else if( $codigo3 == 5  || $codigo3 == "5" ){
-										$dbito = 	$grantotalCostoCosto;
-										$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
-									}else if( $codigo3 == 6 || $codigo3 == "6" ){
-										$dbito = 	$grantotalCostoCosto;
-										$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
-									}else if( $codigo3 == 7 || $codigo3 == "7" ){
-										$dbito = 	$grantotalCostoCosto;
-										$MontoSysDB = ($dbito / $resMonedaSys[0]['tsa_value']);
-									}
-
-									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $cuentaCosto,
-									':ac1_debit' => $dbito,
-									':ac1_credit' => $cdito,
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => $value->ac1_prc_code,
-									':ac1_uncode' => $value->ac1_uncode,
-									':ac1_prj_code' => $value->ac1_prj_code,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-									':ac1_codref' => 1
-									));
-
-									if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-									// Se verifica que el detalle no de error insertando //
-									}else{
-
-										// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
-										// se retorna el error y se detiene la ejecucion del codigo restante.
-										$this->pedeo->trans_rollback();
-
-										$respuesta = array(
-											'error'   => true,
-											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
-										);
-
-										 $this->response($respuesta);
-
-										 return;
-									}
-
 				 }
 
 				 //SOLO SI ES CUENTA 3
@@ -1492,33 +1938,71 @@ class SalesInv extends REST_Controller {
 								$creditoo = 0;
 								$MontoSysDB = 0;
 								$MontoSysCR = 0;
+								$docTotal = 0;
+								$docTotalOriginal = 0;
 
 								$cuentaCxP = $rescuentaCxC[0]['mgs_acct'];
 
 								$codigo2= substr($rescuentaCxC[0]['mgs_acct'], 0, 1);
 
+								$docTotal = $Data['dvf_doctotal'];
+								$docTotalOriginal = $docTotal;
+
+								if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+										$docTotal = ($docTotal * $TasaDocLoc);
+								}
+
 
 								if( $codigo2 == 1 || $codigo2 == "1" ){
-										$debitoo = $Data['dvf_doctotal'];
-										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
+										$debitoo = $docTotal;
+										if( trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysDB = ($debitoo / $TasaLocSys);
+										}else{
+												$MontoSysDB =	$docTotalOriginal;
+										}
 								}else if( $codigo2 == 2 || $codigo2 == "2" ){
-										$creditoo = $Data['dvf_doctotal'];
-										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
+										$creditoo = $docTotal;
+										if( trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysCR = ($creditoo / $TasaLocSys);
+										}else{
+												$MontoSysCR =	$docTotalOriginal;
+										}
 								}else if( $codigo2 == 3 || $codigo2 == "3" ){
-										$creditoo = $Data['dvf_doctotal'];
-										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
+										$creditoo = $docTotal;
+										if( trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysCR = ($creditoo / $TasaLocSys);
+										}else{
+												$MontoSysCR =	$docTotalOriginal;
+										}
 								}else if( $codigo2 == 4 || $codigo2 == "4" ){
-									  $creditoo = $Data['dvf_doctotal'];
-										$MontoSysCR = ($creditoo / $resMonedaSys[0]['tsa_value']);
+									  $creditoo = $docTotal;
+										if( trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysCR = ($creditoo / $TasaLocSys);
+										}else{
+												$MontoSysCR =	$docTotalOriginal;
+										}
 								}else if( $codigo2 == 5  || $codigo2 == "5" ){
-									  $debitoo = $Data['dvf_doctotal'];
-										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
+									  $debitoo = $docTotal;
+										if( trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysDB = ($debitoo / $TasaLocSys);
+										}else{
+												$MontoSysDB =	$docTotalOriginal;
+										}
 								}else if( $codigo2 == 6 || $codigo2 == "6" ){
-									  $debitoo = $Data['dvf_doctotal'];
-										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
+									  $debitoo = $docTotal;
+										if( trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysDB = ($debitoo / $TasaLocSys);
+										}else{
+												$MontoSysDB =	$docTotalOriginal;
+										}
 								}else if( $codigo2 == 7 || $codigo2 == "7" ){
-									  $debitoo = $Data['dvf_doctotal'];
-										$MontoSysDB = ($debitoo / $resMonedaSys[0]['tsa_value']);
+									  $debitoo = $docTotal;
+										if( trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysDB = ($debitoo / $TasaLocSys);
+										}else{
+												$MontoSysDB =	$docTotalOriginal;
+										}
 								}
 
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1568,14 +2052,14 @@ class SalesInv extends REST_Controller {
 									// Se verifica que el detalle no de error insertando //
 							}else{
 
-									// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 									// se retorna el error y se detiene la ejecucion del codigo restante.
 										$this->pedeo->trans_rollback();
 
 										$respuesta = array(
 											'error'   => true,
 											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+											'mensaje'	=> 'No se pudo registrar la factura de ventas'
 										);
 
 										 $this->response($respuesta);
@@ -1590,7 +2074,7 @@ class SalesInv extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la Entrega de ventas, el tercero no tiene cuenta asociada'
+									'mensaje'	=> 'No se pudo registrar la factura de ventas, el tercero no tiene cuenta asociada'
 								);
 
 								 $this->response($respuesta);
@@ -1599,16 +2083,203 @@ class SalesInv extends REST_Controller {
 					}
 					//FIN Procedimiento para llenar cuentas por cobrar
 
-					// Si todo sale bien despues de insertar el detalle de la Entrega de Ventas
+					//FIN DE OPERACIONES VITALES
+
+					// VALIDANDO ESTADOS DE DOCUMENTOS
+
+
+
+					if ($Data['dvf_basetype'] == 1) {
+
+
+						$sqlEstado = 'select distinct
+													case
+														when (sum(t3.fv1_quantity) - t1.vc1_quantity) = 0
+															then 1
+														else 0
+													end "estado"
+												from dvct t0
+												left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+												left join dvfv t2 on t0.dvc_docentry = t2.dvf_baseentry
+												left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.vc1_itemcode = t3.fv1_itemcode
+												where t0.dvc_docentry = :dvc_docentry
+												group by
+													t1.vc1_quantity';
+
+
+						$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvc_docentry' => $Data['dvf_baseentry']));
+
+						if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+
+									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+									$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+														':bed_docentry' => $Data['dvf_baseentry'],
+														':bed_doctype' => $Data['dvf_basetype'],
+														':bed_status' => 3, //ESTADO CERRADO
+														':bed_createby' => $Data['dvf_createby'],
+														':bed_date' => date('Y-m-d'),
+														':bed_baseentry' => $resInsert,
+														':bed_basetype' => $Data['dvf_doctype']
+									));
+
+
+									if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+									}else{
+
+											 $this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resInsertEstado,
+													'mensaje'	=> 'No se pudo registrar la Factura de ventas'
+												);
+
+
+												$this->response($respuesta);
+
+												return;
+									}
+
+						}
+
+					} else if ($Data['dvf_basetype'] == 2) {
+
+
+								$sqlEstado = 'select distinct
+																case
+																	when (sum(t3.em1_quantity) - t1.fv1_quantity) = 0
+																		then 1
+																	else 0
+																end "estado"
+															from dvfv t0
+															left join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
+															left join dvem t2 on t0.dvf_docentry = t2.vem_baseentry
+															left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.fv1_itemcode = t3.em1_itemcode
+															where t0.dvf_docentry = :dvf_docentry
+															group by
+															t1.fv1_quantity';
+
+
+								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvf_docentry' => $Data['dvf_baseentry']));
+
+								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+
+											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+											$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																':bed_docentry' => $Data['dvf_baseentry'],
+																':bed_doctype' => $Data['dvf_basetype'],
+																':bed_status' => 3, //ESTADO CERRADO
+																':bed_createby' => $Data['dvf_createby'],
+																':bed_date' => date('Y-m-d'),
+																':bed_baseentry' => $resInsert,
+																':bed_basetype' => $Data['dvf_doctype']
+											));
+
+
+											if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+											}else{
+
+													 $this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data' => $resInsertEstado,
+															'mensaje'	=> 'No se pudo registrar la Factura de ventas'
+														);
+
+
+														$this->response($respuesta);
+
+														return;
+											}
+
+								}
+
+
+
+
+					} else if ($Data['dvf_basetype'] == 3) {
+
+							 $sqlEstado = 'select distinct
+															case
+																when (sum(t3.fv1_quantity) - t1.em1_quantity) = 0
+																	then 1
+																else 0
+															end "estado"
+														from dvem t0
+														left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+														left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry
+														left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.em1_itemcode = t3.fv1_itemcode
+														where t0.vem_docentry = :vem_docentry
+														group by t1.em1_quantity';
+
+								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vem_docentry' => $Data['dvf_baseentry']));
+
+								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+
+											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+											$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																':bed_docentry' => $Data['dvf_baseentry'],
+																':bed_doctype' => $Data['dvf_basetype'],
+																':bed_status' => 3, //ESTADO CERRADO
+																':bed_createby' => $Data['dvf_createby'],
+																':bed_date' => date('Y-m-d'),
+																':bed_baseentry' => $resInsert,
+																':bed_basetype' => $Data['dvf_doctype']
+											));
+
+
+											if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+											}else{
+
+													 $this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data' => $resInsertEstado,
+															'mensaje'	=> 'No se pudo registrar la Factura de ventas'
+														);
+
+
+														$this->response($respuesta);
+
+														return;
+											}
+
+								}
+
+					}
+
+					// FIN VALIDACION DE ESTADOS
+
+					// Si todo sale bien despues de insertar el detalle de la factura de Ventas
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.
-					$this->pedeo->trans_commit();
+				$ress =	$this->pedeo->trans_commit();
+
+
 
           $respuesta = array(
             'error' => false,
             'data' => $resInsert,
-            'mensaje' =>'Entrega de ventas registrada con exito'
+            'mensaje' =>'Factura de ventas registrada con exito'
           );
+
 
 
         }else{
@@ -1619,15 +2290,19 @@ class SalesInv extends REST_Controller {
               $respuesta = array(
                 'error'   => true,
                 'data' => $resInsert,
-                'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+                'mensaje'	=> 'No se pudo registrar la Factura de ventas'
               );
+
+							$this->response($respuesta);
+
+							return;
 
         }
 
          $this->response($respuesta);
 	}
 
-  //ACTUALIZAR Entrega de Ventas
+  //ACTUALIZAR Factura de Ventas
   public function updateSalesInv_post(){
 
       $Data = $this->post();
@@ -1666,7 +2341,7 @@ class SalesInv extends REST_Controller {
           $respuesta = array(
             'error' => true,
             'data'  => array(),
-            'mensaje' =>'No se encontro el detalle de la Entrega de ventas'
+            'mensaje' =>'No se encontro el detalle de la factura de ventas'
           );
 
           $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -1725,7 +2400,7 @@ class SalesInv extends REST_Controller {
 																			:fv1_acctcode, :fv1_basetype, :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-											':fv1_docentry' => $resInsert,
+											':fv1_docentry' => $Data['dvf_docentry'],
 											':fv1_itemcode' => isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL,
 											':fv1_itemname' => isset($detail['fv1_itemname'])?$detail['fv1_itemname']:NULL,
 											':fv1_quantity' => is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0,
@@ -1751,14 +2426,14 @@ class SalesInv extends REST_Controller {
 											// Se verifica que el detalle no de error insertando //
 									}else{
 
-											// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+											// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 											// se retorna el error y se detiene la ejecucion del codigo restante.
 												$this->pedeo->trans_rollback();
 
 												$respuesta = array(
 													'error'   => true,
 													'data' => $resInsert,
-													'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+													'mensaje'	=> 'No se pudo registrar la factura de ventas'
 												);
 
 												 $this->response($respuesta);
@@ -1773,7 +2448,7 @@ class SalesInv extends REST_Controller {
             $respuesta = array(
               'error' => false,
               'data' => $resUpdate,
-              'mensaje' =>'Entrega de ventas actualizada con exito'
+              'mensaje' =>'Factura de ventas actualizada con exito'
             );
 
 
@@ -1784,8 +2459,12 @@ class SalesInv extends REST_Controller {
             $respuesta = array(
               'error'   => true,
               'data'    => $resUpdate,
-              'mensaje'	=> 'No se pudo actualizar la Entrega de ventas'
+              'mensaje'	=> 'No se pudo actualizar la factura de ventas'
             );
+
+						$this->response($respuesta);
+
+						return;
 
       }
 
@@ -1793,10 +2472,11 @@ class SalesInv extends REST_Controller {
   }
 
 
-  //OBTENER Entrega de VentasES
+  //OBTENER Factura de VentasES
   public function getSalesInv_get(){
+				// ".number_format($value['ivap'], 2, ',', '.').'
+        $sqlSelect = self::getColumn('dvfv','dvf');
 
-        $sqlSelect = " SELECT * FROM dvfv";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1821,7 +2501,7 @@ class SalesInv extends REST_Controller {
   }
 
 
-	//OBTENER Entrega de Ventas POR ID
+	//OBTENER Factura de Ventas POR ID
 	public function getSalesInvById_get(){
 
 				$Data = $this->get();
@@ -1864,7 +2544,7 @@ class SalesInv extends REST_Controller {
 	}
 
 
-	//OBTENER Entrega de Ventas DETALLE POR ID
+	//OBTENER Factura de Ventas DETALLE POR ID
 	public function getSalesInvDetail_get(){
 
 				$Data = $this->get();
@@ -1966,6 +2646,10 @@ class SalesInv extends REST_Controller {
 
 	  }
 
+		if (!base64_decode($data, true) ){
+				return $url;
+		}
+
 		$ruta = '/var/www/html/'.$caperta.'/assets/img/anexos/';
 
 	  $milliseconds = round(microtime(true) * 1000);
@@ -1979,11 +2663,11 @@ class SalesInv extends REST_Controller {
 
 	  if(!empty($data)){
 
-		fwrite($file, base64_decode($data));
+			fwrite($file, base64_decode($data));
 
-		fclose($file);
+			fclose($file);
 
-		$url = "assets/img/anexos/".$nombreArchivo;
+			$url = "assets/img/anexos/".$nombreArchivo;
 	  }
 
 	  return $url;
@@ -2008,4 +2692,184 @@ class SalesInv extends REST_Controller {
 				return false;
 			}
 	}
+
+
+	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod){
+
+		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
+									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
+									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
+									pap_attch,pap_createby,pap_origen)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen)";
+
+		// Se Inicia la transaccion,
+		// Todas las consultas de modificacion siguientes
+		// aplicaran solo despues que se confirme la transaccion,
+		// de lo contrario no se aplicaran los cambios y se devolvera
+		// la base de datos a su estado original.
+
+		$this->pedeo->trans_begin();
+
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+					':pap_docnum' => 0,
+					':pap_series' => is_numeric($Encabezado[$prefijoe.'_series'])?$Encabezado[$prefijoe.'_series']:0,
+					':pap_docdate' => $this->validateDate($Encabezado[$prefijoe.'_docdate'])?$Encabezado[$prefijoe.'_docdate']:NULL,
+					':pap_duedate' => $this->validateDate($Encabezado[$prefijoe.'_duedate'])?$Encabezado[$prefijoe.'_duedate']:NULL,
+					':pap_duedev' => $this->validateDate($Encabezado[$prefijoe.'_duedev'])?$Encabezado[$prefijoe.'_duedev']:NULL,
+					':pap_pricelist' => is_numeric($Encabezado[$prefijoe.'_pricelist'])?$Encabezado[$prefijoe.'_pricelist']:0,
+					':pap_cardcode' => isset($Encabezado[$prefijoe.'_cardcode'])?$Encabezado[$prefijoe.'_cardcode']:NULL,
+					':pap_cardname' => isset($Encabezado[$prefijoe.'_cardname'])?$Encabezado[$prefijoe.'_cardname']:NULL,
+					':pap_currency' => isset($Encabezado[$prefijoe.'_currency'])?$Encabezado[$prefijoe.'_currency']:NULL,
+					':pap_contacid' => isset($Encabezado[$prefijoe.'_contacid'])?$Encabezado[$prefijoe.'_contacid']:NULL,
+					':pap_slpcode' => is_numeric($Encabezado[$prefijoe.'_slpcode'])?$Encabezado[$prefijoe.'_slpcode']:0,
+					':pap_empid' => is_numeric($Encabezado[$prefijoe.'_empid'])?$Encabezado[$prefijoe.'_empid']:0,
+					':pap_comment' => isset($Encabezado[$prefijoe.'_comment'])?$Encabezado[$prefijoe.'_comment']:NULL,
+					':pap_doctotal' => is_numeric($Encabezado[$prefijoe.'_doctotal'])?$Encabezado[$prefijoe.'_doctotal']:0,
+					':pap_baseamnt' => is_numeric($Encabezado[$prefijoe.'_baseamnt'])?$Encabezado[$prefijoe.'_baseamnt']:0,
+					':pap_taxtotal' => is_numeric($Encabezado[$prefijoe.'_taxtotal'])?$Encabezado[$prefijoe.'_taxtotal']:0,
+					':pap_discprofit' => is_numeric($Encabezado[$prefijoe.'_discprofit'])?$Encabezado[$prefijoe.'_discprofit']:0,
+					':pap_discount' => is_numeric($Encabezado[$prefijoe.'_discount'])?$Encabezado[$prefijoe.'_discount']:0,
+					':pap_createat' => $this->validateDate($Encabezado[$prefijoe.'_createat'])?$Encabezado[$prefijoe.'_createat']:NULL,
+					':pap_baseentry' => is_numeric($Encabezado[$prefijoe.'_baseentry'])?$Encabezado[$prefijoe.'_baseentry']:0,
+					':pap_basetype' => is_numeric($Encabezado[$prefijoe.'_basetype'])?$Encabezado[$prefijoe.'_basetype']:0,
+					':pap_doctype' => 21,
+					':pap_idadd' => isset($Encabezado[$prefijoe.'_idadd'])?$Encabezado[$prefijoe.'_idadd']:NULL,
+					':pap_adress' => isset($Encabezado[$prefijoe.'_adress'])?$Encabezado[$prefijoe.'_adress']:NULL,
+					':pap_paytype' => is_numeric($Encabezado[$prefijoe.'_paytype'])?$Encabezado[$prefijoe.'_paytype']:0,
+					':pap_createby' => isset($Encabezado[$prefijoe.'_createby'])?$Encabezado[$prefijoe.'_createby']:NULL,
+					':pap_attch' => $this->getUrl(count(trim(($Encabezado[$prefijoe.'_attch']))) > 0 ? $Encabezado[$prefijoe.'_attch']:NULL, $Carpeta),
+					':pap_origen' => is_numeric($Encabezado[$prefijoe.'_doctype'])?$Encabezado[$prefijoe.'_doctype']:0,
+
+				));
+
+
+				if(is_numeric($resInsert) && $resInsert > 0){
+
+						//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+											':bed_docentry' => $resInsert,
+											':bed_doctype' =>  21,
+											':bed_status' => 5, //ESTADO CERRADO
+											':bed_createby' => $Encabezado[$prefijoe.'_createby'],
+											':bed_date' => date('Y-m-d'),
+											':bed_baseentry' => NULL,
+											':bed_basetype' => NULL
+						));
+
+
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+
+								 $this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar la factura de ventas'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+						}
+
+						//FIN PROCESO ESTADO DEL DOCUMENTO
+
+						foreach ($Detalle as $key => $detail) {
+
+									$sqlInsertDetail = "INSERT INTO pap1(ap1_docentry, ap1_itemcode, ap1_itemname, ap1_quantity, ap1_uom, ap1_whscode,
+																			ap1_price, ap1_vat, ap1_vatsum, ap1_discount, ap1_linetotal, ap1_costcode, ap1_ubusiness, ap1_project,
+																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
+																			:ap1_uom, :ap1_whscode,:ap1_price, :ap1_vat, :ap1_vatsum, :ap1_discount, :ap1_linetotal, :ap1_costcode, :ap1_ubusiness, :ap1_project,
+																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva)";
+
+									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
+													':ap1_docentry' => $resInsert,
+													':ap1_itemcode' => isset($detail[$prefijod.'_itemcode'])?$detail[$prefijod.'_itemcode']:NULL,
+													':ap1_itemname' => isset($detail[$prefijod.'_itemname'])?$detail[$prefijod.'_itemname']:NULL,
+													':ap1_quantity' => is_numeric($detail[$prefijod.'_quantity'])?$detail[$prefijod.'_quantity']:0,
+													':ap1_uom' => isset($detail[$prefijod.'_uom'])?$detail[$prefijod.'_uom']:NULL,
+													':ap1_whscode' => isset($detail[$prefijod.'_whscode'])?$detail[$prefijod.'_whscode']:NULL,
+													':ap1_price' => is_numeric($detail[$prefijod.'_price'])?$detail[$prefijod.'_price']:0,
+													':ap1_vat' => is_numeric($detail[$prefijod.'_vat'])?$detail[$prefijod.'_vat']:0,
+													':ap1_vatsum' => is_numeric($detail[$prefijod.'_vatsum'])?$detail[$prefijod.'_vatsum']:0,
+													':ap1_discount' => is_numeric($detail[$prefijod.'_discount'])?$detail[$prefijod.'_discount']:0,
+													':ap1_linetotal' => is_numeric($detail[$prefijod.'_linetotal'])?$detail[$prefijod.'_linetotal']:0,
+													':ap1_costcode' => isset($detail[$prefijod.'_costcode'])?$detail[$prefijod.'_costcode']:NULL,
+													':ap1_ubusiness' => isset($detail[$prefijod.'_ubusiness'])?$detail[$prefijod.'_ubusiness']:NULL,
+													':ap1_project' => isset($detail[$prefijod.'_project'])?$detail[$prefijod.'_project']:NULL,
+													':ap1_acctcode' => is_numeric($detail[$prefijod.'_acctcode'])?$detail[$prefijod.'_acctcode']:0,
+													':ap1_basetype' => is_numeric($detail[$prefijod.'_basetype'])?$detail[$prefijod.'_basetype']:0,
+													':ap1_doctype' => is_numeric($detail[$prefijod.'_doctype'])?$detail[$prefijod.'_doctype']:0,
+													':ap1_avprice' => is_numeric($detail[$prefijod.'_avprice'])?$detail[$prefijod.'_avprice']:0,
+													':ap1_inventory' => is_numeric($detail[$prefijod.'_inventory'])?$detail[$prefijod.'_inventory']:NULL,
+													':ap1_linenum' => is_numeric($detail[$prefijod.'_linenum'])?$detail[$prefijod.'_linenum']:NULL,
+													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL
+									));
+
+									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+											// Se verifica que el detalle no de error insertando //
+									}else{
+
+											// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+											// se retorna el error y se detiene la ejecucion del codigo restante.
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resInsertDetail,
+													'mensaje'	=> 'No se pudo registrar la factura de ventas'
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+									}
+
+
+						}
+
+
+						// Si todo sale bien despues de insertar el detalle de la cotizacion
+						// se confirma la trasaccion  para que los cambios apliquen permanentemente
+						// en la base de datos y se confirma la operacion exitosa.
+						$this->pedeo->trans_commit();
+
+						$respuesta = array(
+							'error' => false,
+							'data' => $resInsert,
+							'mensaje' =>'El documento fue creado, pero es necesario que sea aprobado'
+						);
+
+						$this->response($respuesta);
+
+						return;
+
+
+				}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'    => $resInsert,
+								'mensaje'	=> 'No se pudo crear la factura de ventas'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+				}
+
+	}
+
 }

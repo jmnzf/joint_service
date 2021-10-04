@@ -229,6 +229,43 @@ class SalesDv extends REST_Controller {
 					}
 					// Fin de la actualizacion de la numeracion del documento
 
+					//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+										':bed_docentry' => $resInsert,
+										':bed_doctype' => $Data['vdv_doctype'],
+										':bed_status' => 1, //ESTADO CERRADO
+										':bed_createby' => $Data['vdv_createby'],
+										':bed_date' => date('Y-m-d'),
+										':bed_baseentry' => NULL,
+										':bed_basetype' => NULL
+					));
+
+
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+					}else{
+
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la cotizacion de ventas'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+					}
+
+					//FIN PROCESO ESTADO DEL DOCUMENTO
 
 					//Se agregan los asientos contables*/*******
 
@@ -1417,12 +1454,12 @@ class SalesDv extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
 																			dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-																			dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
+																			dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, :dv1_acciva)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
 																			:dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,
-																			:dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory)";
+																			:dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_acciva)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-											':dv1_docentry' => $resInsert,
+											':dv1_docentry' => $Data['vdv_docentry'],
 											':dv1_itemcode' => isset($detail['dv1_itemcode'])?$detail['dv1_itemcode']:NULL,
 											':dv1_itemname' => isset($detail['dv1_itemname'])?$detail['dv1_itemname']:NULL,
 											':dv1_quantity' => is_numeric($detail['dv1_quantity'])?$detail['dv1_quantity']:0,
@@ -1440,7 +1477,8 @@ class SalesDv extends REST_Controller {
 											':dv1_basetype' => is_numeric($detail['dv1_basetype'])?$detail['dv1_basetype']:0,
 											':dv1_doctype' => is_numeric($detail['dv1_doctype'])?$detail['dv1_doctype']:0,
 											':dv1_avprice' => is_numeric($detail['dv1_avprice'])?$detail['dv1_avprice']:0,
-											':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL
+											':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL,
+											':dv1_acciva' => is_numeric($detail['dv1_cuentaIva'])?$detail['dv1_cuentaIva']:0
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1492,7 +1530,8 @@ class SalesDv extends REST_Controller {
   //OBTENER Devolución de clientesES
   public function getSalesDv_get(){
 
-        $sqlSelect = " SELECT * FROM dvdv";
+        $sqlSelect = self::getColumn('dvdv','vdv');
+
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

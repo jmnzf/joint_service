@@ -230,6 +230,46 @@ class SalesNd extends REST_Controller {
 					// Fin de la actualizacion de la numeracion del documento
 
 
+
+					//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+										':bed_docentry' => $resInsert,
+										':bed_doctype' => $Data['vnd_doctype'],
+										':bed_status' => 1, //ESTADO CERRADO
+										':bed_createby' => $Data['vnd_createby'],
+										':bed_date' => date('Y-m-d'),
+										':bed_baseentry' => NULL,
+										':bed_basetype' =>NULL
+					));
+
+
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+					}else{
+
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la nota debito de ventas'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+					}
+
+					//FIN PROCESO ESTADO DEL DOCUMENTO
+
+
 					//Se agregan los asientos contables*/*******
 
 					$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
@@ -1417,12 +1457,12 @@ class SalesNd extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO vnd1(nd1_docentry, nd1_itemcode, nd1_itemname, nd1_quantity, nd1_uom, nd1_whscode,
 																			nd1_price, nd1_vat, nd1_vatsum, nd1_discount, nd1_linetotal, nd1_costcode, nd1_ubusiness, nd1_project,
-																			nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
+																			nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory, nd1_acciva)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
 																			:nd1_uom, :nd1_whscode,:nd1_price, :nd1_vat, :nd1_vatsum, :nd1_discount, :nd1_linetotal, :nd1_costcode, :nd1_ubusiness, :nd1_project,
-																			:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory)";
+																			:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory, :nd1_acciva)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-											':nd1_docentry' => $resInsert,
+											':nd1_docentry' => $Data['vnd_docentry'],
 											':nd1_itemcode' => isset($detail['nd1_itemcode'])?$detail['nd1_itemcode']:NULL,
 											':nd1_itemname' => isset($detail['nd1_itemname'])?$detail['nd1_itemname']:NULL,
 											':nd1_quantity' => is_numeric($detail['nd1_quantity'])?$detail['nd1_quantity']:0,
@@ -1440,7 +1480,8 @@ class SalesNd extends REST_Controller {
 											':nd1_basetype' => is_numeric($detail['nd1_basetype'])?$detail['nd1_basetype']:0,
 											':nd1_doctype' => is_numeric($detail['nd1_doctype'])?$detail['nd1_doctype']:0,
 											':nd1_avprice' => is_numeric($detail['nd1_avprice'])?$detail['nd1_avprice']:0,
-											':nd1_inventory' => is_numeric($detail['nd1_inventory'])?$detail['nd1_inventory']:NULL
+											':nd1_inventory' => is_numeric($detail['nd1_inventory'])?$detail['nd1_inventory']:NULL,
+											':nd1_acciva' => is_numeric($detail['nd1_cuentaIva'])?$detail['nd1_cuentaIva']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1492,7 +1533,7 @@ class SalesNd extends REST_Controller {
   //OBTENER Nota debito de clientesES
   public function getSalesNd_get(){
 
-        $sqlSelect = " SELECT * FROM dvnd";
+        $sqlSelect = self::getColumn('dvnd','vnd');
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1706,6 +1747,184 @@ class SalesNd extends REST_Controller {
 	}
 
 
+
+	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod){
+
+		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
+									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
+									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
+									pap_attch,pap_createby,pap_origen)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen)";
+
+		// Se Inicia la transaccion,
+		// Todas las consultas de modificacion siguientes
+		// aplicaran solo despues que se confirme la transaccion,
+		// de lo contrario no se aplicaran los cambios y se devolvera
+		// la base de datos a su estado original.
+
+		$this->pedeo->trans_begin();
+
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+					':pap_docnum' => 0,
+					':pap_series' => is_numeric($Encabezado[$prefijoe.'_series'])?$Encabezado[$prefijoe.'_series']:0,
+					':pap_docdate' => $this->validateDate($Encabezado[$prefijoe.'_docdate'])?$Encabezado[$prefijoe.'_docdate']:NULL,
+					':pap_duedate' => $this->validateDate($Encabezado[$prefijoe.'_duedate'])?$Encabezado[$prefijoe.'_duedate']:NULL,
+					':pap_duedev' => $this->validateDate($Encabezado[$prefijoe.'_duedev'])?$Encabezado[$prefijoe.'_duedev']:NULL,
+					':pap_pricelist' => is_numeric($Encabezado[$prefijoe.'_pricelist'])?$Encabezado[$prefijoe.'_pricelist']:0,
+					':pap_cardcode' => isset($Encabezado[$prefijoe.'_cardcode'])?$Encabezado[$prefijoe.'_cardcode']:NULL,
+					':pap_cardname' => isset($Encabezado[$prefijoe.'_cardname'])?$Encabezado[$prefijoe.'_cardname']:NULL,
+					':pap_currency' => isset($Encabezado[$prefijoe.'_currency'])?$Encabezado[$prefijoe.'_currency']:NULL,
+					':pap_contacid' => isset($Encabezado[$prefijoe.'_contacid'])?$Encabezado[$prefijoe.'_contacid']:NULL,
+					':pap_slpcode' => is_numeric($Encabezado[$prefijoe.'_slpcode'])?$Encabezado[$prefijoe.'_slpcode']:0,
+					':pap_empid' => is_numeric($Encabezado[$prefijoe.'_empid'])?$Encabezado[$prefijoe.'_empid']:0,
+					':pap_comment' => isset($Encabezado[$prefijoe.'_comment'])?$Encabezado[$prefijoe.'_comment']:NULL,
+					':pap_doctotal' => is_numeric($Encabezado[$prefijoe.'_doctotal'])?$Encabezado[$prefijoe.'_doctotal']:0,
+					':pap_baseamnt' => is_numeric($Encabezado[$prefijoe.'_baseamnt'])?$Encabezado[$prefijoe.'_baseamnt']:0,
+					':pap_taxtotal' => is_numeric($Encabezado[$prefijoe.'_taxtotal'])?$Encabezado[$prefijoe.'_taxtotal']:0,
+					':pap_discprofit' => is_numeric($Encabezado[$prefijoe.'_discprofit'])?$Encabezado[$prefijoe.'_discprofit']:0,
+					':pap_discount' => is_numeric($Encabezado[$prefijoe.'_discount'])?$Encabezado[$prefijoe.'_discount']:0,
+					':pap_createat' => $this->validateDate($Encabezado[$prefijoe.'_createat'])?$Encabezado[$prefijoe.'_createat']:NULL,
+					':pap_baseentry' => is_numeric($Encabezado[$prefijoe.'_baseentry'])?$Encabezado[$prefijoe.'_baseentry']:0,
+					':pap_basetype' => is_numeric($Encabezado[$prefijoe.'_basetype'])?$Encabezado[$prefijoe.'_basetype']:0,
+					':pap_doctype' => 21,
+					':pap_idadd' => isset($Encabezado[$prefijoe.'_idadd'])?$Encabezado[$prefijoe.'_idadd']:NULL,
+					':pap_adress' => isset($Encabezado[$prefijoe.'_adress'])?$Encabezado[$prefijoe.'_adress']:NULL,
+					':pap_paytype' => is_numeric($Encabezado[$prefijoe.'_paytype'])?$Encabezado[$prefijoe.'_paytype']:0,
+					':pap_createby' => isset($Encabezado[$prefijoe.'_createby'])?$Encabezado[$prefijoe.'_createby']:NULL,
+					':pap_attch' => $this->getUrl(count(trim(($Encabezado[$prefijoe.'_attch']))) > 0 ? $Encabezado[$prefijoe.'_attch']:NULL, $Carpeta),
+					':pap_origen' => is_numeric($Encabezado[$prefijoe.'_doctype'])?$Encabezado[$prefijoe.'_doctype']:0,
+
+				));
+
+
+				if(is_numeric($resInsert) && $resInsert > 0){
+
+						//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+											':bed_docentry' => $resInsert,
+											':bed_doctype' =>  21,
+											':bed_status' => 5, //ESTADO CERRADO
+											':bed_createby' => $Encabezado[$prefijoe.'_createby'],
+											':bed_date' => date('Y-m-d'),
+											':bed_baseentry' => NULL,
+											':bed_basetype' => NULL
+						));
+
+
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+
+								 $this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar la cotizacion de ventas'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+						}
+
+						//FIN PROCESO ESTADO DEL DOCUMENTO
+
+						foreach ($Detalle as $key => $detail) {
+
+									$sqlInsertDetail = "INSERT INTO pap1(ap1_docentry, ap1_itemcode, ap1_itemname, ap1_quantity, ap1_uom, ap1_whscode,
+																			ap1_price, ap1_vat, ap1_vatsum, ap1_discount, ap1_linetotal, ap1_costcode, ap1_ubusiness, ap1_project,
+																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
+																			:ap1_uom, :ap1_whscode,:ap1_price, :ap1_vat, :ap1_vatsum, :ap1_discount, :ap1_linetotal, :ap1_costcode, :ap1_ubusiness, :ap1_project,
+																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva)";
+
+									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
+													':ap1_docentry' => $resInsert,
+													':ap1_itemcode' => isset($detail[$prefijod.'_itemcode'])?$detail[$prefijod.'_itemcode']:NULL,
+													':ap1_itemname' => isset($detail[$prefijod.'_itemname'])?$detail[$prefijod.'_itemname']:NULL,
+													':ap1_quantity' => is_numeric($detail[$prefijod.'_quantity'])?$detail[$prefijod.'_quantity']:0,
+													':ap1_uom' => isset($detail[$prefijod.'_uom'])?$detail[$prefijod.'_uom']:NULL,
+													':ap1_whscode' => isset($detail[$prefijod.'_whscode'])?$detail[$prefijod.'_whscode']:NULL,
+													':ap1_price' => is_numeric($detail[$prefijod.'_price'])?$detail[$prefijod.'_price']:0,
+													':ap1_vat' => is_numeric($detail[$prefijod.'_vat'])?$detail[$prefijod.'_vat']:0,
+													':ap1_vatsum' => is_numeric($detail[$prefijod.'_vatsum'])?$detail[$prefijod.'_vatsum']:0,
+													':ap1_discount' => is_numeric($detail[$prefijod.'_discount'])?$detail[$prefijod.'_discount']:0,
+													':ap1_linetotal' => is_numeric($detail[$prefijod.'_linetotal'])?$detail[$prefijod.'_linetotal']:0,
+													':ap1_costcode' => isset($detail[$prefijod.'_costcode'])?$detail[$prefijod.'_costcode']:NULL,
+													':ap1_ubusiness' => isset($detail[$prefijod.'_ubusiness'])?$detail[$prefijod.'_ubusiness']:NULL,
+													':ap1_project' => isset($detail[$prefijod.'_project'])?$detail[$prefijod.'_project']:NULL,
+													':ap1_acctcode' => is_numeric($detail[$prefijod.'_acctcode'])?$detail[$prefijod.'_acctcode']:0,
+													':ap1_basetype' => is_numeric($detail[$prefijod.'_basetype'])?$detail[$prefijod.'_basetype']:0,
+													':ap1_doctype' => is_numeric($detail[$prefijod.'_doctype'])?$detail[$prefijod.'_doctype']:0,
+													':ap1_avprice' => is_numeric($detail[$prefijod.'_avprice'])?$detail[$prefijod.'_avprice']:0,
+													':ap1_inventory' => is_numeric($detail[$prefijod.'_inventory'])?$detail[$prefijod.'_inventory']:NULL,
+													':ap1_linenum' => is_numeric($detail[$prefijod.'_linenum'])?$detail[$prefijod.'_linenum']:NULL,
+													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL
+									));
+
+									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+											// Se verifica que el detalle no de error insertando //
+									}else{
+
+											// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+											// se retorna el error y se detiene la ejecucion del codigo restante.
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resInsertDetail,
+													'mensaje'	=> 'No se pudo registrar la cotización'
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+									}
+
+
+						}
+
+
+						// Si todo sale bien despues de insertar el detalle de la cotizacion
+						// se confirma la trasaccion  para que los cambios apliquen permanentemente
+						// en la base de datos y se confirma la operacion exitosa.
+						$this->pedeo->trans_commit();
+
+						$respuesta = array(
+							'error' => false,
+							'data' => $resInsert,
+							'mensaje' =>'El documento fue creado, pero es necesario que sea aprobado'
+						);
+
+						$this->response($respuesta);
+
+						return;
+
+
+				}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'    => $resInsert,
+								'mensaje'	=> 'No se pudo crear la cotización'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+				}
+
+	}
 
 
 }

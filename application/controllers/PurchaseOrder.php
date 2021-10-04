@@ -234,169 +234,169 @@ class PurchaseOrder extends REST_Controller {
 											 return;
 								}
 
-								//Se aplica el movimiento de inventario
-								//Solo si el item es inventariable
-								if($detail['po1_inventory'] == 1 || $detail['po1_inventory']  == '1'){
-
-											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
-																						 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
-
-											$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
-
-													 ':bmi_itemcode' => isset($detail['po1_itemcode'])?$detail['po1_itemcode']:NULL,
-													 ':bmi_quantity' => is_numeric($detail['po1_quantity'])? $detail['po1_quantity'] * $Data['invtype']:0,
-													 ':bmi_whscode'  => isset($detail['po1_whscode'])?$detail['po1_whscode']:NULL,
-													 ':bmi_createat' => $this->validateDate($Data['dpo_createat'])?$Data['dpo_createat']:NULL,
-													 ':bmi_createby' => isset($Data['dpo_createby'])?$Data['dpo_createby']:NULL,
-													 ':bmy_doctype'  => is_numeric($Data['dpo_doctype'])?$Data['dpo_doctype']:0,
-													 ':bmy_baseentry' => $resInsert
-
-											));
-
-											if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
-													// Se verifica que el detalle no de error insertando //
-											}else{
-
-													// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
-													// se retorna el error y se detiene la ejecucion del codigo restante.
-														$this->pedeo->trans_rollback();
-
-														$respuesta = array(
-															'error'   => true,
-															'data' => $sqlInserMovimiento,
-															'mensaje'	=> 'No se pudo registrar la Orden de Compra'
-														);
-
-														 $this->response($respuesta);
-
-														 return;
-											}
-								}
-
-
-								//Se Aplica el movimiento en stock y se cambio el precio ponderado
-								//Solo si el articulo es inventariable
-
-								if($detail['po1_inventory'] == 1 || $detail['po1_inventory']  == '1'){
-
-									$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-																				FROM tbdi
-																				WHERE bdi_itemcode = :bdi_itemcode
-																				AND bdi_whscode = :bdi_whscode";
-
-									$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
-
-												':bdi_itemcode' => $detail['po1_itemcode'],
-												':bdi_whscode'  => $detail['po1_whscode']
-									));
-
-									if(isset($resCostoCantidad[0])){
-
-										if($resCostoCantidad[0]['bdi_quantity'] > 0){
-
-													$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-													$CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
-
-													$CantidadNueva = $detail['po1_quantity'];
-													$CostoNuevo = $detail['po1_price'];
-
-													$CantidadTotal = ($CantidadActual + $CantidadNueva);
-
-													$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-													$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
-
-													$sqlUpdateCostoCantidad = "UPDATE tbdi
-																										 SET bdi_quantity = :bdi_quantity
-																										 ,bdi_avgprice = :bdi_avgprice
-																										 WHERE  bdi_id = :bdi_id";
-
-												 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
-
-															 ':bdi_quantity' => $CantidadTotal,
-															 ':bdi_avgprice' => $NuevoCostoPonderado,
-															 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
-												 ));
-
-												 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
-
-												 }else{
-
-														 $this->pedeo->trans_rollback();
-
-														 $respuesta = array(
-															 'error'   => true,
-															 'data'    => $resUpdateCostoCantidad,
-															 'mensaje'	=> 'No se pudo crear la Orden de Compra'
-														 );
-												 }
-
-										}else{
-
-												 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-												 $CantidadNueva  = ($CantidadActual + $detail['po1_quantity']);
-
-												 $sqlUpdateCostoCantidad = "UPDATE tbdi
-																										SET bdi_quantity = :bdi_quantity, bdi_avgprice = :bdi_avgprice
-																										WHERE  bdi_id = :bdi_id";
-
-												 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
-
-															 ':bdi_quantity' => $CantidadNueva,
-															 ':bdi_avgprice' => $detail['po1_price'],
-															 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
-												 ));
-
-												 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
-
-												 }else{
-
-														 $this->pedeo->trans_rollback();
-
-														 $respuesta = array(
-															 'error'   => true,
-															 'data'    => $resUpdateCostoCantidad,
-															 'mensaje'	=> 'No se pudo crear la Orden de Compra'
-														 );
-												 }
-
-										}
-
-									}else{
-
-												$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
-																									 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+								// //Se aplica el movimiento de inventario
+								// //Solo si el item es inventariable
+								// if($detail['po1_inventory'] == 1 || $detail['po1_inventory']  == '1'){
+								//
+								// 			$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
+								// 														 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
+								//
+								// 			$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+								//
+								// 					 ':bmi_itemcode' => isset($detail['po1_itemcode'])?$detail['po1_itemcode']:NULL,
+								// 					 ':bmi_quantity' => is_numeric($detail['po1_quantity'])? $detail['po1_quantity'] * $Data['invtype']:0,
+								// 					 ':bmi_whscode'  => isset($detail['po1_whscode'])?$detail['po1_whscode']:NULL,
+								// 					 ':bmi_createat' => $this->validateDate($Data['dpo_createat'])?$Data['dpo_createat']:NULL,
+								// 					 ':bmi_createby' => isset($Data['dpo_createby'])?$Data['dpo_createby']:NULL,
+								// 					 ':bmy_doctype'  => is_numeric($Data['dpo_doctype'])?$Data['dpo_doctype']:0,
+								// 					 ':bmy_baseentry' => $resInsert
+								//
+								// 			));
+								//
+								// 			if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
+								// 					// Se verifica que el detalle no de error insertando //
+								// 			}else{
+								//
+								// 					// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
+								// 					// se retorna el error y se detiene la ejecucion del codigo restante.
+								// 						$this->pedeo->trans_rollback();
+								//
+								// 						$respuesta = array(
+								// 							'error'   => true,
+								// 							'data' => $sqlInserMovimiento,
+								// 							'mensaje'	=> 'No se pudo registrar la Orden de Compra'
+								// 						);
+								//
+								// 						 $this->response($respuesta);
+								//
+								// 						 return;
+								// 			}
+								// }
 
 
-												$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
-
-															':bdi_itemcode' => $detail['po1_itemcode'],
-															':bdi_whscode'  => $detail['po1_whscode'],
-															':bdi_quantity' => $detail['po1_quantity'],
-															':bdi_avgprice' => $detail['po1_price']
-												));
-
-
-												if(is_numeric($resInsertCostoCantidad) && $resInsertCostoCantidad > 0){
-														// Se verifica que el detalle no de error insertando //
-												}else{
-
-														// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
-														// se retorna el error y se detiene la ejecucion del codigo restante.
-															$this->pedeo->trans_rollback();
-
-															$respuesta = array(
-																'error'   => true,
-																'data' 		=> $resInsertCostoCantidad,
-																'mensaje'	=> 'No se pudo registrar la Orden de Compra'
-															);
-
-															 $this->response($respuesta);
-
-															 return;
-												}
-									}
-
-								}
+								// //Se Aplica el movimiento en stock y se cambio el precio ponderado
+								// //Solo si el articulo es inventariable
+								//
+								// if($detail['po1_inventory'] == 1 || $detail['po1_inventory']  == '1'){
+								//
+								// 	$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+								// 												FROM tbdi
+								// 												WHERE bdi_itemcode = :bdi_itemcode
+								// 												AND bdi_whscode = :bdi_whscode";
+								//
+								// 	$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+								//
+								// 				':bdi_itemcode' => $detail['po1_itemcode'],
+								// 				':bdi_whscode'  => $detail['po1_whscode']
+								// 	));
+								//
+								// 	if(isset($resCostoCantidad[0])){
+								//
+								// 		if($resCostoCantidad[0]['bdi_quantity'] > 0){
+								//
+								// 					$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+								// 					$CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
+								//
+								// 					$CantidadNueva = $detail['po1_quantity'];
+								// 					$CostoNuevo = $detail['po1_price'];
+								//
+								// 					$CantidadTotal = ($CantidadActual + $CantidadNueva);
+								//
+								// 					$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
+								// 					$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+								//
+								// 					$sqlUpdateCostoCantidad = "UPDATE tbdi
+								// 																		 SET bdi_quantity = :bdi_quantity
+								// 																		 ,bdi_avgprice = :bdi_avgprice
+								// 																		 WHERE  bdi_id = :bdi_id";
+								//
+								// 				 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+								//
+								// 							 ':bdi_quantity' => $CantidadTotal,
+								// 							 ':bdi_avgprice' => $NuevoCostoPonderado,
+								// 							 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+								// 				 ));
+								//
+								// 				 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+								//
+								// 				 }else{
+								//
+								// 						 $this->pedeo->trans_rollback();
+								//
+								// 						 $respuesta = array(
+								// 							 'error'   => true,
+								// 							 'data'    => $resUpdateCostoCantidad,
+								// 							 'mensaje'	=> 'No se pudo crear la Orden de Compra'
+								// 						 );
+								// 				 }
+								//
+								// 		}else{
+								//
+								// 				 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+								// 				 $CantidadNueva  = ($CantidadActual + $detail['po1_quantity']);
+								//
+								// 				 $sqlUpdateCostoCantidad = "UPDATE tbdi
+								// 																		SET bdi_quantity = :bdi_quantity, bdi_avgprice = :bdi_avgprice
+								// 																		WHERE  bdi_id = :bdi_id";
+								//
+								// 				 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+								//
+								// 							 ':bdi_quantity' => $CantidadNueva,
+								// 							 ':bdi_avgprice' => $detail['po1_price'],
+								// 							 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+								// 				 ));
+								//
+								// 				 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+								//
+								// 				 }else{
+								//
+								// 						 $this->pedeo->trans_rollback();
+								//
+								// 						 $respuesta = array(
+								// 							 'error'   => true,
+								// 							 'data'    => $resUpdateCostoCantidad,
+								// 							 'mensaje'	=> 'No se pudo crear la Orden de Compra'
+								// 						 );
+								// 				 }
+								//
+								// 		}
+								//
+								// 	}else{
+								//
+								// 				$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
+								// 																	 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+								//
+								//
+								// 				$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
+								//
+								// 							':bdi_itemcode' => $detail['po1_itemcode'],
+								// 							':bdi_whscode'  => $detail['po1_whscode'],
+								// 							':bdi_quantity' => $detail['po1_quantity'],
+								// 							':bdi_avgprice' => $detail['po1_price']
+								// 				));
+								//
+								//
+								// 				if(is_numeric($resInsertCostoCantidad) && $resInsertCostoCantidad > 0){
+								// 						// Se verifica que el detalle no de error insertando //
+								// 				}else{
+								//
+								// 						// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
+								// 						// se retorna el error y se detiene la ejecucion del codigo restante.
+								// 							$this->pedeo->trans_rollback();
+								//
+								// 							$respuesta = array(
+								// 								'error'   => true,
+								// 								'data' 		=> $resInsertCostoCantidad,
+								// 								'mensaje'	=> 'No se pudo registrar la Orden de Compra'
+								// 							);
+								//
+								// 							 $this->response($respuesta);
+								//
+								// 							 return;
+								// 				}
+								// 	}
+								//
+								// }
 
 								//LLENANDO DETALLE ASIENTO CONTABLES
 								$DetalleAsientoIva->ac1_account = is_numeric($detail['po1_acctcode'])?$detail['po1_acctcode']:0;
@@ -493,122 +493,122 @@ class PurchaseOrder extends REST_Controller {
 					//FIN DEL LLENADO DETALLE
 
 
-					//Procedimiento para llenar Cuenta Articulo
-
-					foreach ($DetalleConsolidadoCuentaArticulo as $key => $posicion) {
-							$granTotalIngreso = 0;
-							$codigoCuentaIngreso = "";
-							$cuenta = "";
-							$proyecto = "";
-							$prc = "";
-							$unidad = "";
-							foreach ($posicion as $key => $value) {
-										$granTotalIngreso = ( $granTotalIngreso + $value->vc1_linetotal );
-										$codigoCuentaIngreso = $value->codigoCuenta;
-										$prc = $value->ac1_prc_code;
-										$unidad = $value->ac1_uncode;
-										$proyecto = $value->ac1_prj_code;
-										$cuenta = $value->ac1_account;
-							}
-
-
-							$debito = 0;
-							$credito = 0;
-
-							switch ($codigoCuentaIngreso) {
-								case 1:
-									$debito = $granTotalIngreso;
-									break;
-
-								case 2:
-									$credito = $granTotalIngreso;
-									break;
-
-								case 3:
-									$credito = $granTotalIngreso;
-									break;
-
-								case 4:
-									$credito = $granTotalIngreso;
-									break;
-
-								case 5:
-									$debito = $granTotalIngreso;
-									break;
-
-								case 6:
-									$debito = $granTotalIngreso;
-									break;
-
-								case 7:
-									$debito = $granTotalIngreso;
-									break;
-							}
-
-
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $cuenta,
-									':ac1_debit' => $debito,
-									':ac1_credit' => $credito,
-									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' => 0,
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dpo_docdate'])?$Data['dpo_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dpo_duedate'])?$Data['dpo_duedate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dpo_doctype'])?$Data['dpo_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => $prc,
-									':ac1_uncode' => $unidad,
-									':ac1_prj_code' => $proyecto,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dpo_createby'])?$Data['dpo_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dpo_cardcode'])?$Data['dpo_cardcode']:NULL,
-									':ac1_codref' => 1
-						));
-
-
-
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-								// si falla algun insert del detalle de la orden de comprar se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la orden de compra'
-									);
-
-									 $this->response($respuesta);
-
-									 return;
-						}
-					}
+					// //Procedimiento para llenar Cuenta Articulo
+					//
+					// foreach ($DetalleConsolidadoCuentaArticulo as $key => $posicion) {
+					// 		$granTotalIngreso = 0;
+					// 		$codigoCuentaIngreso = "";
+					// 		$cuenta = "";
+					// 		$proyecto = "";
+					// 		$prc = "";
+					// 		$unidad = "";
+					// 		foreach ($posicion as $key => $value) {
+					// 					$granTotalIngreso = ( $granTotalIngreso + $value->vc1_linetotal );
+					// 					$codigoCuentaIngreso = $value->codigoCuenta;
+					// 					$prc = $value->ac1_prc_code;
+					// 					$unidad = $value->ac1_uncode;
+					// 					$proyecto = $value->ac1_prj_code;
+					// 					$cuenta = $value->ac1_account;
+					// 		}
+					//
+					//
+					// 		$debito = 0;
+					// 		$credito = 0;
+					//
+					// 		switch ($codigoCuentaIngreso) {
+					// 			case 1:
+					// 				$debito = $granTotalIngreso;
+					// 				break;
+					//
+					// 			case 2:
+					// 				$credito = $granTotalIngreso;
+					// 				break;
+					//
+					// 			case 3:
+					// 				$credito = $granTotalIngreso;
+					// 				break;
+					//
+					// 			case 4:
+					// 				$credito = $granTotalIngreso;
+					// 				break;
+					//
+					// 			case 5:
+					// 				$debito = $granTotalIngreso;
+					// 				break;
+					//
+					// 			case 6:
+					// 				$debito = $granTotalIngreso;
+					// 				break;
+					//
+					// 			case 7:
+					// 				$debito = $granTotalIngreso;
+					// 				break;
+					// 		}
+					//
+					//
+					// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					//
+					// 				':ac1_trans_id' => $resInsertAsiento,
+					// 				':ac1_account' => $cuenta,
+					// 				':ac1_debit' => $debito,
+					// 				':ac1_credit' => $credito,
+					// 				':ac1_debit_sys' => 0,
+					// 				':ac1_credit_sys' => 0,
+					// 				':ac1_currex' => 0,
+					// 				':ac1_doc_date' => $this->validateDate($Data['dpo_docdate'])?$Data['dpo_docdate']:NULL,
+					// 				':ac1_doc_duedate' => $this->validateDate($Data['dpo_duedate'])?$Data['dpo_duedate']:NULL,
+					// 				':ac1_debit_import' => 0,
+					// 				':ac1_credit_import' => 0,
+					// 				':ac1_debit_importsys' => 0,
+					// 				':ac1_credit_importsys' => 0,
+					// 				':ac1_font_key' => $resInsert,
+					// 				':ac1_font_line' => 1,
+					// 				':ac1_font_type' => is_numeric($Data['dpo_doctype'])?$Data['dpo_doctype']:0,
+					// 				':ac1_accountvs' => 1,
+					// 				':ac1_doctype' => 18,
+					// 				':ac1_ref1' => "",
+					// 				':ac1_ref2' => "",
+					// 				':ac1_ref3' => "",
+					// 				':ac1_prc_code' => $prc,
+					// 				':ac1_uncode' => $unidad,
+					// 				':ac1_prj_code' => $proyecto,
+					// 				':ac1_rescon_date' => NULL,
+					// 				':ac1_recon_total' => 0,
+					// 				':ac1_made_user' => isset($Data['dpo_createby'])?$Data['dpo_createby']:NULL,
+					// 				':ac1_accperiod' => 1,
+					// 				':ac1_close' => 0,
+					// 				':ac1_cord' => 0,
+					// 				':ac1_ven_debit' => 1,
+					// 				':ac1_ven_credit' => 1,
+					// 				':ac1_fiscal_acct' => 0,
+					// 				':ac1_taxid' => 1,
+					// 				':ac1_isrti' => 0,
+					// 				':ac1_basert' => 0,
+					// 				':ac1_mmcode' => 0,
+					// 				':ac1_legal_num' => isset($Data['dpo_cardcode'])?$Data['dpo_cardcode']:NULL,
+					// 				':ac1_codref' => 1
+					// 	));
+					//
+					//
+					//
+					// 	if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+					// 			// Se verifica que el detalle no de error insertando //
+					// 	}else{
+					// 			// si falla algun insert del detalle de la orden de comprar se devuelven los cambios realizados por la transaccion,
+					// 			// se retorna el error y se detiene la ejecucion del codigo restante.
+					// 				$this->pedeo->trans_rollback();
+					//
+					// 				$respuesta = array(
+					// 					'error'   => true,
+					// 					'data'	  => $resDetalleAsiento,
+					// 					'mensaje'	=> 'No se pudo registrar la orden de compra'
+					// 				);
+					//
+					// 				 $this->response($respuesta);
+					//
+					// 				 return;
+					// 	}
+					// }
 					//FIN Procedimiento para llenar Cuenta Articulo
 
 
@@ -627,7 +627,7 @@ class PurchaseOrder extends REST_Controller {
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => 240805,
+									':ac1_account' => is_numeric($Data['ac1_account'])?$Data['ac1_account']:0,
 									':ac1_debit' => $granTotalIva,
 									':ac1_credit' => 0,
 									':ac1_debit_sys' => 0,
@@ -837,7 +837,7 @@ class PurchaseOrder extends REST_Controller {
 	}
 
   //ACTUALIZAR ORDEN DE COMPRA
-  public function updateQuotation_post(){
+  public function updatePurchaseOrder_post(){
 
       $Data = $this->post();
 
@@ -883,7 +883,7 @@ class PurchaseOrder extends REST_Controller {
           return;
       }
 
-      $sqlUpdate = "UPDATE dcpo 	SET dpo_docdate=:dpo_docdate,dpo_duedate=:dpo_duedate, dpo_duedev=:dpo_duedev, dpo_pricelist=:dpo_pricelist, dpo_cardcode=:dpo_cardcode,
+      $sqlUpdate = "UPDATE dcpo SET dpo_docdate=:dpo_docdate,dpo_duedate=:dpo_duedate, dpo_duedev=:dpo_duedev, dpo_pricelist=:dpo_pricelist, dpo_cardcode=:dpo_cardcode,
 			  						dpo_cardname=:dpo_cardname, dpo_currency=:dpo_currency, dpo_contacid=:dpo_contacid, dpo_slpcode=:dpo_slpcode,
 										dpo_empid=:dpo_empid, dpo_comment=:dpo_comment, dpo_doctotal=:dpo_doctotal, dpo_baseamnt=:dpo_baseamnt,
 										dpo_taxtotal=:dpo_taxtotal, dpo_discprofit=:dpo_discprofit, dpo_discount=:dpo_discount, dpo_createat=:dpo_createat,
@@ -1004,7 +1004,8 @@ class PurchaseOrder extends REST_Controller {
   //OBTENER ORDEN DE COMPRAS
   public function getPurchaseOrder_get(){
 
-        $sqlSelect = " SELECT * FROM dcpo ";
+        $sqlSelect = "SELECT * from dcpo";//self::getColumn('dcpo','cpo');
+
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1030,7 +1031,7 @@ class PurchaseOrder extends REST_Controller {
 
 
 	//OBTENER ORDEN DE COMPRA POR ID
-	public function getQuotationById_get(){
+	public function getPurchaseOrderById_get(){
 
 				$Data = $this->get();
 
@@ -1073,7 +1074,7 @@ class PurchaseOrder extends REST_Controller {
 
 
 	//OBTENER ORDEN DE COMPRA DETALLE POR ID
-	public function getQuotationDetail_get(){
+	public function getPurchaseOrderDetail_get(){
 
 				$Data = $this->get();
 
@@ -1093,6 +1094,49 @@ class PurchaseOrder extends REST_Controller {
 				$sqlSelect = " SELECT * FROM cpo1 WHERE po1_docentry =:po1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":po1_docentry" => $Data['po1_docentry']));
+
+				if(isset($resSelect[0])){
+
+					$respuesta = array(
+						'error' => false,
+						'data'  => $resSelect,
+						'mensaje' => '');
+
+				}else{
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'	=> 'busqueda sin resultados'
+						);
+
+				}
+
+				 $this->response($respuesta);
+	}
+
+
+	//OBTENER ORDEN DE COMPRA POR SOCIO DE NEGOCIO
+	public function getPurchaseOrderBySN_get(){
+
+				$Data = $this->get();
+
+				if(!isset($Data['dms_card_code'])){
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'La informacion enviada no es valida'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+				}
+
+				$sqlSelect = " SELECT * FROM dcpo WHERE cpo_cardcode =:cpo_cardcode";
+
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cpo_cardcode" => $Data['dms_card_code']));
 
 				if(isset($resSelect[0])){
 

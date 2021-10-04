@@ -1,0 +1,30 @@
+.td{
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.bordew{
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+.fondo{
+    background-color: #525659;
+    color: white;
+}
+
+td,th{
+   font-family:'Tahoma', Times, serif;
+   font-size: 10px;
+   text-align: center;
+}
+
+p,th,td {
+  text-transform: uppercase;
+}
+
+tr {
+  margin-left: auto;
+  margin-right: : auto;
+  text-align: center;
+}

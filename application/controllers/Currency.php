@@ -1,4 +1,6 @@
 <?php
+
+// MONEDAS
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
@@ -126,7 +128,7 @@ class Currency extends REST_Controller {
 
 			if($DataCurrency['pgm_principal'] == 1){
 
-					$sqlValidarPrincipal = " SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal AND pgm_id_moneda = :pgm_id_moneda";
+					$sqlValidarPrincipal = " SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal AND pgm_id_moneda != :pgm_id_moneda";
 
 					$resValidarPricipal = $this->pedeo->queryTable($sqlValidarPrincipal, array(
 
@@ -136,19 +138,18 @@ class Currency extends REST_Controller {
 
 
 					if(isset($resValidarPricipal[0])){
-					}else{
 
-						$respuesta = array(
-							'error'   => true,
-							'data' 		=> $DataCurrency['Pgm_IdMoneda'],
-							'mensaje'	=> 'No se puede actualizar una moneda como principal si ya existe una.'
-						);
+								$respuesta = array(
+									'error'   => true,
+									'data' 		=> $DataCurrency['Pgm_IdMoneda'],
+									'mensaje'	=> 'No se puede actualizar una moneda como principal si ya existe una.'
+								);
 
-						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-						return;
-
+								return;
 					}
+
 			}
 
       $sqlUpdate = "UPDATE pgec SET pgm_name_moneda = :Pgm_NameMoneda, pgm_symbol = :Pgm_Symbol, pgm_enabled = :Pgm_Enabled, pgm_principal = :pgm_principal WHERE pgm_id_moneda = :Pgm_IdMoneda";
@@ -304,4 +305,90 @@ class Currency extends REST_Controller {
   				 $this->response($respuesta);
 
    }
+
+
+	 public function getTasaMLS_get(){
+
+				 	$Data = $this->get();
+
+					$fecha = date('Y-m-d');
+
+
+					if(isset($Data['fecha']) && !empty($Data['fecha'])){
+
+							$fecha = $Data['fecha'];
+
+					}
+
+
+					$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
+					$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
+
+					if(isset($resMonedaLoc[0])){
+
+								// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
+								$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
+								$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
+
+								if(isset($resMonedaSys[0])){
+
+
+									$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+									$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $fecha));
+
+									if(isset($resBusTasa[0])){
+
+														$respuesta = array(
+															'error'   => false,
+															'data'    => $resBusTasa,
+															'mensaje' => ''
+														);
+									}else{
+
+											if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+
+												$respuesta = array(
+													'error' => true,
+													'data'  => array(),
+													'mensaje' =>'No se encrontro la tasa de cambio para la moneda local'
+												);
+
+												$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+												return;
+											}
+									}
+
+
+								}else{
+
+										$respuesta = array(
+											'error' => true,
+											'data'  => array(),
+											'mensaje' =>'No se encontro la moneda de sistema.'
+										);
+
+										$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+										return;
+								}
+
+					}else{
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' =>'No se encontro la moneda local.'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+					}
+
+
+
+
+
+					 $this->response($respuesta);
+	 }
 }

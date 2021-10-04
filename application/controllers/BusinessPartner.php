@@ -60,11 +60,12 @@ class BusinessPartner extends REST_Controller {
         return;
       }
 
-      $sqlSelect = "SELECT dms_card_code, dms_card_type FROM dmsn WHERE dms_card_code = :dms_card_code";
+      $sqlSelect = "SELECT dms_card_code, dms_card_type FROM dmsn WHERE dms_card_code = :dms_card_code AND dms_card_type = :dms_card_type";
 
       $resSelect = $this->pedeo->queryTable($sqlSelect, array(
 
-          ':dms_card_code' => $Data['dms_card_code']
+          ':dms_card_code' => $Data['dms_card_code'],
+					':dms_card_type' => $Data['dms_card_type']
 
       ));
 
@@ -85,10 +86,12 @@ class BusinessPartner extends REST_Controller {
 
       $sqlInsert = "INSERT INTO dmsn(dms_card_code, dms_card_name, dms_card_type, dms_short_name, dms_phone1, dms_phone2,
                     dms_cel, dms_email, dms_inv_mail, dms_group_num, dms_web_site, dms_sip_code, dms_agent, dms_pay_type,
-                    dms_limit_cred, dms_inter, dms_price_list, dms_acct_sn, dms_acct_asn, dms_card_last_name, dms_enabled)
+                    dms_limit_cred, dms_inter, dms_price_list, dms_acct_sn, dms_acct_asn, dms_card_last_name, dms_enabled,
+										dms_rtype,dms_classtype)
 	                  VALUES (:dms_card_code, :dms_card_name, :dms_card_type, :dms_short_name, :dms_phone1, :dms_phone2,
                     :dms_cel, :dms_email, :dms_inv_mail, :dms_group_num, :dms_web_site, :dms_sip_code, :dms_agent, :dms_pay_type,
-                    :dms_limit_cred, :dms_inter, :dms_price_list, :dms_acct_sn, :dms_acct_asn, :dms_card_last_name, :dms_enabled)";
+                    :dms_limit_cred, :dms_inter, :dms_price_list, :dms_acct_sn, :dms_acct_asn, :dms_card_last_name, :dms_enabled,
+										:dms_rtype,:dms_classtype)";
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -111,9 +114,12 @@ class BusinessPartner extends REST_Controller {
              ':dms_price_list' => $Data['dms_price_list'],
              ':dms_acct_sn' => $Data['dms_acct_sn'],
              ':dms_acct_asn' => $Data['dms_acct_asn'],
-             ':dms_card_last_name' =>$Data['dms_card_last_name'], 
-             ':dms_enabled' =>$Data['dms_enabled'] 
-             
+             ':dms_card_last_name' => $Data['dms_card_last_name'],
+             ':dms_enabled' => $Data['dms_enabled'],
+						 ':dms_rtype' => $Data['dms_rtype'],
+						 ':dms_classtype' => $Data['dms_classtype']
+
+
 
       ));
 
@@ -180,12 +186,13 @@ class BusinessPartner extends REST_Controller {
       }
 
       $sqlSelect = "SELECT dms_card_code, dms_card_type FROM dmsn WHERE dms_card_code = :dms_card_code
-                    AND dms_id != :dms_id";
+                    AND dms_id != :dms_id AND dms_card_type = :dms_card_type";
 
       $resSelect = $this->pedeo->queryTable($sqlSelect, array(
 
           ':dms_card_code' => $Data['dms_card_code'],
-          ':dms_id'        => $Data['dms_id']
+          ':dms_id'        => $Data['dms_id'],
+					':dms_card_type' => $Data['dms_card_type']
 
       ));
 
@@ -204,11 +211,11 @@ class BusinessPartner extends REST_Controller {
       }
 
       $sqlUpdate = "UPDATE dmsn SET dms_enabled = :dms_enabled, dms_card_code = :dms_card_code, dms_card_name = :dms_card_name, dms_card_type = :dms_card_type,
-                   dms_short_name = :dms_short_name, dms_phone1 = :dms_phone1, dms_phone2 = :dms_phone2, dms_cel = :dms_cel,
-                   dms_email = :dms_email, dms_inv_mail = :dms_inv_mail, dms_group_num = :dms_group_num, dms_web_site = :dms_web_site,
-                   dms_sip_code = :dms_sip_code, dms_agent = :dms_agent, dms_pay_type = :dms_pay_type, dms_limit_cred = :dms_limit_cred,
-                   dms_inter = :dms_inter, dms_price_list = :dms_price_list, dms_acct_sn = :dms_acct_sn, dms_acct_asn = :dms_acct_asn , dms_card_last_name = :dms_card_last_name
-	                 WHERE dms_id = :dms_id ";
+                    dms_short_name = :dms_short_name, dms_phone1 = :dms_phone1, dms_phone2 = :dms_phone2, dms_cel = :dms_cel,
+                    dms_email = :dms_email, dms_inv_mail = :dms_inv_mail, dms_group_num = :dms_group_num, dms_web_site = :dms_web_site,
+                    dms_sip_code = :dms_sip_code, dms_agent = :dms_agent, dms_pay_type = :dms_pay_type, dms_limit_cred = :dms_limit_cred,
+                    dms_inter = :dms_inter, dms_price_list = :dms_price_list, dms_acct_sn = :dms_acct_sn, dms_acct_asn = :dms_acct_asn , dms_card_last_name = :dms_card_last_name,
+									  dms_rtype = :dms_rtype, dms_classtype = :dms_classtype  WHERE dms_id = :dms_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -234,7 +241,9 @@ class BusinessPartner extends REST_Controller {
             ':dms_acct_asn' => $Data['dms_acct_asn'],
             ':dms_card_last_name' => $Data['dms_card_last_name'],
             ':dms_id' => $Data['dms_id'],
-            ':dms_enabled' => $Data['dms_enabled']
+            ':dms_enabled' => $Data['dms_enabled'],
+						':dms_rtype' => $Data['dms_rtype'],
+						':dms_classtype' => $Data['dms_classtype']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){

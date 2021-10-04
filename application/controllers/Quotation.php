@@ -25,36 +25,252 @@ class Quotation extends REST_Controller {
   //CREAR NUEVA COTIZACION
 	public function createQuotation_post(){
 
-      $Data = $this->post();
-			$DocNumVerificado = 0;
+		      $Data = $this->post();
+					$DocNumVerificado = 0;
 
-      if(!isset($Data['detail'])){
+		      if(!isset($Data['detail'])){
 
-        $respuesta = array(
-          'error' => true,
-          'data'  => array(),
-          'mensaje' =>'La informacion enviada no es valida'
-        );
+		        $respuesta = array(
+		          'error' => true,
+		          'data'  => array(),
+		          'mensaje' =>'La informacion enviada no es valida'
+		        );
 
-        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+		        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-        return;
-      }
+		        return;
+		      }
 
-      $ContenidoDetalle = json_decode($Data['detail'], true);
+		      $ContenidoDetalle = json_decode($Data['detail'], true);
 
 
-      if(!is_array($ContenidoDetalle)){
-          $respuesta = array(
-            'error' => true,
-            'data'  => array(),
-            'mensaje' =>'No se encontro el detalle de la cotización'
-          );
+		      if(!is_array($ContenidoDetalle)){
+		          $respuesta = array(
+		            'error' => true,
+		            'data'  => array(),
+		            'mensaje' =>'No se encontro el detalle de la cotización'
+		          );
 
-          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+		          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-          return;
-      }
+		          return;
+		      }
+
+
+					//Obtener Carpeta Principal del Proyecto
+					$sqlMainFolder = " SELECT * FROM params";
+					$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+					if(!isset($resMainFolder[0])){
+							$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encontro la caperta principal del proyecto'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+					}
+
+					// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+					// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
+					$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
+					$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
+
+					if(isset($resMonedaLoc[0])){
+
+					}else{
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' =>'No se encontro la moneda local.'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+					}
+
+					$MONEDALOCAL = trim($resMonedaLoc[0]['pgm_symbol']);
+
+					// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
+					$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
+					$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
+
+					if(isset($resMonedaSys[0])){
+
+					}else{
+
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' =>'No se encontro la moneda de sistema.'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+					}
+
+
+					$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
+
+					//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
+					// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
+					$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+					$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['dvc_currency'], ':tsa_date' => $Data['dvc_docdate']));
+
+					if(isset($resBusTasa[0])){
+
+					}else{
+
+							if(trim($Data['dvc_currency']) != $MONEDALOCAL ){
+
+								$respuesta = array(
+									'error' => true,
+									'data'  => array(),
+									'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['dvc_currency'].' en la actual fecha del documento: '.$Data['dvc_docdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
+								);
+
+								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+								return;
+							}
+					}
+
+
+					$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+					$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['dvc_docdate']));
+
+					if(isset($resBusTasa2[0])){
+
+					}else{
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['dvf_docdate']
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+					}
+
+					$TasaDocLoc = isset($resBusTasa[0]['tsa_value']) ? $resBusTasa[0]['tsa_value'] : 1;
+					$TasaLocSys = $resBusTasa2[0]['tsa_value'];
+
+					// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+
+
+					// SE VERIFICA SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
+
+					$sqlVerificarAprobacion = "SELECT * FROM tbed WHERE bed_docentry =:bed_docentry AND bed_doctype =:bed_doctype AND bed_status =:bed_status";
+					$resVerificarAprobacion = $this->pedeo->queryTable($sqlVerificarAprobacion, array(
+
+										':bed_docentry' => $Data['dvc_baseentry'],
+										':bed_doctype'  => $Data['dvc_basetype'],
+										':bed_status'   => 4
+					));
+
+					if(!isset($resVerificarAprobacion[0])){
+
+									//VERIFICAR MODELO DE APROBACION
+
+									$sqlDocModelo = " SELECT * FROM tmau inner join mau1 on mau_docentry = au1_docentry where mau_doctype = :mau_doctype";
+									$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(':mau_doctype' => $Data['dvc_doctype']));
+
+									if(isset($resDocModelo[0])){
+
+											$sqlModUser = "SELECT aus_id FROM taus
+																		 INNER JOIN pgus
+																		 ON aus_id_usuario = pgu_id_usuario
+																		 WHERE aus_id_model = :aus_id_model
+																		 AND pgu_code_user = :pgu_code_user";
+
+											$resModUser = $this->pedeo->queryTable($sqlModUser, array(':aus_id_model' =>$resDocModelo[0]['mau_docentry'], ':pgu_code_user' =>$Data['dvc_createby']));
+
+											if(isset($resModUser[0])){
+														// VALIDACION DE APROBACION
+
+														$condicion1 = $resDocModelo[0]['au1_c1']; // ESTO ME DICE SI LA CONDICION DEL DOCTOTAL ES 1 MAYOR 2 MENOR
+														$valorDocTotal = $resDocModelo[0]['au1_doctotal'];
+														$valorSociosNegocio = $resDocModelo[0]['au1_sn'];
+														$TotalDocumento = $Data['dvc_doctotal'];
+
+														if(trim($Data['dvc_currency']) != $TasaDocLoc){
+																$TotalDocumento = ($TotalDocumento * $TasaDocLoc);
+														}
+
+
+														if(is_numeric($valorDocTotal) && $valorDocTotal > 0){ //SI HAY UN VALOR Y SI ESTE ES MAYOR A CERO
+
+																if( !empty($valorSociosNegocio ) ){ // CON EL SOCIO DE NEGOCIO
+
+																		if($condicion1 == 1){
+
+																			if( $TotalDocumento >= $valorDocTotal ){
+
+																				if( in_array($Data['dvc_cardcode'], explode(",", $valorSociosNegocio) )){
+
+																						$this->setAprobacion($Data, $ContenidoDetalle,$resMainFolder[0]['main_folder'],'dvc','vc1');
+																				}
+																			}
+																		}else if($condicion1 == 2){
+
+																			if($TotalDocumento <= $valorDocTotal  ){
+																				if( in_array($Data['dvc_cardcode'], explode(",", $valorSociosNegocio) )){
+
+																						 $this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvc','vc1');
+																				}
+																			}
+																		}
+																}else{ // SIN EL SOCIO DE NEGOCIO
+
+
+																			if($condicion1 == 1){
+																				if($TotalDocumento >= $valorDocTotal){
+
+																					 $this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvc','vc1');
+
+																				}
+																			}else if($condicion1 == 2){
+																				if($TotalDocumento <= $valorDocTotal ){
+
+																						$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvc','vc1');
+
+																				}
+																			}
+																}
+														}else{ // SI NO SE COMPARA EL TOTAL DEL DOCUMENTO
+
+																if( !empty($valorSociosNegocio) ){
+
+																	if( in_array($Data['dvc_cardcode'], explode(",", $valorSociosNegocio) )){
+
+																	 		$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvc','vc1');
+																	}
+																}else{
+
+																			$respuesta = array(
+																				'error' => true,
+																				'data'  => array(),
+																				'mensaje' =>'No se ha encontraro condiciones en el modelo de aprobacion, favor contactar con su administrador del sistema'
+																			);
+
+																			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+																			return;
+																}
+														}
+											}
+									}
+
+								//VERIFICAR MODELO DE PROBACION
+					}
+				// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
+
+
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
@@ -96,21 +312,7 @@ class Quotation extends REST_Controller {
 						return;
 				}
 
-				//Obtener Carpeta Principal del Proyecto
-				$sqlMainFolder = " SELECT * FROM params";
-				$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
 
-				if(!isset($resMainFolder[0])){
-						$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' =>'No se encontro la caperta principal del proyecto'
-						);
-
-						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-						return;
-				}
 
         $sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
@@ -156,6 +358,7 @@ class Quotation extends REST_Controller {
               ':dvc_paytype' => is_numeric($Data['dvc_paytype'])?$Data['dvc_paytype']:0,
 							':dvc_createby' => isset($Data['dvc_createby'])?$Data['dvc_createby']:NULL,
               ':dvc_attch' => $this->getUrl(count(trim(($Data['dvc_attch']))) > 0 ? $Data['dvc_attch']:NULL, $resMainFolder[0]['main_folder'])
+
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -188,14 +391,54 @@ class Quotation extends REST_Controller {
 					// Fin de la actualizacion de la numeracion del documento
 
 
+					//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+										':bed_docentry' => $resInsert,
+										':bed_doctype' => $Data['dvc_doctype'],
+										':bed_status' => 1, //ESTADO CERRADO
+										':bed_createby' => $Data['dvc_createby'],
+										':bed_date' => date('Y-m-d'),
+										':bed_baseentry' => NULL,
+										':bed_basetype' => NULL
+					));
+
+
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+					}else{
+
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la cotizacion de ventas'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+					}
+
+					//FIN PROCESO ESTADO DEL DOCUMENTO
+
+
+
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
                 $sqlInsertDetail = "INSERT INTO vct1(vc1_docentry, vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
                                     vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
-                                    vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
+                                    vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_linenum, vc1_acciva)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
                                     :vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, :vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,
-                                    :vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory)";
+                                    :vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory,:vc1_linenum,:vc1_acciva)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':vc1_docentry' => $resInsert,
@@ -216,7 +459,9 @@ class Quotation extends REST_Controller {
                         ':vc1_basetype' => is_numeric($detail['vc1_basetype'])?$detail['vc1_basetype']:0,
                         ':vc1_doctype' => is_numeric($detail['vc1_doctype'])?$detail['vc1_doctype']:0,
                         ':vc1_avprice' => is_numeric($detail['vc1_avprice'])?$detail['vc1_avprice']:0,
-                        ':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
+                        ':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL,
+												':vc1_linenum' => is_numeric($detail['vc1_linenum'])?$detail['vc1_linenum']:NULL,
+												':vc1_acciva' => is_numeric($detail['vc1_acciva'])?$detail['vc1_acciva']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -229,7 +474,7 @@ class Quotation extends REST_Controller {
 
 											$respuesta = array(
 												'error'   => true,
-												'data' => $resInsert,
+												'data' => $resInsertDetail,
 												'mensaje'	=> 'No se pudo registrar la cotización'
 											);
 
@@ -278,20 +523,7 @@ class Quotation extends REST_Controller {
 
       $Data = $this->post();
 
-			if(!isset($Data['dvc_docentry']) OR !isset($Data['dvc_docnum']) OR
-				 !isset($Data['dvc_docdate']) OR !isset($Data['dvc_duedate']) OR
-				 !isset($Data['dvc_duedev']) OR !isset($Data['dvc_pricelist']) OR
-				 !isset($Data['dvc_cardcode']) OR !isset($Data['dvc_cardname']) OR
-				 !isset($Data['dvc_currency']) OR !isset($Data['dvc_contacid']) OR
-				 !isset($Data['dvc_slpcode']) OR !isset($Data['dvc_empid']) OR
-				 !isset($Data['dvc_comment']) OR !isset($Data['dvc_doctotal']) OR
-				 !isset($Data['dvc_baseamnt']) OR !isset($Data['dvc_taxtotal']) OR
-				 !isset($Data['dvc_discprofit']) OR !isset($Data['dvc_discount']) OR
-				 !isset($Data['dvc_createat']) OR !isset($Data['dvc_baseentry']) OR
-				 !isset($Data['dvc_basetype']) OR !isset($Data['dvc_doctype']) OR
-				 !isset($Data['dvc_idadd']) OR !isset($Data['dvc_adress']) OR
-				 !isset($Data['dvc_paytype']) OR !isset($Data['dvc_attch']) OR
-				 !isset($Data['detail'])){
+			if(!isset($Data['detail'])){
 
         $respuesta = array(
           'error' => true,
@@ -303,7 +535,6 @@ class Quotation extends REST_Controller {
 
         return;
       }
-
 
 			$ContenidoDetalle = json_decode($Data['detail'], true);
 
@@ -347,12 +578,11 @@ class Quotation extends REST_Controller {
       $this->pedeo->trans_begin();
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-							':dvc_docnum' => is_numeric($Data['dvc_docnum'])?$Data['dvc_docnum']:0,
 							':dvc_docdate' => $this->validateDate($Data['dvc_docdate'])?$Data['dvc_docdate']:NULL,
 							':dvc_duedate' => $this->validateDate($Data['dvc_duedate'])?$Data['dvc_duedate']:NULL,
 							':dvc_duedev' => $this->validateDate($Data['dvc_duedev'])?$Data['dvc_duedev']:NULL,
 							':dvc_pricelist' => is_numeric($Data['dvc_pricelist'])?$Data['dvc_pricelist']:0,
-							':dvc_cardcode' => isset($Data['dvc_pricelist'])?$Data['dvc_pricelist']:NULL,
+							':dvc_cardcode' => isset($Data['dvc_cardcode'])?$Data['dvc_cardcode']:NULL,
 							':dvc_cardname' => isset($Data['dvc_cardname'])?$Data['dvc_cardname']:NULL,
 							':dvc_currency' => isset($Data['dvc_currency'])?$Data['dvc_currency']:NULL,
 							':dvc_contacid' => isset($Data['dvc_contacid'])?$Data['dvc_contacid']:NULL,
@@ -383,12 +613,12 @@ class Quotation extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry, vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
 																			vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
-																			vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
+																			vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_acciva, vc1_linenum)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
 																			:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, :vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,
-																			:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory)";
+																			:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory, :vc1_acciva,:vc1_linenum)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-											':vc1_docentry' => $resInsert,
+											':vc1_docentry' => $Data['dvc_docentry'],
 											':vc1_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
 											':vc1_itemname' => isset($detail['vc1_itemname'])?$detail['vc1_itemname']:NULL,
 											':vc1_quantity' => is_numeric($detail['vc1_quantity'])?$detail['vc1_quantity']:0,
@@ -406,7 +636,9 @@ class Quotation extends REST_Controller {
 											':vc1_basetype' => is_numeric($detail['vc1_basetype'])?$detail['vc1_basetype']:0,
 											':vc1_doctype' => is_numeric($detail['vc1_doctype'])?$detail['vc1_doctype']:0,
 											':vc1_avprice' => is_numeric($detail['vc1_avprice'])?$detail['vc1_avprice']:0,
-											':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL
+											':vc1_inventory' => is_numeric($detail['vc1_inventory'])?$detail['vc1_inventory']:NULL,
+											':vc1_acciva' => is_numeric($detail['vc1_acciva'])?$detail['vc1_acciva']:NULL,
+											':vc1_linenum' => is_numeric($detail['vc1_linenum'])?$detail['vc1_linenum']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -458,7 +690,7 @@ class Quotation extends REST_Controller {
   //OBTENER COTIZACIONES
   public function getQuotation_get(){
 
-        $sqlSelect = " SELECT * FROM dvct";
+        $sqlSelect = self::getColumn('dvct','dvc');
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -629,6 +861,11 @@ class Quotation extends REST_Controller {
 
       }
 
+
+			if (!base64_decode($data, true) ){
+    			return $url;
+			}
+
 			$ruta = '/var/www/html/'.$caperta.'/assets/img/anexos/';
 
       $milliseconds = round(microtime(true) * 1000);
@@ -673,6 +910,183 @@ class Quotation extends REST_Controller {
 	}
 
 
+	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod){
+
+		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
+									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
+									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
+									pap_attch,pap_createby,pap_origen)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen)";
+
+		// Se Inicia la transaccion,
+		// Todas las consultas de modificacion siguientes
+		// aplicaran solo despues que se confirme la transaccion,
+		// de lo contrario no se aplicaran los cambios y se devolvera
+		// la base de datos a su estado original.
+
+	  $this->pedeo->trans_begin();
+
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+					':pap_docnum' => 0,
+					':pap_series' => is_numeric($Encabezado[$prefijoe.'_series'])?$Encabezado[$prefijoe.'_series']:0,
+					':pap_docdate' => $this->validateDate($Encabezado[$prefijoe.'_docdate'])?$Encabezado[$prefijoe.'_docdate']:NULL,
+					':pap_duedate' => $this->validateDate($Encabezado[$prefijoe.'_duedate'])?$Encabezado[$prefijoe.'_duedate']:NULL,
+					':pap_duedev' => $this->validateDate($Encabezado[$prefijoe.'_duedev'])?$Encabezado[$prefijoe.'_duedev']:NULL,
+					':pap_pricelist' => is_numeric($Encabezado[$prefijoe.'_pricelist'])?$Encabezado[$prefijoe.'_pricelist']:0,
+					':pap_cardcode' => isset($Encabezado[$prefijoe.'_cardcode'])?$Encabezado[$prefijoe.'_cardcode']:NULL,
+					':pap_cardname' => isset($Encabezado[$prefijoe.'_cardname'])?$Encabezado[$prefijoe.'_cardname']:NULL,
+					':pap_currency' => isset($Encabezado[$prefijoe.'_currency'])?$Encabezado[$prefijoe.'_currency']:NULL,
+					':pap_contacid' => isset($Encabezado[$prefijoe.'_contacid'])?$Encabezado[$prefijoe.'_contacid']:NULL,
+					':pap_slpcode' => is_numeric($Encabezado[$prefijoe.'_slpcode'])?$Encabezado[$prefijoe.'_slpcode']:0,
+					':pap_empid' => is_numeric($Encabezado[$prefijoe.'_empid'])?$Encabezado[$prefijoe.'_empid']:0,
+					':pap_comment' => isset($Encabezado[$prefijoe.'_comment'])?$Encabezado[$prefijoe.'_comment']:NULL,
+					':pap_doctotal' => is_numeric($Encabezado[$prefijoe.'_doctotal'])?$Encabezado[$prefijoe.'_doctotal']:0,
+					':pap_baseamnt' => is_numeric($Encabezado[$prefijoe.'_baseamnt'])?$Encabezado[$prefijoe.'_baseamnt']:0,
+					':pap_taxtotal' => is_numeric($Encabezado[$prefijoe.'_taxtotal'])?$Encabezado[$prefijoe.'_taxtotal']:0,
+					':pap_discprofit' => is_numeric($Encabezado[$prefijoe.'_discprofit'])?$Encabezado[$prefijoe.'_discprofit']:0,
+					':pap_discount' => is_numeric($Encabezado[$prefijoe.'_discount'])?$Encabezado[$prefijoe.'_discount']:0,
+					':pap_createat' => $this->validateDate($Encabezado[$prefijoe.'_createat'])?$Encabezado[$prefijoe.'_createat']:NULL,
+					':pap_baseentry' => is_numeric($Encabezado[$prefijoe.'_baseentry'])?$Encabezado[$prefijoe.'_baseentry']:0,
+					':pap_basetype' => is_numeric($Encabezado[$prefijoe.'_basetype'])?$Encabezado[$prefijoe.'_basetype']:0,
+					':pap_doctype' => 21,
+					':pap_idadd' => isset($Encabezado[$prefijoe.'_idadd'])?$Encabezado[$prefijoe.'_idadd']:NULL,
+					':pap_adress' => isset($Encabezado[$prefijoe.'_adress'])?$Encabezado[$prefijoe.'_adress']:NULL,
+					':pap_paytype' => is_numeric($Encabezado[$prefijoe.'_paytype'])?$Encabezado[$prefijoe.'_paytype']:0,
+					':pap_createby' => isset($Encabezado[$prefijoe.'_createby'])?$Encabezado[$prefijoe.'_createby']:NULL,
+					':pap_attch' => $this->getUrl(count(trim(($Encabezado[$prefijoe.'_attch']))) > 0 ? $Encabezado[$prefijoe.'_attch']:NULL, $Carpeta),
+					':pap_origen' => is_numeric($Encabezado[$prefijoe.'_doctype'])?$Encabezado[$prefijoe.'_doctype']:0,
+
+				));
+
+
+				if(is_numeric($resInsert) && $resInsert > 0){
+
+						//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+											':bed_docentry' => $resInsert,
+											':bed_doctype' =>  21,
+											':bed_status' => 5, //ESTADO CERRADO
+											':bed_createby' => $Encabezado[$prefijoe.'_createby'],
+											':bed_date' => date('Y-m-d'),
+											':bed_baseentry' => NULL,
+											':bed_basetype' => NULL
+						));
+
+
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+
+								 $this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar la cotizacion de ventas'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+						}
+
+						//FIN PROCESO ESTADO DEL DOCUMENTO
+
+						foreach ($Detalle as $key => $detail) {
+
+									$sqlInsertDetail = "INSERT INTO pap1(ap1_docentry, ap1_itemcode, ap1_itemname, ap1_quantity, ap1_uom, ap1_whscode,
+																			ap1_price, ap1_vat, ap1_vatsum, ap1_discount, ap1_linetotal, ap1_costcode, ap1_ubusiness, ap1_project,
+																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
+																			:ap1_uom, :ap1_whscode,:ap1_price, :ap1_vat, :ap1_vatsum, :ap1_discount, :ap1_linetotal, :ap1_costcode, :ap1_ubusiness, :ap1_project,
+																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva)";
+
+									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
+													':ap1_docentry' => $resInsert,
+													':ap1_itemcode' => isset($detail[$prefijod.'_itemcode'])?$detail[$prefijod.'_itemcode']:NULL,
+													':ap1_itemname' => isset($detail[$prefijod.'_itemname'])?$detail[$prefijod.'_itemname']:NULL,
+													':ap1_quantity' => is_numeric($detail[$prefijod.'_quantity'])?$detail[$prefijod.'_quantity']:0,
+													':ap1_uom' => isset($detail[$prefijod.'_uom'])?$detail[$prefijod.'_uom']:NULL,
+													':ap1_whscode' => isset($detail[$prefijod.'_whscode'])?$detail[$prefijod.'_whscode']:NULL,
+													':ap1_price' => is_numeric($detail[$prefijod.'_price'])?$detail[$prefijod.'_price']:0,
+													':ap1_vat' => is_numeric($detail[$prefijod.'_vat'])?$detail[$prefijod.'_vat']:0,
+													':ap1_vatsum' => is_numeric($detail[$prefijod.'_vatsum'])?$detail[$prefijod.'_vatsum']:0,
+													':ap1_discount' => is_numeric($detail[$prefijod.'_discount'])?$detail[$prefijod.'_discount']:0,
+													':ap1_linetotal' => is_numeric($detail[$prefijod.'_linetotal'])?$detail[$prefijod.'_linetotal']:0,
+													':ap1_costcode' => isset($detail[$prefijod.'_costcode'])?$detail[$prefijod.'_costcode']:NULL,
+													':ap1_ubusiness' => isset($detail[$prefijod.'_ubusiness'])?$detail[$prefijod.'_ubusiness']:NULL,
+													':ap1_project' => isset($detail[$prefijod.'_project'])?$detail[$prefijod.'_project']:NULL,
+													':ap1_acctcode' => is_numeric($detail[$prefijod.'_acctcode'])?$detail[$prefijod.'_acctcode']:0,
+													':ap1_basetype' => is_numeric($detail[$prefijod.'_basetype'])?$detail[$prefijod.'_basetype']:0,
+													':ap1_doctype' => is_numeric($detail[$prefijod.'_doctype'])?$detail[$prefijod.'_doctype']:0,
+													':ap1_avprice' => is_numeric($detail[$prefijod.'_avprice'])?$detail[$prefijod.'_avprice']:0,
+													':ap1_inventory' => is_numeric($detail[$prefijod.'_inventory'])?$detail[$prefijod.'_inventory']:NULL,
+													':ap1_linenum' => is_numeric($detail[$prefijod.'_linenum'])?$detail[$prefijod.'_linenum']:NULL,
+													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL
+									));
+
+									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+											// Se verifica que el detalle no de error insertando //
+									}else{
+
+											// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+											// se retorna el error y se detiene la ejecucion del codigo restante.
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resInsertDetail,
+													'mensaje'	=> 'No se pudo registrar la cotización'
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+									}
+
+
+						}
+
+
+						// Si todo sale bien despues de insertar el detalle de la cotizacion
+						// se confirma la trasaccion  para que los cambios apliquen permanentemente
+						// en la base de datos y se confirma la operacion exitosa.
+						$this->pedeo->trans_commit();
+
+						$respuesta = array(
+							'error' => false,
+							'data' => $resInsert,
+							'mensaje' =>'El documento fue creado, pero es necesario que sea aprobado'
+						);
+
+						$this->response($respuesta);
+
+						return;
+
+
+				}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'    => $resInsert,
+								'mensaje'	=> 'No se pudo crear la cotización'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+				}
+
+	}
 
 
 }

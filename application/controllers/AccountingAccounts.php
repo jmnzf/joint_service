@@ -52,8 +52,8 @@ class AccountingAccounts extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dacc(acc_code, acc_name, acc_level, acc_cash, acc_cash_flow, acc_budget, acc_sup, acc_type, acc_tax_edef, acc_cost_center, acc_bus_unit, acc_project, acc_block_manual, acc_enabled)
-	                    VALUES (:acc_code, :acc_name, :acc_level, :acc_cash, :acc_cash_flow, :acc_budget, :acc_sup, :acc_type, :acc_tax_edef, :acc_cost_center, :acc_bus_unit, :acc_project, :acc_block_manual, :acc_enabled)";
+        $sqlInsert = "INSERT INTO dacc(acc_code, acc_name, acc_level, acc_cash, acc_cash_flow, acc_budget, acc_sup, acc_type, acc_tax_edef, acc_cost_center, acc_bus_unit, acc_project, acc_block_manual, acc_enabled, acc_businessp)
+	                    VALUES (:acc_code, :acc_name, :acc_level, :acc_cash, :acc_cash_flow, :acc_budget, :acc_sup, :acc_type, :acc_tax_edef, :acc_cost_center, :acc_bus_unit, :acc_project, :acc_block_manual, :acc_enabled, :acc_businessp)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -71,7 +71,8 @@ class AccountingAccounts extends REST_Controller {
               ':acc_bus_unit' => $Data['acc_bus_unit'],
               ':acc_project' => $Data['acc_project'],
               ':acc_block_manual' => $Data['acc_block_manual'],
-              ':acc_enabled' => $Data['acc_enabled']
+              ':acc_enabled' => $Data['acc_enabled'],
+							':acc_businessp' => $Data['acc_businessp']
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0 ){
@@ -133,7 +134,7 @@ class AccountingAccounts extends REST_Controller {
       $sqlUpdate = "UPDATE dacc	SET acc_code=:acc_code, acc_name=:acc_name, acc_level=:acc_level, acc_cash=:acc_cash,
                     acc_cash_flow=:acc_cash_flow, acc_budget=:acc_budget, acc_sup=:acc_sup, acc_type=:acc_type, acc_tax_edef=:acc_tax_edef,
                     acc_cost_center=:acc_cost_center, acc_bus_unit=:acc_bus_unit, acc_project=:acc_project, acc_block_manual=:acc_block_manual,
-                    acc_enabled=:acc_enabled WHERE acc_id = :acc_id";
+                    acc_enabled=:acc_enabled ,acc_businessp = :acc_businessp WHERE acc_id = :acc_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -152,7 +153,8 @@ class AccountingAccounts extends REST_Controller {
               ':acc_project' => $Data['acc_project'],
               ':acc_block_manual' => $Data['acc_block_manual'],
               ':acc_enabled' => $Data['acc_enabled'],
-              ':acc_id' => $Data['acc_id']
+              ':acc_id' => $Data['acc_id'],
+							':acc_businessp' => $Data['acc_businessp']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){

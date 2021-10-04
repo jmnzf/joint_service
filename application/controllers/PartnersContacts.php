@@ -155,6 +155,48 @@ class PartnersContacts extends REST_Controller {
 
        $this->response($respuesta);
   }
+  
+  // Obtener contacto por id de socio de negocio
+  public function getPartnersContactsById_get(){
+
+        $Data = $this->get();
+
+        if(!isset($Data['dmc_card_code'])){
+
+          $respuesta = array(
+            'error' => true,
+            'data'  => array(),
+            'mensaje' =>'La informacion enviada no es valida'
+          );
+
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          return;
+        }
+
+        $sqlSelect = " SELECT * FROM dmsc WHERE dmc_card_code = :dmc_card_code";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dmc_card_code' => $Data['dmc_card_code']));
+
+        if(isset($resSelect[0])){
+
+          $respuesta = array(
+            'error' => false,
+            'data'  => $resSelect,
+            'mensaje' => '');
+
+        }else{
+
+            $respuesta = array(
+              'error'   => true,
+              'data' => array(),
+              'mensaje'	=> 'busqueda sin resultados'
+            );
+
+        }
+
+         $this->response($respuesta);
+  }
 
   // Obtener contactos por id de socio de negocio
   public function getPartnersContacts_get(){

@@ -55,7 +55,7 @@ class CostCenter extends REST_Controller {
 				  ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
-					
+
               $respuesta = array(
                 'error' => false,
                 'data' => $resInsert,

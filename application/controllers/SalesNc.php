@@ -229,6 +229,44 @@ class SalesNc extends REST_Controller {
 					}
 					// Fin de la actualizacion de la numeracion del documento
 
+					//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+										':bed_docentry' => $resInsert,
+										':bed_doctype' => $Data['vnc_doctype'],
+										':bed_status' => 1, //ESTADO CERRADO
+										':bed_createby' => $Data['vnc_createby'],
+										':bed_date' => date('Y-m-d'),
+										':bed_baseentry' => NULL,
+										':bed_basetype' =>NULL
+					));
+
+
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+					}else{
+
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la nota credito de ventas'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+					}
+
+					//FIN PROCESO ESTADO DEL DOCUMENTO
+
 
 					//Se agregan los asientos contables*/*******
 
@@ -1417,12 +1455,12 @@ class SalesNc extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
 																			nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
-																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
+																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory,nc1_cuentaIva)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
 																			:nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
-																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory)";
+																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory,:nc1_cuentaIva)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-											':nc1_docentry' => $resInsert,
+											':nc1_docentry' => $Data['vnc_docentry'],
 											':nc1_itemcode' => isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL,
 											':nc1_itemname' => isset($detail['nc1_itemname'])?$detail['nc1_itemname']:NULL,
 											':nc1_quantity' => is_numeric($detail['nc1_quantity'])?$detail['nc1_quantity']:0,
@@ -1440,7 +1478,8 @@ class SalesNc extends REST_Controller {
 											':nc1_basetype' => is_numeric($detail['nc1_basetype'])?$detail['nc1_basetype']:0,
 											':nc1_doctype' => is_numeric($detail['nc1_doctype'])?$detail['nc1_doctype']:0,
 											':nc1_avprice' => is_numeric($detail['nc1_avprice'])?$detail['nc1_avprice']:0,
-											':nc1_inventory' => is_numeric($detail['nc1_inventory'])?$detail['nc1_inventory']:NULL
+											':nc1_inventory' => is_numeric($detail['nc1_inventory'])?$detail['nc1_inventory']:NULL,
+											':nc1_acciva' => is_numeric($detail['nc1_cuentaIva'])?$detail['nc1_cuentaIva']:0
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1492,7 +1531,8 @@ class SalesNc extends REST_Controller {
   //OBTENER Nota crédito de clientesES
   public function getSalesNc_get(){
 
-        $sqlSelect = " SELECT * FROM dvnc";
+        $sqlSelect = self::getColumn('dvnc','vnc');
+				
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

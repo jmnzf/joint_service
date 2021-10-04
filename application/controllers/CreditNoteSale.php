@@ -243,7 +243,7 @@ class CreditNoteSale extends REST_Controller {
               ':vnc_id_add' => $Data['vnc_id_add'],
               ':vnc_adress' => $Data['vnc_adress'],
               ':vnc_pay_type' => $Data['vnc_pay_type'],
-              ':vnc_attch' => $this->getUrl($Data['vnc_attch'])
+              ':vnc_attch' => $this->getUrl($Data['vnc_attch']),
 							':vnc_doc_entry' => $Data['vnc_doc_entry'],
       ));
 

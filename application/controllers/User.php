@@ -306,7 +306,7 @@ class User extends REST_Controller {
 						'data'  => array(),
 						'mensaje' => 'este usuario no esta registrado');
 
-						 $this->response($respuesta); 
+						 $this->response($respuesta);
 						 return;
 				}
 
@@ -318,17 +318,17 @@ class User extends REST_Controller {
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':Pgu_CodeUser' => $DataUser['Pgu_CodeUser'],':pgu_enabled' => 1));
 
-				if( isset($resSelect[0]) ){ 
+				if( isset($resSelect[0]) ){
 
 					if(password_verify($DataUser['Pgu_Pass'], $resSelect[0]['pgu_pass'])){
-						// 
+						//
 						$this->pedeo->updateRow("UPDATE logeo SET log_id_estado = :log_id_estado, log_date_end = :log_date_end WHERE log_id_usuario = :log_id_usuario AND log_id_estado = :statusId", array(
 							':log_id_estado' => 0,
 							':log_date_end' => date('Y-m-d H:i:s'),
 							':log_id_usuario' => $resSelect[0]['pgu_id_usuario'],
 							':statusId' => 1
 					    ));
-						// 
+						//
 						$sessionId = $this->pedeo->insertRow("INSERT INTO logeo (log_id_usuario, log_date_init, log_date_end, log_id_estado) VALUES (:log_id_usuario, :log_date_init, :log_date_end, :log_id_estado)",
 							array(
 								':log_id_usuario' => $resSelect[0]['pgu_id_usuario'],
@@ -347,7 +347,7 @@ class User extends REST_Controller {
 							'mensaje' => ''
 						);
 					}else{
-						// 
+						//
 						$respuesta = array(
 							'error'   => true,
 							'data' => array(),
@@ -385,6 +385,8 @@ class User extends REST_Controller {
 
 				}
 
+
+
 				$sqlUpdate = "UPDATE  pgus SET pgu_enabled = :Pgu_Enabled WHERE pgu_id_usuario = :Pgu_IdUsuario";
 
 
@@ -420,6 +422,114 @@ class User extends REST_Controller {
 
 
  		}
+
+
+		// Obtener Solo usuarios autorizados
+		public function getUserListAuth_get(){
+
+					$sqlSelect = "SELECT pgus.pgu_id_usuario as id, concat(pgus.pgu_name_user,' ', COALESCE(pgus.pgu_lname_user,''))as nombre,
+												pgu_code_user as user,
+												case
+													when aus_required = 1 then 'Requerido'
+													else 'NA'
+													end as requerido,
+													tmau.mau_decription
+												FROM taus
+												INNER JOIN pgus
+												ON taus.aus_id_usuario = pgus.pgu_id_usuario
+												INNER JOIN tmau
+												ON tmau.mau_docentry = taus.aus_id_model";
+
+					$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+					if(isset($resSelect[0])){
+
+						$respuesta = array(
+							'error' => false,
+							'data'  => $resSelect,
+							'mensaje' => '');
+
+					}else{
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => [],
+								'mensaje'	=> 'busqueda sin resultados'
+							);
+
+					}
+
+					 $this->response($respuesta);
+		}
+
+
+		// ESTABLECE LOS USUARIOS QUE NECESITAN SER AUTORIZADOS
+		public function setUser_post(){
+
+					$Data = $this->post();
+
+					if(!isset($Data['id']) OR ! isset($Data['modelo'])){
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'La informacion enviada no es valida'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+					}
+
+
+
+					$sqlvalidar = " SELECT * FROM taus WHERE aus_id_usuario = :aus_id_usuario AND aus_id_model = :aus_id_model";
+					$resvalidar = $this->pedeo->queryTable($sqlvalidar, array(':aus_id_usuario' => $Data['id'], ':aus_id_model' => $Data['modelo']));
+
+					if(isset($resvalidar[0])){
+
+							$respuesta = array(
+								'error'   => true,
+								'data' 		=> $resInsert,
+								'mensaje'	=> 'El usuario ya se encuentra en la tabla'
+							);
+
+							$this->response($respuesta);
+							return;
+					}
+
+
+					$sqlInsert = "INSERT INTO taus(aus_id_usuario, aus_required, aus_id_model)
+												VALUES (:aus_id_usuario, :aus_required, :aus_id_model)";
+
+					$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+
+								':aus_id_usuario' => $Data['id'],
+								':aus_required'   => 1,
+								':aus_id_model' 	=> $Data['modelo']
+
+					));
+
+					if(is_numeric($resInsert) && $resInsert > 0){
+
+								$respuesta = array(
+									'error' 	=> false,
+									'data' 		=> $resInsert,
+									'mensaje' =>'Usuario registrado con exito'
+								);
+
+					}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data' 		=> $resInsert,
+									'mensaje'	=> 'No se pudo ingresar el usuario'
+								);
+					}
+
+					 $this->response($respuesta);
+		}
+
 
 
 

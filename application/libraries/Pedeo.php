@@ -41,6 +41,8 @@ class Pedeo {
 		$result = $this->pdo->prepare($sql);
 		$result->execute($params);
 		$table = $result->fetchAll(PDO::FETCH_ASSOC);
+		// print_r($sql);
+		// print_r($params);
 		return $table;
 	}
 
@@ -151,7 +153,7 @@ class Pedeo {
 	*/
 	public function deleteRow($sql, $params) {
 		$result = $this->pdo->prepare($sql);
-		
+
 		if ($result->execute($params)){
 
 			return $result->rowCount();
@@ -172,6 +174,8 @@ class Pedeo {
 	public function trans_commit(){
 		return $this->pdo->commit();
 	}
+
+
 
 
 

@@ -2260,4 +2260,42 @@ abstract class REST_Controller extends \CI_Controller {
             exit;
         }
     }
+
+    public function getColumn($table,$prefijo,$campos='',$inner =''){
+
+    return  "SELECT
+          	t3.mdt_docname,
+            t8.mdt_docname as origen,
+          	t0.".$prefijo."_docentry,
+          	t0.".$prefijo."_doctype,
+          	t0.".$prefijo."_docnum,
+          	t0.".$prefijo."_docdate,
+            t0.".$prefijo."_duedate,
+          	t0.".$prefijo."_cardname,
+          	t0.".$prefijo."_comment,
+            CASE
+            		WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
+            			THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
+            			ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
+            END direccion,
+            concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
+            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR(".$prefijo."_baseamnt,'999,999,999,999.00'))) base ,
+            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR(".$prefijo."_DISCOUNT,'999,999,999,999.00'))) descuento,
+            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR(".$prefijo."_doctotal,'999,999,999,999.00'))) as ".$prefijo."_doctotal,
+            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR(".$prefijo."_TAXTOTAl,'999,999,999,999.00'))) iva,
+            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR((T0.".$prefijo."_baseamnt - T0.".$prefijo."_DISCOUNT),'999,999,999,999.00'))) subtotal,
+          	t1.estado ,
+          	t2.mev_names as ".$prefijo."_slpcode ".$campos."
+            FROM ".$table." t0
+            JOIN responsestatus t1 ON t0.".$prefijo."_docentry = t1.id and t0.".$prefijo."_doctype = t1.tipo
+            join dmev t2 on t0.".$prefijo."_slpcode = t2.mev_id
+            join dmdt t3 on t0.".$prefijo."_doctype = t3.mdt_doctype
+            LEFT JOIN DMSN T4 ON t0.".$prefijo."_cardcode = t4.dms_card_code
+            LEFT JOIN DMSD T5 ON T0.".$prefijo."_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
+            LEFT JOIN DMSC T6 ON T0.".$prefijo."_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
+            LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
+            left join dmdt t8 on ".$prefijo."_origen = t8.mdt_doctype
+             ".$inner;
+
+    }
 }
