@@ -2260,42 +2260,61 @@ abstract class REST_Controller extends \CI_Controller {
             exit;
         }
     }
-
-    public function getColumn($table,$prefijo,$campos='',$inner =''){
-
-    return  "SELECT
+    /**
+     * MÉTODO PARA OBTENER QUERY DINAMICO PARA OBTENER LOS DATO DE LOS DOCUMENTOS DE VENTA Y COMPRA.
+     * @param $table TABLA DE CABECERA DEL DOCUMENTO
+     * @param $prefijo PREFIJO DE LOS CAMPOS DE LA TABLA
+     * @param $campos CAMPOS EXTRAS PARA CONCARDENAR AL QUERY
+     * @param $inner INNER JOIN EXTRAS PARA CONCARDENAR AL QUERY
+     */
+    public function getColumn($table,$prefijo,$campos='',$inner ='') {
+        // QUERY DINAMICO PARA OBTENER CABECERA DE LOS DOCUMENTOS DE VENTA Y COMPRA.
+        $query = "SELECT
           	t3.mdt_docname,
             t8.mdt_docname as origen,
-          	t0.".$prefijo."_docentry,
-          	t0.".$prefijo."_doctype,
-          	t0.".$prefijo."_docnum,
-          	t0.".$prefijo."_docdate,
-            t0.".$prefijo."_duedate,
-          	t0.".$prefijo."_cardname,
-          	t0.".$prefijo."_comment,
+          	t0.{prefix}_docentry,
+          	t0.{prefix}_doctype,
+          	t0.{prefix}_docnum,
+          	t0.{prefix}_docdate,
+            t0.{prefix}_duedate,
+          	t0.{prefix}_cardname,
+          	t0.{prefix}_comment,
+            t0.{prefix}_createby,
+            t0.{prefix}_origen AS origin,
             CASE
             		WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
             			THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
             			ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
             END direccion,
             concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
-            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR(".$prefijo."_baseamnt,'999,999,999,999.00'))) base ,
-            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR(".$prefijo."_DISCOUNT,'999,999,999,999.00'))) descuento,
-            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR(".$prefijo."_doctotal,'999,999,999,999.00'))) as ".$prefijo."_doctotal,
-            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR(".$prefijo."_TAXTOTAl,'999,999,999,999.00'))) iva,
-            CONCAT(T0.".$prefijo."_CURRENCY,' ',TRIM(TO_CHAR((T0.".$prefijo."_baseamnt - T0.".$prefijo."_DISCOUNT),'999,999,999,999.00'))) subtotal,
+            CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR({prefix}_baseamnt,'{format}'))) base ,
+            CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR({prefix}_DISCOUNT,'{format}'))) descuento,
+            CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR({prefix}_doctotal,'{format}'))) as {prefix}_doctotal,
+            CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR({prefix}_TAXTOTAl,'{format}'))) iva,
+            CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR((T0.{prefix}_baseamnt - T0.{prefix}_DISCOUNT),'{format}'))) subtotal,
           	t1.estado ,
-          	t2.mev_names as ".$prefijo."_slpcode ".$campos."
-            FROM ".$table." t0
-            JOIN responsestatus t1 ON t0.".$prefijo."_docentry = t1.id and t0.".$prefijo."_doctype = t1.tipo
-            join dmev t2 on t0.".$prefijo."_slpcode = t2.mev_id
-            join dmdt t3 on t0.".$prefijo."_doctype = t3.mdt_doctype
-            LEFT JOIN DMSN T4 ON t0.".$prefijo."_cardcode = t4.dms_card_code
-            LEFT JOIN DMSD T5 ON T0.".$prefijo."_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
-            LEFT JOIN DMSC T6 ON T0.".$prefijo."_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
+          	t2.mev_names as {prefix}_slpcode {fields} 
+            FROM {table} t0
+            INNER JOIN responsestatus t1 ON t0.{prefix}_docentry = t1.id and t0.{prefix}_doctype = t1.tipo
+            INNER JOIN dmev t2 on t0.{prefix}_slpcode = t2.mev_id
+            INNER JOIN dmdt t3 on t0.{prefix}_doctype = t3.mdt_doctype
+            LEFT JOIN DMSN T4 ON t0.{prefix}_cardcode = t4.dms_card_code
+            LEFT JOIN DMSD T5 ON T0.{prefix}_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
+            LEFT JOIN DMSC T6 ON T0.{prefix}_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
             LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
-            left join dmdt t8 on ".$prefijo."_origen = t8.mdt_doctype
-             ".$inner;
-
+            LEFT JOIN dmdt t8 on {prefix}_origen = t8.mdt_doctype {innerjoin}";
+            
+        // REEMPLAZAR POR LA TABLA
+        $query = str_replace("{table}", $table, $query);
+        // REEMPLAZAR POR EL PREFIJO QUE SE RECIBE COMO PARAMETRO.
+        $query = str_replace("{prefix}", $prefijo, $query);
+        // ASIGNAR FORMATO PARA LA MONEDA AL QUERY.
+        $query = str_replace("{format}", "999,999,999,999.00", $query);
+        // REEMPLAZAR CAMPOS ADICIONALES.
+        $query = str_replace("{fields}", $campos, $query);
+        // REEMPLAZAR INNER ADICIONALES.
+        $query = str_replace("{innerjoin}", $inner, $query);
+        // RETORNAR QUERY.
+        return $query;
     }
 }

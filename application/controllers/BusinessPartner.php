@@ -45,9 +45,7 @@ class BusinessPartner extends REST_Controller {
          !isset($Data['dms_limit_cred']) OR
          !isset($Data['dms_inter']) OR
          !isset($Data['dms_price_list']) OR
-         !isset($Data['dms_acct_sn']) OR
-         !isset($Data['dms_enabled']) OR
-         !isset($Data['dms_acct_asn'])){
+         !isset($Data['dms_enabled'])){
 
         $respuesta = array(
           'error' => true,
@@ -69,7 +67,6 @@ class BusinessPartner extends REST_Controller {
 
       ));
 
-
       if(isset($resSelect[0])){
 
           $respuesta = array(
@@ -82,6 +79,10 @@ class BusinessPartner extends REST_Controller {
           return;
 
       }
+
+
+
+			$this->pedeo->trans_begin();
 
 
       $sqlInsert = "INSERT INTO dmsn(dms_card_code, dms_card_name, dms_card_type, dms_short_name, dms_phone1, dms_phone2,
@@ -112,8 +113,8 @@ class BusinessPartner extends REST_Controller {
              ':dms_limit_cred' => $Data['dms_limit_cred'],
              ':dms_inter' => $Data['dms_inter'],
              ':dms_price_list' => $Data['dms_price_list'],
-             ':dms_acct_sn' => $Data['dms_acct_sn'],
-             ':dms_acct_asn' => $Data['dms_acct_asn'],
+             ':dms_acct_sn' => NULL,
+             ':dms_acct_asn' => NULL,
              ':dms_card_last_name' => $Data['dms_card_last_name'],
              ':dms_enabled' => $Data['dms_enabled'],
 						 ':dms_rtype' => $Data['dms_rtype'],
@@ -126,6 +127,47 @@ class BusinessPartner extends REST_Controller {
       if(is_numeric($resInsert) && $resInsert > 0){
 
 
+						//SE VERIFCA SI TIENE RETECIONES Y SE AGREGAN A LA TABLA
+
+						$retenciones = is_array( $Data['dms_rte'] ) ?$Data['dms_rte'] : array();
+
+
+						if( count($retenciones) > 0){
+
+								foreach ($retenciones as $key => $value) {
+
+											$resInsertRetenciones = $this->pedeo->insertRow('INSERT INTO rtsn(tsn_cardcode, tsn_type, tsn_rtid)VALUES(:tsn_cardcode, :tsn_type, :tsn_rtid)',array(
+														':tsn_cardcode' => $Data['dms_card_code'],
+														':tsn_type'     => $Data['dms_card_type'],
+														':tsn_rtid' 		=> $value
+											));
+
+											if(is_numeric($resInsertRetenciones) && $resInsertRetenciones > 0){
+
+											}else{
+
+													  $this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data' => $resInsertRetenciones,
+															'mensaje'	=> 'No se pudo registrar la retencion para el tercero actual'
+														);
+
+
+														$this->response($respuesta);
+
+														return;
+											}
+
+								}
+						}
+
+						//FIN DEL PROCEDIMIENTO PARA AGREGAR LAS RETENCIONES
+
+						$this->pedeo->trans_commit();
+
+
             $respuesta = array(
               'error' => false,
               'data' => $resInsert,
@@ -134,6 +176,8 @@ class BusinessPartner extends REST_Controller {
 
 
       }else{
+
+						$this->pedeo->trans_rollback();
 
             $respuesta = array(
               'error'   => true,
@@ -169,8 +213,6 @@ class BusinessPartner extends REST_Controller {
          !isset($Data['dms_limit_cred']) OR
          !isset($Data['dms_inter']) OR
          !isset($Data['dms_price_list']) OR
-         !isset($Data['dms_acct_sn']) OR
-         !isset($Data['dms_acct_asn']) OR
          !isset($Data['dms_enabled']) OR
          !isset($Data['dms_id'])){
 
@@ -217,6 +259,7 @@ class BusinessPartner extends REST_Controller {
                     dms_inter = :dms_inter, dms_price_list = :dms_price_list, dms_acct_sn = :dms_acct_sn, dms_acct_asn = :dms_acct_asn , dms_card_last_name = :dms_card_last_name,
 									  dms_rtype = :dms_rtype, dms_classtype = :dms_classtype  WHERE dms_id = :dms_id";
 
+			$this->pedeo->trans_begin();
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
@@ -237,8 +280,8 @@ class BusinessPartner extends REST_Controller {
             ':dms_limit_cred' => $Data['dms_limit_cred'],
             ':dms_inter' => $Data['dms_inter'],
             ':dms_price_list' => $Data['dms_price_list'],
-            ':dms_acct_sn' => $Data['dms_acct_sn'],
-            ':dms_acct_asn' => $Data['dms_acct_asn'],
+            ':dms_acct_sn' => NULL,
+            ':dms_acct_asn' => NULL,
             ':dms_card_last_name' => $Data['dms_card_last_name'],
             ':dms_id' => $Data['dms_id'],
             ':dms_enabled' => $Data['dms_enabled'],
@@ -248,6 +291,49 @@ class BusinessPartner extends REST_Controller {
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
 
+
+						//SE VERIFCA SI TIENE RETECIONES Y SE AGREGAN A LA TABLA
+
+						$retenciones = is_array( $Data['dms_rte'] ) ?$Data['dms_rte'] : array();
+
+
+						if( count($retenciones) > 0){
+
+								$this->pedeo->queryTable('DELETE FROM rtsn WHERE tsn_cardcode = :tsn_cardcode AND  tsn_type = :tsn_type', array(':tsn_cardcode' => $Data['dms_card_code'] , ':tsn_type' => $Data['dms_card_type']));
+
+								foreach ($retenciones as $key => $value) {
+
+											$resInsertRetenciones = $this->pedeo->insertRow('INSERT INTO rtsn(tsn_cardcode, tsn_type, tsn_rtid)VALUES(:tsn_cardcode, :tsn_type, :tsn_rtid)',array(
+														':tsn_cardcode' => $Data['dms_card_code'],
+														':tsn_type'     => $Data['dms_card_type'],
+														':tsn_rtid' 		=> $value
+											));
+
+											if(is_numeric($resInsertRetenciones) && $resInsertRetenciones > 0){
+
+											}else{
+
+														$this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data' => $resInsertRetenciones,
+															'mensaje'	=> 'No se pudo registrar la retencion para el tercero actual'
+														);
+
+
+														$this->response($respuesta);
+
+														return;
+											}
+
+								}
+						}
+
+						//FIN DEL PROCEDIMIENTO PARA AGREGAR LAS RETENCIONES
+
+						$this->pedeo->trans_commit();
+
             $respuesta = array(
               'error' => false,
               'data' => $resUpdate,
@@ -256,6 +342,8 @@ class BusinessPartner extends REST_Controller {
 
 
       }else{
+
+						$this->pedeo->trans_rollback();
 
             $respuesta = array(
               'error'   => true,
@@ -387,6 +475,57 @@ class BusinessPartner extends REST_Controller {
 
          $this->response($respuesta);
   }
+
+	// OBTENER RETENCIONES POR SOCIO DE NEGOCIO
+	public function getRetencionesBYSN_get(){
+
+			$Data = $this->get();
+			$ret = array();
+
+			if(!isset($Data['tsn_cardcode']) OR !isset($Data['tsn_type'])){
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+
+			$sqlSelect = "SELECT *
+										FROM rtsn
+										WHERE tsn_cardcode = :tsn_cardcode
+										AND tsn_type  = :tsn_type";
+
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array(':tsn_cardcode' => $Data['tsn_cardcode'], ':tsn_type' => $Data['tsn_type']));
+
+			if(isset($resSelect[0])){
+
+				foreach ($resSelect as $key => $value) {
+
+					 	array_push($ret, $value['tsn_rtid']);
+				}
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $ret,
+					'mensaje' => '');
+
+			}else{
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => array(),
+						'mensaje'	=> 'busqueda sin resultados'
+					);
+
+			}
+
+			 $this->response($respuesta);
+	}
 
 
 

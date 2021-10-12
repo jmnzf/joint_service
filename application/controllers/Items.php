@@ -26,44 +26,44 @@ class Items extends REST_Controller {
 
       $Data = $this->post();
 
-      if(!isset($Data['dma_item_code']) OR
-         !isset($Data['dma_item_name']) OR
-         !isset($Data['dma_generic_name']) OR
-         !isset($Data['dma_item_purch']) OR
-         !isset($Data['dma_item_inv']) OR
-         !isset($Data['dma_item_sales']) OR
-         !isset($Data['dma_group_code']) OR
-         !isset($Data['dma_attach']) OR
-         !isset($Data['dma_enabled']) OR
-         !isset($Data['dma_firm_code']) OR
-         !isset($Data['dma_series_code']) OR
-         !isset($Data['dma_sup_set']) OR
-         !isset($Data['dma_sku_sup']) OR
-         !isset($Data['dma_uom_purch']) OR
-         !isset($Data['dma_uom_pqty']) OR
-         !isset($Data['dma_uom_pemb']) OR
-         !isset($Data['dma_uom_pembqty']) OR
-         !isset($Data['dma_tax_purch']) OR
-         !isset($Data['dma_price_list']) OR
-         !isset($Data['dma_price']) OR
-         !isset($Data['dma_uom_sale']) OR
-         !isset($Data['dma_uom_sqty']) OR
-         !isset($Data['dma_uom_semb']) OR
-         !isset($Data['dma_uom_embqty']) OR
-         !isset($Data['dma_tax_sales']) OR
-         !isset($Data['dma_acct_type']) OR
-         !isset($Data['dma_avprice'])){
-
-         $respuesta = array(
-            'error' => true,
-            'data'  => array(),
-            'mensaje' =>'La informacion enviada no es valida'
-         );
-
-        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-        return;
-      }
+      // if(!isset($Data['dma_item_code']) OR
+      //    !isset($Data['dma_item_name']) OR
+      //    !isset($Data['dma_generic_name']) OR
+      //    !isset($Data['dma_item_purch']) OR
+      //    !isset($Data['dma_item_inv']) OR
+      //    !isset($Data['dma_item_sales']) OR
+      //    !isset($Data['dma_group_code']) OR
+      //    !isset($Data['dma_attach']) OR
+      //    !isset($Data['dma_enabled']) OR
+      //    !isset($Data['dma_firm_code']) OR
+      //    !isset($Data['dma_series_code']) OR
+      //    !isset($Data['dma_sup_set']) OR
+      //    !isset($Data['dma_sku_sup']) OR
+      //    !isset($Data['dma_uom_purch']) OR
+      //    !isset($Data['dma_uom_pqty']) OR
+      //    !isset($Data['dma_uom_pemb']) OR
+      //    !isset($Data['dma_uom_pembqty']) OR
+      //    !isset($Data['dma_tax_purch']) OR
+      //    !isset($Data['dma_price_list']) OR
+      //    !isset($Data['dma_price']) OR
+      //    !isset($Data['dma_uom_sale']) OR
+      //    !isset($Data['dma_uom_sqty']) OR
+      //    !isset($Data['dma_uom_semb']) OR
+      //    !isset($Data['dma_uom_embqty']) OR
+      //    !isset($Data['dma_tax_sales']) OR
+      //    !isset($Data['dma_acct_type']) OR
+      //    !isset($Data['dma_avprice'])){
+			//
+      //    $respuesta = array(
+      //       'error' => true,
+      //       'data'  => array(),
+      //       'mensaje' =>'La informacion enviada no es valida'
+      //    );
+			//
+      //   $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			//
+      //   return;
+      // }
 
 
       $sqlSelect = "SELECT dma_item_code FROM dmar WHERE dma_item_code = :dma_item_code";
@@ -88,45 +88,66 @@ class Items extends REST_Controller {
 
       }
 
+			// SE BUSCA EL CONSECUTIVO DE ARTICULO
+			$sqlConsecutivo = "SELECT max(dma_id)+1 AS conse FROM dmar";
+			$resConsecutivo = $this->pedeo->queryTable($sqlConsecutivo, array());
+
+			if(!isset($resConsecutivo[0])){
+					$respuesta = array(
+						'error' => true,
+						'data'  => [],
+						'mensaje' => 'no se encontro el consecutivo');
+
+					$this->response($respuesta);
+
+					return;
+			}
+			// FIN BUSQUEDA CONSECUTIVO DE ARTICULO
+
       $sqlInsert = "INSERT INTO dmar(dma_item_code, dma_item_name, dma_generic_name, dma_item_purch, dma_item_inv, dma_item_sales,
                     dma_group_code, dma_attach, dma_enabled, dma_firm_code, dma_series_code, dma_sup_set, dma_sku_sup, dma_uom_purch,
                     dma_uom_pqty, dma_uom_pemb, dma_uom_pembqty, dma_tax_purch, dma_price_list, dma_price, dma_uom_sale,
-                    dma_uom_sqty, dma_uom_semb, dma_uom_embqty, dma_tax_sales, dma_acct_type, dma_avprice)VALUES(:dma_item_code,
-                    :dma_item_name, :dma_generic_name, :dma_item_purch, :dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,
-                    :dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set, :dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,
-                    :dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty, :dma_uom_semb,
-                    :dma_uom_embqty, :dma_tax_sales, :dma_acct_type,:dma_avprice)";
+                    dma_uom_sqty, dma_uom_semb, dma_uom_embqty, dma_tax_sales, dma_acct_type, dma_avprice,dma_uom_weight,dma_uom_umvol,
+										dma_uom_vqty, dma_uom_weightn, dma_uom_sizedim)VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
+										:dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,:dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set,
+										:dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,:dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty, :dma_uom_semb,
+                    :dma_uom_embqty, :dma_tax_sales, :dma_acct_type,:dma_avprice,:dma_uom_weight, :dma_uom_umvol, :dma_uom_vqty, :dma_uom_weightn, :dma_uom_sizedim)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-            ':dma_item_code' => $Data['dma_item_code'],
-            ':dma_item_name' => $Data['dma_item_name'],
-            ':dma_generic_name' => $Data['dma_generic_name'],
-            ':dma_item_purch' => $Data['dma_item_purch'],
-            ':dma_item_inv' => $Data['dma_item_inv'],
-            ':dma_item_sales' => $Data['dma_item_sales'],
-            ':dma_group_code' => $Data['dma_group_code'],
-            ':dma_attach' => $Data['dma_attach'],
-            ':dma_enabled' => $Data['dma_enabled'],
-            ':dma_firm_code' => $Data['dma_firm_code'],
-            ':dma_series_code' => $Data['dma_series_code'],
-            ':dma_sup_set' => $Data['dma_sup_set'],
-            ':dma_sku_sup' => $Data['dma_sku_sup'],
-            ':dma_uom_purch' => $Data['dma_uom_purch'],
-            ':dma_uom_pqty' => $Data['dma_uom_pqty'],
-            ':dma_uom_pemb' => $Data['dma_uom_pemb'],
-            ':dma_uom_pembqty' => $Data['dma_uom_pembqty'],
-            ':dma_tax_purch' => $Data['dma_tax_purch'],
-            ':dma_price_list' => $Data['dma_price_list'],
-            ':dma_price' => $Data['dma_price'],
-            ':dma_uom_sale' => $Data['dma_uom_sale'],
-            ':dma_uom_sqty' => $Data['dma_uom_sqty'],
-            ':dma_uom_semb' => $Data['dma_uom_semb'],
-            ':dma_uom_embqty' => $Data['dma_uom_embqty'],
-            ':dma_tax_sales' => $Data['dma_tax_sales'],
-            ':dma_acct_type' => $Data['dma_acct_type'],
-            ':dma_avprice' => $Data['dma_avprice']
+            ':dma_item_code' => isset($Data['dma_item_code'])?$Data['dma_item_code'].$resConsecutivo[0]['conse'] : NULL,
+            ':dma_item_name' => isset($Data['dma_item_name'])?$Data['dma_item_name'] : NULL,
+            ':dma_generic_name' => isset($Data['dma_generic_name'])?$Data['dma_generic_name']: NULL,
+            ':dma_item_purch' => isset($Data['dma_item_purch'])?$Data['dma_item_purch']: NULL,
+            ':dma_item_inv' => isset($Data['dma_item_inv'])?$Data['dma_item_inv'] : NULL,
+            ':dma_item_sales' => isset($Data['dma_item_sales'])?$Data['dma_item_sales'] : NULL,
+            ':dma_group_code' => is_numeric($Data['dma_group_code'])?$Data['dma_group_code'] : 0,
+            ':dma_attach' => is_numeric($Data['dma_attach'])?$Data['dma_attach']:0,
+            ':dma_enabled' => is_numeric($Data['dma_enabled'])?$Data['dma_enabled']:0,
+            ':dma_firm_code' => isset($Data['dma_firm_code'])?$Data['dma_firm_code']:NULL,
+            ':dma_series_code' => isset($Data['dma_series_code'])?$Data['dma_series_code']:NULL,
+            ':dma_sup_set' => isset($Data['dma_sup_set'])?$Data['dma_sup_set']:NULL,
+            ':dma_sku_sup' => isset($Data['dma_sku_sup'])?$Data['dma_sku_sup']:NULL,
+            ':dma_uom_purch' => is_numeric($Data['dma_uom_purch'])?$Data['dma_uom_purch']:0,
+            ':dma_uom_pqty' => is_numeric($Data['dma_uom_pqty'])?$Data['dma_uom_pqty']:0,
+            ':dma_uom_pemb' => is_numeric($Data['dma_uom_pemb'])?$Data['dma_uom_pemb']:0,
+            ':dma_uom_pembqty' => is_numeric($Data['dma_uom_pembqty'])?$Data['dma_uom_pembqty']:0,
+            ':dma_tax_purch' => is_numeric($Data['dma_tax_purch'])?$Data['dma_tax_purch']:0,
+            ':dma_price_list' => is_numeric($Data['dma_price_list'])?$Data['dma_price_list']:0,
+            ':dma_price' => is_numeric($Data['dma_price'])?$Data['dma_price']:0,
+            ':dma_uom_sale' => is_numeric($Data['dma_uom_sale'])?$Data['dma_uom_sale']:0,
+            ':dma_uom_sqty' => is_numeric($Data['dma_uom_sqty'])?$Data['dma_uom_sqty']:0,
+            ':dma_uom_semb' => is_numeric($Data['dma_uom_semb'])?$Data['dma_uom_semb']:0,
+            ':dma_uom_embqty' => is_numeric($Data['dma_uom_embqty'])?$Data['dma_uom_embqty']:0,
+            ':dma_tax_sales' => is_numeric($Data['dma_tax_sales'])?$Data['dma_tax_sales']:0,
+            ':dma_acct_type' => is_numeric($Data['dma_acct_type'])?$Data['dma_acct_type']:0,
+            ':dma_avprice' => is_numeric($Data['dma_avprice'])?$Data['dma_avprice']:0,
+						':dma_uom_weight' => is_numeric($Data['dma_uom_weight'])?$Data['dma_uom_weight']:0,
+						':dma_uom_umvol'    => is_numeric($Data['dma_uom_umvol'])?$Data['dma_uom_umvol']:0,
+						':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty'])?$Data['dma_uom_vqty']:0,
+						':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn'])?$Data['dma_uom_weightn']:0,
+						':dma_uom_sizedim'  => is_numeric($Data['dma_uom_sizedim'])?$Data['dma_uom_sizedim']:0
       ));
 
 
@@ -137,7 +158,7 @@ class Items extends REST_Controller {
            'data' 	 => $resInsert,
            'mensaje' =>'Artículo registrado con exito'
          );
-				 
+
       }else{
 
         $respuesta = array(
@@ -156,45 +177,45 @@ class Items extends REST_Controller {
 
       $Data = $this->post();
 
-      if(!isset($Data['dma_item_code']) OR
-         !isset($Data['dma_item_name']) OR
-         !isset($Data['dma_generic_name']) OR
-         !isset($Data['dma_item_purch']) OR
-         !isset($Data['dma_item_inv']) OR
-         !isset($Data['dma_item_sales']) OR
-         !isset($Data['dma_group_code']) OR
-         !isset($Data['dma_attach']) OR
-         !isset($Data['dma_enabled']) OR
-         !isset($Data['dma_firm_code']) OR
-         !isset($Data['dma_series_code']) OR
-         !isset($Data['dma_sup_set']) OR
-         !isset($Data['dma_sku_sup']) OR
-         !isset($Data['dma_uom_purch']) OR
-         !isset($Data['dma_uom_pqty']) OR
-         !isset($Data['dma_uom_pemb']) OR
-         !isset($Data['dma_uom_pembqty']) OR
-         !isset($Data['dma_tax_purch']) OR
-         !isset($Data['dma_price_list']) OR
-         !isset($Data['dma_price']) OR
-         !isset($Data['dma_uom_sale']) OR
-         !isset($Data['dma_uom_sqty']) OR
-         !isset($Data['dma_uom_semb']) OR
-         !isset($Data['dma_uom_embqty']) OR
-         !isset($Data['dma_tax_sales']) OR
-         !isset($Data['dma_acct_type']) OR
-         !isset($Data['dma_avprice']) OR
-         !isset($Data['dma_id'])){
-
-        $respuesta = array(
-          'error' => true,
-          'data'  => array(),
-          'mensaje' =>'La informacion enviada no es valida'
-        );
-
-        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-        return;
-      }
+      // if(!isset($Data['dma_item_code']) OR
+      //    !isset($Data['dma_item_name']) OR
+      //    !isset($Data['dma_generic_name']) OR
+      //    !isset($Data['dma_item_purch']) OR
+      //    !isset($Data['dma_item_inv']) OR
+      //    !isset($Data['dma_item_sales']) OR
+      //    !isset($Data['dma_group_code']) OR
+      //    !isset($Data['dma_attach']) OR
+      //    !isset($Data['dma_enabled']) OR
+      //    !isset($Data['dma_firm_code']) OR
+      //    !isset($Data['dma_series_code']) OR
+      //    !isset($Data['dma_sup_set']) OR
+      //    !isset($Data['dma_sku_sup']) OR
+      //    !isset($Data['dma_uom_purch']) OR
+      //    !isset($Data['dma_uom_pqty']) OR
+      //    !isset($Data['dma_uom_pemb']) OR
+      //    !isset($Data['dma_uom_pembqty']) OR
+      //    !isset($Data['dma_tax_purch']) OR
+      //    !isset($Data['dma_price_list']) OR
+      //    !isset($Data['dma_price']) OR
+      //    !isset($Data['dma_uom_sale']) OR
+      //    !isset($Data['dma_uom_sqty']) OR
+      //    !isset($Data['dma_uom_semb']) OR
+      //    !isset($Data['dma_uom_embqty']) OR
+      //    !isset($Data['dma_tax_sales']) OR
+      //    !isset($Data['dma_acct_type']) OR
+      //    !isset($Data['dma_avprice']) OR
+      //    !isset($Data['dma_id'])){
+			//
+      //   $respuesta = array(
+      //     'error' => true,
+      //     'data'  => array(),
+      //     'mensaje' =>'La informacion enviada no es valida'
+      //   );
+			//
+      //   $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			//
+      //   return;
+      // }
 
       $sqlSelect = "SELECT dma_item_code FROM dmar WHERE dma_item_code = :dma_item_code
                     AND dma_id != :dma_id";
@@ -229,39 +250,45 @@ class Items extends REST_Controller {
                     dma_uom_pqty = :dma_uom_pqty, dma_uom_pemb = :dma_uom_pemb, dma_uom_pembqty = :dma_uom_pembqty, dma_tax_purch = :dma_tax_purch,
                     dma_price_list = :dma_price_list, dma_price = :dma_price, dma_uom_sale = :dma_uom_sale, dma_uom_sqty = :dma_uom_sqty,
                     dma_uom_semb = :dma_uom_semb, dma_uom_embqty = :dma_uom_embqty, dma_tax_sales = :dma_tax_sales, dma_acct_type = :dma_acct_type,
-                    dma_avprice = :dma_avprice WHERE dma_id = :dma_id";
+                    dma_avprice = :dma_avprice,dma_uom_weight = :dma_uom_weight, dma_uom_umvol = :dma_uom_umvol, dma_uom_vqty = :dma_uom_vqty,
+										dma_uom_weightn = :dma_uom_weightn, dma_uom_sizedim = :dma_uom_sizedim WHERE dma_id = :dma_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-            ':dma_item_code' => $Data['dma_item_code'],
-            ':dma_item_name' => $Data['dma_item_name'],
-            ':dma_generic_name' => $Data['dma_generic_name'],
-            ':dma_item_purch' => $Data['dma_item_purch'],
-            ':dma_item_inv' => $Data['dma_item_inv'],
-            ':dma_item_sales' => $Data['dma_item_sales'],
-            ':dma_group_code' => $Data['dma_group_code'],
-            ':dma_attach' => $Data['dma_attach'],
-            ':dma_enabled' => $Data['dma_enabled'],
-            ':dma_firm_code' => $Data['dma_firm_code'],
-            ':dma_series_code' => $Data['dma_series_code'],
-            ':dma_sup_set' => $Data['dma_sup_set'],
-            ':dma_sku_sup' => $Data['dma_sku_sup'],
-            ':dma_uom_purch' => $Data['dma_uom_purch'],
-            ':dma_uom_pqty' => $Data['dma_uom_pqty'],
-            ':dma_uom_pemb' => $Data['dma_uom_pemb'],
-            ':dma_uom_pembqty' => $Data['dma_uom_pembqty'],
-            ':dma_tax_purch' => $Data['dma_tax_purch'],
-            ':dma_price_list' => $Data['dma_price_list'],
-            ':dma_price' => $Data['dma_price'],
-            ':dma_uom_sale' => $Data['dma_uom_sale'],
-            ':dma_uom_sqty' => $Data['dma_uom_sqty'],
-            ':dma_uom_semb' => $Data['dma_uom_semb'],
-            ':dma_uom_embqty' => $Data['dma_uom_embqty'],
-            ':dma_tax_sales' => $Data['dma_tax_sales'],
-            ':dma_acct_type' => $Data['dma_acct_type'],
-            ':dma_avprice' => $Data['dma_avprice'],
-            ':dma_id' => $Data['dma_id'],
+						':dma_item_code' => isset($Data['dma_item_code'])?$Data['dma_item_code'] : NULL,
+						':dma_item_name' => isset($Data['dma_item_name'])?$Data['dma_item_name'] : NULL,
+						':dma_generic_name' => isset($Data['dma_generic_name'])?$Data['dma_generic_name']: NULL,
+						':dma_item_purch' => isset($Data['dma_item_purch'])?$Data['dma_item_purch']: NULL,
+						':dma_item_inv' => isset($Data['dma_item_inv'])?$Data['dma_item_inv'] : NULL,
+						':dma_item_sales' => isset($Data['dma_item_sales'])?$Data['dma_item_sales'] : NULL,
+						':dma_group_code' => is_numeric($Data['dma_group_code'])?$Data['dma_group_code'] : 0,
+						':dma_attach' => is_numeric($Data['dma_attach'])?$Data['dma_attach']:0,
+						':dma_enabled' => is_numeric($Data['dma_enabled'])?$Data['dma_enabled']:0,
+						':dma_firm_code' => isset($Data['dma_firm_code'])?$Data['dma_firm_code']:NULL,
+						':dma_series_code' => isset($Data['dma_series_code'])?$Data['dma_series_code']:NULL,
+						':dma_sup_set' => isset($Data['dma_sup_set'])?$Data['dma_sup_set']:NULL,
+						':dma_sku_sup' => isset($Data['dma_sku_sup'])?$Data['dma_sku_sup']:NULL,
+						':dma_uom_purch' => is_numeric($Data['dma_uom_purch'])?$Data['dma_uom_purch']:0,
+						':dma_uom_pqty' => is_numeric($Data['dma_uom_pqty'])?$Data['dma_uom_pqty']:0,
+						':dma_uom_pemb' => is_numeric($Data['dma_uom_pemb'])?$Data['dma_uom_pemb']:0,
+						':dma_uom_pembqty' => is_numeric($Data['dma_uom_pembqty'])?$Data['dma_uom_pembqty']:0,
+						':dma_tax_purch' => is_numeric($Data['dma_tax_purch'])?$Data['dma_tax_purch']:0,
+						':dma_price_list' => is_numeric($Data['dma_price_list'])?$Data['dma_price_list']:0,
+						':dma_price' => is_numeric($Data['dma_price'])?$Data['dma_price']:0,
+						':dma_uom_sale' => is_numeric($Data['dma_uom_sale'])?$Data['dma_uom_sale']:0,
+						':dma_uom_sqty' => is_numeric($Data['dma_uom_sqty'])?$Data['dma_uom_sqty']:0,
+						':dma_uom_semb' => is_numeric($Data['dma_uom_semb'])?$Data['dma_uom_semb']:0,
+						':dma_uom_embqty' => is_numeric($Data['dma_uom_embqty'])?$Data['dma_uom_embqty']:0,
+						':dma_tax_sales' => is_numeric($Data['dma_tax_sales'])?$Data['dma_tax_sales']:0,
+						':dma_acct_type' => is_numeric($Data['dma_acct_type'])?$Data['dma_acct_type']:0,
+						':dma_avprice' => is_numeric($Data['dma_avprice'])?$Data['dma_avprice']:0,
+						':dma_uom_weight' => is_numeric($Data['dma_uom_weight'])?$Data['dma_uom_weight']:0,
+						':dma_uom_umvol'    => is_numeric($Data['dma_uom_umvol'])?$Data['dma_uom_umvol']:0,
+						':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty'])?$Data['dma_uom_vqty']:0,
+						':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn'])?$Data['dma_uom_weightn']:0,
+						':dma_uom_sizedim'  => is_numeric($Data['dma_uom_sizedim'])?$Data['dma_uom_sizedim']:0,
+						':dma_id' => $Data['dma_id']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -289,7 +316,39 @@ class Items extends REST_Controller {
   // Obtener articulos
   public function getItems_get(){
 
-        $sqlSelect = "SELECT * FROM dmar";
+				$Data = $this->get();
+
+				$variableSql = 'WHERE 1=1';
+
+				if(isset($Data['sub_artic']) && !empty($Data['sub_artic'])){
+
+						$variableSql = $variableSql." AND cast(t0.dma_group_code as varchar) LIKE '%".$Data['sub_artic']."%'";
+				}
+				if(isset($Data['cod_artic']) &&  !empty($Data['cod_artic'])){
+
+						$variableSql = $variableSql." AND t0.dma_item_code LIKE '%".$Data['cod_artic']."%'";
+				}
+
+				if(isset($Data['nom_artic']) &&  !empty($Data['nom_artic'])){
+
+						$variableSql = $variableSql." AND t0.dma_item_name LIKE '%".$Data['nom_artic']."%'";
+				}
+
+        $sqlSelect = "SELECT
+												t0.*,
+												t2.mga_name,
+												sum(t1.bdi_quantity) stock
+											from dmar t0
+											left join tbdi t1 on t0.dma_item_code = t1.bdi_itemcode
+											left join dmga t2 on t0.dma_group_code = t2.mga_id
+											" .$variableSql. "
+											group by
+											t0.dma_id, t0.dma_item_code, t0.dma_item_name, t0.dma_generic_name, t0.dma_item_purch, t0.dma_item_inv,
+											t0.dma_item_sales, t0.dma_group_code, t0.dma_attach, t0.dma_enabled, t0.dma_firm_code, t0.dma_series_code,
+											t0.dma_sup_set, t0.dma_sku_sup, t0.dma_uom_purch, t0.dma_uom_pqty, t0.dma_uom_pemb, t0.dma_uom_pembqty,
+											t0.dma_tax_purch, t0.dma_price_list,t0.dma_price, t0.dma_uom_sale, t0.dma_uom_sqty, t0.dma_uom_semb,
+											t0.dma_uom_embqty, t0.dma_tax_sales, t0.dma_acct_type, t0.dma_avprice, t0.dma_uom_weight, t0.dma_uom_umvol,
+											t0.dma_uom_vqty, t0.dma_uom_weightn, t0.dma_uom_sizedim,t2.mga_name LIMIT 100";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -406,6 +465,68 @@ class Items extends REST_Controller {
 
         $this->response($respuesta);
   }
+
+// 
+// //OBTENER ARTICULOS FILTRADOS
+//   public function getItemsFilter_get(){
+//
+//         $Data = $this->get();
+//
+//         if(empty($Data)){
+//
+//           $respuesta = array(
+//             'error' => true,
+//             'data'  => array(),
+//             'mensaje' =>'La informacion enviada no es valida'
+//           );
+//
+//           $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+//
+//           return;
+//         }
+//
+// 				$variableSql = 'WHERE 1=1';
+//
+// 				if(isset($Data['sub_artic']) && !empty($Data['sub_artic'])){
+//
+// 						$variableSql = $variableSql." AND cast(dma_group_code as varchar) LIKE '%".$Data['sub_artic']."%'";
+// 				}
+// 				if(isset($Data['cod_artic']) &&  !empty($Data['cod_artic'])){
+//
+// 						$variableSql = $variableSql." AND dma_item_code LIKE '%".$Data['cod_artic']."%'";
+// 				}
+//
+// 				if(isset($Data['nom_artic']) &&  !empty($Data['nom_artic'])){
+//
+// 					  $variableSql = $variableSql." AND dma_item_name LIKE '%".$Data['nom_artic']."%'";
+// 				}
+//
+//         $sqlSelect = "SELECT * FROM dmar ".$variableSql;
+//
+// // print_r($sqlSelect);exit();die();
+//
+//         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+//
+//         if(isset($resSelect[0])){
+//
+//           $respuesta = array(
+//             'error' => false,
+//             'data'  => $resSelect,
+//             'mensaje' => '');
+//
+//         }else{
+//
+//             $respuesta = array(
+//               'error'   => true,
+//               'data' => array(),
+//               'mensaje'	=> 'busqueda sin resultados'
+//             );
+//
+//         }
+//
+//          $this->response($respuesta);
+//   }
+
 
 
 }

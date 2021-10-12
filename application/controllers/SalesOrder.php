@@ -411,6 +411,8 @@ class SalesOrder extends REST_Controller {
 
 					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
 
+
+
 					}else{
 
 							 $this->pedeo->trans_rollback();
@@ -483,7 +485,65 @@ class SalesOrder extends REST_Controller {
           }
 
 					//FIN DETALLE PEDIDO
+					if ($Data['vov_basetype'] == 1) {
 
+
+						$sqlEstado = 'SELECT distinct
+													case
+														when (t1.vc1_quantity - sum(t3.ov1_quantity)) = 0
+															then 1
+														else 0
+													end "estado"
+													from dvct t0
+													left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+													left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
+													left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
+													where t0.dvc_docentry = :dvc_docentry
+													group by
+													t1.vc1_quantity';
+
+
+						$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvc_docentry' => $Data['vov_baseentry']));
+
+						if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+
+									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+									$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+														':bed_docentry' => $Data['vov_baseentry'],
+														':bed_doctype' => $Data['vov_basetype'],
+														':bed_status' => 3, //ESTADO CERRADO
+														':bed_createby' => $Data['vov_createby'],
+														':bed_date' => date('Y-m-d'),
+														':bed_baseentry' => $resInsert,
+														':bed_basetype' => $Data['vov_doctype']
+									));
+
+
+									if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+									}else{
+
+											 $this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resInsertEstado,
+													'mensaje'	=> 'No se pudo registrar la orden de venta'
+												);
+
+
+												$this->response($respuesta);
+
+												return;
+									}
+
+						}
+
+					}
 
 
 					// Si todo sale bien despues de insertar el detalle de el pedido
@@ -829,7 +889,12 @@ class SalesOrder extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dvov WHERE vov_cardcode =:vov_cardcode";
+				$sqlSelect = "SELECT
+												t0.*
+											FROM dvov t0
+											left join estado_doc t1 on t0.vov_docentry = t1.entry and t0.vov_doctype = t1.tipo
+											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
+											where t2.estado = 'Abierto' and t0.vov_cardcode =:vov_cardcode";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vov_cardcode" => $Data['dms_card_code']));
 

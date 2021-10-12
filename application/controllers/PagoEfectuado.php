@@ -55,7 +55,7 @@ class PagoEfectuado extends REST_Controller {
                                              FROM dcfc t0
                                              LEFT JOIN dret t1 ON t0.cfc_docentry = t1.ret_absentry
                                           	 left join tasa t2 on t0.cfc_currency = t2.tsa_curro and t0.cfc_createat = t2.tsa_date
-                                             WHERE t0.cfc_cardcode = :cardcode 
+                                             WHERE t0.cfc_cardcode = :cardcode and t0.cfc_doctotal <> COALESCE(t0.cfc_paytoday,0)
 
                                              UNION ALL
 
@@ -92,7 +92,7 @@ class PagoEfectuado extends REST_Controller {
                                              FROM dcnc t0
                                              LEFT JOIN dret t1 ON t0.cnc_docentry = t1.ret_absentry
                                           	 left join tasa t2 on t0.cnc_currency = t2.tsa_curro and t0.cnc_createat = t2.tsa_date
-                                             WHERE t0.cnc_cardcode = :cardcode",
+                                             WHERE t0.cnc_cardcode = :cardcode" ,
       array(':cardcode' => $request['cardcode']));
 
   		$respuesta = array(

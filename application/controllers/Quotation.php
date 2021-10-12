@@ -149,7 +149,7 @@ class Quotation extends REST_Controller {
 							$respuesta = array(
 								'error' => true,
 								'data'  => array(),
-								'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['dvf_docdate']
+								'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['dvc_docdate']
 							);
 
 							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -170,106 +170,98 @@ class Quotation extends REST_Controller {
 
 										':bed_docentry' => $Data['dvc_baseentry'],
 										':bed_doctype'  => $Data['dvc_basetype'],
-										':bed_status'   => 4
+										':bed_status'   => 4 // 4 APROBADO SEGUN MODELO DE APROBACION
 					));
 
 					if(!isset($resVerificarAprobacion[0])){
 
-									//VERIFICAR MODELO DE APROBACION
+								$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
+																	au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
+																	FROM tmau
+																	INNER JOIN mau1
+																	ON mau_docentry =  au1_docentry
+																	INNER JOIN taus
+																	ON mau_docentry  = aus_id_model
+																	INNER JOIN pgus
+																	ON aus_id_usuario = pgu_id_usuario
+																	WHERE mau_doctype = :mau_doctype
+																	AND pgu_code_user = :pgu_code_user
+																	AND mau_status = :mau_status
+																	AND aus_status = :aus_status";
 
-									$sqlDocModelo = " SELECT * FROM tmau inner join mau1 on mau_docentry = au1_docentry where mau_doctype = :mau_doctype";
-									$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(':mau_doctype' => $Data['dvc_doctype']));
+								$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
 
-									if(isset($resDocModelo[0])){
+											':mau_doctype'   => $Data['dvc_doctype'],
+											':pgu_code_user' => $Data['dvc_createby'],
+											':mau_status' 	 => 1,
+											':aus_status' 	 => 1
 
-											$sqlModUser = "SELECT aus_id FROM taus
-																		 INNER JOIN pgus
-																		 ON aus_id_usuario = pgu_id_usuario
-																		 WHERE aus_id_model = :aus_id_model
-																		 AND pgu_code_user = :pgu_code_user";
+								));
 
-											$resModUser = $this->pedeo->queryTable($sqlModUser, array(':aus_id_model' =>$resDocModelo[0]['mau_docentry'], ':pgu_code_user' =>$Data['dvc_createby']));
+								if(isset($resDocModelo[0])){
 
-											if(isset($resModUser[0])){
-														// VALIDACION DE APROBACION
+												foreach ($resDocModelo as $key => $value) {
 
-														$condicion1 = $resDocModelo[0]['au1_c1']; // ESTO ME DICE SI LA CONDICION DEL DOCTOTAL ES 1 MAYOR 2 MENOR
-														$valorDocTotal = $resDocModelo[0]['au1_doctotal'];
-														$valorSociosNegocio = $resDocModelo[0]['au1_sn'];
+														//VERIFICAR MODELO DE APROBACION
+														$condicion = $value['condicion'];
+														$valorDocTotal1 = $value['doctotal'];
+														$valorDocTotal2 = $value['doctotal2'];
 														$TotalDocumento = $Data['dvc_doctotal'];
+														$doctype =  $value['doctype'];
 
 														if(trim($Data['dvc_currency']) != $TasaDocLoc){
 																$TotalDocumento = ($TotalDocumento * $TasaDocLoc);
 														}
 
+														if( $condicion == ">" ){
 
-														if(is_numeric($valorDocTotal) && $valorDocTotal > 0){ //SI HAY UN VALOR Y SI ESTE ES MAYOR A CERO
+																	$sq = " SELECT mau_quantity,mau_approvers
+																					FROM tmau
+																					INNER JOIN  mau1
+																					on mau_docentry =  au1_docentry
+																					AND :au1_doctotal > au1_doctotal
+																					AND mau_doctype = :mau_doctype";
 
-																if( !empty($valorSociosNegocio ) ){ // CON EL SOCIO DE NEGOCIO
+																	$ressq = $this->pedeo->queryTable($sq, array(
 
-																		if($condicion1 == 1){
+																						':au1_doctotal' => $TotalDocumento,
+																						':mau_doctype'  => $doctype
+																	));
 
-																			if( $TotalDocumento >= $valorDocTotal ){
-
-																				if( in_array($Data['dvc_cardcode'], explode(",", $valorSociosNegocio) )){
-
-																						$this->setAprobacion($Data, $ContenidoDetalle,$resMainFolder[0]['main_folder'],'dvc','vc1');
-																				}
-																			}
-																		}else if($condicion1 == 2){
-
-																			if($TotalDocumento <= $valorDocTotal  ){
-																				if( in_array($Data['dvc_cardcode'], explode(",", $valorSociosNegocio) )){
-
-																						 $this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvc','vc1');
-																				}
-																			}
-																		}
-																}else{ // SIN EL SOCIO DE NEGOCIO
-
-
-																			if($condicion1 == 1){
-																				if($TotalDocumento >= $valorDocTotal){
-
-																					 $this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvc','vc1');
-
-																				}
-																			}else if($condicion1 == 2){
-																				if($TotalDocumento <= $valorDocTotal ){
-
-																						$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvc','vc1');
-
-																				}
-																			}
-																}
-														}else{ // SI NO SE COMPARA EL TOTAL DEL DOCUMENTO
-
-																if( !empty($valorSociosNegocio) ){
-
-																	if( in_array($Data['dvc_cardcode'], explode(",", $valorSociosNegocio) )){
-
-																	 		$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'],'dvc','vc1');
+																	if(isset($ressq[0]) && count($ressq) > 1){
+																			break;
+																	}else if(isset($ressq[0])){
+																		$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'dvc','vc1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])));
 																	}
-																}else{
 
-																			$respuesta = array(
-																				'error' => true,
-																				'data'  => array(),
-																				'mensaje' =>'No se ha encontraro condiciones en el modelo de aprobacion, favor contactar con su administrador del sistema'
-																			);
 
-																			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+														}else if( $condicion == "BETWEEN" ){
 
-																			return;
-																}
+																	$sq = " SELECT mau_quantity,mau_approvers
+																					FROM tmau
+																					INNER JOIN  mau1
+																					on mau_docentry =  au1_docentry
+																					AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
+																					AND mau_doctype = :mau_doctype";
+
+																	$ressq = $this->pedeo->queryTable($sq, array(
+
+																						':doctotal' 	 => $TotalDocumento,
+																						':mau_doctype' => $doctype
+																	));
+
+																	if(isset($ressq[0]) && count($ressq) > 1){
+																			break;
+																	}else if(isset($ressq[0])){
+																		$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'dvc','vc1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])));
+																	}
 														}
-											}
-									}
+													  //VERIFICAR MODELO DE PROBACION
+												}
+								}
 
-								//VERIFICAR MODELO DE PROBACION
-					}
+				}
 				// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
-
 
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -820,7 +812,12 @@ class Quotation extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dvct WHERE dvc_cardcode =:dvc_cardcode";
+				$sqlSelect = "SELECT
+											t0.*
+											FROM dvct t0
+											left join estado_doc t1 on t0.dvc_docentry = t1.entry and t0.dvc_doctype = t1.tipo
+											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2. tipo
+											where t2.estado = 'Abierto' and t0.dvc_cardcode =:dvc_cardcode";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_cardcode" => $Data['dms_card_code']));
 
@@ -910,14 +907,14 @@ class Quotation extends REST_Controller {
 	}
 
 
-	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod){
+	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod,$Cantidad,$CantidadAP){
 
 		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
 									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
 									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
-									pap_attch,pap_createby,pap_origen)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									pap_attch,pap_createby,pap_origen,pap_qtyrq,pap_qtyap)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
 									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
-									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen)";
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen,:pap_qtyrq,:pap_qtyap)";
 
 		// Se Inicia la transaccion,
 		// Todas las consultas de modificacion siguientes
@@ -956,6 +953,8 @@ class Quotation extends REST_Controller {
 					':pap_createby' => isset($Encabezado[$prefijoe.'_createby'])?$Encabezado[$prefijoe.'_createby']:NULL,
 					':pap_attch' => $this->getUrl(count(trim(($Encabezado[$prefijoe.'_attch']))) > 0 ? $Encabezado[$prefijoe.'_attch']:NULL, $Carpeta),
 					':pap_origen' => is_numeric($Encabezado[$prefijoe.'_doctype'])?$Encabezado[$prefijoe.'_doctype']:0,
+					':pap_qtyrq' => $Cantidad,
+					':pap_qtyap' => $CantidadAP
 
 				));
 

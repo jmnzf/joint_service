@@ -152,7 +152,7 @@ class PayE extends REST_Controller {
                 <p>'.$empresa[0]['pge_mail'].'</p>
             </th>
             <th>
-                <p>PAGO REALIZADO</p>
+                <p>PAGO EFECTUADO</p>
                 <p class="fondo">'.$contenidoPAYE[0]['numero_doc'].'</p>
 
             </th>

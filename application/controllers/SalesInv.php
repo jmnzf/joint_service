@@ -940,7 +940,6 @@ class SalesInv extends REST_Controller {
 
 					//Procedimiento para llenar Ingreso
 
-
 					foreach ($DetalleConsolidadoIngreso as $key => $posicion) {
 							$granTotalIngreso = 0;
 							$granTotalIngresoOriginal = 0;
@@ -1926,7 +1925,8 @@ class SalesInv extends REST_Controller {
 					$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 													 JOIN dmgs  AS f2
 													 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-													 WHERE  f1.dms_card_code = :dms_card_code";
+													 WHERE  f1.dms_card_code = :dms_card_code
+													 AND f1.dms_card_type = '1'";//1 para clientes";
 
 					$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['dvf_cardcode']));
 
@@ -2094,7 +2094,7 @@ class SalesInv extends REST_Controller {
 
 						$sqlEstado = 'select distinct
 													case
-														when (sum(t3.fv1_quantity) - t1.vc1_quantity) = 0
+														when (t1.vc1_quantity - sum(t3.fv1_quantity)) = 0
 															then 1
 														else 0
 													end "estado"
@@ -2152,20 +2152,20 @@ class SalesInv extends REST_Controller {
 
 								$sqlEstado = 'select distinct
 																case
-																	when (sum(t3.em1_quantity) - t1.fv1_quantity) = 0
+																	when (t1.ov1_quantity - sum(t3.fv1_quantity)) = 0
 																		then 1
 																	else 0
 																end "estado"
-															from dvfv t0
-															left join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
-															left join dvem t2 on t0.dvf_docentry = t2.vem_baseentry
-															left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.fv1_itemcode = t3.em1_itemcode
-															where t0.dvf_docentry = :dvf_docentry
+															from dvov t0
+															left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+															left join dvfv t2 on t0.vov_docentry = t2.dvf_baseentry
+															left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.ov1_itemcode = t3.fv1_itemcode
+															where t0.vov_docentry = :vov_docentry
 															group by
-															t1.fv1_quantity';
+															t1.ov1_quantity';
 
 
-								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvf_docentry' => $Data['dvf_baseentry']));
+								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vov_docentry' => $Data['dvf_baseentry']));
 
 								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
 
@@ -2212,7 +2212,7 @@ class SalesInv extends REST_Controller {
 
 							 $sqlEstado = 'select distinct
 															case
-																when (sum(t3.fv1_quantity) - t1.em1_quantity) = 0
+																when (t1.em1_quantity - sum(t3.fv1_quantity) = 0
 																	then 1
 																else 0
 															end "estado"
@@ -2270,7 +2270,7 @@ class SalesInv extends REST_Controller {
 					// Si todo sale bien despues de insertar el detalle de la factura de Ventas
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.
-				$ress =	$this->pedeo->trans_commit();
+				  $this->pedeo->trans_commit();
 
 
 
@@ -2811,9 +2811,9 @@ class SalesInv extends REST_Controller {
 													':ap1_basetype' => is_numeric($detail[$prefijod.'_basetype'])?$detail[$prefijod.'_basetype']:0,
 													':ap1_doctype' => is_numeric($detail[$prefijod.'_doctype'])?$detail[$prefijod.'_doctype']:0,
 													':ap1_avprice' => is_numeric($detail[$prefijod.'_avprice'])?$detail[$prefijod.'_avprice']:0,
-													':ap1_inventory' => is_numeric($detail[$prefijod.'_inventory'])?$detail[$prefijod.'_inventory']:NULL,
-													':ap1_linenum' => is_numeric($detail[$prefijod.'_linenum'])?$detail[$prefijod.'_linenum']:NULL,
-													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL
+													':ap1_inventory' => is_numeric($detail[$prefijod.'_inventory'])?$detail[$prefijod.'_inventory']:0,
+													':ap1_linenum' => is_numeric($detail[$prefijod.'_linenum'])?$detail[$prefijod.'_linenum']:0,
+													':ap1_acciva' => isset($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){

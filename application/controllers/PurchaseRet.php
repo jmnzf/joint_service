@@ -2073,7 +2073,7 @@ class PurchaseRet extends REST_Controller {
   public function getPurchaseRet_get(){
 
         $sqlSelect = self::getColumn('dcdc','cdc');
-		
+
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

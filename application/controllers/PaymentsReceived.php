@@ -250,7 +250,8 @@ class PaymentsReceived extends REST_Controller {
 				$sqlCuentaTercero = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 														 JOIN dmgs  AS f2
 														 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-														 WHERE  f1.dms_card_code = :dms_card_code";
+														 WHERE  f1.dms_card_code = :dms_card_code
+														 AND f1.dms_card_type = '1'"; // 1 para clientes
 
 				$resCuentaTercero = $this->pedeo->queryTable($sqlCuentaTercero, array(":dms_card_code" => $Data['bpr_cardcode']));
 
@@ -411,49 +412,49 @@ class PaymentsReceived extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
-						//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
-						$VlrPayFact = "SELECT COALESCE(dvf_paytoday,0) as dvf_paytoday,dvf_doctotal from dvfv WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
-						$resVlrPayFact = $this->pedeo->queryTable($VlrPayFact, array(
-							':dvf_docentry' => $detail['pr1_docentry'],
-							':dvf_doctype' => $detail['pr1_doctype']
-						));
+								//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
+								$VlrPayFact = "SELECT COALESCE(dvf_paytoday,0) as dvf_paytoday,dvf_doctotal from dvfv WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
+								$resVlrPayFact = $this->pedeo->queryTable($VlrPayFact, array(
+									':dvf_docentry' => $detail['pr1_docentry'],
+									':dvf_doctype' => $detail['pr1_doctype']
+								));
 
-							$VlrPaidActual = $detail['pr1_vlrpaid'];
-							$VlrPaidFact = $resVlrPayFact[0]['dvf_paytoday'];
+									$VlrPaidActual = $detail['pr1_vlrpaid'];
+									$VlrPaidFact = $resVlrPayFact[0]['dvf_paytoday'];
 
-							$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
-						if(isset($resVlrPayFact[0])){
+									$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
+								if(isset($resVlrPayFact[0])){
 
-							if($SumVlr <= $resVlrPayFact[0]['dvf_doctotal'] ){
+									if($SumVlr <= $resVlrPayFact[0]['dvf_doctotal'] ){
 
 
-							}else{
-								$this->pedeo->trans_rollback();
+									}else{
+										$this->pedeo->trans_rollback();
 
-								$respuesta = array(
-									'error'   => true,
-									'data' => '',
-									'mensaje'	=> 'El valor a pagar no puede ser mayor al saldo de la factura'
-								);
+										$respuesta = array(
+											'error'   => true,
+											'data' => '',
+											'mensaje'	=> 'El valor a pagar no puede ser mayor al saldo de la factura'
+										);
 
-								 $this->response($respuesta);
+										 $this->response($respuesta);
 
-								 return;
-							}
+										 return;
+									}
 
-						}
-						else{
-							$this->pedeo->trans_rollback();
-							$respuesta = array(
-								'error'   => true,
-								'data' => $resVlrPayFact,
-								'mensaje'	=> 'No tiene valor para realizar la operacion');
+								}
+								else{
+									$this->pedeo->trans_rollback();
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resVlrPayFact,
+										'mensaje'	=> 'No tiene valor para realizar la operacion');
 
-								$this->response($respuesta);
+										$this->response($respuesta);
 
-							 return;
+									 return;
 
-						}
+								}
 
 
 
@@ -482,6 +483,35 @@ class PaymentsReceived extends REST_Controller {
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
 										// Se verifica que el detalle no de error insertando //
+										$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
+
+										$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+											':dvf_paytoday' => $detail['pr1_vlrpaid'],
+											':dvf_docentry' => $detail['pr1_docentry'],
+											':dvf_doctype' => $detail['pr1_doctype']
+
+
+										));
+
+										if(is_numeric($resUpdateFactPay) && $resUpdateFactPay > 0){
+
+
+
+										}else{
+											$this->pedeo->trans_rollback();
+
+											$respuesta = array(
+												'error'   => true,
+												'data' => $resUpdateFactPay,
+												'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
+											);
+
+											 $this->response($respuesta);
+
+											 return;
+										}
+
 								}else{
 
 										// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
@@ -1121,7 +1151,54 @@ class PaymentsReceived extends REST_Controller {
 
 					}
 					//FIN Procedimiento PARA LLENAR ASIENTO CON CUENTA TERCERO SEGUN GRUPO DE CUENTAS
+					if($detail['pr1_doctype'] == 5) {
 
+
+					$sqlEstado = 'SELECT case when (dvf_doctotal - COALESCE(dvf_paytoday,0)) = 0 then 1 else 0 end estado
+												from dvfv
+												where dvf_docentry = :dvf_docentry';
+
+
+					$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvf_docentry' => $detail['pr1_docentry']));
+
+					if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+								$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																		VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+								$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+													':bed_docentry' => $detail['pr1_docentry'],
+													':bed_doctype' => $detail['pr1_doctype'],
+													':bed_status' => 3, //ESTADO CERRADO
+													':bed_createby' => $Data['bpr_createby'],
+													':bed_date' => date('Y-m-d'),
+													':bed_baseentry' => $resInsert,
+													':bed_basetype' => $Data['bpr_doctype']
+								));
+
+
+								if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+								}else{
+
+										 $this->pedeo->trans_rollback();
+
+											$respuesta = array(
+												'error'   => true,
+												'data' => $resInsertEstado,
+												'mensaje'	=> 'No se pudo registrar el pago'
+											);
+
+
+											$this->response($respuesta);
+
+											return;
+								}
+
+					}
+
+				}
 
 					// Si todo sale bien despues de insertar el detalle de la cotizacion
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente

@@ -151,7 +151,13 @@ class Tasa extends REST_Controller {
   // OBTENER CUENTAS CONTABLES
   public function getTasa_get(){
 
-        $sqlSelect = " SELECT * FROM tasa";
+        $sqlSelect = " SELECT
+											 	tsa_id,
+												tsa_curro,
+												tsa_currd,
+												concat(tsa_curro,' ',to_char(tsa_value,'999,999,999,999.00')) as tsa_value,
+												tsa_date
+											 FROM tasa";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

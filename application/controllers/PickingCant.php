@@ -34,6 +34,7 @@ class PickingCant extends REST_Controller {
 
 				$formatter = new NumeroALetras();
 
+				$totalpeso = 0;
 
 
 
@@ -93,6 +94,7 @@ class PickingCant extends REST_Controller {
 													T1.EM1_WHSCODE Almacen,
 													T1.EM1_UOM UM,
 													T1.EM1_QUANTITY Cantidad,
+													T8.DMA_UOM_WEIGHT peso,
 													T1.EM1_PRICE VrUnit,
 													T1.EM1_DISCOUNT PrcDes,
 													T1.EM1_VATSUM IVAP,
@@ -118,6 +120,7 @@ class PickingCant extends REST_Controller {
 												LEFT JOIN DMEV T5 ON T0.VEM_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.VEM_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.VEM_SERIES = T6.PGS_ID
 												LEFT JOIN PGEC T7 ON T0.VEM_CURRENCY = T7.PGM_SYMBOL
+												LEFT JOIN DMAR T8 ON T1.EM1_ITEMCODE = T8.DMA_ITEM_CODE
 												WHERE T0.VEM_DOCENTRY = :VEM_DOCENTRY";
 
 				$contenidoEV = $this->pedeo->queryTable($sqlPickingCiego,array(':VEM_DOCENTRY'=>$Data));
@@ -141,8 +144,10 @@ class PickingCant extends REST_Controller {
 					$detalle = '<td>'.$value['referencia'].'</td>
 											<td>'.$value['descripcion'].'</td>
 											<td>'.$value['um'].'</td>
-                      <td>'.$value['cantidad'].'</td>';
+                      <td>'.$value['cantidad'].'</td>
+											<td>'.$value['peso'] * $value['cantidad'].'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
+				 $totalpeso	= ($totalpeso	+ ($value['peso'] * $value['cantidad']));
 				}
 
 
@@ -225,6 +230,7 @@ class PickingCant extends REST_Controller {
           <th class="fondo">REFERENCIA</th>
           <th class="fondo">UNIDAD</th>
           <th class="fondo">CANTIDAD</th>
+					<th class="fondo">PESO</th>
         </tr>
       	'.$totaldetalle.'
         </table>
@@ -240,6 +246,10 @@ class PickingCant extends REST_Controller {
 
         <br>
         <table width="100%">
+
+				<tr>
+            <td style="text-align: auto;">PESO TOTAL: <span >'.$totalpeso.'</span></p></td>
+        </tr>
         <tr>
             <td style="text-align: auto;">TRANSPORTE: <span class="sub_ray";>'.$contenidoEV[0]['transporte'].'</span></p></td>
         </tr>

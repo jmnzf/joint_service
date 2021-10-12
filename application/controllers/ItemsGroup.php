@@ -53,27 +53,27 @@ class ItemsGroup extends REST_Controller {
 
 
 
-      $sqlSelect = "SELECT mga_code FROM dmga WHERE mga_code = :mga_code";
-
-      $resSelect = $this->pedeo->queryTable($sqlSelect, array(
-
-          ':mga_code' => $Data['mga_code']
-
-      ));
-
-
-      if(isset($resSelect[0])){
-
-        $respuesta = array(
-          'error' => true,
-          'data'  => array($Data['mga_code'], $Data['mga_code']),
-          'mensaje' => 'ya existe un grupo con ese código');
-
-        $this->response($respuesta);
-
-        return;
-
-    }
+    //   $sqlSelect = "SELECT mga_code FROM dmga WHERE mga_code = :mga_code";
+		//
+    //   $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+		//
+    //       ':mga_code' => $Data['mga_code']
+		//
+    //   ));
+		//
+		//
+    //   if(isset($resSelect[0])){
+		//
+    //     $respuesta = array(
+    //       'error' => true,
+    //       'data'  => array($Data['mga_code'], $Data['mga_code']),
+    //       'mensaje' => 'ya existe un grupo con ese código');
+		//
+    //     $this->response($respuesta);
+		//
+    //     return;
+		//
+    // }
 
 
         $sqlInsert = "INSERT INTO dmga (mga_code, mga_name, mga_acctin, mga_acct_out, mga_acct_inv, mga_acct_stockn, mga_acct_stockp, mga_acct_redu, mga_acct_amp, mga_acct_cost, mga_enabled)
@@ -139,27 +139,27 @@ class ItemsGroup extends REST_Controller {
 
 
 
-		 $sqlSelect = "SELECT mfa_pref FROM dmfa WHERE mfa_pref = :mfa_pref";
-
-		 $resSelect = $this->pedeo->queryTable($sqlSelect, array(
-
-				 ':mfa_pref' => $Data['mfa_pref']
-
-		 ));
-
-
-		 if(isset($resSelect[0])){
-
-			 $respuesta = array(
-				 'error' => true,
-				 'data'  => array($Data['mfa_pref'], $Data['mfa_pref']),
-				 'mensaje' => 'ya existe un grupo con ese código');
-
-			 $this->response($respuesta);
-
-			 return;
-
-	 }
+		//  $sqlSelect = "SELECT mfa_pref FROM dmfa WHERE mfa_pref = :mfa_pref";
+	 //
+		//  $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+	 //
+		// 		 ':mfa_pref' => $Data['mfa_pref']
+	 //
+		//  ));
+	 //
+	 //
+		//  if(isset($resSelect[0])){
+	 //
+		// 	 $respuesta = array(
+		// 		 'error' => true,
+		// 		 'data'  => array($Data['mfa_pref'], $Data['mfa_pref']),
+		// 		 'mensaje' => 'ya existe un grupo con ese código');
+	 //
+		// 	 $this->response($respuesta);
+	 //
+		// 	 return;
+	 //
+	 // }
 
 
 			 $sqlInsert = "INSERT INTO dmfa (mfa_pref, mfa_name,mfa_gcode)

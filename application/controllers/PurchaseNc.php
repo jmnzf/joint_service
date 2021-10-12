@@ -1573,7 +1573,8 @@ class PurchaseNc extends REST_Controller {
 					$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 													 JOIN dmgs  AS f2
 													 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-													 WHERE  f1.dms_card_code = :dms_card_code";
+													 WHERE  f1.dms_card_code = :dms_card_code
+													 AND f1.dms_card_type = '2'";//2 para proveedores";
 
 
 					$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['cnc_cardcode']));
@@ -2073,7 +2074,7 @@ class PurchaseNc extends REST_Controller {
   public function getPurchaseNc_get(){
 
         $sqlSelect = self::getColumn('dcnc','cnc');
-				
+
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

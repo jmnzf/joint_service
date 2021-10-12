@@ -806,7 +806,124 @@ class PurchaseOrder extends REST_Controller {
 									 return;
 						}
 						//FIN Procedimiento para llenar cuentas por pagar
+						if ($Data['cpo_basetype'] == 11) {
 
+
+							$sqlEstado = 'SELECT distinct
+														case
+															when (t1.sc1_quantity - sum(t3.ov1_quantity)) = 0
+																then 1
+															else 0
+														end "estado"
+														from dcsc t0
+														left join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+														left join dcpo t2 on t0.csc_docentry = t2.cpo_baseentry
+														left join cpo1 t3 on t2.csc_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
+														where t0.csc_docentry = :csc_docentry
+														group by
+														t1.vc1_quantity';
+
+
+							$resEstado = $this->pedeo->queryTable($sqlEstado, array(':csc_docentry' => $Data['cpo_baseentry']));
+
+							if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+
+										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+										$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+															':bed_docentry' => $Data['cpo_baseentry'],
+															':bed_doctype' => $Data['cpo_basetype'],
+															':bed_status' => 3, //ESTADO CERRADO
+															':bed_createby' => $Data['cpo_createby'],
+															':bed_date' => date('Y-m-d'),
+															':bed_baseentry' => $resInsert,
+															':bed_basetype' => $Data['cpo_doctype']
+										));
+
+
+										if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+										}else{
+
+												 $this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resInsertEstado,
+														'mensaje'	=> 'No se pudo registrar la orden de compra'
+													);
+
+
+													$this->response($respuesta);
+
+													return;
+										}
+
+							}
+
+						}
+						if ($Data['cpo_basetype'] == 11) {
+
+
+							$sqlEstado = 'SELECT distinct
+														case
+															when (t1.sc1_quantity - sum(t3.po1_quantity)) = 0
+																then 1
+															else 0
+														end "estado"
+														from dcsc t0
+														left join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+														left join dcpo t2 on t0.csc_docentry = t2.cpo_baseentry
+														left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
+														where t0.csc_docentry = :csc_docentry
+														group by
+														t1.sc1_quantity';
+
+
+							$resEstado = $this->pedeo->queryTable($sqlEstado, array(':csc_docentry' => $Data['cpo_baseentry']));
+
+							if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+
+										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+										$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+															':bed_docentry' => $Data['cpo_baseentry'],
+															':bed_doctype' => $Data['cpo_basetype'],
+															':bed_status' => 3, //ESTADO CERRADO
+															':bed_createby' => $Data['cpo_createby'],
+															':bed_date' => date('Y-m-d'),
+															':bed_baseentry' => $resInsert,
+															':bed_basetype' => $Data['cpo_doctype']
+										));
+
+
+										if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+										}else{
+
+												 $this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resInsertEstado,
+														'mensaje'	=> 'No se pudo registrar la la factura de compra'
+													);
+
+
+													$this->response($respuesta);
+
+													return;
+										}
+
+							}
+
+						}
 
 						// Si todo sale bien despues de insertar el detalle de la orden de compra
 						// se confirma la trasaccion  para que los cambios apliquen permanentemente
@@ -1004,7 +1121,7 @@ class PurchaseOrder extends REST_Controller {
   //OBTENER ORDEN DE COMPRAS
   public function getPurchaseOrder_get(){
 
-        $sqlSelect = "SELECT * from dcpo";//self::getColumn('dcpo','cpo');
+        $sqlSelect = self::getColumn('dcpo','cpo');
 
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -1134,7 +1251,12 @@ class PurchaseOrder extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dcpo WHERE cpo_cardcode =:cpo_cardcode";
+				$sqlSelect = "SELECT
+												t0.*
+											FROM dcpo t0
+											left join estado_doc t1 on t0.cpo_docentry = t1.entry and t0.cpo_doctype = t1.tipo
+											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
+											where t2.estado = 'Abierto' and t0.cpo_cardcode =:cpo_cardcode";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cpo_cardcode" => $Data['dms_card_code']));
 

@@ -1214,7 +1214,8 @@ class SalesDv extends REST_Controller {
 					$sqlcuentaCxP = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 													 JOIN dmgs  AS f2
 													 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-													 WHERE  f1.dms_card_code = :dms_card_code";
+													 WHERE  f1.dms_card_code = :dms_card_code
+													 AND f1.dms_card_type = '1'";//1 para clientes
 
 					$rescuentaCxP = $this->pedeo->queryTable($sqlcuentaCxP, array(":dms_card_code" => $Data['vdv_cardcode']));
 

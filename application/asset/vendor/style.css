@@ -23,10 +23,11 @@ p,th,td {
   text-transform: uppercase;
 }
 
+
 td,tr,p {
   margin-left: auto;
   margin-right: : auto;
-  text-align: center;
+  text-align: left;
 }
 
 td,.centro{
@@ -34,5 +35,5 @@ td,.centro{
 }
 
 .sub_ray {
-  text-decoration: underline; 
+  text-decoration: underline;
 }

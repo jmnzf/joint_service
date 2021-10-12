@@ -29,7 +29,7 @@ class Reports extends REST_Controller {
 
 		$where = [];
 
-      	$sql = 'SELECT 
+      	$sql = 'SELECT
 			T0.BMI_ITEMCODE CodigoArticulo,
 			T14.DMA_ITEM_NAME NombreArticulo,
 			T1.DWS_CODE CodigoAlmacen,
@@ -56,17 +56,17 @@ class Reports extends REST_Controller {
 		LEFT JOIN DMWS T1 ON T0.BMI_WHSCODE = T1.DWS_CODE
 		LEFT JOIN DMDT T2 ON T0.BMY_DOCTYPE = T2.MDT_DOCTYPE
 		LEFT JOIN TBDI T3 ON T0.BMI_ITEMCODE = T3.BDI_ITEMCODE
-		LEFT JOIN DVEM T4 ON T0.BMY_BASEENTRY = T4.VEM_DOCENTRY 
-		LEFT JOIN DVFV T5 ON T0.BMY_BASEENTRY = T5.DVF_DOCENTRY 
-		LEFT JOIN DVDV T6 ON T0.BMY_BASEENTRY = T6.VDV_DOCENTRY 
-		LEFT JOIN DVNC T7 ON T0.BMY_BASEENTRY = T7.VNC_DOCENTRY 
+		LEFT JOIN DVEM T4 ON T0.BMY_BASEENTRY = T4.VEM_DOCENTRY
+		LEFT JOIN DVFV T5 ON T0.BMY_BASEENTRY = T5.DVF_DOCENTRY
+		LEFT JOIN DVDV T6 ON T0.BMY_BASEENTRY = T6.VDV_DOCENTRY
+		LEFT JOIN DVNC T7 ON T0.BMY_BASEENTRY = T7.VNC_DOCENTRY
 		LEFT JOIN DVND T8 ON T0.BMY_BASEENTRY = T8.VND_DOCENTRY
-		LEFT JOIN DCEC T9 ON T0.BMY_BASEENTRY = T9.CEC_DOCENTRY 
-		LEFT JOIN DCDC T10 ON T0.BMY_BASEENTRY = T10.CDC_DOCENTRY 
-		LEFT JOIN DCFC T11 ON T0.BMY_BASEENTRY = T11.CFC_DOCENTRY 
-		LEFT JOIN DCNC T12 ON T0.BMY_BASEENTRY = T12.CNC_DOCENTRY 
-		LEFT JOIN DCND T13 ON T0.BMY_BASEENTRY = T13.CND_DOCENTRY 
-		INNER JOIN DMAR T14 ON T0.BMI_ITEMCODE = T14.DMA_ITEM_CODE 
+		LEFT JOIN DCEC T9 ON T0.BMY_BASEENTRY = T9.CEC_DOCENTRY
+		LEFT JOIN DCDC T10 ON T0.BMY_BASEENTRY = T10.CDC_DOCENTRY
+		LEFT JOIN DCFC T11 ON T0.BMY_BASEENTRY = T11.CFC_DOCENTRY
+		LEFT JOIN DCNC T12 ON T0.BMY_BASEENTRY = T12.CNC_DOCENTRY
+		LEFT JOIN DCND T13 ON T0.BMY_BASEENTRY = T13.CND_DOCENTRY
+		INNER JOIN DMAR T14 ON T0.BMI_ITEMCODE = T14.DMA_ITEM_CODE
 		WHERE T0.BMY_DOCTYPE NOT IN (1,2,11,12,18) ';
 		// ID ARTICULO.
 		if (!empty($request['fil_acticuloId'])) {
@@ -353,14 +353,68 @@ class Reports extends REST_Controller {
 
 			$this->response($respuesta);
 	}
+	//INFORME STATUS DE STOCK
+	public function getStatusStock_post(){
 
+			$Data = $this->post();
+			// print_r($Data);exit();die();
+			$where = '';
 
+			 // print_r($Data);exit();die();
+			if(isset($Data['fil_almacenId']) && !empty($Data['fil_almacenId'])){
+				$array = array();
+				foreach (explode(',',$Data['fil_almacenId']) as $key => $value) {
+					array_push($array,"'".$value."'");
+				}
+				$where = ' and T1.bdi_whscode IN ('.implode(',',$array).')';
 
+			}if(isset($Data['fil_acticuloId']) && !empty($Data['fil_acticuloId'])){
+				$where = $where.' and t2.dma_item_code = '.$Data['fil_acticuloId'];
 
+			}if(isset($Data['fil_grupoId']) && !empty($Data['fil_grupoId']) ){
+				$array = array();
+				foreach (explode(',',$Data['fil_grupoId']) as $key => $value) {
+					array_push($array,"'".$value."'");
+				}
+				$where = $where.' and t2.dma_group_code IN ('.implode(',',$array).')';
+			}
+// print_r($where);exit();die();
+			$sql = 'SELECT
+									t2.dma_item_code,
+									trim(t2.dma_item_name),
+									t3.dmu_nameum,
+									t1.bdi_whscode,
+									t1.bdi_quantity,
+									t1.bdi_avgprice,
+									(t1.bdi_quantity * t1.bdi_avgprice) as costo
+							from tbdi t1
+							join dmar t2
+							on t1.bdi_itemcode = t2.dma_item_code
+							left join dmum t3 on t3.dmu_id =  t2.dma_uom_sale
+							where 1 = 1'.$where;
 
+// print_r($sql);exit();
+			$respuesta = $this->pedeo->queryTable($sql, array());
 
+			if(isset($respuesta[0])){
 
+				 $respuesta = array(
+						'error'   => false,
+						'data'    => $respuesta,
+						'mensaje' =>''
+				 );
 
+			}else{
 
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+			}
+
+			$this->response($respuesta);
+	}
 
 }

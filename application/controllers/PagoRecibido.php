@@ -55,7 +55,7 @@ class PagoRecibido extends REST_Controller {
                                            FROM dvfv t0
                                            LEFT JOIN dret t1 ON t0.dvf_docentry = t1.ret_absentry
                                            left join tasa t2 on t0.dvf_currency = t2.tsa_curro and t0.dvf_createat = t2.tsa_date
-                                           WHERE t0.dvf_cardcode = :cardcode
+                                           WHERE t0.dvf_cardcode = :cardcode and t0.dvf_doctotal <> COALESCE(t0.dvf_paytoday,0)
 
                                            UNION ALL
 

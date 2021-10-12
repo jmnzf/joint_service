@@ -102,7 +102,8 @@ class FacturaCompra extends REST_Controller {
 													(T0.CFC_BASEAMNT - T0.CFC_DISCOUNT) subtotal,
 													T0.CFC_TAXTOTAL Iva,
 													T0.CFC_DOCTOTAL TotalDoc,
-													T0.CFC_COMMENT Comentarios
+													T0.CFC_COMMENT Comentarios,
+													t0.CFC_TOTALRET totalret
 												FROM DCFC t0
 												INNER JOIN CFC1 T1 ON t0.CFC_docentry = t1.FC1_docentry
 												LEFT JOIN DMSN T2 ON t0.CFC_cardcode = t2.dms_card_code
@@ -260,6 +261,9 @@ class FacturaCompra extends REST_Controller {
         </tr>
 				<tr>
             <td style="text-align: right;">Sub Total: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['subtotal'], 2, ',', '.').'</span></p></td>
+        </tr>
+				<tr>
+            <td style="text-align: right;">Total Retencion: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totalret'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
             <td style="text-align: right;">Impuestos: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['iva'], 2, ',', '.').'</span></p></td>

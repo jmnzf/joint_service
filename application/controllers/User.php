@@ -427,13 +427,18 @@ class User extends REST_Controller {
 		// Obtener Solo usuarios autorizados
 		public function getUserListAuth_get(){
 
-					$sqlSelect = "SELECT pgus.pgu_id_usuario as id, concat(pgus.pgu_name_user,' ', COALESCE(pgus.pgu_lname_user,''))as nombre,
+					$sqlSelect = "SELECT aus_id,
+												pgus.pgu_id_usuario as id, concat(pgus.pgu_name_user,' ', COALESCE(pgus.pgu_lname_user,''))as nombre,
 												pgu_code_user as user,
 												case
 													when aus_required = 1 then 'Requerido'
 													else 'NA'
-													end as requerido,
-													tmau.mau_decription
+												end as requerido,
+												case
+													when aus_status = 1 then 'Activo'
+													else 'Inactivo'
+												end as estado,
+												tmau.mau_decription
 												FROM taus
 												INNER JOIN pgus
 												ON taus.aus_id_usuario = pgus.pgu_id_usuario
@@ -499,14 +504,15 @@ class User extends REST_Controller {
 					}
 
 
-					$sqlInsert = "INSERT INTO taus(aus_id_usuario, aus_required, aus_id_model)
-												VALUES (:aus_id_usuario, :aus_required, :aus_id_model)";
+					$sqlInsert = "INSERT INTO taus(aus_id_usuario, aus_required, aus_id_model, aus_status)
+												VALUES (:aus_id_usuario, :aus_required, :aus_id_model, :aus_status)";
 
 					$resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
 								':aus_id_usuario' => $Data['id'],
 								':aus_required'   => 1,
-								':aus_id_model' 	=> $Data['modelo']
+								':aus_id_model' 	=> $Data['modelo'],
+								':aus_status'			=> 1
 
 					));
 

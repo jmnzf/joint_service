@@ -461,7 +461,6 @@ class SalesDel extends REST_Controller {
 
 					//FIN PROCESO ESTADO DEL DOCUMENTO
 
-
 					//Se agregan los asientos contables*/*******
 
 					$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
@@ -1241,6 +1240,125 @@ class SalesDel extends REST_Controller {
 					// Si todo sale bien despues de insertar el detalle de la Entrega de Ventas
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.
+					if ($Data['vem_basetype'] == 1) {
+
+
+								$sqlEstado = 'SELECT distinct
+																case
+																	when (t1.vc1_quantity - sum(t3.em1_quantity)) = 0
+																		then 1
+																	else 0
+																end "estado"
+															from dvct t0
+															left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+															left join dvem t2 on t0.dvc_docentry = t2.vem_baseentry
+															left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.vc1_itemcode = t3.em1_itemcode
+															where t0.dvc_docentry = :dvc_docentry
+															group by
+															t1.vc1_quantity';
+
+
+								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvc_docentry' => $Data['vem_baseentry']));
+
+								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+
+											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+											$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																':bed_docentry' => $Data['vem_baseentry'],
+																':bed_doctype' => $Data['vem_basetype'],
+																':bed_status' => 3, //ESTADO CERRADO
+																':bed_createby' => $Data['vem_createby'],
+																':bed_date' => date('Y-m-d'),
+																':bed_baseentry' => $resInsert,
+																':bed_basetype' => $Data['vem_doctype']
+											));
+
+
+											if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+											}else{
+
+													 $this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data' => $resInsertEstado,
+															'mensaje'	=> 'No se pudo registrar la entrega de venta'
+														);
+
+
+														$this->response($respuesta);
+
+														return;
+											}
+
+								}
+
+					}else if ($Data['vem_basetype'] == 2) {
+
+
+								$sqlEstado = 'SELECT distinct
+																case
+																	when (t1.ov1_quantity - sum(t3.em1_quantity)) = 0
+																		then 1
+																	else 0
+																end "estado"
+															from dvov t0
+															left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+															left join dvem t2 on t0.vov_docentry = t2.vem_baseentry
+															left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
+															where t0.vov_docentry = :vov_docentry
+															group by
+															t1.ov1_quantity';
+
+
+								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vov_docentry' => $Data['vem_baseentry']));
+
+								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+
+											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+											$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																':bed_docentry' => $Data['vem_baseentry'],
+																':bed_doctype' => $Data['vem_basetype'],
+																':bed_status' => 3, //ESTADO CERRADO
+																':bed_createby' => $Data['vem_createby'],
+																':bed_date' => date('Y-m-d'),
+																':bed_baseentry' => $resInsert,
+																':bed_basetype' => $Data['vem_doctype']
+											));
+
+
+											if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+											}else{
+
+													 $this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data' => $resInsertEstado,
+															'mensaje'	=> 'No se pudo registrar la entrega de venta'
+														);
+
+
+														$this->response($respuesta);
+
+														return;
+											}
+
+								}
+
+					}
+
+
 					$this->pedeo->trans_commit();
 
           $respuesta = array(
@@ -1404,6 +1522,8 @@ class SalesDel extends REST_Controller {
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
 											// Se verifica que el detalle no de error insertando //
+
+
 									}else{
 
 											// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
@@ -1422,17 +1542,7 @@ class SalesDel extends REST_Controller {
 									}
 						}
 
-
-						$this->pedeo->trans_commit();
-
-            $respuesta = array(
-              'error' => false,
-              'data' => $resUpdate,
-              'mensaje' =>'Entrega de ventas actualizada con exito'
-            );
-
-
-      }else{
+				}else{
 
 						$this->pedeo->trans_rollback();
 

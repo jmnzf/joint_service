@@ -132,7 +132,12 @@ class FacturaVenta extends REST_Controller {
 						return;
 				}
 				// print_r($contenidoFV);exit();die();
-
+				//INFORMACION DE LA DESCRIPCION FINAL DEL FORMATO
+				$CommentFinal = "SELECT t0.*
+												 FROM cfdm t0
+												 LEFT JOIN dvfv t1 ON t0.cdm_type = CAST(t1.dvf_doctype AS VARCHAR)
+												 WHERE t1.dvf_docentry = :dvf_docentry";
+				$CommentFinal = $this->pedeo->queryTable($CommentFinal,array(':dvf_docentry' => $Data));
 				$totaldetalle = '';
 				foreach ($contenidoFV as $key => $value) {
 					// code...
@@ -141,7 +146,6 @@ class FacturaVenta extends REST_Controller {
 											<td>'.$value['um'].'</td>
 											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], 2, ',', '.').'</td>
 											<td>'.$value['cantidad'].'</td>
-											<td>'.$value['prcdes'].'</td>
 											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
 											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], 2, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
@@ -174,9 +178,7 @@ class FacturaVenta extends REST_Controller {
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
                 <th style="text-align: center;">
-                    <p>Autorización de numeración de facturación N°18764009111647 de 2020-12-22 Modalidad Factura Electrónica Desde N° WT5000 hasta WT10000 con
-                    vigencia hasta 2021-12-22.
-                    </p>
+                    <p>'.$CommentFinal[0]['cdm_legal_num'].'</p>
                 </th>
             </tr>
         </table>
@@ -239,7 +241,6 @@ class FacturaVenta extends REST_Controller {
           <th class="fondo">UNIDAD</th>
           <th class="fondo">PRECIO</th>
           <th class="fondo">CANTIDAD</th>
-          <th class="fondo">DESCUENTO</th>
           <th class="fondo">IVA</th>
           <th class="fondo">TOTAL</th>
         </tr>
@@ -260,9 +261,7 @@ class FacturaVenta extends REST_Controller {
         <tr>
             <td style="text-align: right;">Base Documento: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['base'], 2, ',', '.').'</span></p></td>
         </tr>
-        <tr>
-            <td style="text-align: right;">Descuento: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['descuento'], 2, ',', '.').'</span></p></td>
-        </tr>
+
 				<tr>
             <td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['subtotal'], 2, ',', '.').'</span></p></td>
         </tr>
@@ -290,10 +289,7 @@ class FacturaVenta extends REST_Controller {
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
                 <th style="text-align: left;">
-                    <p>Esta factura se asimila en todos sus efectos a una letra de cambio de conformidad con el Art. 774 del código de
-                    comercio. Autorizo que en caso de incumplimiento de esta obligación sea reportado a las centrales de riesgo, se
-                    cobraran intereses por mora.
-                    </p>
+                    <p>'.$CommentFinal[0]['cdm_comments'].'</p>
                 </th>
             </tr>
         </table>';

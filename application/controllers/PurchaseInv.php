@@ -240,9 +240,9 @@ class PurchaseInv extends REST_Controller {
         $sqlInsert = "INSERT INTO dcfc(cfc_series, cfc_docnum, cfc_docdate, cfc_duedate, cfc_duedev, cfc_pricelist, cfc_cardcode,
                       cfc_cardname, cfc_currency, cfc_contacid, cfc_slpcode, cfc_empid, cfc_comment, cfc_doctotal, cfc_baseamnt, cfc_taxtotal,
                       cfc_discprofit, cfc_discount, cfc_createat, cfc_baseentry, cfc_basetype, cfc_doctype, cfc_idadd, cfc_adress, cfc_paytype,
-                      cfc_attch,cfc_createby)VALUES(:cfc_series, :cfc_docnum, :cfc_docdate, :cfc_duedate, :cfc_duedev, :cfc_pricelist, :cfc_cardcode, :cfc_cardname,
+                      cfc_attch,cfc_createby,cfc_totalret)VALUES(:cfc_series, :cfc_docnum, :cfc_docdate, :cfc_duedate, :cfc_duedev, :cfc_pricelist, :cfc_cardcode, :cfc_cardname,
                       :cfc_currency, :cfc_contacid, :cfc_slpcode, :cfc_empid, :cfc_comment, :cfc_doctotal, :cfc_baseamnt, :cfc_taxtotal, :cfc_discprofit, :cfc_discount,
-                      :cfc_createat, :cfc_baseentry, :cfc_basetype, :cfc_doctype, :cfc_idadd, :cfc_adress, :cfc_paytype, :cfc_attch,:cfc_createby)";
+                      :cfc_createat, :cfc_baseentry, :cfc_basetype, :cfc_doctype, :cfc_idadd, :cfc_adress, :cfc_paytype, :cfc_attch,:cfc_createby,:cfc_totalret)";
 
 
 				// Se Inicia la transaccion,
@@ -280,6 +280,7 @@ class PurchaseInv extends REST_Controller {
               ':cfc_adress' => isset($Data['cfc_adress'])?$Data['cfc_adress']:NULL,
               ':cfc_paytype' => is_numeric($Data['cfc_paytype'])?$Data['cfc_paytype']:0,
 							':cfc_createby' => isset($Data['cfc_createby'])?$Data['cfc_createby']:NULL,
+							':cfc_totalret' => is_numeric($Data['cfc_totalret'])?$Data['cfc_totalret']:0,
               ':cfc_attch' => $this->getUrl(count(trim(($Data['cfc_attch']))) > 0 ? $Data['cfc_attch']:NULL, $resMainFolder[0]['main_folder'])
 						));
 
@@ -461,6 +462,49 @@ class PurchaseInv extends REST_Controller {
 
 											 return;
 								}
+
+								// PROCESO PARA INSERTAR RETENCIONES
+
+								if(isset($Data['cfc_totalret']) && is_numeric($Data['cfc_totalret']) && $Data['cfc_totalret'] > 0){
+									if(isset($detail['crt_totalrt']) && is_numeric($detail['crt_totalrt']) && $detail['crt_totalrt'] > 0){
+
+										$sqlInsertRetenciones = "INSERT INTO fcrt(crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt,crt_linenum)
+																						 VALUES (:crt_baseentry, :crt_basetype, :crt_typert, :crt_basert, :crt_profitrt, :crt_totalrt,:crt_linenum)";
+
+										$resInsertRetenciones = $this->pedeo->insertRow($sqlInsertRetenciones, array(
+
+													':crt_baseentry' => $resInsert,
+													':crt_basetype'  => $Data['cfc_doctype'],
+													':crt_typert'    => $detail['crt_typert'],
+													':crt_basert'    => $detail['crt_basert'],
+													':crt_profitrt'  => $detail['crt_profitrt'],
+													':crt_totalrt'   => $detail['crt_totalrt'],
+													':crt_linenum'   => $detail['fc1_linenum']
+										));
+
+
+										if(is_numeric($resInsertRetenciones) && $resInsertRetenciones > 0){
+												// Se verifica que el detalle no de error insertando //
+										}else{
+
+												// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
+												// se retorna el error y se detiene la ejecucion del codigo restante.
+													$this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resInsertDetail,
+														'mensaje'	=> 'No se pudo registrar la factura de compras, fallo el proceso para insertar las retenciones'
+													);
+
+													 $this->response($respuesta);
+
+													 return;
+										}
+									}
+								}
+								// FIN PROCESO PARA INSERTAR RETENCIONES
+
 
 								// si el item es inventariable
 								if( $detail['fc1_articleInv'] == 1 || $detail['fc1_articleInv'] == "1" ){
@@ -1715,7 +1759,8 @@ class PurchaseInv extends REST_Controller {
 					$sqlcuentaCxP = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 													 JOIN dmgs  AS f2
 													 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-													 WHERE  f1.dms_card_code = :dms_card_code";
+													 WHERE  f1.dms_card_code = :dms_card_code
+													 AND f1.dms_card_type = '2'";//2 para proveedores";
 
 
 					$rescuentaCxP = $this->pedeo->queryTable($sqlcuentaCxP, array(":dms_card_code" => $Data['cfc_cardcode']));
@@ -1845,25 +1890,25 @@ class PurchaseInv extends REST_Controller {
 
 					// VALIDANDO ESTADOS DE DOCUMENTOS
 
-					if ($Data['cfc_basetype'] == 1) {
+					if ($Data['cfc_basetype'] == 12) {
 
 
-						$sqlEstado = 'select distinct
+						$sqlEstado = 'SELECT distinct
 													case
-														when (sum(t3.ov1_quantity) - t1.vc1_quantity) = 0
+														when (t1.po1_quantity - sum(t3.fc11_quantity)) = 0
 															then 1
 														else 0
 													end "estado"
-												from dvct t0
-												left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-												left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
-												left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
-												where t0.dvc_docentry = :dvc_docentry
+												from dcpo t0
+												left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
+												left join dcfc t2 on t0.cpo_docentry = t2.cfc_baseentry
+												left join cfc1 t3 on t2.cpo_docentry = t3.fc1_docentry and t1.po1_itemcode = t3.fc1_itemcode
+												where t0.cpo_docentry = :cpo_docentry
 												group by
-													t1.vc1_quantity';
+													t1.po1_quantity';
 
 
-						$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvc_docentry' => $Data['cfc_baseentry']));
+						$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cpo_docentry' => $Data['cfc_baseentry']));
 
 						if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
 
@@ -1903,83 +1948,22 @@ class PurchaseInv extends REST_Controller {
 
 						}
 
-					} else if ($Data['cfc_basetype'] == 2) {
-
-
-								$sqlEstado = 'select distinct
-																case
-																	when (sum(t3.em1_quantity) - t1.ov1_quantity) = 0
-																		then 1
-																	else 0
-																end "estado"
-															from dvov t0
-															left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-															left join dvem t2 on t0.vov_docentry = t2.vem_baseentry
-															left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
-															where t0.vov_docentry = :vov_docentry
-															group by
-															t1.ov1_quantity';
-
-
-								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vov_docentry' => $Data['cfc_baseentry']));
-
-								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-
-											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-											$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-																':bed_docentry' => $Data['cfc_baseentry'],
-																':bed_doctype' => $Data['cfc_basetype'],
-																':bed_status' => 3, //ESTADO CERRADO
-																':bed_createby' => $Data['cfc_createby'],
-																':bed_date' => date('Y-m-d'),
-																':bed_baseentry' => $resInsert,
-																':bed_basetype' => $Data['cfc_doctype']
-											));
-
-
-											if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-											}else{
-
-													 $this->pedeo->trans_rollback();
-
-														$respuesta = array(
-															'error'   => true,
-															'data' => $resInsertEstado,
-															'mensaje'	=> 'No se pudo registrar la Factura de compras'
-														);
-
-
-														$this->response($respuesta);
-
-														return;
-											}
-
-								}
-
-
-
-
 					} else if ($Data['cfc_basetype'] == 13) {
 
-							 $sqlEstado = 'select distinct
+							 $sqlEstado = 'SELECT distinct
 															case
-																when (sum(t3.fc1_quantity) - t1.em1_quantity) = 0
+																when (t1.ec1_quantity - sum(t3.fc1_quantity)) = 0
 																	then 1
 																else 0
 															end "estado"
-														from dvem t0
-														left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-														left join dcfc t2 on t0.vem_docentry = t2.cfc_baseentry
-														left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.em1_itemcode = t3.fc1_itemcode
-														where t0.vem_docentry = :vem_docentry
-														group by t1.em1_quantity';
+														from dcec t0
+														left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+														left join dcfc t2 on t0.cec_docentry = t2.cfc_baseentry
+														left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.ec1_itemcode = t3.fc1_itemcode
+														where t0.cec_docentry = :cec_docentry
+														group by t1.ec1_quantity';
 
-								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vem_docentry' => $Data['cfc_baseentry']));
+								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cec_docentry' => $Data['cfc_baseentry']));
 
 								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
 
@@ -2022,6 +2006,65 @@ class PurchaseInv extends REST_Controller {
 					}
 
 					// FIN VALIDACION DE ESTADOS
+					if ($Data['cfc_basetype'] == 13) {
+
+
+						$sqlEstado = 'SELECT distinct
+													case
+														when (t1.ec1_quantity - sum(t3.fc1_quantity)) = 0
+															then 1
+														else 0
+													end "estado"
+													from dcec t0
+													left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+													left join dcfc t2 on t0.cec_docentry = t2.cfc_baseentry
+													left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.ec1_itemcode = t3.fc1_itemcode
+													where t0.cec_docentry = :cec_docentry
+													group by
+													t1.ec1_quantity';
+
+
+						$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cec_docentry' => $Data['cfc_baseentry']));
+
+						if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+
+									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+									$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+														':bed_docentry' => $Data['cfc_baseentry'],
+														':bed_doctype' => $Data['cfc_basetype'],
+														':bed_status' => 3, //ESTADO CERRADO
+														':bed_createby' => $Data['cfc_createby'],
+														':bed_date' => date('Y-m-d'),
+														':bed_baseentry' => $resInsert,
+														':bed_basetype' => $Data['cfc_doctype']
+									));
+
+
+									if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+									}else{
+
+											 $this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resInsertEstado,
+													'mensaje'	=> 'No se pudo registrar la la factura de compra'
+												);
+
+
+												$this->response($respuesta);
+
+												return;
+									}
+
+						}
+
+					}
 
 					// Si todo sale bien despues de insertar el detalle de la factura de compras
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
@@ -2221,7 +2264,7 @@ class PurchaseInv extends REST_Controller {
   public function getPurchaseInv_get(){
 
         $sqlSelect = self::getColumn('dcfc','cfc');
-			
+
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

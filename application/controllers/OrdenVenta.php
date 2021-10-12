@@ -134,7 +134,6 @@ class OrdenVenta extends REST_Controller {
 											<td>'.$value['um'].'</td>
 											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], 2, ',', '.').'</td>
 											<td>'.$value['cantidad'].'</td>
-											<td>'.$value['prcdes'].'</td>
 											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
 											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], 2, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
@@ -163,16 +162,6 @@ class OrdenVenta extends REST_Controller {
         </table>';
 
         $footer = '
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: center;">
-                    <p>Autorización de numeración de facturación N°18764009111647 de 2020-12-22 Modalidad Factura Electrónica Desde N° WT5000 hasta WT10000 con
-                    vigencia hasta 2021-12-22.
-                    </p>
-                </th>
-            </tr>
-        </table>
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
@@ -232,7 +221,6 @@ class OrdenVenta extends REST_Controller {
           <th class="fondo">UNIDAD</th>
           <th class="fondo">PRECIO</th>
           <th class="fondo">CANTIDAD</th>
-          <th class="fondo">DESCUENTO</th>
           <th class="fondo">IVA</th>
           <th class="fondo">TOTAL</th>
         </tr>
@@ -253,9 +241,7 @@ class OrdenVenta extends REST_Controller {
         <tr>
             <td style="text-align: right;">Base Documento: <span>'.$contenidoOV[0]['monedadocumento']." ".number_format($contenidoOV[0]['base'], 2, ',', '.').'</span></p></td>
         </tr>
-        <tr>
-            <td style="text-align: right;">Descuento: <span>'.$contenidoOV[0]['monedadocumento']." ".number_format($contenidoOV[0]['descuento'], 2, ',', '.').'</span></p></td>
-        </tr>
+
 				<tr>
             <td style="text-align: right;">Sub Total: <span>'.$contenidoOV[0]['monedadocumento']." ".number_format($contenidoOV[0]['subtotal'], 2, ',', '.').'</span></p></td>
         </tr>
@@ -274,19 +260,6 @@ class OrdenVenta extends REST_Controller {
             <tr>
                 <th style="text-align: left;" class="fondo">
                     <p>'.$formatter->toWords($contenidoOV[0]['totaldoc'],2)." ".$contenidoOV[0]['nombremoneda'].'</p>
-                </th>
-            </tr>
-        </table>
-
-        <br><br>
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: left;">
-                    <p>Esta factura se asimila en todos sus efectos a una letra de cambio de conformidad con el Art. 774 del código de
-                    comercio. Autorizo que en caso de incumplimiento de esta obligación sea reportado a las centrales de riesgo, se
-                    cobraran intereses por mora.
-                    </p>
                 </th>
             </tr>
         </table>';
