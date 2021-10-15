@@ -46,10 +46,11 @@ class PriceList extends REST_Controller {
 													INNER JOIN dmar
 													ON tbdi.bdi_itemcode = dmar.dma_item_code
 													WHERE dmar.dma_enabled = :dma_enabled
+													AND dma_item_sales = :dma_item_sales
 													GROUP BY tbdi.bdi_itemcode,tbdi.bdi_avgprice, dmar.dma_item_name";
 
 
-        $resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1));
+        $resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1,':dma_item_sales' => '1'));
 
         if(!isset($resProductos[0])){
 
@@ -200,10 +201,11 @@ class PriceList extends REST_Controller {
 												INNER JOIN dmar
 												ON tbdi.bdi_itemcode = dmar.dma_item_code
 												WHERE dmar.dma_enabled = :dma_enabled
+												AND dma_item_sales = :dma_item_sales
 												GROUP BY tbdi.bdi_itemcode,tbdi.bdi_avgprice, dmar.dma_item_name";
 
 
-			$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1));
+			$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1,':dma_item_sales' => '1'));
 
 			if(!isset($resProductos[0])){
 

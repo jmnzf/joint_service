@@ -193,6 +193,15 @@ class FacturaVenta extends REST_Controller {
         $html = '
 
 				<table class="bordew" style="width:100%">
+				<tr>
+          <th>
+            <p class="fondo">RIF:</p>
+          </th>
+          <th style="text-align: left;">
+            <p>'.$contenidoFV[0]['nit'].'</p>
+          </th>
+
+        </tr>
         <tr>
           <th>
           	<p class="fondo">SEÑOR(ES):</p>
@@ -221,8 +230,6 @@ class FacturaVenta extends REST_Controller {
           <th style="text-align: left;">
             <p>
             	<span>'.$contenidoFV[0]['telefono'].'</span>
-                <span class ="fondo">RIF:</span>
-                <span>'.$contenidoFV[0]['nit'].'</span>
             </p>
           </th>
           <th>

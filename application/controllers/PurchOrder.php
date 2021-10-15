@@ -191,7 +191,7 @@ class PurchOrder extends REST_Controller {
 						$respuesta = array(
 							'error' => true,
 							'data'  => array(),
-							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['dvf_docdate']
+							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['cpo_docdate']
 						);
 
 						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -257,7 +257,7 @@ class PurchOrder extends REST_Controller {
 
 													if( $condicion == ">" ){
 
-																$sq = " SELECT mau_quantity,mau_approvers
+																$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
 																				FROM tmau
 																				INNER JOIN  mau1
 																				on mau_docentry =  au1_docentry
@@ -273,13 +273,13 @@ class PurchOrder extends REST_Controller {
 																if(isset($ressq[0]) && count($ressq) > 1){
 																		break;
 																}else if(isset($ressq[0])){
-																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'cpo','po1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])));
+																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'cpo','po1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 
 
 													}else if( $condicion == "BETWEEN" ){
 
-																$sq = " SELECT mau_quantity,mau_approvers
+																$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
 																				FROM tmau
 																				INNER JOIN  mau1
 																				on mau_docentry =  au1_docentry
@@ -295,7 +295,7 @@ class PurchOrder extends REST_Controller {
 																if(isset($ressq[0]) && count($ressq) > 1){
 																		break;
 																}else if(isset($ressq[0])){
-																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'cpo','po1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])));
+																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'cpo','po1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 													}
 													//VERIFICAR MODELO DE PROBACION
@@ -961,14 +961,14 @@ class PurchOrder extends REST_Controller {
 
 
 
-	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod,$Cantidad,$CantidadAP){
+	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod,$Cantidad,$CantidadAP,$Model){
 
 		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
 									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
 									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
-									pap_attch,pap_createby,pap_origen,pap_qtyrq,pap_qtyap)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									pap_attch,pap_createby,pap_origen,pap_qtyrq,pap_qtyap,pap_model)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
 									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
-									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen,:pap_qtyrq,:pap_qtyap)";
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen,:pap_qtyrq,:pap_qtyap,:pap_model)";
 
 		// Se Inicia la transaccion,
 		// Todas las consultas de modificacion siguientes
@@ -1008,7 +1008,8 @@ class PurchOrder extends REST_Controller {
 					':pap_attch' => $this->getUrl(count(trim(($Encabezado[$prefijoe.'_attch']))) > 0 ? $Encabezado[$prefijoe.'_attch']:NULL, $Carpeta),
 					':pap_origen' => is_numeric($Encabezado[$prefijoe.'_doctype'])?$Encabezado[$prefijoe.'_doctype']:0,
 					':pap_qtyrq' => $Cantidad,
-					':pap_qtyap' => $CantidadAP
+					':pap_qtyap' => $CantidadAP,
+					':pap_model' => $Model
 
 				));
 

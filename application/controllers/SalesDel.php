@@ -351,9 +351,11 @@ class SalesDel extends REST_Controller {
         $sqlInsert = "INSERT INTO dvem(vem_series, vem_docnum, vem_docdate, vem_duedate, vem_duedev, vem_pricelist, vem_cardcode,
                       vem_cardname, vem_currency, vem_contacid, vem_slpcode, vem_empid, vem_comment, vem_doctotal, vem_baseamnt, vem_taxtotal,
                       vem_discprofit, vem_discount, vem_createat, vem_baseentry, vem_basetype, vem_doctype, vem_idadd, vem_adress, vem_paytype,
-                      vem_attch,vem_createby)VALUES(:vem_series, :vem_docnum, :vem_docdate, :vem_duedate, :vem_duedev, :vem_pricelist, :vem_cardcode, :vem_cardname,
+                      vem_attch,vem_createby,vem_transport,vem_sup_transport,vem_ci,vem_t_vehiculo,vem_guia,vem_opl,vem_placa)
+											VALUES(:vem_series, :vem_docnum, :vem_docdate, :vem_duedate, :vem_duedev, :vem_pricelist, :vem_cardcode, :vem_cardname,
                       :vem_currency, :vem_contacid, :vem_slpcode, :vem_empid, :vem_comment, :vem_doctotal, :vem_baseamnt, :vem_taxtotal, :vem_discprofit, :vem_discount,
-                      :vem_createat, :vem_baseentry, :vem_basetype, :vem_doctype, :vem_idadd, :vem_adress, :vem_paytype, :vem_attch,:vem_createby)";
+                      :vem_createat, :vem_baseentry, :vem_basetype, :vem_doctype, :vem_idadd, :vem_adress, :vem_paytype, :vem_attch,:vem_createby,
+										  :vem_transport,:vem_sup_transport,:vem_ci,:vem_t_vehiculo,:vem_guia,:vem_opl,:vem_placa)";
 
 
 				// Se Inicia la transaccion,
@@ -391,6 +393,13 @@ class SalesDel extends REST_Controller {
               ':vem_adress' => isset($Data['vem_adress'])?$Data['vem_adress']:NULL,
               ':vem_paytype' => is_numeric($Data['vem_paytype'])?$Data['vem_paytype']:0,
 							':vem_createby' => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
+							':vem_transport' => isset($Data['vem_transport'])?$Data['vem_transport']:NULL,
+							':vem_sup_transport' => isset($Data['vem_sup_transport'])?$Data['vem_sup_transport']:NULL,
+							':vem_ci' => isset($Data['vem_ci'])?$Data['vem_ci']:NULL,
+							':vem_t_vehiculo' => isset($Data['vem_t_vehiculo'])?$Data['vem_t_vehiculo']:NULL,
+							':vem_guia' => isset($Data['vem_guia'])?$Data['vem_guia']:NULL,
+							':vem_opl' => isset($Data['vem_opl'])?$Data['vem_opl']:NULL,
+							':vem_placa' => isset($Data['vem_placa'])?$Data['vem_placa']:NULL,
               ':vem_attch' => $this->getUrl(count(trim(($Data['vem_attch']))) > 0 ? $Data['vem_attch']:NULL, $resMainFolder[0]['main_folder'])
 						));
 
@@ -1693,7 +1702,12 @@ class SalesDel extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dvem WHERE vem_cardcode =:vem_cardcode";
+				$sqlSelect = "SELECT
+												t0.*
+											FROM dvem t0
+											left join estado_doc t1 on t0.vem_docentry = t1.entry and t0.vem_doctype = t1.tipo
+											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
+											where t2.estado = 'Abierto' and t0.vem_cardcode =:vem_cardcode";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vem_cardcode" => $Data['dms_card_code']));
 

@@ -2607,7 +2607,12 @@ class SalesInv extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dvfv WHERE dvf_cardcode =:dvf_cardcode";
+				$sqlSelect = "SELECT
+												t0.*
+											FROM dvfv t0
+											left join estado_doc t1 on t0.dvf_docentry = t1.entry and t0.dvf_doctype = t1.tipo
+											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
+											where t2.estado = 'Abierto' and t0.dvf_cardcode =:dvf_cardcode";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvf_cardcode" => $Data['dms_card_code']));
 

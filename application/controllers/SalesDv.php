@@ -154,6 +154,24 @@ class SalesDv extends REST_Controller {
 						return;
 				}
 
+
+				//Obtener Carpeta Principal del Proyecto
+				$sqlMainFolder = " SELECT * FROM params";
+				$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+				if(!isset($resMainFolder[0])){
+						$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'No se encontro la caperta principal del proyecto'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+				// FIN PROCESO PARA OBTENER LA CARPETA PRINCIPAL DEL PROYECTO
+
         $sqlInsert = "INSERT INTO dvdv(vdv_series, vdv_docnum, vdv_docdate, vdv_duedate, vdv_duedev, vdv_pricelist, vdv_cardcode,
                       vdv_cardname, vdv_currency, vdv_contacid, vdv_slpcode, vdv_empid, vdv_comment, vdv_doctotal, vdv_baseamnt, vdv_taxtotal,
                       vdv_discprofit, vdv_discount, vdv_createat, vdv_baseentry, vdv_basetype, vdv_doctype, vdv_idadd, vdv_adress, vdv_paytype,
@@ -197,7 +215,7 @@ class SalesDv extends REST_Controller {
               ':vdv_adress' => isset($Data['vdv_adress'])?$Data['vdv_adress']:NULL,
               ':vdv_paytype' => is_numeric($Data['vdv_paytype'])?$Data['vdv_paytype']:0,
 							':vdv_createby' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL,
-              ':vdv_attch' => $this->getUrl(count(trim(($Data['vdv_attch']))) > 0 ? $Data['vdv_attch']:NULL)
+              ':vdv_attch' => $this->getUrl(count(trim(($Data['vdv_attch']))) > 0 ? $Data['vdv_attch']:NULL, $resMainFolder[0]['main_folder')
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -316,7 +334,7 @@ class SalesDv extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resInsertAsiento,
-									'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+									'mensaje'	=> 'No se pudo registrar la Devolución de clientes 1'
 								);
 
 								 $this->response($respuesta);
@@ -329,9 +347,9 @@ class SalesDv extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                                     dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-                                    dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
+                                    dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
                                     :dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,
-                                    :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory)";
+                                    :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum, :dv1_acciva)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':dv1_docentry' => $resInsert,
@@ -352,7 +370,10 @@ class SalesDv extends REST_Controller {
                         ':dv1_basetype' => is_numeric($detail['dv1_basetype'])?$detail['dv1_basetype']:0,
                         ':dv1_doctype' => is_numeric($detail['dv1_doctype'])?$detail['dv1_doctype']:0,
                         ':dv1_avprice' => is_numeric($detail['dv1_avprice'])?$detail['dv1_avprice']:0,
-                        ':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL
+                        ':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL,
+												':dv1_linenum' => is_numeric($detail['dv1_linenum'])?$detail['dv1_linenum']:0,
+												':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0,
+
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -365,8 +386,8 @@ class SalesDv extends REST_Controller {
 
 											$respuesta = array(
 												'error'   => true,
-												'data' => $resInsert,
-												'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+												'data' => $resInsertDetail,
+												'mensaje'	=> 'No se pudo registrar la Devolución de clientes 2'
 											);
 
 											 $this->response($respuesta);
@@ -403,7 +424,7 @@ class SalesDv extends REST_Controller {
 													$respuesta = array(
 														'error'   => true,
 														'data' => $sqlInserMovimiento,
-														'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+														'mensaje'	=> 'No se pudo registrar la Devolución de clientes 3'
 													);
 
 													 $this->response($respuesta);
@@ -541,7 +562,7 @@ class SalesDv extends REST_Controller {
 											$respuesta = array(
 												'error'   => true,
 												'data' => $resArticulo,
-												'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+												'mensaje'	=> 'No se pudo registrar la Devolución de clientes 4'
 											);
 
 											 $this->response($respuesta);
@@ -806,7 +827,7 @@ class SalesDv extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+										'mensaje'	=> 'No se pudo registrar la Devolución de clientes 5'
 									);
 
 									 $this->response($respuesta);
@@ -887,7 +908,7 @@ class SalesDv extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+										'mensaje'	=> 'No se pudo registrar la Devolución de clientes 6'
 									);
 
 									 $this->response($respuesta);
@@ -1040,7 +1061,7 @@ class SalesDv extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+										'mensaje'	=> 'No se pudo registrar la Devolución de clientes 7'
 									);
 
 									 $this->response($respuesta);
@@ -1196,7 +1217,7 @@ class SalesDv extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+									'mensaje'	=> 'No se pudo registrar la Devolución de clientes 8'
 								);
 
 								 $this->response($respuesta);
@@ -1310,7 +1331,7 @@ class SalesDv extends REST_Controller {
 										$respuesta = array(
 											'error'   => true,
 											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+											'mensaje'	=> 'No se pudo registrar la Devolución de clientes 9'
 										);
 
 										 $this->response($respuesta);
@@ -1354,7 +1375,7 @@ class SalesDv extends REST_Controller {
               $respuesta = array(
                 'error'   => true,
                 'data' => $resInsert,
-                'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+                'mensaje'	=> 'No se pudo registrar la Devolución de clientes 10'
               );
 
         }
@@ -1409,6 +1430,24 @@ class SalesDv extends REST_Controller {
           return;
       }
 
+
+			//Obtener Carpeta Principal del Proyecto
+			$sqlMainFolder = " SELECT * FROM params";
+			$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+			if(!isset($resMainFolder[0])){
+					$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'No se encontro la caperta principal del proyecto'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+			// FIN PROCESO PARA OBTENER LA CARPETA PRINCIPAL DEL PROYECTO
+
       $sqlUpdate = "UPDATE dvdv	SET vdv_docdate=:vdv_docdate,vdv_duedate=:vdv_duedate, vdv_duedev=:vdv_duedev, vdv_pricelist=:vdv_pricelist, vdv_cardcode=:vdv_cardcode,
 			  						vdv_cardname=:vdv_cardname, vdv_currency=:vdv_currency, vdv_contacid=:vdv_contacid, vdv_slpcode=:vdv_slpcode,
 										vdv_empid=:vdv_empid, vdv_comment=:vdv_comment, vdv_doctotal=:vdv_doctotal, vdv_baseamnt=:vdv_baseamnt,
@@ -1443,7 +1482,7 @@ class SalesDv extends REST_Controller {
 							':vdv_idadd' => isset($Data['vdv_idadd'])?$Data['vdv_idadd']:NULL,
 							':vdv_adress' => isset($Data['vdv_adress'])?$Data['vdv_adress']:NULL,
 							':vdv_paytype' => is_numeric($Data['vdv_paytype'])?$Data['vdv_paytype']:0,
-							':vdv_attch' => $this->getUrl(count(trim(($Data['vdv_attch']))) > 0 ? $Data['vdv_attch']:NULL),
+							':vdv_attch' => $this->getUrl(count(trim(($Data['vdv_attch']))) > 0 ? $Data['vdv_attch']:NULL, $resMainFolder[0]['main_folder'),
 							':vdv_docentry' => $Data['vdv_docentry']
       ));
 
@@ -1455,9 +1494,9 @@ class SalesDv extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
 																			dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-																			dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, :dv1_acciva)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
+																			dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
 																			:dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,
-																			:dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_acciva)";
+																			:dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum :dv1_acciva)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 											':dv1_docentry' => $Data['vdv_docentry'],
@@ -1479,7 +1518,8 @@ class SalesDv extends REST_Controller {
 											':dv1_doctype' => is_numeric($detail['dv1_doctype'])?$detail['dv1_doctype']:0,
 											':dv1_avprice' => is_numeric($detail['dv1_avprice'])?$detail['dv1_avprice']:0,
 											':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL,
-											':dv1_acciva' => is_numeric($detail['dv1_cuentaIva'])?$detail['dv1_cuentaIva']:0
+											':dv1_linenum' => is_numeric($detail['dv1_linenum'])?$detail['dv1_linenum']:0,
+											':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1493,7 +1533,7 @@ class SalesDv extends REST_Controller {
 												$respuesta = array(
 													'error'   => true,
 													'data' => $resInsert,
-													'mensaje'	=> 'No se pudo registrar la Devolución de clientes'
+													'mensaje'	=> 'No se pudo registrar la Devolución de clientes 11'
 												);
 
 												 $this->response($respuesta);
@@ -1693,36 +1733,41 @@ class SalesDv extends REST_Controller {
 
 
 
-  private function getUrl($data){
-      $url = "";
+	private function getUrl($data, $caperta){
+	  $url = "";
 
-      if ($data == NULL){
+	  if ($data == NULL){
 
-        return $url;
+		return $url;
 
-      }
+	  }
 
-      $ruta = '/var/www/html/serpent/assets/img/anexos/';
-      $milliseconds = round(microtime(true) * 1000);
+		if (!base64_decode($data, true) ){
+				return $url;
+		}
+
+		$ruta = '/var/www/html/'.$caperta.'/assets/img/anexos/';
+
+	  $milliseconds = round(microtime(true) * 1000);
 
 
-      $nombreArchivo = $milliseconds.".pdf";
+	  $nombreArchivo = $milliseconds.".pdf";
 
-      touch($ruta.$nombreArchivo);
+	  touch($ruta.$nombreArchivo);
 
-      $file = fopen($ruta.$nombreArchivo,"wb");
+	  $file = fopen($ruta.$nombreArchivo,"wb");
 
-      if(!empty($data)){
+	  if(!empty($data)){
 
-        fwrite($file, base64_decode($data));
+			fwrite($file, base64_decode($data));
 
-        fclose($file);
+			fclose($file);
 
-        $url = "assets/img/anexos/".$nombreArchivo;
-      }
+			$url = "assets/img/anexos/".$nombreArchivo;
+	  }
 
-      return $url;
-  }
+	  return $url;
+	}
 
 	private function buscarPosicion($llave, $inArray){
 			$res = 0;
