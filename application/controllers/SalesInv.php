@@ -62,7 +62,6 @@ class SalesInv extends REST_Controller {
 													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref)";
 
 
-
       if(!isset($Data['detail'])){
 
         $respuesta = array(

@@ -146,7 +146,6 @@ class PickingCiego extends REST_Controller {
 											<td>'.$value['descripcion'].'</td>
 											<td>'.$value['um'].'</td>
 											<td></td>
-											<td>'.$value['peso'] * $value['cantidad'].'</td>
                       <td></td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				 $totalpeso = ($totalpeso + ($value['peso'] * $value['cantidad']));
@@ -234,7 +233,6 @@ class PickingCiego extends REST_Controller {
           <th class="fondo">REFERENCIA</th>
           <th class="fondo">UNIDAD</th>
           <th class="fondo">CANTIDAD</th>
-					<th class="fondo">PESO</th>
         </tr>
       	'.$totaldetalle.'
         </table>
@@ -250,9 +248,6 @@ class PickingCiego extends REST_Controller {
 
         <br>
         <table width="100%">
-				<tr>
-            <td style="text-align: auto;">PESO TOTAL: <span >'.$totalpeso.'</span></p></td>
-        </tr>
         <tr>
             <td style="text-align: auto;">TRANSPORTE: <span class="sub_ray";>'.$contenidoEV[0]['transporte'].'</span></p></td>
         </tr>
