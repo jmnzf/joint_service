@@ -75,10 +75,10 @@ $query_builder = TRUE;
 
 $db['default'] = array(
 	'dsn'	=> '',
-	'hostname' => '209.97.157.73',
+	'hostname' => '143.198.19.136',
 	'username' => 'postgres',
 	'password' => 'Webtic@2021*',
-	'database' => 'db_serpent',//'AppServicios2018'
+	'database' => 'db_pneus',//'AppServicios2018'
 	'dbdriver' => 'postgre',
 	'dbprefix' => '',
 	'pconnect' => FALSE,

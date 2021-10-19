@@ -37,7 +37,7 @@ class FacturaVenta extends REST_Controller {
 
 
 
-        $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);
+        $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','default_font' => 'arial']);
 
 				//RUTA DE CARPETA EMPRESA
 				$company = $this->pedeo->queryTable("SELECT main_folder company FROM PARAMS",array());
@@ -166,7 +166,7 @@ class FacturaVenta extends REST_Controller {
             </th>
             <th>
                 <p>FACTURA DE VENTA</p>
-                <p class="fondo">'.$contenidoFV[0]['numerodocumento'].'</p>
+                <p class="">'.$contenidoFV[0]['numerodocumento'].'</p>
 
             </th>
         </tr>
@@ -178,14 +178,14 @@ class FacturaVenta extends REST_Controller {
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
                 <th style="text-align: center;">
-                    <p>'.$CommentFinal[0]['cdm_legal_num'].'</p>
+                  
                 </th>
             </tr>
         </table>
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th class="fondo" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+                <th class="" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
             </tr>
         </table>';
 
@@ -195,7 +195,7 @@ class FacturaVenta extends REST_Controller {
 				<table class="bordew" style="width:100%">
 				<tr>
           <th>
-            <p class="fondo">RIF:</p>
+            <p class="">RIF:</p>
           </th>
           <th style="text-align: left;">
             <p>'.$contenidoFV[0]['nit'].'</p>
@@ -204,19 +204,19 @@ class FacturaVenta extends REST_Controller {
         </tr>
         <tr>
           <th>
-          	<p class="fondo">SEÑOR(ES):</p>
+          	<p class="">SEÑOR(ES):</p>
           </th>
           <th style="text-align: left;">
           	<p>'.$contenidoFV[0]['cliente'].'</p>
           </th>
           <th>
-            <p class="fondo">FECHA DE EXPEDICIÓN </p>
+            <p class="">FECHA DE EXPEDICIÓN </p>
             <p>'.$contenidoFV[0]['fechadocumento'].'</p>
           </th>
         </tr>
         <tr>
           <th>
-            <p class="fondo">DIRECCIÓN:</p>
+            <p class="">DIRECCIÓN:</p>
           </th>
           <th style="text-align: left;">
             <p>'.$contenidoFV[0]['direccion'].'</p>
@@ -225,7 +225,7 @@ class FacturaVenta extends REST_Controller {
         </tr>
         <tr>
           <th>
-            <p class="fondo">TELÉFONO:</p>
+            <p class="">TELÉFONO:</p>
           </th>
           <th style="text-align: left;">
             <p>
@@ -233,7 +233,7 @@ class FacturaVenta extends REST_Controller {
             </p>
           </th>
           <th>
-            <p class="fondo">FECHA DE VENCIMIENTO </p>
+            <p class="">FECHA DE VENCIMIENTO </p>
             <p>'.$contenidoFV[0]['fechavendocumento'].'</p>
           </th>
         </tr>
@@ -243,13 +243,13 @@ class FacturaVenta extends REST_Controller {
 
         <table class="borde" style="width:100%">
         <tr>
-          <th class="fondo">ITEM</th>
-          <th class="fondo">REFERENCIA</th>
-          <th class="fondo">UNIDAD</th>
-          <th class="fondo">PRECIO</th>
-          <th class="fondo">CANTIDAD</th>
-          <th class="fondo">IVA</th>
-          <th class="fondo">TOTAL</th>
+          <th class="">ITEM</th>
+          <th class="">REFERENCIA</th>
+          <th class="">UNIDAD</th>
+          <th class="">PRECIO</th>
+          <th class="">CANTIDAD</th>
+          <th class="">IVA</th>
+          <th class="">TOTAL</th>
         </tr>
       	'.$totaldetalle.'
         </table>
@@ -257,7 +257,7 @@ class FacturaVenta extends REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th class="fondo">
+                <th class="">
                     <p></p>
                 </th>
             </tr>
@@ -285,7 +285,7 @@ class FacturaVenta extends REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th style="text-align: left;" class="fondo">
+                <th style="text-align: left;" class="">
                     <p>'.$formatter->toWords($contenidoFV[0]['totaldoc'],2)." ".$contenidoFV[0]['nombremoneda'].'</p>
                 </th>
             </tr>
@@ -303,7 +303,7 @@ class FacturaVenta extends REST_Controller {
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
-        $mpdf->SetHTMLHeader($header);
+        // $mpdf->SetHTMLHeader($header);
         $mpdf->SetHTMLFooter($footer);
 
 
