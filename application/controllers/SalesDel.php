@@ -765,7 +765,7 @@ class SalesDel extends REST_Controller {
 								// se busca la cuenta contable del costoInventario y costoCosto
 								$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-								$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['em1_itemcode']));
+								$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':dma_item_code' => $detail['em1_itemcode']));
 
 								if(!isset($resArticulo[0])){
 
@@ -934,7 +934,7 @@ class SalesDel extends REST_Controller {
 
 										$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->em1_itemcode));
+										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':dma_item_code' => $value->em1_itemcode));
 
 										if(isset($resArticulo[0])){
 												$dbito = 0;
@@ -945,7 +945,7 @@ class SalesDel extends REST_Controller {
 
 												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
 
-												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->em1_itemcode, ":bdi_whscode" => $value->em1_whscode));
+												$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bdi_itemcode' => $value->em1_itemcode, ':bdi_whscode' => $value->em1_whscode));
 
 												if( isset( $resCosto[0] ) ){
 
@@ -1105,7 +1105,7 @@ class SalesDel extends REST_Controller {
 
 												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
 
-												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->em1_itemcode, ":bdi_whscode" => $value->em1_whscode));
+												$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bdi_itemcode' => $value->em1_itemcode, ':bdi_whscode' => $value->em1_whscode));
 
 
 												if( isset( $resCosto[0] ) ){
@@ -1659,7 +1659,7 @@ class SalesDel extends REST_Controller {
 
 				$sqlSelect = " SELECT * FROM vem1 WHERE em1_docentry =:em1_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":em1_docentry" => $Data['em1_docentry']));
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
 
 				if(isset($resSelect[0])){
 
@@ -1709,7 +1709,7 @@ class SalesDel extends REST_Controller {
 											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
 											where t2.estado = 'Abierto' and t0.vem_cardcode =:vem_cardcode";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vem_cardcode" => $Data['dms_card_code']));
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':vem_cardcode' => $Data['dms_card_code']));
 
 				if(isset($resSelect[0])){
 
