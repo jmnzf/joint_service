@@ -296,7 +296,7 @@ class Business extends REST_Controller {
 					//
 					$sqlUpdate = "UPDATE pgem SET pge_logo = :pge_logo WHERE pge_id = :pge_id";
 
-					$ruta = '/var/www/html/serpent/assets/img/';
+					$ruta = '/var/www/html/pneus/assets/img/';
 
 					$nombreArchivo = "logo".".jpeg";
 

@@ -29,7 +29,6 @@ class User extends REST_Controller {
 				   !isset($DataUser['Pgu_Pass']) OR
 				   !isset($DataUser['Pgu_NameUser']) OR
 				   !isset($DataUser['Pgu_LnameUser']) OR
-					 !isset($DataUser['pgu_id_vendor']) OR
 				   !isset($DataUser['Pgu_Branch'])){
 
 					$respuesta = array(
@@ -73,7 +72,7 @@ class User extends REST_Controller {
 							':Pgu_Branch' => $DataUser['Pgu_Branch'],
 							':Pgu_Role' => $DataUser['Pgu_Role'],
 							':Pgu_Curr' => $DataUser['Pgu_Curr'],
-							':pgu_id_vendor' => $DataUser['pgu_id_vendor']
+							':pgu_id_vendor' => isset($DataUser['pgu_id_vendor'])?$DataUser['pgu_id_vendor']:NULL
 
 				));
 

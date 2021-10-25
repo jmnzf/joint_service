@@ -3,6 +3,12 @@
     text-align: center;
 }
 
+
+.border_bottom{
+  border-bottom: 1px solid black;
+  border-collapse: collapse;
+}
+
 .bordew{
     border: 1px solid black;
     border-collapse: collapse;
@@ -14,13 +20,15 @@
 }
 
 td,th{
-   /* font-family:'Tahoma', Times, serif; */
+   font-family:'Arial, Helvetica, sans-serif';
+   font-style: normal !important;
    font-size: 10px;
    text-align: center;
 }
 
 p,th,td {
   text-transform: uppercase;
+  font-weight: lighter !important;
 }
 
 

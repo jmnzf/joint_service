@@ -190,7 +190,7 @@ class SalesOrder extends REST_Controller {
 						$respuesta = array(
 							'error' => true,
 							'data'  => array(),
-							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['dvf_docdate']
+							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['vov_docdate']
 						);
 
 						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);

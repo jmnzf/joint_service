@@ -35,8 +35,6 @@ class FacturaVenta extends REST_Controller {
 				$formatter = new NumeroALetras();
 
 
-
-
         $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','default_font' => 'arial']);
 
 				//RUTA DE CARPETA EMPRESA
@@ -75,48 +73,52 @@ class FacturaVenta extends REST_Controller {
 				}
 
 				$sqlcotizacion = "SELECT
-													CONCAT(T0.DVF_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
-													TRIM('J' FROM T0.DVF_CARDCODE) Nit,
-													CASE
-															WHEN COALESCE(TRIM(CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY)),'') = ''
-																THEN TRIM(CONCAT(T8.DMD_ADRESS,' ',T8.DMD_CITY))
-																ELSE TRIM(CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY))
-													END direccion,
-													T4.DMC_PHONE1 Telefono,
-													T4.DMC_EMAIL Email,
-													CONCAT(T6.PGS_PREF_NUM,' ',T0.DVF_DOCNUM) NumeroDocumento,
-													T0.DVF_DOCDATE FechaDocumento,
-													T0.DVF_DUEDATE FechaVenDocumento,
-													trim('COP' FROM t0.DVF_CURRENCY) MonedaDocumento,
-													T7.PGM_NAME_MONEDA NOMBREMONEDA,
-													T5.MEV_NAMES Vendedor,
-													'' MedioPago,
-													'' CondPago,
-													T1.FV1_ITEMCODE Referencia,
-													T1.FV1_ITEMNAME descripcion,
-													T1.FV1_WHSCODE Almacen,
-													T1.FV1_UOM UM,
-													T1.FV1_QUANTITY Cantidad,
-													T1.FV1_PRICE VrUnit,
-													T1.FV1_DISCOUNT PrcDes,
-													T1.FV1_VATSUM IVAP,
-													T1.FV1_LINETOTAL ValorTotalL,
-													T0.DVF_BASEAMNT base,
-													T0.DVF_DISCOUNT Descuento,
-													(T0.DVF_BASEAMNT - T0.DVF_DISCOUNT) subtotal,
-													T0.DVF_TAXTOTAL Iva,
-													T0.DVF_DOCTOTAL TotalDoc,
-													T0.DVF_COMMENT Comentarios
-												FROM DVFV t0
-												INNER JOIN VFV1 T1 ON t0.DVF_docentry = t1.FV1_docentry
-												LEFT JOIN DMSN T2 ON t0.DVF_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON T0.DVF_ADRESS = CAST(T3.DMD_ID AS VARCHAR)
-												LEFT JOIN DMSC T4 ON T0.DVF_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
-												LEFT JOIN DMEV T5 ON T0.DVF_SLPCODE = T5.MEV_ID
-												LEFT JOIN PGDN T6 ON T0.DVF_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.DVF_SERIES = T6.PGS_ID
-												LEFT JOIN PGEC T7 ON T0.DVF_CURRENCY = T7.PGM_SYMBOL
-												LEFT JOIN DMSD T8 ON T2.DMS_CARD_CODE = T8.DMD_CARD_CODE
-												WHERE T0.DVF_DOCENTRY = :DVF_DOCENTRY";
+																				concat(T0.dvf_cardname,' ',T2.dms_card_last_name) Cliente,
+																				T0.dvf_cardcode Nit,
+																				concat(T3.dmd_adress,' ',T3.dmd_city) Direccion,
+																			    T3.dmd_state_mm ciudad,
+																			    t3.dmd_state estado,
+																				T2.dms_phone1 Telefono,
+																				T2.dms_email Email,
+																				ConCAT(T6.pgs_pref_num,' ',T0.dvf_docnum) NumeroDocumento,
+																				T0.dvf_docdate FechaDocumento,
+																				T0.dvf_duedate FechaVenDocumento,
+																				trim('COP' from t0.dvf_currency) MonedaDocumento,
+																				T7.pgm_name_moneda NOMBREMonEDA,
+																				T5.mev_names Vendedor,
+																				t8.mpf_name CondPago,
+																				T1.fv1_itemcode Referencia,
+																				T1.fv1_itemname descripcion,
+																				T1.fv1_whscode Almacen,
+																				T1.fv1_uom UM,
+																				T1.fv1_quantity Cantidad,
+																				T1.fv1_price VrUnit,
+																				T1.fv1_discount PrcDes,
+																				T1.fv1_vatsum IVAP,
+																				T1.fv1_linetotal ValorTotalL,
+																				T0.dvf_baseamnt base,
+																				T0.dvf_discount Descuento,
+																				(T0.dvf_baseamnt - T0.dvf_discount) subtotal,
+																				T0.dvf_taxtotal Iva,
+																				T0.dvf_doctotal TotalDoc,
+																				T0.dvf_comment Comentarios,
+																				t0.dvf_ref refer,
+																				(select t9.dma_uom_weight from dmar t9 where  t9.dma_item_code = t1.fv1_itemcode) peso,
+																				t0.dvf_baseentry baseentry,
+																			  t0.dvf_basetype basetype,
+																			  t10.dmu_code unidad
+																			from dvfv t0
+																			inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
+																			left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
+																			left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code
+																			left join dmsc T4 on T0.dvf_cardcode = t4.dmc_card_code
+																			left join dmev T5 on T0.dvf_slpcode = T5.mev_id
+																			left join pgdn T6 on T0.dvf_doctype = T6.pgs_id_doc_type and T0.dvf_series = T6.pgs_id
+																			left join pgec T7 on T0.dvf_currency = T7.pgm_symbol
+																			left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
+																			left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
+																			left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
+																			where t0.dvf_docentry = :DVF_DOCENTRY";
 
 				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
 
@@ -131,25 +133,71 @@ class FacturaVenta extends REST_Controller {
 
 						return;
 				}
-				// print_r($contenidoFV);exit();die();
+				 // print_r($contenidoFV);exit();die();
+				 //consulta para obtener el docentry del pedido
+				//obtener el numero de pedido y de ENTREGA
+				$sqlPedido = "SELECT * FROM dvem where vem_docentry = :vem_docentry and vem_doctype = :vem_doctype";
+				$resSqlPedido = $this->pedeo->queryTable($sqlPedido, array(
+					':vem_docentry' => $contenidoFV[0]['baseentry'],
+					':vem_doctype' => $contenidoFV[0]['basetype']
+				));
+				$Pedido = "SELECT
+																t0.vov_docnum pedido
+																from dvov t0
+																where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype
+																order by pedido asc";
+									  $resPedido = $this->pedeo->queryTable($Pedido, array(
+											':vov_docentry' => $resSqlPedido[0]['vem_baseentry'],
+											':vov_doctype' => $resSqlPedido[0]['vem_basetype']
+										));
+
+				$VienePedido = "";
+
+				if(isset($resPedido[0])){
+						$VienePedido = $resPedido[0]['pedido'];
+				}
+		// print_r($VienePedido);exit();die();
+
+				$Entrega = "SELECT
+										t0.vem_docnum entrega,t2.*
+										from dvem t0
+										left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry and t0.vem_doctype = t2.dvf_basetype
+										where t2.dvf_docentry = :DVF_DOCENTRY
+										order by entrega asc";
+			  $resEntrega = $this->pedeo->queryTable($Entrega, array(':DVF_DOCENTRY' => $Data));
+
+				$VieneEntrega = "";
+
+				if(isset($resEntrega[0])){
+						$VieneEntrega = $resEntrega[0]['entrega'];
+				}
 				//INFORMACION DE LA DESCRIPCION FINAL DEL FORMATO
 				$CommentFinal = "SELECT t0.*
 												 FROM cfdm t0
 												 LEFT JOIN dvfv t1 ON t0.cdm_type = CAST(t1.dvf_doctype AS VARCHAR)
-												 WHERE t1.dvf_docentry = :dvf_docentry";
-				$CommentFinal = $this->pedeo->queryTable($CommentFinal,array(':dvf_docentry' => $Data));
+												 WHERE t1.dvf_docentry = :DVF_DOCENTRY";
+				$CommentFinal = $this->pedeo->queryTable($CommentFinal,array(':DVF_DOCENTRY' => $Data));
+
+
 				$totaldetalle = '';
+				$TotalCantidad = 0;
+				$TotalPeso = 0;
+
 				foreach ($contenidoFV as $key => $value) {
-					// code...
-					$detalle = '<td>'.$value['referencia'].'</td>
+					// code...<td>'.$value['um'].'</td>
+					//<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
+
+				$detalle = '	<td>'.$value['cantidad'].'</td>
+											<td>'.$value['referencia'].'</td>
 											<td>'.$value['descripcion'].'</td>
-											<td>'.$value['um'].'</td>
 											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], 2, ',', '.').'</td>
-											<td>'.$value['cantidad'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
 											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], 2, ',', '.').'</td>';
+
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
+				 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
+				 $TotalPeso = ($TotalPeso + ($value['peso']));
 				}
+
 
 
         $header = '
@@ -178,7 +226,7 @@ class FacturaVenta extends REST_Controller {
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
                 <th style="text-align: center;">
-                  
+
                 </th>
             </tr>
         </table>
@@ -192,67 +240,134 @@ class FacturaVenta extends REST_Controller {
 
         $html = '
 
-				<table class="bordew" style="width:100%">
+				<table class="" style="width:100%">
 				<tr>
-          <th>
-            <p class="">RIF:</p>
+          <th style="text-align: left;">
+            <p class="">NIT/RUC: </p>
           </th>
           <th style="text-align: left;">
-            <p>'.$contenidoFV[0]['nit'].'</p>
+            <p> '.$contenidoFV[0]['nit'].'</p>
           </th>
-
+					<th style="text-align: right;">
+						<p class="">FACTURA: </p>
+					</th>
+					<th style="text-align: right;">
+						<p> '.$contenidoFV[0]['numerodocumento'].'</p>
+					</th>
         </tr>
         <tr>
-          <th>
-          	<p class="">SEÑOR(ES):</p>
+          <th style="text-align: left;">
+          	<p class="">NOMBRE: </p>
           </th>
           <th style="text-align: left;">
-          	<p>'.$contenidoFV[0]['cliente'].'</p>
+          	<p> '.$contenidoFV[0]['cliente'].'</p>
           </th>
-          <th>
-            <p class="">FECHA DE EXPEDICIÓN </p>
-            <p>'.$contenidoFV[0]['fechadocumento'].'</p>
-          </th>
+					<th style="text-align: right;">
+						<p class="">CLIENTE: </p>
+					</th>
+					<th style="text-align: right;">
+						<p> '.$contenidoFV[0]['nit'].'</p>
+					</th>
         </tr>
         <tr>
-          <th>
-            <p class="">DIRECCIÓN:</p>
-          </th>
-          <th style="text-align: left;">
-            <p>'.$contenidoFV[0]['direccion'].'</p>
-          </th>
-
+					<th style="text-align: left;">
+						<p class="">DIRECCIÓN: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoFV[0]['direccion'].'</p>
+					</th>
+					<th style="text-align: right;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: right;">
+						<p></p>
+					</th>
         </tr>
         <tr>
-          <th>
-            <p class="">TELÉFONO:</p>
-          </th>
           <th style="text-align: left;">
-            <p>
-            	<span>'.$contenidoFV[0]['telefono'].'</span>
-            </p>
+            <p class="">CIUDAD: </p>
           </th>
-          <th>
-            <p class="">FECHA DE VENCIMIENTO </p>
-            <p>'.$contenidoFV[0]['fechavendocumento'].'</p>
-          </th>
+					<th style="text-align: left;">
+						<p> '.$contenidoFV[0]['ciudad'].'</p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">OC: </p>
+					</th>
+					<th style="text-align: right;">
+						<p> '.$contenidoFV[0]['refer'].'</p>
+					</th>
         </tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">ESTADO: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoFV[0]['estado'].'</p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">PEDIDO: </p>
+					</th>
+					<th style="text-align: right;">
+						<p>'.$VienePedido.'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">ENTREGA: </p>
+					</th>
+					<th style="text-align: right;">
+						<p>'.$VieneEntrega.'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">COND. PAGO: </p>
+					</th>
+					<th style="text-align: right;">
+						<p>'.$contenidoFV[0]['condpago'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">FECHA DE EMISIÓN: </p>
+					</th>
+					<th style="text-align: right;">
+						<p>'.date("d-m-Y", strtotime($contenidoFV[0]['fechadocumento'])).'</p>
+					</th>
+				</tr>
         </table>
-
         <br>
 
-        <table class="borde" style="width:100%">
-        <tr>
-          <th class="">ITEM</th>
-          <th class="">REFERENCIA</th>
-          <th class="">UNIDAD</th>
-          <th class="">PRECIO</th>
-          <th class="">CANTIDAD</th>
-          <th class="">IVA</th>
-          <th class="">TOTAL</th>
+        <table width="100%">
+        <tr class="">
+          <th class="border_bottom" >CANT.</th>
+          <th class="border_bottom">MATERIAL</th>
+          <th class="border_bottom">DESCRIPCION</th>
+          <th class="border_bottom">PRECIO UNITARIO</th>
+          <th class="border_bottom">TOTAL</th>
         </tr>
       	'.$totaldetalle.'
+
         </table>
+
         <br>
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
@@ -264,26 +379,75 @@ class FacturaVenta extends REST_Controller {
         </table>
 
         <br>
-        <table width="100%">
-        <tr>
-            <td style="text-align: right;">Base Documento: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['base'], 2, ',', '.').'</span></p></td>
-        </tr>
+				<br>
 
+				<table width="100%">
+						<tr>
+								<th style="text-align: center;">Sello Nro.: <span>0</span></th>
+								<th style="text-align: center;">Total Peso Bruto: <span>0</span></th>
+						</tr>
+						<tr>
+								<th style="text-align: center;">Container Nro.: <span>0</span></th>
+								<th style="text-align: center;">Contenedor: <span>0</span></th>
+						</tr>
+						<tr>
+								<th style="text-align: center;">Naviera Buque: <span>0</span></th>
+								<th style="text-align: center;">Fecha de Embarque: <span>0</span></th>
+						</tr>
+				</table>
+				<br>
+				<br>
+				<table width="100%">
+						<tr>
+								<th style="text-align: left;">Total Cantidad: <span>'.$TotalCantidad.'</span></th>
+								<th style="text-align: left;">Total Peso: <span>'.$TotalPeso.' '.$contenidoFV[0]['unidad'].' </span></th>
+						</tr>
+				</table>
+
+
+				<table width="100%" style="border-bottom: solid 1px black;">
 				<tr>
-            <td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['subtotal'], 2, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;">Impuestos: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['iva'], 2, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;">Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['totaldoc'], 2, ',', '.').'</span></p></td>
-        </tr>
+						<th style="text-align: left;"></span></th>
+				</tr>
+				</table>
 
+        <table width="100%">
+						<tr>
+								<th>
+											<table class= "bordew" width="100%">
+												<tr>
+														<th>PLACA</th>
+														<th>PRECINTOS</th>
+												</tr>
+											</table>
+								</th>
+								<th>
+											<table width="100%">
+													<tr>
+															<td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['subtotal'], 2, ',', '.').'</span></td>
+													</tr>
+													<tr>
+															<td style="text-align: right;">Flete (E): <span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
+													</tr>
+													<tr>
+															<td style="text-align: right;">Base Imponible: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['base'], 2, ',', '.').'</span></td>
+													</tr>
+													<tr>
+															<td style="text-align: right;">Monto total excento o exonerado:<span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
+													</tr>
+													<tr>
+															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'], 2, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['iva'], 2, ',', '.').'</span></td>
+													</tr>
+													<tr>
+															<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['totaldoc'], 2, ',', '.').'</span></td>
+													</tr>
+											</table>
+								</th>
+						</tr>
         </table>
 
 
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+        <table width="100%" style="vertical-align: bottom;">
             <tr>
                 <th style="text-align: left;" class="">
                     <p>'.$formatter->toWords($contenidoFV[0]['totaldoc'],2)." ".$contenidoFV[0]['nombremoneda'].'</p>
@@ -292,11 +456,10 @@ class FacturaVenta extends REST_Controller {
         </table>
 
         <br><br>
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+        <table width="100%" style="vertical-align: bottom;">
             <tr>
                 <th style="text-align: left;">
-                    <p>'.$CommentFinal[0]['cdm_comments'].'</p>
+                    <span>'.$CommentFinal[0]['cdm_comments'].'</span>
                 </th>
             </tr>
         </table>';
@@ -304,8 +467,8 @@ class FacturaVenta extends REST_Controller {
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
         // $mpdf->SetHTMLHeader($header);
-        $mpdf->SetHTMLFooter($footer);
-
+        // $mpdf->SetHTMLFooter($footer);
+//print_r($html);exit();die();
 
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);

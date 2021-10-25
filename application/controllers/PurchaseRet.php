@@ -22,26 +22,19 @@ class PurchaseRet extends REST_Controller {
 
 	}
 
-  //CREAR NUEVA devolucion DE compras
+  //CREAR NUEVA DEVOLUCION DE COMPRAS
 	public function createPurchaseRet_post(){
 
       $Data = $this->post();
-			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 
 			$DetalleCuentaPuente = new stdClass();
 			$DetalleCuentaInvetario = new stdClass();
-
 			$DetalleConsolidadoCuentaPuente = [];
 			$DetalleConsolidadoCuentaInventario = [];
-
-
 			$inArrayCuentaPuente = array();
 			$inArrayCuentaInvetario = array();
-		  $llave = ""; // la comnbinacion entre la cuenta contable,proyecto, unidad de negocio y centro de costo
-
 			$llaveCuentaPuente = "";
 			$llaveCuentaInvetario = "";
-
 			$posicionCuentaPuente = 0;
 			$posicionCuentaInvetario = 0;
 			$codigoCuenta = ""; //para saber la naturaleza

@@ -62,7 +62,6 @@ class SalesInv extends REST_Controller {
 													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref)";
 
 
-
       if(!isset($Data['detail'])){
 
         $respuesta = array(
@@ -1234,7 +1233,7 @@ class SalesInv extends REST_Controller {
 
 																	$respuesta = array(
 																		'error'   => true,
-																		'data'	  => $resArticulo,
+																		'data'	  => $resCosto,
 																		'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
 																	);
 
@@ -1430,7 +1429,7 @@ class SalesInv extends REST_Controller {
 
 																	$respuesta = array(
 																		'error'   => true,
-																		'data'	  => $resArticulo,
+																		'data'	  => 'hola1',
 																		'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
 																	);
 
@@ -1477,9 +1476,9 @@ class SalesInv extends REST_Controller {
 																				AND bmy_baseentry = :bmy_baseentry
 																				AND bmi_itemcode  = :bmi_itemcode";
 
-														$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bmi_itemcode" => $value->fv1_itemcode, ':bmy_doctype' => $Data['dvf_basetype'], ':bmy_baseentry' => $Data['dvf_baseentry']));
+														$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bmi_itemcode' => $value->fv1_itemcode, ':bmy_doctype' => $Data['dvf_basetype'], ':bmy_baseentry' => $Data['dvf_baseentry']));
 
-														if( isset( $resCosto[0] ) ){
+														if( isset($resCosto[0]) ){
 
 																	$cuentaCosto = $resArticulo[0]['pge_bridge_inv'];
 																	$costoArticulo = $resCosto[0]['bmi_cost'];
@@ -1566,7 +1565,7 @@ class SalesInv extends REST_Controller {
 
 																	$respuesta = array(
 																		'error'   => true,
-																		'data'	  => $resArticulo,
+																		'data'	  => 'hola2',
 																		'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
 																	);
 
@@ -1765,7 +1764,7 @@ class SalesInv extends REST_Controller {
 
 																		$respuesta = array(
 																			'error'   => true,
-																			'data'	  => $resArticulo,
+																			'data'	  => 'hola3',
 																			'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
 																		);
 
@@ -2212,7 +2211,7 @@ class SalesInv extends REST_Controller {
 
 							 $sqlEstado = 'select distinct
 															case
-																when (t1.em1_quantity - sum(t3.fv1_quantity) = 0
+																when (t1.em1_quantity - sum(t3.fv1_quantity)) = 0
 																	then 1
 																else 0
 															end "estado"
