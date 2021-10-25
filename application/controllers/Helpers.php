@@ -135,6 +135,7 @@ class Helpers extends REST_Controller {
 
       return;
     }
+<<<<<<< HEAD
 
 
 		$sqlSelect = "SELECT v.mev_id, v.mev_prc_code, v.mev_dpj_pj_code, v.mev_dun_un_code,  v.mev_whs_code, w.dws_code,
@@ -151,6 +152,23 @@ class Helpers extends REST_Controller {
 									inner join dmcc d3
 									on v.mev_prc_code = d3.dcc_prc_code
 									where u.pgu_id_usuario = :iduservendor";
+=======
+		
+				$sqlSelect = "SELECT v.mev_id, v.mev_prc_code, v.mev_dpj_pj_code, v.mev_dun_un_code,  v.mev_whs_code, w.dws_code,
+								d.dpj_pj_code, d2.dun_un_code,d3.dcc_prc_code
+								FROM pgus u
+								inner join dmev v
+								on u.pgu_id_vendor = v.mev_id
+								inner join dmws w
+								on v.mev_whs_code = w.dws_code
+								inner join dmpj d
+								on v.mev_dpj_pj_code = d.dpj_pj_code
+								inner join dmun d2
+								on v.mev_dun_un_code = d2.dun_un_code
+								inner join dmcc d3
+								on v.mev_prc_code = d3.dcc_prc_code
+								where u.pgu_id_usuario = :iduservendor";
+>>>>>>> ded995d24172e3cf306e935444b3de64271ad1cb
     // $sqlSelect = "SELECT v.mev_id, v.mev_prc_code, v.mev_dpj_pj_code, v.mev_dun_un_code,  v.mev_whs_code, w.dws_code,
 		// 							d.dpj_pj_code, d2.dun_un_code,d3.dcc_prc_code
 		// 							FROM pgus u
