@@ -73,97 +73,52 @@ class FacturaVenta extends REST_Controller {
 				}
 
 				$sqlcotizacion = "SELECT
-<<<<<<< HEAD
-																				concat(T0.dvf_cardname,' ',T2.dms_card_last_name) Cliente,
-																				T0.dvf_cardcode Nit,
-																				concat(T3.dmd_adress,' ',T3.dmd_city) Direccion,
-																			    T3.dmd_state_mm ciudad,
-																			    t3.dmd_state estado,
-																				T2.dms_phone1 Telefono,
-																				T2.dms_email Email,
-																				ConCAT(T6.pgs_pref_num,' ',T0.dvf_docnum) NumeroDocumento,
-																				T0.dvf_docdate FechaDocumento,
-																				T0.dvf_duedate FechaVenDocumento,
-																				trim('COP' from t0.dvf_currency) MonedaDocumento,
-																				T7.pgm_name_moneda NOMBREMonEDA,
-																				T5.mev_names Vendedor,
-																				t8.mpf_name CondPago,
-																				T1.fv1_itemcode Referencia,
-																				T1.fv1_itemname descripcion,
-																				T1.fv1_whscode Almacen,
-																				T1.fv1_uom UM,
-																				T1.fv1_quantity Cantidad,
-																				T1.fv1_price VrUnit,
-																				T1.fv1_discount PrcDes,
-																				T1.fv1_vatsum IVAP,
-																				T1.fv1_linetotal ValorTotalL,
-																				T0.dvf_baseamnt base,
-																				T0.dvf_discount Descuento,
-																				(T0.dvf_baseamnt - T0.dvf_discount) subtotal,
-																				T0.dvf_taxtotal Iva,
-																				T0.dvf_doctotal TotalDoc,
-																				T0.dvf_comment Comentarios,
-																				t0.dvf_ref refer,
-																				(select t9.dma_uom_weight from dmar t9 where  t9.dma_item_code = t1.fv1_itemcode) peso,
-																				t0.dvf_baseentry baseentry,
-																			  t0.dvf_basetype basetype,
-																			  t10.dmu_code unidad
-																			from dvfv t0
-																			inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
-																			left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
-																			left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code
-																			left join dmsc T4 on T0.dvf_cardcode = t4.dmc_card_code
-																			left join dmev T5 on T0.dvf_slpcode = T5.mev_id
-																			left join pgdn T6 on T0.dvf_doctype = T6.pgs_id_doc_type and T0.dvf_series = T6.pgs_id
-																			left join pgec T7 on T0.dvf_currency = T7.pgm_symbol
-																			left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
-																			left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
-																			left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
+												concat(T0.dvf_cardname,' ',T2.dms_card_last_name) Cliente,
+												T0.dvf_cardcode Nit,
+												concat(T3.dmd_adress,' ',T3.dmd_city) Direccion,
+											    T3.dmd_state_mm ciudad,
+											    t3.dmd_state estado,
+												T2.dms_phone1 Telefono,
+												T2.dms_email Email,
+												ConCAT(T6.pgs_pref_num,' ',T0.dvf_docnum) NumeroDocumento,
+												T0.dvf_docdate FechaDocumento,
+												T0.dvf_duedate FechaVenDocumento,
+												trim('COP' from t0.dvf_currency) MonedaDocumento,
+												T7.pgm_name_moneda NOMBREMonEDA,
+												T5.mev_names Vendedor,
+												t8.mpf_name CondPago,
+												T1.fv1_itemcode Referencia,
+												T1.fv1_itemname descripcion,
+												T1.fv1_whscode Almacen,
+												T1.fv1_uom UM,
+												T1.fv1_quantity Cantidad,
+												T1.fv1_price VrUnit,
+												T1.fv1_discount PrcDes,
+												T1.fv1_vatsum IVAP,
+												T1.fv1_linetotal ValorTotalL,
+												T0.dvf_baseamnt base,
+												T0.dvf_discount Descuento,
+												(T0.dvf_baseamnt - T0.dvf_discount) subtotal,
+												T0.dvf_taxtotal Iva,
+												T0.dvf_doctotal TotalDoc,
+												T0.dvf_comment Comentarios,
+												t0.dvf_ref refer,
+												(select t9.dma_uom_weight from dmar t9 where  t9.dma_item_code = t1.fv1_itemcode) peso,
+												t0.dvf_baseentry baseentry,
+											  t0.dvf_basetype basetype,
+											  t10.dmu_code unidad
+											from dvfv t0
+											inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
+											left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
+											left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code
+											left join dmsc T4 on T0.dvf_cardcode = t4.dmc_card_code
+											left join dmev T5 on T0.dvf_slpcode = T5.mev_id
+											left join pgdn T6 on T0.dvf_doctype = T6.pgs_id_doc_type and T0.dvf_series = T6.pgs_id
+											left join pgec T7 on T0.dvf_currency = T7.pgm_symbol
+											left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
+											left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
+											left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
 																			where t0.dvf_docentry = :DVF_DOCENTRY";
-=======
-																							concat(T0.dvf_cardname,' ',T2.dms_card_last_name) Cliente,
-																							T0.dvf_cardcode Nit,
-																							concat(T3.dmd_adress,' ',T3.dmd_city) Direccion,
-																						    T3.dmd_state_mm ciudad,
-																						    t3.dmd_state estado,
-																							T2.dms_phone1 Telefono,
-																							T2.dms_email Email,
-																							ConCAT(T6.pgs_pref_num,' ',T0.dvf_docnum) NumeroDocumento,
-																							T0.dvf_docdate FechaDocumento,
-																							T0.dvf_duedate FechaVenDocumento,
-																							trim('COP' from t0.dvf_currency) MonedaDocumento,
-																							T7.pgm_name_moneda NOMBREMonEDA,
-																							T5.mev_names Vendedor,
-																							t8.mpf_name CondPago,
-																							T1.fv1_itemcode Referencia,
-																							T1.fv1_itemname descripcion,
-																							T1.fv1_whscode Almacen,
-																							T1.fv1_uom UM,
-																							T1.fv1_quantity Cantidad,
-																							T1.fv1_price VrUnit,
-																							T1.fv1_discount PrcDes,
-																							T1.fv1_vatsum IVAP,
-																							T1.fv1_linetotal ValorTotalL,
-																							T0.dvf_baseamnt base,
-																							T0.dvf_discount Descuento,
-																							(T0.dvf_baseamnt - T0.dvf_discount) subtotal,
-																							T0.dvf_taxtotal Iva,
-																							T0.dvf_doctotal TotalDoc,
-																							T0.dvf_comment Comentarios,
-																							t0.dvf_ref referencia,
-																							(select t9.dma_uom_weight from dmar t9 where  t9.dma_item_code = t1.fv1_itemcode) peso
-																						from dvfv t0
-																						inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
-																						left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
-																						left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code
-																						left join dmsc T4 on T0.dvf_cardcode = t4.dmc_card_code
-																						left join dmev T5 on T0.dvf_slpcode = T5.mev_id
-																						left join pgdn T6 on T0.dvf_doctype = T6.pgs_id_doc_type and T0.dvf_series = T6.pgs_id
-																						left join pgec T7 on T0.dvf_currency = T7.pgm_symbol
-																						left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
-																						where T0.dvf_docentry = :DVF_DOCENTRY";
->>>>>>> ded995d24172e3cf306e935444b3de64271ad1cb
-
 				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
 
 				if(!isset($contenidoFV[0])){
@@ -177,7 +132,6 @@ class FacturaVenta extends REST_Controller {
 
 						return;
 				}
-<<<<<<< HEAD
 				 // print_r($contenidoFV);exit();die();
 				 //consulta para obtener el docentry del pedido
 				//obtener el numero de pedido y de ENTREGA
@@ -215,26 +169,6 @@ class FacturaVenta extends REST_Controller {
 
 				if(isset($resEntrega[0])){
 						$VieneEntrega = $resEntrega[0]['entrega'];
-=======
-				// print_r();exit();die();
-
-				//obtener el numero de pedido y de ENTREGA
-				$Entrega = "SELECT
-																t0.vem_docnum entrega,1 pedido,t2.*
-																from dvem t0
-																left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry and t0.vem_doctype = t2.dvf_basetype
-																where t2.dvf_docentry = :DVF_DOCENTRY
-																order by entrega asc";
-			  $resEntrega = $this->pedeo->queryTable($Entrega, array(':DVF_DOCENTRY' => $Data));
-
-				$VieneEntrega = "";
-				$VienePedido = "";
-
-				if(isset($resEntrega[0])){
-						$VieneEntrega = $resEntrega[0]['entrega'];
-						$VienePedido = $resEntrega[0]['pedido'];
-
->>>>>>> ded995d24172e3cf306e935444b3de64271ad1cb
 				}
 				//INFORMACION DE LA DESCRIPCION FINAL DEL FORMATO
 				$CommentFinal = "SELECT t0.*
@@ -359,11 +293,7 @@ class FacturaVenta extends REST_Controller {
 						<p class="">OC: </p>
 					</th>
 					<th style="text-align: right;">
-<<<<<<< HEAD
 						<p> '.$contenidoFV[0]['refer'].'</p>
-=======
-						<p> '.$contenidoFV[0]['referencia'].'</p>
->>>>>>> ded995d24172e3cf306e935444b3de64271ad1cb
 					</th>
         </tr>
 				<tr>
@@ -377,11 +307,7 @@ class FacturaVenta extends REST_Controller {
 						<p class="">PEDIDO: </p>
 					</th>
 					<th style="text-align: right;">
-<<<<<<< HEAD
 						<p>'.$VienePedido.'</p>
-=======
-						<p>'.$VienePedido[0]['pedido'].'</p>
->>>>>>> ded995d24172e3cf306e935444b3de64271ad1cb
 					</th>
 				</tr>
 				<tr>
@@ -395,11 +321,7 @@ class FacturaVenta extends REST_Controller {
 						<p class="">ENTREGA: </p>
 					</th>
 					<th style="text-align: right;">
-<<<<<<< HEAD
 						<p>'.$VieneEntrega.'</p>
-=======
-						<p>'.$VieneEntrega[0]['entrega'].'</p>
->>>>>>> ded995d24172e3cf306e935444b3de64271ad1cb
 					</th>
 				</tr>
 				<tr>
@@ -477,11 +399,7 @@ class FacturaVenta extends REST_Controller {
 				<table width="100%">
 						<tr>
 								<th style="text-align: left;">Total Cantidad: <span>'.$TotalCantidad.'</span></th>
-<<<<<<< HEAD
 								<th style="text-align: left;">Total Peso: <span>'.$TotalPeso.' '.$contenidoFV[0]['unidad'].' </span></th>
-=======
-								<th style="text-align: left;">Total Peso: <span>'.$TotalPeso.'</span></th>
->>>>>>> ded995d24172e3cf306e935444b3de64271ad1cb
 						</tr>
 				</table>
 
