@@ -526,7 +526,7 @@ class SalesInv extends REST_Controller {
 								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
 								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
 
-												':dma_item_code' => $detail['dvf_itemcode'],
+												':dma_item_code' => $detail['fv1_itemcode'],
 												':dma_item_inv'  => 1
 								));
 
