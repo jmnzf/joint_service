@@ -98,6 +98,20 @@ class PaymentsReceived extends REST_Controller {
 
           return;
       }
+
+			// SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
+			if(!intval(count($ContenidoDetalle)) > 0 ){
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'Documento sin detalle'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+			//
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
