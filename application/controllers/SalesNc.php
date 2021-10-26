@@ -49,6 +49,7 @@ class SalesNc extends REST_Controller {
 			$codigoCuenta = ""; //para saber la naturaleza
 			$grantotalCostoInventario = 0;
 			$DocNumVerificado = 0;
+			$ManejaInvetario = 1;
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -389,8 +390,25 @@ class SalesNc extends REST_Controller {
 											 return;
 								}
 
+								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
+								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
+								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
+
+												':dma_item_code' => $detail['nc1_itemcode'],
+												':dma_item_inv'  => 1
+								));
+
+								if(isset($resItemINV[0])){
+
+									$ManejaInvetario = 1;
+
+								}
+
+								// FIN PROCESO ITEM MANEJA INVENTARIO
+
+
 								// si el item es inventariable
-								if( $detail['nc1_articleInv'] == 1 || $detail['nc1_articleInv'] == "1" ){
+								if(	$ManejaInvetario == 1){
 										//Se aplica el movimiento de inventario
 										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
 																					 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
