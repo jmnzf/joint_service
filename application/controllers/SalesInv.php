@@ -56,6 +56,7 @@ class SalesInv extends REST_Controller {
 			$SumaDebitosSYS = 0;
 			$SumaCreditosLOC = 0;
 			$SumaDebitoLOC = 0;
+			$ManejaInvetario = 0;
 
 
 
@@ -111,7 +112,7 @@ class SalesInv extends REST_Controller {
 					return;
 			}
 			//
-			
+
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
@@ -521,8 +522,24 @@ class SalesInv extends REST_Controller {
 											 return;
 								}
 
+								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
+								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
+								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
+
+												':dma_item_code' => $detail['dvf_itemcode'],
+												':dma_item_inv'  => 1
+								));
+
+								if(isset($resItemINV[0])){
+
+									$ManejaInvetario = 1;
+
+								}
+
+								// FIN PROCESO ITEM MANEJA INVENTARIO
+
 								// si el item es inventariable
-								if( $detail['fv1_articleInv'] == 1 || $detail['fv1_articleInv'] == "1" ){
+								if( $ManejaInvetario == 1 ){
 
 										// se verifica de donde viene  el documento
 									  if($Data['dvf_basetype'] != 3){

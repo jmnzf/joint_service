@@ -38,6 +38,7 @@ class SalesDv extends REST_Controller {
 			$posicionCuentaInvetario = 0;
 			$codigoCuenta = ""; //para saber la naturaleza
 			$DocNumVerificado = 0;
+			$ManejaInvetario = 0;
 
 
 
@@ -502,8 +503,25 @@ class SalesDv extends REST_Controller {
 								}
 
 
+								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
+								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
+								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
+
+												':dma_item_code' => $detail['dv1_itemcode'],
+												':dma_item_inv'  => 1
+								));
+
+								if(isset($resItemINV[0])){
+
+									$ManejaInvetario = 1;
+
+								}
+
+								// FIN PROCESO ITEM MANEJA INVENTARIO
+
+
 								// si el item es inventariable
-								if( $detail['dv1_articleInv'] == 1 || $detail['dv1_articleInv'] == "1" ){
+								if( $ManejaInvetario == 1 ){
 
 											//se busca el costo del item en el momento de la creacion del documento de venta
 											// para almacenar en el movimiento de inventario
