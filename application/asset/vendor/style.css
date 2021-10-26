@@ -3,8 +3,10 @@
     text-align: center;
 }
 
-tr.border_bottom{
-  border-bottom: 1px solid black !important;
+
+.border_bottom{
+  border-bottom: 1px solid black;
+  border-collapse: collapse;
 }
 
 .bordew{

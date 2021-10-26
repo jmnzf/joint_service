@@ -9,7 +9,7 @@ require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 use Luecano\NumeroALetras\NumeroALetras;
 
-class FacturaVenta extends REST_Controller {
+class FacturaVentaUSD extends REST_Controller {
 
 	private $pdo;
 
@@ -27,7 +27,7 @@ class FacturaVenta extends REST_Controller {
 	}
 
 
-	public function FacturaVenta_post(){
+	public function FacturaVentaUSD_post(){
 
         $Data = $this->post();
 				$Data = $Data['DVF_DOCENTRY'];
@@ -129,7 +129,18 @@ class FacturaVenta extends REST_Controller {
 						return;
 				}
 				// print_r();exit();die();
+				//obtener tasa en dolar para el formato de dolar
 
+				$sqlTasa = "SELECT tsa_value  from tasa where tsa_date = current_date";
+				$resTasa = $this->pedeo->queryTable($sqlTasa, array());
+				// print_r($resTasa);exit();die();
+
+				$VieneTasa = 0;
+				if(is_numeric($resTasa[0]['tsa_value']) && is_numeric($resTasa[0]['tsa_value']) > 0){
+
+						$VieneTasa = $resTasa[0]['tsa_value'];
+				}
+	// print_r($VieneTasa);exit();die();
 				//obtener el numero de pedido y de ENTREGA
 				$Entrega = "SELECT
 																t0.vem_docnum entrega,1 pedido,t2.*
@@ -161,13 +172,13 @@ class FacturaVenta extends REST_Controller {
 
 				foreach ($contenidoFV as $key => $value) {
 					// code...<td>'.$value['um'].'</td>
-					//<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
+					//<td>'.number_format($value['ivap'], 2, ',', '.').'</td>
 
 				$detalle = '	<td>'.$value['cantidad'].'</td>
 											<td>'.$value['referencia'].'</td>
 											<td>'.$value['descripcion'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], 2, ',', '.').'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], 2, ',', '.').'</td>';
+											<td>USD '.number_format(($value['vrunit']  * 1.25) / $VieneTasa , 2, ',', '.').'</td>
+											<td>USD '.number_format(($value['valortotall'] * 1.25) / $VieneTasa, 2, ',', '.').'</td>';
 
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
@@ -390,36 +401,36 @@ class FacturaVenta extends REST_Controller {
         <table width="100%">
 						<tr>
 								<th>
-											<table border=1 width="100%">
-												<tr>
-														<th  style="width: 100px;">PLACA</th>
-														<th style="width: 100px;">PRECINTOS</th>
-												</tr>
-												<tr>
-												<td style="height: 50px;" ></td>
-												<td style="height: 50px;"></td>
-												</tr>
-											</table>
+								<table border=1 width="100%">
+									<tr>
+											<th  style="width: 100px;">PLACA</th>
+											<th style="width: 100px;">PRECINTOS</th>
+									</tr>
+									<tr>
+									<td style="height: 50px;" ></td>
+									<td style="height: 50px;"></td>
+									</tr>
+								</table>
 								</th>
 								<th>
 											<table width="100%">
 													<tr>
-															<td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['subtotal'], 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Sub Total: <span>USD '.number_format(($contenidoFV[0]['subtotal'] * 1.25) / $VieneTasa, 2, ',', '.').'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">Flete (E): <span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
+															<td style="text-align: right;">Flete (E): <span>USD 0</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">Base Imponible: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['base'], 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Base Imponible: <span>USD '.number_format(($contenidoFV[0]['base'] * 1.25) / $VieneTasa, 2, ',', '.').'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">Monto total excento o exonerado:<span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
+															<td style="text-align: right;">Monto total excento o exonerado:<span>USD 0</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'], 2, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['iva'], 2, ',', '.').'</span></td>
+															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'] * 1.25 / $VieneTasa , 2, ',', '.').': <span>USD '.number_format($contenidoFV[0]['iva'] * 1.25 / $VieneTasa, 2, ',', '.').'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['totaldoc'], 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Valor Total: <span>USD  '.number_format($contenidoFV[0]['totaldoc'] * 1.25 / $VieneTasa, 2, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>

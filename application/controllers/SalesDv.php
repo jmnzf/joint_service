@@ -68,7 +68,7 @@ class SalesDv extends REST_Controller {
 
       $ContenidoDetalle = json_decode($Data['detail'], true);
 
-
+			// SE VALIDA QUE EL DOCUMENTO SEA UN ARRAY
       if(!is_array($ContenidoDetalle)){
           $respuesta = array(
             'error' => true,
@@ -80,6 +80,22 @@ class SalesDv extends REST_Controller {
 
           return;
       }
+			//
+
+			// SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
+			if(!intval(count($ContenidoDetalle)) > 0 ){
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'Documento sin detalle'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+			//
+
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
@@ -229,7 +245,7 @@ class SalesDv extends REST_Controller {
 				}
 				// FIN PROCESO PARA OBTENER LA CARPETA PRINCIPAL DEL PROYECTO
 
-			
+
 
         $sqlInsert = "INSERT INTO dvdv(vdv_series, vdv_docnum, vdv_docdate, vdv_duedate, vdv_duedev, vdv_pricelist, vdv_cardcode,
                       vdv_cardname, vdv_currency, vdv_contacid, vdv_slpcode, vdv_empid, vdv_comment, vdv_doctotal, vdv_baseamnt, vdv_taxtotal,

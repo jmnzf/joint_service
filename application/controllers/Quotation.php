@@ -56,6 +56,20 @@ class Quotation extends REST_Controller {
 		          return;
 		      }
 
+					// SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
+					if(!intval(count($ContenidoDetalle)) > 0 ){
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' =>'Documento sin detalle'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+					}
+					//
+
 
 					//Obtener Carpeta Principal del Proyecto
 					$sqlMainFolder = " SELECT * FROM params";

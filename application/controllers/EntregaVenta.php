@@ -278,7 +278,7 @@ class EntregaVenta extends REST_Controller {
 
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
-
+ 		
 
         $mpdf->Output('Doc.pdf', 'D');
 

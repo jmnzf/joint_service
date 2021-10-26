@@ -92,7 +92,7 @@ class DocumentNumbering extends REST_Controller {
             ':Pgs_DocDate'    => $Data['pgs_doc_date'],
             ':Pgs_DocDueDate' => $Data['pgs_doc_due_date'],
             ':Pgs_Enabled'    => $Data['pgs_enabled'],
-						':pgs_nextnum'	  => 0,
+						':pgs_nextnum'	  => ($Data['pgs_nextnum'] - 1),
 						':pgs_doctype'		=> $Data['pgs_id_doc_type']
 
       ));
