@@ -2269,7 +2269,7 @@ abstract class REST_Controller extends \CI_Controller {
      */
     public function getColumn($table,$prefijo,$campos='',$inner ='') {
         // QUERY DINAMICO PARA OBTENER CABECERA DE LOS DOCUMENTOS DE VENTA Y COMPRA.
-        $query = "SELECT
+        $query = "SELECT DISTINCT
           	t3.mdt_docname,
             t8.mdt_docname as origen,
           	t0.{prefix}_docentry,
@@ -2293,7 +2293,7 @@ abstract class REST_Controller extends \CI_Controller {
             CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR({prefix}_TAXTOTAl,'{format}'))) iva,
             CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR((T0.{prefix}_baseamnt - T0.{prefix}_DISCOUNT),'{format}'))) subtotal,
           	t1.estado ,
-          	t2.mev_names as {prefix}_slpcode {fields} 
+          	t2.mev_names as {prefix}_slpcode {fields}
             FROM {table} t0
             INNER JOIN responsestatus t1 ON t0.{prefix}_docentry = t1.id and t0.{prefix}_doctype = t1.tipo
             INNER JOIN dmev t2 on t0.{prefix}_slpcode = t2.mev_id
@@ -2303,7 +2303,7 @@ abstract class REST_Controller extends \CI_Controller {
             LEFT JOIN DMSC T6 ON T0.{prefix}_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
             LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
             LEFT JOIN dmdt t8 on {prefix}_origen = t8.mdt_doctype {innerjoin}";
-            
+
         // REEMPLAZAR POR LA TABLA
         $query = str_replace("{table}", $table, $query);
         // REEMPLAZAR POR EL PREFIJO QUE SE RECIBE COMO PARAMETRO.
