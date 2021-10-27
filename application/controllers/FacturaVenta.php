@@ -150,7 +150,7 @@ class FacturaVenta extends REST_Controller {
 											':vov_doctype' => $resSqlPedido[0]['vem_basetype']
 										));
 
-				$VienePedido = "";
+				$VienePedido = 0;
 
 				if(isset($resPedido[0])){
 						$VienePedido = $resPedido[0]['pedido'];
@@ -473,7 +473,7 @@ class FacturaVenta extends REST_Controller {
 
         // $mpdf->SetHTMLHeader($header);
         // $mpdf->SetHTMLFooter($footer);
-//print_r($html);exit();die();
+// print_r($html);exit();die();
 
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
