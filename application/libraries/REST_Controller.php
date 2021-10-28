@@ -2281,6 +2281,7 @@ abstract class REST_Controller extends \CI_Controller {
           	t0.{prefix}_comment,
             t0.{prefix}_createby,
             t0.{prefix}_origen AS origin,
+            t0.{prefix}_currency,
             CASE
             		WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
             			THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
