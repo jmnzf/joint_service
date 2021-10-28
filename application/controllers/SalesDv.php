@@ -39,6 +39,7 @@ class SalesDv extends REST_Controller {
 			$codigoCuenta = ""; //para saber la naturaleza
 			$DocNumVerificado = 0;
 			$ManejaInvetario = 0;
+			$AC1LINE = 1;
 
 
 
@@ -46,11 +47,11 @@ class SalesDv extends REST_Controller {
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line)";
 
 
 
@@ -909,7 +910,8 @@ class SalesDv extends REST_Controller {
 								':ac1_basert' => 0,
 								':ac1_mmcode' => 0,
 								':ac1_legal_num' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
-								':ac1_codref' => 1
+								':ac1_codref' => 1,
+								':ac1_line'   => $AC1LINE
 								));
 
 								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -1049,7 +1051,7 @@ class SalesDv extends REST_Controller {
 										 $MontoSysDB = $grantotalCuentaIventarioOriginal;
 								 }
 							 }
-
+							 $AC1LINE = $AC1LINE+1;
 							 $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							 ':ac1_trans_id' => $resInsertAsiento,
@@ -1090,7 +1092,8 @@ class SalesDv extends REST_Controller {
 							 ':ac1_basert' => 0,
 							 ':ac1_mmcode' => 0,
 							 ':ac1_legal_num' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
-							 ':ac1_codref' => 1
+							 ':ac1_codref' => 1,
+							 ':ac1_line'   => $AC1LINE
 							 ));
 
 							 if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){

@@ -102,9 +102,11 @@ class FacturaVentaUSD extends REST_Controller {
 													T0.dvf_taxtotal Iva,
 													T0.dvf_doctotal TotalDoc,
 													T0.dvf_comment Comentarios,
-													t0.dvf_ref referencia,
+													t0.dvf_ref oc,
 													(select t9.dma_uom_weight from dmar t9 where  t9.dma_item_code = t1.fv1_itemcode) peso,
-													t11.dmu_code unidad
+												    t10.dmu_code um,
+														T0.dvf_precinto precintos,
+														t0.dvf_placa placa
 												from dvfv t0
 												inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
 												left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
@@ -114,9 +116,10 @@ class FacturaVentaUSD extends REST_Controller {
 												left join pgdn T6 on T0.dvf_doctype = T6.pgs_id_doc_type and T0.dvf_series = T6.pgs_id
 												left join pgec T7 on T0.dvf_currency = T7.pgm_symbol
 												left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
-												left join dmar t10 on t1.fv1_itemcode = t10.dma_item_code
-												left join dmum t11 on t10.dma_uom_umweight = t11.dmu_id
-												where T0.dvf_docentry = :DVF_DOCENTRY";
+												left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
+												left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
+											  where T0.dvf_docentry = :DVF_DOCENTRY";
+
 
 				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
 
@@ -284,7 +287,7 @@ class FacturaVentaUSD extends REST_Controller {
 						<p class="">OC: </p>
 					</th>
 					<th style="text-align: right;">
-						<p> '.$contenidoFV[0]['referencia'].'</p>
+						<p> '.$contenidoFV[0]['oc'].'</p>
 					</th>
         </tr>
 				<tr>
@@ -390,7 +393,8 @@ class FacturaVentaUSD extends REST_Controller {
 				<table width="100%">
 						<tr>
 								<th style="text-align: left;">Total Cantidad: <span>'.$TotalCantidad.'</span></th>
-								<th style="text-align: left;">Total Peso: <span>'.$TotalPeso.' '.$contenidoFV[0]['unidad'].' </span></th>
+
+								<th style="text-align: left;">Total Peso: <span>'.$TotalPeso." ".$contenidoFV[0]['um'].'</span></th>
 						</tr>
 				</table>
 
@@ -410,30 +414,15 @@ class FacturaVentaUSD extends REST_Controller {
 											<th style="width: 100px;">PRECINTOS</th>
 									</tr>
 									<tr>
-									<td style="height: 50px;" ></td>
-									<td style="height: 50px;"></td>
+									<td style="height: 50px;" >'.$contenidoFV[0]['placa'].'</td>
+									<td style="height: 50px;">'.$contenidoFV[0]['precintos'].'</td>
 									</tr>
 								</table>
 								</th>
 								<th>
 											<table width="100%">
 													<tr>
-															<td style="text-align: right;">Sub Total: <span>USD '.number_format(($contenidoFV[0]['subtotal'] * 1.25) / $VieneTasa, 2, ',', '.').'</span></td>
-													</tr>
-													<tr>
-															<td style="text-align: right;">Flete (E): <span>USD 0</span></td>
-													</tr>
-													<tr>
-															<td style="text-align: right;">Base Imponible: <span>USD '.number_format(($contenidoFV[0]['base'] * 1.25) / $VieneTasa, 2, ',', '.').'</span></td>
-													</tr>
-													<tr>
-															<td style="text-align: right;">Monto total excento o exonerado:<span>USD 0</span></td>
-													</tr>
-													<tr>
-															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'] * 1.25 / $VieneTasa , 2, ',', '.').': <span>USD '.number_format($contenidoFV[0]['iva'] * 1.25 / $VieneTasa, 2, ',', '.').'</span></td>
-													</tr>
-													<tr>
-															<td style="text-align: right;">Valor Total: <span>USD  '.number_format($contenidoFV[0]['totaldoc'] * 1.25 / $VieneTasa, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Valor Total: <span>USD  '.number_format($contenidoFV[0]['subtotal'] * 1.25 / $VieneTasa, 2, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>
@@ -444,7 +433,9 @@ class FacturaVentaUSD extends REST_Controller {
         <table width="100%" style="vertical-align: bottom;">
             <tr>
                 <th style="text-align: left;" class="">
-                    <p>'.$formatter->toWords($contenidoFV[0]['totaldoc'] * 1.25 / $VieneTasa,2).' USD</p>
+
+                    <p>'.$formatter->toWords($contenidoFV[0]['subtotal'] * 1.25 / $VieneTasa,2).' DOLARES</p>
+
                 </th>
             </tr>
         </table>
