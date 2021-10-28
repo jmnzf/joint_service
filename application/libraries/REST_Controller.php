@@ -2293,6 +2293,9 @@ abstract class REST_Controller extends \CI_Controller {
             CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR({prefix}_TAXTOTAl,'{format}'))) iva,
             CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR((T0.{prefix}_baseamnt - T0.{prefix}_DISCOUNT),'{format}'))) subtotal,
           	t1.estado ,
+            t0.{prefix}_currency,
+            t0.{prefix}_slpcode,
+            t0.{prefix}_empid, 
           	t2.mev_names as {prefix}_slpcode {fields}
             FROM {table} t0
             INNER JOIN responsestatus t1 ON t0.{prefix}_docentry = t1.id and t0.{prefix}_doctype = t1.tipo
