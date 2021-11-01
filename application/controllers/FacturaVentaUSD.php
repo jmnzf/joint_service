@@ -106,7 +106,8 @@ class FacturaVentaUSD extends REST_Controller {
 													(select t9.dma_uom_weight from dmar t9 where  t9.dma_item_code = t1.fv1_itemcode) peso,
 												    t10.dmu_code um,
 														T0.dvf_precinto precintos,
-														t0.dvf_placa placa
+														t0.dvf_placav placa,
+														t1.fv1_fixrate fixrate
 												from dvfv t0
 												inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
 												left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
@@ -119,7 +120,6 @@ class FacturaVentaUSD extends REST_Controller {
 												left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
 												left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
 											  where T0.dvf_docentry = :DVF_DOCENTRY";
-
 
 				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
 
@@ -175,16 +175,18 @@ class FacturaVentaUSD extends REST_Controller {
 				$totaldetalle = '';
 				$TotalCantidad = 0;
 				$TotalPeso = 0;
+				$TOTALFIXRATE = 0;
 
 				foreach ($contenidoFV as $key => $value) {
 					// code...<td>'.$value['um'].'</td>
 					//<td>'.number_format($value['ivap'], 2, ',', '.').'</td>
+				$TOTALFIXRATE = ($TOTALFIXRATE + $value['fixrate']);
 
 				$detalle = '	<td>'.$value['cantidad'].'</td>
 											<td>'.$value['referencia'].'</td>
 											<td>'.$value['descripcion'].'</td>
-											<td>USD '.number_format(($value['vrunit']  * 1.25) / $VieneTasa , 2, ',', '.').'</td>
-											<td>USD '.number_format(($value['valortotall'] * 1.25) / $VieneTasa, 2, ',', '.').'</td>';
+											<td>USD '.number_format(($value['vrunit'] + $value['fixrate']) / $VieneTasa , 2, ',', '.').'</td>
+											<td>USD '.number_format(($value['base'] + $value['fixrate']) / $VieneTasa, 2, ',', '.').'</td>';
 
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
@@ -422,7 +424,7 @@ class FacturaVentaUSD extends REST_Controller {
 								<th>
 											<table width="100%">
 													<tr>
-															<td style="text-align: right;">Valor Total: <span>USD  '.number_format($contenidoFV[0]['subtotal'] * 1.25 / $VieneTasa, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Valor Total: <span>USD  '.number_format(($contenidoFV[0]['subtotal'] + $TOTALFIXRATE) / $VieneTasa, 2, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>
@@ -433,9 +435,7 @@ class FacturaVentaUSD extends REST_Controller {
         <table width="100%" style="vertical-align: bottom;">
             <tr>
                 <th style="text-align: left;" class="">
-
-                    <p>'.$formatter->toWords($contenidoFV[0]['subtotal'] * 1.25 / $VieneTasa,2).' DOLARES</p>
-
+                    <p>'.$formatter->toWords(($contenidoFV[0]['subtotal'] + $TOTALFIXRATE) / $VieneTasa,2).' DOLARES</p>
                 </th>
             </tr>
         </table>
@@ -453,7 +453,9 @@ class FacturaVentaUSD extends REST_Controller {
 
         // $mpdf->SetHTMLHeader($header);
         // $mpdf->SetHTMLFooter($footer);
-//print_r($html);exit();die();
+// print_r($contenidoFV[0]['subtotal']);
+// print_r($TOTALFIXRATE);
+// exit();die();
 
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
