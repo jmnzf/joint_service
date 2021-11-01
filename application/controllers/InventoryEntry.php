@@ -504,18 +504,40 @@ class InventoryEntry extends REST_Controller {
 
 													}else{
 
-																	 $this->pedeo->trans_rollback();
-
-																	 $respuesta = array(
-																		 'error'   => true,
-																		 'data'    => $resUpdateCostoCantidad,
-																		 'mensaje' => 'No hay existencia para el item: '.$detail['ei1_itemcode']
-																	 );
+																$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+																$CantidadNueva = $detail['ei1_quantity'];
 
 
-																	 $this->response($respuesta);
+																$CantidadTotal = ($CantidadActual + $CantidadNueva);
 
-																	 return;
+																$sqlUpdateCostoCantidad =  "UPDATE tbdi
+																														SET bdi_quantity = :bdi_quantity
+																														WHERE  bdi_id = :bdi_id";
+
+																$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+																			':bdi_quantity' => $CantidadTotal,
+																			':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+																));
+
+																if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+
+																}else{
+
+																		$this->pedeo->trans_rollback();
+
+																		$respuesta = array(
+																			'error'   => true,
+																			'data'    => $resUpdateCostoCantidad,
+																			'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+																		);
+
+
+																		$this->response($respuesta);
+
+																		return;
+																}
+
 													}
 
 												}else{

@@ -59,7 +59,7 @@ class SalesInv extends REST_Controller {
 			$ManejaInvetario = 0;
 			$IVASINTASAFIJA = 0;
 			$AC1LINE = 1;
-
+			$SUMALINEAFIXRATE = 0;
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -100,6 +100,8 @@ class SalesInv extends REST_Controller {
 
           return;
       }
+
+
 
 			// SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
 			if(!intval(count($ContenidoDetalle)) > 0 ){
@@ -492,9 +494,9 @@ class SalesInv extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vfv1(fv1_docentry, fv1_itemcode, fv1_itemname, fv1_quantity, fv1_uom, fv1_whscode,
                                     fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
-                                    fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,
+                                    fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,
                                     :fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, :fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,
-                                    :fv1_acctcode, :fv1_basetype, :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva)";
+                                    :fv1_acctcode, :fv1_basetype, :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':fv1_docentry' => $resInsert,
@@ -517,6 +519,7 @@ class SalesInv extends REST_Controller {
                         ':fv1_avprice' => is_numeric($detail['fv1_avprice'])?$detail['fv1_avprice']:0,
                         ':fv1_inventory' => is_numeric($detail['fv1_inventory'])?$detail['fv1_inventory']:NULL,
 												':fv1_acciva'  => is_numeric($detail['fv1_cuentaIva'])?$detail['fv1_cuentaIva']:0,
+												':fv1_fixrate' => is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -537,6 +540,22 @@ class SalesInv extends REST_Controller {
 
 											 return;
 								}
+
+
+
+								if(!isset($detail['fv1_fixrate'])){
+										$respuesta = array(
+											'error' => true,
+											'data'  => array(),
+											'mensaje' =>'no se encontro el descuento aplicado'
+										);
+
+										$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+										return;
+								}
+
+								$SUMALINEAFIXRATE = ( $SUMALINEAFIXRATE +$detail['fv1_fixrate'] );
 
 								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
 								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
@@ -732,6 +751,8 @@ class SalesInv extends REST_Controller {
 								$DetalleAsientoIngreso->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
 								$DetalleAsientoIngreso->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
 								$DetalleAsientoIngreso->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
+								$DetalleAsientoIngreso->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
+
 
 
 
@@ -747,6 +768,7 @@ class SalesInv extends REST_Controller {
 								$DetalleAsientoIva->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
 								$DetalleAsientoIva->fv1_cuentaIva = is_numeric($detail['fv1_cuentaIva'])?$detail['fv1_cuentaIva']:NULL;
 								$DetalleAsientoIva->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
+								$DetalleAsientoIva->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
 
 
 
@@ -782,6 +804,7 @@ class SalesInv extends REST_Controller {
 								$DetalleCostoInventario->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
 								$DetalleCostoInventario->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
 								$DetalleCostoInventario->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
+								$DetalleCostoInventario->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
 
 
 								$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
@@ -795,6 +818,7 @@ class SalesInv extends REST_Controller {
 								$DetalleCostoCosto->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
 								$DetalleCostoCosto->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
 								$DetalleCostoCosto->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
+								$DetalleCostoCosto->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
 
 								$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 
@@ -920,6 +944,7 @@ class SalesInv extends REST_Controller {
 					foreach ($DetalleConsolidadoIngreso as $key => $posicion) {
 							$granTotalIngreso = 0;
 							$granTotalIngresoOriginal = 0;
+							$granTotalTasaFija = 0;
 							$codigoCuentaIngreso = "";
 							$cuenta = "";
 							$proyecto = "";
@@ -927,6 +952,7 @@ class SalesInv extends REST_Controller {
 							$unidad = "";
 							foreach ($posicion as $key => $value) {
 										$granTotalIngreso = ($granTotalIngreso + $value->fv1_linetotal);
+										$granTotalTasaFija = ($granTotalTasaFija + $value->fv1_fixrate);
 										$codigoCuentaIngreso = $value->codigoCuenta;
 										$prc = $value->ac1_prc_code;
 										$unidad = $value->ac1_uncode;
@@ -953,7 +979,7 @@ class SalesInv extends REST_Controller {
 								case 1:
 									$debito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-										 	$ti = (($ti * $TasaFija) / 100) + $ti;
+										 	$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
@@ -963,7 +989,7 @@ class SalesInv extends REST_Controller {
 								case 2:
 									$credito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-										  $ti = (($ti * $TasaFija) / 100) + $ti;
+										  $ti = ($ti + $granTotalTasaFija);
 											$MontoSysCR = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysCR = $granTotalIngresoOriginal;
@@ -973,7 +999,7 @@ class SalesInv extends REST_Controller {
 								case 3:
 									$credito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-										 	$ti = (($ti * $TasaFija) / 100) + $ti;
+										  $ti = ($ti + $granTotalTasaFija);
 											$MontoSysCR = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysCR = $granTotalIngresoOriginal;
@@ -983,7 +1009,7 @@ class SalesInv extends REST_Controller {
 								case 4:
 									$credito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$ti = (($ti * $TasaFija) / 100) + $ti;
+											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysCR = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysCR = $granTotalIngresoOriginal;
@@ -993,7 +1019,7 @@ class SalesInv extends REST_Controller {
 								case 5:
 									$debito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$ti = (($ti * $TasaFija) / 100) + $ti;
+											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
@@ -1003,7 +1029,7 @@ class SalesInv extends REST_Controller {
 								case 6:
 									$debito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$ti = (($ti * $TasaFija) / 100) + $ti;
+											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
@@ -1013,7 +1039,7 @@ class SalesInv extends REST_Controller {
 								case 7:
 									$debito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$ti = (($ti * $TasaFija) / 100) + $ti;
+											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
@@ -1097,6 +1123,23 @@ class SalesInv extends REST_Controller {
 
 					//Procedimiento para llenar Impuestos
 
+					$cuentaIVAAsumido = "SELECT pge_acc_impas FROM  pgem";
+					$rescuentaIVAAsumido = $this->pedeo->queryTable($cuentaIVAAsumido,array());
+
+					if(!isset($rescuentaIVAAsumido[0])){
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $rescuentaIVAAsumido,
+								'mensaje'	=> 'No se encontro la cuenta contable para el IVA asumido'
+							);
+
+							 $this->response($respuesta);
+
+							 return;
+					}
+
 
 					$granTotalIva = 0;
 
@@ -1127,7 +1170,7 @@ class SalesInv extends REST_Controller {
 							}
 
 
-							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+							// $SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 							$AC1LINE = $AC1LINE+1;
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1137,6 +1180,104 @@ class SalesInv extends REST_Controller {
 									':ac1_credit' => round($granTotalIva, 2),
 									':ac1_debit_sys' => 0,
 									':ac1_credit_sys' => round($MontoSysCR, 2),
+									':ac1_currex' => 0,
+									':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+									':ac1_debit_import' => 0,
+									':ac1_credit_import' => 0,
+									':ac1_debit_importsys' => 0,
+									':ac1_credit_importsys' => 0,
+									':ac1_font_key' => $resInsert,
+									':ac1_font_line' => 1,
+									':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+									':ac1_accountvs' => 1,
+									':ac1_doctype' => 18,
+									':ac1_ref1' => "",
+									':ac1_ref2' => "",
+									':ac1_ref3' => "",
+									':ac1_prc_code' => NULL,
+									':ac1_uncode' => NULL,
+									':ac1_prj_code' => NULL,
+									':ac1_rescon_date' => NULL,
+									':ac1_recon_total' => 0,
+									':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+									':ac1_accperiod' => 1,
+									':ac1_close' => 0,
+									':ac1_cord' => 0,
+									':ac1_ven_debit' => 1,
+									':ac1_ven_credit' => 1,
+									':ac1_fiscal_acct' => 0,
+									':ac1_taxid' => 1,
+									':ac1_isrti' => 0,
+									':ac1_basert' => 0,
+									':ac1_mmcode' => 0,
+									':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+									':ac1_codref' => 1,
+									':ac1_line'   => 	$AC1LINE
+						));
+
+
+
+						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+								// Se verifica que el detalle no de error insertando //
+						}else{
+
+								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resDetalleAsiento,
+										'mensaje'	=> 'No se pudo registrar la factura de ventas'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+						}
+					}
+
+
+					$granTotalIva = 0;
+
+					foreach ($DetalleConsolidadoIva as $key => $posicion) {
+							$granTotalIva = 0;
+							$granTotalIvaOriginal = 0;
+							$MontoSysCR = 0;
+
+							foreach ($posicion as $key => $value) {
+										$granTotalIva = round($granTotalIva + $value->fv1_vatsum,2);
+							}
+
+							$granTotalIvaOriginal = $granTotalIva;
+
+							if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+									$granTotalIva = ($granTotalIva * $TasaDocLoc);
+							}
+
+							$TIva = $granTotalIva;
+
+							if(trim($Data['dvf_currency']) != $MONEDASYS ){
+									// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
+									$MontoSysCR = ($TIva / $TasaLocSys);
+									$IVASINTASAFIJA = $MontoSysCR;
+							}else{
+									$MontoSysCR = $granTotalIvaOriginal;
+									$IVASINTASAFIJA = $MontoSysCR;
+							}
+
+
+							// $SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+							$AC1LINE = $AC1LINE+1;
+							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+									':ac1_trans_id' => $resInsertAsiento,
+									':ac1_account' => $rescuentaIVAAsumido[0]['pge_acc_impas'],
+									':ac1_debit' => 0,
+									':ac1_credit' => 0,
+									':ac1_debit_sys' => round($MontoSysCR, 2),
+									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
@@ -1948,7 +2089,6 @@ class SalesInv extends REST_Controller {
 								$docTotalOriginal = 0;
 
 								$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
-
 								$codigo2= substr($rescuentaCxC[0]['mgs_acct'], 0, 1);
 
 								$docTotal = $Data['dvf_doctotal'];
@@ -1964,63 +2104,63 @@ class SalesInv extends REST_Controller {
 								if( $codigo2 == 1 || $codigo2 == "1" ){
 										$debitoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = (($dt * $TasaFija) / 100) + $dt;
+												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysDB = ($dt / $TasaLocSys);
-												$MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
+												// $MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
 										}else{
 												$MontoSysDB =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 2 || $codigo2 == "2" ){
 										$creditoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = (($dt * $TasaFija) / 100) + $dt;
+												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysCR = ($dt / $TasaLocSys);
-												$MontoSysCR = ($MontoSysCR+$IVASINTASAFIJA);
+												// $MontoSysCR = ($MontoSysCR+$IVASINTASAFIJA);
 										}else{
 												$MontoSysCR =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 3 || $codigo2 == "3" ){
 										$creditoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = (($dt * $TasaFija) / 100) + $dt;
+												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysCR = ($dt / $TasaLocSys);
-												$MontoSysCR = ($MontoSysCR+$IVASINTASAFIJA);
+												// $MontoSysCR = ($MontoSysCR+$IVASINTASAFIJA);
 										}else{
 												$MontoSysCR =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 4 || $codigo2 == "4" ){
 									  $creditoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = (($dt * $TasaFija) / 100) + $dt;
+												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysCR = ($dt / $TasaLocSys);
-												$MontoSysCR = ($MontoSysCR+$IVASINTASAFIJA);
+												// $MontoSysCR = ($MontoSysCR+$IVASINTASAFIJA);
 										}else{
 												$MontoSysCR =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 5  || $codigo2 == "5" ){
 									  $debitoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = (($dt * $TasaFija) / 100) + $dt;
+												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysDB = ($dt / $TasaLocSys);
-												$MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
+												// $MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
 										}else{
 												$MontoSysDB =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 6 || $codigo2 == "6" ){
 									  $debitoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = (($dt * $TasaFija) / 100) + $dt;
+												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysDB = ($dt / $TasaLocSys);
-												$MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
+												// $MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
 										}else{
 												$MontoSysDB =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 7 || $codigo2 == "7" ){
 									  $debitoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = (($dt * $TasaFija) / 100) + $dt;
+												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysDB = ($dt / $TasaLocSys);
-												$MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
+												// $MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
 										}else{
 												$MontoSysDB =	$docTotalOriginal;
 										}
