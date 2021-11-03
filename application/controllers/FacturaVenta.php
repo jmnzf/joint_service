@@ -541,26 +541,20 @@ class FacturaVenta extends REST_Controller {
 				</tr>
 				</table>
 
-				<table width="100%" style="vertical-align: bottom;">
-						<tr>
-								<th style="text-align: left;" class="">
-										<p>'.$formatter->toWords($valorTotalDoc,2)." ".$contenidoFV[0]['nombremoneda'].'</p>
-								</th>
-						</tr>
-				</table>
-
         <table width="100%">
 						<tr>
 								<th>
-											<table border=1 width="100%">
+											<table width="100%" style="vertical-align: bottom;">
+												<tr><td>&nbsp;</td></tr>
+												<tr><td>&nbsp;</td></tr>
+												<tr><td>&nbsp;</td></tr>
+												<tr><td>&nbsp;</td></tr>
+												<tr><td>&nbsp;</td></tr>
 												<tr>
-														<th  style="width: 100px;">PLACA</th>
-														<th style="width: 100px;">PRECINTOS</th>
-												</tr>
-												<tr>
-												<td style="height: 50px;" >'.$contenidoFV[0]['placa'].'</td>
-												<td style="height: 50px;">'.$contenidoFV[0]['precintos'].'</td>
-												</tr>
+															<td style="text-align: left;" class="">
+																	<p>'.$formatter->toWords($valorTotalDoc,2)." ".$contenidoFV[0]['nombremoneda'].'</p>
+															</td>
+													</tr>
 											</table>
 								</th>
 								<th>
@@ -588,7 +582,18 @@ class FacturaVenta extends REST_Controller {
 						</tr>
         </table>
 
+				<br><br>
 
+				<table border=1 width="50%">
+					<tr>
+							<th  style="width: 100px;">PLACA</th>
+							<th style="width: 100px;">PRECINTOS</th>
+					</tr>
+					<tr>
+							<td style="height: 50px;" >'.$contenidoFV[0]['placa'].'</td>
+							<td style="height: 50px;">'.$contenidoFV[0]['precintos'].'</td>
+					</tr>
+				</table>
 
 
         <br><br>

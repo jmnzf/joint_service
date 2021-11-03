@@ -560,28 +560,22 @@ class FacturaVentaUSD extends REST_Controller {
 				</tr>
 				</table>
 
-				<table width="100%" style="vertical-align: bottom;">
-						<tr>
-								<th style="text-align: left;" class="">
-										<p>'.$formatter->toWords(($valorSubtotal + $TOTALFIXRATE),2).' DOLARES</p>
-								</th>
-						</tr>
-				</table>
-
 
         <table width="100%">
 						<tr>
 								<th>
-								<table border=1 width="100%">
-									<tr>
-											<th  style="width: 100px;">PLACA</th>
-											<th style="width: 100px;">PRECINTOS</th>
-									</tr>
-									<tr>
-									<td style="height: 50px;" >'.$contenidoFV[0]['placa'].'</td>
-									<td style="height: 50px;">'.$contenidoFV[0]['precintos'].'</td>
-									</tr>
-								</table>
+									<table width="100%" style="vertical-align: bottom;">
+										<tr><td>&nbsp;</td></tr>
+										<tr><td>&nbsp;</td></tr>
+										<tr><td>&nbsp;</td></tr>
+										<tr><td>&nbsp;</td></tr>
+										<tr><td>&nbsp;</td></tr>
+											<tr>
+													<td style="text-align: left;" class="">
+															<p>'.$formatter->toWords(($valorSubtotal + $TOTALFIXRATE),2).' DOLARES</p>
+													</td>
+											</tr>
+									</table>
 								</th>
 								<th>
 											<table width="100%">
@@ -592,6 +586,18 @@ class FacturaVentaUSD extends REST_Controller {
 								</th>
 						</tr>
         </table>
+
+				<br><br>
+				<table border=1 width="50%">
+					<tr>
+							<th  style="width: 100px;">PLACA</th>
+							<th style="width: 100px;">PRECINTOS</th>
+					</tr>
+					<tr>
+							<td style="height: 50px;" >'.$contenidoFV[0]['placa'].'</td>
+							<td style="height: 50px;">'.$contenidoFV[0]['precintos'].'</td>
+					</tr>
+				</table>
 
         <br><br>
         <table width="100%" style="vertical-align: bottom;">
