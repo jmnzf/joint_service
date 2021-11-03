@@ -147,6 +147,47 @@ class ClasifyDisc extends REST_Controller {
          $this->response($respuesta);
   }
 
+	public function getClasifyDiscBYSN_get(){
+
+			$Data = $this->get();
+
+			if(!isset($Data['dms_card_code'])){
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'Falta el campo dms_card_code'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+
+			$sqlSelect = "SELECT DISTINCT bdc_clasify, bdc_disc1, bdc_disc2 FROM tbdc INNER JOIN dmsn ON  TRIM(tbdc.bdc_clasify) = TRIM(dmsn.dms_classtype) WHERE dms_card_code = :dms_card_code";
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+							':dms_card_code' => $Data['dms_card_code']
+			));
+
+			if(isset($resSelect[0])){
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $resSelect,
+					'mensaje' => '');
+
+			}else{
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => array(),
+						'mensaje'	=> 'busqueda sin resultados'
+					);
+
+			}
+
+			 $this->response($respuesta);
+	}
+
 
 
 

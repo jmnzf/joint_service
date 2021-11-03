@@ -80,6 +80,7 @@ class FacturaVentaUSD extends REST_Controller {
 												    t3.dmd_state estado,
 													T2.dms_phone1 Telefono,
 													T2.dms_email Email,
+													t0.dvf_docnum,
 													ConCAT(T6.pgs_pref_num,' ',T0.dvf_docnum) NumeroDocumento,
 													T0.dvf_docdate FechaDocumento,
 													T0.dvf_duedate FechaVenDocumento,
@@ -107,7 +108,10 @@ class FacturaVentaUSD extends REST_Controller {
 												    t10.dmu_code um,
 														T0.dvf_precinto precintos,
 														t0.dvf_placav placa,
-														t1.fv1_fixrate fixrate
+														t1.fv1_fixrate fixrate,
+														t0.dvf_docdate,
+														t6.pgs_mpfn,
+														t6.pgs_mde
 												from dvfv t0
 												inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
 												left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
@@ -134,36 +138,125 @@ class FacturaVentaUSD extends REST_Controller {
 
 						return;
 				}
-				// print_r();exit();die();
-				//obtener tasa en dolar para el formato de dolar
 
-				$sqlTasa = "SELECT tsa_value  from tasa where tsa_date = current_date";
-				$resTasa = $this->pedeo->queryTable($sqlTasa, array());
-				// print_r($resTasa);exit();die();
+
+				// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+				// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
+				$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
+				$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
+
+				if(isset($resMonedaLoc[0])){
+
+				}else{
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encontro la moneda local.'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
+				$MONEDALOCAL = trim($resMonedaLoc[0]['pgm_symbol']);
+
+				// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
+				$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
+				$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
+
+				if(isset($resMonedaSys[0])){
+
+				}else{
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encontro la moneda de sistema.'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
+
+				$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
+
+				//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
+				// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
+				$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+				$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $contenidoFV[0]['monedadocumento'], ':tsa_date' => $contenidoFV[0]['dvf_docdate']));
+
+				if(isset($resBusTasa[0])){
+
+				}else{
+
+						if(trim($contenidoFV[0]['monedadocumento']) != $MONEDALOCAL ){
+
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$contenidoFV[0]['monedadocumento'].' en la actual fecha del documento: '.$contenidoFV[0]['dvf_docdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+						}
+				}
+
+
+				$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+				$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $contenidoFV[0]['dvf_docdate']));
+
+				if(isset($resBusTasa2[0])){
+
+				}else{
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$contenidoFV[0]['dvf_docdate']
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
+				$TasaDocLoc = isset($resBusTasa[0]['tsa_value']) ? $resBusTasa[0]['tsa_value'] : 1;
+				$TasaLocSys = $resBusTasa2[0]['tsa_value'];
+
+				// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+
 
 				$VieneTasa = 0;
-				if(is_numeric($resTasa[0]['tsa_value']) && is_numeric($resTasa[0]['tsa_value']) > 0){
 
-						$VieneTasa = $resTasa[0]['tsa_value'];
-				}
-	// print_r($VieneTasa);exit();die();
-				//obtener el numero de pedido y de ENTREGA
-				$Entrega = "SELECT
-																t0.vem_docnum entrega,1 pedido,t2.*
-																from dvem t0
-																left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry and t0.vem_doctype = t2.dvf_basetype
-																where t2.dvf_docentry = :DVF_DOCENTRY
-																order by entrega asc";
-			  $resEntrega = $this->pedeo->queryTable($Entrega, array(':DVF_DOCENTRY' => $Data));
+				//OBTENER RELACION DE DOCUMENTOS
+				$relacionsql = "SELECT dvct.dvc_docnum AS cotizacion, dvov.vov_docnum AS pedido, dvem.vem_docnum AS entrega
+										FROM dvfv
+										LEFT JOIN dvem
+										ON dvfv.dvf_baseentry = dvem.vem_docentry
+										LEFT JOIN dvov
+										ON dvem.vem_baseentry = dvov.vov_docentry
+										LEFT JOIN dvct
+										ON dvov.vov_baseentry = dvct.dvc_docentry
+										WHERE dvfv.dvf_docentry = :DVF_DOCENTRY";
+
+				$resrelacionsql = $this->pedeo->queryTable($relacionsql, array(':DVF_DOCENTRY' => $Data));
 
 				$VieneEntrega = 0;
 				$VienePedido = 0;
+				$VieneCotizacion = 0;
 
-				if(isset($resEntrega[0])){
-						$VieneEntrega = $resEntrega[0]['entrega'];
-						$VienePedido = $resEntrega[0]['pedido'];
+				if(isset($resrelacionsql[0])){
+						$VieneEntrega = $resrelacionsql[0]['entrega'];
+						$VienePedido = $resrelacionsql[0]['pedido'];
+						$VieneCotizacion = $resrelacionsql[0]['cotizacion'];
 
 				}
+				//FIN BUSQUEDA REALAZION DE DOCUMENTOS
+
 				//INFORMACION DE LA DESCRIPCION FINAL DEL FORMATO
 				$CommentFinal = "SELECT t0.*
 												 FROM cfdm t0
@@ -178,21 +271,93 @@ class FacturaVentaUSD extends REST_Controller {
 				$TOTALFIXRATE = 0;
 
 				foreach ($contenidoFV as $key => $value) {
-					// code...<td>'.$value['um'].'</td>
-					//<td>'.number_format($value['ivap'], 2, ',', '.').'</td>
-				$TOTALFIXRATE = ($TOTALFIXRATE + $value['fixrate']);
+							// code...<td>'.$value['um'].'</td>
+							//<td>'.number_format($value['ivap'], 2, ',', '.').'</td>
 
-				$detalle = '	<td>'.$value['cantidad'].'</td>
-											<td>'.$value['referencia'].'</td>
-											<td>'.$value['descripcion'].'</td>
-											<td>USD '.number_format(($value['vrunit'] + $value['fixrate']) / $VieneTasa , 2, ',', '.').'</td>
-											<td>USD '.number_format(($value['base'] + $value['fixrate']) / $VieneTasa, 2, ',', '.').'</td>';
 
-				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
-				 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
-				 $TotalPeso = ($TotalPeso + ($value['peso']));
+						$valorUnitario = $value['vrunit'];
+						$valorBase = $value['base'];
+						$vfx = $value['fixrate'];
+
+						if( $value['monedadocumento'] != $MONEDASYS ){
+
+							if( $value['monedadocumento'] != $MONEDALOCAL ){
+
+									$valorUnitario = (($valorUnitario + $vfx) * $TasaDocLoc);
+									$valorUnitario = ($valorUnitario  / $TasaLocSys);
+
+									$valorBase = (($valorBase + $vfx) * $TasaDocLoc);
+									$valorBase = ($valorBase / $TasaLocSys);
+
+									$TOTALFIXRATE = $TOTALFIXRATE + (($vfx * $TasaDocLoc) / $TasaLocSys);
+
+							}else{
+
+									$valorUnitario = (($valorUnitario + $value['fixrate']) / $TasaLocSys);
+									$valorBase = (($valorBase + $value['fixrate']) / $TasaLocSys);
+									$TOTALFIXRATE = $TOTALFIXRATE + ($value['fixrate'] / $TasaLocSys);
+
+									// print_r($valorUnitario);exit();die();
+							}
+
+						}
+
+
+
+						$detalle = '	<td>'.$value['cantidad'].'</td>
+													<td>'.$value['referencia'].'</td>
+													<td>'.$value['descripcion'].'</td>
+													<td>USD '.number_format($valorUnitario, 2, ',', '.').'</td>
+													<td>USD '.number_format($valorBase , 2, ',', '.').'</td>';
+
+						 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
+						 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
+						 $TotalPeso = ($TotalPeso + ($value['peso']));
 				}
 
+				$valorSubtotal = $contenidoFV[0]['subtotal'];
+				if( $value['monedadocumento'] != $MONEDASYS ){
+
+					if( $value['monedadocumento'] != $MONEDALOCAL ){
+
+							$valorSubtotal = ($valorSubtotal * $TasaDocLoc);
+							$valorSubtotal = ($valorSubtotal / $TasaLocSys);
+
+					}else{
+							$valorSubtotal = ($valorSubtotal / $TasaLocSys);
+
+					}
+
+				}
+
+				$consecutivo = '';
+
+				if($contenidoFV[0]['pgs_mpfn'] == 1){
+					$consecutivo = $contenidoFV[0]['numerodocumento'];
+				}else{
+					$consecutivo = $contenidoFV[0]['dvf_docnum'];
+				}
+
+
+				$DatosExportacion = '';
+
+				if($contenidoFV[0]['pgs_mde'] == 1){
+
+					$DatosExportacion = '<table width="100%">
+																<tr>
+																		<th style="text-align: center;">Sello Nro.: <span>0</span></th>
+																		<th style="text-align: center;">Total Peso Bruto: <span>0</span></th>
+																</tr>
+																<tr>
+																		<th style="text-align: center;">Container Nro.: <span>0</span></th>
+																		<th style="text-align: center;">Contenedor: <span>0</span></th>
+																</tr>
+																<tr>
+																		<th style="text-align: center;">Naviera Buque: <span>0</span></th>
+																		<th style="text-align: center;">Fecha de Embarque: <span>0</span></th>
+																</tr>
+														</table>';
+				}
 
 
         $header = '
@@ -209,7 +374,7 @@ class FacturaVentaUSD extends REST_Controller {
             </th>
             <th>
                 <p>FACTURA DE VENTA</p>
-                <p class="">'.$contenidoFV[0]['numerodocumento'].'</p>
+                <p class="">'.$consecutivo.'</p>
 
             </th>
         </tr>
@@ -247,7 +412,7 @@ class FacturaVentaUSD extends REST_Controller {
 						<p class="">FACTURA: </p>
 					</th>
 					<th style="text-align: right;">
-						<p> '.$contenidoFV[0]['numerodocumento'].'</p>
+						<p> '.$consecutivo.'</p>
 					</th>
         </tr>
         <tr>
@@ -303,7 +468,7 @@ class FacturaVentaUSD extends REST_Controller {
 						<p class="">PEDIDO: </p>
 					</th>
 					<th style="text-align: right;">
-						<p>'.$VienePedido[0]['pedido'].'</p>
+						<p>'.$VienePedido.'</p>
 					</th>
 				</tr>
 				<tr>
@@ -317,7 +482,7 @@ class FacturaVentaUSD extends REST_Controller {
 						<p class="">ENTREGA: </p>
 					</th>
 					<th style="text-align: right;">
-						<p>'.$VieneEntrega[0]['entrega'].'</p>
+						<p>'.$VieneEntrega.'</p>
 					</th>
 				</tr>
 				<tr>
@@ -376,20 +541,8 @@ class FacturaVentaUSD extends REST_Controller {
         <br>
 				<br>
 
-				<table width="100%">
-						<tr>
-								<th style="text-align: center;">Sello Nro.: <span>0</span></th>
-								<th style="text-align: center;">Total Peso Bruto: <span>0</span></th>
-						</tr>
-						<tr>
-								<th style="text-align: center;">Container Nro.: <span>0</span></th>
-								<th style="text-align: center;">Contenedor: <span>0</span></th>
-						</tr>
-						<tr>
-								<th style="text-align: center;">Naviera Buque: <span>0</span></th>
-								<th style="text-align: center;">Fecha de Embarque: <span>0</span></th>
-						</tr>
-				</table>
+				'.$DatosExportacion.'
+
 				<br>
 				<br>
 				<table width="100%">
@@ -406,6 +559,15 @@ class FacturaVentaUSD extends REST_Controller {
 						<th style="text-align: left;"></span></th>
 				</tr>
 				</table>
+
+				<table width="100%" style="vertical-align: bottom;">
+						<tr>
+								<th style="text-align: left;" class="">
+										<p>'.$formatter->toWords(($valorSubtotal + $TOTALFIXRATE),2).' DOLARES</p>
+								</th>
+						</tr>
+				</table>
+
 
         <table width="100%">
 						<tr>
@@ -424,20 +586,11 @@ class FacturaVentaUSD extends REST_Controller {
 								<th>
 											<table width="100%">
 													<tr>
-															<td style="text-align: right;">Valor Total: <span>USD  '.number_format(($contenidoFV[0]['subtotal'] + $TOTALFIXRATE) / $VieneTasa, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Valor Total: <span>USD  '.number_format(($valorSubtotal + $TOTALFIXRATE), 2, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>
 						</tr>
-        </table>
-
-
-        <table width="100%" style="vertical-align: bottom;">
-            <tr>
-                <th style="text-align: left;" class="">
-                    <p>'.$formatter->toWords(($contenidoFV[0]['subtotal'] + $TOTALFIXRATE) / $VieneTasa,2).' DOLARES</p>
-                </th>
-            </tr>
         </table>
 
         <br><br>
