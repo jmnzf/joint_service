@@ -294,7 +294,7 @@ class BusinessPartner extends REST_Controller {
 
 						//SE VERIFCA SI TIENE RETECIONES Y SE AGREGAN A LA TABLA
 
-						$retenciones = is_array( $Data['dms_rte'] ) ?$Data['dms_rte'] : array();
+						$retenciones = (isset($Data['dms_rte']) && is_array( $Data['dms_rte'] )) ?$Data['dms_rte'] : array();
 
 
 						if( count($retenciones) > 0){
