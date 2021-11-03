@@ -555,7 +555,7 @@ class SalesInv extends REST_Controller {
 										return;
 								}
 
-								$SUMALINEAFIXRATE = ( $SUMALINEAFIXRATE +$detail['fv1_fixrate'] );
+								$SUMALINEAFIXRATE = ( $SUMALINEAFIXRATE + $detail['fv1_fixrate'] );
 
 								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
 								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
