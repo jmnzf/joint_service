@@ -435,7 +435,7 @@ class FacturaVenta extends REST_Controller {
 						<p class="">OC: </p>
 					</th>
 					<th style="text-align: right;">
-						<p> '.$contenidoFV[0]['oc'].'</p>
+						<p> '.$VieneCotizacion.'</p>
 					</th>
         </tr>
 				<tr>
