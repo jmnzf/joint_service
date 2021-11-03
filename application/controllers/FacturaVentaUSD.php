@@ -111,7 +111,8 @@ class FacturaVentaUSD extends REST_Controller {
 														t1.fv1_fixrate fixrate,
 														t0.dvf_docdate,
 														t6.pgs_mpfn,
-														t6.pgs_mde
+														t6.pgs_mde,
+														t1.fv1_quantity
 												from dvfv t0
 												inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
 												left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
@@ -283,21 +284,20 @@ class FacturaVentaUSD extends REST_Controller {
 
 							if( $value['monedadocumento'] != $MONEDALOCAL ){
 
-									$valorUnitario = (($valorUnitario + $vfx) * $TasaDocLoc);
+									$valorUnitario = (($valorUnitario + ($vfx * $value['fv1_quantity'])) * $TasaDocLoc);
 									$valorUnitario = ($valorUnitario  / $TasaLocSys);
 
-									$valorBase = (($valorBase + $vfx) * $TasaDocLoc);
+									$valorBase = (($valorBase + ($vfx * $value['fv1_quantity'])) * $TasaDocLoc);
 									$valorBase = ($valorBase / $TasaLocSys);
 
 									$TOTALFIXRATE = $TOTALFIXRATE + (($vfx * $TasaDocLoc) / $TasaLocSys);
 
 							}else{
 
-									$valorUnitario = (($valorUnitario + $value['fixrate']) / $TasaLocSys);
-									$valorBase = (($valorBase + $value['fixrate']) / $TasaLocSys);
-									$TOTALFIXRATE = $TOTALFIXRATE + ($value['fixrate'] / $TasaLocSys);
+									$valorUnitario = (($valorUnitario + ($value['fixrate'] * $value['fv1_quantity'])) / $TasaLocSys);
+									$valorBase = (($valorBase + ($value['fixrate'] * $value['fv1_quantity'])) / $TasaLocSys);
+									$TOTALFIXRATE = $TOTALFIXRATE + (($value['fixrate'] * $value['fv1_quantity']) / $TasaLocSys);
 
-									// print_r($valorUnitario);exit();die();
 							}
 
 						}
