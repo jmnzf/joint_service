@@ -110,7 +110,8 @@ class FacturaVenta extends REST_Controller {
 												  t0.dvf_placav placa,
 												  t0.dvf_docdate,
 												  t6.pgs_mpfn,
-												  t6.pgs_mde
+												  t6.pgs_mde,
+													t1.fv1_quantity
 												from dvfv t0
 												inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
 												left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
@@ -273,23 +274,24 @@ class FacturaVenta extends REST_Controller {
 
 
 							$valorUnitario = $value['vrunit'];
-							$valorBase = $value['base'];
+							$valortotalLinea = $value['valortotall'];
 
 
 
 							if( $value['monedadocumento'] != $MONEDALOCAL ){
 
 									$valorUnitario = ($valorUnitario  * $TasaDocLoc);
-									$valorBase = ($valorBase  * $TasaDocLoc);
+									$valortotalLinea = ($valortotalLinea  * $TasaDocLoc);
 
 							}
+
 
 
 							$detalle = '	<td>'.$value['cantidad'].'</td>
 														<td>'.$value['referencia'].'</td>
 														<td>'.$value['descripcion'].'</td>
 														<td>'.$value['monedadocumento']." ".number_format($valorUnitario , 2, ',', '.').'</td>
-														<td>'.$value['monedadocumento']." ".number_format($valorBase , 2, ',', '.').'</td>';
+														<td>'.$value['monedadocumento']." ".number_format($valortotalLinea , 2, ',', '.').'</td>';
 
 							 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 							 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));

@@ -140,7 +140,6 @@ class FacturaVentaUSD extends REST_Controller {
 						return;
 				}
 
-
 				// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 				// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
 				$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
@@ -277,25 +276,29 @@ class FacturaVentaUSD extends REST_Controller {
 
 
 						$valorUnitario = $value['vrunit'];
-						$valorBase = $value['base'];
+						$valortotalLinea = $value['valortotall'];
 						$vfx = $value['fixrate'];
 
 						if( $value['monedadocumento'] != $MONEDASYS ){
 
 							if( $value['monedadocumento'] != $MONEDALOCAL ){
 
-									$valorUnitario = (($valorUnitario + ($vfx * $value['fv1_quantity'])) * $TasaDocLoc);
+									$valorUnitario = (($valorUnitario + $vfx) * $TasaDocLoc);
 									$valorUnitario = ($valorUnitario  / $TasaLocSys);
 
-									$valorBase = (($valorBase + ($vfx * $value['fv1_quantity'])) * $TasaDocLoc);
-									$valorBase = ($valorBase / $TasaLocSys);
+									$sv = ($vfx * $value['fv1_quantity']);
+									$valortotalLinea = (($valortotalLinea + $sv) * $TasaDocLoc);
+									$valortotalLinea = ($valortotalLinea / $TasaLocSys);
 
 									$TOTALFIXRATE = $TOTALFIXRATE + (($vfx * $TasaDocLoc) / $TasaLocSys);
 
 							}else{
 
-									$valorUnitario = (($valorUnitario + ($value['fixrate'] * $value['fv1_quantity'])) / $TasaLocSys);
-									$valorBase = (($valorBase + ($value['fixrate'] * $value['fv1_quantity'])) / $TasaLocSys);
+									$valorUnitario = (($valorUnitario + $value['fixrate']) / $TasaLocSys);
+
+									$sv = ($value['fixrate'] * $value['fv1_quantity']);
+									$valortotalLinea = (($valortotalLinea + $sv) / $TasaLocSys);
+
 									$TOTALFIXRATE = $TOTALFIXRATE + (($value['fixrate'] * $value['fv1_quantity']) / $TasaLocSys);
 
 							}
@@ -308,7 +311,7 @@ class FacturaVentaUSD extends REST_Controller {
 													<td>'.$value['referencia'].'</td>
 													<td>'.$value['descripcion'].'</td>
 													<td>USD '.number_format($valorUnitario, 2, ',', '.').'</td>
-													<td>USD '.number_format($valorBase , 2, ',', '.').'</td>';
+													<td>USD '.number_format($valortotalLinea , 2, ',', '.').'</td>';
 
 						 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 						 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));

@@ -502,6 +502,171 @@ class PriceList extends REST_Controller {
 	}
 
 
+	public function getListaPrecioDetalle_get(){
+
+			$Data = $this->get();
+
+			if(!isset($Data['dmlp_id'])){
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'falto el codigo de la lista'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+
+
+			$sqlSelect = "SELECT DISTINCT dmlp_id, dmlp_name_list,
+										dma_item_code, dma_item_name,
+										pl1_price,pl1_id
+										FROM dmpl
+										INNER JOIN mpl1
+										ON dmpl.dmlp_id = mpl1.pl1_id_price_list
+										INNER JOIN dmar
+										ON trim(mpl1.pl1_item_code) =  trim(dma_item_code)
+										WHERE dmlp_id = :dmlp_id";
+
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+
+									':dmlp_id' => $Data['dmlp_id']
+			));
+
+
+			if(isset($resSelect[0])){
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $resSelect,
+					'mensaje' => '');
+
+			}else{
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => array(),
+						'mensaje'	=> 'busqueda sin resultados'
+					);
+
+			}
+
+			$this->response($respuesta);
+	}
+
+	public function setChangePrice_post(){
+
+				$Data = $this->post();
+
+				if(!isset($Data['detail'])){
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'La informacion enviada no es valida'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
+				$ContenidoDetalle = json_decode($Data['detail'], true);
+
+				// SE VALIDA QUE EL DOCUMENTO SEA UN ARRAY
+	      if(!is_array($ContenidoDetalle)){
+	          $respuesta = array(
+	            'error' => true,
+	            'data'  => array(),
+	            'mensaje' =>'No se encontro el detalle de la Devolución de clientes'
+	          );
+
+	          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+	          return;
+	      }
+				//
+
+
+				// SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
+				if(!intval(count($ContenidoDetalle)) > 0 ){
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'Documento sin detalle'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+				//
+
+				try {
+						$this->pedeo->trans_begin();
+
+						$sqlUpdate = "UPDATE mpl1	SET pl1_price = :pl1_price
+													WHERE pl1_id = :pl1_id";
+
+						foreach ($ContenidoDetalle as $key => $value) {
+
+
+								$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+
+											':pl1_price' => is_numeric($value['pl1_price'])?$value['pl1_price']:'',
+											':pl1_id' 	 => is_numeric($value['pl1_id'])?$value['pl1_id']:''
+								));
+
+
+								if(is_numeric($resUpdate) && $resUpdate == 1){
+
+								}else{
+
+											$this->pedeo->trans_rollback();
+
+											$respuesta = array(
+												'error'   => true,
+												'data' 		=> $resUpdate,
+												'mensaje'	=> 'no se pudo actualizar el precio de la lista '.$value['pl1_id']
+											);
+
+											 $this->response($respuesta);
+
+											 return;
+								}
+
+						}
+
+						$this->pedeo->trans_commit();
+
+						$respuesta = array(
+							'error' => false,
+							'data' => $resUpdate,
+							'mensaje' =>'Lista de precio actualiza con exito'
+						);
+
+				} catch (\Exception $e) {
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data' 		=> $e,
+							'mensaje'	=> 'no se pudo actualizar la lista de precios'
+						);
+
+						 $this->response($respuesta);
+
+						 return;
+				}
+
+
+				$this->response($respuesta);
+	}
+
+
 
 // METODOS PRIVADOS
 

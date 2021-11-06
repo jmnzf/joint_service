@@ -128,11 +128,11 @@ class BusinessPartner extends REST_Controller {
 
 
 						//SE VERIFCA SI TIENE RETECIONES Y SE AGREGAN A LA TABLA
+						if(isset($Data['dms_rte'])){
+							$retenciones = is_array( $Data['dms_rte'] ) ?$Data['dms_rte'] : array();
 
-						$retenciones = is_array( $Data['dms_rte'] ) ?$Data['dms_rte'] : array();
 
-
-						if( count($retenciones) > 0){
+							if( count($retenciones) > 0){
 
 								foreach ($retenciones as $key => $value) {
 
@@ -146,7 +146,7 @@ class BusinessPartner extends REST_Controller {
 
 											}else{
 
-													  $this->pedeo->trans_rollback();
+														$this->pedeo->trans_rollback();
 
 														$respuesta = array(
 															'error'   => true,
@@ -161,8 +161,8 @@ class BusinessPartner extends REST_Controller {
 											}
 
 								}
+							}
 						}
-
 						//FIN DEL PROCEDIMIENTO PARA AGREGAR LAS RETENCIONES
 
 						$this->pedeo->trans_commit();

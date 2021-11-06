@@ -454,38 +454,38 @@ class SalesDv extends REST_Controller {
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
-										// Se verifica que el detalle no de error insertando //
+														// Se verifica que el detalle no de error insertando //
 
-										//VALIDACION DE CANTIDAD A DEVOLVER NO SEA MAYOR A LA ENTREGADA
-										if($Data['vdv_basetype'] == 3 ){
-										$sqlValidationQty = "SELECT coalesce(t1.dv1_quantity,0) qty_dev,coalesce(t3.em1_quantity,0) qty_entr,
-																													    case
-																													        when COALESCE(t1.dv1_quantity,0) > COALESCE(t3.em1_quantity,0)
-																													            then 1
-																													        else 0
-																													    end estado
-																													FROM dvdv t0
-																													left join vdv1 t1 on t0.vdv_docentry = t1.dv1_docentry
-																													left join dvem t2 on t0.vdv_baseentry = t2.vem_docentry
-																													left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.dv1_itemcode = t3.em1_itemcode
-																													where t0.vdv_docentry = :vdv_docentry ";
-									$resSqlValidationQty = $this->pedeo->queryTable($sqlValidationQty,array(':vdv_docentry' => $resInsert));
+														//VALIDACION DE CANTIDAD A DEVOLVER NO SEA MAYOR A LA ENTREGADA
+														if($Data['vdv_basetype'] == 3 ){
+														$sqlValidationQty = "SELECT coalesce(t1.dv1_quantity,0) qty_dev,coalesce(t3.em1_quantity,0) qty_entr,
+																																	    case
+																																	        when COALESCE(t1.dv1_quantity,0) > COALESCE(t3.em1_quantity,0)
+																																	            then 1
+																																	        else 0
+																																	    end estado
+																																	FROM dvdv t0
+																																	left join vdv1 t1 on t0.vdv_docentry = t1.dv1_docentry
+																																	left join dvem t2 on t0.vdv_baseentry = t2.vem_docentry
+																																	left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.dv1_itemcode = t3.em1_itemcode
+																																	where t0.vdv_docentry = :vdv_docentry ";
+													$resSqlValidationQty = $this->pedeo->queryTable($sqlValidationQty,array(':vdv_docentry' => $resInsert));
 
-									if(is_numeric($resSqlValidationQty['estado'])  &&  $resSqlValidationQty['estado'] == 0){
+													if(is_numeric($resSqlValidationQty[0]['estado'])  &&  $resSqlValidationQty[0]['estado'] == 0){
 
-									}else{
-														$this->pedeo->trans_rollback();
+													}else{
+																		$this->pedeo->trans_rollback();
 
-														$respuesta = array(
-															'error'   => true,
-															'data' => $resSqlValidationQty,
-															'mensaje'	=> 'La cantidad a devolver no puede ser mayor a la entegada'
-														);
-														$this->response($respuesta);
+																		$respuesta = array(
+																			'error'   => true,
+																			'data' => $resSqlValidationQty,
+																			'mensaje'	=> 'La cantidad a devolver no puede ser mayor a la entegada'
+																		);
+																		$this->response($respuesta);
 
-		 											 return;
-									}
-							}
+						 											 return;
+													}
+											}
 								}else{
 
 										// si falla algun insert del detalle de la Devolución de clientes se devuelven los cambios realizados por la transaccion,
