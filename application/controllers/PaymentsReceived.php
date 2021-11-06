@@ -700,8 +700,8 @@ class PaymentsReceived extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuenta,
-									':ac1_debit' => $debito,
-									':ac1_credit' => $credito,
+									':ac1_debit' => round($debito, 2),
+									':ac1_credit' => round($credito, 2),
 									':ac1_debit_sys' => round($MontoSysDB,2),
 									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
@@ -982,10 +982,10 @@ class PaymentsReceived extends REST_Controller {
 															':ac1_font_type' => $doctype,
 															':ac1_font_key'  => $docentry,
 															':ac1_account'   => $cuentaTercero,
-															':ac1_credit_import' => $credito,
-															':ac1_debit_import' => $debito,
-															':ac1_credit_importsys' => $MontoSysCR,
-															':ac1_debit_importsys' => $MontoSysDB
+															':ac1_credit_import' => round($credito, 2),
+															':ac1_debit_import' => round($debito, 2),
+															':ac1_credit_importsys' => round($MontoSysCR, 2),
+															':ac1_debit_importsys' => round($MontoSysDB, 2)
 									));
 
 
@@ -1014,8 +1014,8 @@ class PaymentsReceived extends REST_Controller {
 
 											':ac1_trans_id' => $resInsertAsiento,
 											':ac1_account' => $cuentaTercero,
-											':ac1_debit' => $debito,
-											':ac1_credit' => $credito,
+											':ac1_debit' => round($debito, 2),
+											':ac1_credit' => round($credito, 2),
 											':ac1_debit_sys' => round($MontoSysDB,2),
 											':ac1_credit_sys' => round($MontoSysCR,2),
 											':ac1_currex' => 0,
