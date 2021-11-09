@@ -979,7 +979,6 @@ class SalesInv extends REST_Controller {
 								case 1:
 									$debito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-										 	$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
@@ -989,7 +988,6 @@ class SalesInv extends REST_Controller {
 								case 2:
 									$credito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-										  $ti = ($ti + $granTotalTasaFija);
 											$MontoSysCR = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysCR = $granTotalIngresoOriginal;
@@ -999,7 +997,6 @@ class SalesInv extends REST_Controller {
 								case 3:
 									$credito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-										  $ti = ($ti + $granTotalTasaFija);
 											$MontoSysCR = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysCR = $granTotalIngresoOriginal;
@@ -1009,7 +1006,6 @@ class SalesInv extends REST_Controller {
 								case 4:
 									$credito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysCR = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysCR = $granTotalIngresoOriginal;
@@ -1019,7 +1015,6 @@ class SalesInv extends REST_Controller {
 								case 5:
 									$debito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
@@ -1029,7 +1024,6 @@ class SalesInv extends REST_Controller {
 								case 6:
 									$debito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
@@ -1039,7 +1033,6 @@ class SalesInv extends REST_Controller {
 								case 7:
 									$debito = $granTotalIngreso;
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
@@ -1051,6 +1044,9 @@ class SalesInv extends REST_Controller {
 
 							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+							$SumaCreditosLOC = ($SumaDebitoLOC + round($credito,2));
+							$SumaDebitoLOC   = ($SumaDebitoLOC + round($debito,2));
 
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1123,22 +1119,22 @@ class SalesInv extends REST_Controller {
 
 					//Procedimiento para llenar Impuestos
 
-					$cuentaIVAAsumido = "SELECT pge_acc_impas FROM  pgem";
-					$rescuentaIVAAsumido = $this->pedeo->queryTable($cuentaIVAAsumido,array());
-
-					if(!isset($rescuentaIVAAsumido[0])){
-							$this->pedeo->trans_rollback();
-
-							$respuesta = array(
-								'error'   => true,
-								'data'	  => $rescuentaIVAAsumido,
-								'mensaje'	=> 'No se encontro la cuenta contable para el IVA asumido'
-							);
-
-							 $this->response($respuesta);
-
-							 return;
-					}
+					// $cuentaIVAAsumido = "SELECT pge_acc_impas FROM  pgem";
+					// $rescuentaIVAAsumido = $this->pedeo->queryTable($cuentaIVAAsumido,array());
+					//
+					// if(!isset($rescuentaIVAAsumido[0])){
+					// 		$this->pedeo->trans_rollback();
+					//
+					// 		$respuesta = array(
+					// 			'error'   => true,
+					// 			'data'	  => $rescuentaIVAAsumido,
+					// 			'mensaje'	=> 'No se encontro la cuenta contable para el IVA asumido'
+					// 		);
+					//
+					// 		 $this->response($respuesta);
+					//
+					// 		 return;
+					// }
 
 
 					$granTotalIva = 0;
@@ -1149,7 +1145,7 @@ class SalesInv extends REST_Controller {
 							$MontoSysCR = 0;
 
 							foreach ($posicion as $key => $value) {
-										$granTotalIva = round($granTotalIva + $value->fv1_vatsum,2);
+										$granTotalIva = $granTotalIva + $value->fv1_vatsum;
 							}
 
 							$granTotalIvaOriginal = $granTotalIva;
@@ -1170,7 +1166,9 @@ class SalesInv extends REST_Controller {
 							}
 
 
-							// $SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+							$SumaCreditosLOC = ($SumaCreditosLOC + round($granTotalIva,2));
+
 							$AC1LINE = $AC1LINE+1;
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1238,103 +1236,103 @@ class SalesInv extends REST_Controller {
 						}
 					}
 
-
-					$granTotalIva = 0;
-
-					foreach ($DetalleConsolidadoIva as $key => $posicion) {
-							$granTotalIva = 0;
-							$granTotalIvaOriginal = 0;
-							$MontoSysCR = 0;
-
-							foreach ($posicion as $key => $value) {
-										$granTotalIva = round($granTotalIva + $value->fv1_vatsum,2);
-							}
-
-							$granTotalIvaOriginal = $granTotalIva;
-
-							if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
-									$granTotalIva = ($granTotalIva * $TasaDocLoc);
-							}
-
-							$TIva = $granTotalIva;
-
-							if(trim($Data['dvf_currency']) != $MONEDASYS ){
-									// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
-									$MontoSysCR = ($TIva / $TasaLocSys);
-									$IVASINTASAFIJA = $MontoSysCR;
-							}else{
-									$MontoSysCR = $granTotalIvaOriginal;
-									$IVASINTASAFIJA = $MontoSysCR;
-							}
-
-
-							// $SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-							$AC1LINE = $AC1LINE+1;
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $rescuentaIVAAsumido[0]['pge_acc_impas'],
-									':ac1_debit' => 0,
-									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($MontoSysCR, 2),
-									':ac1_credit_sys' => 0,
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => NULL,
-									':ac1_uncode' => NULL,
-									':ac1_prj_code' => NULL,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-									':ac1_codref' => 1,
-									':ac1_line'   => 	$AC1LINE
-						));
-
-
-
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-
-								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la factura de ventas'
-									);
-
-									 $this->response($respuesta);
-
-									 return;
-						}
-					}
+					//
+					// $granTotalIva = 0;
+					//
+					// foreach ($DetalleConsolidadoIva as $key => $posicion) {
+					// 		$granTotalIva = 0;
+					// 		$granTotalIvaOriginal = 0;
+					// 		$MontoSysCR = 0;
+					//
+					// 		foreach ($posicion as $key => $value) {
+					// 					$granTotalIva = round($granTotalIva + $value->fv1_vatsum,2);
+					// 		}
+					//
+					// 		$granTotalIvaOriginal = $granTotalIva;
+					//
+					// 		if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+					// 				$granTotalIva = ($granTotalIva * $TasaDocLoc);
+					// 		}
+					//
+					// 		$TIva = $granTotalIva;
+					//
+					// 		if(trim($Data['dvf_currency']) != $MONEDASYS ){
+					// 				// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
+					// 				$MontoSysCR = ($TIva / $TasaLocSys);
+					// 				$IVASINTASAFIJA = $MontoSysCR;
+					// 		}else{
+					// 				$MontoSysCR = $granTotalIvaOriginal;
+					// 				$IVASINTASAFIJA = $MontoSysCR;
+					// 		}
+					//
+					//
+					// 		// $SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+					// 		$AC1LINE = $AC1LINE+1;
+					// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					//
+					// 				':ac1_trans_id' => $resInsertAsiento,
+					// 				':ac1_account' => $rescuentaIVAAsumido[0]['pge_acc_impas'],
+					// 				':ac1_debit' => 0,
+					// 				':ac1_credit' => 0,
+					// 				':ac1_debit_sys' => round($MontoSysCR, 2),
+					// 				':ac1_credit_sys' => 0,
+					// 				':ac1_currex' => 0,
+					// 				':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+					// 				':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+					// 				':ac1_debit_import' => 0,
+					// 				':ac1_credit_import' => 0,
+					// 				':ac1_debit_importsys' => 0,
+					// 				':ac1_credit_importsys' => 0,
+					// 				':ac1_font_key' => $resInsert,
+					// 				':ac1_font_line' => 1,
+					// 				':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+					// 				':ac1_accountvs' => 1,
+					// 				':ac1_doctype' => 18,
+					// 				':ac1_ref1' => "",
+					// 				':ac1_ref2' => "",
+					// 				':ac1_ref3' => "",
+					// 				':ac1_prc_code' => NULL,
+					// 				':ac1_uncode' => NULL,
+					// 				':ac1_prj_code' => NULL,
+					// 				':ac1_rescon_date' => NULL,
+					// 				':ac1_recon_total' => 0,
+					// 				':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+					// 				':ac1_accperiod' => 1,
+					// 				':ac1_close' => 0,
+					// 				':ac1_cord' => 0,
+					// 				':ac1_ven_debit' => 1,
+					// 				':ac1_ven_credit' => 1,
+					// 				':ac1_fiscal_acct' => 0,
+					// 				':ac1_taxid' => 1,
+					// 				':ac1_isrti' => 0,
+					// 				':ac1_basert' => 0,
+					// 				':ac1_mmcode' => 0,
+					// 				':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+					// 				':ac1_codref' => 1,
+					// 				':ac1_line'   => 	$AC1LINE
+					// 	));
+					//
+					//
+					//
+					// 	if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+					// 			// Se verifica que el detalle no de error insertando //
+					// 	}else{
+					//
+					// 			// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+					// 			// se retorna el error y se detiene la ejecucion del codigo restante.
+					// 				$this->pedeo->trans_rollback();
+					//
+					// 				$respuesta = array(
+					// 					'error'   => true,
+					// 					'data'	  => $resDetalleAsiento,
+					// 					'mensaje'	=> 'No se pudo registrar la factura de ventas'
+					// 				);
+					//
+					// 				 $this->response($respuesta);
+					//
+					// 				 return;
+					// 	}
+					// }
 
 					//FIN Procedimiento para llenar Impuestos
 
@@ -2100,67 +2098,53 @@ class SalesInv extends REST_Controller {
 										$docTotal = ($docTotal * $TasaDocLoc);
 								}
 
-								$dt = $Data['dvf_baseamnt'];
+								$dt = $docTotal;
 								if( $codigo2 == 1 || $codigo2 == "1" ){
 										$debitoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysDB = ($dt / $TasaLocSys);
-												// $MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
 										}else{
 												$MontoSysDB =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 2 || $codigo2 == "2" ){
 										$creditoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysCR = ($dt / $TasaLocSys);
-												// $MontoSysCR = ($MontoSysCR+$IVASINTASAFIJA);
 										}else{
 												$MontoSysCR =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 3 || $codigo2 == "3" ){
 										$creditoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysCR = ($dt / $TasaLocSys);
-												// $MontoSysCR = ($MontoSysCR+$IVASINTASAFIJA);
 										}else{
 												$MontoSysCR =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 4 || $codigo2 == "4" ){
 									  $creditoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysCR = ($dt / $TasaLocSys);
-												// $MontoSysCR = ($MontoSysCR+$IVASINTASAFIJA);
 										}else{
 												$MontoSysCR =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 5  || $codigo2 == "5" ){
 									  $debitoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysDB = ($dt / $TasaLocSys);
-												// $MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
 										}else{
 												$MontoSysDB =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 6 || $codigo2 == "6" ){
 									  $debitoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysDB = ($dt / $TasaLocSys);
-												// $MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
 										}else{
 												$MontoSysDB =	$docTotalOriginal;
 										}
 								}else if( $codigo2 == 7 || $codigo2 == "7" ){
 									  $debitoo = $docTotal;
 										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$dt = ($dt + $SUMALINEAFIXRATE);
 												$MontoSysDB = ($dt / $TasaLocSys);
-												// $MontoSysDB = ($MontoSysDB+$IVASINTASAFIJA);
 										}else{
 												$MontoSysDB =	$docTotalOriginal;
 										}
@@ -2169,6 +2153,10 @@ class SalesInv extends REST_Controller {
 
 								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+								$SumaCreditosLOC = ($SumaCreditosLOC + round($creditoo,2));
+								$SumaDebitoLOC 	 = ($SumaDebitoLOC + round($debitoo,2));
+
 								$AC1LINE = $AC1LINE+1;
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2253,106 +2241,110 @@ class SalesInv extends REST_Controller {
 					// SE VALIDA DIFERENCIA POR DECIMALES
 					// Y SE AGREGA UN ASIENTO DE DIFERENCIA EN DECIMALES
 					// SEGUN SEA EL CASO
-					$debito  = 0;
-					$credito = 0;
-					if($SumaCreditosSYS > $SumaDebitosSYS || $SumaDebitosSYS > $SumaCreditosSYS){
-
-								$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
-								$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
-
-								if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
-
-											if( $SumaCreditosSYS > $SumaDebitosSYS ){ // DIFERENCIA EN CREDITO EL VALOR SE COLOCA EN DEBITO
-
-														$debito = ($SumaCreditosSYS - $SumaDebitosSYS);
-
-											}else{ // DIFERENCIA EN DEBITO EL VALOR SE COLOCA EN CREDITO
-
-														$credito = ($SumaDebitosSYS - $SumaCreditosSYS);
-											}
-
-											if(round($debito+$credito, 2) > 0){
-													  $AC1LINE = $AC1LINE+1;
-														$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-																':ac1_trans_id' => $resInsertAsiento,
-																':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
-																':ac1_debit' => 0,
-																':ac1_credit' => 0,
-																':ac1_debit_sys' => round($debito,2),
-																':ac1_credit_sys' => round($credito,2),
-																':ac1_currex' => 0,
-																':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-																':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-																':ac1_debit_import' => 0,
-																':ac1_credit_import' => 0,
-																':ac1_debit_importsys' => 0,
-																':ac1_credit_importsys' => 0,
-																':ac1_font_key' => $resInsert,
-																':ac1_font_line' => 1,
-																':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-																':ac1_accountvs' => 1,
-																':ac1_doctype' => 18,
-																':ac1_ref1' => "",
-																':ac1_ref2' => "",
-																':ac1_ref3' => "",
-																':ac1_prc_code' => NULL,
-																':ac1_uncode' => NULL,
-																':ac1_prj_code' => NULL,
-																':ac1_rescon_date' => NULL,
-																':ac1_recon_total' => 0,
-																':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-																':ac1_accperiod' => 1,
-																':ac1_close' => 0,
-																':ac1_cord' => 0,
-																':ac1_ven_debit' => 1,
-																':ac1_ven_credit' => 1,
-																':ac1_fiscal_acct' => 0,
-																':ac1_taxid' => 1,
-																':ac1_isrti' => 0,
-																':ac1_basert' => 0,
-																':ac1_mmcode' => 0,
-																':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-																':ac1_codref' => 1,
-																':ac1_line'   => 	$AC1LINE
-													));
-
-													if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-															// Se verifica que el detalle no de error insertando //
-													}else{
-
-															// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-															// se retorna el error y se detiene la ejecucion del codigo restante.
-																$this->pedeo->trans_rollback();
-
-																$respuesta = array(
-																	'error'   => true,
-																	'data'	  => $resDetalleAsiento,
-																	'mensaje'	=> 'No se pudo registrar la factura de ventas'
-																);
-
-																 $this->response($respuesta);
-
-																 return;
-													}
-
-											}
-
-								}else{
-
-										$this->pedeo->trans_rollback();
-
-										$respuesta = array(
-											'error'   => true,
-											'data'	  => $resCuentaDiferenciaDecimal,
-											'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
-										);
-
-										 $this->response($respuesta);
-
-										 return;
-								}
-				  }
+					// $debito  = 0;
+					// $credito = 0;
+					// $debitosys  = 0;
+					// $creditosys = 0;
+					// if($SumaCreditosSYS > $SumaDebitosSYS || $SumaDebitosSYS > $SumaCreditosSYS){
+					//
+					// 			$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+					// 			$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+					//
+					// 			if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+					//
+					// 						if( $SumaCreditosSYS > $SumaDebitosSYS ){ // DIFERENCIA EN CREDITO EL VALOR SE COLOCA EN DEBITO
+					//
+					// 									$debito = ($SumaCreditosSYS - $SumaDebitosSYS);
+					// 									$debitosys = ($SumaCreditosLOC - $SumaCreditosLOC);
+					//
+					// 						}else{ // DIFERENCIA EN DEBITO EL VALOR SE COLOCA EN CREDITO
+					//
+					// 									$credito = ($SumaDebitosSYS - $SumaCreditosSYS);
+					// 									$creditosys = ($SumaDebitoLOC - $SumaDebitoLOC);
+					// 						}
+					//
+					// 						if(round($debito+$credito, 2) > 0){
+					// 								  $AC1LINE = $AC1LINE+1;
+					// 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					//
+					// 											':ac1_trans_id' => $resInsertAsiento,
+					// 											':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+					// 											':ac1_debit' => 0,
+					// 											':ac1_credit' => 0,
+					// 											':ac1_debit_sys' => round($debito,2),
+					// 											':ac1_credit_sys' => round($credito,2),
+					// 											':ac1_currex' => 0,
+					// 											':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+					// 											':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+					// 											':ac1_debit_import' => 0,
+					// 											':ac1_credit_import' => 0,
+					// 											':ac1_debit_importsys' => 0,
+					// 											':ac1_credit_importsys' => 0,
+					// 											':ac1_font_key' => $resInsert,
+					// 											':ac1_font_line' => 1,
+					// 											':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+					// 											':ac1_accountvs' => 1,
+					// 											':ac1_doctype' => 18,
+					// 											':ac1_ref1' => "",
+					// 											':ac1_ref2' => "",
+					// 											':ac1_ref3' => "",
+					// 											':ac1_prc_code' => NULL,
+					// 											':ac1_uncode' => NULL,
+					// 											':ac1_prj_code' => NULL,
+					// 											':ac1_rescon_date' => NULL,
+					// 											':ac1_recon_total' => 0,
+					// 											':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+					// 											':ac1_accperiod' => 1,
+					// 											':ac1_close' => 0,
+					// 											':ac1_cord' => 0,
+					// 											':ac1_ven_debit' => 1,
+					// 											':ac1_ven_credit' => 1,
+					// 											':ac1_fiscal_acct' => 0,
+					// 											':ac1_taxid' => 1,
+					// 											':ac1_isrti' => 0,
+					// 											':ac1_basert' => 0,
+					// 											':ac1_mmcode' => 0,
+					// 											':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+					// 											':ac1_codref' => 1,
+					// 											':ac1_line'   => 	$AC1LINE
+					// 								));
+					//
+					// 								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+					// 										// Se verifica que el detalle no de error insertando //
+					// 								}else{
+					//
+					// 										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+					// 										// se retorna el error y se detiene la ejecucion del codigo restante.
+					// 											$this->pedeo->trans_rollback();
+					//
+					// 											$respuesta = array(
+					// 												'error'   => true,
+					// 												'data'	  => $resDetalleAsiento,
+					// 												'mensaje'	=> 'No se pudo registrar la factura de ventas'
+					// 											);
+					//
+					// 											 $this->response($respuesta);
+					//
+					// 											 return;
+					// 								}
+					//
+					// 						}
+					//
+					// 			}else{
+					//
+					// 					$this->pedeo->trans_rollback();
+					//
+					// 					$respuesta = array(
+					// 						'error'   => true,
+					// 						'data'	  => $resCuentaDiferenciaDecimal,
+					// 						'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+					// 					);
+					//
+					// 					 $this->response($respuesta);
+					//
+					// 					 return;
+					// 			}
+				  // }
 
 					// FIN VALIDACION DIFERENCIA EN DECIMALES
 					// FIN DE OPERACIONES VITALES

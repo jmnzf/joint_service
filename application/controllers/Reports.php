@@ -417,4 +417,71 @@ class Reports extends REST_Controller {
 			$this->response($respuesta);
 	}
 
+	//INFORME ESTADO DE CARTERA
+	public function getPortfolioStatus_post(){
+
+			$Data = $this->post();
+			// print_r($Data);exit();die();
+
+// print_r($where);exit();die();
+			$sql = "SELECT
+									 	t0.dvf_cardcode CodigoCliente,
+									 	t0.dvf_cardname NombreCliente,
+									 	t0.dvf_docnum NumeroDocumento,
+									 	t0.dvf_docdate FechaDocumento,
+									 	t0.dvf_duedate FechaVencimiento,
+										t0.dvf_doctotal totalfactura,
+									    T0.dvf_paytoday saldo,
+										trim('COP' FROM t0.dvf_currency) MonedaDocumento,
+									 	'".$Data['fecha']."' FechaCorte,
+										('".$Data['fecha']."' - t0.dvf_duedate) dias,
+									 	CASE
+									 		WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=0 and ( '".$Data['fecha']."' - t0.dvf_duedate) <=30
+									 			then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+																								ELSE 0
+									 	END uno_treinta,
+									 	CASE
+									 		WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=31 and ( '".$Data['fecha']."' - t0.dvf_duedate) <=60
+									 			then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+																								ELSE 0
+									 	END treinta_uno_secenta,
+									 	CASE
+									 		WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=61 and ( '".$Data['fecha']."' - t0.dvf_duedate) <=90
+									 			then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+																								ELSE 0
+									 	END secenta_uno_noventa,
+									 	CASE
+									 		WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=91
+									 			then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+																						ELSE 0
+									 	END mayor_noventa
+
+									 FROM dvfv t0
+									 WHERE '".$Data['fecha']."' >= t0.dvf_duedate
+									ORDER BY CodigoCliente asc";
+
+// print_r($sql);exit();
+			$respuesta = $this->pedeo->queryTable($sql, array());
+
+			if(isset($respuesta[0])){
+
+				 $respuesta = array(
+						'error'   => false,
+						'data'    => $respuesta,
+						'mensaje' =>''
+				 );
+
+			}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+			}
+
+			$this->response($respuesta);
+	}
+
 }

@@ -93,15 +93,15 @@ class FacturaVentaUSD extends REST_Controller {
 													T1.fv1_whscode Almacen,
 													T1.fv1_uom UM,
 													T1.fv1_quantity Cantidad,
-													T1.fv1_price VrUnit,
+													T1.fv1_price  VrUnit,
 													T1.fv1_discount PrcDes,
 													T1.fv1_vatsum IVAP,
-													T1.fv1_linetotal ValorTotalL,
+													T1.fv1_linetotal  ValorTotalL,
 													T0.dvf_baseamnt base,
 													T0.dvf_discount Descuento,
 													(T0.dvf_baseamnt - T0.dvf_discount) subtotal,
 													T0.dvf_taxtotal Iva,
-													T0.dvf_doctotal TotalDoc,
+													T0.dvf_doctotal  TotalDoc,
 													T0.dvf_comment Comentarios,
 													t0.dvf_ref oc,
 													(select t9.dma_uom_weight from dmar t9 where  t9.dma_item_code = t1.fv1_itemcode) peso,
@@ -277,29 +277,30 @@ class FacturaVentaUSD extends REST_Controller {
 
 						$valorUnitario = $value['vrunit'];
 						$valortotalLinea = $value['valortotall'];
-						$vfx = $value['fixrate'];
+						$ivap = $value['ivap'];
+						$ivapl = $value['ivap'];
+						$cantidad = $value['cantidad'];
+
 
 						if( $value['monedadocumento'] != $MONEDASYS ){
 
 							if( $value['monedadocumento'] != $MONEDALOCAL ){
-
-									$valorUnitario = (($valorUnitario + $vfx) * $TasaDocLoc);
+									$ivap =(($ivap * $TasaDocLoc));
+									$ivap = (($ivapl / $TasaLocSys) );
+									$valorUnitario = ($valorUnitario * $TasaDocLoc);
 									$valorUnitario = ($valorUnitario  / $TasaLocSys);
 
-									$sv = ($vfx * $value['fv1_quantity']);
-									$valortotalLinea = (($valortotalLinea + $sv) * $TasaDocLoc);
+									$ivapl = ($ivap * $TasaDocLoc);
+									$ivapl = ($ivapl / $TasaLocSys);
+									$valortotalLinea = ($valortotalLinea  * $TasaDocLoc);
 									$valortotalLinea = ($valortotalLinea / $TasaLocSys);
 
-									$TOTALFIXRATE = $TOTALFIXRATE + (($vfx * $TasaDocLoc) / $TasaLocSys);
 
 							}else{
-
-									$valorUnitario = (($valorUnitario + $value['fixrate']) / $TasaLocSys);
-
-									$sv = ($value['fixrate'] * $value['fv1_quantity']);
-									$valortotalLinea = (($valortotalLinea + $sv) / $TasaLocSys);
-
-									$TOTALFIXRATE = $TOTALFIXRATE + (($value['fixrate'] * $value['fv1_quantity']) / $TasaLocSys);
+								 $ivap =(($ivap * $TasaDocLoc)  );
+								 $ivapl = (($ivapl / $TasaLocSys));
+									$valorUnitario = ($valorUnitario / $TasaLocSys);
+									$valortotalLinea = ($valortotalLinea / $TasaLocSys);
 
 							}
 
@@ -310,15 +311,15 @@ class FacturaVentaUSD extends REST_Controller {
 						$detalle = '	<td>'.$value['cantidad'].'</td>
 													<td>'.$value['referencia'].'</td>
 													<td>'.$value['descripcion'].'</td>
-													<td>USD '.number_format($valorUnitario, 2, ',', '.').'</td>
-													<td>USD '.number_format($valortotalLinea , 2, ',', '.').'</td>';
+													<td>USD '.number_format(($valortotalLinea + $ivapl) / $cantidad, 2, ',', '.').'</td>
+													<td>USD '.number_format($valortotalLinea + $ivapl, 2, ',', '.').'</td>';
 
 						 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 						 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
 						 $TotalPeso = ($TotalPeso + ($value['peso']));
 				}
 
-				$valorSubtotal = $contenidoFV[0]['subtotal'];
+				$valorSubtotal = $contenidoFV[0]['totaldoc'];
 				if( $value['monedadocumento'] != $MONEDASYS ){
 
 					if( $value['monedadocumento'] != $MONEDALOCAL ){
@@ -406,7 +407,7 @@ class FacturaVentaUSD extends REST_Controller {
 				<table class="" style="width:100%">
 				<tr>
           <th style="text-align: left;">
-            <p class="">NIT/RUC: </p>
+            <p class="">RIF: </p>
           </th>
           <th style="text-align: left;">
             <p> '.$contenidoFV[0]['nit'].'</p>
@@ -575,7 +576,7 @@ class FacturaVentaUSD extends REST_Controller {
 										<tr><td>&nbsp;</td></tr>
 											<tr>
 													<td style="text-align: left;" class="">
-															<p>'.$formatter->toWords(($valorSubtotal + $TOTALFIXRATE),2).' DOLARES</p>
+															<p>'.$formatter->toWords($valorSubtotal, 2).' DOLARES</p>
 													</td>
 											</tr>
 									</table>
@@ -583,7 +584,7 @@ class FacturaVentaUSD extends REST_Controller {
 								<th>
 											<table width="100%">
 													<tr>
-															<td style="text-align: right;">Valor Total: <span>USD  '.number_format(($valorSubtotal + $TOTALFIXRATE), 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Valor Total: <span>USD  '.number_format($valorSubtotal, 2, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>
@@ -610,7 +611,7 @@ class FacturaVentaUSD extends REST_Controller {
                 </th>
             </tr>
         </table>';
-
+// print_r($html);exit();die();
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
         // $mpdf->SetHTMLHeader($header);

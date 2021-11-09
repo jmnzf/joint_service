@@ -386,7 +386,7 @@ class FacturaVenta extends REST_Controller {
 				<table class="" style="width:100%">
 				<tr>
           <th style="text-align: left;">
-            <p class="">NIT/RUC: </p>
+            <p class="">RIF: </p>
           </th>
           <th style="text-align: left;">
             <p> '.$contenidoFV[0]['nit'].'</p>
