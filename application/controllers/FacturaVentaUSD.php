@@ -316,7 +316,7 @@ class FacturaVentaUSD extends REST_Controller {
 
 						 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 						 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
-						 $TotalPeso = ($TotalPeso + ($value['peso']));
+						 $TotalPeso = ($TotalPeso + ($value['peso'] * $value['cantidad']));
 				}
 
 				$valorSubtotal = $contenidoFV[0]['totaldoc'];
