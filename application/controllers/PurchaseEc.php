@@ -539,53 +539,96 @@ class PurchaseEc extends REST_Controller {
 									// SI EXISTE EL ITEM EN EL STOCK
 									if(isset($resCostoCantidad[0])){
 
+										//SI TIENE CANTIDAD POSITIVA
+										if($resCostoCantidad[0]['bdi_quantity'] > 0){
+
+													$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+													$CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
+
+													$CantidadNueva = $detail['ec1_quantity'];
+													$CostoNuevo = $detail['ec1_price'];
+
+													$CantidadTotal = ($CantidadActual + $CantidadNueva);
+
+													if(trim($Data['cec_currency']) != $MONEDALOCAL ){
+														 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
+													}
+
+													$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
+													$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+
+													$sqlUpdateCostoCantidad = "UPDATE tbdi
+																										 SET bdi_quantity = :bdi_quantity
+																										 ,bdi_avgprice = :bdi_avgprice
+																										 WHERE  bdi_id = :bdi_id";
+
+												 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+															 ':bdi_quantity' => $CantidadTotal,
+															 ':bdi_avgprice' => $NuevoCostoPonderado,
+															 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+												 ));
+
+												 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+
+												 }else{
+
+														 $this->pedeo->trans_rollback();
+
+														 $respuesta = array(
+															 'error'   => true,
+															 'data'    => $resUpdateCostoCantidad,
+															 'mensaje'	=> 'No se pudo crear la Entrada de Compra'
+														 );
+
+														 $this->response($respuesta);
+
+														 return;
+												 }
+
+										}else{
+
+													$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+													$CantidadNueva = $detail['ec1_quantity'];
+													$CostoNuevo = $detail['ec1_price'];
 
 
-												$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-												$CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
+													$CantidadTotal = ($CantidadActual + $CantidadNueva);
 
-												$CantidadNueva = $detail['ec1_quantity'];
-												$CostoNuevo = $detail['ec1_price'];
+													if(trim($Data['cec_currency']) != $MONEDALOCAL ){
+														 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
+													}
 
-												$CantidadTotal = ($CantidadActual + $CantidadNueva);
+													$sqlUpdateCostoCantidad = "UPDATE tbdi
+																										 SET bdi_quantity = :bdi_quantity
+																										 ,bdi_avgprice = :bdi_avgprice
+																										 WHERE  bdi_id = :bdi_id";
 
-												if(trim($Data['cec_currency']) != $MONEDALOCAL ){
-													 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
-												}
+													$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
-												$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-												$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+																 ':bdi_quantity' => $CantidadTotal,
+																 ':bdi_avgprice' => $CostoNuevo,
+																 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+													));
 
-												$sqlUpdateCostoCantidad = "UPDATE tbdi
-																									 SET bdi_quantity = :bdi_quantity
-																									 ,bdi_avgprice = :bdi_avgprice
-																									 WHERE  bdi_id = :bdi_id";
+													if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
 
-											 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+													}else{
 
-														 ':bdi_quantity' => $CantidadTotal,
-														 ':bdi_avgprice' => $NuevoCostoPonderado,
-														 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
-											 ));
+															$this->pedeo->trans_rollback();
 
-											 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
-
-											 }else{
-
-													 $this->pedeo->trans_rollback();
-
-													 $respuesta = array(
-														 'error'   => true,
-														 'data'    => $resUpdateCostoCantidad,
-														 'mensaje'	=> 'No se pudo crear la Entrada de Compra'
-													 );
-
-													 $this->response($respuesta);
-
-													 return;
-											 }
+															$respuesta = array(
+																'error'   => true,
+																'data'    => $resUpdateCostoCantidad,
+																'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+															);
 
 
+															$this->response($respuesta);
+
+															return;
+													}
+										}
 
 								// En caso de que no exista el item en el stock
 								// Se inserta en el stock con el precio de compra

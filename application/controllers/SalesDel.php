@@ -563,9 +563,9 @@ class SalesDel extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
                                     em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
+                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
                                     :em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
-                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva)";
+                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':em1_docentry' => $resInsert,
@@ -588,6 +588,7 @@ class SalesDel extends REST_Controller {
                         ':em1_avprice' => is_numeric($detail['em1_avprice'])?$detail['em1_avprice']:0,
                         ':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL,
 												':em1_acciva' => is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:0,
+												':em1_linenum'=> is_numeric($detail['em1_linenum'])?$detail['em1_linenum']:0
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1709,7 +1710,57 @@ class SalesDel extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM vem1 WHERE em1_docentry =:em1_docentry";
+				$sqlSelect = " SELECT
+											t1.em1_acciva,
+											t1.em1_acctcode,
+											t1.em1_avprice,
+											t1.em1_basetype,
+											t1.em1_costcode,
+											t1.em1_discount,
+											t1.em1_docentry,
+											t1.em1_doctype,
+											t1.em1_id,
+											t1.em1_inventory,
+											t1.em1_itemcode,
+											t1.em1_itemname,
+											t1.em1_linenum,
+											t1.em1_linetotal,
+											t1.em1_price,
+											t1.em1_project,
+											t1.em1_quantity - coalesce(SUM(t3.dv1_quantity),0) em1_quantity,
+											t1.em1_ubusiness,
+											t1.em1_uom,
+											t1.em1_vat,
+											t1.em1_vatsum,
+											t1.em1_whscode
+											from dvem t0
+											left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+											left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
+											left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+											 WHERE em1_docentry =:em1_docentry
+											 GROUP BY
+											t1.em1_acciva,
+											t1.em1_acctcode,
+											t1.em1_avprice,
+											t1.em1_basetype,
+											t1.em1_costcode,
+											t1.em1_discount,
+											t1.em1_docentry,
+											t1.em1_doctype,
+											t1.em1_id,
+											t1.em1_inventory,
+											t1.em1_itemcode,
+											t1.em1_itemname,
+											t1.em1_linenum,
+											t1.em1_linetotal,
+											t1.em1_price,
+											t1.em1_project,
+											t1.em1_ubusiness,
+											t1.em1_uom,
+											t1.em1_vat,
+											t1.em1_vatsum,
+											t1.em1_whscode,
+											t1.em1_quantity";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
 

@@ -60,6 +60,11 @@ class SalesInv extends REST_Controller {
 			$IVASINTASAFIJA = 0;
 			$AC1LINE = 1;
 			$SUMALINEAFIXRATE = 0;
+			$TOTALCXCLOC = 0;
+			$TOTALCXCSYS = 0;
+			$TOTALCXCLOCIVA = 0;
+			$TOTALCXCSYSIVA = 0;
+
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -524,6 +529,35 @@ class SalesInv extends REST_Controller {
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
 										// Se verifica que el detalle no de error insertando //
+										//validar que lo facturado no se mayor a lo entregado menos devuelto
+
+										// if($Data['dvf_basetype'] == 3){
+										// 	$sqlDev = "SELECT
+										// 							     t1.em1_quantity - sum(t3.dv1_quantity) cantidad
+										// 							from dvem t0
+										// 							left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+										// 							left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
+										// 							left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+										// 							where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype
+										// 							group by t1.em1_quantity";
+										// 			$resSqlDev = $this->pedeo->queryTable($sqlDev,array(
+										// 				':vem_docentry' => $Data['dvf_baseentry'],
+										// 				':vem_doctype' => $Data['dvf_basetype']
+										// 			));
+										//
+										// 			if($detail['fv1_quantity'] > $resSqlDev[0]['cantidad'] ){
+										// 				$this->pedeo->trans_rollback();
+										//
+										// 				$respuesta = array(
+										// 					'error'   => true,
+										// 					'data' => $resSqlDev,
+										// 					'mensaje'	=> 'La cantidad a facturar no puede ser mayor a la entregada menos la devuelta'
+										// 				);
+										// 				$this->response($respuesta);
+										//
+										// 			 return;
+										// 		 }
+										// }
 								}else{
 
 										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
@@ -952,7 +986,7 @@ class SalesInv extends REST_Controller {
 							$unidad = "";
 							foreach ($posicion as $key => $value) {
 										$granTotalIngreso = ($granTotalIngreso + $value->fv1_linetotal);
-										$granTotalTasaFija = ($granTotalTasaFija + $value->fv1_fixrate);
+										$granTotalTasaFija = ($granTotalTasaFija + ($value->fv1_fixrate * $value->fv1_quantity));
 										$codigoCuentaIngreso = $value->codigoCuenta;
 										$prc = $value->ac1_prc_code;
 										$unidad = $value->ac1_uncode;
@@ -973,81 +1007,109 @@ class SalesInv extends REST_Controller {
 
 							$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
 
+
 							$ti = $granTotalIngreso;
 
 							switch ($codigoCuentaIngreso) {
 								case 1:
 									$debito = $granTotalIngreso;
+
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+										 	$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
+
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
+
 									}
 									break;
 
 								case 2:
 									$credito = $granTotalIngreso;
+
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+										  $ti = ($ti + $granTotalTasaFija);
 											$MontoSysCR = ($ti / $TasaLocSys);
+
 									}else{
 											$MontoSysCR = $granTotalIngresoOriginal;
+
 									}
 									break;
 
 								case 3:
 									$credito = $granTotalIngreso;
+
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+										  $ti = ($ti + $granTotalTasaFija);
 											$MontoSysCR = ($ti / $TasaLocSys);
+
 									}else{
 											$MontoSysCR = $granTotalIngresoOriginal;
+
 									}
 									break;
 
 								case 4:
 									$credito = $granTotalIngreso;
+
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysCR = ($ti / $TasaLocSys);
+
 									}else{
 											$MontoSysCR = $granTotalIngresoOriginal;
+
 									}
 									break;
 
 								case 5:
 									$debito = $granTotalIngreso;
+
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
+
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
+
 									}
 									break;
 
 								case 6:
 									$debito = $granTotalIngreso;
+
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
+
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
+
 									}
 									break;
 
 								case 7:
 									$debito = $granTotalIngreso;
+
 									if(trim($Data['dvf_currency']) != $MONEDASYS ){
+											$ti = ($ti + $granTotalTasaFija);
 											$MontoSysDB = ($ti / $TasaLocSys);
+
 									}else{
 											$MontoSysDB = $granTotalIngresoOriginal;
+
 									}
 									break;
 							}
 
 
-
 							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
 
-							$SumaCreditosLOC = ($SumaDebitoLOC + round($credito,2));
-							$SumaDebitoLOC   = ($SumaDebitoLOC + round($debito,2));
 
+							$TOTALCXCLOC = ($TOTALCXCLOC + ($debito+$credito));
+							$TOTALCXCSYS = ($TOTALCXCSYS + ($MontoSysDB+$MontoSysCR));
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1118,7 +1180,7 @@ class SalesInv extends REST_Controller {
 
 
 					//Procedimiento para llenar Impuestos
-
+					//
 					// $cuentaIVAAsumido = "SELECT pge_acc_impas FROM  pgem";
 					// $rescuentaIVAAsumido = $this->pedeo->queryTable($cuentaIVAAsumido,array());
 					//
@@ -1141,35 +1203,44 @@ class SalesInv extends REST_Controller {
 
 					foreach ($DetalleConsolidadoIva as $key => $posicion) {
 							$granTotalIva = 0;
+							$granTotalIva2 = 0;
 							$granTotalIvaOriginal = 0;
 							$MontoSysCR = 0;
 
 							foreach ($posicion as $key => $value) {
-										$granTotalIva = $granTotalIva + $value->fv1_vatsum;
+										$granTotalIva = round($granTotalIva + $value->fv1_vatsum,2);
+
+										$v1 = ($value->fv1_linetotal + ($value->fv1_quantity * $value->fv1_fixrate));
+										$granTotalIva2 = round($granTotalIva2 + ($v1 * ($value->fv1_vat / 100)), 2);
 							}
 
 							$granTotalIvaOriginal = $granTotalIva;
+
+
 
 							if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
 									$granTotalIva = ($granTotalIva * $TasaDocLoc);
 							}
 
-							$TIva = $granTotalIva;
+
+
+							$TIva = $granTotalIva2;
 
 							if(trim($Data['dvf_currency']) != $MONEDASYS ){
 									// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
 									$MontoSysCR = ($TIva / $TasaLocSys);
-									$IVASINTASAFIJA = $MontoSysCR;
+
 							}else{
 									$MontoSysCR = $granTotalIvaOriginal;
-									$IVASINTASAFIJA = $MontoSysCR;
 							}
 
 
-							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-							$SumaCreditosLOC = ($SumaCreditosLOC + round($granTotalIva,2));
-
+							// $SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 							$AC1LINE = $AC1LINE+1;
+
+
+							$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva);
+							$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysCR);
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
@@ -1236,7 +1307,7 @@ class SalesInv extends REST_Controller {
 						}
 					}
 
-					//
+
 					// $granTotalIva = 0;
 					//
 					// foreach ($DetalleConsolidadoIva as $key => $posicion) {
@@ -2089,75 +2160,58 @@ class SalesInv extends REST_Controller {
 								$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
 								$codigo2= substr($rescuentaCxC[0]['mgs_acct'], 0, 1);
 
-								$docTotal = $Data['dvf_doctotal'];
-								$docTotalOriginal = $docTotal;
+								// $docTotal = $Data['dvf_doctotal'];
+								// $docTotalOriginal = $docTotal;
+								//
+								//
+								// if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+								//
+								// 		$docTotal = ($docTotal * $TasaDocLoc);
+								// }
+								//
+								// $dt = $Data['dvf_doctotal'];
 
-
-								if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
-
-										$docTotal = ($docTotal * $TasaDocLoc);
-								}
-
-								$dt = $docTotal;
 								if( $codigo2 == 1 || $codigo2 == "1" ){
-										$debitoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysDB = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysDB =	$docTotalOriginal;
-										}
+
+										$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+										$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
 								}else if( $codigo2 == 2 || $codigo2 == "2" ){
-										$creditoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysCR = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysCR =	$docTotalOriginal;
-										}
+
+										$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+										$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
 								}else if( $codigo2 == 3 || $codigo2 == "3" ){
-										$creditoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysCR = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysCR =	$docTotalOriginal;
-										}
+
+										$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+										$MontoSysCR = ($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
 								}else if( $codigo2 == 4 || $codigo2 == "4" ){
-									  $creditoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysCR = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysCR =	$docTotalOriginal;
-										}
+
+										$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+										$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
 								}else if( $codigo2 == 5  || $codigo2 == "5" ){
-									  $debitoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysDB = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysDB =	$docTotalOriginal;
-										}
+
+										$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+										$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
 								}else if( $codigo2 == 6 || $codigo2 == "6" ){
-									  $debitoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysDB = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysDB =	$docTotalOriginal;
-										}
+
+										$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+										$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
 								}else if( $codigo2 == 7 || $codigo2 == "7" ){
-									  $debitoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysDB = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysDB =	$docTotalOriginal;
-										}
+
+										$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+										$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 								}
 
 
-								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
-
-								$SumaCreditosLOC = ($SumaCreditosLOC + round($creditoo,2));
-								$SumaDebitoLOC 	 = ($SumaDebitoLOC + round($debitoo,2));
-
+								// $SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+								// $SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
 								$AC1LINE = $AC1LINE+1;
+
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 										':ac1_trans_id' => $resInsertAsiento,
@@ -2243,8 +2297,6 @@ class SalesInv extends REST_Controller {
 					// SEGUN SEA EL CASO
 					// $debito  = 0;
 					// $credito = 0;
-					// $debitosys  = 0;
-					// $creditosys = 0;
 					// if($SumaCreditosSYS > $SumaDebitosSYS || $SumaDebitosSYS > $SumaCreditosSYS){
 					//
 					// 			$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
@@ -2255,12 +2307,10 @@ class SalesInv extends REST_Controller {
 					// 						if( $SumaCreditosSYS > $SumaDebitosSYS ){ // DIFERENCIA EN CREDITO EL VALOR SE COLOCA EN DEBITO
 					//
 					// 									$debito = ($SumaCreditosSYS - $SumaDebitosSYS);
-					// 									$debitosys = ($SumaCreditosLOC - $SumaCreditosLOC);
 					//
 					// 						}else{ // DIFERENCIA EN DEBITO EL VALOR SE COLOCA EN CREDITO
 					//
 					// 									$credito = ($SumaDebitosSYS - $SumaCreditosSYS);
-					// 									$creditosys = ($SumaDebitoLOC - $SumaDebitoLOC);
 					// 						}
 					//
 					// 						if(round($debito+$credito, 2) > 0){

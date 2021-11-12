@@ -1116,67 +1116,67 @@ class SalesDv extends REST_Controller {
 							 }
 				 }
 
-					//FIN PROCEDIMIENTO PARA LLENAR CUENTA INVENTARIO
-
-					if ($Data['vdv_basetype'] == 3) {
-
-
-						$sqlEstado = 'SELECT distinct
-													case
-														when (t1.em1_quantity - sum(t3.dv1_quantity)) = 0
-															then 1
-														else 0
-													end "estado"
-													from dvem t0
-													left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-													left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry
-													left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
-													where t0.vem_docentry = :vem_docentry
-													group by
-													t1.em1_quantity';
-
-
-						$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vem_docentry' => $Data['vdv_baseentry']));
-
-						if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-
-									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-									$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-														':bed_docentry' => $Data['vdv_baseentry'],
-														':bed_doctype' => $Data['vdv_basetype'],
-														':bed_status' => 3, //ESTADO CERRADO
-														':bed_createby' => $Data['vdv_createby'],
-														':bed_date' => date('Y-m-d'),
-														':bed_baseentry' => $resInsert,
-														':bed_basetype' => $Data['vdv_doctype']
-									));
-
-
-									if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-									}else{
-
-											 $this->pedeo->trans_rollback();
-
-												$respuesta = array(
-													'error'   => true,
-													'data' => $resInsertEstado,
-													'mensaje'	=> 'No se pudo registrar la orden de venta'
-												);
-
-
-												$this->response($respuesta);
-
-												return;
-									}
-
-						}
-
-					}
+					// //FIN PROCEDIMIENTO PARA ACTUALIZAR ESTADO DOCUMENTO
+					//
+					// if ($Data['vdv_basetype'] == 3) {
+					//
+					//
+					// 	$sqlEstado = 'SELECT distinct
+					// 								case
+					// 									when (t1.em1_quantity - sum(t3.dv1_quantity)) = 0
+					// 										then 1
+					// 									else 0
+					// 								end "estado"
+					// 								from dvem t0
+					// 								left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+					// 								left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry
+					// 								left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+					// 								where t0.vem_docentry = :vem_docentry
+					// 								group by
+					// 								t1.em1_quantity';
+					//
+					//
+					// 	$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vem_docentry' => $Data['vdv_baseentry']));
+					//
+					// 	if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+					//
+					// 				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+					// 														VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+					//
+					// 				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+					//
+					//
+					// 									':bed_docentry' => $Data['vdv_baseentry'],
+					// 									':bed_doctype' => $Data['vdv_basetype'],
+					// 									':bed_status' => 3, //ESTADO CERRADO
+					// 									':bed_createby' => $Data['vdv_createby'],
+					// 									':bed_date' => date('Y-m-d'),
+					// 									':bed_baseentry' => $resInsert,
+					// 									':bed_basetype' => $Data['vdv_doctype']
+					// 				));
+					//
+					//
+					// 				if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+					//
+					// 				}else{
+					//
+					// 						 $this->pedeo->trans_rollback();
+					//
+					// 							$respuesta = array(
+					// 								'error'   => true,
+					// 								'data' => $resInsertEstado,
+					// 								'mensaje'	=> 'No se pudo registrar la orden de venta'
+					// 							);
+					//
+					//
+					// 							$this->response($respuesta);
+					//
+					// 							return;
+					// 				}
+					//
+					// 	}
+					//
+					// }
 
 
 					// Si todo sale bien despues de insertar el detalle de la Devolución de clientes
