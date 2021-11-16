@@ -498,12 +498,13 @@ class SalesOrder extends REST_Controller {
           }
 
 					//FIN DETALLE PEDIDO
+
 					if ($Data['vov_basetype'] == 1) {
 
 
 						$sqlEstado = 'SELECT distinct
 													case
-														when (t1.vc1_quantity - sum(t3.ov1_quantity)) = 0
+														when (sum(t1.vc1_quantity) - sum(t3.ov1_quantity)) = 0
 															then 1
 														else 0
 													end "estado"
@@ -513,7 +514,7 @@ class SalesOrder extends REST_Controller {
 													left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
 													where t0.dvc_docentry = :dvc_docentry
 													group by
-													t1.vc1_quantity';
+													t1.vc1_itemcode,t1.vc1_quantity';
 
 
 						$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvc_docentry' => $Data['vov_baseentry']));

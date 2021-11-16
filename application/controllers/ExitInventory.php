@@ -134,9 +134,8 @@ class ExitInventory extends REST_Controller {
 						return;
 				}
 
-
-				// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
-
+				// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+				// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
 				$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
 				$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
 
@@ -153,6 +152,8 @@ class ExitInventory extends REST_Controller {
 
 						return;
 				}
+
+				$MONEDALOCAL = trim($resMonedaLoc[0]['pgm_symbol']);
 
 				// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
 				$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
@@ -173,8 +174,33 @@ class ExitInventory extends REST_Controller {
 						return;
 				}
 
+				//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
+				// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
+
+
+				$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+				$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['iei_currency'], ':tsa_date' => $Data['iei_docdate']));
+
+				if(isset($resBusTasa[0])){
+
+				}else{
+
+						if(trim($Data['iei_currency']) != $MONEDALOCAL ){
+
+								$respuesta = array(
+									'error' => true,
+									'data'  => array(),
+									'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['iei_currency'].' en la actual fecha del documento: '.$Data['iei_docdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
+								);
+
+								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+								return;
+						}
+				}
+
 				$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-				$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['isi_docdate']));
+				$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['iei_docdate']));
 
 				if(isset($resBusTasa2[0])){
 
@@ -182,7 +208,7 @@ class ExitInventory extends REST_Controller {
 						$respuesta = array(
 							'error' => true,
 							'data'  => array(),
-							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['isi_docdate']
+							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['iei_docdate']
 						);
 
 						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -190,11 +216,11 @@ class ExitInventory extends REST_Controller {
 						return;
 				}
 
+				$TasaDocLoc = isset($resBusTasa[0]['tsa_value']) ? $resBusTasa[0]['tsa_value'] : 1;
 				$TasaLocSys = $resBusTasa2[0]['tsa_value'];
-				// FIN PROCEDIMIENTO PARA OBTENER MONEDA DE SISTEMA
 
+				// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 
-				$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
 
 				$sqlInsert = "INSERT INTO misi (isi_docnum, isi_docdate, isi_duedate, isi_duedev, isi_pricelist, isi_cardcode, isi_cardname, isi_contacid, isi_slpcode, isi_empid, isi_comment, isi_doctotal, isi_baseamnt,
                       isi_taxtotal, isi_discprofit, isi_discount, isi_createat, isi_baseentry, isi_basetype, isi_doctype, isi_idadd, isi_adress, isi_paytype, isi_attch,
@@ -388,8 +414,23 @@ class ExitInventory extends REST_Controller {
 
 
 								// si el item es inventariable
-								if( $detail['si1_articleInv'] == 1 || $detail['si1_articleInv'] == "1" ){
-								// if( $detail['si1_inventory'] == 1 || $detail['si1_inventory'] == "1" ){
+								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
+								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
+								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
+
+												':dma_item_code' => $detail['ei1_itemcode'],
+												':dma_item_inv'  => 1
+								));
+
+								if(isset($resItemINV[0])){
+
+									$ManejaInvetario = 1;
+
+								}
+
+								// FIN PROCESO ITEM MANEJA INVENTARIO
+								// si el item es inventariable
+								if( $ManejaInvetario == 1 ){
 
 											//se busca el costo del item en el momento de la creacion del documento de venta
 											// para almacenar en el movimiento de inventario
@@ -472,57 +513,39 @@ class ExitInventory extends REST_Controller {
 
 												if(isset($resCostoCantidad[0])){
 
-													if($resCostoCantidad[0]['bdi_quantity'] > 0){
-
-															 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-															 $CantidadNueva = $detail['si1_quantity'];
+														 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+														 $CantidadNueva = $detail['si1_quantity'];
 
 
-															 $CantidadTotal = ($CantidadActual - $CantidadNueva);
+														 $CantidadTotal = ($CantidadActual - $CantidadNueva);
 
-															 $sqlUpdateCostoCantidad =  "UPDATE tbdi
-																													 SET bdi_quantity = :bdi_quantity
-																													 WHERE  bdi_id = :bdi_id";
+														 $sqlUpdateCostoCantidad =  "UPDATE tbdi
+																												 SET bdi_quantity = :bdi_quantity
+																												 WHERE  bdi_id = :bdi_id";
 
-															 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+														 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
-																		 ':bdi_quantity' => $CantidadTotal,
-																		 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
-															 ));
+																	 ':bdi_quantity' => $CantidadTotal,
+																	 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+														 ));
 
-															 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+														 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
 
-															 }else{
+														 }else{
 
-																	 $this->pedeo->trans_rollback();
+																 $this->pedeo->trans_rollback();
 
-																	 $respuesta = array(
-																		 'error'   => true,
-																		 'data'    => $resUpdateCostoCantidad,
-																		 'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
-																	 );
-
-
-																	 $this->response($respuesta);
-
-																	 return;
-															 }
-
-													}else{
-
-																	 $this->pedeo->trans_rollback();
-
-																	 $respuesta = array(
-																		 'error'   => true,
-																		 'data'    => $resUpdateCostoCantidad,
-																		 'mensaje' => 'No hay existencia para el item: '.$detail['si1_itemcode']
-																	 );
+																 $respuesta = array(
+																	 'error'   => true,
+																	 'data'    => $resUpdateCostoCantidad,
+																	 'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+																 );
 
 
-																	 $this->response($respuesta);
+																 $this->response($respuesta);
 
-																	 return;
-													}
+																 return;
+														 }
 
 												}else{
 
@@ -540,8 +563,11 @@ class ExitInventory extends REST_Controller {
 												}
 
 													//FIN de  Aplicacion del movimiento en stock
-
 								}
+
+
+
+
 								//LLENANDO AGRUPADOS
 								$DetalleCuentaLineaDocumento = new stdClass();
 								$DetalleCuentaGrupo = new stdClass();
@@ -656,32 +682,32 @@ class ExitInventory extends REST_Controller {
 
 							switch ($codigoCuentaLinea) {
 								case 1:
-									$debito = $grantotalLinea;
-									$MontoSysDB = ($debito / $TasaLocSys);
+									$credito = $grantotalLinea;
+									$MontoSysCR = ($credito / $TasaLocSys);
 									break;
 								case 2:
-									$debito = $grantotalLinea;
-									$MontoSysDB = ($debito / $TasaLocSys);
+									$credito = $grantotalLinea;
+									$MontoSysCR = ($credito / $TasaLocSys);
 									break;
 								case 3:
-									$debito = $grantotalLinea;
-									$MontoSysDB = ($debito / $TasaLocSys);
+									$credito = $grantotalLinea;
+									$MontoSysCR = ($credito / $TasaLocSys);
 									break;
 								case 4:
-									$debito = $grantotalLinea;
-									$MontoSysDB = ($debito / $TasaLocSys);
+									$credito = $grantotalLinea;
+									$MontoSysCR = ($credito / $TasaLocSys);
 									break;
 								case 5:
-									$debito = $grantotalLinea;
-									$MontoSysDB = ($debito / $TasaLocSys);
+									$credito = $grantotalLinea;
+									$MontoSysCR = ($credito / $TasaLocSys);
 									break;
 								case 6:
-									$debito = $grantotalLinea;
-									$MontoSysDB = ($debito / $TasaLocSys);
+									$credito = $grantotalLinea;
+									$MontoSysCR = ($credito / $TasaLocSys);
 									break;
 								case 7:
-									$debito = $grantotalLinea;
-									$MontoSysDB = ($debito / $TasaLocSys);
+									$credito = $grantotalLinea;
+									$MontoSysCR = ($credito / $TasaLocSys);
 									break;
 							}
 
@@ -690,8 +716,8 @@ class ExitInventory extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuenta,
-									':ac1_debit' => $debito,
-									':ac1_credit' => $credito,
+									':ac1_debit' => round($debito,2),
+									':ac1_credit' => round($credito,2),
 									':ac1_debit_sys' => round($MontoSysDB,2),
 									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
@@ -819,36 +845,36 @@ class ExitInventory extends REST_Controller {
 
 
 							if( $codigo3 == 1 || $codigo3 == "1" ){
-									$cdito = $grantotalCuentaGrupo;
-									$MontoSysCR = ($cdito / $TasaLocSys);
+									$dbito = $grantotalCuentaGrupo;
+									$MontoSysDB = ($dbito / $TasaLocSys);
 							}else if( $codigo3 == 2 || $codigo3 == "2" ){
-									$cdito = $grantotalCuentaGrupo;
-									$MontoSysCR = ($cdito / $TasaLocSys);
+									$dbito = $grantotalCuentaGrupo;
+									$MontoSysDB = ($dbito / $TasaLocSys);
 							}else if( $codigo3 == 3 || $codigo3 == "3" ){
-									$cdito = $grantotalCuentaGrupo;
-									$MontoSysCR = ($cdito / $TasaLocSys);
+									$dbito = $grantotalCuentaGrupo;
+									$MontoSysDB = ($dbito / $TasaLocSys);
 							}else if( $codigo3 == 4 || $codigo3 == "4" ){
-									$cdito = $grantotalCuentaGrupo;
-									$MontoSysCR = ($cdito / $TasaLocSys);
+									$dbito = $grantotalCuentaGrupo;
+									$MontoSysDB = ($dbito / $TasaLocSys);
 							}else if( $codigo3 == 5  || $codigo3 == "5" ){
-									$cdito = $grantotalCuentaGrupo;
-									$MontoSysCR = ($cdito / $TasaLocSys);
+									$dbito = $grantotalCuentaGrupo;
+									$MontoSysDB = ($dbito / $TasaLocSys);
 							}else if( $codigo3 == 6 || $codigo3 == "6" ){
-									$cdito = $grantotalCuentaGrupo;
-									$MontoSysCR = ($cdito / $TasaLocSys);
+									$dbito = $grantotalCuentaGrupo;
+									$MontoSysDB = ($dbito / $TasaLocSys);
 							}else if( $codigo3 == 7 || $codigo3 == "7" ){
-									$cdito = $grantotalCuentaGrupo;
-									$MontoSysCR = ($cdito / $TasaLocSys);
+									$dbito = $grantotalCuentaGrupo;
+									$MontoSysDB = ($dbito / $TasaLocSys);
 							}
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuentaGrupo,
-									':ac1_debit' => $dbito,
-									':ac1_credit' => $cdito,
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
+									':ac1_debit' => round($dbito, 2),
+									':ac1_credit' => round($cdito, 2),
+									':ac1_debit_sys' => round($MontoSysDB, 2),
+									':ac1_credit_sys' => round($MontoSysCR, 2),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['isi_docdate'])?$Data['isi_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['isi_docdate'])?$Data['isi_docdate']:NULL,

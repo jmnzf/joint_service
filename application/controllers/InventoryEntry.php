@@ -131,64 +131,6 @@ class InventoryEntry extends REST_Controller {
 						return;
 				}
 
-				// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
-
-				$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
-				$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
-
-				if(isset($resMonedaLoc[0])){
-
-				}else{
-						$respuesta = array(
-							'error' => true,
-							'data'  => array(),
-							'mensaje' =>'No se encontro la moneda local.'
-						);
-
-						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-						return;
-				}
-
-				// // SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
-				// $sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
-				// $resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
-				//
-				// if(isset($resMonedaSys[0])){
-				//
-				// }else{
-				//
-				// 		$respuesta = array(
-				// 			'error' => true,
-				// 			'data'  => array(),
-				// 			'mensaje' =>'No se encontro la moneda de sistema.'
-				// 		);
-				//
-				// 		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-				//
-				// 		return;
-				// }
-				//
-				// $sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-				// $resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['iei_docdate']));
-				//
-				// if(isset($resBusTasa2[0])){
-				//
-				// }else{
-				// 		$respuesta = array(
-				// 			'error' => true,
-				// 			'data'  => array(),
-				// 			'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['iei_docdate']
-				// 		);
-				//
-				// 		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-				//
-				// 		return;
-				// }
-				//
-				// $TasaLocSys = $resBusTasa2[0]['tsa_value'];
-				// // FIN PROCEDIMIENTO PARA OBTENER MONEDA DE SISTEMA
-
 				//OBTENER CARPETA PRINCIPAL DEL PROYECTO
 				$sqlMainFolder = " SELECT * FROM params";
 				$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());

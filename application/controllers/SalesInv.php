@@ -533,6 +533,7 @@ class SalesInv extends REST_Controller {
 
 										if($Data['dvf_basetype'] == 3){
 											$sqlDev = "SELECT
+																			 t1.em1_itemcode item,
 																	     t1.em1_quantity - COALESCE(sum(t3.dv1_quantity),0) cantidad
 																	from dvem t0
 																	left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
@@ -545,7 +546,7 @@ class SalesInv extends REST_Controller {
 														':vem_doctype' => $Data['dvf_basetype']
 													));
 
-													if($detail['fv1_quantity'] > $resSqlDev[0]['cantidad'] ){
+													if($detail['fv1_itemcode'] == $resSqlDev[0]['item'] && $detail['fv1_quantity'] > $resSqlDev[0]['cantidad'] ){
 														$this->pedeo->trans_rollback();
 
 														$respuesta = array(
@@ -2418,28 +2419,27 @@ class SalesInv extends REST_Controller {
 											}
 
 								}
-
-
-
-
-					} else if ($Data['dvf_basetype'] == 3) {
+					}else if ($Data['dvf_basetype'] == 3) {
 
 							 $sqlEstado = 'SELECT distinct
-															case
-																when (t1.em1_quantity - sum(t3.fv1_quantity)) = 0
-																	then 1
-																else 0
-															end "estado"
+							 											 t1.em1_itemcode item,
+																	 case
+																					when ((t1.em1_quantity - coalesce(sum(dv1.dv1_quantity),0)) - coalesce(sum(t3.fv1_quantity),0)) = 0
+																					then 1
+																					else 0
+																		end "estado"
 														from dvem t0
 														left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+														left join dvdv dv on t0.vem_docentry = dv.vdv_baseentry and t0.vem_doctype = dv.vdv_basetype
+														left join vdv1 dv1 on dv.vdv_docentry = dv1.dv1_docentry and t1.em1_itemcode = dv1.dv1_itemcode
 														left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry
 														left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.em1_itemcode = t3.fv1_itemcode
 														where t0.vem_docentry = :vem_docentry
-														group by t1.em1_quantity';
+														group by  t1.em1_itemcode,t1.em1_quantity';
 
 								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vem_docentry' => $Data['dvf_baseentry']));
 
-								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+								if(isset($resEstado[0]['item'])&& isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
 
 											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
