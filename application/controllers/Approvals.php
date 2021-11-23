@@ -9,7 +9,7 @@ class Approvals extends REST_Controller {
 
 	private $pdo;
 
-	public function __construct(){
+  public function __construct(){
 
 		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
 		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
@@ -582,7 +582,6 @@ class Approvals extends REST_Controller {
 		}
 
 
-
 		//SE ACTUALIZA EL ESTADO DEL USUARIO SEGUN EL MODELO
 		public function updateStatusUserModel_get(){
 
@@ -629,15 +628,115 @@ class Approvals extends REST_Controller {
 										$estado = 0;
 					}
 
-					// $sqlUpdate = "UPDATE taus SET aus_status = :aus_status	WHERE aus_id = :aus_id";
-					//
-					//
-					// $resUpdat
-				}
+					$sqlUpdate = "UPDATE taus SET aus_status = :aus_status	WHERE aus_id = :aus_id";
 
 
+					$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+
+								':aus_status' => $estado,
+								':aus_id' 		=> $Data['aus_id']
+					));
 
 
+					if(is_numeric($resUpdate) && $resUpdate == 1){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => $resUpdate,
+									'mensaje' =>'Operacion exitosa'
+								);
+
+
+					}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resUpdate,
+									'mensaje'	=> 'No se puedo actualizar el estado del usaurio'
+								);
+
+					}
+
+					 $this->response($respuesta);
+		}
+
+
+		//SE ACTUALIZA EL ESTADO DEL MODELO
+		public function updateStatusModel_get(){
+
+					$Data = $this->get();
+					$estado = 0;
+
+					if(!isset($Data['mau_docentry'])){
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'La informacion enviada no es valida'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+					}
+
+					$Sql = " SELECT mau_status FROM tmau WHERE mau_docentry = :mau_docentry";
+
+					$resSql = $this->pedeo->queryTable($Sql, array(
+
+								':mau_docentry' => $Data['mau_docentry']
+					));
+
+					if(isset($resSql[0])){
+
+							if( is_null($resSql[0]['mau_status']) ){
+
+										$estado = 0;
+
+							}else if($resSql[0]['mau_status'] == 0){
+
+										$estado = 1;
+
+							}else if( $resSql[0]['mau_status'] == 1 ) {
+
+										$estado = 0;
+							}
+					}else{
+
+										$estado = 0;
+					}
+
+					$sqlUpdate = "UPDATE tmau SET mau_status = :mau_status	WHERE mau_docentry = :mau_docentry";
+
+
+					$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+
+								':mau_status' 	=> $estado,
+								':mau_docentry' => $Data['mau_docentry']
+					));
+
+
+					if(is_numeric($resUpdate) && $resUpdate == 1){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => $resUpdate,
+									'mensaje' =>'Operacion exitosa'
+								);
+
+
+					}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resUpdate,
+									'mensaje'	=> 'No se puedo actualizar el estado del usaurio'
+								);
+
+					}
+
+					 $this->response($respuesta);
+		}
 
 
 }

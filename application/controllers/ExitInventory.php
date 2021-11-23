@@ -179,18 +179,18 @@ class ExitInventory extends REST_Controller {
 
 
 				$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-				$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['iei_currency'], ':tsa_date' => $Data['iei_docdate']));
+				$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['isi_currency'], ':tsa_date' => $Data['isi_docdate']));
 
 				if(isset($resBusTasa[0])){
 
 				}else{
 
-						if(trim($Data['iei_currency']) != $MONEDALOCAL ){
+						if(trim($Data['isi_currency']) != $MONEDALOCAL ){
 
 								$respuesta = array(
 									'error' => true,
 									'data'  => array(),
-									'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['iei_currency'].' en la actual fecha del documento: '.$Data['iei_docdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
+									'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['isi_currency'].' en la actual fecha del documento: '.$Data['isi_docdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
 								);
 
 								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -200,7 +200,7 @@ class ExitInventory extends REST_Controller {
 				}
 
 				$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-				$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['iei_docdate']));
+				$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['isi_docdate']));
 
 				if(isset($resBusTasa2[0])){
 
@@ -208,7 +208,7 @@ class ExitInventory extends REST_Controller {
 						$respuesta = array(
 							'error' => true,
 							'data'  => array(),
-							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['iei_docdate']
+							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['isi_docdate']
 						);
 
 						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -418,7 +418,7 @@ class ExitInventory extends REST_Controller {
 								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
 								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
 
-												':dma_item_code' => $detail['ei1_itemcode'],
+												':dma_item_code' => $detail['si1_itemcode'],
 												':dma_item_inv'  => 1
 								));
 
@@ -682,32 +682,32 @@ class ExitInventory extends REST_Controller {
 
 							switch ($codigoCuentaLinea) {
 								case 1:
-									$credito = $grantotalLinea;
-									$MontoSysCR = ($credito / $TasaLocSys);
+									$debito = $grantotalLinea;
+									$MontoSysDB = ($debito / $TasaLocSys);
 									break;
 								case 2:
-									$credito = $grantotalLinea;
-									$MontoSysCR = ($credito / $TasaLocSys);
+									$debito = $grantotalLinea;
+									$MontoSysDB = ($debito / $TasaLocSys);
 									break;
 								case 3:
-									$credito = $grantotalLinea;
-									$MontoSysCR = ($credito / $TasaLocSys);
+									$debito = $grantotalLinea;
+									$MontoSysDB = ($debito / $TasaLocSys);
 									break;
 								case 4:
-									$credito = $grantotalLinea;
-									$MontoSysCR = ($credito / $TasaLocSys);
+									$debito = $grantotalLinea;
+									$MontoSysDB = ($debito / $TasaLocSys);
 									break;
 								case 5:
-									$credito = $grantotalLinea;
-									$MontoSysCR = ($credito / $TasaLocSys);
+									$debito = $grantotalLinea;
+									$MontoSysDB = ($debito / $TasaLocSys);
 									break;
 								case 6:
-									$credito = $grantotalLinea;
-									$MontoSysCR = ($credito / $TasaLocSys);
+									$debito = $grantotalLinea;
+									$MontoSysDB = ($debito / $TasaLocSys);
 									break;
 								case 7:
-									$credito = $grantotalLinea;
-									$MontoSysCR = ($credito / $TasaLocSys);
+									$debito = $grantotalLinea;
+									$MontoSysDB = ($debito / $TasaLocSys);
 									break;
 							}
 
@@ -845,26 +845,26 @@ class ExitInventory extends REST_Controller {
 
 
 							if( $codigo3 == 1 || $codigo3 == "1" ){
-									$dbito = $grantotalCuentaGrupo;
-									$MontoSysDB = ($dbito / $TasaLocSys);
+									$cdito = $grantotalCuentaGrupo;
+									$MontoSysCR = ($cdito / $TasaLocSys);
 							}else if( $codigo3 == 2 || $codigo3 == "2" ){
-									$dbito = $grantotalCuentaGrupo;
-									$MontoSysDB = ($dbito / $TasaLocSys);
+									$cdito = $grantotalCuentaGrupo;
+									$MontoSysCR = ($cdito / $TasaLocSys);
 							}else if( $codigo3 == 3 || $codigo3 == "3" ){
-									$dbito = $grantotalCuentaGrupo;
-									$MontoSysDB = ($dbito / $TasaLocSys);
+									$cdito = $grantotalCuentaGrupo;
+									$MontoSysCR = ($cdito / $TasaLocSys);
 							}else if( $codigo3 == 4 || $codigo3 == "4" ){
-									$dbito = $grantotalCuentaGrupo;
-									$MontoSysDB = ($dbito / $TasaLocSys);
+									$cdito = $grantotalCuentaGrupo;
+									$MontoSysCR = ($cdito / $TasaLocSys);
 							}else if( $codigo3 == 5  || $codigo3 == "5" ){
-									$dbito = $grantotalCuentaGrupo;
-									$MontoSysDB = ($dbito / $TasaLocSys);
+									$cdito = $grantotalCuentaGrupo;
+									$MontoSysCR = ($cdito / $TasaLocSys);
 							}else if( $codigo3 == 6 || $codigo3 == "6" ){
-									$dbito = $grantotalCuentaGrupo;
-									$MontoSysDB = ($dbito / $TasaLocSys);
+									$cdito = $grantotalCuentaGrupo;
+									$MontoSysCR = ($cdito / $TasaLocSys);
 							}else if( $codigo3 == 7 || $codigo3 == "7" ){
-									$dbito = $grantotalCuentaGrupo;
-									$MontoSysDB = ($dbito / $TasaLocSys);
+									$cdito = $grantotalCuentaGrupo;
+									$MontoSysCR = ($cdito / $TasaLocSys);
 							}
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(

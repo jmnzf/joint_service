@@ -35,7 +35,7 @@ class PickingCant extends REST_Controller {
 				$formatter = new NumeroALetras();
 
 				$totalpeso = 0;
-
+				$totalcantidad = 0;
 
 
         $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);

@@ -76,40 +76,117 @@ class EstadoCuentaCl extENDs REST_Controller {
 				}
 
 				$sqlestadocuenta = "SELECT
-                        	t0.dvf_cardcode CodigoProveedor,
-                        	t0.dvf_cardname NombreProveedor,
-                        	t0.dvf_docnum NumeroDocumento,
-                        	t0.dvf_docdate FechaDocumento,
-                        	t0.dvf_duedate FechaVencimiento,
-													t0.dvf_doctotal totalfactura,
-                          T0.dvf_paytoday saldo,
-													trim('COP' FROM t0.dvf_currency) MonedaDocumento,
-                        	'".$Data['fecha']."' FechaCorte,
-													('".$Data['fecha']."' - t0.dvf_duedate) dias,
-                        	CASE
-                        		WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=0 and ( '".$Data['fecha']."' - t0.dvf_duedate) <=30
-                        			then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
-															ELSE 0
-                        	END uno_treinta,
-                        	CASE
-                        		WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=31 and ( '".$Data['fecha']."' - t0.dvf_duedate) <=60
-                        			then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
-															ELSE 0
-                        	END treinta_uno_secenta,
-                        	CASE
-                        		WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=61 and ( '".$Data['fecha']."' - t0.dvf_duedate) <=90
-                        			then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
-															ELSE 0
-                        	END secenta_uno_noventa,
-                        	CASE
-                        		WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=91
-                        			then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
-													ELSE 0
-                        	END mayor_noventa
+																			    'Factura' as tipo,
+																				t0.dvf_cardcode CodigoProveedor,
+																				t0.dvf_cardname NombreProveedor,
+																				t0.dvf_docnum NumeroDocumento,
+																				t0.dvf_docdate FechaDocumento,
+																				t0.dvf_duedate FechaVencimiento,
+																				t0.dvf_doctotal totalfactura,
+																			    coalesce(T0.dvf_paytoday,0) saldo,
+																				trim('COP' FROM t0.dvf_currency) MonedaDocumento,
+																				'".$Data['fecha']."' FechaCorte,
+																				('".$Data['fecha']."' - t0.dvf_duedate) dias,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=0 and ( '".$Data['fecha']."' - t0.dvf_duedate) <=30
+																						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+																						ELSE 0
+																				END uno_treinta,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=31 and ( '".$Data['fecha']."' - t0.dvf_duedate) <=60
+																						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+																						ELSE 0
+																				END treinta_uno_secenta,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=61 and ( '".$Data['fecha']."' - t0.dvf_duedate) <=90
+																						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+																						ELSE 0
+																				END secenta_uno_noventa,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.dvf_duedate) >=91
+																						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+																						ELSE 0
+																				END mayor_noventa
 
-                        FROM dvfv t0
-                        WHERE '".$Data['fecha']."' >= t0.dvf_duedate  and t0.dvf_cardcode = '".$Data['cardcode']."'
-												ORDER BY NumeroDocumento";
+																			FROM dvfv t0
+																			WHERE '".$Data['fecha']."' >= t0.dvf_duedate  and t0.dvf_cardcode = '".$Data['cardcode']."'
+
+																			union all
+
+																			SELECT
+																			    'NotaCredito' as tipo,
+																				t0.vnc_cardcode CodigoProveedor,
+																				t0.vnc_cardname NombreProveedor,
+																				t0.vnc_docnum NumeroDocumento,
+																				t0.vnc_docdate FechaDocumento,
+																				t0.vnc_duedate FechaVencimiento,
+																				t0.vnc_doctotal * -1 totalfactura,
+																			    coalesce(t0.vnc_doctotal ,0) saldo,
+																				trim('COP' FROM t0.vnc_currency) MonedaDocumento,
+																				'".$Data['fecha']."' FechaCorte,
+																				('".$Data['fecha']."' - t0.vnc_duedate) dias,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.vnc_duedate) >=0 and ( '".$Data['fecha']."' - t0.vnc_duedate) <=30
+																						then (t0.vnc_doctotal * -1)
+																						ELSE 0
+																				END uno_treinta,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.vnc_duedate) >=31 and ( '".$Data['fecha']."' - t0.vnc_duedate) <=60
+																						then (t0.vnc_doctotal * -1)
+																						ELSE 0
+																				END treinta_uno_secenta,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.vnc_duedate) >=61 and ( '".$Data['fecha']."' - t0.vnc_duedate) <=90
+																						then (t0.vnc_doctotal * -1)
+																						ELSE 0
+																				END secenta_uno_noventa,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.vnc_duedate) >=91
+																						then (t0.vnc_doctotal * -1)
+																						ELSE 0
+																				END mayor_noventa
+
+																			FROM dvnc t0
+																			WHERE '".$Data['fecha']."' >= t0.vnc_duedate  and t0.vnc_cardcode = '".$Data['cardcode']."'
+
+																			union all
+
+																			SELECT
+																			    'NotaDebito' as tipo,
+																				t0.vnd_cardcode CodigoProveedor,
+																				t0.vnd_cardname NombreProveedor,
+																				t0.vnd_docnum NumeroDocumento,
+																				t0.vnd_docdate FechaDocumento,
+																				t0.vnd_duedate FechaVencimiento,
+																				t0.vnd_doctotal totalfactura,
+																			    coalesce(t0.vnd_doctotal ,0) saldo,
+																				trim('COP' FROM t0.vnd_currency) MonedaDocumento,
+																				'".$Data['fecha']."' FechaCorte,
+																				('".$Data['fecha']."' - t0.vnd_duedate) dias,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.vnd_duedate) >=0 and ( '".$Data['fecha']."' - t0.vnd_duedate) <=30
+																						then (t0.vnd_doctotal )
+																						ELSE 0
+																				END uno_treinta,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.vnd_duedate) >=31 and ( '".$Data['fecha']."' - t0.vnd_duedate) <=60
+																						then (t0.vnd_doctotal )
+																						ELSE 0
+																				END treinta_uno_secenta,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.vnd_duedate) >=61 and ( '".$Data['fecha']."' - t0.vnd_duedate) <=90
+																						then (t0.vnd_doctotal )
+																						ELSE 0
+																				END secenta_uno_noventa,
+																				CASE
+																					WHEN ( '".$Data['fecha']."' - t0.vnd_duedate) >=91
+																						then (t0.vnd_doctotal )
+																						ELSE 0
+																				END mayor_noventa
+
+																			FROM dvnd t0
+																			WHERE '".$Data['fecha']."' >= t0.vnd_duedate  and t0.vnd_cardcode = '".$Data['cardcode']."'
+																			ORDER BY NumeroDocumento";
 
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
          // print_r($contenidoestadocuenta);exit();die();

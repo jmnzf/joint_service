@@ -1319,23 +1319,23 @@ class PurchaseOrder extends REST_Controller {
   }
 
 	private function buscarPosicion($llave, $inArray){
-			$res = 0;
-	  	for($i = 0; $i < count($inArray); $i++) {
-					if($inArray[$i] == "$llave"){
-								$res =  $i;
-								break;
-					}
-			}
+		$res = 0;
+  	for($i = 0; $i < count($inArray); $i++) {
+				if($inArray[$i] == "$llave"){
+							$res =  $i;
+							break;
+				}
+		}
 
-			return $res;
+		return $res;
 	}
 
 	private function validateDate($fecha){
-			if(strlen($fecha) == 10 OR strlen($fecha) > 10){
-				return true;
-			}else{
-				return false;
-			}
+		if(strlen($fecha) == 10 OR strlen($fecha) > 10){
+			return true;
+		}else{
+			return false;
+		}
 	}
 
 

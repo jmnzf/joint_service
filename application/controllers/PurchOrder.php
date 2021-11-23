@@ -265,8 +265,19 @@ class PurchOrder extends REST_Controller {
 													$TotalDocumento = $Data['cpo_doctotal'];
 													$doctype =  $value['doctype'];
 
-													if(trim($Data['cpo_currency']) != $TasaDocLoc){
-															$TotalDocumento = ($TotalDocumento * $TasaDocLoc);
+													if(trim($Data['cpo_currency']) != $MONEDASYS){
+
+														  if(trim($Data['cpo_currency']) != $MONEDALOCAL){
+
+																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), 2);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+
+															}else{
+
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+
+															}
+
 													}
 
 													if( $condicion == ">" ){

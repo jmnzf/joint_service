@@ -35,7 +35,7 @@ class PickingCiego extends REST_Controller {
 				$formatter = new NumeroALetras();
 
 				$totalpeso = 0;
-
+				$totalcantidad = 0;
 
 
 
@@ -139,6 +139,7 @@ class PickingCiego extends REST_Controller {
 				// print_r($contenidoEV);exit();die();
 
 				$totaldetalle = '';
+
 				foreach ($contenidoEV as $key => $value) {
 					// code...
 					$detalle = '<td>'.$value['referencia'].'</td>

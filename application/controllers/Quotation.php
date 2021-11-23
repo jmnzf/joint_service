@@ -782,7 +782,7 @@ class Quotation extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM vct1 WHERE vc1_docentry =:vc1_docentry";
+				$sqlSelect = "SELECT * FROM vct1 WHERE vc1_docentry =:vc1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vc1_docentry" => $Data['vc1_docentry']));
 

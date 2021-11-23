@@ -251,6 +251,8 @@ class PurchaseRequest extends REST_Controller {
 									':bed_status'   => 4 // 4 APROBADO SEGUN MODELO DE APROBACION
 				));
 
+
+
 				if(!isset($resVerificarAprobacion[0])){
 
 							$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
@@ -287,10 +289,21 @@ class PurchaseRequest extends REST_Controller {
 													$TotalDocumento = $Data['csc_doctotal'];
 													$doctype =  $value['doctype'];
 
-													if(trim($Data['csc_currency']) != $TasaDocLoc){
-															$TotalDocumento = ($TotalDocumento * $TasaDocLoc);
-													}
+													if(trim($Data['csc_currency']) != $MONEDASYS){
 
+															if(trim($Data['csc_currency']) != $MONEDALOCAL){
+
+																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), 2);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+
+															}else{
+
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+
+															}
+
+													}
+													
 													if( $condicion == ">" ){
 
 																$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
@@ -339,6 +352,7 @@ class PurchaseRequest extends REST_Controller {
 							}
 
 			}
+
 
 			// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
 

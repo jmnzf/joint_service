@@ -480,13 +480,13 @@ class PaymentsReceived extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO
                                         	bpr1 (pr1_docnum,pr1_docentry,pr1_numref,pr1_docdate,pr1_vlrtotal,pr1_vlrpaid,pr1_comments,pr1_porcdiscount,pr1_doctype,
-                                            pr1_docduedate,pr1_daysbackw,pr1_vlrdiscount,pr1_ocrcode)
+                                            pr1_docduedate,pr1_daysbackw,pr1_vlrdiscount,pr1_ocrcode, pr1_accountid)
                                     VALUES (:pr1_docnum,:pr1_docentry,:pr1_numref,:pr1_docdate,:pr1_vlrtotal,:pr1_vlrpaid,:pr1_comments,:pr1_porcdiscount,
-                                            :pr1_doctype,:pr1_docduedate,:pr1_daysbackw,:pr1_vlrdiscount,:pr1_ocrcode)";
+                                            :pr1_doctype,:pr1_docduedate,:pr1_daysbackw,:pr1_vlrdiscount,:pr1_ocrcode, :pr1_accountid)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':pr1_docnum' => $resInsert,
-                        ':pr1_docentry' => is_numeric($detail['pr1_docentry'])?$detail['pr1_docentry']:0,
+                        ':pr1_docentry' => $resInsert,
                         ':pr1_numref' => isset($detail['pr1_numref'])?$detail['pr1_numref']:NULL,
                         ':pr1_docdate' =>  $this->validateDate($detail['pr1_docdate'])?$detail['pr1_docdate']:NULL,
                         ':pr1_vlrtotal' => is_numeric($detail['pr1_vlrtotal'])?$detail['pr1_vlrtotal']:0,
@@ -497,7 +497,8 @@ class PaymentsReceived extends REST_Controller {
                         ':pr1_docduedate' => $this->validateDate($detail['pr1_docdate'])?$detail['pr1_docdate']:NULL,
                         ':pr1_daysbackw' => is_numeric($detail['pr1_daysbackw'])?$detail['pr1_daysbackw']:0,
                         ':pr1_vlrdiscount' => is_numeric($detail['pr1_vlrdiscount'])?$detail['pr1_vlrdiscount']:0,
-                        ':pr1_ocrcode' => isset($detail['pr1_ocrcode'])?$detail['pr1_ocrcode']:NULL
+                        ':pr1_ocrcode' => isset($detail['pr1_ocrcode'])?$detail['pr1_ocrcode']:NULL,
+												':pr1_accountid' => is_numeric($detail['pr1_accountid'])?$detail['pr1_accountid']:0
 
                 ));
 								// Se verifica que el detalle no de error insertando //
@@ -559,8 +560,8 @@ class PaymentsReceived extends REST_Controller {
 								$DetalleAsientoCuentaTercero->bpr_cardcode  = isset($Data['bpr_cardcode'])?$Data['bpr_cardcode']:NULL;
 								$DetalleAsientoCuentaTercero->pr1_doctype   = is_numeric($detail['pr1_doctype'])?$detail['pr1_doctype']:0;
 								$DetalleAsientoCuentaTercero->pr1_docentry  = is_numeric($detail['pr1_docentry'])?$detail['pr1_docentry']:0;
-								$DetalleAsientoCuentaTercero->cuentatercero = $cuentaTercero;
-								$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($cuentaTercero, 0, 1);
+								$DetalleAsientoCuentaTercero->cuentatercero = is_numeric($detail['pr1_accountid'])?$detail['pr1_accountid']:0;
+								$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($DetalleAsientoCuentaTercero->cuentatercero, 0, 1);
 								$DetalleAsientoCuentaTercero->pr1_vlrpaid = is_numeric($detail['pr1_vlrpaid'])?$detail['pr1_vlrpaid']:0;
 								$DetalleAsientoCuentaTercero->pr1_docdate	= $this->validateDate($detail['pr1_docdate'])?$detail['pr1_docdate']:NULL;
 
@@ -783,6 +784,7 @@ class PaymentsReceived extends REST_Controller {
 										$TotalPagoRecibidoOriginal = 0;
 										$TotalDiferencia = 0;
 										$cuenta = 0;
+										$cuentaLinea = 0;
 										$docentry = 0;
 										$doctype = 0;
 										$fechaDocumento = '';
@@ -798,7 +800,8 @@ class PaymentsReceived extends REST_Controller {
 													$docentry = $value->pr1_docentry;
 													$doctype  = $value->pr1_doctype;
 													$cuenta   = $value->cuentaNaturaleza;
-													$fechaDocumento =$value->pr1_docdate;
+													$fechaDocumento = $value->pr1_docdate;
+													$cuentaLinea = $value->cuentatercero;
 
 										}
 
@@ -978,55 +981,10 @@ class PaymentsReceived extends REST_Controller {
 												break;
 										}
 
-
-										// ACTUALIZAR EL ASIENTO DE LA FACTURA QUE SE ESTA AFECTANDO CON EL PAGO RECIBIDO
-										$sqlUpdateDoc = "UPDATE mac1
-																		 SET ac1_credit_import = ac1_credit_import + :ac1_credit_import
-																		 ,ac1_debit_import = ac1_debit_import + :ac1_debit_import
-																		 ,ac1_credit_importsys = ac1_credit_importsys + :ac1_credit_importsys
-																		 ,ac1_debit_importsys = ac1_debit_importsys + :ac1_debit_importsys
-																		 WHERE ac1_legal_num = :ac1_legal_num
-																		 AND ac1_font_type = :ac1_font_type
-																		 AND ac1_font_key =  :ac1_font_key
-																		 AND ac1_account = :ac1_account";
-
-										$resUpdateDoc = $this->pedeo->updateRow($sqlUpdateDoc, array(
-																':ac1_legal_num' => $Data['bpr_cardcode'],
-																':ac1_font_type' => $doctype,
-																':ac1_font_key'  => $docentry,
-																':ac1_account'   => $cuentaTercero,
-																':ac1_credit_import' => round($credito, 2),
-																':ac1_debit_import' => round($debito, 2),
-																':ac1_credit_importsys' => round($MontoSysCR, 2),
-																':ac1_debit_importsys' => round($MontoSysDB, 2)
-										));
-
-
-										if(is_numeric($resUpdateDoc) && $resUpdateDoc == 1){
-
-										}else{
-
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data'    => $resUpdateDoc,
-														'mensaje'	=> 'No se pudo actualizar el asiento del documento: '.$docentry
-													);
-
-													$this->response($respuesta);
-
-													return;
-
-										}
-
-										// FIN PROCEDIMIENTO ACTUALIZAR EL ASIENTO DE LA FACTURA QUE SE ESTA AFECTANDO CON EL PAGO RECIBIDO
-
-
 										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 												':ac1_trans_id' => $resInsertAsiento,
-												':ac1_account' => $cuentaTercero,
+												':ac1_account' => $cuentaLinea,
 												':ac1_debit' => round($debito, 2),
 												':ac1_credit' => round($credito, 2),
 												':ac1_debit_sys' => round($MontoSysDB,2),
@@ -1191,6 +1149,7 @@ class PaymentsReceived extends REST_Controller {
 																$TotalPagoRecibidoOriginal = 0;
 																$TotalDiferencia = 0;
 																$cuenta = 0;
+																$cuentaLinea = 0;
 																$docentry = 0;
 																$doctype = 0;
 																$fechaDocumento = '';
@@ -1207,6 +1166,7 @@ class PaymentsReceived extends REST_Controller {
 																			$doctype  = $value->pr1_doctype;
 																			$cuenta   = $value->cuentaNaturaleza;
 																			$fechaDocumento =$value->pr1_docdate;
+																			$cuentaLinea = $value->cuentatercero;
 
 																}
 
@@ -1308,7 +1268,7 @@ class PaymentsReceived extends REST_Controller {
 																$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 																		':ac1_trans_id' => $resInsertAsiento,
-																		':ac1_account' => $cuentaTercero,
+																		':ac1_account' => $cuentaLinea,
 																		':ac1_debit' => round($debito, 2),
 																		':ac1_credit' => round($credito, 2),
 																		':ac1_debit_sys' => round($MontoSysDB,2),

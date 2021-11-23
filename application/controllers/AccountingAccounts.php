@@ -183,7 +183,28 @@ class AccountingAccounts extends REST_Controller {
   // OBTENER CUENTAS CONTABLES
   public function getAccountingAccounts_get(){
 
-        $sqlSelect = " SELECT * FROM dacc";
+        $sqlSelect = "SELECT
+														    acc_id,
+														    cast(acc_code as varchar) ,
+														    acc_name,
+														    acc_level,
+														    round((select sum(t1.ac1_debit-t1.ac1_credit) from mac1 t1 where t1.ac1_account = acc_code), 2) as saldo,
+														    acc_cash ,
+														    acc_cash_flow,
+														    acc_budget,
+														    acc_sup  ,
+														    acc_type ,
+														    acc_tax_edef ,
+														    acc_bus_unit   ,
+														    acc_project,
+														    acc_block_manual ,
+														    acc_businessp  ,
+														    acc_enabled,
+														    acc_cost_center,
+														    acc_shortb ,
+														    acc_jobcap ,
+														    acc_exptype from dacc
+														order by cast(acc_code as varchar)";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
