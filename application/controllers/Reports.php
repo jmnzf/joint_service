@@ -584,6 +584,7 @@ class Reports extends REST_Controller {
 									left join mac1 t1 on t0.dvf_docentry = t1.ac1_font_key and t0.dvf_doctype = t1.ac1_font_type
 									join dacc t2 on t2.acc_code = t1.ac1_account and t2.acc_businessp = '1'
 									WHERE '".$Data['fecha']."'  >= t0.dvf_duedate  and t0.dvf_cardcode = '".$Data['cardcode']."'
+									and (t0.dvf_doctotal - coalesce(T0.dvf_paytoday,0))  > 0
 
 									union all
 
