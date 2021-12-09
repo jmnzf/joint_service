@@ -489,6 +489,8 @@ class SalesNc extends REST_Controller {
 
 										$ManejaInvetario = 1;
 
+									}else{
+										$ManejaInvetario = 0;
 									}
 
 									// FIN PROCESO ITEM MANEJA INVENTARIO
@@ -502,18 +504,43 @@ class SalesNc extends REST_Controller {
 											// si el item es inventariable
 											if(	$ManejaInvetario == 1){
 													//Se aplica el movimiento de inventario
-													$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
-																								 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
+
+													//BUSCANDO COSTO DE ARTICULO PARA RIGISTRARLO EN EL MOVIMIENTO
+													$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+													$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['nc1_whscode'], ':bdi_itemcode' => $detail['nc1_itemcode']));
+
+
+													if(!isset($resCostoMomentoRegistro[0])){
+
+															$this->pedeo->trans_rollback();
+
+															$respuesta = array(
+																'error'   => true,
+																'data' => [],
+																'mensaje'	=> 'no se encontro el costo del articulo'.$detail['nc1_itemcode']
+															);
+
+															 $this->response($respuesta);
+
+															 return;
+													}
+
+													$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																								VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
 
 													$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-															 ':bmi_itemcode' => isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL,
-															 ':bmi_quantity' => is_numeric($detail['nc1_quantity'])? $detail['nc1_quantity'] * $Data['invtype']:0,
-															 ':bmi_whscode'  => isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL,
-															 ':bmi_createat' => $this->validateDate($Data['vnc_createat'])?$Data['vnc_createat']:NULL,
-															 ':bmi_createby' => isset($Data['vnc_createby'])?$Data['vnc_createby']:NULL,
-															 ':bmy_doctype'  => is_numeric($Data['vnc_doctype'])?$Data['vnc_doctype']:0,
-															 ':bmy_baseentry' => $resInsert
+															 ':bmi_itemcode'  => isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL,
+															 ':bmi_quantity'  => is_numeric($detail['nc1_quantity'])? $detail['nc1_quantity'] * $Data['invtype']:0,
+															 ':bmi_whscode'   => isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL,
+															 ':bmi_createat'  => $this->validateDate($Data['vnc_createat'])?$Data['vnc_createat']:NULL,
+															 ':bmi_createby'  => isset($Data['vnc_createby'])?$Data['vnc_createby']:NULL,
+															 ':bmy_doctype'   => is_numeric($Data['vnc_doctype'])?$Data['vnc_doctype']:0,
+															 ':bmy_baseentry' => $resInsert,
+															 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+															 ':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
+															 ':bmi_basenum'			  => $DocNumVerificado
+
 
 													));
 
@@ -560,7 +587,7 @@ class SalesNc extends REST_Controller {
 																	 $CantidadNueva = $detail['nc1_quantity'];
 
 
-																	 $CantidadTotal = ($CantidadActual - $CantidadNueva);
+																	 $CantidadTotal = ($CantidadActual + $CantidadNueva);
 
 																	 $sqlUpdateCostoCantidad =  "UPDATE tbdi
 																															 SET bdi_quantity = :bdi_quantity
@@ -615,7 +642,7 @@ class SalesNc extends REST_Controller {
 											}
 
 									}
-									//FIN SI LA NOTA APLICA SIN MOVER INVETARIO
+									//FIN SI LA NOTA APLICA SIN MOVER INVENTARIO
 
 
 
@@ -662,29 +689,29 @@ class SalesNc extends REST_Controller {
 
 
 									// se busca la cuenta contable del costoInventario y costoCosto
-									$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-
-									$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['nc1_itemcode']));
-
-									if(!isset($resArticulo[0])){
-
-												$this->pedeo->trans_rollback();
-
-												$respuesta = array(
-													'error'   => true,
-													'data' => $resArticulo,
-													'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
-												);
-
-												 $this->response($respuesta);
-
-												 return;
-									}
+									// $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+									//
+									// $resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['nc1_itemcode']));
+									//
+									// if(!isset($resArticulo[0])){
+									//
+									// 			$this->pedeo->trans_rollback();
+									//
+									// 			$respuesta = array(
+									// 				'error'   => true,
+									// 				'data' => $resArticulo,
+									// 				'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
+									// 			);
+									//
+									// 			 $this->response($respuesta);
+									//
+									// 			 return;
+									// }
 
 									if ( $exc_inv == 1 ){
 										// VALIDANDO ITEM INVENTARIABLE
 										if ( $ManejaInvetario == 1){
-												$DetalleCostoInventario->ac1_account = $resArticulo[0]['mga_acct_inv'];
+												$DetalleCostoInventario->ac1_account = is_numeric($detail['nc1_acctcode'])?$detail['nc1_acctcode']: 0;
 												$DetalleCostoInventario->ac1_prc_code = isset($detail['nc1_costcode'])?$detail['nc1_costcode']:NULL;
 												$DetalleCostoInventario->ac1_uncode = isset($detail['nc1_ubusiness'])?$detail['nc1_ubusiness']:NULL;
 												$DetalleCostoInventario->ac1_prj_code = isset($detail['nc1_project'])?$detail['nc1_project']:NULL;
@@ -698,7 +725,7 @@ class SalesNc extends REST_Controller {
 												$DetalleCostoInventario->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
 
 
-												$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
+												$DetalleCostoCosto->ac1_account = is_numeric($detail['nc1_acctcode'])?$detail['nc1_acctcode']: 0;
 												$DetalleCostoCosto->ac1_prc_code = isset($detail['nc1_costcode'])?$detail['nc1_costcode']:NULL;
 												$DetalleCostoCosto->ac1_uncode = isset($detail['nc1_ubusiness'])?$detail['nc1_ubusiness']:NULL;
 												$DetalleCostoCosto->ac1_prj_code = isset($detail['nc1_project'])?$detail['nc1_project']:NULL;

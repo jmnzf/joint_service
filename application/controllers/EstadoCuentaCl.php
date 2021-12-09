@@ -204,9 +204,15 @@ class EstadoCuentaCl extENDs REST_Controller {
 
 
 				$totaldetalle = '';
+				$detail_0_30 = 0;
+				$detail_30_60 = 0;
+				$detail_60_90 = 0;
+				$detail_mayor_90 = 0;
+				$total_valores = '';
+
 				foreach ($contenidoestadocuenta as $key => $value) {
 					// code...
-					$detalle = '<td class="centro">'.$value['numerodocumento'].'</td>
+					$detalle = '<td style="width: 12%;" class="centro">'.$value['numerodocumento'].'</td>
 											<td class="centro">'.$value['fechadocumento'].'</td>
 											<td class="centro">'.$value['monedadocumento']." ".number_format($value['totalfactura'], 2, ',', '.').'</td>
 											<td class="centro">'.$value['fechavencimiento'].'</td>
@@ -216,8 +222,28 @@ class EstadoCuentaCl extENDs REST_Controller {
 											<td class="centro">'.$value['monedadocumento']." ".number_format($value['treinta_uno_secenta'], 2, ',', '.').'</td>
                       <td class="centro">'.$value['monedadocumento']." ".number_format($value['secenta_uno_noventa'], 2, ',', '.').'</td>
                       <td class="centro">'.$value['monedadocumento']." ".number_format($value['mayor_noventa'], 2, ',', '.').'</td>';
-				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
-				 $totalfactura = ($totalfactura + ($value['totalfactura'] - $value['saldo']));
+				  $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
+
+				  $detail_0_30 =  $detail_0_30 + ($value['uno_treinta']);
+				  $detail_30_60 =  $detail_30_60 + ($value['treinta_uno_secenta']);
+				  $detail_60_90 =  $detail_60_90 + ($value['secenta_uno_noventa']);
+				  $detail_mayor_90 =  $detail_mayor_90 + ($value['mayor_noventa']);
+
+					$total_valores = '
+								<tr>
+								<th>&nbsp;</th>
+								<th>&nbsp;</th>
+								<th>&nbsp;</th>
+								<th>&nbsp;</th>
+								<th>Total</th>
+								<th style="width: 10%;" class="fondo centro">'.$value['monedadocumento'].' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), 2, ',', '.').'</th>
+								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_0_30, 2, ',', '.').'</th>
+								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_30_60, 2, ',', '.').'</th>
+								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_60_90, 2, ',', '.').'</th>
+								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_mayor_90, 2, ',', '.').'</th>
+								</tr>';
+
+				  $totalfactura = ($totalfactura + ($value['totalfactura'] - $value['saldo']));
 				}
 
 
@@ -285,17 +311,17 @@ class EstadoCuentaCl extENDs REST_Controller {
         <table class="borde" style="width:100%">
         <tr>
           <th class="fondo">Numero Documento</th>
-          <th class="fondo">Fecha Documento</th>
+          <th class="fondo">F. Documento</th>
 					<th class="fondo">Total Documento</th>
-          <th class="fondo">Fecha Ven Documento</th>
-          <th class="fondo">Fecha Corte</th>
+          <th class="fondo">F. Ven Documento</th>
+          <th class="fondo">F. Corte</th>
 					<th class="fondo">Dias Vencidos</th>
           <th class="fondo">0-30</th>
           <th class="fondo">31-60</th>
           <th class="fondo">61-90</th>
           <th class="fondo">+90</th>
         </tr>
-      	'.$totaldetalle.'
+      	'.$totaldetalle.$total_valores.'
         </table>
         <br>
         <table width="100%" style="vertical-align: bottom; font-family: serif;

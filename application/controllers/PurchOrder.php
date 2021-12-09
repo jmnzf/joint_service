@@ -229,6 +229,8 @@ class PurchOrder extends REST_Controller {
 									':bed_status'   => 4 // 4 APROBADO SEGUN MODELO DE APROBACION
 				));
 
+
+
 				if(!isset($resVerificarAprobacion[0])){
 
 							$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
@@ -295,9 +297,7 @@ class PurchOrder extends REST_Controller {
 																					':mau_doctype'  => $doctype
 																));
 
-																if(isset($ressq[0]) && count($ressq) > 1){
-																		break;
-																}else if(isset($ressq[0])){
+																if( isset($ressq[0]) ){
 																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'cpo','po1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 
@@ -317,9 +317,7 @@ class PurchOrder extends REST_Controller {
 																					':mau_doctype' => $doctype
 																));
 
-																if(isset($ressq[0]) && count($ressq) > 1){
-																		break;
-																}else if(isset($ressq[0])){
+																if( isset($ressq[0]) ){
 																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'cpo','po1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 													}
@@ -416,7 +414,7 @@ class PurchOrder extends REST_Controller {
 
 										':bed_docentry' => $resInsert,
 										':bed_doctype' => $Data['cpo_doctype'],
-										':bed_status' => 1, //ESTADO CERRADO
+										':bed_status' => 1, //ESTADO ABIERTO
 										':bed_createby' => $Data['cpo_createby'],
 										':bed_date' => date('Y-m-d'),
 										':bed_baseentry' => NULL,
@@ -441,6 +439,50 @@ class PurchOrder extends REST_Controller {
 
 								return;
 					}
+
+
+
+					// SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
+					// SI EL DOCTYPE = 21
+					if( $Data['cpo_basetype'] == 21){
+
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+											':bed_docentry' => $Data['cpo_baseentry'],
+											':bed_doctype' => $Data['cpo_basetype'],
+											':bed_status' => 3, //ESTADO CERRADO
+											':bed_createby' => $Data['cpo_createby'],
+											':bed_date' => date('Y-m-d'),
+											':bed_baseentry' => $resInsert,
+											':bed_basetype' => $Data['cpo_doctype']
+						));
+
+
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+
+								 $this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar la solicitud de compras',
+										'proceso' => 'Insertar estado documento'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+						}
+
+					}
+					//FIN SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
 
 					//FIN PROCESO ESTADO DEL DOCUMENTO
 

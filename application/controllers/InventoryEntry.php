@@ -37,6 +37,7 @@ class InventoryEntry extends REST_Controller {
 			$inArrayCuentaGrupo = array();
 			$llaveCuentaGrupo = "";
 			$posicionCuentaGrupo = 0;
+			$ManejaInvetario = 0;
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -439,6 +440,8 @@ class InventoryEntry extends REST_Controller {
 
 									$ManejaInvetario = 1;
 
+								}else{
+									$ManejaInvetario = 0;
 								}
 
 								// FIN PROCESO ITEM MANEJA INVENTARIO
@@ -450,6 +453,7 @@ class InventoryEntry extends REST_Controller {
 
 										$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
 										$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['ei1_whscode'], ':bdi_itemcode' => $detail['ei1_itemcode']));
+
 
 
 										if(isset($resCostoMomentoRegistro[0])){
@@ -488,8 +492,8 @@ class InventoryEntry extends REST_Controller {
 											}
 
 											//Se aplica el movimiento de inventario
-											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost)
-																						 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost)";
+											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																						VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
 
 											$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -500,7 +504,9 @@ class InventoryEntry extends REST_Controller {
 													 ':bmi_createby' => isset($Data['iei_createby'])?$Data['iei_createby']:NULL,
 													 ':bmy_doctype'  => is_numeric($Data['iei_doctype'])?$Data['iei_doctype']:0,
 													 ':bmy_baseentry' => $resInsert,
-													 ':bmi_cost'      => $NuevoCostoPonderado
+													 ':bmi_cost'      => $NuevoCostoPonderado,
+													 ':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
+													 ':bmi_basenum'			=> $DocNumVerificado
 
 											));
 
@@ -529,8 +535,8 @@ class InventoryEntry extends REST_Controller {
 
 												// SE COLOCA EL PRECIO DE LA LINEA COMO EL COSTO
 												//Se aplica el movimiento de inventario
-												$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost)
-																							 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost)";
+												$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																							VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
 
 												$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -541,7 +547,9 @@ class InventoryEntry extends REST_Controller {
 														 ':bmi_createby'  => isset($Data['iei_createby'])?$Data['iei_createby']:NULL,
 														 ':bmy_doctype'   => is_numeric($Data['iei_doctype'])?$Data['iei_doctype']:0,
 														 ':bmy_baseentry' => $resInsert,
-														 ':bmi_cost'      => $detail['ei1_price']
+														 ':bmi_cost'      => $detail['ei1_price'],
+														 ':bmi_currequantity' => $detail['ei1_quantity'],
+														 ':bmi_basenum'			=> $DocNumVerificado
 
 												));
 
@@ -1128,11 +1136,14 @@ class InventoryEntry extends REST_Controller {
   public function getInventoryEntry_get(){
 
         $sqlSelect = "SELECT
+        							t0.iei_docentry,
+        							t0.iei_currency,
 											t2.mdt_docname,
 											t0.iei_docnum,
 											t0.iei_docdate,
 											t0.iei_cardname,
 											t0.iei_comment,
+											CONCAT(T0.iei_currency,' ',to_char(t0.iei_baseamnt,'999,999,999,999.00')) iei_baseamnt,
 											CONCAT(T0.iei_currency,' ',to_char(t0.iei_doctotal,'999,999,999,999.00')) iei_doctotal,
 											t1.mev_names iei_slpcode
 										 FROM miei t0
@@ -1223,7 +1234,7 @@ class InventoryEntry extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM iei WHERE ei1_docentry =:ei1_docentry";
+				$sqlSelect = "SELECT iei1.*, dmws.dws_name FROM iei1 INNER JOIN dmws ON dmws.dws_code = iei1.ei1_whscode WHERE ei1_docentry =:ei1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ei1_docentry" => $Data['ei1_docentry']));
 

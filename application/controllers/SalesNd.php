@@ -493,57 +493,17 @@ class SalesNd extends REST_Controller {
 
 														$ManejaInvetario = 1;
 
+													}else{
+														$ManejaInvetario = 0;
 													}
 
 													// FIN PROCESO ITEM MANEJA INVENTARIO
 
 													// si el item es inventariable
 													if( $ManejaInvetario == 1 ){
-																	//Se aplica el movimiento de inventario
-																	$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
-																												 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
-
-																	$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
-
-																			 ':bmi_itemcode' => isset($detail['nd1_itemcode'])?$detail['nd1_itemcode']:NULL,
-																			 ':bmi_quantity' => is_numeric($detail['nd1_quantity'])? $detail['nd1_quantity'] * $Data['invtype']:0,
-																			 ':bmi_whscode'  => isset($detail['nd1_whscode'])?$detail['nd1_whscode']:NULL,
-																			 ':bmi_createat' => $this->validateDate($Data['vnd_createat'])?$Data['vnd_createat']:NULL,
-																			 ':bmi_createby' => isset($Data['vnd_createby'])?$Data['vnd_createby']:NULL,
-																			 ':bmy_doctype'  => is_numeric($Data['vnd_doctype'])?$Data['vnd_doctype']:0,
-																			 ':bmy_baseentry' => $resInsert
-
-																	));
-
-																	if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
-																			// Se verifica que el detalle no de error insertando //
-																	}else{
-
-																			// si falla algun insert del detalle de la Nota debito de clientes se devuelven los cambios realizados por la transaccion,
-																			// se retorna el error y se detiene la ejecucion del codigo restante.
-																				$this->pedeo->trans_rollback();
-
-																				$respuesta = array(
-																					'error'   => true,
-																					'data' => $sqlInserMovimiento,
-																					'mensaje'	=> 'No se pudo registrar la Nota debito de clientes'
-																				);
-
-																				 $this->response($respuesta);
-
-																				 return;
-																	}
-
-																	//FIN aplicacion de movimiento de inventario
-
-
-
 
 
 																	//LLENANDO DETALLE ASIENTO CONTABLES
-
-
-
 																	$DetalleAsientoIngreso = new stdClass();
 																	$DetalleAsientoIva = new stdClass();
 																	$DetalleCostoInventario = new stdClass();

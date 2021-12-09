@@ -335,7 +335,7 @@ class SalesDv extends REST_Controller {
 
 										':bed_docentry' => $resInsert,
 										':bed_doctype' => $Data['vdv_doctype'],
-										':bed_status' => 1, //ESTADO CERRADO
+										':bed_status' => 1, //ESTADO ABIERTO
 										':bed_createby' => $Data['vdv_createby'],
 										':bed_date' => date('Y-m-d'),
 										':bed_baseentry' => NULL,
@@ -461,6 +461,9 @@ class SalesDv extends REST_Controller {
 
 									$ManejaInvetario = 1;
 
+								}else{
+
+									$ManejaInvetario = 0;
 								}
 
 								// FIN PROCESO ITEM MANEJA INVENTARIO
@@ -542,8 +545,8 @@ class SalesDv extends REST_Controller {
 
 
 												//Se aplica el movimiento de inventario
-												$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost)
-																							 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost)";
+												$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																							VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
 
 												$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -554,7 +557,10 @@ class SalesDv extends REST_Controller {
 														 ':bmi_createby'  => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL,
 														 ':bmy_doctype'   => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
 														 ':bmy_baseentry' => $resInsert,
-														 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice']
+														 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+														 ':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
+														 ':bmi_basenum'				=> $DocNumVerificado
+
 
 												));
 
@@ -641,6 +647,8 @@ class SalesDv extends REST_Controller {
 																		 'data'    => $resUpdateCostoCantidad,
 																		 'mensaje'	=> 'No se pudo crear la devolucion de ventas'
 																	 );
+
+																	 return;
 															 }
 
 													}else{
@@ -652,6 +660,8 @@ class SalesDv extends REST_Controller {
 																		 'data'    => $resUpdateCostoCantidad,
 																		 'mensaje' => 'No hay existencia para el item: '.$detail['dv1_itemcode']
 																	 );
+
+																	 return;
 													}
 
 												}else{
@@ -914,8 +924,8 @@ class SalesDv extends REST_Controller {
 
 								':ac1_trans_id' => $resInsertAsiento,
 								':ac1_account' => $cuentaPuente,
-								':ac1_debit' => $dbito,
-								':ac1_credit' => $cdito,
+								':ac1_debit' => round($dbito, 2),
+								':ac1_credit' => round($cdito, 2),
 								':ac1_debit_sys' => round($MontoSysDB,2),
 								':ac1_credit_sys' => round($MontoSysCR,2),
 								':ac1_currex' => 0,
@@ -1226,11 +1236,6 @@ class SalesDv extends REST_Controller {
 					$cantidad_dev = $resEstado2[0]['cantidad'];
 
 
-//
-// print_r($item_del);
-// print_r($item_dev);
-// print_r($cantidad_del);
-// print_r($cantidad_dev);exit();die();
 					if($item_del == $item_dev  &&  $cantidad_del == $cantidad_dev){
 
 
@@ -1259,7 +1264,7 @@ class SalesDv extends REST_Controller {
 												$respuesta = array(
 													'error'   => true,
 													'data' => $resInsertEstado,
-													'mensaje'	=> 'No se pudo registrar la devolucion de venta123'
+													'mensaje'	=> 'No se pudo registrar la devolucion de venta'
 												);
 
 

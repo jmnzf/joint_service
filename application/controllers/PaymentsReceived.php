@@ -413,7 +413,7 @@ class PaymentsReceived extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resInsertAsiento,
-									'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+									'mensaje'	=> 'No se pudo registrar el pago'
 								);
 
 								 $this->response($respuesta);
@@ -428,53 +428,52 @@ class PaymentsReceived extends REST_Controller {
 
 
 								// SOLO SI NO ES UN ANTICIPO
-								if($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0){
-											//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
-											$VlrPayFact = "SELECT COALESCE(dvf_paytoday,0) as dvf_paytoday,dvf_doctotal from dvfv WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
-											$resVlrPayFact = $this->pedeo->queryTable($VlrPayFact, array(
-												':dvf_docentry' => $detail['pr1_docentry'],
-												':dvf_doctype' => $detail['pr1_doctype']
-											));
-
-
-											if(isset($resVlrPayFact[0])){
-
-												$VlrPaidActual = $detail['pr1_vlrpaid'];
-												$VlrPaidFact = $resVlrPayFact[0]['dvf_paytoday'];
-
-												$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
-
-												if($SumVlr <= $resVlrPayFact[0]['dvf_doctotal'] ){
-
-
-												}else{
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data' => '',
-														'mensaje'	=> 'El valor a pagar no puede ser mayor al saldo de la factura'
-													);
-
-													 $this->response($respuesta);
-
-													 return;
-												}
-
-											}
-											else{
-												$this->pedeo->trans_rollback();
-												$respuesta = array(
-													'error'   => true,
-													'data' => $resVlrPayFact,
-													'mensaje'	=> 'No tiene valor para realizar la operacion');
-
-													$this->response($respuesta);
-
-												 return;
-
-											}
-								}
+								// if($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0){
+								// 			//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
+								// 			$VlrPayFact = "SELECT COALESCE(dvf_paytoday,0) as dvf_paytoday,dvf_doctotal from dvfv WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
+								// 			$resVlrPayFact = $this->pedeo->queryTable($VlrPayFact, array(
+								// 				':dvf_docentry' => $detail['pr1_docentry'],
+								// 				':dvf_doctype' => $detail['pr1_doctype']
+								// 			));
+								//
+								//
+								// 			if(isset($resVlrPayFact[0])){
+								//
+								// 				$VlrPaidActual = $detail['pr1_vlrpaid'];
+								// 				$VlrPaidFact = $resVlrPayFact[0]['dvf_paytoday'];
+								//
+								// 				$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
+								//
+								// 				if($SumVlr <= $resVlrPayFact[0]['dvf_doctotal'] ){
+								//
+								//
+								// 				}else{
+								// 					$this->pedeo->trans_rollback();
+								//
+								// 					$respuesta = array(
+								// 						'error'   => true,
+								// 						'data' => '',
+								// 						'mensaje'	=> 'El valor a pagar no puede ser mayor al saldo de la factura'
+								// 					);
+								//
+								// 					 $this->response($respuesta);
+								//
+								// 					 return;
+								// 				}
+								//
+								// 			}else{
+								// 				$this->pedeo->trans_rollback();
+								// 				$respuesta = array(
+								// 					'error'   => true,
+								// 					'data' => $resVlrPayFact,
+								// 					'mensaje'	=> 'No tiene valor para realizar la operacion');
+								//
+								// 					$this->response($respuesta);
+								//
+								// 				 return;
+								//
+								// 			}
+								// }
 
 
 
@@ -512,12 +511,12 @@ class PaymentsReceived extends REST_Controller {
 
 															':dvf_paytoday' => $detail['pr1_vlrpaid'],
 															':dvf_docentry' => $detail['pr1_docentry'],
-															':dvf_doctype' => $detail['pr1_doctype']
+															':dvf_doctype'  => $detail['pr1_doctype']
 
 
 														));
 
-														if(is_numeric($resUpdateFactPay) && $resUpdateFactPay > 0){
+														if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
 
 
 
@@ -560,11 +559,10 @@ class PaymentsReceived extends REST_Controller {
 								$DetalleAsientoCuentaTercero->bpr_cardcode  = isset($Data['bpr_cardcode'])?$Data['bpr_cardcode']:NULL;
 								$DetalleAsientoCuentaTercero->pr1_doctype   = is_numeric($detail['pr1_doctype'])?$detail['pr1_doctype']:0;
 								$DetalleAsientoCuentaTercero->pr1_docentry  = is_numeric($detail['pr1_docentry'])?$detail['pr1_docentry']:0;
-								$DetalleAsientoCuentaTercero->cuentatercero = is_numeric($detail['pr1_accountid'])?$detail['pr1_accountid']:0;
+								$DetalleAsientoCuentaTercero->cuentatercero = is_numeric($detail['pr1_cuenta'])?$detail['pr1_cuenta']:0;
 								$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($DetalleAsientoCuentaTercero->cuentatercero, 0, 1);
 								$DetalleAsientoCuentaTercero->pr1_vlrpaid = is_numeric($detail['pr1_vlrpaid'])?$detail['pr1_vlrpaid']:0;
 								$DetalleAsientoCuentaTercero->pr1_docdate	= $this->validateDate($detail['pr1_docdate'])?$detail['pr1_docdate']:NULL;
-
 
 								$llaveAsientoCuentaTercero = $DetalleAsientoCuentaTercero->bpr_cardcode.$DetalleAsientoCuentaTercero->pr1_docentry.$DetalleAsientoCuentaTercero->pr1_doctype;
 
@@ -721,9 +719,9 @@ class PaymentsReceived extends REST_Controller {
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
+									':ac1_font_key' => 0,
 									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['bpr_doctype'])?$Data['bpr_doctype']:0,
+									':ac1_font_type' => 0,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",
@@ -981,6 +979,7 @@ class PaymentsReceived extends REST_Controller {
 												break;
 										}
 
+
 										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 												':ac1_trans_id' => $resInsertAsiento,
@@ -996,9 +995,9 @@ class PaymentsReceived extends REST_Controller {
 												':ac1_credit_import' => 0,
 												':ac1_debit_importsys' => 0,
 												':ac1_credit_importsys' => 0,
-												':ac1_font_key' => $resInsert,
+												':ac1_font_key' => $docentry,
 												':ac1_font_line' => 1,
-												':ac1_font_type' => is_numeric($Data['bpr_doctype'])?$Data['bpr_doctype']:0,
+												':ac1_font_type' => $doctype,
 												':ac1_accountvs' => 1,
 												':ac1_doctype' => 18,
 												':ac1_ref1' => "",
@@ -1082,9 +1081,9 @@ class PaymentsReceived extends REST_Controller {
 															':ac1_credit_import' => 0,
 															':ac1_debit_importsys' => 0,
 															':ac1_credit_importsys' => 0,
-															':ac1_font_key' => $resInsert,
+															':ac1_font_key' => $docentry,
 															':ac1_font_line' => 1,
-															':ac1_font_type' => is_numeric($Data['bpr_doctype'])?$Data['bpr_doctype']:0,
+															':ac1_font_type' => $doctype,
 															':ac1_accountvs' => 1,
 															':ac1_doctype' => 18,
 															':ac1_ref1' => "",
@@ -1280,9 +1279,9 @@ class PaymentsReceived extends REST_Controller {
 																		':ac1_credit_import' => 0,
 																		':ac1_debit_importsys' => 0,
 																		':ac1_credit_importsys' => 0,
-																		':ac1_font_key' => $resInsert,
+																		':ac1_font_key' => $docentry,
 																		':ac1_font_line' => 1,
-																		':ac1_font_type' => is_numeric($Data['bpr_doctype'])?$Data['bpr_doctype']:0,
+																		':ac1_font_type' => $doctype,
 																		':ac1_accountvs' => 1,
 																		':ac1_doctype' => 18,
 																		':ac1_ref1' => "",

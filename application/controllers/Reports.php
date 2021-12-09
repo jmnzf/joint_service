@@ -28,70 +28,70 @@ class Reports extends REST_Controller {
       	$request = $this->post();
 
 		$where = [];
-
-      	$sql = 'SELECT
-			T0.BMI_ITEMCODE CodigoArticulo,
-			T14.DMA_ITEM_NAME NombreArticulo,
-			T1.DWS_CODE CodigoAlmacen,
-			T1.DWS_NAME NombreAlmacen,
-			T2.MDT_DOCNAME DocOrigen,
-			CASE
-				WHEN T0.BMY_DOCTYPE = 3 THEN T4.VEM_DOCNUM
-				WHEN T0.BMY_DOCTYPE = 5 THEN T5.DVF_DOCNUM
-				WHEN T0.BMY_DOCTYPE = 4 THEN T6.VDV_DOCNUM
-				WHEN T0.BMY_DOCTYPE = 6 THEN T7.VNC_DOCNUM
-				WHEN T0.BMY_DOCTYPE = 7 THEN T8.VND_DOCNUM
-				WHEN T0.BMY_DOCTYPE = 13 THEN T9.CEC_DOCNUM
-				WHEN T0.BMY_DOCTYPE = 14 THEN T10.CDC_DOCNUM
-				WHEN T0.BMY_DOCTYPE = 15 THEN T11.CFC_DOCNUM
-				WHEN T0.BMY_DOCTYPE = 16 THEN T12.CNC_DOCNUM
-				WHEN T0.BMY_DOCTYPE = 17 THEN T13.CND_DOCNUM
-			END DocNum,
-			T0.BMI_CREATEAT FechaDocNum,
-			T0.BMI_QUANTITY CantidadMovida,
-			T3.BDI_AVGPRICE * T0.BMI_QUANTITY  Costo,
-			T3.BDI_QUANTITY CantidadAcumulada,
-			T3.BDI_AVGPRICE * T3.BDI_QUANTITY CostoAcumulado
-		FROM TBMI T0
-		LEFT JOIN DMWS T1 ON T0.BMI_WHSCODE = T1.DWS_CODE
-		LEFT JOIN DMDT T2 ON T0.BMY_DOCTYPE = T2.MDT_DOCTYPE
-		LEFT JOIN TBDI T3 ON T0.BMI_ITEMCODE = T3.BDI_ITEMCODE
-		LEFT JOIN DVEM T4 ON T0.BMY_BASEENTRY = T4.VEM_DOCENTRY
-		LEFT JOIN DVFV T5 ON T0.BMY_BASEENTRY = T5.DVF_DOCENTRY
-		LEFT JOIN DVDV T6 ON T0.BMY_BASEENTRY = T6.VDV_DOCENTRY
-		LEFT JOIN DVNC T7 ON T0.BMY_BASEENTRY = T7.VNC_DOCENTRY
-		LEFT JOIN DVND T8 ON T0.BMY_BASEENTRY = T8.VND_DOCENTRY
-		LEFT JOIN DCEC T9 ON T0.BMY_BASEENTRY = T9.CEC_DOCENTRY
-		LEFT JOIN DCDC T10 ON T0.BMY_BASEENTRY = T10.CDC_DOCENTRY
-		LEFT JOIN DCFC T11 ON T0.BMY_BASEENTRY = T11.CFC_DOCENTRY
-		LEFT JOIN DCNC T12 ON T0.BMY_BASEENTRY = T12.CNC_DOCENTRY
-		LEFT JOIN DCND T13 ON T0.BMY_BASEENTRY = T13.CND_DOCENTRY
-		INNER JOIN DMAR T14 ON T0.BMI_ITEMCODE = T14.DMA_ITEM_CODE
-		WHERE T0.BMY_DOCTYPE NOT IN (1,2,11,12,18) ';
+      	$sql = '';
 		// ID ARTICULO.
 		if (!empty($request['fil_acticuloId'])) {
 			//
 			$where[':fil_acticuloId'] = $request['fil_acticuloId'];
 			// CONDICIÓN SQL.
-			$sql .= " AND T0.BMI_ITEMCODE = :fil_acticuloId";
+			$sql .= " AND tbmi.bmi_itemcode = :fil_acticuloId";
 		}
 		// ID ALMACEN.
 		if (!empty($request['fil_almacenId'])) {
 			//
 			$where[':fil_almacenId'] = $request['fil_almacenId'];
 			// CONDICIÓN SQL.
-			$sql .= " AND T1.DWS_CODE = :fil_almacenId";
+			$sql .= " AND dmws.dws_code = :fil_almacenId";
 		}
 		// FECHA INICIO Y FIN.
 		if (!empty($request['flt_dateint']) && !empty($request['flt_dateend'])) {
 			// CONDICIÓN SQL.
-			$sql .= " AND T0.BMI_CREATEAT BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
+			$sql .= " AND DATE(tbmi.bmi_createat) BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
 		}
 
-		$sql .=' ORDER BY FechaDocNum DESC';
-
-      	$result = $this->pedeo->queryTable($sql, $where);
-
+      	$result = $this->pedeo->queryTable("SELECT tbmi.bmi_itemcode AS codigoarticulo,
+																						dmar.dma_item_name AS nombrearticulo,
+																						tbdi.bdi_whscode AS codigoalmacen,
+																						dmws.dws_name AS nombrealmacen,
+																						dmdt.mdt_docname AS docorigen,
+																						CASE
+																							WHEN tbmi.bmy_doctype = 3 THEN  dvem.vem_docnum
+																							WHEN tbmi.bmy_doctype = 5 THEN  dvfv.dvf_docnum
+																							WHEN tbmi.bmy_doctype = 4 THEN  dvdv.vdv_docnum
+																							WHEN tbmi.bmy_doctype = 6 THEN  dvnc.vnc_docnum
+																							WHEN tbmi.bmy_doctype = 7 THEN  dvnd.vnd_docnum
+																							WHEN tbmi.bmy_doctype = 13 THEN dcec.cec_docnum
+																							WHEN tbmi.bmy_doctype = 14 THEN dcdc.cdc_docnum
+																							WHEN tbmi.bmy_doctype = 15 THEN dcfc.cfc_docnum
+																							WHEN tbmi.bmy_doctype = 16 THEN dcnc.cnc_docnum
+																							WHEN tbmi.bmy_doctype = 17 THEN dcnd.cnd_docnum
+																							WHEN tbmi.bmy_doctype = 9 THEN  miei.iei_docnum
+																							WHEN tbmi.bmy_doctype = 8 THEN  misi.isi_docnum
+																						END AS docnum,
+																						tbmi.bmi_createat AS fechadocnum,
+																						tbmi.bmi_quantity AS cantidadmovida,
+																						tbmi.bmi_cost AS costo,
+																						(tbmi.bmi_quantity + tbdi.bdi_quantity) AS cantidadrestante,
+																						tbdi.bdi_quantity AS cantidadantesdemovimiento,
+																						(tbmi.bmi_cost * (tbmi.bmi_quantity + tbdi.bdi_quantity)) costoacumulado
+																						FROM tbmi
+																						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
+																						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
+																						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
+																						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code
+																						LEFT JOIN dvem ON tbmi.bmy_baseentry = dvem.vem_docentry AND tbmi.bmy_doctype = dvem.vem_doctype
+																						LEFT JOIN dvfv ON tbmi.bmy_baseentry = dvfv.dvf_docentry AND tbmi.bmy_doctype = dvfv.dvf_doctype
+																						LEFT JOIN dvdv ON tbmi.bmy_baseentry = dvdv.vdv_docentry AND tbmi.bmy_doctype = dvdv.vdv_doctype
+																						LEFT JOIN dvnc ON tbmi.bmy_baseentry = dvnc.vnc_docentry AND tbmi.bmy_doctype = dvnc.vnc_doctype
+																						LEFT JOIN dvnd ON tbmi.bmy_baseentry = dvnd.vnd_docentry AND tbmi.bmy_doctype = dvnd.vnd_doctype
+																						LEFT JOIN dcec ON tbmi.bmy_baseentry = dcec.cec_docentry AND tbmi.bmy_doctype = dcec.cec_doctype
+																						LEFT JOIN dcdc ON tbmi.bmy_baseentry = dcdc.cdc_docentry AND tbmi.bmy_doctype = dcdc.cdc_doctype
+																						LEFT JOIN dcfc ON tbmi.bmy_baseentry = dcfc.cfc_docentry AND tbmi.bmy_doctype = dcfc.cfc_doctype
+																						LEFT JOIN dcnc ON tbmi.bmy_baseentry = dcnc.cnc_docentry AND tbmi.bmy_doctype = dcnc.cnc_doctype
+																						LEFT JOIN dcnd ON tbmi.bmy_baseentry = dcnd.cnd_docentry AND tbmi.bmy_doctype = dcnd.cnd_doctype
+																						LEFT JOIN miei ON tbmi.bmy_baseentry = miei.iei_docentry AND tbmi.bmy_doctype = miei.iei_doctype
+																						LEFT JOIN misi ON tbmi.bmy_baseentry = misi.isi_docentry AND tbmi.bmy_doctype = misi.isi_doctype
+																						WHERE 1=1".$sql." ORDER BY tbmi.bmi_createat DESC", $where);
 		if(isset($result[0])){
 
 			$respuesta = array(
@@ -103,7 +103,7 @@ class Reports extends REST_Controller {
 		}else{
 
 			$respuesta = array(
-				'error'   => true,
+				'error' => true,
 				'data' => array(),
 				'mensaje'	=> 'busqueda sin resultados'
 			);
@@ -409,45 +409,41 @@ class Reports extends REST_Controller {
 	//INFORME STATUS DE STOCK
 	public function getStatusStock_post(){
 
-			$Data = $this->post();
-			// print_r($Data);exit();die();
-			$where = '';
+		$Data = $this->post();
 
-			 // print_r($Data);exit();die();
-			if(isset($Data['fil_almacenId']) && !empty($Data['fil_almacenId'])){
-				$array = array();
-				foreach (explode(',',$Data['fil_almacenId']) as $key => $value) {
-					array_push($array,"'".$value."'");
-				}
-				$where = ' and T1.bdi_whscode IN ('.implode(',',$array).')';
+		$where = '';
+		$array = [];
 
-			}if(isset($Data['fil_acticuloId']) && !empty($Data['fil_acticuloId'])){
-				$where = $where.' and t2.dma_item_code = '.$Data['fil_acticuloId'];
+		if(isset($Data['fil_almacenId']) && !empty($Data['fil_almacenId'])){
+			// ADD WHERE QUERY
+			$where .= ' and T1.bdi_whscode IN ('.$Data['fil_almacenId'].')';
 
-			}if(isset($Data['fil_grupoId']) && !empty($Data['fil_grupoId']) ){
-				$array = array();
-				foreach (explode(',',$Data['fil_grupoId']) as $key => $value) {
-					array_push($array,"'".$value."'");
-				}
-				$where = $where.' and t2.dma_group_code IN ('.implode(',',$array).')';
-			}
-// print_r($where);exit();die();
-			$sql = 'SELECT
-									t2.dma_item_code,
-									trim(t2.dma_item_name),
-									t3.dmu_nameum,
-									t1.bdi_whscode,
-									t1.bdi_quantity,
-									t1.bdi_avgprice,
-									(t1.bdi_quantity * t1.bdi_avgprice) as costo
-							from tbdi t1
-							join dmar t2
-							on t1.bdi_itemcode = t2.dma_item_code
-							left join dmum t3 on t3.dmu_id =  t2.dma_uom_sale
-							where 1 = 1'.$where;
+		}if(isset($Data['fil_acticuloId']) && !empty($Data['fil_acticuloId'])){
+			// ADD WHERE QUERY
+			$where .= ' and t2.dma_item_code = :dma_item_code';
+			// ADD WHERE
+			$array[':dma_item_code'] = $Data['fil_acticuloId'];
 
-// print_r($sql);exit();
-			$respuesta = $this->pedeo->queryTable($sql, array());
+		}if(isset($Data['fil_grupoId']) && !empty($Data['fil_grupoId']) ){
+			// ADD WHERE QUERY
+			$where .= ' and t2.dma_group_code IN ('.$Data['fil_grupoId'].')';
+		}
+
+		$sql = "SELECT
+						t2.dma_item_code,
+						trim(t2.dma_item_name),
+						t3.dmu_nameum,
+						t1.bdi_whscode,
+						t1.bdi_quantity,
+						t1.bdi_avgprice,
+						(t1.bdi_quantity * t1.bdi_avgprice) as costo
+				from tbdi t1
+				join dmar t2
+				on t1.bdi_itemcode = t2.dma_item_code
+				left join dmum t3 on t3.dmu_id =  t2.dma_uom_sale
+				where 1 = 1".$where;
+
+			$respuesta = $this->pedeo->queryTable($sql, $array);
 
 			if(isset($respuesta[0])){
 
@@ -537,11 +533,20 @@ class Reports extends REST_Controller {
 			$this->response($respuesta);
 	}
 
+
+
 	public function EstadoCuentaCl_post(){
 
 				$Data = $this->post();
 
+				$where1 = '';
+				$where2 = '';
+				$where3 = '';
 
+				if(isset($Data['cardcode']) && !empty($Data['cardcode'])){
+					$where1 = '  and t0.dvf_cardcode in ('.$Data['cardcode'].')';
+					$where2 = '  and t0.vnc_cardcode in ('.$Data['cardcode'].')';
+					$where3 = '  and t0.vnd_cardcode in ('.$Data['cardcode'].')';
 
 				$sql = "SELECT distinct
 									    'Factura' as tipo,
@@ -553,7 +558,6 @@ class Reports extends REST_Controller {
 										t0.dvf_docdate FechaDocumento,
 										t0.dvf_duedate FechaVencimiento,
 										(t0.dvf_doctotal - coalesce(T0.dvf_paytoday,0)) totalfactura,
-									  coalesce(T0.dvf_paytoday,0) saldo,
 										trim('COP' FROM t0.dvf_currency) MonedaDocumento,
 										'".$Data['fecha']."'  FechaCorte,
 										('".$Data['fecha']."'  - t0.dvf_duedate) dias,
@@ -583,8 +587,8 @@ class Reports extends REST_Controller {
 									FROM dvfv t0
 									left join mac1 t1 on t0.dvf_docentry = t1.ac1_font_key and t0.dvf_doctype = t1.ac1_font_type
 									join dacc t2 on t2.acc_code = t1.ac1_account and t2.acc_businessp = '1'
-									WHERE '".$Data['fecha']."'  >= t0.dvf_duedate  and t0.dvf_cardcode = '".$Data['cardcode']."'
-									and (t0.dvf_doctotal - coalesce(T0.dvf_paytoday,0))  > 0
+									WHERE '".$Data['fecha']."'  >= t0.dvf_duedate
+									and (t0.dvf_doctotal - coalesce(T0.dvf_paytoday,0))  <> 0 and 1 = 1 ".$where1."
 
 									union all
 
@@ -597,8 +601,7 @@ class Reports extends REST_Controller {
 										t0.vnc_docnum NumeroDocumento,
 										t0.vnc_docdate FechaDocumento,
 										t0.vnc_duedate FechaVencimiento,
-										t0.vnc_doctotal * -1 totalfactura,
-									    coalesce(t0.vnc_doctotal ,0) saldo,
+									(t0.vnc_doctotal - coalesce(T0.vnc_paytoday,0))  * -1  totalfactura,
 										trim('COP' FROM t0.vnc_currency) MonedaDocumento,
 										'".$Data['fecha']."'  FechaCorte,
 										('".$Data['fecha']."'  - t0.vnc_duedate) dias,
@@ -628,7 +631,7 @@ class Reports extends REST_Controller {
 									FROM dvnc t0
 									left join mac1 t1 on t0.vnc_docentry = t1.ac1_font_key and t0.vnc_doctype = t1.ac1_font_type
 									join dacc t2 on t2.acc_code = t1.ac1_account and t2.acc_businessp = '1'
-									WHERE '".$Data['fecha']."'  >= t0.vnc_duedate  and t0.vnc_cardcode = '".$Data['cardcode']."'
+									WHERE '".$Data['fecha']."'  >= t0.vnc_duedate and ((t0.vnc_doctotal ) - (coalesce(T0.vnc_paytoday,0))) <> 0 and 1 = 1 ".$where2."
 
 									union all
 
@@ -641,8 +644,7 @@ class Reports extends REST_Controller {
 										t0.vnd_docnum NumeroDocumento,
 										t0.vnd_docdate FechaDocumento,
 										t0.vnd_duedate FechaVencimiento,
-										t0.vnd_doctotal totalfactura,
-									    coalesce(t0.vnd_doctotal ,0) saldo,
+										(t0.vnd_doctotal - coalesce(T0.vnd_paytoday,0))  totalfactura,
 										trim('COP' FROM t0.vnd_currency) MonedaDocumento,
 										'".$Data['fecha']."'  FechaCorte,
 										('".$Data['fecha']."'  - t0.vnd_duedate) dias,
@@ -672,14 +674,14 @@ class Reports extends REST_Controller {
 									FROM dvnd t0
 									left join mac1 t1 on t0.vnd_docentry = t1.ac1_font_key and t0.vnd_doctype = t1.ac1_font_type
 									join dacc t2 on t2.acc_code = t1.ac1_account and t2.acc_businessp = '1'
-									WHERE '".$Data['fecha']."'  >= t0.vnd_duedate  and t0.vnd_cardcode = '".$Data['cardcode']."'
+									WHERE '".$Data['fecha']."'  >= t0.vnd_duedate and (t0.vnd_doctotal - coalesce(T0.vnd_paytoday,0)) <> 0 and 1 = 1 ".$where3."
 
 									ORDER BY NumeroDocumento";
 		// ID ARTICULO.
-
+// print_r($sql);exit();die();
 
 				$result = $this->pedeo->queryTable($sql,array());
-
+// print_r($sql);exit();die();
 		if(isset($result[0])){
 
 			$respuesta = array(
@@ -700,6 +702,7 @@ class Reports extends REST_Controller {
 
 				$this->response($respuesta);
 	}
+}
 
 
 	// OBTENER ACIENTO CONTABLE POR ID

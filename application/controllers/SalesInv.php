@@ -612,12 +612,15 @@ class SalesInv extends REST_Controller {
 
 										$ManejaInvetario = 1;
 
+									}else{
+										$ManejaInvetario = 0;
 									}
 
 									// FIN PROCESO ITEM MANEJA INVENTARIO
 
 
 									if( $ManejaInvetario == 1 ){
+
 
 											// se verifica de donde viene  el documento
 											if($Data['dvf_basetype'] != 3){
@@ -657,8 +660,8 @@ class SalesInv extends REST_Controller {
 
 
 													//Se aplica el movimiento de inventario
-													$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost)
-																								 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost)";
+													$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																								VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
 
 													$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -669,7 +672,9 @@ class SalesInv extends REST_Controller {
 															 ':bmi_createby' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
 															 ':bmy_doctype'  => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
 															 ':bmy_baseentry' => $resInsert,
-															 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice']
+															 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+															 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+															 ':bmi_basenum'			=> $DocNumVerificado
 
 													));
 
@@ -840,28 +845,28 @@ class SalesInv extends REST_Controller {
 
 
 									// se busca la cuenta contable del costoInventario y costoCosto
-									$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-
-									$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['fv1_itemcode']));
-
-									if(!isset($resArticulo[0])){
-
-												$this->pedeo->trans_rollback();
-
-												$respuesta = array(
-													'error'   => true,
-													'data' => $resArticulo,
-													'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro la cuenta contable (costo, inventario) del grupo de articulo para el item '.$detail['fv1_itemcode']
-												);
-
-												 $this->response($respuesta);
-
-												 return;
-									}
+									// $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+									//
+									// $resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['fv1_itemcode']));
+									//
+									// if(!isset($resArticulo[0])){
+									//
+									// 			$this->pedeo->trans_rollback();
+									//
+									// 			$respuesta = array(
+									// 				'error'   => true,
+									// 				'data' => $resArticulo,
+									// 				'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro la cuenta contable (costo, inventario) del grupo de articulo para el item '.$detail['fv1_itemcode']
+									// 			);
+									//
+									// 			 $this->response($respuesta);
+									//
+									// 			 return;
+									// }
 
 									// VALIDANDO ITEM INVENTARIABLE
 									if ( $ManejaInvetario == 1 ){
-										$DetalleCostoInventario->ac1_account = $resArticulo[0]['mga_acct_inv'];
+										$DetalleCostoInventario->ac1_account = is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']: 0;
 										$DetalleCostoInventario->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
 										$DetalleCostoInventario->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
 										$DetalleCostoInventario->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
@@ -875,7 +880,7 @@ class SalesInv extends REST_Controller {
 										$DetalleCostoInventario->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
 
 
-										$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
+										$DetalleCostoCosto->ac1_account = is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']: 0;
 										$DetalleCostoCosto->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
 										$DetalleCostoCosto->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
 										$DetalleCostoCosto->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
@@ -1385,9 +1390,9 @@ class SalesInv extends REST_Controller {
 															$MontoSysDB = 0;
 															$MontoSysCR = 0;
 
-															$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
+															$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
 
-															$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bdi_itemcode' => $value->fv1_itemcode));
+															$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bdi_itemcode' => $value->fv1_itemcode, ':bdi_whscode' => $value->em1_whscode));
 
 															if( isset( $resCosto[0] ) ){
 
@@ -1584,9 +1589,9 @@ class SalesInv extends REST_Controller {
 															$MontoSysDB = 0;
 															$MontoSysCR = 0;
 
-															$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
+															$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
 
-															$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->fv1_itemcode));
+															$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->fv1_itemcode, ':bdi_whscode' => $value->em1_whscode));
 
 															if( isset( $resCosto[0] ) ){
 
@@ -1893,7 +1898,6 @@ class SalesInv extends REST_Controller {
 
 											 return;
 									}
-
 						}
 
 					 //SOLO SI ES CUENTA 3
@@ -1919,16 +1923,25 @@ class SalesInv extends REST_Controller {
 																$MontoSysDB = 0;
 																$MontoSysCR = 0;
 
-																$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
+																$sqlCosto = "SELECT
+																							CASE
+																								WHEN bmi_quantity < 0 THEN bmi_quantity * -1
+																								ELSE bmi_quantity
+																							END AS cantidad, bmi_cost,bmy_baseentry,bmy_doctype
+																						FROM tbmi
+																						WHERE bmy_doctype = :bmy_doctype
+																						AND bmy_baseentry = :bmy_baseentry
+																						AND bmi_itemcode  = :bmi_itemcode";
 
-																$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->fv1_itemcode));
+																$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bmi_itemcode' => $value->fv1_itemcode, ':bmy_doctype' => $Data['dvf_basetype'], ':bmy_baseentry' => $Data['dvf_baseentry']));
+
 
 																if( isset( $resCosto[0] ) ){
 
 																			$cuentaCosto = $resArticulo[0]['mga_acct_cost'];
 
 
-																			$costoArticulo = $resCosto[0]['bdi_avgprice'];
+																			$costoArticulo = $resCosto[0]['bmi_cost'];
 																			$cantidadArticulo = $value->fv1_quantity;
 																			$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
 
@@ -1938,7 +1951,7 @@ class SalesInv extends REST_Controller {
 
 																			$respuesta = array(
 																				'error'   => true,
-																				'data'	  => 'hola3',
+																				'data'	  => $resCosto,
 																				'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
 																			);
 
@@ -2372,8 +2385,8 @@ class SalesInv extends REST_Controller {
 
 
 							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-								':dvc_docentry' => $Data['vov_baseentry'],
-								':dvc_doctype' => $Data['vov_basetype']
+								':dvc_docentry' => $Data['dvf_baseentry'],
+								':dvc_doctype' => $Data['dvf_basetype']
 								// ':vc1_itemcode' => $detail['ov1_itemcode']
 							));
 
@@ -2388,8 +2401,8 @@ class SalesInv extends REST_Controller {
 
 
 							$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
-								':dvc_docentry' => $Data['vov_baseentry'],
-								':dvc_doctype' => $Data['vov_basetype']
+								':dvc_docentry' => $Data['dvf_baseentry'],
+								':dvc_doctype' => $Data['dvf_basetype']
 								// ':vc1_itemcode' => $detail['ov1_itemcode']
 							));
 
@@ -2412,13 +2425,13 @@ class SalesInv extends REST_Controller {
 										$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-															':bed_docentry' => $Data['vov_baseentry'],
-															':bed_doctype' => $Data['vov_basetype'],
+															':bed_docentry' => $Data['dvf_baseentry'],
+															':bed_doctype' => $Data['dvf_basetype'],
 															':bed_status' => 3, //ESTADO CERRADO
-															':bed_createby' => $Data['vov_createby'],
+															':bed_createby' => $Data['dvf_createby'],
 															':bed_date' => date('Y-m-d'),
 															':bed_baseentry' => $resInsert,
-															':bed_basetype' => $Data['vov_doctype']
+															':bed_basetype' => $Data['dvf_doctype']
 										));
 
 
@@ -2454,8 +2467,8 @@ class SalesInv extends REST_Controller {
 
 
 							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-								':vov_docentry' => $Data['vem_baseentry'],
-								':vov_doctype' => $Data['vem_basetype']
+								':vov_docentry' => $Data['dvf_baseentry'],
+								':vov_doctype' => $Data['dvf_basetype']
 							));
 
 
@@ -2468,8 +2481,8 @@ class SalesInv extends REST_Controller {
 																			left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
 																			where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
 						$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
-							':vov_docentry' => $Data['vem_baseentry'],
-							':vov_doctype' => $Data['vem_basetype']
+							':vov_docentry' => $Data['dvf_baseentry'],
+							':vov_doctype' => $Data['dvf_basetype']
 						));
 
 						$item_ord = $resEstado1[0]['item'];
@@ -2491,13 +2504,13 @@ class SalesInv extends REST_Controller {
 										$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-															':bed_docentry' => $Data['vem_baseentry'],
-															':bed_doctype' => $Data['vem_basetype'],
+															':bed_docentry' => $Data['dvf_baseentry'],
+															':bed_doctype' => $Data['dvf_basetype'],
 															':bed_status' => 3, //ESTADO CERRADO
-															':bed_createby' => $Data['vem_createby'],
+															':bed_createby' => $Data['dvf_createby'],
 															':bed_date' => date('Y-m-d'),
 															':bed_baseentry' => $resInsert,
-															':bed_basetype' => $Data['vem_doctype']
+															':bed_basetype' => $Data['dvf_doctype']
 										));
 
 

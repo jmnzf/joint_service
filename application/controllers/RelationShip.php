@@ -23,11 +23,11 @@ class RelationShip extends REST_Controller {
 	}
 
   //INFORME AUDITORIA STOCK
-	public function RelationShipSales(){
+	public function RelationShipSales_post(){
 
       	$request = $this->post();
 
-		$where = [];
+
 
       	$sql = 'SELECT
                       t0.dvc_cardcode codigo_cliente,
@@ -56,7 +56,7 @@ class RelationShip extends REST_Controller {
 
 
       	$result = $this->pedeo->queryTable($sql,array());
-
+// print_r($result);exit();die();
 		if(isset($result[0])){
 
 			$respuesta = array(

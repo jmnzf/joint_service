@@ -568,6 +568,8 @@ class SalesDel extends REST_Controller {
 
 										$ManejaInvetario = 1;
 
+								}else{
+									$ManejaInvetario = 0;
 								}
 
 								// FIN PROCESO ITEM MANEJA INVENTARIO
@@ -653,41 +655,43 @@ class SalesDel extends REST_Controller {
 
 											//VALIDANDO CANTIDAD DE ARTICULOS
 
-													$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
-													$CANT_ARTICULOLN = is_numeric($detail['em1_quantity'])? $detail['em1_quantity'] : 0;
+												$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
+												$CANT_ARTICULOLN = is_numeric($detail['em1_quantity'])? $detail['em1_quantity'] : 0;
 
-													if( ($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0){
+												if( ($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0){
 
-															$this->pedeo->trans_rollback();
+														$this->pedeo->trans_rollback();
 
-															$respuesta = array(
-																'error'   => true,
-																'data' => [],
-																'mensaje'	=> 'no puede crear el documento porque el articulo '.$detail['em1_itemcode'].' recae en inventario negativo ('.($CANT_ARTICULOEX - $CANT_ARTICULOLN).')'
-															);
+														$respuesta = array(
+															'error'   => true,
+															'data' => [],
+															'mensaje'	=> 'no puede crear el documento porque el articulo '.$detail['em1_itemcode'].' recae en inventario negativo ('.($CANT_ARTICULOEX - $CANT_ARTICULOLN).')'
+														);
 
-															 $this->response($respuesta);
+														 $this->response($respuesta);
 
-															 return;
+														 return;
 
-													}
+												}
 
 											//VALIDANDO CANTIDAD DE ARTICULOS
 
 											//Se aplica el movimiento de inventario
-											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost)
-																						 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost)";
+											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																						 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
 
 											$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-													 ':bmi_itemcode'  => isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
-													 ':bmi_quantity'  => is_numeric($detail['em1_quantity'])? $detail['em1_quantity'] * $Data['invtype']:0,
-													 ':bmi_whscode'   => isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
-													 ':bmi_createat'  => $this->validateDate($Data['vem_createat'])?$Data['vem_createat']:NULL,
-													 ':bmi_createby'  => isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
-													 ':bmy_doctype'   => is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
-													 ':bmy_baseentry' => $resInsert,
-													 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice']
+													 ':bmi_itemcode'  		=> isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
+													 ':bmi_quantity'  		=> is_numeric($detail['em1_quantity'])? $detail['em1_quantity'] * $Data['invtype']:0,
+													 ':bmi_whscode'   		=> isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
+													 ':bmi_createat'  		=> $this->validateDate($Data['vem_createat'])?$Data['vem_createat']:NULL,
+													 ':bmi_createby'  		=> isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
+													 ':bmy_doctype'   		=> is_numeric($Data['vem_doctype'])?$Data['vem_doctype']:0,
+													 ':bmy_baseentry' 		=> $resInsert,
+													 ':bmi_cost'      		=> $resCostoMomentoRegistro[0]['bdi_avgprice'],
+													 ':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
+													 ':bmi_basenum'				=> $DocNumVerificado
 
 											));
 
@@ -804,206 +808,216 @@ class SalesDel extends REST_Controller {
 								}
 
 								//SOLO PARA LOS ITEMS INVENTATIABLES
+								$DetalleAsientoIngreso = new stdClass();
+								$DetalleAsientoIva = new stdClass();
+
+
+								$DetalleAsientoIngreso->ac1_account = is_numeric($detail['em1_acctcode'])?$detail['em1_acctcode']: 0;
+								$DetalleAsientoIngreso->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
+								$DetalleAsientoIngreso->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
+								$DetalleAsientoIngreso->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
+								$DetalleAsientoIngreso->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
+								$DetalleAsientoIngreso->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
+								$DetalleAsientoIngreso->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
+								$DetalleAsientoIngreso->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
+								$DetalleAsientoIngreso->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
+								$DetalleAsientoIngreso->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+								$DetalleAsientoIngreso->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
+
+
+
+								$DetalleAsientoIva->ac1_account = is_numeric($detail['em1_acctcode'])?$detail['em1_acctcode']: 0;
+								$DetalleAsientoIva->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
+								$DetalleAsientoIva->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
+								$DetalleAsientoIva->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
+								$DetalleAsientoIva->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
+								$DetalleAsientoIva->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
+								$DetalleAsientoIva->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
+								$DetalleAsientoIva->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
+								$DetalleAsientoIva->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
+								$DetalleAsientoIva->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+								$DetalleAsientoIva->em1_cuentaIva = is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:NULL;
+								$DetalleAsientoIva->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
+
+
 								if( $ManejaInvetario == 1){
 
-										//LLENANDO DETALLE ASIENTO CONTABLES
+									//LLENANDO DETALLE ASIENTO CONTABLES
 
-										$DetalleAsientoIngreso = new stdClass();
-										$DetalleAsientoIva = new stdClass();
-										$DetalleCostoInventario = new stdClass();
-										$DetalleCostoCosto = new stdClass();
+									$DetalleCostoInventario = new stdClass();
+									$DetalleCostoCosto = new stdClass();
 
+									// se busca la cuenta contable del costoInventario y costoCosto
+									$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-										$DetalleAsientoIngreso->ac1_account = is_numeric($detail['em1_acctcode'])?$detail['em1_acctcode']: 0;
-										$DetalleAsientoIngreso->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
-										$DetalleAsientoIngreso->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
-										$DetalleAsientoIngreso->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
-										$DetalleAsientoIngreso->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
-										$DetalleAsientoIngreso->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
-										$DetalleAsientoIngreso->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
-										$DetalleAsientoIngreso->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
-										$DetalleAsientoIngreso->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
-										$DetalleAsientoIngreso->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
-										$DetalleAsientoIngreso->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
+									$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':dma_item_code' => $detail['em1_itemcode']));
 
+									if(!isset($resArticulo[0])){
 
+												$this->pedeo->trans_rollback();
 
-										$DetalleAsientoIva->ac1_account = is_numeric($detail['em1_acctcode'])?$detail['em1_acctcode']: 0;
-										$DetalleAsientoIva->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
-										$DetalleAsientoIva->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
-										$DetalleAsientoIva->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
-										$DetalleAsientoIva->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
-										$DetalleAsientoIva->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
-										$DetalleAsientoIva->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
-										$DetalleAsientoIva->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
-										$DetalleAsientoIva->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
-										$DetalleAsientoIva->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
-										$DetalleAsientoIva->em1_cuentaIva = is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:NULL;
-										$DetalleAsientoIva->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resArticulo,
+													'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+									}
 
 
-
-										// se busca la cuenta contable del costoInventario y costoCosto
-										$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-
-										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':dma_item_code' => $detail['em1_itemcode']));
-
-										if(!isset($resArticulo[0])){
-
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data' => $resArticulo,
-														'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
-													);
-
-													 $this->response($respuesta);
-
-													 return;
-										}
+									$DetalleCostoInventario->ac1_account = $resArticulo[0]['mga_acct_inv'];
+									$DetalleCostoInventario->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
+									$DetalleCostoInventario->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
+									$DetalleCostoInventario->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
+									$DetalleCostoInventario->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
+									$DetalleCostoInventario->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
+									$DetalleCostoInventario->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
+									$DetalleCostoInventario->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
+									$DetalleCostoInventario->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
+									$DetalleCostoInventario->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+									$DetalleCostoInventario->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
 
-										$DetalleCostoInventario->ac1_account = $resArticulo[0]['mga_acct_inv'];
-										$DetalleCostoInventario->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
-										$DetalleCostoInventario->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
-										$DetalleCostoInventario->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
-										$DetalleCostoInventario->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
-										$DetalleCostoInventario->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
-										$DetalleCostoInventario->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
-										$DetalleCostoInventario->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
-										$DetalleCostoInventario->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
-										$DetalleCostoInventario->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
-										$DetalleCostoInventario->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
+									$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
+									$DetalleCostoCosto->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
+									$DetalleCostoCosto->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
+									$DetalleCostoCosto->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
+									$DetalleCostoCosto->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
+									$DetalleCostoCosto->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
+									$DetalleCostoCosto->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
+									$DetalleCostoCosto->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
+									$DetalleCostoCosto->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
+									$DetalleCostoCosto->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+									$DetalleCostoCosto->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
-
-										$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
-										$DetalleCostoCosto->ac1_prc_code = isset($detail['em1_costcode'])?$detail['em1_costcode']:NULL;
-										$DetalleCostoCosto->ac1_uncode = isset($detail['em1_ubusiness'])?$detail['em1_ubusiness']:NULL;
-										$DetalleCostoCosto->ac1_prj_code = isset($detail['em1_project'])?$detail['em1_project']:NULL;
-										$DetalleCostoCosto->em1_linetotal = is_numeric($detail['em1_linetotal'])?$detail['em1_linetotal']:0;
-										$DetalleCostoCosto->em1_vat = is_numeric($detail['em1_vat'])?$detail['em1_vat']:0;
-										$DetalleCostoCosto->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
-										$DetalleCostoCosto->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
-										$DetalleCostoCosto->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
-										$DetalleCostoCosto->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
-										$DetalleCostoCosto->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
-
-										$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
-
-										$DetalleAsientoIngreso->codigoCuenta = $codigoCuenta;
-										$DetalleAsientoIva->codigoCuenta = $codigoCuenta;
-										$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
-										$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
-
-
-										$llave = $DetalleAsientoIngreso->ac1_uncode.$DetalleAsientoIngreso->ac1_prc_code.$DetalleAsientoIngreso->ac1_prj_code.$DetalleAsientoIngreso->ac1_account;
-										$llaveIva = $DetalleAsientoIva->em1_vat;
-										$llaveCostoInventario = $DetalleCostoInventario->ac1_account;
-										$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
-
-
-										if(in_array( $llave, $inArrayIngreso )){
-
-												$posicion = $this->buscarPosicion( $llave, $inArrayIngreso );
-
-										}else{
-
-												array_push( $inArrayIngreso, $llave );
-												$posicion = $this->buscarPosicion( $llave, $inArrayIngreso );
-
-										}
-
-
-										if(in_array( $llaveIva, $inArrayIva )){
-
-												$posicionIva = $this->buscarPosicion( $llaveIva, $inArrayIva );
-
-										}else{
-
-												array_push( $inArrayIva, $llaveIva );
-												$posicionIva = $this->buscarPosicion( $llaveIva, $inArrayIva );
-
-										}
-
-
-										if(in_array( $llaveCostoInventario, $inArrayCostoInventario )){
-
-												$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
-
-										}else{
-
-												array_push( $inArrayCostoInventario, $llaveCostoInventario );
-												$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
-
-										}
-
-
-										if(in_array( $llaveCostoCosto, $inArrayCostoCosto )){
-
-												$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
-
-										}else{
-
-												array_push( $inArrayCostoCosto, $llaveCostoCosto );
-												$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
-
-										}
+								}
 
 
 
-										if( isset($DetalleConsolidadoIva[$posicionIva])){
+								$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 
-											if(!is_array($DetalleConsolidadoIva[$posicionIva])){
-												$DetalleConsolidadoIva[$posicionIva] = array();
-											}
-
-										}else{
-											$DetalleConsolidadoIva[$posicionIva] = array();
-										}
-
-										array_push( $DetalleConsolidadoIva[$posicionIva], $DetalleAsientoIva);
+								$DetalleAsientoIngreso->codigoCuenta = $codigoCuenta;
+								$DetalleAsientoIva->codigoCuenta = $codigoCuenta;
+								$llave = $DetalleAsientoIngreso->ac1_uncode.$DetalleAsientoIngreso->ac1_prc_code.$DetalleAsientoIngreso->ac1_prj_code.$DetalleAsientoIngreso->ac1_account;
+								$llaveIva = $DetalleAsientoIva->em1_vat;
 
 
-										if( isset($DetalleConsolidadoIngreso[$posicion])){
+								if ( $ManejaInvetario == 1){
 
-											if(!is_array($DetalleConsolidadoIngreso[$posicion])){
-												$DetalleConsolidadoIngreso[$posicion] = array();
-											}
+									$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
+									$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 
-										}else{
-											$DetalleConsolidadoIngreso[$posicion] = array();
-										}
+									$llaveCostoInventario = $DetalleCostoInventario->ac1_account;
+									$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
 
-										array_push( $DetalleConsolidadoIngreso[$posicion], $DetalleAsientoIngreso);
+								}
 
 
-										if( isset($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
+								if(in_array( $llave, $inArrayIngreso )){
 
-											if(!is_array($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
-												$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
-											}
+										$posicion = $this->buscarPosicion( $llave, $inArrayIngreso );
 
-										}else{
+								}else{
+
+										array_push( $inArrayIngreso, $llave );
+										$posicion = $this->buscarPosicion( $llave, $inArrayIngreso );
+
+								}
+
+
+								if(in_array( $llaveIva, $inArrayIva )){
+
+										$posicionIva = $this->buscarPosicion( $llaveIva, $inArrayIva );
+
+								}else{
+
+										array_push( $inArrayIva, $llaveIva );
+										$posicionIva = $this->buscarPosicion( $llaveIva, $inArrayIva );
+
+								}
+
+								if ( $ManejaInvetario == 1){
+									if(in_array( $llaveCostoInventario, $inArrayCostoInventario )){
+
+											$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
+
+									}else{
+
+											array_push( $inArrayCostoInventario, $llaveCostoInventario );
+											$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
+
+									}
+
+
+									if(in_array( $llaveCostoCosto, $inArrayCostoCosto )){
+
+											$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+
+									}else{
+
+											array_push( $inArrayCostoCosto, $llaveCostoCosto );
+											$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+
+									}
+								}
+
+
+
+
+
+								if( isset($DetalleConsolidadoIva[$posicionIva])){
+
+									if(!is_array($DetalleConsolidadoIva[$posicionIva])){
+										$DetalleConsolidadoIva[$posicionIva] = array();
+									}
+
+								}else{
+									$DetalleConsolidadoIva[$posicionIva] = array();
+								}
+
+								array_push( $DetalleConsolidadoIva[$posicionIva], $DetalleAsientoIva);
+
+
+								if( isset($DetalleConsolidadoIngreso[$posicion])){
+
+									if(!is_array($DetalleConsolidadoIngreso[$posicion])){
+										$DetalleConsolidadoIngreso[$posicion] = array();
+									}
+
+								}else{
+									$DetalleConsolidadoIngreso[$posicion] = array();
+								}
+
+								array_push( $DetalleConsolidadoIngreso[$posicion], $DetalleAsientoIngreso);
+
+								if ( $ManejaInvetario == 1){
+									if( isset($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
+
+										if(!is_array($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
 											$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
 										}
 
-										array_push( $DetalleConsolidadoCostoInventario[$posicionCostoInventario], $DetalleCostoInventario );
+									}else{
+										$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
+									}
+
+									array_push( $DetalleConsolidadoCostoInventario[$posicionCostoInventario], $DetalleCostoInventario );
 
 
-										if( isset($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
+									if( isset($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
 
-											if(!is_array($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
-												$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
-											}
-
-										}else{
+										if(!is_array($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
 											$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
 										}
 
-										array_push( $DetalleConsolidadoCostoCosto[$posicionCostoCosto], $DetalleCostoCosto );
+									}else{
+										$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
+									}
 
-
+									array_push( $DetalleConsolidadoCostoCosto[$posicionCostoCosto], $DetalleCostoCosto );
 								}
 
           }

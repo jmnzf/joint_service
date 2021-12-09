@@ -37,6 +37,7 @@ class ExitInventory extends REST_Controller {
 			$inArrayCuentaGrupo = array();
 			$llaveCuentaGrupo = "";
 			$posicionCuentaGrupo = 0;
+			$ManejaInvetario = 0;
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -179,7 +180,7 @@ class ExitInventory extends REST_Controller {
 
 
 				$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-				$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['isi_currency'], ':tsa_date' => $Data['isi_docdate']));
+				$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['isi_docdate']));
 
 				if(isset($resBusTasa[0])){
 
@@ -426,6 +427,8 @@ class ExitInventory extends REST_Controller {
 
 									$ManejaInvetario = 1;
 
+								}else{
+									$ManejaInvetario = 0;
 								}
 
 								// FIN PROCESO ITEM MANEJA INVENTARIO
@@ -435,6 +438,8 @@ class ExitInventory extends REST_Controller {
 											//se busca el costo del item en el momento de la creacion del documento de venta
 											// para almacenar en el movimiento de inventario
 
+
+
 											$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
 											$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['si1_whscode'], ':bdi_itemcode' => $detail['si1_itemcode']));
 
@@ -442,9 +447,33 @@ class ExitInventory extends REST_Controller {
 											if(isset($resCostoMomentoRegistro[0])){
 
 
+												//VALIDANDO CANTIDAD DE ARTICULOS
+
+														$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
+														$CANT_ARTICULOLN = is_numeric($detail['si1_quantity'])? $detail['si1_quantity'] : 0;
+
+														if( ($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0){
+
+																$this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' => [],
+																	'mensaje'	=> 'no puede crear el documento porque el articulo '.$detail['si1_itemcode'].' recae en inventario negativo ('.($CANT_ARTICULOEX - $CANT_ARTICULOLN).')'
+																);
+
+																 $this->response($respuesta);
+
+																 return;
+
+														}
+
+												//VALIDANDO CANTIDAD DE ARTICULOS
+
+
 												//Se aplica el movimiento de inventario
-												$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost)
-																							 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost)";
+												$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																							VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
 
 												$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -455,7 +484,9 @@ class ExitInventory extends REST_Controller {
 														 ':bmi_createby' => isset($Data['isi_createby'])?$Data['isi_createby']:NULL,
 														 ':bmy_doctype'  => is_numeric($Data['isi_doctype'])?$Data['isi_doctype']:0,
 														 ':bmy_baseentry' => $resInsert,
-														 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice']
+														 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+														 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+														 ':bmi_basenum'			=> $DocNumVerificado
 
 												));
 
@@ -514,11 +545,15 @@ class ExitInventory extends REST_Controller {
 												if(isset($resCostoCantidad[0])){
 
 														 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-														 $CantidadNueva = $detail['si1_quantity'];
+														 $CostoActual    = $resCostoCantidad[0]['bdi_avgprice'];
 
+														 $CantidadDevolucion = $detail['si1_quantity'];
+														 $CostoDevolucion = $detail['si1_price'];
 
-														 $CantidadTotal = ($CantidadActual - $CantidadNueva);
+														 $CantidadTotal = ($CantidadActual - $CantidadDevolucion);
 
+														 $CostoPonderado = (($CostoActual * $CantidadActual) + ($CostoDevolucion * $CantidadDevolucion)) / $CantidadTotal;
+														 // NO SE MUEVE EL COSTO PONDERADO
 														 $sqlUpdateCostoCantidad =  "UPDATE tbdi
 																												 SET bdi_quantity = :bdi_quantity
 																												 WHERE  bdi_id = :bdi_id";
@@ -621,6 +656,8 @@ class ExitInventory extends REST_Controller {
 								$DetalleCuentaGrupo->si1_itemcode = isset($detail['si1_itemcode'])?$detail['si1_itemcode']:NULL;
 								$DetalleCuentaGrupo->si1_acctcode = is_numeric($detail['si1_acctcode'])?$detail['si1_acctcode']: 0;
 								$DetalleCuentaGrupo->si1_quantity = is_numeric($detail['si1_quantity'])?$detail['si1_quantity']:0;
+								$DetalleCuentaGrupo->si1_price = is_numeric($detail['si1_price'])?$detail['si1_price']:0;
+								$DetalleCuentaGrupo->si1_linetotal = is_numeric($detail['si1_linetotal'])?$detail['si1_linetotal']:0;
 
 								$llaveCuentaGrupo = $DetalleCuentaGrupo->si1_acctcode;
 								//********************************
@@ -783,6 +820,10 @@ class ExitInventory extends REST_Controller {
 							$grantotalCuentaGrupo = 0 ;
 							$grantotalCuentaGrupoOriginal = 0;
 							$cuentaGrupo = "";
+							$dbito = 0;
+							$cdito = 0;
+							$MontoSysDB = 0;
+							$MontoSysCR = 0;
 							foreach ($posicion as $key => $value) {
 
 										$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
@@ -790,37 +831,11 @@ class ExitInventory extends REST_Controller {
 										$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->si1_itemcode));
 
 										if(isset($resArticulo[0])){
-												$dbito = 0;
-												$cdito = 0;
 
-												$MontoSysDB = 0;
-												$MontoSysCR = 0;
+												$cuentaGrupo = $resArticulo[0]['mga_acct_inv'];
+												$grantotalCuentaGrupo = ($grantotalCuentaGrupo + $value->si1_linetotal);
 
-												$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
 
-												$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->si1_itemcode));
-
-												if( isset( $resCosto[0] ) ){
-
-															$cuentaGrupo = $resArticulo[0]['mga_acct_inv'];
-															$costoArticulo = $resCosto[0]['bdi_avgprice'];
-															$cantidadArticulo = $value->si1_quantity;
-															$grantotalCuentaGrupo = ($grantotalCuentaGrupo + ($costoArticulo * $cantidadArticulo));
-
-												}else{
-
-															$this->pedeo->trans_rollback();
-
-															$respuesta = array(
-																'error'   => true,
-																'data'	  => $resArticulo,
-																'mensaje'	=> 'No se encontro el costo para el item: '.$value->si1_itemcode
-															);
-
-															 $this->response($respuesta);
-
-															 return;
-												}
 
 										}else{
 												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
@@ -967,11 +982,14 @@ class ExitInventory extends REST_Controller {
   public function getExitInventory_get(){
 
         $sqlSelect = "SELECT
+        							t0.isi_docentry,
+        							t0.isi_currency,
 											t2.mdt_docname,
 											t0.isi_docnum,
 											t0.isi_docdate,
 											t0.isi_cardname,
 											t0.isi_comment,
+											CONCAT(T0.isi_currency,' ',to_char(t0.isi_baseamnt,'999,999,999,999.00')) isi_baseamnt,
 											CONCAT(T0.isi_currency,' ',to_char(t0.isi_doctotal,'999,999,999,999.00')) isi_doctotal,
 											t1.mev_names isi_slpcode
 										 FROM misi t0
@@ -1062,7 +1080,7 @@ class ExitInventory extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM isi WHERE si1_docentry =:si1_docentry";
+				$sqlSelect = " SELECT isi1.*, dmws.dws_name FROM isi1 INNER JOIN dmws ON dmws.dws_code = isi1.si1_whscode WHERE si1_docentry =:si1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":si1_docentry" => $Data['si1_docentry']));
 

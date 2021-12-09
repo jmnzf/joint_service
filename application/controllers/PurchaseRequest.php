@@ -303,7 +303,7 @@ class PurchaseRequest extends REST_Controller {
 															}
 
 													}
-													
+
 													if( $condicion == ">" ){
 
 																$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
@@ -319,9 +319,7 @@ class PurchaseRequest extends REST_Controller {
 																					':mau_doctype'  => $doctype
 																));
 
-																if(isset($ressq[0]) && count($ressq) > 1){
-																		break;
-																}else if(isset($ressq[0])){
+																if( isset($ressq[0]) ){
 																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'csc','sc1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 
@@ -341,9 +339,7 @@ class PurchaseRequest extends REST_Controller {
 																					':mau_doctype' => $doctype
 																));
 
-																if(isset($ressq[0]) && count($ressq) > 1){
-																		break;
-																}else if(isset($ressq[0])){
+																if( isset($ressq[0]) ){
 																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'csc','sc1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 													}
@@ -473,7 +469,50 @@ class PurchaseRequest extends REST_Controller {
 								return;
 					}
 
-					//FIN PROCESO ESTADO DEL DOCUMENTO
+
+					// SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
+					// SI EL DOCTYPE = 21
+					if( $Data['csc_basetype'] == 21){
+
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+											':bed_docentry' => $Data['csc_baseentry'],
+											':bed_doctype' => $Data['csc_basetype'],
+											':bed_status' => 3, //ESTADO CERRADO
+											':bed_createby' => $Data['csc_createby'],
+											':bed_date' => date('Y-m-d'),
+											':bed_baseentry' => $resInsert,
+											':bed_basetype' => $Data['csc_doctype']
+						));
+
+
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+
+								 $this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar la solicitud de compras',
+										'proceso' => 'Insertar estado documento'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+						}
+
+					}
+					//FIN SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
+
+					//FIN PROCESO GUARDAR ESTADO DEL DOCUMENTO
 
 
           foreach ($ContenidoDetalle as $key => $detail) {
@@ -847,7 +886,7 @@ class PurchaseRequest extends REST_Controller {
 
 				$Data = $this->get();
 
-				if(!isset($Data['csc_slpcode'])){
+				if(!isset($Data['dms_card_code'])){
 
 					$respuesta = array(
 						'error' => true,
@@ -860,9 +899,9 @@ class PurchaseRequest extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dcsc WHERE csc_slpcode =:csc_slpcode";
+				$sqlSelect = "SELECT * FROM dcsc WHERE csc_slpcode =:dms_card_code";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":csc_slpcode" => $Data['csc_slpcode']));
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dms_card_code" => $Data['dms_card_code']));
 
 				if(isset($resSelect[0])){
 
