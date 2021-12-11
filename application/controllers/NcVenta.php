@@ -106,7 +106,7 @@ class NcVenta extends REST_Controller {
 												FROM DVNC t0
 												INNER JOIN VNC1 T1 ON t0.VNC_docentry = t1.NC1_docentry
 												LEFT JOIN DMSN T2 ON t0.VNC_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON T0.VNC_ADRESS = CAST(T3.DMD_ID AS VARCHAR)
+												LEFT JOIN DMSD T3 ON T0.VNC_ADRESS = CAST(T3.DMD_ID AS VARCHAR) AND t3.dmd_ppal = 1
 												LEFT JOIN DMSC T4 ON T0.VNC_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
 												LEFT JOIN DMEV T5 ON T0.VNC_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.VNC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.VNC_SERIES = T6.PGS_ID

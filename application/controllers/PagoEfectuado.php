@@ -40,59 +40,38 @@ class PagoEfectuado extends REST_Controller {
       }
 
 
-      $resSelect = $this->pedeo->queryTable("SELECT 15 AS tipo,
-                                           	  t0.cfc_cardcode codigo_proveedor,
-                                              t0.cfc_docentry AS id_origen,
-                                              t0.cfc_docdate AS fecha_doc,
-																							t0.cfc_duedate fecha_ven,
-                                              CURRENT_DATE - t0.cfc_duedate AS dias_atrasado,
-																							t0.cfc_doctotal AS total_doc,
-                                              t1.ret_vlret AS retencion,
-                                              t0.cfc_doctotal - t0.cfc_paytoday AS saldo_venc,
-                                          	  t2.tsa_value tasa_dia,
-                                          	  t0.cfc_currency,
-																							t0.cfc_comment comentario
-                                             FROM dcfc t0
-                                             LEFT JOIN dret t1 ON t0.cfc_docentry = t1.ret_absentry
-                                          	 left join tasa t2 on t0.cfc_currency = t2.tsa_curro and t0.cfc_createat = t2.tsa_date
-                                             WHERE t0.cfc_cardcode = :cardcode and t0.cfc_doctotal <> COALESCE(t0.cfc_paytoday,0)
-
-                                             UNION ALL
-
-                                             SELECT 16 AS tipo,
-                                           	  t0.cnd_cardcode codigo_proveedor,
-                                              t0.cnd_docentry AS id_origen,
-                                              t0.cnd_docdate AS fecha_doc,
-																							t0.cnd_duedate fecha_ven,
-                                              CURRENT_DATE - t0.cnd_duedate AS dias_atrasado,
-                                              t0.cnd_doctotal AS total_doc,
-                                              t1.ret_vlret AS retencion,
-                                              0 AS saldo_venc,
-                                             t2.tsa_value tasa_dia,
-                                          	 t0.cnd_currency,
-																						 t0.cnd_comment comentario
-                                             FROM dcnd t0
-                                             LEFT JOIN dret t1 ON t0.cnd_docentry = t1.ret_absentry
-                                          	 left join tasa t2 on t0.cnd_currency = t2.tsa_curro and t0.cnd_createat = t2.tsa_date
-                                             WHERE t0.cnd_cardcode = :cardcode
-                                             UNION ALL
-
-                                             SELECT 17 AS tipo,
-                                           	 t0.cnc_cardcode codigo_proveedor,
-                                             t0.cnc_docentry AS id_origen,
-                                             t0.cnc_docdate AS fecha_doc,
-																						 t0.cnc_duedate fecha_ven,
-                                             CURRENT_DATE - t0.cnc_duedate AS dias_atrasado,
-                                             t0.cnc_doctotal AS total_doc,
-                                             t1.ret_vlret AS retencion,
-                                             0 AS saldo_venc,
-                                          	 t2.tsa_value tasa_dia,
-                                           	 t0.cnc_currency,
-																						 t0.cnc_comment comentario
-                                             FROM dcnc t0
-                                             LEFT JOIN dret t1 ON t0.cnc_docentry = t1.ret_absentry
-                                          	 left join tasa t2 on t0.cnc_currency = t2.tsa_curro and t0.cnc_createat = t2.tsa_date
-                                             WHERE t0.cnc_cardcode = :cardcode" ,
+      $resSelect = $this->pedeo->queryTable("SELECT cfc_docnum id_origen,
+       ac1_legal_num codigo_proveedor,
+       ac1_account cuenta,
+       ac1_font_key ,
+       CURRENT_DATE - mac_doc_duedate AS dias_atrasado,
+       ac1_font_type numType,
+       mdt_docname tipo,
+       mac_doc_date fecha_doc,
+       ' ' retencion,
+        mac_doc_duedate fecha_ven,
+       tsa_value tasa_dia,
+       cfc_currency,
+       mac_comments comentario,
+       cfc_doctotal total_doc,
+       sum(ac1_debit) - sum(ac1_credit)  as saldo_venc
+			from mac1
+			join dacc on ac1_account = acc_code
+			left join dmdt
+			on ac1_font_type = mdt_doctype
+            left join dcfc
+			on cfc_doctype = ac1_font_type and cfc_docentry = ac1_font_key
+			left join dcnd
+			on cnd_doctype = ac1_font_type and cnd_docentry = ac1_font_key
+			left join dcnc
+			on cnc_doctype = ac1_font_type and cnc_docentry = ac1_font_key
+            left join tmac
+			on mac_base_type = ac1_font_type and mac_base_entry = ac1_font_key
+			left join tasa
+			on tsa_date = CURRENT_DATE
+where mdt_docname like 'Factura de Proveedores%' and acc_businessp = '1' and ac1_font_type in(15,16,17) and ac1_legal_num = :cardcode
+group by ac1_account, ac1_font_key, ac1_font_type, ac1_legal_num, mdt_docname, cfc_docnum, cfc_cardcode, mac_doc_duedate, mac_doc_date, tsa_value, cfc_currency, mac_comments, cfc_doctotal
+having  sum(ac1_debit) - sum(ac1_credit)  <> 0" ,
       array(':cardcode' => $request['cardcode']));
 
   		$respuesta = array(

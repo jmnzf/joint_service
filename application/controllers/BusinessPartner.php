@@ -527,7 +527,66 @@ class BusinessPartner extends REST_Controller {
 			 $this->response($respuesta);
 	}
 
+	public function updateAddress_post()
+	{
+		$Data = $this->post();
 
+		if(!isset($Data['dmd_card_code']) OR !isset($Data['dmd_id'])){
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+				return;
+		}
+
+		$sqlSelect = "SELECT * FROM dmsd where dmd_card_code = :dmd_card_code and dmd_ppal = 1";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect,[':dmd_card_code'=> $Data['dmd_card_code']]);
+		if(isset($resSelect[0])){
+			$update = $this->pedeo->updateRow('UPDATE dmsd SET dmd_ppal = 0 WHERE dmd_card_code = :dmd_card_code',[':dmd_card_code'=>$Data['dmd_card_code']]);
+		}else{
+			$this->response(array(
+				'error'   => true,
+				'data'    => [],
+				'mensaje' =>'No se pudo actualizar la dirreccion del socio de negocio'
+			),REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlUpdate = "UPDATE dmsd SET dmd_ppal = :dmd_ppal WHERE dmd_id = :dmd_id";
+
+
+		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+									':dmd_ppal' => 1,
+									':dmd_id' => $Data['dmd_id']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate == 1){
+
+					$respuesta = array(
+						'error'   => false,
+						'data'    => $resUpdate,
+						'mensaje' =>'Se actualizó la dirreccion del socio de negocio'
+					);
+
+
+		}else{
+
+					$respuesta = array(
+						'error'   => true,
+						'data'    => $resUpdate,
+						'mensaje'	=> 'No se pudo actualizar la dirreccion del socio de negocio'
+					);
+
+		}
+
+		 $this->response($respuesta);
+	}
 
 
 }

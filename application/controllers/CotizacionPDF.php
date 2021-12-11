@@ -107,7 +107,7 @@ class CotizacionPDF extends REST_Controller {
 												FROM DVCT t0
 												INNER JOIN VCT1 T1 ON t0.dvc_docentry = t1.VC1_docentry
 												LEFT JOIN DMSN T2 ON t0.dvc_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON T0.DVC_ADRESS = CAST(T3.DMD_ID AS VARCHAR)
+												LEFT JOIN DMSD T3 ON T0.DVC_ADRESS = CAST(T3.DMD_ID AS VARCHAR) AND t3.dmd_ppal = 1
 												LEFT JOIN DMSC T4 ON T0.DVC_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
 												LEFT JOIN DMEV T5 ON T0.DVC_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.DVC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.DVC_SERIES = T6.PGS_ID

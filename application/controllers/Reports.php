@@ -49,49 +49,24 @@ class Reports extends REST_Controller {
 			$sql .= " AND DATE(tbmi.bmi_createat) BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
 		}
 
-      	$result = $this->pedeo->queryTable("SELECT tbmi.bmi_itemcode AS codigoarticulo,
-																						dmar.dma_item_name AS nombrearticulo,
-																						tbdi.bdi_whscode AS codigoalmacen,
-																						dmws.dws_name AS nombrealmacen,
-																						dmdt.mdt_docname AS docorigen,
-																						CASE
-																							WHEN tbmi.bmy_doctype = 3 THEN  dvem.vem_docnum
-																							WHEN tbmi.bmy_doctype = 5 THEN  dvfv.dvf_docnum
-																							WHEN tbmi.bmy_doctype = 4 THEN  dvdv.vdv_docnum
-																							WHEN tbmi.bmy_doctype = 6 THEN  dvnc.vnc_docnum
-																							WHEN tbmi.bmy_doctype = 7 THEN  dvnd.vnd_docnum
-																							WHEN tbmi.bmy_doctype = 13 THEN dcec.cec_docnum
-																							WHEN tbmi.bmy_doctype = 14 THEN dcdc.cdc_docnum
-																							WHEN tbmi.bmy_doctype = 15 THEN dcfc.cfc_docnum
-																							WHEN tbmi.bmy_doctype = 16 THEN dcnc.cnc_docnum
-																							WHEN tbmi.bmy_doctype = 17 THEN dcnd.cnd_docnum
-																							WHEN tbmi.bmy_doctype = 9 THEN  miei.iei_docnum
-																							WHEN tbmi.bmy_doctype = 8 THEN  misi.isi_docnum
-																						END AS docnum,
-																						tbmi.bmi_createat AS fechadocnum,
-																						tbmi.bmi_quantity AS cantidadmovida,
-																						tbmi.bmi_cost AS costo,
-																						(tbmi.bmi_quantity + tbdi.bdi_quantity) AS cantidadrestante,
-																						tbdi.bdi_quantity AS cantidadantesdemovimiento,
-																						(tbmi.bmi_cost * (tbmi.bmi_quantity + tbdi.bdi_quantity)) costoacumulado
-																						FROM tbmi
-																						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
-																						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
-																						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
-																						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code
-																						LEFT JOIN dvem ON tbmi.bmy_baseentry = dvem.vem_docentry AND tbmi.bmy_doctype = dvem.vem_doctype
-																						LEFT JOIN dvfv ON tbmi.bmy_baseentry = dvfv.dvf_docentry AND tbmi.bmy_doctype = dvfv.dvf_doctype
-																						LEFT JOIN dvdv ON tbmi.bmy_baseentry = dvdv.vdv_docentry AND tbmi.bmy_doctype = dvdv.vdv_doctype
-																						LEFT JOIN dvnc ON tbmi.bmy_baseentry = dvnc.vnc_docentry AND tbmi.bmy_doctype = dvnc.vnc_doctype
-																						LEFT JOIN dvnd ON tbmi.bmy_baseentry = dvnd.vnd_docentry AND tbmi.bmy_doctype = dvnd.vnd_doctype
-																						LEFT JOIN dcec ON tbmi.bmy_baseentry = dcec.cec_docentry AND tbmi.bmy_doctype = dcec.cec_doctype
-																						LEFT JOIN dcdc ON tbmi.bmy_baseentry = dcdc.cdc_docentry AND tbmi.bmy_doctype = dcdc.cdc_doctype
-																						LEFT JOIN dcfc ON tbmi.bmy_baseentry = dcfc.cfc_docentry AND tbmi.bmy_doctype = dcfc.cfc_doctype
-																						LEFT JOIN dcnc ON tbmi.bmy_baseentry = dcnc.cnc_docentry AND tbmi.bmy_doctype = dcnc.cnc_doctype
-																						LEFT JOIN dcnd ON tbmi.bmy_baseentry = dcnd.cnd_docentry AND tbmi.bmy_doctype = dcnd.cnd_doctype
-																						LEFT JOIN miei ON tbmi.bmy_baseentry = miei.iei_docentry AND tbmi.bmy_doctype = miei.iei_doctype
-																						LEFT JOIN misi ON tbmi.bmy_baseentry = misi.isi_docentry AND tbmi.bmy_doctype = misi.isi_doctype
-																						WHERE 1=1".$sql." ORDER BY tbmi.bmi_createat DESC", $where);
+		$result = $this->pedeo->queryTable("SELECT tbmi.bmi_itemcode AS codigoarticulo,
+																			dmar.dma_item_name AS nombrearticulo,
+																			tbdi.bdi_whscode AS codigoalmacen,
+																			dmws.dws_name AS nombrealmacen,
+																			dmdt.mdt_docname AS docorigen,
+																			tbmi.bmi_basenum docnum,
+																			tbmi.bmi_createat AS fechadocnum,
+																			tbmi.bmi_quantity AS cantidadmovida,
+																			tbmi.bmi_cost AS costo,
+																			tbmi.bmi_currequantity + tbmi.bmi_quantity AS cantidadrestante,
+																			tbmi.bmi_currequantity AS cantidadantesdemovimiento,
+																			(tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)) costoacumulado
+																			FROM tbmi
+																			INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
+																			INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
+																			INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
+																			INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code
+																			WHERE 1=1".$sql." ORDER BY tbmi.bmi_createat DESC", $where);
 		if(isset($result[0])){
 
 			$respuesta = array(

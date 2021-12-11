@@ -294,13 +294,61 @@ class Business extends REST_Controller {
         }
 
 
+				//Obtener Carpeta Principal del Proyecto
+				$sqlMainFolder = " SELECT * FROM params";
+				$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+				if(!isset($resMainFolder[0])){
+						$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'No se encontro la caperta principal del proyecto'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+				// FIN PROCESO PARA OBTENER LA CARPETA PRINCIPAL DEL PROYECTO
+
+
 				try {
 					//
 					$sqlUpdate = "UPDATE pgem SET pge_logo = :pge_logo WHERE pge_id = :pge_id";
 
-					$ruta = '/var/www/html/pneus/assets/img/';
+					$carpeta = $resMainFolder[0]['main_folder'];
+
+					$ruta = '/var/www/html/'.$carpeta.'/assets/img/';
 
 					$nombreArchivo = "logo".".jpeg";
+
+					$data = $Data['pge_logo'];
+
+					if ($data == NULL){
+
+						$respuesta = array(
+							'error'   => true,
+							'data'    => [],
+							'mensaje' => 'String Base64 no valido'
+						);
+
+						 $this->response($respuesta);
+						 return;
+
+
+					}
+
+					if (!base64_decode($data, true) ){
+						$respuesta = array(
+							'error'   => true,
+							'data'    => [],
+							'mensaje' => 'String Base64 no valido'
+						);
+
+						 $this->response($respuesta);
+						 return;
+					}
+
 
 					touch($ruta.$nombreArchivo);
 
