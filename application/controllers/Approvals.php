@@ -238,12 +238,14 @@ class Approvals extends REST_Controller {
             inner join tmau t9 on t9.mau_docentry = t0.pap_model
             inner join pgus t10 on t10.pgu_code_user = t0.pap_createby
             left join tmau t12 on t0.pap_model = t12.mau_docentry
-            WHERE t0.pap_createby = :pgu_code_user and t0.pap_model IN(
-            SELECT tmau.mau_docentry
-            FROM tmau
-            INNER JOIN pgus
-            ON pgu_code_user = :pgu_code_user
-            AND pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[]))";
+            WHERE t0.pap_createby = :pgu_code_user and
+                  (case
+               when lower(statusapprovals(:pgu_code_user,t0.pap_doctype,t0.pap_docentry)) = 'aprobado por mi' or
+                     lower(statusapprovals(:pgu_code_user,t0.pap_doctype,t0.pap_docentry))  = 'rechazado por mi' or
+                     lower(statusapprovals(:pgu_code_user,t0.pap_doctype,t0.pap_docentry)) = 'aprobado'
+					then statusapprovals('aimitola',t0.pap_doctype,t0.pap_docentry)
+				else 'Pendiente Aprobación'
+            end) in('Aprobado')";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgu_code_user' => $Data['code_user']));
 				// print_r($sqlSelect);exit();die();

@@ -266,6 +266,7 @@ class PurchOrder extends REST_Controller {
 													$valorDocTotal2 = $value['doctotal2'];
 													$TotalDocumento = $Data['cpo_doctotal'];
 													$doctype =  $value['doctype'];
+													$modelo = $value['modelo'];
 
 													if(trim($Data['cpo_currency']) != $MONEDASYS){
 
@@ -289,12 +290,14 @@ class PurchOrder extends REST_Controller {
 																				INNER JOIN  mau1
 																				on mau_docentry =  au1_docentry
 																				AND :au1_doctotal > au1_doctotal
-																				AND mau_doctype = :mau_doctype";
+																				AND mau_doctype = :mau_doctype
+																				AND mau_docentry = :mau_docentry";
 
 																$ressq = $this->pedeo->queryTable($sq, array(
 
 																					':au1_doctotal' => $TotalDocumento,
-																					':mau_doctype'  => $doctype
+																					':mau_doctype'  => $doctype,
+																					':mau_docentry' => $modelo
 																));
 
 																if( isset($ressq[0]) ){
@@ -309,12 +312,14 @@ class PurchOrder extends REST_Controller {
 																				INNER JOIN  mau1
 																				on mau_docentry =  au1_docentry
 																				AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
-																				AND mau_doctype = :mau_doctype";
+																				AND mau_doctype = :mau_doctype,
+																				AND mau_docentry = :mau_docentry";
 
 																$ressq = $this->pedeo->queryTable($sq, array(
 
 																					':doctotal' 	 => $TotalDocumento,
-																					':mau_doctype' => $doctype
+																					':mau_doctype' => $doctype,
+																					':mau_docentry' => $modelo
 																));
 
 																if( isset($ressq[0]) ){
