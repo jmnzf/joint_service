@@ -695,7 +695,6 @@ class PaymentsMade extends REST_Controller {
 									break;
 							}
 
-
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
@@ -787,7 +786,6 @@ class PaymentsMade extends REST_Controller {
 												$fechaDocumento =$value->pe1_docdate;
 
 									}
-
 
 									$debito = 0;
 									$credito = 0;
@@ -964,7 +962,6 @@ class PaymentsMade extends REST_Controller {
 											break;
 									}
 
-
 									// ACTUALIZAR EL ASIENTO DE LA FACTURA QUE SE ESTA AFECTANDO CON EL PAGO RECIBIDO
 									$sqlUpdateDoc = "UPDATE mac1
 																	 SET ac1_credit_import = ac1_credit_import + :ac1_credit_import
@@ -1007,7 +1004,6 @@ class PaymentsMade extends REST_Controller {
 									}
 
 									// FIN PROCEDIMIENTO ACTUALIZAR EL ASIENTO DE LA FACTURA QUE SE ESTA AFECTANDO CON EL PAGO RECIBIDO
-
 
 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1071,7 +1067,6 @@ class PaymentsMade extends REST_Controller {
 
 											 return;
 								}
-
 
 
 								if($DireferenciaCambio == 1){

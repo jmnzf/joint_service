@@ -40,38 +40,93 @@ class PagoEfectuado extends REST_Controller {
       }
 
 
-      $resSelect = $this->pedeo->queryTable("SELECT cfc_docnum id_origen,
-       ac1_legal_num codigo_proveedor,
+      $resSelect = $this->pedeo->queryTable("SELECT mdt_docname tipo,
+       cfc_docnum id_origen,
+       cfc_cardcode codigo_proveedor,
+       cfc_docentry,
        ac1_account cuenta,
-       ac1_font_key ,
-       CURRENT_DATE - mac_doc_duedate AS dias_atrasado,
-       ac1_font_type numType,
-       mdt_docname tipo,
-       mac_doc_date fecha_doc,
-       ' ' retencion,
-        mac_doc_duedate fecha_ven,
-       tsa_value tasa_dia,
-       cfc_currency,
-       mac_comments comentario,
+       cfc_docdate fecha_doc,
+       cfc_duedate fecha_ven,
+       CURRENT_DATE - cfc_duedate dias_atrasado,
        cfc_doctotal total_doc,
-       sum(ac1_debit) - sum(ac1_credit)  as saldo_venc
-			from mac1
-			join dacc on ac1_account = acc_code
-			left join dmdt
-			on ac1_font_type = mdt_doctype
-            left join dcfc
-			on cfc_doctype = ac1_font_type and cfc_docentry = ac1_font_key
-			left join dcnd
-			on cnd_doctype = ac1_font_type and cnd_docentry = ac1_font_key
-			left join dcnc
-			on cnc_doctype = ac1_font_type and cnc_docentry = ac1_font_key
-            left join tmac
-			on mac_base_type = ac1_font_type and mac_base_entry = ac1_font_key
-			left join tasa
-			on tsa_date = CURRENT_DATE
-where mdt_docname like 'Factura de Proveedores%' and acc_businessp = '1' and ac1_font_type in(15,16,17) and ac1_legal_num = :cardcode
-group by ac1_account, ac1_font_key, ac1_font_type, ac1_legal_num, mdt_docname, cfc_docnum, cfc_cardcode, mac_doc_duedate, mac_doc_date, tsa_value, cfc_currency, mac_comments, cfc_doctotal
-having  sum(ac1_debit) - sum(ac1_credit)  <> 0" ,
+       saldo saldo_venc,
+       cfc_doctype numType,
+       tsa_value tasa_dia,
+       '' retencion,
+       cfc_currency,
+	ac1_font_key,
+       cfc_comment
+FROM dcfc
+JOIN SALDO_DOC on cfc_docentry = ac1_font_key and cfc_doctype = ac1_font_type
+join dmdt on cfc_doctype = mdt_doctype
+join tasa on cfc_docdate = tsa_date
+where  cfc_cardcode = :cardcode
+union all
+SELECT mdt_docname tipo,
+       vnc_docnum id_origen,
+       vnc_cardcode codigo_proveedor,
+       vnc_docentry,
+       ac1_account cuenta,
+       vnc_docdate fecha_doc,
+       vnc_duedate fecha_ven,
+       CURRENT_DATE - vnc_duedate dias_atrasado,
+       vnc_doctotal total_doc,
+       saldo saldo_venc,
+       vnc_doctype numType,
+       tsa_value tasa_dia,
+       '' retencion,
+       vnc_currency,
+       ac1_font_key,
+       vnc_comment
+FROM dvnc
+JOIN SALDO_DOC on vnc_docentry = ac1_font_key and vnc_doctype = ac1_font_type
+join dmdt on vnc_doctype = mdt_doctype
+join tasa on vnc_docdate = tsa_date
+where  vnc_cardcode = :cardcode
+union all
+SELECT mdt_docname tipo,
+       cnd_docnum id_origen,
+       cnd_cardcode codigo_proveedor,
+       cnd_docentry,
+       ac1_account cuenta,
+       cnd_docdate fecha_doc,
+       cnd_duedate fecha_ven,
+       CURRENT_DATE - cnd_duedate dias_atrasado,
+       cnd_doctotal total_doc,
+       saldo saldo_venc,
+       cnd_doctype numType,
+       tsa_value tasa_dia,
+       '' retencion,
+       cnd_currency,
+       ac1_font_key,
+       cnd_comment
+FROM dcnd
+JOIN SALDO_DOC on cnd_docentry = ac1_font_key and cnd_doctype = ac1_font_type
+join dmdt on cnd_doctype = mdt_doctype
+join tasa on cnd_docdate = tsa_date
+where  cnd_cardcode = :cardcode
+union all
+SELECT mdt_docname tipo,
+       bpe_docnum id_origen,
+       bpe_cardcode codigo_proveedor,
+       bpe_docentry,
+       ac1_account cuenta,
+       bpe_docdate fecha_doc,
+       bpe_docdate fecha_ven,
+       CURRENT_DATE - bpe_docdate dias_atrasado,
+       bpe_doctotal total_doc,
+       saldo saldo_venc,
+       bpe_doctype numType,
+       tsa_value tasa_dia,
+       '' retencion,
+       bpe_currency,
+       ac1_font_key,
+       bpe_comments
+FROM gbpe
+JOIN SALDO_DOC on bpe_docentry = ac1_font_key and bpe_doctype = ac1_font_type
+join dmdt on bpe_doctype = mdt_doctype
+join tasa on bpe_docdate = tsa_date
+where bpe_cardcode = :cardcode" ,
       array(':cardcode' => $request['cardcode']));
 
   		$respuesta = array(

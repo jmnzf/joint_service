@@ -73,13 +73,15 @@ class SoportePago extends REST_Controller {
 				}
 
 				$sqlcotizacion = "SELECT distinct cfc_docnum,cfc_cardcode, bpe_comments, cfc_docdate, cfc_docdate,
-                cfc_comment, cfc_baseamnt, cfc_taxtotal, 'exento', r1.crt_profitrt porcent,
+                cfc_comment, cfc_baseamnt, cfc_taxtotal, 'exento' col, r1.crt_profitrt porcent,
                 r1.crt_totalrt as totalRtIva, cfc_baseamnt + dcfc.cfc_taxtotal Neto,
                 cfc_baseamnt baseRT,r2.crt_profitrt isrporcent, r2.crt_totalrt totalRtfte, cfc_doctotal TotalPagar,
-								cfc_currency monedadocumento
+								cfc_currency monedadocumento,concat(cfc_cardname) Cliente,cfc_cardcode nit,
+								concat(dmd_adress,' ',dmd_city) direccion,dmd_state_mm ciudad,dmd_state estado
 						from bpe1
 						left join gbpe on bpe_docentry = pe1_docentry
 						left join dcfc on cfc_docentry = cfc_docentry and cfc_doctype = pe1_doctype
+						left join dmsd on cfc_cardcode = dmd_card_code
 						left join fcrt r1 on cfc_docentry = crt_baseentry and crt_basetype = cfc_doctype and r1.crt_type ='3'
 						left join fcrt r2 on cfc_docentry = r2.crt_baseentry and r2.crt_basetype = cfc_doctype and r2.crt_type ='2'
 						where cfc_docnum = :DVF_DOCENTRY";
@@ -232,46 +234,43 @@ class SoportePago extends REST_Controller {
 								//<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
 
 
-							$valorUnitario = $value['vrunit'];
-							$valortotalLinea = $value['valortotall'];
+							// $valorUnitario = $value['vrunit'];
+							// $valortotalLinea = $value['valortotall'];
 
 
 
-							if( $value['monedadocumento'] != $MONEDALOCAL ){
-
-									$valorUnitario = ($valorUnitario  * $TasaDocLoc);
-									$valortotalLinea = ($valortotalLinea  * $TasaDocLoc);
-
-							}
+							// if( $value['monedadocumento'] != $MONEDALOCAL ){
+							//
+							// 		$valorUnitario = ($valorUnitario  * $TasaDocLoc);
+							// 		$valortotalLinea = ($valortotalLinea  * $TasaDocLoc);
+							//
+							// }
 
 
 
 							$detalle = '	<td>'.$value['cfc_docnum'].'</td>
 														<td>'.$value['cfc_cardcode'].'</td>
-														<td>'.$value['bpe_comments'].'</td>
 														<td>'.$value['cfc_docdate'].'</td>
 														<td>'.$value['cfc_docdate'].'</td>
 														<td>'.$value['cfc_comment'].'</td>
-														<td>'.$value['cfc_baseamnt'].'</td>
+														<td>'.number_format($value['cfc_baseamnt'], 2, ',', '.').'</td>
 														<td>'.$value['cfc_taxtotal'].'</td>
-														<td>'.$value['cfc_comment'].'</td>
 														<td>'.$value['porcent'].'</td>
-														<td>'.$value['totalrtiva'].'</td>
-														<td>'.$value['neto'].'</td>
+														<td>'.(is_null($value['totalrtiva'])? 0:$value['totalrtiva'] ).'</td>
 														<td>'.$value['basert'].'</td>
 														<td>'.$value['isrporcent'].'</td>
-														<td>'.$value['totalRtfte'].'</td>
-														<td>'.$value['totalpagar'].'</td>';
+														<td>'.number_format($value['totalrtfte'], 2, ',', '.').'</td>
+														<td>'.number_format($value['totalpagar'], 2, ',', '.').'</td>';
 
 							 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
-							 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
-							 $TotalPeso = ($TotalPeso + ($value['peso'] * $value['cantidad']));
+							 // $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
+							 // $TotalPeso = ($TotalPeso + ($value['peso'] * $value['cantidad']));
 				}
 
-				$valorTotalBase = $contenidoFV[0]['base'];
-				$valorTotalSubtotal = $contenidoFV[0]['subtotal'];
-				$valorTotalIva = $contenidoFV[0]['iva'];
-				$valorTotalDoc = $contenidoFV[0]['totaldoc'];
+				$valorTotalBase = $contenidoFV[0]['basert'];
+				$valorTotalSubtotal = $contenidoFV[0]['totalpagar'];
+				$valorTotalIva = $contenidoFV[0]['porcent'];
+				$valorTotalDoc = $contenidoFV[0]['basert'];
 
 
 
@@ -287,31 +286,32 @@ class SoportePago extends REST_Controller {
 
 				$consecutivo = '';
 
-				if($contenidoFV[0]['pgs_mpfn'] == 1){
-					$consecutivo = $contenidoFV[0]['numerodocumento'];
-				}else{
-					$consecutivo = $contenidoFV[0]['cfc_docnum'];
-				}
+				// if($contenidoFV[0]['pgs_mpfn'] == 1){
+				// 	$consecutivo = $contenidoFV[0]['numerodocumento'];
+				// }else{
+				// 	$consecutivo = $contenidoFV[0]['cfc_docnum'];
+				// }
+				$consecutivo = $contenidoFV[0]['cfc_docnum'];
 
 				$DatosExportacion = '';
 
-				if($contenidoFV[0]['pgs_mde'] == 1){
-
-					$DatosExportacion = '<table width="100%">
-																<tr>
-																		<th style="text-align: center;">Sello Nro.: <span>0</span></th>
-																		<th style="text-align: center;">Total Peso Bruto: <span>0</span></th>
-																</tr>
-																<tr>
-																		<th style="text-align: center;">Container Nro.: <span>0</span></th>
-																		<th style="text-align: center;">Contenedor: <span>0</span></th>
-																</tr>
-																<tr>
-																		<th style="text-align: center;">Naviera Buque: <span>0</span></th>
-																		<th style="text-align: center;">Fecha de Embarque: <span>0</span></th>
-																</tr>
-														</table>';
-				}
+				// if($contenidoFV[0]['pgs_mde'] == 1){
+				//
+				// 	$DatosExportacion = '<table width="100%">
+				// 												<tr>
+				// 														<th style="text-align: center;">Sello Nro.: <span>0</span></th>
+				// 														<th style="text-align: center;">Total Peso Bruto: <span>0</span></th>
+				// 												</tr>
+				// 												<tr>
+				// 														<th style="text-align: center;">Container Nro.: <span>0</span></th>
+				// 														<th style="text-align: center;">Contenedor: <span>0</span></th>
+				// 												</tr>
+				// 												<tr>
+				// 														<th style="text-align: center;">Naviera Buque: <span>0</span></th>
+				// 														<th style="text-align: center;">Fecha de Embarque: <span>0</span></th>
+				// 												</tr>
+				// 										</table>';
+				// }
 
 
 
@@ -357,13 +357,13 @@ class SoportePago extends REST_Controller {
 
 				<table class="" style="width:100%">
 				<tr>
-					<th style="text-align: left;">
+					<th style="text-align: left; width:6%">
 						<p class="">RIF: </p>
 					</th>
 					<th style="text-align: left;">
 						<p> '.$contenidoFV[0]['nit'].'</p>
 					</th>
-					<th style="text-align: right;">
+					<th style="text-align: right; width:60%;">
 						<p class="">FACTURA: </p>
 					</th>
 					<th style="text-align: right;">
@@ -386,44 +386,34 @@ class SoportePago extends REST_Controller {
 				</tr>
 				<tr>
 					<th style="text-align: left;">
-						<p class="">DIRECCIÓN: </p>
+						<p class="">DIRECCION: </p>
 					</th>
 					<th style="text-align: left;">
-						<p> '.$contenidoFV[0]['direccion'].'</p>
+						<p>'.$contenidoFV[0]['direccion'].'</p>
 					</th>
-					<th style="text-align: right;">
-						<p class=""></p>
-					</th>
-					<th style="text-align: right;">
-						<p></p>
-					</th>
+
 				</tr>
 				<tr>
 					<th style="text-align: left;">
 						<p class="">CIUDAD: </p>
 					</th>
 					<th style="text-align: left;">
-						<p> '.$contenidoFV[0]['ciudad'].'</p>
+						<p>'.$contenidoFV[0]['ciudad'].'</p>
 					</th>
-					<th style="text-align: right;">
+					<!--<th style="text-align: right;">
 						<p class="">OC: </p>
 					</th>
 					<th style="text-align: right;">
 						<p> '.$VieneCotizacion.'</p>
-					</th>
+					</th>-->
 				</tr>
 				<tr>
 					<th style="text-align: left;">
 						<p class="">ESTADO: </p>
 					</th>
 					<th style="text-align: left;">
-						<p> '.$contenidoFV[0]['estado'].'</p>
-					</th>
-					<th style="text-align: right;">
-						<p class="">PEDIDO: </p>
-					</th>
-					<th style="text-align: right;">
-						<p>'.$VienePedido.'</p>
+					<p>'.$contenidoFV[0]['estado'].'</p>
+
 					</th>
 				</tr>
 				<tr>
@@ -433,12 +423,7 @@ class SoportePago extends REST_Controller {
 					<th style="text-align: left;">
 						<p></p>
 					</th>
-					<th style="text-align: right;">
-						<p class="">ENTREGA: </p>
-					</th>
-					<th style="text-align: right;">
-						<p>'.$VieneEntrega.'</p>
-					</th>
+
 				</tr>
 				<tr>
 					<th style="text-align: left;">
@@ -447,13 +432,7 @@ class SoportePago extends REST_Controller {
 					<th style="text-align: left;">
 						<p></p>
 					</th>
-					<th style="text-align: right;">
-						<p class="">COND. PAGO: </p>
-					</th>
-					<th style="text-align: right;">
-						<p>'.$contenidoFV[0]['condpago'].'</p>
-					</th>
-				</tr>
+					</tr>
 				<tr>
 					<th style="text-align: left;">
 						<p class=""></p>
@@ -465,7 +444,7 @@ class SoportePago extends REST_Controller {
 						<p class="">FECHA DE EMISIÓN: </p>
 					</th>
 					<th style="text-align: right;">
-						<p>'.date("d-m-Y", strtotime($contenidoFV[0]['fechadocumento'])).'</p>
+						<p>'.date("d-m-Y", strtotime($contenidoFV[0]['cfc_docdate'])).'</p>
 					</th>
 				</tr>
 				</table>
@@ -484,6 +463,8 @@ class SoportePago extends REST_Controller {
 					<th class="border_bottom">RETENCION<BR>75% IVA</th>
 					<th class="border_bottom">BASE<BR>RETENCION</th>
 					<th class="border_bottom">%</th>
+					<th class="border_bottom">RETENCION ISLR<BR>MONTO</th>
+					<th class="border_bottom">TOTAL A<BR>PAGAR</th>
 				</tr>
 				'.$totaldetalle.'
 
@@ -506,13 +487,13 @@ class SoportePago extends REST_Controller {
 
 				<br>
 				<br>
-				<table width="100%">
+				<!--<table width="100%">
 
 						<tr>
 								<th style="text-align: left;">Total Cantidad: <span>'.$TotalCantidad.'</span></th>
-								<th style="text-align: left;">Total Peso: <span>'.$TotalPeso." ".$contenidoFV[0]['um'].'</span></th>
+								<th style="text-align: left;">Total Peso: <span></span></th>
 						</tr>
-				</table>
+				</table>-->
 
 
 				<table width="100%" style="border-bottom: solid 1px black;">
@@ -532,17 +513,17 @@ class SoportePago extends REST_Controller {
 												<tr><td>&nbsp;</td></tr>
 												<tr>
 															<td style="text-align: left;" class="">
-																	<p>'.$formatter->toWords($valorTotalDoc,2)." ".$contenidoFV[0]['nombremoneda'].'</p>
+																	<p>'.$formatter->toWords($contenidoFV[0]['totalpagar'],2)." ".$contenidoFV[0]['monedadocumento'].'</p>
 															</td>
 													</tr>
 											</table>
 								</th>
 								<th>
 											<table width="100%">
-													<tr>
+												<!--	<tr>
 															<td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalSubtotal, 2, ',', '.').'</span></td>
 													</tr>
-													<tr>
+												<tr>
 															<td style="text-align: right;">Flete (E): <span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
 													</tr>
 													<tr>
@@ -552,13 +533,13 @@ class SoportePago extends REST_Controller {
 															<td style="text-align: right;">Monto total excento o exonerado:<span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'], 2, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalIva, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['basert'], 2, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalIva, 2, ',', '.').'</span></td>
 													</tr>
 													<tr>
 															<td style="text-align: right;">Retencion IVA:<span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valRet, 2, ',', '.').'</span></td>
-													</tr>
+													</tr>-->
 													<tr>
-															<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalDoc, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['totalpagar'], 2, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>
@@ -567,18 +548,10 @@ class SoportePago extends REST_Controller {
 
 				<br><br>
 
-				<table border=1 width="30%">
+				<table border=1 width="30%" style="border-collapse: collapse;">
 					<tr>
 							<th  style="width: 100px;">TASA</th>
-							<td>100</td>
-					</tr>
-					<tr>
-							<th  style="width: 100px;">TASA</th>
-							<td>100</td>
-					</tr>
-					<tr>
-							<th  style="width: 100px;">TASA</th>
-							<td>100</td>
+							<td>'.$resBusTasa2[0]['tsa_value'].'</td>
 					</tr>
 				</table>
 
@@ -586,7 +559,7 @@ class SoportePago extends REST_Controller {
 				<table width="100%" style="vertical-align: bottom;">
 						<tr>
 								<th style="text-align: left;">
-										<span>'.$CommentFinal[0]['cdm_comments'].'</span>
+										<span></span>
 								</th>
 						</tr>
 				</table>';

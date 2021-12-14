@@ -40,48 +40,93 @@ class PagoRecibido extends REST_Controller {
       }
 
 
-      $resSelect = $this->pedeo->queryTable("SELECT
-       dvf_docnum id_origen,
-       ac1_legal_num codigo_proveedor,
-       ac1_account cuenta,
-       ac1_font_key ,
-       CURRENT_DATE - mac_doc_duedate AS dias_atrasado,
-       ac1_font_type numType,
-       mdt_docname tipo,
-       mac_doc_date fecha_doc,
-       ' ' retencion,
-        mac_doc_duedate fecha_ven,
-       tsa_value tasa_dia,
-       dvf_currency,
-       mac_comments comentario,
-       dvf_doctotal total_doc,
-       sum(ac1_debit) - sum(ac1_credit)  as saldo_venc
-			from mac1
-			join dacc on ac1_account = acc_code
-			left join dmdt
-			on ac1_font_type = mdt_doctype
-			left join dvfv
-			on dvf_doctype = ac1_font_type and dvf_docentry = ac1_font_key
-			left join dcfc
-			on cfc_doctype = ac1_font_type and cfc_docentry = ac1_font_key
-			left join dvnd
-			on vnd_doctype = ac1_font_type and vnd_docentry = ac1_font_key
-			left join dvnc
-			on vnc_doctype = ac1_font_type and vnc_docentry = ac1_font_key
-			left join tmac
-			on mac_base_type = ac1_font_type and mac_base_entry = ac1_font_key
-			left join tasa
-			on tsa_date = CURRENT_DATE
-			where acc_businessp = '1' and ac1_font_type <> 0 and ac1_font_type = 5 and ac1_legal_num = :cardcode
-			group by ac1_account, ac1_font_key, ac1_font_type, ac1_legal_num, mdt_docname, dvf_docnum, dvf_cardcode, mac_doc_duedate, mac_doc_date, tsa_value, dvf_currency, mac_comments, dvf_doctotal
-			having  sum(ac1_debit) - sum(ac1_credit)  <> 0",
-      array(':cardcode' => $request['cardcode']));
-
-  		$respuesta = array(
-  			'error'  => true,
-  			'data'   => false,
-  			'mensaje'=> 'No se encontraron registro para pagar'
-  		);
+      $resSelect = $this->pedeo->queryTable("SELECT mdt_docname tipo,
+	       dvf_docnum id_origen,
+	       dvf_cardcode codigo_proveedor,
+	       dvf_docentry,
+	       ac1_account cuenta,
+	       dvf_docdate fecha_doc,
+	       dvf_duedate fecha_ven,
+	       CURRENT_DATE - dvf_duedate dias_atrasado,
+	       dvf_doctotal total_doc,
+	       saldo saldo_venc,
+	       dvf_doctype numType,
+	       tsa_value tasa_dia,
+	       '' retencion,
+	       dvf_currency,
+				 ac1_font_key,
+	       dvf_comment
+						FROM dvfv
+						JOIN SALDO_DOC on dvf_docentry = ac1_font_key and dvf_doctype = ac1_font_type
+						join dmdt on dvf_doctype = mdt_doctype
+						join tasa on dvf_docdate = tsa_date
+						where dvf_cardcode = :cardcode
+						union all
+						SELECT mdt_docname tipo,
+						       vnc_docnum id_origen,
+						       vnc_cardcode codigo_proveedor,
+						       vnc_docentry,
+						       ac1_account cuenta,
+						       vnc_docdate fecha_doc,
+						       vnc_duedate fecha_ven,
+						       CURRENT_DATE - vnc_duedate dias_atrasado,
+						       vnc_doctotal total_doc,
+						       saldo saldo_venc,
+						       vnc_doctype numType,
+						       tsa_value tasa_dia,
+						       '' retencion,
+						       vnc_currency,
+									 ac1_font_key,
+						       vnc_comment
+						FROM dvnc
+						JOIN SALDO_DOC on vnc_docentry = ac1_font_key and vnc_doctype = ac1_font_type
+						join dmdt on vnc_doctype = mdt_doctype
+						join tasa on vnc_docdate = tsa_date
+						where  vnc_cardcode = :cardcode
+						union all
+						SELECT mdt_docname tipo,
+						       vnd_docnum id_origen,
+						       vnd_cardcode codigo_proveedor,
+						       vnd_docentry,
+						       ac1_account cuenta,
+						       vnd_docdate fecha_doc,
+						       vnd_duedate fecha_ven,
+						       CURRENT_DATE - vnd_duedate dias_atrasado,
+						       vnd_doctotal total_doc,
+						       saldo saldo_venc,
+						       vnd_doctype numType,
+						       tsa_value tasa_dia,
+						       '' retencion,
+						       vnd_currency,
+									 ac1_font_key,
+						       vnd_comment
+						FROM dvnd
+						JOIN SALDO_DOC on vnd_docentry = ac1_font_key and vnd_doctype = ac1_font_type
+						join dmdt on vnd_doctype = mdt_doctype
+						join tasa on vnd_docdate = tsa_date
+						where  vnd_cardcode = :cardcode
+						union all
+						SELECT mdt_docname tipo,
+						       bpr_docnum id_origen,
+						       bpr_cardcode codigo_proveedor,
+						       bpr_docentry,
+						       ac1_account cuenta,
+						       bpr_docdate fecha_doc,
+						       bpr_docdate fecha_ven,
+						       CURRENT_DATE - bpr_docdate dias_atrasado,
+						       bpr_doctotal total_doc,
+						       saldo saldo_venc,
+						       bpr_doctype numType,
+						       tsa_value tasa_dia,
+						       '' retencion,
+						       bpr_currency,
+									 ac1_font_key,
+						       bpr_comments
+						FROM gbpr
+						JOIN SALDO_DOC on bpr_docentry = ac1_font_key and bpr_doctype = ac1_font_type
+						join dmdt on bpr_doctype = mdt_doctype
+						join tasa on bpr_docdate = tsa_date
+						where bpr_cardcode = :cardcode", array(':cardcode' => $request['cardcode']));
 
   		if(isset($resSelect[0])){
 
@@ -90,7 +135,13 @@ class PagoRecibido extends REST_Controller {
   				'data'   => $resSelect,
   				'mensaje'=> 'ok'
   			);
-  		}
+  		}else{
+				$respuesta = array(
+	  			'error'  => true,
+	  			'data'   => false,
+	  			'mensaje'=> 'No se encontraron registro para pagar'
+	  		);
+			}
 
   		$this->response($respuesta);
 
