@@ -71,6 +71,29 @@ class PaymentsMade extends REST_Controller {
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
 													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref)";
 
+			// SE VERIFICA QUE SE PUEDA PAGAR EL
+			$sqlPe = " SELECT distinct sum(bpe_vlrpaid) from gbpe
+								join bpe1 b on bpe_docentry = pe1_docnum
+								where pe1_docentry = :pe1_docentry";
+								$det = json_decode($Data['detail'],true);
+
+			$resPe= $this->pedeo->queryTable($sqlPe, array(':pe1_docentry' => $det[0]['pe1_docentry']));
+
+				if(isset($resPe[0])){
+					$suma = $resPe[0];
+					if( $suma['sum']>$det[0]['pe1_vlrtotal']){
+						$respuesta = array(
+		          'error' => true,
+		          'data'  => array(),
+		          'mensaje' =>'El valor del pago excede el valor de la factura'
+		        );
+
+		        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+		        return;
+					}
+				}
+
       if(!isset($Data['detail'])){
 
         $respuesta = array(
@@ -291,10 +314,10 @@ class PaymentsMade extends REST_Controller {
         $sqlInsert = "INSERT INTO
                             	gbpe (bpe_cardcode,bpe_doctype,bpe_cardname,bpe_address,bpe_perscontact,bpe_series,bpe_docnum,bpe_docdate,bpe_taxdate,bpe_ref,bpe_transid,
                                     bpe_comments,bpe_memo,bpe_acctransfer,bpe_datetransfer,bpe_reftransfer,bpe_doctotal,bpe_vlrpaid,bpe_project,bpe_createby,
-                                    bpe_createat,bpe_payment)
+                                    bpe_createat,bpe_payment,bpe_currency)
                       VALUES (:bpe_cardcode,:bpe_doctype,:bpe_cardname,:bpe_address,:bpe_perscontact,:bpe_series,:bpe_docnum,:bpe_docdate,:bpe_taxdate,:bpe_ref,:bpe_transid,
                               :bpe_comments,:bpe_memo,:bpe_acctransfer,:bpe_datetransfer,:bpe_reftransfer,:bpe_doctotal,:bpe_vlrpaid,:bpe_project,:bpe_createby,
-                              :bpe_createat,:bpe_payment)";
+                              :bpe_createat,:bpe_payment,:bpe_currency)";
 
 
 				// Se Inicia la transaccion,
@@ -327,8 +350,8 @@ class PaymentsMade extends REST_Controller {
               ':bpe_project' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
               ':bpe_createby' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
               ':bpe_createat' => $this->validateDate($Data['bpe_createat'])?$Data['bpe_createat']:NULL,
-              ':bpe_payment' => isset($Data['bpe_payment'])?$Data['bpe_payment']:NULL)
-
+              ':bpe_payment' => isset($Data['bpe_payment'])?$Data['bpe_payment']:NULL),
+							':bpe_currency'=> isset($Data['bpe_currency'])?$Data['bpe_currency']:NULL)
 						);
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -547,6 +570,7 @@ class PaymentsMade extends REST_Controller {
 								// LLENANDO DETALLE ASIENTOS CONTABLES (AGRUPACION)
 
 
+
 								$DetalleAsientoCuentaTercero = new stdClass();
 
 								$DetalleAsientoCuentaTercero->bpe_cardcode  = isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL;
@@ -608,7 +632,6 @@ class PaymentsMade extends REST_Controller {
 							if(trim($Data['bpe_currency']) != $MONEDALOCAL ){
 									$granTotalIngreso = ($granTotalIngreso * $TasaDocLoc);
 							}
-
 							switch ($codigoCuentaIngreso) {
 								case 1: // ESTABLECIDO COMO CREDITO
 									$credito = $granTotalIngreso;
@@ -710,9 +733,9 @@ class PaymentsMade extends REST_Controller {
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
+									':ac1_font_key' => $detail['pe1_docentry'],
 									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['bpe_doctype'])?$Data['bpe_doctype']:0,
+									':ac1_font_type' => is_numeric($detail['pe1_doctype'])?$detail['pe1_doctype']:0,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",
@@ -890,14 +913,14 @@ class PaymentsMade extends REST_Controller {
 											break;
 
 										case 2:
-											$credito = $TotalPagoRecibido;
+											$debito = $TotalPagoRecibido;
 											if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-													$MontoSysCR = ($credito / $TasaLocSys);
+													$MontoSysDB = ($debito / $TasaLocSys);
 
 											}else{
 
-													$MontoSysCR = $TotalPagoRecibidoOriginal;
+													$MontoSysDB = $TotalPagoRecibidoOriginal;
 											}
 											break;
 
@@ -963,45 +986,45 @@ class PaymentsMade extends REST_Controller {
 									}
 
 									// ACTUALIZAR EL ASIENTO DE LA FACTURA QUE SE ESTA AFECTANDO CON EL PAGO RECIBIDO
-									$sqlUpdateDoc = "UPDATE mac1
-																	 SET ac1_credit_import = ac1_credit_import + :ac1_credit_import
-																	 ,ac1_debit_import = ac1_debit_import + :ac1_debit_import
-																	 ,ac1_credit_importsys = ac1_credit_importsys + :ac1_credit_importsys
-																	 ,ac1_debit_importsys = ac1_debit_importsys + :ac1_debit_importsys
-																	 WHERE ac1_legal_num = :ac1_legal_num
-																	 AND ac1_font_type = :ac1_font_type
-																	 AND ac1_font_key =  :ac1_font_key
-																	 AND ac1_account = :ac1_account";
-
-									$resUpdateDoc = $this->pedeo->updateRow($sqlUpdateDoc, array(
-															':ac1_legal_num' => $Data['bpe_cardcode'],
-															':ac1_font_type' => $doctype,
-															':ac1_font_key'  => $docentry,
-															':ac1_account'   => $cuentaTercero,
-															':ac1_credit_import' => $credito,
-															':ac1_debit_import' => $debito,
-															':ac1_credit_importsys' => $MontoSysCR,
-															':ac1_debit_importsys' => $MontoSysDB
-									));
-
-
-									if(is_numeric($resUpdateDoc) && $resUpdateDoc == 1){
-
-									}else{
-
-												$this->pedeo->trans_rollback();
-
-												$respuesta = array(
-													'error'   => true,
-													'data'    => $resUpdateDoc,
-													'mensaje'	=> 'No se pudo actualizar el asiento del documento: '.$docentry
-												);
-
-												$this->response($respuesta);
-
-												return;
-
-									}
+									// $sqlUpdateDoc = "UPDATE mac1
+									// 								 SET ac1_credit_import = ac1_credit_import + :ac1_credit_import
+									// 								 ,ac1_debit_import = ac1_debit_import + :ac1_debit_import
+									// 								 ,ac1_credit_importsys = ac1_credit_importsys + :ac1_credit_importsys
+									// 								 ,ac1_debit_importsys = ac1_debit_importsys + :ac1_debit_importsys
+									// 								 WHERE ac1_legal_num = :ac1_legal_num
+									// 								 AND ac1_font_type = :ac1_font_type
+									// 								 AND ac1_font_key =  :ac1_font_key
+									// 								 AND ac1_account = :ac1_account";
+									//
+									// $resUpdateDoc = $this->pedeo->updateRow($sqlUpdateDoc, array(
+									// 						':ac1_legal_num' => $Data['bpe_cardcode'],
+									// 						':ac1_font_type' => $doctype,
+									// 						':ac1_font_key'  => $docentry,
+									// 						':ac1_account'   => $cuentaTercero,
+									// 						':ac1_credit_import' => $credito,
+									// 						':ac1_debit_import' => $debito,
+									// 						':ac1_credit_importsys' => $MontoSysCR,
+									// 						':ac1_debit_importsys' => $MontoSysDB
+									// ));
+									//
+									//
+									// if(is_numeric($resUpdateDoc) && $resUpdateDoc == 1){
+									//
+									// }else{
+									//
+									// 			$this->pedeo->trans_rollback();
+									//
+									// 			$respuesta = array(
+									// 				'error'   => true,
+									// 				'data'    => $resUpdateDoc,
+									// 				'mensaje'	=> 'No se pudo actualizar el asiento del documento: '.$docentry
+									// 			);
+									//
+									// 			$this->response($respuesta);
+									//
+									// 			return;
+									//
+									// }
 
 									// FIN PROCEDIMIENTO ACTUALIZAR EL ASIENTO DE LA FACTURA QUE SE ESTA AFECTANDO CON EL PAGO RECIBIDO
 
@@ -1020,9 +1043,9 @@ class PaymentsMade extends REST_Controller {
 											':ac1_credit_import' => 0,
 											':ac1_debit_importsys' => 0,
 											':ac1_credit_importsys' => 0,
-											':ac1_font_key' => $resInsert,
+											':ac1_font_key' => $detail['pe1_docentry'],
 											':ac1_font_line' => 1,
-											':ac1_font_type' => is_numeric($Data['bpe_doctype'])?$Data['bpe_doctype']:0,
+											':ac1_font_type' => is_numeric($detail['pe1_doctype'])?$detail['pe1_doctype']:0,
 											':ac1_accountvs' => 1,
 											':ac1_doctype' => 18,
 											':ac1_ref1' => "",
@@ -1105,9 +1128,9 @@ class PaymentsMade extends REST_Controller {
 														':ac1_credit_import' => 0,
 														':ac1_debit_importsys' => 0,
 														':ac1_credit_importsys' => 0,
-														':ac1_font_key' => $resInsert,
+														':ac1_font_key' => $detail['pe1_docentry'],
 														':ac1_font_line' => 1,
-														':ac1_font_type' => is_numeric($Data['bpe_doctype'])?$Data['bpe_doctype']:0,
+														':ac1_font_type' => is_numeric($detail['pe1_doctype'])?$detail['pe1_docentry']:0,
 														':ac1_accountvs' => 1,
 														':ac1_doctype' => 18,
 														':ac1_ref1' => "",
@@ -1392,6 +1415,48 @@ class PaymentsMade extends REST_Controller {
 
 				 $this->response($respuesta);
 	}
+
+	public function getDetails_get(){
+		$Data = $this->get();
+
+		if(!isset($Data['pe1_docentry'])){
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' =>'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM bpe1 WHERE pe1_docnum =:pe1_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pe1_docentry" => $Data['pe1_docentry']));
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+
+	}
+
 
 	private function getUrl($data, $caperta){
       $url = "";

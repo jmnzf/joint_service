@@ -123,7 +123,8 @@ class FacturaVenta extends REST_Controller {
 												left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
 												left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
 												left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
-												where T0.dvf_docentry = :DVF_DOCENTRY";
+												where T0.dvf_docentry = :DVF_DOCENTRY
+												and t2.dms_card_type = '1'";
 
 				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
 

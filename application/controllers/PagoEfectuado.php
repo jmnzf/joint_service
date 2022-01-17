@@ -104,29 +104,7 @@ FROM dcnd
 JOIN SALDO_DOC on cnd_docentry = ac1_font_key and cnd_doctype = ac1_font_type
 join dmdt on cnd_doctype = mdt_doctype
 join tasa on cnd_docdate = tsa_date
-where  cnd_cardcode = :cardcode
-union all
-SELECT mdt_docname tipo,
-       bpe_docnum id_origen,
-       bpe_cardcode codigo_proveedor,
-       bpe_docentry,
-       ac1_account cuenta,
-       bpe_docdate fecha_doc,
-       bpe_docdate fecha_ven,
-       CURRENT_DATE - bpe_docdate dias_atrasado,
-       bpe_doctotal total_doc,
-       saldo saldo_venc,
-       bpe_doctype numType,
-       tsa_value tasa_dia,
-       '' retencion,
-       bpe_currency,
-       ac1_font_key,
-       bpe_comments
-FROM gbpe
-JOIN SALDO_DOC on bpe_docentry = ac1_font_key and bpe_doctype = ac1_font_type
-join dmdt on bpe_doctype = mdt_doctype
-join tasa on bpe_docdate = tsa_date
-where bpe_cardcode = :cardcode" ,
+where  cnd_cardcode = :cardcode" ,
       array(':cardcode' => $request['cardcode']));
 
   		$respuesta = array(

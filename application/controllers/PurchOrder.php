@@ -312,7 +312,7 @@ class PurchOrder extends REST_Controller {
 																				INNER JOIN  mau1
 																				on mau_docentry =  au1_docentry
 																				AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
-																				AND mau_doctype = :mau_doctype,
+																				AND mau_doctype = :mau_doctype
 																				AND mau_docentry = :mau_docentry";
 
 																$ressq = $this->pedeo->queryTable($sq, array(
@@ -332,7 +332,6 @@ class PurchOrder extends REST_Controller {
 
 			}
 			// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
-
         $sqlInsert = "INSERT INTO dcpo(cpo_series, cpo_docnum, cpo_docdate, cpo_duedate, cpo_duedev, cpo_pricelist, cpo_cardcode,
                       cpo_cardname, cpo_currency, cpo_contacid, cpo_slpcode, cpo_empid, cpo_comment, cpo_doctotal, cpo_baseamnt, cpo_taxtotal,
                       cpo_discprofit, cpo_discount, cpo_createat, cpo_baseentry, cpo_basetype, cpo_doctype, cpo_idadd, cpo_adress, cpo_paytype,

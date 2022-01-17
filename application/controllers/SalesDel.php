@@ -1399,13 +1399,13 @@ class SalesDel extends REST_Controller {
 									$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-														':bed_docentry' => $Data['vov_baseentry'],
-														':bed_doctype' => $Data['vov_basetype'],
+														':bed_docentry' => $Data['vem_baseentry'],
+														':bed_doctype' => $Data['vem_basetype'],
 														':bed_status' => 3, //ESTADO CERRADO
-														':bed_createby' => $Data['vov_createby'],
+														':bed_createby' => $Data['vem_createby'],
 														':bed_date' => date('Y-m-d'),
 														':bed_baseentry' => $resInsert,
-														':bed_basetype' => $Data['vov_doctype']
+														':bed_basetype' => $Data['vem_doctype']
 									));
 
 

@@ -111,7 +111,8 @@ class NcVenta extends REST_Controller {
 												LEFT JOIN DMEV T5 ON T0.VNC_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.VNC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.VNC_SERIES = T6.PGS_ID
 												LEFT JOIN PGEC T7 ON T0.VNC_CURRENCY = T7.PGM_SYMBOL
-												WHERE T0.VNC_DOCENTRY = :VNC_DOCENTRY";
+												WHERE T0.VNC_DOCENTRY = :VNC_DOCENTRY
+												and t2.dms_card_type = '1'";
 
 				$contenidoNcV = $this->pedeo->queryTable($sqlcotizacion,array(':VNC_DOCENTRY'=>$Data));
 

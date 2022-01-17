@@ -830,7 +830,7 @@ class Quotation extends REST_Controller {
 											t0.*
 											FROM dvct t0
 											left join estado_doc t1 on t0.dvc_docentry = t1.entry and t0.dvc_doctype = t1.tipo
-											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2. tipo
+											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
 											where t2.estado = 'Abierto' and t0.dvc_cardcode =:dvc_cardcode";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_cardcode" => $Data['dms_card_code']));

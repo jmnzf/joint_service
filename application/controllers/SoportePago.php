@@ -30,7 +30,7 @@ class SoportePago extends REST_Controller {
 	public function SoportePago_post(){
 
 				$Data = $this->post();
-				$Data = $Data['DVF_DOCENTRY'];
+				$Data = $Data['id_pago'];
 
 				$formatter = new NumeroALetras();
 
@@ -84,9 +84,9 @@ class SoportePago extends REST_Controller {
 						left join dmsd on cfc_cardcode = dmd_card_code
 						left join fcrt r1 on cfc_docentry = crt_baseentry and crt_basetype = cfc_doctype and r1.crt_type ='3'
 						left join fcrt r2 on cfc_docentry = r2.crt_baseentry and r2.crt_basetype = cfc_doctype and r2.crt_type ='2'
-						where cfc_docnum = :DVF_DOCENTRY";
+						where cfc_docnum = :id_pago";
 
-				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
+				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':id_pago'=>$Data));
 
 				if(!isset($contenidoFV[0])){
 						$respuesta = array(
@@ -200,9 +200,9 @@ class SoportePago extends REST_Controller {
 										ON dvem.vem_baseentry = dvov.vov_docentry
 										LEFT JOIN dvct
 										ON dvov.vov_baseentry = dvct.dvc_docentry
-										WHERE dvfv.dvf_docentry = :DVF_DOCENTRY";
+										WHERE dvfv.id_pago = :id_pago";
 
-				$resrelacionsql = $this->pedeo->queryTable($relacionsql, array(':DVF_DOCENTRY' => $Data));
+				$resrelacionsql = $this->pedeo->queryTable($relacionsql, array(':id_pago' => $Data));
 
 				$VieneEntrega = 0;
 				$VienePedido = 0;
@@ -221,8 +221,8 @@ class SoportePago extends REST_Controller {
 				$CommentFinal = "SELECT t0.*
 												 FROM cfdm t0
 												 LEFT JOIN dvfv t1 ON t0.cdm_type = CAST(t1.dvf_doctype AS VARCHAR)
-												 WHERE t1.dvf_docentry = :DVF_DOCENTRY";
-				$CommentFinal = $this->pedeo->queryTable($CommentFinal,array(':DVF_DOCENTRY' => $Data));
+												 WHERE t1.id_pago = :id_pago";
+				$CommentFinal = $this->pedeo->queryTable($CommentFinal,array(':id_pago' => $Data));
 
 
 				$totaldetalle = '';

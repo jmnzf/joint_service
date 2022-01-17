@@ -112,7 +112,8 @@ class CotizacionPDF extends REST_Controller {
 												LEFT JOIN DMEV T5 ON T0.DVC_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.DVC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.DVC_SERIES = T6.PGS_ID
 												LEFT JOIN PGEC T7 ON T0.DVC_CURRENCY = T7.PGM_SYMBOL
-												WHERE T0.DVC_DOCENTRY = :DVC_DOCENTRY";
+												WHERE T0.DVC_DOCENTRY = :DVC_DOCENTRY
+												and t2.dms_card_type = '1'";
 
 				$contenidocotizacion = $this->pedeo->queryTable($sqlcotizacion,array(':DVC_DOCENTRY'=>$Data));
 

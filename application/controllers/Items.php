@@ -283,7 +283,7 @@ class Items extends REST_Controller {
 
 				$Data = $this->get();
 
-				$variableSql = 'WHERE 1=1';
+				$variableSql = ' WHERE 1=1';
 
 				if(isset($Data['sub_artic']) && !empty($Data['sub_artic'])){
 
@@ -313,7 +313,7 @@ class Items extends REST_Controller {
 											t0.dma_sup_set, t0.dma_sku_sup, t0.dma_uom_purch, t0.dma_uom_pqty, t0.dma_uom_pemb, t0.dma_uom_pembqty,
 											t0.dma_tax_purch, t0.dma_price_list,t0.dma_price, t0.dma_uom_sale, t0.dma_uom_sqty, t0.dma_uom_semb,
 											t0.dma_uom_embqty, t0.dma_tax_sales, t0.dma_acct_type, t0.dma_avprice, t0.dma_uom_weight, t0.dma_uom_umvol,
-											t0.dma_uom_vqty, t0.dma_uom_weightn, t0.dma_uom_sizedim,t2.mga_name LIMIT 100";
+											t0.dma_uom_vqty, t0.dma_uom_weightn, t0.dma_uom_sizedim,t2.mga_name LIMIT 500";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -336,6 +336,60 @@ class Items extends REST_Controller {
 
          $this->response($respuesta);
   }
+
+  	// Obtener articulos
+  	public function getDtItems_post(){
+
+		$request = $this->post();
+
+		$variableSql = 'WHERE 1=1';
+
+		if(isset($Data['sub_artic']) && !empty($Data['sub_artic'])){
+
+			$variableSql .= " AND cast(t0.dma_group_code as varchar) LIKE '%".$Data['sub_artic']."%'";
+		}
+		if(isset($Data['cod_artic']) &&  !empty($Data['cod_artic'])){
+
+			$variableSql .= " AND t0.dma_item_code LIKE '%".$Data['cod_artic']."%'";
+		}
+
+		if(isset($Data['nom_artic']) &&  !empty($Data['nom_artic'])){
+
+			$variableSql .= " AND t0.dma_item_name LIKE '%".$Data['nom_artic']."%'";
+		}
+		// OBTENER NÚMERO DE REGISTROS DE LA TABLA.
+		$numRows = $this->pedeo->queryTable("select get_numrows('dmar') as numrows", []);
+		// COLUMNAS DEL DATATABLE
+		$columns = array(
+			'cast(t0.dma_id as varchar)',
+			't0.dma_item_code',
+			't0.dma_item_name',
+			't2.mga_name',
+			'cast(t1.bdi_quantity as varchar)',
+			'cast(t0.dma_enabled as varchar)'
+		);
+		// 
+		if( !empty($request['search']['value']) ) {
+			// OBTENER CONDICIONALES.
+			$variableSql .= " AND ".self::get_Filter($columns,$request['search']['value']);
+		}
+		// 
+        $sqlSelect = "SELECT t0.*, t2.mga_name, COALESCE(SUM(t1.bdi_quantity),0) stock FROM dmar t0 LEFT JOIN tbdi t1 on t0.dma_item_code = t1.bdi_itemcode LEFT JOIN dmga t2 on t0.dma_group_code = t2.mga_id $variableSql GROUP BY t0.dma_id, t0.dma_item_code, t0.dma_item_name, t0.dma_generic_name, t0.dma_item_purch, t0.dma_item_inv, t0.dma_item_sales, t0.dma_group_code, t0.dma_attach, t0.dma_enabled, t0.dma_firm_code, t0.dma_series_code, t0.dma_sup_set, t0.dma_sku_sup, t0.dma_uom_purch, t0.dma_uom_pqty, t0.dma_uom_pemb, t0.dma_uom_pembqty, t0.dma_tax_purch, t0.dma_price_list,t0.dma_price, t0.dma_uom_sale, t0.dma_uom_sqty, t0.dma_uom_semb, t0.dma_uom_embqty, t0.dma_tax_sales, t0.dma_acct_type, t0.dma_avprice, t0.dma_uom_weight, t0.dma_uom_umvol, t0.dma_uom_vqty, t0.dma_uom_weightn, t0.dma_uom_sizedim,t2.mga_name";
+
+		//
+		$sqlSelect .=" ORDER BY ".$columns[$request['order'][0]['column']]." ".$request['order'][0]['dir']." LIMIT ".$request['length']." OFFSET ".$request['start'];
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+		$respuesta = array(
+			'error' => false,
+			'data'  => $resSelect,
+			'rows'  => $numRows[0]['numrows'],
+			'mensaje' => ''
+		);
+
+        $this->response($respuesta);
+  	}
 	// Obtener costo del articulo
 	public function getItemsCost_get(){
 

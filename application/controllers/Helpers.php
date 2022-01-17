@@ -53,6 +53,8 @@ class Helpers extends REST_Controller {
 
         $sqlSelect = " SELECT ".$Data['table_camps']." FROM ".$Data['table_name']." WHERE 1=1 ".$filtro. " ORDER BY ".$Data['camps_order']." ".$Data['order']." ".$limite." ";
 // print_r($sqlSelect);exit();die();
+
+
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
         if(isset($resSelect[0])){

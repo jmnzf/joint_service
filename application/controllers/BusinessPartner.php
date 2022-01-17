@@ -543,49 +543,35 @@ class BusinessPartner extends REST_Controller {
 				return;
 		}
 
-		$sqlSelect = "SELECT * FROM dmsd where dmd_card_code = :dmd_card_code and dmd_ppal = 1";
-
-		$resSelect = $this->pedeo->queryTable($sqlSelect,[':dmd_card_code'=> $Data['dmd_card_code']]);
-		if(isset($resSelect[0])){
-			$update = $this->pedeo->updateRow('UPDATE dmsd SET dmd_ppal = 0 WHERE dmd_card_code = :dmd_card_code',[':dmd_card_code'=>$Data['dmd_card_code']]);
-		}else{
-			$this->response(array(
-				'error'   => true,
-				'data'    => [],
-				'mensaje' =>'No se pudo actualizar la dirreccion del socio de negocio'
-			),REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
+    $resUpdate = NULL;
+    
+    $update = $this->pedeo->updateRow('UPDATE dmsd SET dmd_ppal = 0 WHERE dmd_card_code = :dmd_card_code',[':dmd_card_code' => $Data['dmd_card_code']]);
+		
+    if(is_numeric($update) && $update > 0){
+      // 
+			$resUpdate = $this->pedeo->updateRow("UPDATE dmsd SET dmd_ppal = :dmd_ppal WHERE dmd_id = :dmd_id", 
+        array(
+          ':dmd_ppal' => 1,
+          ':dmd_id' => $Data['dmd_id']
+        )
+      );
 		}
 
-		$sqlUpdate = "UPDATE dmsd SET dmd_ppal = :dmd_ppal WHERE dmd_id = :dmd_id";
-
-
-		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-									':dmd_ppal' => 1,
-									':dmd_id' => $Data['dmd_id']
-		));
+    $respuesta = array(
+      'error'   => true,
+      'data'    => $update,
+      'mensaje'	=> 'No se pudo actualizar la dirreccion del socio de negocio'
+    );
 
 		if(is_numeric($resUpdate) && $resUpdate == 1){
-
-					$respuesta = array(
-						'error'   => false,
-						'data'    => $resUpdate,
-						'mensaje' =>'Se actualizó la dirreccion del socio de negocio'
-					);
-
-
-		}else{
-
-					$respuesta = array(
-						'error'   => true,
-						'data'    => $resUpdate,
-						'mensaje'	=> 'No se pudo actualizar la dirreccion del socio de negocio'
-					);
-
+      $respuesta = array(
+        'error'   => false,
+        'data'    => $resUpdate,
+        'mensaje' =>'Se actualizó la dirreccion del socio de negocio'
+      );
 		}
 
-		 $this->response($respuesta);
+		$this->response($respuesta);
 	}
 
 
