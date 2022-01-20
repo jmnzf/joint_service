@@ -23,6 +23,7 @@ class FinanceReport extends REST_Controller {
 
 	}
 
+
 	// METODO PARA OBTENER TODOS LOS REGISTROS
   public function getFinanceReport_get(){
 
@@ -53,9 +54,9 @@ class FinanceReport extends REST_Controller {
 
   public function getFinanceReportGroup_post(){
 	$Data = $this->post();
-    $sqlSelect = "SELECT * FROM mif1 WHERE if1_mif_id = :if1_docentry";
+    $sqlSelect = "SELECT * FROM mif1 WHERE if1_mif_id = :mif_docentry";
 
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array(":if1_docentry" =>$Data['if1_docentry']));
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(":mif_docentry" =>$Data['mif_docentry']));
 
     if(isset($resSelect[0])){
 
@@ -226,7 +227,7 @@ class FinanceReport extends REST_Controller {
 
 		$this->response($respuesta);
 
-  }
+  	}
 
 	// METODO PARA actualizar CABECERA
 	public function updateFinanceReport_post(){
@@ -344,11 +345,51 @@ class FinanceReport extends REST_Controller {
 		$this->response($respuesta);
 	}
 
+	// METODO PAR ACTUALIZAR GRUPO
+	public function updateGroup_post()	{
+		$Data = $this->post();
+		if( !isset($Data['if1_group_name']) OR
+			!isset($Data['if1_docentry'])
+		){
+		$this->response(array(
+			'error'  => true,
+			'data'   => [],
+			'mensaje'=>'La informacion enviada no es valida'
+		), REST_Controller::HTTP_BAD_REQUEST);
+
+		return ;
+		}
+
+		$sqlUpdate ="UPDATE mif1 set if1_group_name = :if1_group_name
+					WHERE if1_docentry = :if1_docentry";
+
+		$resUpdate = $this->pedeo->updateRow($sqlUpdate,array(
+										':if1_group_name' =>$Data['if1_group_name'],
+										':if1_docentry' =>$Data['if1_docentry']
+									));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resUpdate,
+				'mensaje' => 'Grupo actualizado con exito');
+		}else{
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => $resUpdate,
+				'mensaje' => 'No se pudo actualizar el grupo');
+		}
+		$this->response($respuesta);
+	}	
+
+	// METODO PARA CREAR SUBGRUPO
 	public function createSubgroup_post(){
 		$Data = $this->post();
 			if( !isset($Data['if2_subgroup_name']) OR
 				!isset($Data['if2_conduct']) OR
-				!isset($Data['if2_if1_id'])
+				!isset($Data['if2_fi1_id'])
 			){
 			$this->response(array(
 				'error'  => true,
@@ -360,13 +401,13 @@ class FinanceReport extends REST_Controller {
 			}
 
 
-			$sqlInsert ="INSERT INTO mif2 (if2_subgroup_name,if2_conduct, if2_if1_id)
-			VALUES(:if2_subgroup_name,:if2_conduct,:if2_if1_id)";
+			$sqlInsert ="INSERT INTO mif2 (if2_subgroup_name,if2_conduct, if2_fi1_id)
+			VALUES(:if2_subgroup_name,:if2_conduct,:if2_fi1_id)";
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert,array(
-				":if1_group_name"=>$Data['if1_group_name'],
-				":if1_group_name"=>$Data['if2_conduct'],
-				":if1_mif_id"=>$Data['if1_mif_id'])
+				":if2_subgroup_name"=>$Data['if2_subgroup_name'],
+				":if2_conduct"=>$Data['if2_conduct'],
+				":if2_fi1_id"=>$Data['if2_fi1_id'])
 			);
 
 
@@ -386,13 +427,12 @@ class FinanceReport extends REST_Controller {
 			}
 			$this->response($respuesta);
 	}
-
-	public function updateSubgroup(){
+	// METODO PARA ACTUALIZAR SUBGRUPO
+	public function updateSubgroup_post(){
 			$Data = $this->post();
 			if( !isset($Data['if2_subgroup_name']) OR
 				!isset($Data['if2_conduct']) OR
-				!isset($Data['if2_docentry']) OR
-				!isset($Data['if2_if1_id'])
+				!isset($Data['if2_docentry'])
 			){
 			$this->response(array(
 				'error'  => true,
@@ -405,14 +445,12 @@ class FinanceReport extends REST_Controller {
 
 
 			$sqlUpdate ="UPDATE mif2 SET if2_subgroup_name = :if2_subgroup_name,
-										if2_conduct = :if2_conduct,
-										if2_if1_id = :if2_if1_id
+										if2_conduct = :if2_conduct
 										WHERE if2_docentry = :if2_docentry";
 
 			$resUpdate = $this->pedeo->updateRow($sqlUpdate,array(
 				":if2_subgroup_name"=>$Data['if2_subgroup_name'],
 				":if2_conduct"=>$Data['if2_conduct'],
-				":if2_if1_id"=>$Data['if2_if1_id'],
 				":if2_docentry"=>$Data['if2_docentry']
 				));
 
@@ -433,9 +471,10 @@ class FinanceReport extends REST_Controller {
 			}
 			$this->response($respuesta);
 	}
-
+	
 	public function getFinanceReportSGroup_post(){
 		$Data = $this->post();
+		
 		$sqlSelect = "SELECT * FROM mif2 WHERE if2_fi1_id = :if2_fi1_id";
 	
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":if2_fi1_id" =>$Data['if2_fi1_id']));
@@ -459,6 +498,51 @@ class FinanceReport extends REST_Controller {
 	
 		 $this->response($respuesta);
 	
-	  }
+	}
 
+	public function createAccount_post(){
+		$Data = $this->post();
+		if( !isset($Data['if3_if2_id']) OR
+			!isset($Data['if3_account'])
+		){
+			$this->response(array(
+				'error'  => true,
+				'data'   => [],
+				'mensaje'=>'La informacion enviada no es valida'
+			), REST_Controller::HTTP_BAD_REQUEST);
+
+			return ;
+		}
+
+		$cuentas = $Data['if3_account'];
+		$sqlInsert = "INSERT INTO mif3 (if_account,if3_if2_id) values (:if_account,:if3_if2_id)";
+		$this->trans_begin();
+		foreach ($cuentas as $key => $cuenta){
+			$resInsert = $this->pedeo->insertRow($sqlInsert,array(
+				":if3_account" => $Data['if3_account'],
+				"if3_if2_id" => $cuenta
+			));
+			if(is_numeric($resInsert) && $resInsert > 0){
+
+			}else{
+				$this->response(array(
+					'error'  => true,
+					'data'   => [],
+					'mensaje'=>'La informacion enviada no es valida'
+				), REST_Controller::HTTP_BAD_REQUEST);
+	
+				return ;
+				$this->trans_rollback();
+			}
+		}
+
+		$respuesta = array(
+			'error' => false,
+			'data'  => $resInsert,
+			'mensaje' => 'Cuentas agregadas con exito');
+			$this->trans_commit();
+
+		$this->response($respuesta);
+
+	}
 }
