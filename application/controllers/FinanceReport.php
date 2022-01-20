@@ -51,9 +51,9 @@ class FinanceReport extends REST_Controller {
 
   }
 
-  public function getFinanceReportGroup_get(){
-	$Data = $this->get();
-    $sqlSelect = "SELECT * FROM mif1 WHERE if1_docentry = :if1_docentry";
+  public function getFinanceReportGroup_post(){
+	$Data = $this->post();
+    $sqlSelect = "SELECT * FROM mif1 WHERE if1_mif_id = :if1_docentry";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array(":if1_docentry" =>$Data['if1_docentry']));
 
@@ -174,36 +174,13 @@ class FinanceReport extends REST_Controller {
     }
 
 
+	$sqlInsert ="INSERT INTO mif1 (if1_group_name, if1_mif_id) VALUES(:if1_group_name,:if1_mif_id)";
+	$resInsert = $this->pedeo->insertRow($sqlInsert,array(":if1_group_name"=>$Data['if1_group_name'],
+	":if1_mif_id"=>$Data['if1_mif_id']));
+
 
     if(is_numeric($resInsert) && $resInsert > 0){
 
-    //   $detalles = $Data['Details'];
-    //   $detalles = json_decode($detalles,true);
-
-    //   $sqlInsert2 = "INSERT INTO fif2(fi2_subgroup_name, fi2_account, fi2_conduct, fi2_fi1_id)
-    //                         VALUES (:fi2_subgroup_name, :fi2_account, :fi2_conduct, :fi2_fi1_id)";
-
-    //   foreach ($detalles as $key => $detalle) {
-
-    //     $resInsert2 = $this->pedeo->insertRow($sqlInsert2,array(
-    //                     ':fi2_subgroup_name' =>$detalle['fi2_subgroup_name'],
-    //                     ':fi2_account' =>$detalle['fi2_account'],
-    //                     ':fi2_conduct' =>$detalle['fi2_conduct'],
-    //                     ':fi2_fi1_id' =>$resInsert
-    //                   ));
-
-    //     if(is_numeric($resInsert2) && $resInsert2 = 0){
-	// 				$this->pedeo->trans_rollback();
-    //       $respuesta = array(
-    //         'error' => true,
-    //         'data'  => $resInsert,
-    //         'mensaje' => 'No se pudo crear el informe financiero');
-    //         $this->response($respuesta);
-    //         return ;
-
-    //     }
-    //   }
-	// 		$this->pedeo->trans_commit();
       $respuesta = array(
         'error' => false,
         'data'  => $resInsert,
@@ -221,33 +198,33 @@ class FinanceReport extends REST_Controller {
 
 	// METODO PARA FILTRAR LOS DETALLES
 	public function getFinanceReportDetailsById_get(){
-    $Data = $this->get();
+		$Data = $this->get();
 
-    $sqlSelect = "SELECT * from tmif
-									join mif1 on mif_docentry = if1_mif_id
-									join fif2 on if1_docentry = fi2_fi1_id
-									where mif_docentry = :mif_docentry";
+		$sqlSelect = "SELECT * from tmif
+										join mif1 on mif_docentry = if1_mif_id
+										join fif2 on if1_docentry = fi2_fi1_id
+										where mif_docentry = :mif_docentry";
 
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array(':mif_docentry' =>$Data['mif_docentry']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mif_docentry' =>$Data['mif_docentry']));
 
-    if(isset($resSelect[0])){
+		if(isset($resSelect[0])){
 
-      $respuesta = array(
-        'error' => false,
-        'data'  => $resSelect,
-        'mensaje' => '');
+		$respuesta = array(
+			'error' => false,
+			'data'  => $resSelect,
+			'mensaje' => '');
 
-    }else{
+		}else{
 
-        $respuesta = array(
-          'error'   => true,
-          'data' => array(),
-          'mensaje'	=> 'busqueda sin resultados'
-        );
+			$respuesta = array(
+			'error'   => true,
+			'data' => array(),
+			'mensaje'	=> 'busqueda sin resultados'
+			);
 
-    }
+		}
 
-     $this->response($respuesta);
+		$this->response($respuesta);
 
   }
 
@@ -303,15 +280,15 @@ class FinanceReport extends REST_Controller {
 		if( !isset($Data['if1_group_name']) OR
         !isset($Data['if1_mif_id']) OR
         !isset($Data['Details'])
-      ){
-      $this->response(array(
-        'error'  => true,
-        'data'   => [],
-        'mensaje'=>'La informacion enviada no es valida'
-      ), REST_Controller::HTTP_BAD_REQUEST);
+		){
+		$this->response(array(
+			'error'  => true,
+			'data'   => [],
+			'mensaje'=>'La informacion enviada no es valida'
+		), REST_Controller::HTTP_BAD_REQUEST);
 
-      return ;
-    }
+		return ;
+		}
 		$sqlUpdate = "UPDATE mif1 set if1_group_name = :if1_group_name,
 																	if1_mif_id = :if1_mif_id
 																	WHERE if1_docentry = :if1_docentry";
@@ -367,90 +344,121 @@ class FinanceReport extends REST_Controller {
 		$this->response($respuesta);
 	}
 
-	// public function createFinanceReport_post(){
-	// 	$Data = $this->post();
-	// 	$respuesta = [];
+	public function createSubgroup_post(){
+		$Data = $this->post();
+			if( !isset($Data['if2_subgroup_name']) OR
+				!isset($Data['if2_conduct']) OR
+				!isset($Data['if2_if1_id'])
+			){
+			$this->response(array(
+				'error'  => true,
+				'data'   => [],
+				'mensaje'=>'La informacion enviada no es valida'
+			), REST_Controller::HTTP_BAD_REQUEST);
 
-	// 		// creando cabecera
-	// 		$sqlInsert ="INSERT INTO tmif (mif_name, mif_create_by, mif_status)
-	//                   VALUES(:mif_name, :mif_create_by, :mif_status)";
-
-
-
-	//     $resInsert = $this->pedeo->insertRow($sqlInsert,array(
-	//                     ':mif_name' =>$Data['mif_name'],
-	//                     ':mif_create_by' =>$Data['mif_create_by'],
-	//                     ':mif_status' =>$Data['mif_status']
-	//                   ));
-
-	//     if(is_numeric($resInsert) && $resInsert > 0){
-
-	// 			// creando grupo
-	// 			$grupos = json_decode($Data['mif_details'],true);
-	// 			// print_r($grupos);
-	// 			// die;
-	// 			foreach ($grupos as $key => $grupo) {
-	// 				$this->pedeo->trans_begin();
-	// 				$sqlInsert2 ="INSERT INTO mif1 (if1_group_name, if1_mif_id)
-	// 		                            VALUES(:if1_group_name, :if1_mif_id)";
-
-	// 		    $resInsert2 = $this->pedeo->insertRow($sqlInsert2,array(
-	// 		                    ':if1_group_name' =>$grupo['if1_group_name'],
-	// 		                    ':if1_mif_id' =>$resInsert
-	// 		                  ));
-
-	// 			 if(is_numeric($resInsert2) && $resInsert2 > 0){
-	// 				 // inicio creacion de subgrupo
-	// 				 $subgrupos = $grupo['if1_details'];
-	// 				 $sqlInsert3 = "INSERT INTO fif2(fi2_subgroup_name, fi2_account, fi2_conduct, fi2_fi1_id)
-	// 	                             VALUES (:fi2_subgroup_name, :fi2_account, :fi2_conduct, :fi2_fi1_id)";
-	// 	       // $subgrupos = json_decode($subgrupos,true);
-	// 				 foreach ($subgrupos as $key => $subgrupo) {
-
-	// 	         $resInsert3 = $this->pedeo->insertRow($sqlInsert3,array(
-	// 	                         ':fi2_subgroup_name' =>$subgrupo['fi2_subgroup_name'],
-	// 	                         ':fi2_account' =>json_encode($subgrupo['fi2_account']),
-	// 	                         ':fi2_conduct' =>$subgrupo['fi2_conduct'],
-	// 	                         ':fi2_fi1_id' =>$resInsert2
-	// 	                       ));
-
-	// 	         if(is_numeric($resInsert3) && $resInsert3 = 0){
-	// 	 					$this->pedeo->trans_rollback();
-	// 	           $respuesta = array(
-	// 	             'error' => true,
-	// 	             'data'  => $resInsert,
-	// 	             'mensaje' => 'No se pudo crear el informe financiero');
-	// 	             $this->response($respuesta);
-	// 	             return ;
-	// 	         }
-	// 					 $this->pedeo->trans_commit();
-	// 					 $respuesta = array(
-	// 						 'error' => false,
-	// 						 'data'  => [],
-	// 						 'mensaje' => 'Informe financiero creado con exito');
-	// 	       }
+			return ;
+			}
 
 
-	// 			 }else{
-	// 				 $this->pedeo->trans_rollback();
+			$sqlInsert ="INSERT INTO mif2 (if2_subgroup_name,if2_conduct, if2_if1_id)
+			VALUES(:if2_subgroup_name,:if2_conduct,:if2_if1_id)";
 
-	// 				 $respuesta = array(
-	//  	        'error' => true,
-	//  	        'data'  => [],
-	//  	        'mensaje' => 'No se pudo crear el informe');
-	// 			 }
-	// 			}
-	// 			// fin creacion de grupo
+			$resInsert = $this->pedeo->insertRow($sqlInsert,array(
+				":if1_group_name"=>$Data['if1_group_name'],
+				":if1_group_name"=>$Data['if2_conduct'],
+				":if1_mif_id"=>$Data['if1_mif_id'])
+			);
 
-	//     }else{
-	// 			$this->pedeo->trans_rollback();
-	//       $respuesta = array(
-	//         'error' => true,
-	//         'data'  => [],
-	//         'mensaje' => 'No se pudo crear el informe');
-	//     }
 
-	// 		$this->response($respuesta);
-	// }
+			if(is_numeric($resInsert) && $resInsert > 0){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resInsert,
+				'mensaje' => 'Subgrupo creado con exito');
+
+			}else{
+					$this->pedeo->trans_rollback();
+			$respuesta = array(
+				'error' => true,
+				'data'  => $resInsert,
+				'mensaje' => 'No se pudo crear el subgrupo');
+			}
+			$this->response($respuesta);
+	}
+
+	public function updateSubgroup(){
+			$Data = $this->post();
+			if( !isset($Data['if2_subgroup_name']) OR
+				!isset($Data['if2_conduct']) OR
+				!isset($Data['if2_docentry']) OR
+				!isset($Data['if2_if1_id'])
+			){
+			$this->response(array(
+				'error'  => true,
+				'data'   => [],
+				'mensaje'=>'La informacion enviada no es valida'
+			), REST_Controller::HTTP_BAD_REQUEST);
+
+			return ;
+			}
+
+
+			$sqlUpdate ="UPDATE mif2 SET if2_subgroup_name = :if2_subgroup_name,
+										if2_conduct = :if2_conduct,
+										if2_if1_id = :if2_if1_id
+										WHERE if2_docentry = :if2_docentry";
+
+			$resUpdate = $this->pedeo->updateRow($sqlUpdate,array(
+				":if2_subgroup_name"=>$Data['if2_subgroup_name'],
+				":if2_conduct"=>$Data['if2_conduct'],
+				":if2_if1_id"=>$Data['if2_if1_id'],
+				":if2_docentry"=>$Data['if2_docentry']
+				));
+
+
+			if(is_numeric($resUpdate) && $resUpdate > 0){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resUpdate,
+				'mensaje' => 'Subgrupo creado con exito');
+
+			}else{
+					$this->pedeo->trans_rollback();
+			$respuesta = array(
+				'error' => true,
+				'data'  => [],
+				'mensaje' => 'No se pudo crear el subgrupo');
+			}
+			$this->response($respuesta);
+	}
+
+	public function getFinanceReportSGroup_post(){
+		$Data = $this->post();
+		$sqlSelect = "SELECT * FROM mif2 WHERE if2_fi1_id = :if2_fi1_id";
+	
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":if2_fi1_id" =>$Data['if2_fi1_id']));
+	
+		if(isset($resSelect[0])){
+	
+		  $respuesta = array(
+			'error' => false,
+			'data'  => $resSelect,
+			'mensaje' => '');
+	
+		}else{
+	
+			$respuesta = array(
+			  'error'   => true,
+			  'data' => array(),
+			  'mensaje'	=> 'busqueda sin resultados'
+			);
+	
+		}
+	
+		 $this->response($respuesta);
+	
+	  }
 
 }
