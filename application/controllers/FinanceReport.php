@@ -545,4 +545,115 @@ class FinanceReport extends REST_Controller {
 		$this->response($respuesta);
 
 	}
+
+	public function getAccountSubgroup_get(){
+		$Data = $this->get();
+
+		if(!isset($Data['if3_if2_id'])){
+			$this->response(array(
+				'error'  => true,
+				'data'   => [],
+				'mensaje'=>'La informacion enviada no es valida'
+			), REST_Controller::HTTP_BAD_REQUEST);
+
+			return ;
+		}
+
+		$sqlSelect = "SELECT * from mif3  where if3_if2_id = :if3_if2_id";
+		
+		$resSelect = $this->pedeo->queryTable($sqlSelect,[":if3_if2_id" => $Data['if3_if2_id']]);
+		
+		if(isset($resSelect[0])){
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+		}else{
+			$respuesta = array(
+				'error' => true,
+				'data'  => [],
+				'mensaje' => 'busqueda sin resultados');
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function getComplete_get(){
+		$Data = $this->get();
+
+		$sqlSelect = "select * from tmif WHERE mif_docentry = :mif_docentry";
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":mif_docentry"=> $Data['mif_docentry']));
+
+		$sqlSelect2 = "SELECT * from mif1 where if1_mif_id = :if1_mif_id";
+		$resSelect2 = $this->pedeo->queryTable($sqlSelect2,array(":if1_mif_id"=>$resSelect[0]['mif_docentry']));
+		$resSelect[0]['groups'] = $resSelect2;
+		$sqlSelect3 = "SELECT * from mif2 where if2_fi1_id = :if2_fi1_id";
+		$resSelect3 = $this->pedeo->queryTable($sqlSelect3,array(":if2_fi1_id"=>$resSelect2[0]['if1_docentry']));
+		$resSelect[0]['subgroups'] = $resSelect3;
+		$this->response($resSelect);
+	}
+
+	public function editAccounts_post(){
+		$Data = $this->post();
+
+		if( !isset($Data['if3_if2_id']) OR
+			!isset($Data['if3_account']) OR 
+			!isset($Data['edit'])
+		){
+			$this->response(array(
+				'error'  => true,
+				'data'   => [],
+				'mensaje'=>'La informacion enviada no es valida'
+			), REST_Controller::HTTP_BAD_REQUEST);
+
+			return ;
+		}
+
+		if($Data['edit'] == 1){
+			$sqlDelete = "DELETE FROM mif3 WHERE if3_if2_id = :if3_if2_id";
+			$resDelete = $this->pedeo->deleteRow($sqlDelete, array(":if3_if2_id" => $Data['if3_if2_id']));
+		}
+		
+		// if(is_numeric($resDelete) && $resDelete > 0){
+
+		$cuentas = explode(',',$Data['if3_account']);
+		$sqlInsert = "INSERT INTO mif3 (if3_account,if3_if2_id) values (:if3_account,:if3_if2_id)";
+		$this->pedeo->trans_begin();
+		foreach ($cuentas as $key => $cuenta){
+			$resInsert = $this->pedeo->insertRow($sqlInsert,array(
+				":if3_account" => $cuenta,
+				"if3_if2_id" => $Data['if3_if2_id']
+			));
+			if(is_numeric($resInsert) && $resInsert > 0){
+
+			}else{
+				$this->response(array(
+					'error'  => true,
+					'data'   => [],
+					'mensaje'=>'No se pudo crear'
+				), REST_Controller::HTTP_BAD_REQUEST);
+	
+				return ;
+				$this->pedeo->trans_rollback();
+			}
+		}
+		$respuesta = array(
+			'error' => false,
+			'data'  => $resInsert,
+			'mensaje' => 'Cuentas agregadas con exito');
+			$this->pedeo->trans_commit();
+	// } else{
+	// 	$this->response(array(
+	// 		'error'  => false,
+	// 		'data'   => $resDelete,
+	// 		'mensaje'=>'No se pudo crear'
+	// 	), REST_Controller::HTTP_BAD_REQUEST);
+
+	// 	return ;
+	// 	$this->pedeo->trans_rollback();
+	// }
+		
+
+		$this->response($respuesta);
+	}
 }
