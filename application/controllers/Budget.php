@@ -260,6 +260,18 @@ class Budget extends REST_Controller {
 	// METODO PARA CREAR INSERTAR LOS DATOS EN LOS PERIODOS PRESUPUESTALES
 	public function createBugetPeriod_post(){
 		$Data = $this->post();
+		if($Data['mpp_mpc_id'] OR
+				$Data['mpp_profit'] OR
+				$Data['mpp_fecha_inicial'] OR
+				$Data['mpp_fecha_final']){
+					$this->response(array(
+		        'error'  => true,
+		        'data'   => [],
+		        'mensaje'=>'La informacion enviada no es valida'
+		      ), REST_Controller::HTTP_BAD_REQUEST);
+
+		      return ;
+		}
 		// BUSCA EL ACUMULADO DEL PRESUPUESTO
 		$sqlSelect = "SELECT case
 									when sum(mpp_profit) is null then 0

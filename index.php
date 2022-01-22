@@ -1,4 +1,7 @@
 <?php
+// var_dump(getallheaders());
+
+
 date_default_timezone_set('America/Bogota');
 /**
  * CodeIgniter
