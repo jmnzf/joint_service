@@ -9,10 +9,12 @@ class User extends REST_Controller {
 	private $pdo;
 
 	public function __construct(){
-
-		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
-		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
 		header("Access-Control-Allow-Origin: *");
+		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
+		header("Access-Control-Allow-Headers: Origin,X-Requested-With,Content-Type,Accept,Access-Control-Request-Method,Authorization,Cache-Control");
+		// header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding, Authorization,Accept, x-api-key, X-Requested-With");
+
+
 
 		parent::__construct();
 		$this->load->database();

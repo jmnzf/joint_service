@@ -382,7 +382,7 @@ class FinanceReport extends REST_Controller {
 				'mensaje' => 'No se pudo actualizar el grupo');
 		}
 		$this->response($respuesta);
-	}	
+	}
 
 	// METODO PARA CREAR SUBGRUPO
 	public function createSubgroup_post(){
@@ -471,33 +471,33 @@ class FinanceReport extends REST_Controller {
 			}
 			$this->response($respuesta);
 	}
-	
+
 	public function getFinanceReportSGroup_post(){
 		$Data = $this->post();
-		
+
 		$sqlSelect = "SELECT * FROM mif2 WHERE if2_fi1_id = :if2_fi1_id";
-	
+
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":if2_fi1_id" =>$Data['if2_fi1_id']));
-	
+
 		if(isset($resSelect[0])){
-	
+
 		  $respuesta = array(
 			'error' => false,
 			'data'  => $resSelect,
 			'mensaje' => '');
-	
+
 		}else{
-	
+
 			$respuesta = array(
 			  'error'   => true,
 			  'data' => array(),
 			  'mensaje'	=> 'busqueda sin resultados'
 			);
-	
+
 		}
-	
+
 		 $this->response($respuesta);
-	
+
 	}
 
 	public function createAccount_post(){
@@ -513,7 +513,7 @@ class FinanceReport extends REST_Controller {
 
 			return ;
 		}
-		
+
 		$cuentas = explode(',',$Data['if3_account']);
 		$sqlInsert = "INSERT INTO mif3 (if3_account,if3_if2_id) values (:if3_account,:if3_if2_id)";
 		$this->pedeo->trans_begin();
@@ -530,7 +530,7 @@ class FinanceReport extends REST_Controller {
 					'data'   => [],
 					'mensaje'=>'No se pudo crear'
 				), REST_Controller::HTTP_BAD_REQUEST);
-	
+
 				return ;
 				$this->pedeo->trans_rollback();
 			}
@@ -560,9 +560,9 @@ class FinanceReport extends REST_Controller {
 		}
 
 		$sqlSelect = "SELECT * from mif3  where if3_if2_id = :if3_if2_id";
-		
+
 		$resSelect = $this->pedeo->queryTable($sqlSelect,[":if3_if2_id" => $Data['if3_if2_id']]);
-		
+
 		if(isset($resSelect[0])){
 			$respuesta = array(
 				'error' => false,
@@ -580,13 +580,13 @@ class FinanceReport extends REST_Controller {
 
 	public function getComplete_get(){
 		$Data = $this->get();
-		
+
 
 		$sqlSelect2 = "SELECT * from mif1 where if1_mif_id = :if1_mif_id";
 		$resSelect2 = $this->pedeo->queryTable($sqlSelect2,array(":if1_mif_id"=>$Data['mif_docentry']));
-		
+
 		if(isset($resSelect2[0])){
-	
+
 			foreach ($resSelect2 as $key => $sub){
 				$sqlSelect3 = "SELECT * from mif2 where if2_fi1_id = :if2_fi1_id";
 				$resSelect3 = $this->pedeo->queryTable($sqlSelect3,array(":if2_fi1_id"=>$sub['if1_docentry']));
@@ -596,19 +596,19 @@ class FinanceReport extends REST_Controller {
 						// $resSelect2[$key]['ac'] = $value['if2_docentry'];
 						// print_r($resSelect2);
 						// die;
-						// 
+						//
 					}
-					
-						
+
+
 				}
 				$resSelect2[$key]['sub'] = $resSelect3;
-				
-				
+
+
 			}
-	  
+
 		  }
-	
-		
+
+
 		$this->response(['error' => false,
 		'data'  => $resSelect2,
 		'mensaje' => '']);
@@ -618,7 +618,7 @@ class FinanceReport extends REST_Controller {
 		$Data = $this->post();
 
 		if( !isset($Data['if3_if2_id']) OR
-			!isset($Data['if3_account']) OR 
+			!isset($Data['if3_account']) OR
 			!isset($Data['edit'])
 		){
 			$this->response(array(
@@ -634,7 +634,7 @@ class FinanceReport extends REST_Controller {
 			$sqlDelete = "DELETE FROM mif3 WHERE if3_if2_id = :if3_if2_id";
 			$resDelete = $this->pedeo->deleteRow($sqlDelete, array(":if3_if2_id" => $Data['if3_if2_id']));
 		}
-		
+
 		// if(is_numeric($resDelete) && $resDelete > 0){
 
 		$cuentas = explode(',',$Data['if3_account']);
@@ -653,7 +653,7 @@ class FinanceReport extends REST_Controller {
 					'data'   => [],
 					'mensaje'=>'No se pudo crear'
 				), REST_Controller::HTTP_BAD_REQUEST);
-	
+
 				return ;
 				$this->pedeo->trans_rollback();
 			}
@@ -673,14 +673,14 @@ class FinanceReport extends REST_Controller {
 	// 	return ;
 	// 	$this->pedeo->trans_rollback();
 	// }
-		
+
 
 		$this->response($respuesta);
 	}
 
 	private function getAccountsSub($subId){
 		$sqlSelect = "SELECT concat(mif3.if3_account,' - ' ,acc_name) account
-		from mif3 
+		from mif3
 		join dacc on dacc.acc_code = cast(mif3.if3_account as bigint)
 		where if3_if2_id = :if3_if2_id";
 		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":if3_if2_id"=>$subId));
