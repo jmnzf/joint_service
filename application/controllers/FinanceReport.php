@@ -513,14 +513,14 @@ class FinanceReport extends REST_Controller {
 
 			return ;
 		}
-
-		$cuentas = $Data['if3_account'];
-		$sqlInsert = "INSERT INTO mif3 (if_account,if3_if2_id) values (:if_account,:if3_if2_id)";
-		$this->trans_begin();
+		
+		$cuentas = explode(',',$Data['if3_account']);
+		$sqlInsert = "INSERT INTO mif3 (if3_account,if3_if2_id) values (:if3_account,:if3_if2_id)";
+		$this->pedeo->trans_begin();
 		foreach ($cuentas as $key => $cuenta){
 			$resInsert = $this->pedeo->insertRow($sqlInsert,array(
-				":if3_account" => $Data['if3_account'],
-				"if3_if2_id" => $cuenta
+				":if3_account" => $cuenta,
+				"if3_if2_id" => $Data['if3_if2_id']
 			));
 			if(is_numeric($resInsert) && $resInsert > 0){
 
@@ -528,11 +528,11 @@ class FinanceReport extends REST_Controller {
 				$this->response(array(
 					'error'  => true,
 					'data'   => [],
-					'mensaje'=>'La informacion enviada no es valida'
+					'mensaje'=>'No se pudo crear'
 				), REST_Controller::HTTP_BAD_REQUEST);
 	
 				return ;
-				$this->trans_rollback();
+				$this->pedeo->trans_rollback();
 			}
 		}
 
@@ -540,7 +540,7 @@ class FinanceReport extends REST_Controller {
 			'error' => false,
 			'data'  => $resInsert,
 			'mensaje' => 'Cuentas agregadas con exito');
-			$this->trans_commit();
+			$this->pedeo->trans_commit();
 
 		$this->response($respuesta);
 
