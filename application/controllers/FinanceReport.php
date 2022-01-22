@@ -580,17 +580,38 @@ class FinanceReport extends REST_Controller {
 
 	public function getComplete_get(){
 		$Data = $this->get();
-
-		$sqlSelect = "select * from tmif WHERE mif_docentry = :mif_docentry";
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":mif_docentry"=> $Data['mif_docentry']));
+		
 
 		$sqlSelect2 = "SELECT * from mif1 where if1_mif_id = :if1_mif_id";
-		$resSelect2 = $this->pedeo->queryTable($sqlSelect2,array(":if1_mif_id"=>$resSelect[0]['mif_docentry']));
-		$resSelect[0]['groups'] = $resSelect2;
-		$sqlSelect3 = "SELECT * from mif2 where if2_fi1_id = :if2_fi1_id";
-		$resSelect3 = $this->pedeo->queryTable($sqlSelect3,array(":if2_fi1_id"=>$resSelect2[0]['if1_docentry']));
-		$resSelect[0]['subgroups'] = $resSelect3;
-		$this->response($resSelect);
+		$resSelect2 = $this->pedeo->queryTable($sqlSelect2,array(":if1_mif_id"=>$Data['mif_docentry']));
+		
+		if(isset($resSelect2[0])){
+	
+			foreach ($resSelect2 as $key => $sub){
+				$sqlSelect3 = "SELECT * from mif2 where if2_fi1_id = :if2_fi1_id";
+				$resSelect3 = $this->pedeo->queryTable($sqlSelect3,array(":if2_fi1_id"=>$sub['if1_docentry']));
+				if(isset($resSelect3[0])){
+					foreach ($resSelect3 as $ke => $value){
+						$resSelect3[$ke]['accounts'] = self::getAccountsSub($value['if2_docentry']);
+						// $resSelect2[$key]['ac'] = $value['if2_docentry'];
+						// print_r($resSelect2);
+						// die;
+						// 
+					}
+					
+						
+				}
+				$resSelect2[$key]['sub'] = $resSelect3;
+				
+				
+			}
+	  
+		  }
+	
+		
+		$this->response(['error' => false,
+		'data'  => $resSelect2,
+		'mensaje' => '']);
 	}
 
 	public function editAccounts_post(){
@@ -655,5 +676,17 @@ class FinanceReport extends REST_Controller {
 		
 
 		$this->response($respuesta);
+	}
+
+	private function getAccountsSub($subId){
+		$sqlSelect = "SELECT concat(mif3.if3_account,' - ' ,acc_name) account
+		from mif3 
+		join dacc on dacc.acc_code = cast(mif3.if3_account as bigint)
+		where if3_if2_id = :if3_if2_id";
+		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":if3_if2_id"=>$subId));
+		if(isset($resSelect[0])){
+			return $resSelect;
+		}
+		return [];
 	}
 }
