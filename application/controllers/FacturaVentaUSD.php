@@ -95,7 +95,7 @@ class FacturaVentaUSD extends REST_Controller {
 													T1.fv1_quantity Cantidad,
 													T1.fv1_price  VrUnit,
 													T1.fv1_discount PrcDes,
-													T1.fv1_vatsum IVAP,
+													T1.fv1_vatsum ivap,
 													T1.fv1_linetotal  ValorTotalL,
 													T0.dvf_baseamnt base,
 													T0.dvf_discount Descuento,
@@ -112,11 +112,12 @@ class FacturaVentaUSD extends REST_Controller {
 														t0.dvf_docdate,
 														t6.pgs_mpfn,
 														t6.pgs_mde,
-														t1.fv1_quantity
+														t1.fv1_quantity,
+														t1.fv1_vat
 												from dvfv t0
 												inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
 												left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
-												left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code
+												left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code AND t3.dmd_ppal = 1
 												left join dmsc T4 on T0.dvf_cardcode = t4.dmc_card_code
 												left join dmev T5 on T0.dvf_slpcode = T5.mev_id
 												left join pgdn T6 on T0.dvf_doctype = T6.pgs_id_doc_type and T0.dvf_series = T6.pgs_id
@@ -124,7 +125,8 @@ class FacturaVentaUSD extends REST_Controller {
 												left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
 												left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
 												left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
-											  where T0.dvf_docentry = :DVF_DOCENTRY";
+											  where T0.dvf_docentry = :DVF_DOCENTRY
+												and t2.dms_card_type = '1'";
 
 				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
 
@@ -228,8 +230,12 @@ class FacturaVentaUSD extends REST_Controller {
 				$TasaLocSys = $resBusTasa2[0]['tsa_value'];
 
 				// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
-
-
+// print_r("TASA LOCAL ".json_encode($TasaDocLoc));
+// echo "\n";
+// print_r("TASA LOCAL ".json_encode($TasaLocSys));
+// echo "\n";
+// print_r("DATA ".json_encode($contenidoFV));
+// exit();
 				$VieneTasa = 0;
 
 				//OBTENER RELACION DE DOCUMENTOS
@@ -270,69 +276,71 @@ class FacturaVentaUSD extends REST_Controller {
 				$TotalPeso = 0;
 				$TOTALFIXRATE = 0;
 
+				$valorTotal = 0;
+
 				foreach ($contenidoFV as $key => $value) {
-							// code...<td>'.$value['um'].'</td>
-							//<td>'.number_format($value['ivap'], 2, ',', '.').'</td>
-
-
-						$valorUnitario = $value['vrunit'];
-						$valortotalLinea = $value['valortotall'];
-						$ivap = $value['ivap'];
-						$ivapl = $value['ivap'];
-						$cantidad = $value['cantidad'];
-
 
 						if( $value['monedadocumento'] != $MONEDASYS ){
 
 							if( $value['monedadocumento'] != $MONEDALOCAL ){
-									$ivap =(($ivap * $TasaDocLoc));
-									$ivap = (($ivapl / $TasaLocSys) );
-									$valorUnitario = ($valorUnitario * $TasaDocLoc);
-									$valorUnitario = ($valorUnitario  / $TasaLocSys);
 
-									$ivapl = ($ivap * $TasaDocLoc);
-									$ivapl = ($ivapl / $TasaLocSys);
-									$valortotalLinea = ($valortotalLinea  * $TasaDocLoc);
-									$valortotalLinea = ($valortotalLinea / $TasaLocSys);
-
+									// $valorlinea = (($valorlinea + ($vfx * $value['fv1_quantity'])) * $TasaDocLoc);
+									// $valorlinea = ($valorlinea  / $TasaLocSys);
+									//
+									// $valorunitario = (($valorunitario + ($vfx * $value['fv1_quantity'])) * $TasaDocLoc);
+									// $valorunitario = ($valorunitario / $TasaLocSys);
+									//
+									// $TOTALFIXRATE = $TOTALFIXRATE + (($vfx * $TasaDocLoc) / $TasaLocSys);
 
 							}else{
-								 $ivap =(($ivap * $TasaDocLoc)  );
-								 $ivapl = (($ivapl / $TasaLocSys));
-									$valorUnitario = ($valorUnitario / $TasaLocSys);
-									$valortotalLinea = ($valortotalLinea / $TasaLocSys);
+									$valorUN = $value['vrunit']; // valor unitario
+									// print_r($valorUN);
+									// echo "\n";
+									$valorunitario = 0;
+									$vfx = $value['fixrate'];
+									$valorUN = round(($valorUN  + $vfx),2);
+									// print_r($valorUN);
+									// echo "\n";
+									$IvaUnitario = (($valorUN) * ($value['fv1_vat'] / 100));
+									$valorUN = round(($valorUN  + $IvaUnitario),2);
+									// $valorUN = $valorUN + ($vfx * $value['fv1_quantity']);
+
+									// $valorUN = (($valorUN * ($value['fv1_vat'] / 100)) + $valorUN);
+									$valorlinea = 0;
+									// $IvaUnitario = round(($valorUN * ($value['fv1_vat'] / 100)), 2);
+
+									$valorlinea = round(($valorUN  * $value['fv1_quantity']),2);
+
+
+// print_r($IvaUnitario);
+// echo "\n";
+// print_r($valorUN);
+// echo "\n";
+// print_r($valorlinea);
+// echo "\n";
+									$valorlinea = round(( $valorlinea/ $TasaLocSys), 2);
+
+// print_r($valorlinea);
+// exit();
+									$valorUN = round(($valorUN / $TasaLocSys),2);
+									$valorTotal = round(($valorTotal + $valorlinea),2);
 
 							}
 
 						}
 
-
-
 						$detalle = '	<td>'.$value['cantidad'].'</td>
 													<td>'.$value['referencia'].'</td>
 													<td>'.$value['descripcion'].'</td>
-													<td>USD '.number_format(($valortotalLinea + $ivapl) / $cantidad, 2, ',', '.').'</td>
-													<td>USD '.number_format($valortotalLinea + $ivapl, 2, ',', '.').'</td>';
+													<td>USD '.number_format($valorUN, 2, ',', '.').'</td>
+													<td>USD '.number_format($valorlinea , 2, ',', '.').'</td>';
 
 						 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 						 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
 						 $TotalPeso = ($TotalPeso + ($value['peso'] * $value['cantidad']));
 				}
 
-				$valorSubtotal = $contenidoFV[0]['totaldoc'];
-				if( $value['monedadocumento'] != $MONEDASYS ){
 
-					if( $value['monedadocumento'] != $MONEDALOCAL ){
-
-							$valorSubtotal = ($valorSubtotal * $TasaDocLoc);
-							$valorSubtotal = ($valorSubtotal / $TasaLocSys);
-
-					}else{
-							$valorSubtotal = ($valorSubtotal / $TasaLocSys);
-
-					}
-
-				}
 
 				$consecutivo = '';
 
@@ -341,7 +349,6 @@ class FacturaVentaUSD extends REST_Controller {
 				}else{
 					$consecutivo = $contenidoFV[0]['dvf_docnum'];
 				}
-
 
 				$DatosExportacion = '';
 
@@ -576,7 +583,7 @@ class FacturaVentaUSD extends REST_Controller {
 										<tr><td>&nbsp;</td></tr>
 											<tr>
 													<td style="text-align: left;" class="">
-															<p>'.$formatter->toWords($valorSubtotal, 2).' DOLARES</p>
+																<p>'.$formatter->toWords(($valorTotal),2).' DOLARES</p>
 													</td>
 											</tr>
 									</table>
@@ -584,7 +591,7 @@ class FacturaVentaUSD extends REST_Controller {
 								<th>
 											<table width="100%">
 													<tr>
-															<td style="text-align: right;">Valor Total: <span>USD  '.number_format($valorSubtotal, 2, ',', '.').'</span></td>
+														<td style="text-align: right;">Valor Total: <span>USD  '.number_format(($valorTotal), 2, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>

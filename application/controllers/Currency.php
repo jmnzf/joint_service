@@ -306,7 +306,7 @@ class Currency extends REST_Controller {
 
    }
 
-
+	 // CONSULTAR LA TASA SEGUN FECHA
 	 public function getTasaMLS_get(){
 
 				 	$Data = $this->get();
@@ -345,18 +345,13 @@ class Currency extends REST_Controller {
 														);
 									}else{
 
-											if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
-
 												$respuesta = array(
 													'error' => true,
 													'data'  => array(),
-													'mensaje' =>'No se encrontro la tasa de cambio para la moneda local'
+													'mensaje' =>'No se encrontro la tasa de cambio'
 												);
-
 												$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
 												return;
-											}
 									}
 
 

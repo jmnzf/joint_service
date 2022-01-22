@@ -60,6 +60,12 @@ class SalesInv extends REST_Controller {
 			$IVASINTASAFIJA = 0;
 			$AC1LINE = 1;
 			$SUMALINEAFIXRATE = 0;
+			$TOTALCXCLOC = 0;
+			$TOTALCXCSYS = 0;
+			$TOTALCXCLOCIVA = 0;
+			$TOTALCXCSYSIVA = 0;
+			$AgregarAsiento = true;
+
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -316,745 +322,1525 @@ class SalesInv extends REST_Controller {
 				// de lo contrario no se aplicaran los cambios y se devolvera
 				// la base de datos a su estado original.
 
-			  $this->pedeo->trans_begin();
+				try {
+
+					$this->pedeo->trans_begin();
 
 
-        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':dvf_docnum' => $DocNumVerificado,
-              ':dvf_series' => is_numeric($Data['dvf_series'])?$Data['dvf_series']:0,
-              ':dvf_docdate' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-              ':dvf_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-              ':dvf_duedev' => $this->validateDate($Data['dvf_duedev'])?$Data['dvf_duedev']:NULL,
-              ':dvf_pricelist' => is_numeric($Data['dvf_pricelist'])?$Data['dvf_pricelist']:0,
-              ':dvf_cardcode' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-              ':dvf_cardname' => isset($Data['dvf_cardname'])?$Data['dvf_cardname']:NULL,
-              ':dvf_currency' => isset($Data['dvf_currency'])?$Data['dvf_currency']:NULL,
-              ':dvf_contacid' => isset($Data['dvf_contacid'])?$Data['dvf_contacid']:NULL,
-              ':dvf_slpcode' => is_numeric($Data['dvf_slpcode'])?$Data['dvf_slpcode']:0,
-              ':dvf_empid' => is_numeric($Data['dvf_empid'])?$Data['dvf_empid']:0,
-              ':dvf_comment' => isset($Data['dvf_comment'])?$Data['dvf_comment']:NULL,
-              ':dvf_doctotal' => is_numeric($Data['dvf_doctotal'])?$Data['dvf_doctotal']:0,
-              ':dvf_baseamnt' => is_numeric($Data['dvf_baseamnt'])?$Data['dvf_baseamnt']:0,
-              ':dvf_taxtotal' => is_numeric($Data['dvf_taxtotal'])?$Data['dvf_taxtotal']:0,
-              ':dvf_discprofit' => is_numeric($Data['dvf_discprofit'])?$Data['dvf_discprofit']:0,
-              ':dvf_discount' => is_numeric($Data['dvf_discount'])?$Data['dvf_discount']:0,
-              ':dvf_createat' => $this->validateDate($Data['dvf_createat'])?$Data['dvf_createat']:NULL,
-              ':dvf_baseentry' => is_numeric($Data['dvf_baseentry'])?$Data['dvf_baseentry']:0,
-              ':dvf_basetype' => is_numeric($Data['dvf_basetype'])?$Data['dvf_basetype']:0,
-              ':dvf_doctype' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-              ':dvf_idadd' => isset($Data['dvf_idadd'])?$Data['dvf_idadd']:NULL,
-              ':dvf_adress' => isset($Data['dvf_adress'])?$Data['dvf_adress']:NULL,
-              ':dvf_paytype' => is_numeric($Data['dvf_paytype'])?$Data['dvf_paytype']:0,
-							':dvf_createby' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-              ':dvf_attch' => $this->getUrl(count(trim(($Data['dvf_attch']))) > 0 ? $Data['dvf_attch']:NULL, $resMainFolder[0]['main_folder']),
-							':dvf_correl' => is_numeric($Data['dvf_correl'])?$Data['dvf_correl']:0,
-							':dvf_transport' => isset($Data['dvf_transport'])?$Data['dvf_transport']:NULL,
-							':dvf_sub_transport' => isset($Data['dvf_sub_transport'])?$Data['dvf_sub_transport']:NULL,
-							':dvf_ci' => isset($Data['dvf_ci'])?$Data['dvf_ci']:NULL,
-							':dvf_t_vehiculo' => isset($Data['dvf_t_vehiculo'])?$Data['dvf_t_vehiculo']:NULL,
-							':dvf_guia' => isset($Data['dvf_guia'])?$Data['dvf_guia']:NULL,
-							':dvf_placa' => isset($Data['dvf_placa'])?$Data['dvf_placa']:NULL,
-							':dvf_precinto' => isset($Data['dvf_precinto'])?$Data['dvf_precinto']:NULL,
-							':dvf_placav' => isset($Data['dvf_placav'])?$Data['dvf_placav']:NULL,
-							':dvf_modelv' => isset($Data['dvf_modelv'])?$Data['dvf_modelv']:NULL,
-							':dvf_driverv' => isset($Data['dvf_driverv'])?$Data['dvf_driverv']:NULL,
-							':dvf_driverid'  => isset($Data['dvf_driverid'])?$Data['dvf_driverid']:NULL
+					$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+								':dvf_docnum' => $DocNumVerificado,
+								':dvf_series' => is_numeric($Data['dvf_series'])?$Data['dvf_series']:0,
+								':dvf_docdate' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+								':dvf_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+								':dvf_duedev' => $this->validateDate($Data['dvf_duedev'])?$Data['dvf_duedev']:NULL,
+								':dvf_pricelist' => is_numeric($Data['dvf_pricelist'])?$Data['dvf_pricelist']:0,
+								':dvf_cardcode' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+								':dvf_cardname' => isset($Data['dvf_cardname'])?$Data['dvf_cardname']:NULL,
+								':dvf_currency' => isset($Data['dvf_currency'])?$Data['dvf_currency']:NULL,
+								':dvf_contacid' => isset($Data['dvf_contacid'])?$Data['dvf_contacid']:NULL,
+								':dvf_slpcode' => is_numeric($Data['dvf_slpcode'])?$Data['dvf_slpcode']:0,
+								':dvf_empid' => is_numeric($Data['dvf_empid'])?$Data['dvf_empid']:0,
+								':dvf_comment' => isset($Data['dvf_comment'])?$Data['dvf_comment']:NULL,
+								':dvf_doctotal' => is_numeric($Data['dvf_doctotal'])?$Data['dvf_doctotal']:0,
+								':dvf_baseamnt' => is_numeric($Data['dvf_baseamnt'])?$Data['dvf_baseamnt']:0,
+								':dvf_taxtotal' => is_numeric($Data['dvf_taxtotal'])?$Data['dvf_taxtotal']:0,
+								':dvf_discprofit' => is_numeric($Data['dvf_discprofit'])?$Data['dvf_discprofit']:0,
+								':dvf_discount' => is_numeric($Data['dvf_discount'])?$Data['dvf_discount']:0,
+								':dvf_createat' => $this->validateDate($Data['dvf_createat'])?$Data['dvf_createat']:NULL,
+								':dvf_baseentry' => is_numeric($Data['dvf_baseentry'])?$Data['dvf_baseentry']:0,
+								':dvf_basetype' => is_numeric($Data['dvf_basetype'])?$Data['dvf_basetype']:0,
+								':dvf_doctype' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+								':dvf_idadd' => isset($Data['dvf_idadd'])?$Data['dvf_idadd']:NULL,
+								':dvf_adress' => isset($Data['dvf_adress'])?$Data['dvf_adress']:NULL,
+								':dvf_paytype' => is_numeric($Data['dvf_paytype'])?$Data['dvf_paytype']:0,
+								':dvf_createby' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+								':dvf_attch' => $this->getUrl(count(trim(($Data['dvf_attch']))) > 0 ? $Data['dvf_attch']:NULL, $resMainFolder[0]['main_folder']),
+								':dvf_correl' => is_numeric($Data['dvf_correl'])?$Data['dvf_correl']:0,
+								':dvf_transport' => isset($Data['dvf_transport'])?$Data['dvf_transport']:NULL,
+								':dvf_sub_transport' => isset($Data['dvf_sub_transport'])?$Data['dvf_sub_transport']:NULL,
+								':dvf_ci' => isset($Data['dvf_ci'])?$Data['dvf_ci']:NULL,
+								':dvf_t_vehiculo' => isset($Data['dvf_t_vehiculo'])?$Data['dvf_t_vehiculo']:NULL,
+								':dvf_guia' => isset($Data['dvf_guia'])?$Data['dvf_guia']:NULL,
+								':dvf_placa' => isset($Data['dvf_placa'])?$Data['dvf_placa']:NULL,
+								':dvf_precinto' => isset($Data['dvf_precinto'])?$Data['dvf_precinto']:NULL,
+								':dvf_placav' => isset($Data['dvf_placav'])?$Data['dvf_placav']:NULL,
+								':dvf_modelv' => isset($Data['dvf_modelv'])?$Data['dvf_modelv']:NULL,
+								':dvf_driverv' => isset($Data['dvf_driverv'])?$Data['dvf_driverv']:NULL,
+								':dvf_driverid'  => isset($Data['dvf_driverid'])?$Data['dvf_driverid']:NULL
+							));
+
+					if(is_numeric($resInsert) && $resInsert > 0){
+
+						// Se actualiza la serie de la numeracion del documento
+
+						$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+																				 WHERE pgs_id = :pgs_id";
+						$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+								':pgs_nextnum' => $DocNumVerificado,
+								':pgs_id'      => $Data['dvf_series']
 						));
 
-        if(is_numeric($resInsert) && $resInsert > 0){
 
-					// Se actualiza la serie de la numeracion del documento
+						if(is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1){
 
-					$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
-																			 WHERE pgs_id = :pgs_id";
-					$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
-							':pgs_nextnum' => $DocNumVerificado,
-							':pgs_id'      => $Data['dvf_series']
-					));
+						}else{
+									$this->pedeo->trans_rollback();
 
+									$respuesta = array(
+										'error'   => true,
+										'data'    => $resActualizarNumeracion,
+										'mensaje'	=> 'No se pudo crear la factura de ventas'
+									);
 
-					if(is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1){
+									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-					}else{
-								$this->pedeo->trans_rollback();
+									return;
+						}
+						// Fin de la actualizacion de la numeracion del documento
 
-								$respuesta = array(
-									'error'   => true,
-									'data'    => $resActualizarNumeracion,
-									'mensaje'	=> 'No se pudo crear la factura de ventas'
-								);
 
-								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+						//Se agrega encabezado del asiento contable
 
-								return;
-					}
-					// Fin de la actualizacion de la numeracion del documento
 
+						$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
+																 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
 
 
-					//SE INSERTA EL ESTADO DEL DOCUMENTO
+						$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
 
-					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+								':mac_doc_num' => 1,
+								':mac_status' => 1,
+								':mac_base_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+								':mac_base_entry' => $resInsert,
+								':mac_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+								':mac_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+								':mac_legal_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+								':mac_ref1' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+								':mac_ref2' => "",
+								':mac_ref3' => "",
+								':mac_loc_total' => is_numeric($Data['dvf_doctotal'])?$Data['dvf_doctotal']:0,
+								':mac_fc_total' => is_numeric($Data['dvf_doctotal'])?$Data['dvf_doctotal']:0,
+								':mac_sys_total' => is_numeric($Data['dvf_doctotal'])?$Data['dvf_doctotal']:0,
+								':mac_trans_dode' => 1,
+								':mac_beline_nume' => 1,
+								':mac_vat_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+								':mac_serie' => 1,
+								':mac_number' => 1,
+								':mac_bammntsys' => is_numeric($Data['dvf_baseamnt'])?$Data['dvf_baseamnt']:0,
+								':mac_bammnt' => is_numeric($Data['dvf_baseamnt'])?$Data['dvf_baseamnt']:0,
+								':mac_wtsum' => 1,
+								':mac_vatsum' => is_numeric($Data['dvf_taxtotal'])?$Data['dvf_taxtotal']:0,
+								':mac_comments' => isset($Data['dvf_comment'])?$Data['dvf_comment']:NULL,
+								':mac_create_date' => $this->validateDate($Data['dvf_createat'])?$Data['dvf_createat']:NULL,
+								':mac_made_usuer' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+								':mac_update_date' => date("Y-m-d"),
+								':mac_update_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL
+						));
 
-					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
+						if(is_numeric($resInsertAsiento) && $resInsertAsiento > 0){
+								$AgregarAsiento = false;
+						}else{
 
-										':bed_docentry' => $resInsert,
-										':bed_doctype' => $Data['dvf_doctype'],
-										':bed_status' => 1, //ESTADO CERRADO
-										':bed_createby' => $Data['dvf_createby'],
-										':bed_date' => date('Y-m-d'),
-										':bed_baseentry' => NULL,
-										':bed_basetype' => NULL
-					));
+								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
 
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resInsertAsiento,
+										'mensaje'	=> 'No se pudo registrar la factura de ventas'
+									);
 
-					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+									 $this->response($respuesta);
 
-					}else{
+									 return;
+						}// FINN
 
-							 $this->pedeo->trans_rollback();
 
-								$respuesta = array(
-									'error'   => true,
-									'data' => $resInsertEstado,
-									'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
-								);
 
 
-								$this->response($respuesta);
 
-								return;
-					}
 
-					//FIN PROCESO ESTADO DEL DOCUMENTO
 
+						//SE INSERTA EL ESTADO DEL DOCUMENTO
 
-					//Se agregan los asientos contables*/*******
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
-					$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
-															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-					$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
+											':bed_docentry' => $resInsert,
+											':bed_doctype' => $Data['dvf_doctype'],
+											':bed_status' => 1, //ESTADO CERRADO
+											':bed_createby' => $Data['dvf_createby'],
+											':bed_date' => date('Y-m-d'),
+											':bed_baseentry' => NULL,
+											':bed_basetype' => NULL
+						));
 
-							':mac_doc_num' => 1,
-							':mac_status' => 1,
-							':mac_base_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-							':mac_base_entry' => $resInsert,
-							':mac_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-							':mac_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-							':mac_legal_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-							':mac_ref1' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-							':mac_ref2' => "",
-							':mac_ref3' => "",
-							':mac_loc_total' => is_numeric($Data['dvf_doctotal'])?$Data['dvf_doctotal']:0,
-							':mac_fc_total' => is_numeric($Data['dvf_doctotal'])?$Data['dvf_doctotal']:0,
-							':mac_sys_total' => is_numeric($Data['dvf_doctotal'])?$Data['dvf_doctotal']:0,
-							':mac_trans_dode' => 1,
-							':mac_beline_nume' => 1,
-							':mac_vat_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-							':mac_serie' => 1,
-							':mac_number' => 1,
-							':mac_bammntsys' => is_numeric($Data['dvf_baseamnt'])?$Data['dvf_baseamnt']:0,
-							':mac_bammnt' => is_numeric($Data['dvf_baseamnt'])?$Data['dvf_baseamnt']:0,
-							':mac_wtsum' => 1,
-							':mac_vatsum' => is_numeric($Data['dvf_taxtotal'])?$Data['dvf_taxtotal']:0,
-							':mac_comments' => isset($Data['dvf_comment'])?$Data['dvf_comment']:NULL,
-							':mac_create_date' => $this->validateDate($Data['dvf_createat'])?$Data['dvf_createat']:NULL,
-							':mac_made_usuer' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-							':mac_update_date' => date("Y-m-d"),
-							':mac_update_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL
-					));
-
-
-					if(is_numeric($resInsertAsiento) && $resInsertAsiento > 0){
-							// Se verifica que el detalle no de error insertando //
-					}else{
 
-							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-							// se retorna el error y se detiene la ejecucion del codigo restante.
-								$this->pedeo->trans_rollback();
-
-								$respuesta = array(
-									'error'   => true,
-									'data'	  => $resInsertAsiento,
-									'mensaje'	=> 'No se pudo registrar la factura de ventas'
-								);
-
-								 $this->response($respuesta);
-
-								 return;
-					}
-
-
-
-          foreach ($ContenidoDetalle as $key => $detail) {
-
-                $sqlInsertDetail = "INSERT INTO vfv1(fv1_docentry, fv1_itemcode, fv1_itemname, fv1_quantity, fv1_uom, fv1_whscode,
-                                    fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
-                                    fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,
-                                    :fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, :fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,
-                                    :fv1_acctcode, :fv1_basetype, :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate)";
-
-                $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-                        ':fv1_docentry' => $resInsert,
-                        ':fv1_itemcode' => isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL,
-                        ':fv1_itemname' => isset($detail['fv1_itemname'])?$detail['fv1_itemname']:NULL,
-                        ':fv1_quantity' => is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0,
-                        ':fv1_uom' => isset($detail['fv1_uom'])?$detail['fv1_uom']:NULL,
-                        ':fv1_whscode' => isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL,
-                        ':fv1_price' => is_numeric($detail['fv1_price'])?$detail['fv1_price']:0,
-                        ':fv1_vat' => is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0,
-                        ':fv1_vatsum' => is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0,
-                        ':fv1_discount' => is_numeric($detail['fv1_discount'])?$detail['fv1_discount']:0,
-                        ':fv1_linetotal' => is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0,
-                        ':fv1_costcode' => isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL,
-                        ':fv1_ubusiness' => isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL,
-                        ':fv1_project' => isset($detail['fv1_project'])?$detail['fv1_project']:NULL,
-                        ':fv1_acctcode' => is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']:0,
-                        ':fv1_basetype' => is_numeric($detail['fv1_basetype'])?$detail['fv1_basetype']:0,
-                        ':fv1_doctype' => is_numeric($detail['fv1_doctype'])?$detail['fv1_doctype']:0,
-                        ':fv1_avprice' => is_numeric($detail['fv1_avprice'])?$detail['fv1_avprice']:0,
-                        ':fv1_inventory' => is_numeric($detail['fv1_inventory'])?$detail['fv1_inventory']:NULL,
-												':fv1_acciva'  => is_numeric($detail['fv1_cuentaIva'])?$detail['fv1_cuentaIva']:0,
-												':fv1_fixrate' => is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0
-                ));
-
-								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
-										// Se verifica que el detalle no de error insertando //
-								}else{
-
-										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-										// se retorna el error y se detiene la ejecucion del codigo restante.
-											$this->pedeo->trans_rollback();
-
-											$respuesta = array(
-												'error'   => true,
-												'data' => $resInsert,
-												'mensaje'	=> 'No se pudo registrar la factura de ventas'
-											);
-
-											 $this->response($respuesta);
-
-											 return;
-								}
-
-
-
-								if(!isset($detail['fv1_fixrate'])){
-										$respuesta = array(
-											'error' => true,
-											'data'  => array(),
-											'mensaje' =>'no se encontro el descuento aplicado'
-										);
-
-										$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-										return;
-								}
-
-								$SUMALINEAFIXRATE = ( $SUMALINEAFIXRATE + $detail['fv1_fixrate'] );
-
-								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
-								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
-								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
-
-												':dma_item_code' => $detail['fv1_itemcode'],
-												':dma_item_inv'  => 1
-								));
-
-								if(isset($resItemINV[0])){
-
-									$ManejaInvetario = 1;
-
-								}
-
-								// FIN PROCESO ITEM MANEJA INVENTARIO
-
-								// si el item es inventariable
-								if( $ManejaInvetario == 1 ){
-
-										// se verifica de donde viene  el documento
-									  if($Data['dvf_basetype'] != 3){
-
-											//se busca el costo del item en el momento de la creacion del documento de venta
-											// para almacenar en el movimiento de inventario
-
-											$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
-											$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['fv1_whscode'], ':bdi_itemcode' => $detail['fv1_itemcode']));
-
-
-											if(isset($resCostoMomentoRegistro[0])){
-
-
-												//Se aplica el movimiento de inventario
-												$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost)
-																							 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost)";
-
-												$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
-
-														 ':bmi_itemcode' => isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL,
-														 ':bmi_quantity' => is_numeric($detail['fv1_quantity'])? $detail['fv1_quantity'] * $Data['invtype']:0,
-														 ':bmi_whscode'  => isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL,
-														 ':bmi_createat' => $this->validateDate($Data['dvf_createat'])?$Data['dvf_createat']:NULL,
-														 ':bmi_createby' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-														 ':bmy_doctype'  => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-														 ':bmy_baseentry' => $resInsert,
-														 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice']
-
-												));
-
-												if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
-														// Se verifica que el detalle no de error insertando //
-												}else{
-
-														// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-														// se retorna el error y se detiene la ejecucion del codigo restante.
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+
+								 $this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+						}
+
+						//FIN PROCESO ESTADO DEL DOCUMENTO
+
+
+						foreach ($ContenidoDetalle as $key => $detail) {
+
+									$sqlInsertDetail = "INSERT INTO vfv1(fv1_docentry, fv1_itemcode, fv1_itemname, fv1_quantity, fv1_uom, fv1_whscode,
+																			fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
+																			fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,
+																			:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, :fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,
+																			:fv1_acctcode, :fv1_basetype, :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate)";
+
+									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
+													':fv1_docentry' => $resInsert,
+													':fv1_itemcode' => isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL,
+													':fv1_itemname' => isset($detail['fv1_itemname'])?$detail['fv1_itemname']:NULL,
+													':fv1_quantity' => is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0,
+													':fv1_uom' => isset($detail['fv1_uom'])?$detail['fv1_uom']:NULL,
+													':fv1_whscode' => isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL,
+													':fv1_price' => is_numeric($detail['fv1_price'])?$detail['fv1_price']:0,
+													':fv1_vat' => is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0,
+													':fv1_vatsum' => is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0,
+													':fv1_discount' => is_numeric($detail['fv1_discount'])?$detail['fv1_discount']:0,
+													':fv1_linetotal' => is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0,
+													':fv1_costcode' => isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL,
+													':fv1_ubusiness' => isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL,
+													':fv1_project' => isset($detail['fv1_project'])?$detail['fv1_project']:NULL,
+													':fv1_acctcode' => is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']:0,
+													':fv1_basetype' => is_numeric($detail['fv1_basetype'])?$detail['fv1_basetype']:0,
+													':fv1_doctype' => is_numeric($detail['fv1_doctype'])?$detail['fv1_doctype']:0,
+													':fv1_avprice' => is_numeric($detail['fv1_avprice'])?$detail['fv1_avprice']:0,
+													':fv1_inventory' => is_numeric($detail['fv1_inventory'])?$detail['fv1_inventory']:NULL,
+													':fv1_acciva'  => is_numeric($detail['fv1_cuentaIva'])?$detail['fv1_cuentaIva']:0,
+													':fv1_fixrate' => is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0
+									));
+
+									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+											// Se verifica que el detalle no de error insertando //
+											//validar que lo facturado no se mayor a lo entregado menos devuelto
+
+											if($Data['dvf_basetype'] == 3){
+												$sqlDev = "SELECT
+																				t1.em1_itemcode,
+																				t1.em1_quantity - COALESCE(sum(t3.dv1_quantity),0) cantidad
+																		from dvem t0
+																		left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																		left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
+																		left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+																		where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype and t1.em1_itemcode = :em1_itemcode
+																		group by t1.em1_itemcode,t1.em1_quantity";
+														$resSqlDev = $this->pedeo->queryTable($sqlDev,array(
+															':vem_docentry' => $Data['dvf_baseentry'],
+															':vem_doctype' => $Data['dvf_basetype'],
+															':em1_itemcode' => $detail['fv1_itemcode']
+														));
+
+														if($detail['fv1_quantity'] > $resSqlDev[0]['cantidad'] ){
 															$this->pedeo->trans_rollback();
 
 															$respuesta = array(
 																'error'   => true,
-																'data' => $sqlInserMovimiento,
-																'mensaje'	=> 'No se pudo registrar la factura de ventas'
+																'data' => $resSqlDev,
+																'mensaje'	=> 'La cantidad a facturar no puede ser mayor a la entregada menos la devuelta'
 															);
+															$this->response($respuesta);
 
-															 $this->response($respuesta);
-
-															 return;
-												}
-
-
-
-											}else{
-
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data' => $resCostoMomentoRegistro,
-														'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro el costo del articulo'
-													);
-
-													 $this->response($respuesta);
-
-													 return;
+														 return;
+													 }
 											}
+									}else{
 
-											//FIN aplicacion de movimiento de inventario
+											// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+											// se retorna el error y se detiene la ejecucion del codigo restante.
+												$this->pedeo->trans_rollback();
 
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resInsert,
+													'mensaje'	=> 'No se pudo registrar la factura de ventas'
+												);
 
-												//Se Aplica el movimiento en stock ***************
-												// Buscando item en el stock
-												$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-																							FROM tbdi
-																							WHERE bdi_itemcode = :bdi_itemcode
-																							AND bdi_whscode = :bdi_whscode";
+												 $this->response($respuesta);
 
-												$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
-
-															':bdi_itemcode' => $detail['fv1_itemcode'],
-															':bdi_whscode'  => $detail['fv1_whscode']
-												));
-
-												if(isset($resCostoCantidad[0])){
-
-													if($resCostoCantidad[0]['bdi_quantity'] > 0){
-
-															 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-															 $CantidadNueva = $detail['fv1_quantity'];
+												 return;
+									}
 
 
-															 $CantidadTotal = ($CantidadActual - $CantidadNueva);
 
-															 $sqlUpdateCostoCantidad =  "UPDATE tbdi
-																													 SET bdi_quantity = :bdi_quantity
-																													 WHERE  bdi_id = :bdi_id";
+									if(!isset($detail['fv1_fixrate'])){
+											$respuesta = array(
+												'error' => true,
+												'data'  => array(),
+												'mensaje' =>'no se encontro el descuento aplicado'
+											);
 
-															 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+											$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-																		 ':bdi_quantity' => $CantidadTotal,
-																		 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
-															 ));
+											return;
+									}
 
-															 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+									$SUMALINEAFIXRATE = ( $SUMALINEAFIXRATE + is_numeric($detail['fv1_fixrate']) );
 
-															 }else{
+									// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
+									$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
+									$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
 
-																	 $this->pedeo->trans_rollback();
+													':dma_item_code' => $detail['fv1_itemcode'],
+													':dma_item_inv'  => 1
+									));
 
-																	 $respuesta = array(
-																		 'error'   => true,
-																		 'data'    => $resUpdateCostoCantidad,
-																		 'mensaje'	=> 'No se pudo crear la factura de Ventas'
-																	 );
+									if(isset($resItemINV[0])){
 
+										$ManejaInvetario = 1;
+
+									}else{
+										$ManejaInvetario = 0;
+									}
+
+									// FIN PROCESO ITEM MANEJA INVENTARIO
+
+
+									if( $ManejaInvetario == 1 ){
+
+
+											// se verifica de donde viene  el documento
+											if($Data['dvf_basetype'] != 3){
+
+												//se busca el costo del item en el momento de la creacion del documento de venta
+												// para almacenar en el movimiento de inventario
+
+												$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+												$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['fv1_whscode'], ':bdi_itemcode' => $detail['fv1_itemcode']));
+
+
+												if(isset($resCostoMomentoRegistro[0])){
+
+													//VALIDANDO CANTIDAD DE ARTICULOS
+
+															$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
+															$CANT_ARTICULOLN = is_numeric($detail['fv1_quantity'])? $detail['fv1_quantity'] : 0;
+
+														  if( ($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0){
+
+																	$this->pedeo->trans_rollback();
+
+																	$respuesta = array(
+																		'error'   => true,
+																		'data' => [],
+																		'mensaje'	=> 'no puede crear el documento porque el articulo '.$detail['fv1_itemcode'].' recae en inventario negativo ('.($CANT_ARTICULOEX - $CANT_ARTICULOLN).')'
+																	);
 
 																	 $this->response($respuesta);
 
 																	 return;
-															 }
+
+															}
+
+													//VALIDANDO CANTIDAD DE ARTICULOS
+
+
+
+													//Se aplica el movimiento de inventario
+													$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																								VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
+
+													$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+
+															 ':bmi_itemcode' => isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL,
+															 ':bmi_quantity' => is_numeric($detail['fv1_quantity'])? $detail['fv1_quantity'] * $Data['invtype']:0,
+															 ':bmi_whscode'  => isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL,
+															 ':bmi_createat' => $this->validateDate($Data['dvf_createat'])?$Data['dvf_createat']:NULL,
+															 ':bmi_createby' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+															 ':bmy_doctype'  => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+															 ':bmy_baseentry' => $resInsert,
+															 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+															 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+															 ':bmi_basenum'			=> $DocNumVerificado
+
+													));
+
+													if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
+															// Se verifica que el detalle no de error insertando //
+													}else{
+
+															// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+															// se retorna el error y se detiene la ejecucion del codigo restante.
+																$this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' => $sqlInserMovimiento,
+																	'mensaje'	=> 'No se pudo registrar la factura de ventas'
+																);
+
+																 $this->response($respuesta);
+
+																 return;
+													}
+
+
+
+												}else{
+
+														$this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data' => $resCostoMomentoRegistro,
+															'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro el costo del articulo'
+														);
+
+														 $this->response($respuesta);
+
+														 return;
+												}
+
+												//FIN aplicacion de movimiento de inventario
+
+
+													//Se Aplica el movimiento en stock ***************
+													// Buscando item en el stock
+													$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+																								FROM tbdi
+																								WHERE bdi_itemcode = :bdi_itemcode
+																								AND bdi_whscode = :bdi_whscode";
+
+													$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+																':bdi_itemcode' => $detail['fv1_itemcode'],
+																':bdi_whscode'  => $detail['fv1_whscode']
+													));
+
+													if(isset($resCostoCantidad[0])){
+
+														if($resCostoCantidad[0]['bdi_quantity'] > 0){
+
+																 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+																 $CantidadNueva = $detail['fv1_quantity'];
+
+
+																 $CantidadTotal = ($CantidadActual - $CantidadNueva);
+
+																 $sqlUpdateCostoCantidad =  "UPDATE tbdi
+																														 SET bdi_quantity = :bdi_quantity
+																														 WHERE  bdi_id = :bdi_id";
+
+																 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+																			 ':bdi_quantity' => $CantidadTotal,
+																			 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+																 ));
+
+																 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+
+																 }else{
+
+																		 $this->pedeo->trans_rollback();
+
+																		 $respuesta = array(
+																			 'error'   => true,
+																			 'data'    => $resUpdateCostoCantidad,
+																			 'mensaje'	=> 'No se pudo crear la factura de Ventas'
+																		 );
+
+
+																		 $this->response($respuesta);
+
+																		 return;
+																 }
+
+														}else{
+
+																		 $this->pedeo->trans_rollback();
+
+																		 $respuesta = array(
+																			 'error'   => true,
+																			 'data'    => $resUpdateCostoCantidad,
+																			 'mensaje' => 'No hay existencia para el item: '.$detail['fv1_itemcode']
+																		 );
+
+
+																		 $this->response($respuesta);
+
+																		 return;
+														}
 
 													}else{
 
-																	 $this->pedeo->trans_rollback();
+																$this->pedeo->trans_rollback();
 
-																	 $respuesta = array(
-																		 'error'   => true,
-																		 'data'    => $resUpdateCostoCantidad,
-																		 'mensaje' => 'No hay existencia para el item: '.$detail['fv1_itemcode']
-																	 );
+																$respuesta = array(
+																	'error'   => true,
+																	'data' 		=> $resCostoCantidad,
+																	'mensaje'	=> 'El item no existe en el stock '.$detail['fv1_itemcode']
+																);
 
+																 $this->response($respuesta);
 
-																	 $this->response($respuesta);
-
-																	 return;
+																 return;
 													}
 
-												}else{
+														//FIN de  Aplicacion del movimiento en stock
 
+											}// EN CASO CONTRARIO NO SE MUEVE INVENTARIO
+
+									}
+
+									//LLENANDO DETALLE ASIENTO CONTABLES
+									$DetalleAsientoIngreso = new stdClass();
+									$DetalleAsientoIva = new stdClass();
+									$DetalleCostoInventario = new stdClass();
+									$DetalleCostoCosto = new stdClass();
+
+
+									$DetalleAsientoIngreso->ac1_account = is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']: 0;
+									$DetalleAsientoIngreso->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
+									$DetalleAsientoIngreso->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
+									$DetalleAsientoIngreso->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
+									$DetalleAsientoIngreso->fv1_linetotal = is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0;
+									$DetalleAsientoIngreso->fv1_vat = is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0;
+									$DetalleAsientoIngreso->fv1_vatsum = is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0;
+									$DetalleAsientoIngreso->fv1_price = is_numeric($detail['fv1_price'])?$detail['fv1_price']:0;
+									$DetalleAsientoIngreso->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
+									$DetalleAsientoIngreso->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
+									$DetalleAsientoIngreso->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
+									$DetalleAsientoIngreso->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
+
+
+
+
+									$DetalleAsientoIva->ac1_account = is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']: 0;
+									$DetalleAsientoIva->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
+									$DetalleAsientoIva->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
+									$DetalleAsientoIva->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
+									$DetalleAsientoIva->fv1_linetotal = is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0;
+									$DetalleAsientoIva->fv1_vat = is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0;
+									$DetalleAsientoIva->fv1_vatsum = is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0;
+									$DetalleAsientoIva->fv1_price = is_numeric($detail['fv1_price'])?$detail['fv1_price']:0;
+									$DetalleAsientoIva->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
+									$DetalleAsientoIva->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
+									$DetalleAsientoIva->fv1_cuentaIva = is_numeric($detail['fv1_cuentaIva'])?$detail['fv1_cuentaIva']:NULL;
+									$DetalleAsientoIva->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
+									$DetalleAsientoIva->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
+
+
+
+									// se busca la cuenta contable del costoInventario y costoCosto
+									// $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+									//
+									// $resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['fv1_itemcode']));
+									//
+									// if(!isset($resArticulo[0])){
+									//
+									// 			$this->pedeo->trans_rollback();
+									//
+									// 			$respuesta = array(
+									// 				'error'   => true,
+									// 				'data' => $resArticulo,
+									// 				'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro la cuenta contable (costo, inventario) del grupo de articulo para el item '.$detail['fv1_itemcode']
+									// 			);
+									//
+									// 			 $this->response($respuesta);
+									//
+									// 			 return;
+									// }
+
+									// VALIDANDO ITEM INVENTARIABLE
+									if ( $ManejaInvetario == 1 ){
+										$DetalleCostoInventario->ac1_account = is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']: 0;
+										$DetalleCostoInventario->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
+										$DetalleCostoInventario->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
+										$DetalleCostoInventario->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
+										$DetalleCostoInventario->fv1_linetotal = is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0;
+										$DetalleCostoInventario->fv1_vat = is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0;
+										$DetalleCostoInventario->fv1_vatsum = is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0;
+										$DetalleCostoInventario->fv1_price = is_numeric($detail['fv1_price'])?$detail['fv1_price']:0;
+										$DetalleCostoInventario->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
+										$DetalleCostoInventario->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
+										$DetalleCostoInventario->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
+										$DetalleCostoInventario->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
+
+
+										$DetalleCostoCosto->ac1_account = is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']: 0;
+										$DetalleCostoCosto->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
+										$DetalleCostoCosto->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
+										$DetalleCostoCosto->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
+										$DetalleCostoCosto->fv1_linetotal = is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0;
+										$DetalleCostoCosto->fv1_vat = is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0;
+										$DetalleCostoCosto->fv1_vatsum = is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0;
+										$DetalleCostoCosto->fv1_price = is_numeric($detail['fv1_price'])?$detail['fv1_price']:0;
+										$DetalleCostoCosto->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
+										$DetalleCostoCosto->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
+										$DetalleCostoCosto->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
+										$DetalleCostoCosto->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
+									}
+									//ITEM INVENTARIABLE
+
+
+
+									$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
+
+									$DetalleAsientoIngreso->codigoCuenta = $codigoCuenta;
+									$DetalleAsientoIva->codigoCuenta = $codigoCuenta;
+
+									//ITEM INVENTARIABLE
+									if( $ManejaInvetario == 1){
+
+										$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
+										$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
+
+										$llaveCostoInventario = $DetalleCostoInventario->ac1_account;
+										$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
+
+									}	//ITEM INVENTARIABLE
+
+
+									$llave = $DetalleAsientoIngreso->ac1_uncode.$DetalleAsientoIngreso->ac1_prc_code.$DetalleAsientoIngreso->ac1_prj_code.$DetalleAsientoIngreso->ac1_account;
+									$llaveIva = $DetalleAsientoIva->fv1_vat;
+
+
+
+
+									if(in_array( $llave, $inArrayIngreso )){
+
+											$posicion = $this->buscarPosicion( $llave, $inArrayIngreso );
+
+									}else{
+
+											array_push( $inArrayIngreso, $llave );
+											$posicion = $this->buscarPosicion( $llave, $inArrayIngreso );
+
+									}
+
+
+									if(in_array( $llaveIva, $inArrayIva )){
+
+											$posicionIva = $this->buscarPosicion( $llaveIva, $inArrayIva );
+
+									}else{
+
+											array_push( $inArrayIva, $llaveIva );
+											$posicionIva = $this->buscarPosicion( $llaveIva, $inArrayIva );
+
+									}
+
+
+
+									//ITEM INVENTARIABLE
+									if ( $ManejaInvetario == 1 ){
+
+											if(in_array( $llaveCostoInventario, $inArrayCostoInventario )){
+
+													$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
+
+											}else{
+
+													array_push( $inArrayCostoInventario, $llaveCostoInventario );
+													$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
+
+											}
+
+
+											if(in_array( $llaveCostoCosto, $inArrayCostoCosto )){
+
+													$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+
+											}else{
+
+													array_push( $inArrayCostoCosto, $llaveCostoCosto );
+													$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+
+											}
+
+									}//ITEM INVENTARIABLE
+
+
+
+
+									if( isset($DetalleConsolidadoIva[$posicionIva])){
+
+										if(!is_array($DetalleConsolidadoIva[$posicionIva])){
+											$DetalleConsolidadoIva[$posicionIva] = array();
+										}
+
+									}else{
+										$DetalleConsolidadoIva[$posicionIva] = array();
+									}
+
+									array_push( $DetalleConsolidadoIva[$posicionIva], $DetalleAsientoIva);
+
+
+									if( isset($DetalleConsolidadoIngreso[$posicion])){
+
+										if(!is_array($DetalleConsolidadoIngreso[$posicion])){
+											$DetalleConsolidadoIngreso[$posicion] = array();
+										}
+
+									}else{
+										$DetalleConsolidadoIngreso[$posicion] = array();
+									}
+
+									array_push( $DetalleConsolidadoIngreso[$posicion], $DetalleAsientoIngreso);
+
+
+									//ITEM INVENTARIABLE
+									if ( $ManejaInvetario == 1 ){
+
+										if( isset($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
+
+											if(!is_array($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
+												$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
+											}
+
+										}else{
+											$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
+										}
+
+										array_push( $DetalleConsolidadoCostoInventario[$posicionCostoInventario], $DetalleCostoInventario );
+
+
+										if( isset($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
+
+											if(!is_array($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
+												$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
+											}
+
+										}else{
+											$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
+										}
+
+										array_push( $DetalleConsolidadoCostoCosto[$posicionCostoCosto], $DetalleCostoCosto );
+									}//ITEM INVENTARIABLE
+
+
+						}
+						// FIN INSERSION DETALLE FACTURA
+
+
+						//Procedimiento para llenar Ingreso
+
+						foreach ($DetalleConsolidadoIngreso as $key => $posicion) {
+								$granTotalIngreso = 0;
+								$granTotalIngresoOriginal = 0;
+								$granTotalTasaFija = 0;
+								$codigoCuentaIngreso = "";
+								$cuenta = "";
+								$proyecto = "";
+								$prc = "";
+								$unidad = "";
+								foreach ($posicion as $key => $value) {
+											$granTotalIngreso = ($granTotalIngreso + $value->fv1_linetotal);
+											$granTotalTasaFija = ($granTotalTasaFija + ($value->fv1_fixrate * $value->fv1_quantity));
+											$codigoCuentaIngreso = $value->codigoCuenta;
+											$prc = $value->ac1_prc_code;
+											$unidad = $value->ac1_uncode;
+											$proyecto = $value->ac1_prj_code;
+											$cuenta = $value->ac1_account;
+								}
+
+
+								$debito = 0;
+								$credito = 0;
+								$MontoSysDB = 0;
+								$MontoSysCR = 0;
+								$granTotalIngresoOriginal = $granTotalIngreso;
+
+								if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+										$granTotalIngreso = ($granTotalIngreso * $TasaDocLoc);
+								}
+
+								$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
+
+
+								$ti = $granTotalIngreso;
+
+								switch ($codigoCuentaIngreso) {
+									case 1:
+										$credito = $granTotalIngreso;
+
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$ti = ($ti + $granTotalTasaFija);
+												$MontoSysCR = ($ti / $TasaLocSys);
+
+										}else{
+												$MontoSysCR = $granTotalIngresoOriginal;
+
+										}
+										break;
+
+									case 2:
+										$credito = $granTotalIngreso;
+
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$ti = ($ti + $granTotalTasaFija);
+												$MontoSysCR = ($ti / $TasaLocSys);
+
+										}else{
+												$MontoSysCR = $granTotalIngresoOriginal;
+
+										}
+										break;
+
+									case 3:
+										$credito = $granTotalIngreso;
+
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$ti = ($ti + $granTotalTasaFija);
+												$MontoSysCR = ($ti / $TasaLocSys);
+
+										}else{
+												$MontoSysCR = $granTotalIngresoOriginal;
+
+										}
+										break;
+
+									case 4:
+										$credito = $granTotalIngreso;
+
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$ti = ($ti + $granTotalTasaFija);
+												$MontoSysCR = ($ti / $TasaLocSys);
+
+										}else{
+												$MontoSysCR = $granTotalIngresoOriginal;
+
+										}
+										break;
+
+									case 5:
+										$credito = $granTotalIngreso;
+
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$ti = ($ti + $granTotalTasaFija);
+												$MontoSysCR = ($ti / $TasaLocSys);
+
+										}else{
+												$MontoSysCR = $granTotalIngresoOriginal;
+
+										}
+										break;
+
+									case 6:
+										$credito = $granTotalIngreso;
+
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$ti = ($ti + $granTotalTasaFija);
+												$MontoSysCR = ($ti / $TasaLocSys);
+
+										}else{
+												$MontoSysCR = $granTotalIngresoOriginal;
+
+										}
+										break;
+
+									case 7:
+										$credito = $granTotalIngreso;
+
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$ti = ($ti + $granTotalTasaFija);
+												$MontoSysCR = ($ti / $TasaLocSys);
+
+										}else{
+												$MontoSysCR = $granTotalIngresoOriginal;
+
+										}
+										break;
+								}
+
+
+								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+
+								$TOTALCXCLOC = ($TOTALCXCLOC + ($debito+$credito));
+								$TOTALCXCSYS = ($TOTALCXCSYS + ($MontoSysDB+$MontoSysCR));
+
+								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+										':ac1_trans_id' => $resInsertAsiento,
+										':ac1_account' => $cuenta,
+										':ac1_debit' => round($debito,2),
+										':ac1_credit' => round($credito,2),
+										':ac1_debit_sys' => round($MontoSysDB,2),
+										':ac1_credit_sys' => round($MontoSysCR,2),
+										':ac1_currex' => 0,
+										':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+										':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+										':ac1_debit_import' => 0,
+										':ac1_credit_import' => 0,
+										':ac1_debit_importsys' => 0,
+										':ac1_credit_importsys' => 0,
+										':ac1_font_key' => $resInsert,
+										':ac1_font_line' => 1,
+										':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+										':ac1_accountvs' => 1,
+										':ac1_doctype' => 18,
+										':ac1_ref1' => "",
+										':ac1_ref2' => "",
+										':ac1_ref3' => "",
+										':ac1_prc_code' => $prc,
+										':ac1_uncode' => $unidad,
+										':ac1_prj_code' => $proyecto,
+										':ac1_rescon_date' => NULL,
+										':ac1_recon_total' => 0,
+										':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+										':ac1_accperiod' => 1,
+										':ac1_close' => 0,
+										':ac1_cord' => 0,
+										':ac1_ven_debit' => 1,
+										':ac1_ven_credit' => 1,
+										':ac1_fiscal_acct' => 0,
+										':ac1_taxid' => 1,
+										':ac1_isrti' => 0,
+										':ac1_basert' => 0,
+										':ac1_mmcode' => 0,
+										':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+										':ac1_codref' => 1,
+										':ac1_line'   => 	$AC1LINE
+							));
+
+
+
+							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+									// Se verifica que el detalle no de error insertando //
+							}else{
+									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'	  => $resDetalleAsiento,
+											'mensaje'	=> 'No se pudo registrar la factura de ventas'
+										);
+
+										 $this->response($respuesta);
+
+										 return;
+							}
+						}
+						//FIN Procedimiento para llenar Ingreso
+
+
+
+						//Procedimiento para llenar Impuestos
+						//
+						// $cuentaIVAAsumido = "SELECT pge_acc_impas FROM  pgem";
+						// $rescuentaIVAAsumido = $this->pedeo->queryTable($cuentaIVAAsumido,array());
+						//
+						// if(!isset($rescuentaIVAAsumido[0])){
+						// 		$this->pedeo->trans_rollback();
+						//
+						// 		$respuesta = array(
+						// 			'error'   => true,
+						// 			'data'	  => $rescuentaIVAAsumido,
+						// 			'mensaje'	=> 'No se encontro la cuenta contable para el IVA asumido'
+						// 		);
+						//
+						// 		 $this->response($respuesta);
+						//
+						// 		 return;
+						// }
+
+
+						$granTotalIva = 0;
+
+						foreach ($DetalleConsolidadoIva as $key => $posicion) {
+								$granTotalIva = 0;
+								$granTotalIva2 = 0;
+								$granTotalIvaOriginal = 0;
+								$MontoSysCR = 0;
+
+								foreach ($posicion as $key => $value) {
+											$granTotalIva = round($granTotalIva + $value->fv1_vatsum,2);
+
+											$v1 = ($value->fv1_linetotal + ($value->fv1_quantity * $value->fv1_fixrate));
+											$granTotalIva2 = round($granTotalIva2 + ($v1 * ($value->fv1_vat / 100)), 2);
+								}
+
+								$granTotalIvaOriginal = $granTotalIva;
+
+
+
+								if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+										$granTotalIva = ($granTotalIva * $TasaDocLoc);
+								}
+
+
+
+								$TIva = $granTotalIva2;
+
+								if(trim($Data['dvf_currency']) != $MONEDASYS ){
+										// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
+										$MontoSysCR = ($TIva / $TasaLocSys);
+
+								}else{
+										$MontoSysCR = $granTotalIvaOriginal;
+								}
+
+
+								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+								$AC1LINE = $AC1LINE+1;
+
+
+								$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva);
+								$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysCR);
+								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+										':ac1_trans_id' => $resInsertAsiento,
+										':ac1_account' => $value->fv1_cuentaIva,
+										':ac1_debit' => 0,
+										':ac1_credit' => round($granTotalIva, 2),
+										':ac1_debit_sys' => 0,
+										':ac1_credit_sys' => round($MontoSysCR, 2),
+										':ac1_currex' => 0,
+										':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+										':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+										':ac1_debit_import' => 0,
+										':ac1_credit_import' => 0,
+										':ac1_debit_importsys' => 0,
+										':ac1_credit_importsys' => 0,
+										':ac1_font_key' => $resInsert,
+										':ac1_font_line' => 1,
+										':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+										':ac1_accountvs' => 1,
+										':ac1_doctype' => 18,
+										':ac1_ref1' => "",
+										':ac1_ref2' => "",
+										':ac1_ref3' => "",
+										':ac1_prc_code' => NULL,
+										':ac1_uncode' => NULL,
+										':ac1_prj_code' => NULL,
+										':ac1_rescon_date' => NULL,
+										':ac1_recon_total' => 0,
+										':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+										':ac1_accperiod' => 1,
+										':ac1_close' => 0,
+										':ac1_cord' => 0,
+										':ac1_ven_debit' => 1,
+										':ac1_ven_credit' => 1,
+										':ac1_fiscal_acct' => 0,
+										':ac1_taxid' => 1,
+										':ac1_isrti' => 0,
+										':ac1_basert' => 0,
+										':ac1_mmcode' => 0,
+										':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+										':ac1_codref' => 1,
+										':ac1_line'   => 	$AC1LINE
+							));
+
+
+
+							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+									// Se verifica que el detalle no de error insertando //
+							}else{
+
+									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'	  => $resDetalleAsiento,
+											'mensaje'	=> 'No se pudo registrar la factura de ventas'
+										);
+
+										 $this->response($respuesta);
+
+										 return;
+							}
+						}
+						//FIN Procedimiento para llenar Impuestos
+
+						if($Data['dvf_basetype'] != 3){ // solo si el documento no viene de una entrega
+								//Procedimiento para llenar costo inventario
+								foreach ($DetalleConsolidadoCostoInventario as $key => $posicion) {
+										$grantotalCostoInventario = 0 ;
+										$grantotalCostoInventarioOriginal = 0;
+										$cuentaInventario = "";
+										foreach ($posicion as $key => $value) {
+
+													$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+
+													$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':dma_item_code' => $value->fv1_itemcode));
+
+													if(isset($resArticulo[0])){
+															$dbito = 0;
+															$cdito = 0;
+
+															$MontoSysDB = 0;
+															$MontoSysCR = 0;
+
+															$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
+
+															$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bdi_itemcode' => $value->fv1_itemcode, ':bdi_whscode' => $value->em1_whscode));
+
+															if( isset( $resCosto[0] ) ){
+
+																		$cuentaInventario = $resArticulo[0]['mga_acct_inv'];
+
+
+																		$costoArticulo = $resCosto[0]['bdi_avgprice'];
+																		$cantidadArticulo = $value->fv1_quantity;
+																		$grantotalCostoInventario = ($grantotalCostoInventario + ($costoArticulo * $cantidadArticulo));
+
+															}else{
+
+																		$this->pedeo->trans_rollback();
+
+																		$respuesta = array(
+																			'error'   => true,
+																			'data'	  => $resCosto,
+																			'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
+																		);
+
+																		 $this->response($respuesta);
+
+																		 return;
+															}
+
+													}else{
+															// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+															// se retorna el error y se detiene la ejecucion del codigo restante.
 															$this->pedeo->trans_rollback();
 
 															$respuesta = array(
 																'error'   => true,
-																'data' 		=> $resInsertCostoCantidad,
-																'mensaje'	=> 'El item no existe en el stock '.$detail['fv1_itemcode']
+																'data'	  => $resArticulo,
+																'mensaje'	=> 'No se encontro la cuenta de inventario y costo para el item '.$value->fv1_itemcode
 															);
 
 															 $this->response($respuesta);
 
 															 return;
+													}
+										}
+
+										$codigo3 = substr($cuentaInventario, 0, 1);
+
+										$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
+
+										if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+												$grantotalCostoInventario = ($grantotalCostoInventario / $TasaLocSys);
+										}
+
+										if( $codigo3 == 1 || $codigo3 == "1" ){
+												$cdito = $grantotalCostoInventario;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysCR = ($cdito / $TasaLocSys);
+												}else{
+														$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
 												}
 
-													//FIN de  Aplicacion del movimiento en stock
-
-										}// EN CASO CONTRARIO NO SE MUEVE INVENTARIO
-
-								}
-
-								//LLENANDO DETALLE ASIENTO CONTABLES
-								$DetalleAsientoIngreso = new stdClass();
-								$DetalleAsientoIva = new stdClass();
-								$DetalleCostoInventario = new stdClass();
-								$DetalleCostoCosto = new stdClass();
-
-
-								$DetalleAsientoIngreso->ac1_account = is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']: 0;
-								$DetalleAsientoIngreso->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
-								$DetalleAsientoIngreso->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
-								$DetalleAsientoIngreso->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
-								$DetalleAsientoIngreso->fv1_linetotal = is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0;
-								$DetalleAsientoIngreso->fv1_vat = is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0;
-								$DetalleAsientoIngreso->fv1_vatsum = is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0;
-								$DetalleAsientoIngreso->fv1_price = is_numeric($detail['fv1_price'])?$detail['fv1_price']:0;
-								$DetalleAsientoIngreso->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
-								$DetalleAsientoIngreso->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
-								$DetalleAsientoIngreso->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
-								$DetalleAsientoIngreso->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
-
-
-
-
-								$DetalleAsientoIva->ac1_account = is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']: 0;
-								$DetalleAsientoIva->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
-								$DetalleAsientoIva->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
-								$DetalleAsientoIva->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
-								$DetalleAsientoIva->fv1_linetotal = is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0;
-								$DetalleAsientoIva->fv1_vat = is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0;
-								$DetalleAsientoIva->fv1_vatsum = is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0;
-								$DetalleAsientoIva->fv1_price = is_numeric($detail['fv1_price'])?$detail['fv1_price']:0;
-								$DetalleAsientoIva->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
-								$DetalleAsientoIva->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
-								$DetalleAsientoIva->fv1_cuentaIva = is_numeric($detail['fv1_cuentaIva'])?$detail['fv1_cuentaIva']:NULL;
-								$DetalleAsientoIva->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
-								$DetalleAsientoIva->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
-
-
-
-								// se busca la cuenta contable del costoInventario y costoCosto
-								$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-
-								$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['fv1_itemcode']));
-
-								if(!isset($resArticulo[0])){
-
-											$this->pedeo->trans_rollback();
-
-											$respuesta = array(
-												'error'   => true,
-												'data' => $resArticulo,
-												'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro la cuenta contable (costo, inventario) del grupo de articulo para el item '.$detail['fv1_itemcode']
-											);
-
-											 $this->response($respuesta);
-
-											 return;
-								}
-
-
-								$DetalleCostoInventario->ac1_account = $resArticulo[0]['mga_acct_inv'];
-								$DetalleCostoInventario->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
-								$DetalleCostoInventario->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
-								$DetalleCostoInventario->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
-								$DetalleCostoInventario->fv1_linetotal = is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0;
-								$DetalleCostoInventario->fv1_vat = is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0;
-								$DetalleCostoInventario->fv1_vatsum = is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0;
-								$DetalleCostoInventario->fv1_price = is_numeric($detail['fv1_price'])?$detail['fv1_price']:0;
-								$DetalleCostoInventario->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
-								$DetalleCostoInventario->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
-								$DetalleCostoInventario->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
-								$DetalleCostoInventario->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
-
-
-								$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
-								$DetalleCostoCosto->ac1_prc_code = isset($detail['fv1_costcode'])?$detail['fv1_costcode']:NULL;
-								$DetalleCostoCosto->ac1_uncode = isset($detail['fv1_ubusiness'])?$detail['fv1_ubusiness']:NULL;
-								$DetalleCostoCosto->ac1_prj_code = isset($detail['fv1_project'])?$detail['fv1_project']:NULL;
-								$DetalleCostoCosto->fv1_linetotal = is_numeric($detail['fv1_linetotal'])?$detail['fv1_linetotal']:0;
-								$DetalleCostoCosto->fv1_vat = is_numeric($detail['fv1_vat'])?$detail['fv1_vat']:0;
-								$DetalleCostoCosto->fv1_vatsum = is_numeric($detail['fv1_vatsum'])?$detail['fv1_vatsum']:0;
-								$DetalleCostoCosto->fv1_price = is_numeric($detail['fv1_price'])?$detail['fv1_price']:0;
-								$DetalleCostoCosto->fv1_itemcode = isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL;
-								$DetalleCostoCosto->fv1_quantity = is_numeric($detail['fv1_quantity'])?$detail['fv1_quantity']:0;
-								$DetalleCostoCosto->em1_whscode = isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL;
-								$DetalleCostoCosto->fv1_fixrate = is_numeric($detail['fv1_fixrate'])?$detail['fv1_fixrate']:0;
-
-								$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
-
-								$DetalleAsientoIngreso->codigoCuenta = $codigoCuenta;
-								$DetalleAsientoIva->codigoCuenta = $codigoCuenta;
-								$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
-								$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
-
-
-								$llave = $DetalleAsientoIngreso->ac1_uncode.$DetalleAsientoIngreso->ac1_prc_code.$DetalleAsientoIngreso->ac1_prj_code.$DetalleAsientoIngreso->ac1_account;
-								$llaveIva = $DetalleAsientoIva->fv1_vat;
-								$llaveCostoInventario = $DetalleCostoInventario->ac1_account;
-								$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
-
-
-								if(in_array( $llave, $inArrayIngreso )){
-
-										$posicion = $this->buscarPosicion( $llave, $inArrayIngreso );
-
-								}else{
-
-										array_push( $inArrayIngreso, $llave );
-										$posicion = $this->buscarPosicion( $llave, $inArrayIngreso );
-
-								}
-
-
-								if(in_array( $llaveIva, $inArrayIva )){
-
-										$posicionIva = $this->buscarPosicion( $llaveIva, $inArrayIva );
-
-								}else{
-
-										array_push( $inArrayIva, $llaveIva );
-										$posicionIva = $this->buscarPosicion( $llaveIva, $inArrayIva );
-
-								}
-
-
-								if(in_array( $llaveCostoInventario, $inArrayCostoInventario )){
-
-										$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
-
-								}else{
-
-										array_push( $inArrayCostoInventario, $llaveCostoInventario );
-										$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
-
-								}
-
-
-								if(in_array( $llaveCostoCosto, $inArrayCostoCosto )){
-
-										$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
-
-								}else{
-
-										array_push( $inArrayCostoCosto, $llaveCostoCosto );
-										$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
-
-								}
-
-
-
-								if( isset($DetalleConsolidadoIva[$posicionIva])){
-
-									if(!is_array($DetalleConsolidadoIva[$posicionIva])){
-										$DetalleConsolidadoIva[$posicionIva] = array();
-									}
-
-								}else{
-									$DetalleConsolidadoIva[$posicionIva] = array();
-								}
-
-								array_push( $DetalleConsolidadoIva[$posicionIva], $DetalleAsientoIva);
-
-
-								if( isset($DetalleConsolidadoIngreso[$posicion])){
-
-									if(!is_array($DetalleConsolidadoIngreso[$posicion])){
-										$DetalleConsolidadoIngreso[$posicion] = array();
-									}
-
-								}else{
-									$DetalleConsolidadoIngreso[$posicion] = array();
-								}
-
-								array_push( $DetalleConsolidadoIngreso[$posicion], $DetalleAsientoIngreso);
-
-
-								if( isset($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
-
-									if(!is_array($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
-										$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
-									}
-
-								}else{
-									$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
-								}
-
-								array_push( $DetalleConsolidadoCostoInventario[$posicionCostoInventario], $DetalleCostoInventario );
-
-
-								if( isset($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
-
-									if(!is_array($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
-										$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
-									}
-
-								}else{
-									$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
-								}
-
-								array_push( $DetalleConsolidadoCostoCosto[$posicionCostoCosto], $DetalleCostoCosto );
-
-          }
-
-					// FIN DETALLE Factura
-
-
-					//Procedimiento para llenar Ingreso
-
-					foreach ($DetalleConsolidadoIngreso as $key => $posicion) {
-							$granTotalIngreso = 0;
-							$granTotalIngresoOriginal = 0;
-							$granTotalTasaFija = 0;
-							$codigoCuentaIngreso = "";
-							$cuenta = "";
-							$proyecto = "";
-							$prc = "";
-							$unidad = "";
-							foreach ($posicion as $key => $value) {
-										$granTotalIngreso = ($granTotalIngreso + $value->fv1_linetotal);
-										$granTotalTasaFija = ($granTotalTasaFija + $value->fv1_fixrate);
-										$codigoCuentaIngreso = $value->codigoCuenta;
-										$prc = $value->ac1_prc_code;
-										$unidad = $value->ac1_uncode;
-										$proyecto = $value->ac1_prj_code;
-										$cuenta = $value->ac1_account;
-							}
-
-
-							$debito = 0;
-							$credito = 0;
-							$MontoSysDB = 0;
-							$MontoSysCR = 0;
-							$granTotalIngresoOriginal = $granTotalIngreso;
-
-							if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
-									$granTotalIngreso = ($granTotalIngreso * $TasaDocLoc);
-							}
-
-							$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
-
-							$ti = $granTotalIngreso;
-
-							switch ($codigoCuentaIngreso) {
-								case 1:
-									$debito = $granTotalIngreso;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysDB = ($ti / $TasaLocSys);
+										}else if( $codigo3 == 2 || $codigo3 == "2" ){
+												$cdito = $grantotalCostoInventario;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysCR = ($cdito / $TasaLocSys);
+												}else{
+														$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												}
+										}else if( $codigo3 == 3 || $codigo3 == "3" ){
+												$cdito = $grantotalCostoInventario;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysCR = ($cdito / $TasaLocSys);
+												}else{
+														$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												}
+										}else if( $codigo3 == 4 || $codigo3 == "4" ){
+												$cdito = $grantotalCostoInventario;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysCR = ($cdito / $TasaLocSys);
+												}else{
+														$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												}
+										}else if( $codigo3 == 5  || $codigo3 == "5" ){
+												$dbito = $grantotalCostoInventario;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysDB = ($dbito / $TasaLocSys);
+												}else{
+														$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												}
+										}else if( $codigo3 == 6 || $codigo3 == "6" ){
+												$dbito = $grantotalCostoInventario;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysDB = ($dbito / $TasaLocSys);
+												}else{
+														$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												}
+										}else if( $codigo3 == 7 || $codigo3 == "7" ){
+												$dbito = $grantotalCostoInventario;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysDB = ($dbito / $TasaLocSys);
+												}else{
+														$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												}
+										}
+
+										$AC1LINE = $AC1LINE+1;
+
+										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+												':ac1_trans_id' => $resInsertAsiento,
+												':ac1_account' => $cuentaInventario,
+												':ac1_debit' => round($dbito, 2),
+												':ac1_credit' => round($cdito, 2),
+												':ac1_debit_sys' => round($MontoSysDB,2),
+												':ac1_credit_sys' => round($MontoSysCR,2),
+												':ac1_currex' => 0,
+												':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+												':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+												':ac1_debit_import' => 0,
+												':ac1_credit_import' => 0,
+												':ac1_debit_importsys' => 0,
+												':ac1_credit_importsys' => 0,
+												':ac1_font_key' => $resInsert,
+												':ac1_font_line' => 1,
+												':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+												':ac1_accountvs' => 1,
+												':ac1_doctype' => 18,
+												':ac1_ref1' => "",
+												':ac1_ref2' => "",
+												':ac1_ref3' => "",
+												':ac1_prc_code' => NULL,
+												':ac1_uncode' => NULL,
+												':ac1_prj_code' => NULL,
+												':ac1_rescon_date' => NULL,
+												':ac1_recon_total' => 0,
+												':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+												':ac1_accperiod' => 1,
+												':ac1_close' => 0,
+												':ac1_cord' => 0,
+												':ac1_ven_debit' => 1,
+												':ac1_ven_credit' => 1,
+												':ac1_fiscal_acct' => 0,
+												':ac1_taxid' => 1,
+												':ac1_isrti' => 0,
+												':ac1_basert' => 0,
+												':ac1_mmcode' => 0,
+												':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+												':ac1_codref' => 1,
+												':ac1_line'   => 	$AC1LINE
+									));
+
+									if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+											// Se verifica que el detalle no de error insertando //
 									}else{
-											$MontoSysDB = $granTotalIngresoOriginal;
+
+											// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+											// se retorna el error y se detiene la ejecucion del codigo restante.
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data'	  => $resDetalleAsiento,
+													'mensaje'	=> 'No se pudo registrar la factura de ventas'
+												);
+
+												 $this->response($respuesta);
+
+												 return;
 									}
-									break;
 
-								case 2:
-									$credito = $granTotalIngreso;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysCR = ($ti / $TasaLocSys);
-									}else{
-											$MontoSysCR = $granTotalIngresoOriginal;
+								}
+						}	//FIN Procedimiento para llenar costo inventario
+
+
+
+
+						// Procedimiento para llenar costo costo
+						foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
+								$grantotalCostoCosto = 0 ;
+								$grantotalCostoCostoOriginal = 0 ;
+								$cuentaCosto = "";
+								$dbito = 0;
+								$cdito = 0;
+								$MontoSysDB = 0;
+								$MontoSysCR = 0;
+								foreach ($posicion as $key => $value) {
+
+											if($Data['dvf_basetype'] != 3){
+
+													$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+													$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->fv1_itemcode));
+
+													if(isset($resArticulo[0])){
+															$dbito = 0;
+															$cdito = 0;
+															$MontoSysDB = 0;
+															$MontoSysCR = 0;
+
+															$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
+
+															$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->fv1_itemcode, ':bdi_whscode' => $value->em1_whscode));
+
+															if( isset( $resCosto[0] ) ){
+
+																		$cuentaCosto = $resArticulo[0]['mga_acct_cost'];
+
+
+																		$costoArticulo = $resCosto[0]['bdi_avgprice'];
+																		$cantidadArticulo = $value->fv1_quantity;
+																		$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
+
+															}else{
+
+																		$this->pedeo->trans_rollback();
+
+																		$respuesta = array(
+																			'error'   => true,
+																			'data'	  => 'hola1',
+																			'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
+																		);
+
+																		 $this->response($respuesta);
+
+																		 return;
+															}
+
+													}else{
+															// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+															// se retorna el error y se detiene la ejecucion del codigo restante.
+															$this->pedeo->trans_rollback();
+
+															$respuesta = array(
+																'error'   => true,
+																'data'	  => $resArticulo,
+																'mensaje'	=> 'No se encontro la cuenta puente para costo'
+															);
+
+															 $this->response($respuesta);
+
+															 return;
+													}
+
+											}else if($Data['dvf_basetype'] == 3){//Procedimiento cuando sea tipo documento 3 (Entrega)
+
+													$sqlArticulo = "SELECT pge_bridge_inv FROM pgem"; // Cuenta costo puente
+													$resArticulo = $this->pedeo->queryTable($sqlArticulo, array());// Cuenta costo puente
+
+													if(isset($resArticulo[0])){
+															$dbito = 0;
+															$cdito = 0;
+															$MontoSysDB = 0;
+															$MontoSysCR = 0;
+
+
+															$sqlCosto = "SELECT
+																						CASE
+																							WHEN bmi_quantity < 0 THEN bmi_quantity * -1
+																							ELSE bmi_quantity
+																						END AS cantidad, bmi_cost,bmy_baseentry,bmy_doctype
+																					FROM tbmi
+																					WHERE bmy_doctype = :bmy_doctype
+																					AND bmy_baseentry = :bmy_baseentry
+																					AND bmi_itemcode  = :bmi_itemcode";
+
+															$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bmi_itemcode' => $value->fv1_itemcode, ':bmy_doctype' => $Data['dvf_basetype'], ':bmy_baseentry' => $Data['dvf_baseentry']));
+
+															if( isset($resCosto[0]) ){
+
+																		$cuentaCosto = $resArticulo[0]['pge_bridge_inv'];
+																		$costoArticulo = $resCosto[0]['bmi_cost'];
+
+																		// SE VALIDA QUE LA CANTIDAD DEL ITEM A FACTURAR NO SUPERE LA CANTIDAD EN EL DOCUMENTO DE ENTREGA
+
+																		if($value->fv1_quantity > $resCosto[0]['cantidad']){
+																					//Se devuelve la transaccion
+																					$this->pedeo->trans_rollback();
+
+																					$respuesta = array(
+																						'error'   => true,
+																						'data'	  => $resArticulo,
+																						'mensaje'	=> 'La cantidad a facturar  mayor a la entregada, para el item: '.$value->fv1_itemcode
+																					);
+
+																					 $this->response($respuesta);
+
+																					 return;
+																		}
+
+																		//SE VALIDA QUE EL TOTAL FACTURADO NO SUPERE EL TOTAL ENTEGRADO
+
+																		$sqlFacturadoItem = "SELECT coalesce((SUM(fv1_quantity)), 0) AS cantidaditem
+																													FROM dvfv
+																													INNER JOIN vfv1
+																													ON dvf_docentry = fv1_docentry
+																													WHERE dvf_baseentry = :dvf_baseentry
+																													AND fv1_itemcode = :fv1_itemcode
+																													AND dvf_basetype = :dvf_basetype";
+
+
+																		$resFacturadoItem = $this->pedeo->queryTable($sqlFacturadoItem, array(
+																						':dvf_baseentry' =>  $resCosto[0]['bmy_baseentry'],
+																						':fv1_itemcode'  =>  $value->fv1_itemcode,
+																						':dvf_basetype'  =>  $resCosto[0]['bmy_doctype']
+																		));
+
+
+																		if ( isset($resFacturadoItem[0]) ){
+
+																				$CantidadOriginal = ($resFacturadoItem[0]['cantidaditem'] - $value->fv1_quantity);
+
+																				if ( $CantidadOriginal >= $resCosto[0]['cantidad'] ){
+																							//Se devuelve la transaccion
+																							$this->pedeo->trans_rollback();
+																							$respuesta = array(
+																								'error'   => true,
+																								'data'	  => $resArticulo,
+																								'mensaje'	=> 'No se puede facturar una cantidad mayor a la entregada, para el item: '.$value->fv1_itemcode
+																							);
+
+																							 $this->response($respuesta);
+
+																							 return;
+																				}else{
+
+																						$resto = ($resCosto[0]['cantidad'] - $CantidadOriginal);
+
+																						if($value->fv1_quantity > $resto){
+
+																								$this->pedeo->trans_rollback();
+																								$respuesta = array(
+																									'error'   => true,
+																									'data'	  => $resArticulo,
+																									'mensaje'	=> 'No se puede facturar una cantidad mayor a la entregada, para el item: '.$value->fv1_itemcode
+																								);
+
+																								 $this->response($respuesta);
+
+																								 return;
+																						}
+
+																				}
+																		}
+
+																		$cantidadArticulo = $value->fv1_quantity;
+																		$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
+
+															}else{
+																		//Se devuelve la transaccion
+																		$this->pedeo->trans_rollback();
+
+																		$respuesta = array(
+																			'error'   => true,
+																			'data'	  => 'hola2',
+																			'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
+																		);
+
+																		 $this->response($respuesta);
+
+																		 return;
+															}
+
+													}else{
+															// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+															// se retorna el error y se detiene la ejecucion del codigo restante.
+															$this->pedeo->trans_rollback();
+
+															$respuesta = array(
+																'error'   => true,
+																'data'	  => $resArticulo,
+																'mensaje'	=> 'No se encontro la cuenta puente para costo'
+															);
+
+															 $this->response($respuesta);
+
+															 return;
+													}
+
+											}
+
+								}
+
+
+
+									$codigo3 = substr($cuentaCosto, 0, 1);
+
+									$grantotalCostoCostoOriginal = $grantotalCostoCosto;
+
+									if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+											$grantotalCostoCosto = ($grantotalCostoCosto / $TasaLocSys);
 									}
-									break;
 
-								case 3:
-									$credito = $granTotalIngreso;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysCR = ($ti / $TasaLocSys);
-									}else{
-											$MontoSysCR = $granTotalIngresoOriginal;
+
+									if( $codigo3 == 1 || $codigo3 == "1" ){
+										$cdito = 	$grantotalCostoCosto; //Se voltearon las cuenta
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
+										}else{
+												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+										}
+									}else if( $codigo3 == 2 || $codigo3 == "2" ){
+										$cdito = 	$grantotalCostoCosto;
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
+										}else{
+												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+										}
+									}else if( $codigo3 == 3 || $codigo3 == "3" ){
+										$cdito = 	$grantotalCostoCosto;
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
+										}else{
+												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+										}
+									}else if( $codigo3 == 4 || $codigo3 == "4" ){
+										$cdito = 	$grantotalCostoCosto;
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
+										}else{
+												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+										}
+									}else if( $codigo3 == 5  || $codigo3 == "5" ){
+										$dbito = 	$grantotalCostoCosto;
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
+										}else{
+												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+										}
+									}else if( $codigo3 == 6 || $codigo3 == "6" ){
+										$dbito = 	$grantotalCostoCosto;
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
+										}else{
+												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+										}
+									}else if( $codigo3 == 7 || $codigo3 == "7" ){
+										$dbito = 	$grantotalCostoCosto;
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
+										}else{
+												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+										}
 									}
-									break;
-
-								case 4:
-									$credito = $granTotalIngreso;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysCR = ($ti / $TasaLocSys);
-									}else{
-											$MontoSysCR = $granTotalIngresoOriginal;
-									}
-									break;
-
-								case 5:
-									$debito = $granTotalIngreso;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysDB = ($ti / $TasaLocSys);
-									}else{
-											$MontoSysDB = $granTotalIngresoOriginal;
-									}
-									break;
-
-								case 6:
-									$debito = $granTotalIngreso;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysDB = ($ti / $TasaLocSys);
-									}else{
-											$MontoSysDB = $granTotalIngresoOriginal;
-									}
-									break;
-
-								case 7:
-									$debito = $granTotalIngreso;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysDB = ($ti / $TasaLocSys);
-									}else{
-											$MontoSysDB = $granTotalIngresoOriginal;
-									}
-									break;
-							}
-
-
-
-							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
-
-							$SumaCreditosLOC = ($SumaDebitoLOC + round($credito,2));
-							$SumaDebitoLOC   = ($SumaDebitoLOC + round($debito,2));
-
-
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+									$AC1LINE = $AC1LINE+1;
+									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $cuenta,
-									':ac1_debit' => round($debito,2),
-									':ac1_credit' => round($credito,2),
+									':ac1_account' => $cuentaCosto,
+									':ac1_debit' => round($dbito,2),
+									':ac1_credit' => round($cdito,2),
 									':ac1_debit_sys' => round($MontoSysDB,2),
 									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
@@ -1072,9 +1858,9 @@ class SalesInv extends REST_Controller {
 									':ac1_ref1' => "",
 									':ac1_ref2' => "",
 									':ac1_ref3' => "",
-									':ac1_prc_code' => $prc,
-									':ac1_uncode' => $unidad,
-									':ac1_prj_code' => $proyecto,
+									':ac1_prc_code' => $value->ac1_prc_code,
+									':ac1_uncode' => $value->ac1_uncode,
+									':ac1_prj_code' => $value->ac1_prj_code,
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
 									':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
@@ -1091,386 +1877,320 @@ class SalesInv extends REST_Controller {
 									':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
 									':ac1_codref' => 1,
 									':ac1_line'   => 	$AC1LINE
-						));
+									));
 
+									if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+									// Se verifica que el detalle no de error insertando //
 
+									}else{
 
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
+											// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+											// se retorna el error y se detiene la ejecucion del codigo restante.
+											$this->pedeo->trans_rollback();
 
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la factura de ventas'
-									);
+											$respuesta = array(
+												'error'   => true,
+												'data'	  => $resDetalleAsiento,
+												'mensaje'	=> 'No se pudo registrar la factura de venta'
+											);
 
-									 $this->response($respuesta);
+											 $this->response($respuesta);
 
-									 return;
+											 return;
+									}
 						}
-					}
-					//FIN Procedimiento para llenar Ingreso
 
+					 //SOLO SI ES CUENTA 3
 
+					 if($Data['dvf_basetype'] == 3){
 
-					//Procedimiento para llenar Impuestos
-
-					// $cuentaIVAAsumido = "SELECT pge_acc_impas FROM  pgem";
-					// $rescuentaIVAAsumido = $this->pedeo->queryTable($cuentaIVAAsumido,array());
-					//
-					// if(!isset($rescuentaIVAAsumido[0])){
-					// 		$this->pedeo->trans_rollback();
-					//
-					// 		$respuesta = array(
-					// 			'error'   => true,
-					// 			'data'	  => $rescuentaIVAAsumido,
-					// 			'mensaje'	=> 'No se encontro la cuenta contable para el IVA asumido'
-					// 		);
-					//
-					// 		 $this->response($respuesta);
-					//
-					// 		 return;
-					// }
-
-
-					$granTotalIva = 0;
-
-					foreach ($DetalleConsolidadoIva as $key => $posicion) {
-							$granTotalIva = 0;
-							$granTotalIvaOriginal = 0;
-							$MontoSysCR = 0;
-
-							foreach ($posicion as $key => $value) {
-										$granTotalIva = $granTotalIva + $value->fv1_vatsum;
-							}
-
-							$granTotalIvaOriginal = $granTotalIva;
-
-							if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
-									$granTotalIva = ($granTotalIva * $TasaDocLoc);
-							}
-
-							$TIva = $granTotalIva;
-
-							if(trim($Data['dvf_currency']) != $MONEDASYS ){
-									// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
-									$MontoSysCR = ($TIva / $TasaLocSys);
-									$IVASINTASAFIJA = $MontoSysCR;
-							}else{
-									$MontoSysCR = $granTotalIvaOriginal;
-									$IVASINTASAFIJA = $MontoSysCR;
-							}
-
-
-							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-							$SumaCreditosLOC = ($SumaCreditosLOC + round($granTotalIva,2));
-
-							$AC1LINE = $AC1LINE+1;
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $value->fv1_cuentaIva,
-									':ac1_debit' => 0,
-									':ac1_credit' => round($granTotalIva, 2),
-									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' => round($MontoSysCR, 2),
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => NULL,
-									':ac1_uncode' => NULL,
-									':ac1_prj_code' => NULL,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-									':ac1_codref' => 1,
-									':ac1_line'   => 	$AC1LINE
-						));
-
-
-
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-
-								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la factura de ventas'
-									);
-
-									 $this->response($respuesta);
-
-									 return;
-						}
-					}
-
-					//
-					// $granTotalIva = 0;
-					//
-					// foreach ($DetalleConsolidadoIva as $key => $posicion) {
-					// 		$granTotalIva = 0;
-					// 		$granTotalIvaOriginal = 0;
-					// 		$MontoSysCR = 0;
-					//
-					// 		foreach ($posicion as $key => $value) {
-					// 					$granTotalIva = round($granTotalIva + $value->fv1_vatsum,2);
-					// 		}
-					//
-					// 		$granTotalIvaOriginal = $granTotalIva;
-					//
-					// 		if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
-					// 				$granTotalIva = ($granTotalIva * $TasaDocLoc);
-					// 		}
-					//
-					// 		$TIva = $granTotalIva;
-					//
-					// 		if(trim($Data['dvf_currency']) != $MONEDASYS ){
-					// 				// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
-					// 				$MontoSysCR = ($TIva / $TasaLocSys);
-					// 				$IVASINTASAFIJA = $MontoSysCR;
-					// 		}else{
-					// 				$MontoSysCR = $granTotalIvaOriginal;
-					// 				$IVASINTASAFIJA = $MontoSysCR;
-					// 		}
-					//
-					//
-					// 		// $SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-					// 		$AC1LINE = $AC1LINE+1;
-					// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-					//
-					// 				':ac1_trans_id' => $resInsertAsiento,
-					// 				':ac1_account' => $rescuentaIVAAsumido[0]['pge_acc_impas'],
-					// 				':ac1_debit' => 0,
-					// 				':ac1_credit' => 0,
-					// 				':ac1_debit_sys' => round($MontoSysCR, 2),
-					// 				':ac1_credit_sys' => 0,
-					// 				':ac1_currex' => 0,
-					// 				':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-					// 				':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-					// 				':ac1_debit_import' => 0,
-					// 				':ac1_credit_import' => 0,
-					// 				':ac1_debit_importsys' => 0,
-					// 				':ac1_credit_importsys' => 0,
-					// 				':ac1_font_key' => $resInsert,
-					// 				':ac1_font_line' => 1,
-					// 				':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-					// 				':ac1_accountvs' => 1,
-					// 				':ac1_doctype' => 18,
-					// 				':ac1_ref1' => "",
-					// 				':ac1_ref2' => "",
-					// 				':ac1_ref3' => "",
-					// 				':ac1_prc_code' => NULL,
-					// 				':ac1_uncode' => NULL,
-					// 				':ac1_prj_code' => NULL,
-					// 				':ac1_rescon_date' => NULL,
-					// 				':ac1_recon_total' => 0,
-					// 				':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-					// 				':ac1_accperiod' => 1,
-					// 				':ac1_close' => 0,
-					// 				':ac1_cord' => 0,
-					// 				':ac1_ven_debit' => 1,
-					// 				':ac1_ven_credit' => 1,
-					// 				':ac1_fiscal_acct' => 0,
-					// 				':ac1_taxid' => 1,
-					// 				':ac1_isrti' => 0,
-					// 				':ac1_basert' => 0,
-					// 				':ac1_mmcode' => 0,
-					// 				':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-					// 				':ac1_codref' => 1,
-					// 				':ac1_line'   => 	$AC1LINE
-					// 	));
-					//
-					//
-					//
-					// 	if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-					// 			// Se verifica que el detalle no de error insertando //
-					// 	}else{
-					//
-					// 			// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-					// 			// se retorna el error y se detiene la ejecucion del codigo restante.
-					// 				$this->pedeo->trans_rollback();
-					//
-					// 				$respuesta = array(
-					// 					'error'   => true,
-					// 					'data'	  => $resDetalleAsiento,
-					// 					'mensaje'	=> 'No se pudo registrar la factura de ventas'
-					// 				);
-					//
-					// 				 $this->response($respuesta);
-					//
-					// 				 return;
-					// 	}
-					// }
-
-					//FIN Procedimiento para llenar Impuestos
-
-					if($Data['dvf_basetype'] != 3){ // solo si el documento no viene de una entrega
-							//Procedimiento para llenar costo inventario
-							foreach ($DetalleConsolidadoCostoInventario as $key => $posicion) {
-									$grantotalCostoInventario = 0 ;
-									$grantotalCostoInventarioOriginal = 0;
-									$cuentaInventario = "";
+							foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
+									$grantotalCostoCosto = 0 ;
+									$grantotalCostoCostoOriginal = 0 ;
+									$cuentaCosto = "";
+									$dbito = 0;
+									$cdito = 0;
+									$MontoSysDB = 0;
+									$MontoSysCR = 0;
 									foreach ($posicion as $key => $value) {
 
-												$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+														$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+														$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->fv1_itemcode));
 
-												$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':dma_item_code' => $value->fv1_itemcode));
+														if(isset($resArticulo[0])){
+																$dbito = 0;
+																$cdito = 0;
+																$MontoSysDB = 0;
+																$MontoSysCR = 0;
 
-												if(isset($resArticulo[0])){
-														$dbito = 0;
-														$cdito = 0;
+																$sqlCosto = "SELECT
+																							CASE
+																								WHEN bmi_quantity < 0 THEN bmi_quantity * -1
+																								ELSE bmi_quantity
+																							END AS cantidad, bmi_cost,bmy_baseentry,bmy_doctype
+																						FROM tbmi
+																						WHERE bmy_doctype = :bmy_doctype
+																						AND bmy_baseentry = :bmy_baseentry
+																						AND bmi_itemcode  = :bmi_itemcode";
 
-														$MontoSysDB = 0;
-														$MontoSysCR = 0;
-
-														$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
-
-														$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bdi_itemcode' => $value->fv1_itemcode));
-
-														if( isset( $resCosto[0] ) ){
-
-																	$cuentaInventario = $resArticulo[0]['mga_acct_inv'];
+																$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bmi_itemcode' => $value->fv1_itemcode, ':bmy_doctype' => $Data['dvf_basetype'], ':bmy_baseentry' => $Data['dvf_baseentry']));
 
 
-																	$costoArticulo = $resCosto[0]['bdi_avgprice'];
-																	$cantidadArticulo = $value->fv1_quantity;
-																	$grantotalCostoInventario = ($grantotalCostoInventario + ($costoArticulo * $cantidadArticulo));
+																if( isset( $resCosto[0] ) ){
+
+																			$cuentaCosto = $resArticulo[0]['mga_acct_cost'];
+
+
+																			$costoArticulo = $resCosto[0]['bmi_cost'];
+																			$cantidadArticulo = $value->fv1_quantity;
+																			$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
+
+																}else{
+
+																			$this->pedeo->trans_rollback();
+
+																			$respuesta = array(
+																				'error'   => true,
+																				'data'	  => $resCosto,
+																				'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
+																			);
+
+																			 $this->response($respuesta);
+
+																			 return;
+																}
 
 														}else{
+																// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+																// se retorna el error y se detiene la ejecucion del codigo restante.
+																$this->pedeo->trans_rollback();
 
-																	$this->pedeo->trans_rollback();
+																$respuesta = array(
+																	'error'   => true,
+																	'data'	  => $resArticulo,
+																	'mensaje'	=> 'No se encontro la cuenta puente para costo'
+																);
 
-																	$respuesta = array(
-																		'error'   => true,
-																		'data'	  => $resCosto,
-																		'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
-																	);
+																 $this->response($respuesta);
 
-																	 $this->response($respuesta);
-
-																	 return;
+																 return;
 														}
 
+												}
+
+												$codigo3 = substr($cuentaCosto, 0, 1);
+
+												$grantotalCostoCostoOriginal = $grantotalCostoCosto;
+
+												if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+														$grantotalCostoCosto = ($grantotalCostoCosto / $TasaLocSys);
+												}
+
+												if( $codigo3 == 1 || $codigo3 == "1" ){
+													$dbito = 	$grantotalCostoCosto;
+													if(trim($Data['dvf_currency']) != $MONEDASYS ){
+															$MontoSysDB = ($dbito / $TasaLocSys);
+													}else{
+															$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+													}
+												}else if( $codigo3 == 2 || $codigo3 == "2" ){
+													$cdito = 	$grantotalCostoCosto;
+													if(trim($Data['dvf_currency']) != $MONEDASYS ){
+															$MontoSysCR = ($cdito / $TasaLocSys);
+													}else{
+															$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+													}
+												}else if( $codigo3 == 3 || $codigo3 == "3" ){
+													$cdito = 	$grantotalCostoCosto;
+													if(trim($Data['dvf_currency']) != $MONEDASYS ){
+															$MontoSysCR = ($cdito / $TasaLocSys);
+													}else{
+															$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+													}
+												}else if( $codigo3 == 4 || $codigo3 == "4" ){
+													$cdito = 	$grantotalCostoCosto;
+													if(trim($Data['dvf_currency']) != $MONEDASYS ){
+															$MontoSysCR = ($cdito / $TasaLocSys);
+													}else{
+															$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+													}
+												}else if( $codigo3 == 5  || $codigo3 == "5" ){
+													$dbito = 	$grantotalCostoCosto;
+													if(trim($Data['dvf_currency']) != $MONEDASYS ){
+															$MontoSysDB = ($dbito / $TasaLocSys);
+													}else{
+															$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+													}
+												}else if( $codigo3 == 6 || $codigo3 == "6" ){
+													$dbito = 	$grantotalCostoCosto;
+													if(trim($Data['dvf_currency']) != $MONEDASYS ){
+															$MontoSysDB = ($dbito / $TasaLocSys);
+													}else{
+															$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+													}
+												}else if( $codigo3 == 7 || $codigo3 == "7" ){
+													$dbito = 	$grantotalCostoCosto;
+													if(trim($Data['dvf_currency']) != $MONEDASYS ){
+															$MontoSysDB = ($dbito / $TasaLocSys);
+													}else{
+															$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+													}
+												}
+												$AC1LINE = $AC1LINE+1;
+												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+												':ac1_trans_id' => $resInsertAsiento,
+												':ac1_account' => $cuentaCosto,
+												':ac1_debit' => round($dbito, 2),
+												':ac1_credit' => round($cdito, 2),
+												':ac1_debit_sys' => round($MontoSysDB,2),
+												':ac1_credit_sys' => round($MontoSysCR,2),
+												':ac1_currex' => 0,
+												':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+												':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+												':ac1_debit_import' => 0,
+												':ac1_credit_import' => 0,
+												':ac1_debit_importsys' => 0,
+												':ac1_credit_importsys' => 0,
+												':ac1_font_key' => $resInsert,
+												':ac1_font_line' => 1,
+												':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+												':ac1_accountvs' => 1,
+												':ac1_doctype' => 18,
+												':ac1_ref1' => "",
+												':ac1_ref2' => "",
+												':ac1_ref3' => "",
+												':ac1_prc_code' => $value->ac1_prc_code,
+												':ac1_uncode' => $value->ac1_uncode,
+												':ac1_prj_code' => $value->ac1_prj_code,
+												':ac1_rescon_date' => NULL,
+												':ac1_recon_total' => 0,
+												':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+												':ac1_accperiod' => 1,
+												':ac1_close' => 0,
+												':ac1_cord' => 0,
+												':ac1_ven_debit' => 1,
+												':ac1_ven_credit' => 1,
+												':ac1_fiscal_acct' => 0,
+												':ac1_taxid' => 1,
+												':ac1_isrti' => 0,
+												':ac1_basert' => 0,
+												':ac1_mmcode' => 0,
+												':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+												':ac1_codref' => 1,
+												':ac1_line'   => 	$AC1LINE
+												));
+
+												if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+												// Se verifica que el detalle no de error insertando //
 												}else{
-														// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-														// se retorna el error y se detiene la ejecucion del codigo restante.
-														$this->pedeo->trans_rollback();
 
-														$respuesta = array(
-															'error'   => true,
-															'data'	  => $resArticulo,
-															'mensaje'	=> 'No se encontro la cuenta de inventario y costo para el item '.$value->fv1_itemcode
-														);
+													// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+													// se retorna el error y se detiene la ejecucion del codigo restante.
+													$this->pedeo->trans_rollback();
 
-														 $this->response($respuesta);
+													$respuesta = array(
+														'error'   => true,
+														'data'	  => $resDetalleAsiento,
+														'mensaje'	=> 'No se pudo registrar la factura de ventas'
+													);
 
-														 return;
+													 $this->response($respuesta);
+
+													 return;
 												}
 									}
+					 }
 
-									$codigo3 = substr($cuentaInventario, 0, 1);
+					 //SOLO SI ES CUENTA 3
 
-									$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
+					 //FIN Procedimiento para llenar costo costo
 
-									if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+					//Procedimiento para llenar cuentas por cobrar
 
-											$grantotalCostoInventario = ($grantotalCostoInventario / $TasaLocSys);
+						$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
+														 JOIN dmgs  AS f2
+														 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
+														 WHERE  f1.dms_card_code = :dms_card_code
+														 AND f1.dms_card_type = '1'";//1 para clientes";
+
+						$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['dvf_cardcode']));
+
+
+
+						if(isset( $rescuentaCxC[0] )){
+
+									$debitoo = 0;
+									$creditoo = 0;
+									$MontoSysDB = 0;
+									$MontoSysCR = 0;
+									$docTotal = 0;
+									$docTotalOriginal = 0;
+
+									$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
+									$codigo2= substr($rescuentaCxC[0]['mgs_acct'], 0, 1);
+
+									// $docTotal = $Data['dvf_doctotal'];
+									// $docTotalOriginal = $docTotal;
+									//
+									//
+									// if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+									//
+									// 		$docTotal = ($docTotal * $TasaDocLoc);
+									// }
+									//
+									// $dt = $Data['dvf_doctotal'];
+
+									if( $codigo2 == 1 || $codigo2 == "1" ){
+
+											$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+											$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+									}else if( $codigo2 == 2 || $codigo2 == "2" ){
+
+											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+									}else if( $codigo2 == 3 || $codigo2 == "3" ){
+
+											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+											$MontoSysCR = ($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+									}else if( $codigo2 == 4 || $codigo2 == "4" ){
+
+											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+									}else if( $codigo2 == 5  || $codigo2 == "5" ){
+
+											$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+											$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+									}else if( $codigo2 == 6 || $codigo2 == "6" ){
+
+											$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+											$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+									}else if( $codigo2 == 7 || $codigo2 == "7" ){
+
+											$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+											$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 									}
 
-									if( $codigo3 == 1 || $codigo3 == "1" ){
-											$cdito = $grantotalCostoInventario;
-											if(trim($Data['dvf_currency']) != $MONEDASYS ){
-													$MontoSysCR = ($cdito / $TasaLocSys);
-											}else{
-													$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
-											}
 
-									}else if( $codigo3 == 2 || $codigo3 == "2" ){
-											$cdito = $grantotalCostoInventario;
-											if(trim($Data['dvf_currency']) != $MONEDASYS ){
-													$MontoSysCR = ($cdito / $TasaLocSys);
-											}else{
-													$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
-											}
-									}else if( $codigo3 == 3 || $codigo3 == "3" ){
-											$cdito = $grantotalCostoInventario;
-											if(trim($Data['dvf_currency']) != $MONEDASYS ){
-													$MontoSysCR = ($cdito / $TasaLocSys);
-											}else{
-													$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
-											}
-									}else if( $codigo3 == 4 || $codigo3 == "4" ){
-											$cdito = $grantotalCostoInventario;
-											if(trim($Data['dvf_currency']) != $MONEDASYS ){
-													$MontoSysCR = ($cdito / $TasaLocSys);
-											}else{
-													$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
-											}
-									}else if( $codigo3 == 5  || $codigo3 == "5" ){
-											$dbito = $grantotalCostoInventario;
-											if(trim($Data['dvf_currency']) != $MONEDASYS ){
-													$MontoSysDB = ($dbito / $TasaLocSys);
-											}else{
-													$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
-											}
-									}else if( $codigo3 == 6 || $codigo3 == "6" ){
-											$dbito = $grantotalCostoInventario;
-											if(trim($Data['dvf_currency']) != $MONEDASYS ){
-													$MontoSysDB = ($dbito / $TasaLocSys);
-											}else{
-													$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
-											}
-									}else if( $codigo3 == 7 || $codigo3 == "7" ){
-											$dbito = $grantotalCostoInventario;
-											if(trim($Data['dvf_currency']) != $MONEDASYS ){
-													$MontoSysDB = ($dbito / $TasaLocSys);
-											}else{
-													$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
-											}
-									}
-
+									$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+									$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
 									$AC1LINE = $AC1LINE+1;
 
 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 											':ac1_trans_id' => $resInsertAsiento,
-											':ac1_account' => $cuentaInventario,
-											':ac1_debit' => round($dbito, 2),
-											':ac1_credit' => round($cdito, 2),
-											':ac1_debit_sys' => round($MontoSysDB,2),
-											':ac1_credit_sys' => round($MontoSysCR,2),
+											':ac1_account' => $cuentaCxC,
+											':ac1_debit' => round($debitoo, 2),
+											':ac1_credit' => round($creditoo, 2),
+											':ac1_debit_sys' => round($MontoSysDB, 2),
+											':ac1_credit_sys' => round($MontoSysCR, 2),
 											':ac1_currex' => 0,
 											':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
 											':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
@@ -1526,55 +2246,102 @@ class SalesInv extends REST_Controller {
 											 return;
 								}
 
-							}
-					}	//FIN Procedimiento para llenar costo inventario
+						}else{
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resDetalleAsiento,
+										'mensaje'	=> 'No se pudo registrar la factura de ventas, el tercero no tiene cuenta asociada'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+						}
+						//FIN Procedimiento para llenar cuentas por cobrar
 
 
+						// SE VALIDA DIFERENCIA POR DECIMALES
+						// Y SE AGREGA UN ASIENTO DE DIFERENCIA EN DECIMALES
+						// SEGUN SEA EL CASO
+						$debito  = 0;
+						$credito = 0;
+						if($SumaCreditosSYS > $SumaDebitosSYS || $SumaDebitosSYS > $SumaCreditosSYS){
 
+									$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+									$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
 
-					// Procedimiento para llenar costo costo
-					foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
-							$grantotalCostoCosto = 0 ;
-							$grantotalCostoCostoOriginal = 0 ;
-							$cuentaCosto = "";
-							$dbito = 0;
-							$cdito = 0;
-							$MontoSysDB = 0;
-							$MontoSysCR = 0;
-							foreach ($posicion as $key => $value) {
+									if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
 
-										if($Data['dvf_basetype'] != 3){
+												if( $SumaCreditosSYS > $SumaDebitosSYS ){ // DIFERENCIA EN CREDITO EL VALOR SE COLOCA EN DEBITO
 
-												$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-												$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->fv1_itemcode));
+															$debito = ($SumaCreditosSYS - $SumaDebitosSYS);
 
-												if(isset($resArticulo[0])){
-														$dbito = 0;
-														$cdito = 0;
-														$MontoSysDB = 0;
-														$MontoSysCR = 0;
+												}else{ // DIFERENCIA EN DEBITO EL VALOR SE COLOCA EN CREDITO
 
-														$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
+															$credito = ($SumaDebitosSYS - $SumaCreditosSYS);
+												}
 
-														$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->fv1_itemcode));
+												if(round($debito+$credito, 2) > 0){
+															$AC1LINE = $AC1LINE+1;
+															$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
-														if( isset( $resCosto[0] ) ){
+																	':ac1_trans_id' => $resInsertAsiento,
+																	':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+																	':ac1_debit' => 0,
+																	':ac1_credit' => 0,
+																	':ac1_debit_sys' => round($debito,2),
+																	':ac1_credit_sys' => round($credito,2),
+																	':ac1_currex' => 0,
+																	':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+																	':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+																	':ac1_debit_import' => 0,
+																	':ac1_credit_import' => 0,
+																	':ac1_debit_importsys' => 0,
+																	':ac1_credit_importsys' => 0,
+																	':ac1_font_key' => $resInsert,
+																	':ac1_font_line' => 1,
+																	':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+																	':ac1_accountvs' => 1,
+																	':ac1_doctype' => 18,
+																	':ac1_ref1' => "",
+																	':ac1_ref2' => "",
+																	':ac1_ref3' => "",
+																	':ac1_prc_code' => NULL,
+																	':ac1_uncode' => NULL,
+																	':ac1_prj_code' => NULL,
+																	':ac1_rescon_date' => NULL,
+																	':ac1_recon_total' => 0,
+																	':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+																	':ac1_accperiod' => 1,
+																	':ac1_close' => 0,
+																	':ac1_cord' => 0,
+																	':ac1_ven_debit' => 1,
+																	':ac1_ven_credit' => 1,
+																	':ac1_fiscal_acct' => 0,
+																	':ac1_taxid' => 1,
+																	':ac1_isrti' => 0,
+																	':ac1_basert' => 0,
+																	':ac1_mmcode' => 0,
+																	':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+																	':ac1_codref' => 1,
+																	':ac1_line'   => 	$AC1LINE
+														));
 
-																	$cuentaCosto = $resArticulo[0]['mga_acct_cost'];
-
-
-																	$costoArticulo = $resCosto[0]['bdi_avgprice'];
-																	$cantidadArticulo = $value->fv1_quantity;
-																	$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
-
+														if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+																// Se verifica que el detalle no de error insertando //
 														}else{
 
+																// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+																// se retorna el error y se detiene la ejecucion del codigo restante.
 																	$this->pedeo->trans_rollback();
 
 																	$respuesta = array(
 																		'error'   => true,
-																		'data'	  => 'hola1',
-																		'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
+																		'data'	  => $resDetalleAsiento,
+																		'mensaje'	=> 'No se pudo registrar la factura de ventas'
 																	);
 
 																	 $this->response($respuesta);
@@ -1582,987 +2349,427 @@ class SalesInv extends REST_Controller {
 																	 return;
 														}
 
-												}else{
-														// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-														// se retorna el error y se detiene la ejecucion del codigo restante.
-														$this->pedeo->trans_rollback();
-
-														$respuesta = array(
-															'error'   => true,
-															'data'	  => $resArticulo,
-															'mensaje'	=> 'No se encontro la cuenta puente para costo'
-														);
-
-														 $this->response($respuesta);
-
-														 return;
 												}
 
-										}else if($Data['dvf_basetype'] == 3){//Procedimiento cuando sea tipo documento 3 (Entrega)
-
-												$sqlArticulo = "SELECT pge_bridge_inv FROM pgem"; // Cuenta costo puente
-												$resArticulo = $this->pedeo->queryTable($sqlArticulo, array());// Cuenta costo puente
-
-												if(isset($resArticulo[0])){
-														$dbito = 0;
-														$cdito = 0;
-														$MontoSysDB = 0;
-														$MontoSysCR = 0;
-
-
-														$sqlCosto = "SELECT
-																					CASE
-																						WHEN bmi_quantity < 0 THEN bmi_quantity * -1
-																						ELSE bmi_quantity
-																					END AS cantidad, bmi_cost,bmy_baseentry,bmy_doctype
-																				FROM tbmi
-																				WHERE bmy_doctype = :bmy_doctype
-																				AND bmy_baseentry = :bmy_baseentry
-																				AND bmi_itemcode  = :bmi_itemcode";
-
-														$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bmi_itemcode' => $value->fv1_itemcode, ':bmy_doctype' => $Data['dvf_basetype'], ':bmy_baseentry' => $Data['dvf_baseentry']));
-
-														if( isset($resCosto[0]) ){
-
-																	$cuentaCosto = $resArticulo[0]['pge_bridge_inv'];
-																	$costoArticulo = $resCosto[0]['bmi_cost'];
-
-																	// SE VALIDA QUE LA CANTIDAD DEL ITEM A FACTURAR NO SUPERE LA CANTIDAD EN EL DOCUMENTO DE ENTREGA
-
-																	if($value->fv1_quantity > $resCosto[0]['cantidad']){
-																				//Se devuelve la transaccion
-																				$this->pedeo->trans_rollback();
-
-																				$respuesta = array(
-																					'error'   => true,
-																					'data'	  => $resArticulo,
-																					'mensaje'	=> 'La cantidad a facturar  mayor a la entregada, para el item: '.$value->fv1_itemcode
-																				);
-
-																				 $this->response($respuesta);
-
-																				 return;
-																	}
-
-																	//SE VALIDA QUE EL TOTAL FACTURADO NO SUPERE EL TOTAL ENTEGRADO
-
-																	$sqlFacturadoItem = "SELECT coalesce((SUM(fv1_quantity)), 0) AS cantidaditem
-																												FROM dvfv
-																												INNER JOIN vfv1
-																												ON dvf_docentry = fv1_docentry
-																												WHERE dvf_baseentry = :dvf_baseentry
-																												AND fv1_itemcode = :fv1_itemcode
-																												AND dvf_basetype = :dvf_basetype";
-
-
-																	$resFacturadoItem = $this->pedeo->queryTable($sqlFacturadoItem, array(
-
-																					':dvf_baseentry' =>  $resCosto[0]['bmy_baseentry'],
-																					':fv1_itemcode'  =>  $value->fv1_itemcode,
-																					':dvf_basetype'  =>  $resCosto[0]['bmy_doctype']
-																	));
-
-
-																	if ( isset($resFacturadoItem[0]) ){
-
-																			$CantidadOriginal = ($resFacturadoItem[0]['cantidaditem'] - $value->fv1_quantity);
-
-																			if ( $CantidadOriginal >= $resCosto[0]['cantidad'] ){
-																						//Se devuelve la transaccion
-																						$this->pedeo->trans_rollback();
-																						$respuesta = array(
-																							'error'   => true,
-																							'data'	  => $resArticulo,
-																							'mensaje'	=> 'No se puede facturar una cantidad mayor a la entregada, para el item: '.$value->fv1_itemcode
-																						);
-
-																						 $this->response($respuesta);
-
-																						 return;
-																			}else{
-
-																					$resto = ($resCosto[0]['cantidad'] - $CantidadOriginal);
-
-																					if($value->fv1_quantity > $resto){
-
-																							$this->pedeo->trans_rollback();
-																							$respuesta = array(
-																								'error'   => true,
-																								'data'	  => $resArticulo,
-																								'mensaje'	=> 'No se puede facturar una cantidad mayor a la entregada, para el item: '.$value->fv1_itemcode
-																							);
-
-																							 $this->response($respuesta);
-
-																							 return;
-																					}
-
-																			}
-																	}
-
-																	$cantidadArticulo = $value->fv1_quantity;
-																	$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
-
-														}else{
-																	//Se devuelve la transaccion
-																	$this->pedeo->trans_rollback();
-
-																	$respuesta = array(
-																		'error'   => true,
-																		'data'	  => 'hola2',
-																		'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
-																	);
-
-																	 $this->response($respuesta);
-
-																	 return;
-														}
-
-												}else{
-														// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-														// se retorna el error y se detiene la ejecucion del codigo restante.
-														$this->pedeo->trans_rollback();
-
-														$respuesta = array(
-															'error'   => true,
-															'data'	  => $resArticulo,
-															'mensaje'	=> 'No se encontro la cuenta puente para costo'
-														);
-
-														 $this->response($respuesta);
-
-														 return;
-												}
-
-										}
-
-							}
-
-
-
-								$codigo3 = substr($cuentaCosto, 0, 1);
-
-								$grantotalCostoCostoOriginal = $grantotalCostoCosto;
-
-								if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
-
-										$grantotalCostoCosto = ($grantotalCostoCosto / $TasaLocSys);
-								}
-
-
-								if( $codigo3 == 1 || $codigo3 == "1" ){
-									$cdito = 	$grantotalCostoCosto; //Se voltearon las cuenta
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
 									}else{
-											$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+
+											$this->pedeo->trans_rollback();
+
+											$respuesta = array(
+												'error'   => true,
+												'data'	  => $resCuentaDiferenciaDecimal,
+												'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+											);
+
+											 $this->response($respuesta);
+
+											 return;
 									}
-								}else if( $codigo3 == 2 || $codigo3 == "2" ){
-									$cdito = 	$grantotalCostoCosto;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
-									}else{
-											$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
-									}
-								}else if( $codigo3 == 3 || $codigo3 == "3" ){
-									$cdito = 	$grantotalCostoCosto;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
-									}else{
-											$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
-									}
-								}else if( $codigo3 == 4 || $codigo3 == "4" ){
-									$cdito = 	$grantotalCostoCosto;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
-									}else{
-											$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
-									}
-								}else if( $codigo3 == 5  || $codigo3 == "5" ){
-									$dbito = 	$grantotalCostoCosto;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
-									}else{
-											$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
-									}
-								}else if( $codigo3 == 6 || $codigo3 == "6" ){
-									$dbito = 	$grantotalCostoCosto;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
-									}else{
-											$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
-									}
-								}else if( $codigo3 == 7 || $codigo3 == "7" ){
-									$dbito = 	$grantotalCostoCosto;
-									if(trim($Data['dvf_currency']) != $MONEDASYS ){
-											$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
-									}else{
-											$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
-									}
-								}
-								$AC1LINE = $AC1LINE+1;
-								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+						}
 
-								':ac1_trans_id' => $resInsertAsiento,
-								':ac1_account' => $cuentaCosto,
-								':ac1_debit' => round($dbito,2),
-								':ac1_credit' => round($cdito,2),
-								':ac1_debit_sys' => round($MontoSysDB,2),
-								':ac1_credit_sys' => round($MontoSysCR,2),
-								':ac1_currex' => 0,
-								':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-								':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-								':ac1_debit_import' => 0,
-								':ac1_credit_import' => 0,
-								':ac1_debit_importsys' => 0,
-								':ac1_credit_importsys' => 0,
-								':ac1_font_key' => $resInsert,
-								':ac1_font_line' => 1,
-								':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-								':ac1_accountvs' => 1,
-								':ac1_doctype' => 18,
-								':ac1_ref1' => "",
-								':ac1_ref2' => "",
-								':ac1_ref3' => "",
-								':ac1_prc_code' => $value->ac1_prc_code,
-								':ac1_uncode' => $value->ac1_uncode,
-								':ac1_prj_code' => $value->ac1_prj_code,
-								':ac1_rescon_date' => NULL,
-								':ac1_recon_total' => 0,
-								':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-								':ac1_accperiod' => 1,
-								':ac1_close' => 0,
-								':ac1_cord' => 0,
-								':ac1_ven_debit' => 1,
-								':ac1_ven_credit' => 1,
-								':ac1_fiscal_acct' => 0,
-								':ac1_taxid' => 1,
-								':ac1_isrti' => 0,
-								':ac1_basert' => 0,
-								':ac1_mmcode' => 0,
-								':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-								':ac1_codref' => 1,
-								':ac1_line'   => 	$AC1LINE
-								));
-
-								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-
-								}else{
-
-										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-										// se retorna el error y se detiene la ejecucion del codigo restante.
-										$this->pedeo->trans_rollback();
-
-										$respuesta = array(
-											'error'   => true,
-											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la factura de venta'
-										);
-
-										 $this->response($respuesta);
-
-								 	 	 return;
-								}
-
-					}
-
-				 //SOLO SI ES CUENTA 3
-
-				 if($Data['dvf_basetype'] == 3){
-
-						foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
-								$grantotalCostoCosto = 0 ;
-								$grantotalCostoCostoOriginal = 0 ;
-								$cuentaCosto = "";
-								$dbito = 0;
-								$cdito = 0;
-								$MontoSysDB = 0;
-								$MontoSysCR = 0;
-								foreach ($posicion as $key => $value) {
-
-													$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-													$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->fv1_itemcode));
-
-													if(isset($resArticulo[0])){
-															$dbito = 0;
-															$cdito = 0;
-															$MontoSysDB = 0;
-															$MontoSysCR = 0;
-
-															$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode";
-
-															$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->fv1_itemcode));
-
-															if( isset( $resCosto[0] ) ){
-
-																		$cuentaCosto = $resArticulo[0]['mga_acct_cost'];
-
-
-																		$costoArticulo = $resCosto[0]['bdi_avgprice'];
-																		$cantidadArticulo = $value->fv1_quantity;
-																		$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
-
-															}else{
-
-																		$this->pedeo->trans_rollback();
-
-																		$respuesta = array(
-																			'error'   => true,
-																			'data'	  => 'hola3',
-																			'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
-																		);
-
-																		 $this->response($respuesta);
-
-																		 return;
-															}
-
-													}else{
-															// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-															// se retorna el error y se detiene la ejecucion del codigo restante.
-															$this->pedeo->trans_rollback();
-
-															$respuesta = array(
-																'error'   => true,
-																'data'	  => $resArticulo,
-																'mensaje'	=> 'No se encontro la cuenta puente para costo'
-															);
-
-															 $this->response($respuesta);
-
-															 return;
-													}
-
-											}
-
-											$codigo3 = substr($cuentaCosto, 0, 1);
-
-											$grantotalCostoCostoOriginal = $grantotalCostoCosto;
-
-											if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
-
-													$grantotalCostoCosto = ($grantotalCostoCosto / $TasaLocSys);
-											}
-
-											if( $codigo3 == 1 || $codigo3 == "1" ){
-												$dbito = 	$grantotalCostoCosto;
-												if(trim($Data['dvf_currency']) != $MONEDASYS ){
-														$MontoSysDB = ($dbito / $TasaLocSys);
-												}else{
-														$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
-												}
-											}else if( $codigo3 == 2 || $codigo3 == "2" ){
-												$cdito = 	$grantotalCostoCosto;
-												if(trim($Data['dvf_currency']) != $MONEDASYS ){
-														$MontoSysCR = ($cdito / $TasaLocSys);
-												}else{
-														$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
-												}
-											}else if( $codigo3 == 3 || $codigo3 == "3" ){
-												$cdito = 	$grantotalCostoCosto;
-												if(trim($Data['dvf_currency']) != $MONEDASYS ){
-														$MontoSysCR = ($cdito / $TasaLocSys);
-												}else{
-														$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
-												}
-											}else if( $codigo3 == 4 || $codigo3 == "4" ){
-												$cdito = 	$grantotalCostoCosto;
-												if(trim($Data['dvf_currency']) != $MONEDASYS ){
-														$MontoSysCR = ($cdito / $TasaLocSys);
-												}else{
-														$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
-												}
-											}else if( $codigo3 == 5  || $codigo3 == "5" ){
-												$dbito = 	$grantotalCostoCosto;
-												if(trim($Data['dvf_currency']) != $MONEDASYS ){
-														$MontoSysDB = ($dbito / $TasaLocSys);
-												}else{
-														$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
-												}
-											}else if( $codigo3 == 6 || $codigo3 == "6" ){
-												$dbito = 	$grantotalCostoCosto;
-												if(trim($Data['dvf_currency']) != $MONEDASYS ){
-														$MontoSysDB = ($dbito / $TasaLocSys);
-												}else{
-														$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
-												}
-											}else if( $codigo3 == 7 || $codigo3 == "7" ){
-												$dbito = 	$grantotalCostoCosto;
-												if(trim($Data['dvf_currency']) != $MONEDASYS ){
-														$MontoSysDB = ($dbito / $TasaLocSys);
-												}else{
-														$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
-												}
-											}
-											$AC1LINE = $AC1LINE+1;
-											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-											':ac1_trans_id' => $resInsertAsiento,
-											':ac1_account' => $cuentaCosto,
-											':ac1_debit' => round($dbito, 2),
-											':ac1_credit' => round($cdito, 2),
-											':ac1_debit_sys' => round($MontoSysDB,2),
-											':ac1_credit_sys' => round($MontoSysCR,2),
-											':ac1_currex' => 0,
-											':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-											':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-											':ac1_debit_import' => 0,
-											':ac1_credit_import' => 0,
-											':ac1_debit_importsys' => 0,
-											':ac1_credit_importsys' => 0,
-											':ac1_font_key' => $resInsert,
-											':ac1_font_line' => 1,
-											':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-											':ac1_accountvs' => 1,
-											':ac1_doctype' => 18,
-											':ac1_ref1' => "",
-											':ac1_ref2' => "",
-											':ac1_ref3' => "",
-											':ac1_prc_code' => $value->ac1_prc_code,
-											':ac1_uncode' => $value->ac1_uncode,
-											':ac1_prj_code' => $value->ac1_prj_code,
-											':ac1_rescon_date' => NULL,
-											':ac1_recon_total' => 0,
-											':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-											':ac1_accperiod' => 1,
-											':ac1_close' => 0,
-											':ac1_cord' => 0,
-											':ac1_ven_debit' => 1,
-											':ac1_ven_credit' => 1,
-											':ac1_fiscal_acct' => 0,
-											':ac1_taxid' => 1,
-											':ac1_isrti' => 0,
-											':ac1_basert' => 0,
-											':ac1_mmcode' => 0,
-											':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-											':ac1_codref' => 1,
-											':ac1_line'   => 	$AC1LINE
-											));
-
-											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-											// Se verifica que el detalle no de error insertando //
-											}else{
-
-												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-												// se retorna el error y se detiene la ejecucion del codigo restante.
-												$this->pedeo->trans_rollback();
-
-												$respuesta = array(
-													'error'   => true,
-													'data'	  => $resDetalleAsiento,
-													'mensaje'	=> 'No se pudo registrar la factura de ventas'
-												);
-
-												 $this->response($respuesta);
-
-												 return;
-											}
-								}
-				 }
-
-				 //SOLO SI ES CUENTA 3
-
-				 //FIN Procedimiento para llenar costo costo
-
-				//Procedimiento para llenar cuentas por cobrar
-
-					$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
-													 JOIN dmgs  AS f2
-													 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-													 WHERE  f1.dms_card_code = :dms_card_code
-													 AND f1.dms_card_type = '1'";//1 para clientes";
-
-					$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['dvf_cardcode']));
+						// FIN VALIDACION DIFERENCIA EN DECIMALES
+						// FIN DE OPERACIONES VITALES
 
 
 
-					if(isset( $rescuentaCxC[0] )){
-
-								$debitoo = 0;
-								$creditoo = 0;
-								$MontoSysDB = 0;
-								$MontoSysCR = 0;
-								$docTotal = 0;
-								$docTotalOriginal = 0;
-
-								$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
-								$codigo2= substr($rescuentaCxC[0]['mgs_acct'], 0, 1);
-
-								$docTotal = $Data['dvf_doctotal'];
-								$docTotalOriginal = $docTotal;
+						// VALIDANDO ESTADOS DE DOCUMENTOS
+						if ($Data['dvf_basetype'] == 1) {
 
 
-								if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
-
-										$docTotal = ($docTotal * $TasaDocLoc);
-								}
-
-								$dt = $docTotal;
-								if( $codigo2 == 1 || $codigo2 == "1" ){
-										$debitoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysDB = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysDB =	$docTotalOriginal;
-										}
-								}else if( $codigo2 == 2 || $codigo2 == "2" ){
-										$creditoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysCR = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysCR =	$docTotalOriginal;
-										}
-								}else if( $codigo2 == 3 || $codigo2 == "3" ){
-										$creditoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysCR = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysCR =	$docTotalOriginal;
-										}
-								}else if( $codigo2 == 4 || $codigo2 == "4" ){
-									  $creditoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysCR = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysCR =	$docTotalOriginal;
-										}
-								}else if( $codigo2 == 5  || $codigo2 == "5" ){
-									  $debitoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysDB = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysDB =	$docTotalOriginal;
-										}
-								}else if( $codigo2 == 6 || $codigo2 == "6" ){
-									  $debitoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysDB = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysDB =	$docTotalOriginal;
-										}
-								}else if( $codigo2 == 7 || $codigo2 == "7" ){
-									  $debitoo = $docTotal;
-										if( trim($Data['dvf_currency']) != $MONEDASYS ){
-												$MontoSysDB = ($dt / $TasaLocSys);
-										}else{
-												$MontoSysDB =	$docTotalOriginal;
-										}
-								}
+							$sqlEstado1 = "SELECT
+																			       count(t1.vc1_itemcode) item,
+																			       sum(t1.vc1_quantity) cantidad
+																			from dvct t0
+																			inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+																			where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
 
-								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
-
-								$SumaCreditosLOC = ($SumaCreditosLOC + round($creditoo,2));
-								$SumaDebitoLOC 	 = ($SumaDebitoLOC + round($debitoo,2));
-
-								$AC1LINE = $AC1LINE+1;
-								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-										':ac1_trans_id' => $resInsertAsiento,
-										':ac1_account' => $cuentaCxC,
-										':ac1_debit' => round($debitoo, 2),
-										':ac1_credit' => round($creditoo, 2),
-										':ac1_debit_sys' => round($MontoSysDB, 2),
-										':ac1_credit_sys' => round($MontoSysCR, 2),
-										':ac1_currex' => 0,
-										':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-										':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-										':ac1_debit_import' => 0,
-										':ac1_credit_import' => 0,
-										':ac1_debit_importsys' => 0,
-										':ac1_credit_importsys' => 0,
-										':ac1_font_key' => $resInsert,
-										':ac1_font_line' => 1,
-										':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-										':ac1_accountvs' => 1,
-										':ac1_doctype' => 18,
-										':ac1_ref1' => "",
-										':ac1_ref2' => "",
-										':ac1_ref3' => "",
-										':ac1_prc_code' => NULL,
-										':ac1_uncode' => NULL,
-										':ac1_prj_code' => NULL,
-										':ac1_rescon_date' => NULL,
-										':ac1_recon_total' => 0,
-										':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-										':ac1_accperiod' => 1,
-										':ac1_close' => 0,
-										':ac1_cord' => 0,
-										':ac1_ven_debit' => 1,
-										':ac1_ven_credit' => 1,
-										':ac1_fiscal_acct' => 0,
-										':ac1_taxid' => 1,
-										':ac1_isrti' => 0,
-										':ac1_basert' => 0,
-										':ac1_mmcode' => 0,
-										':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-										':ac1_codref' => 1,
-										':ac1_line'   => 	$AC1LINE
+							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+								':dvc_docentry' => $Data['dvf_baseentry'],
+								':dvc_doctype' => $Data['dvf_basetype']
+								// ':vc1_itemcode' => $detail['ov1_itemcode']
 							));
 
-							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-									// Se verifica que el detalle no de error insertando //
-							}else{
+							$sqlEstado2 = "SELECT
+																			       coalesce(count(t3.ov1_itemcode),0) item,
+																			       coalesce(sum(t3.ov1_quantity),0) cantidad
+																			from dvct t0
+																			left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+																			left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
+																			left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
+																			where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
-									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-									// se retorna el error y se detiene la ejecucion del codigo restante.
-										$this->pedeo->trans_rollback();
 
-										$respuesta = array(
-											'error'   => true,
-											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la factura de ventas'
-										);
+							$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
+								':dvc_docentry' => $Data['dvf_baseentry'],
+								':dvc_doctype' => $Data['dvf_basetype']
+								// ':vc1_itemcode' => $detail['ov1_itemcode']
+							));
 
-										 $this->response($respuesta);
+							$item_cot = $resEstado1[0]['item'];
+							$item_ord = $resEstado2[0]['item'];
+							$cantidad_cot = $resEstado1[0]['cantidad'];
+							$cantidad_ord = $resEstado2[0]['cantidad'];
 
-										 return;
+
+
+	// print_r($item_cot);
+	// print_r($item_ord);
+	// print_r($cantidad_cot);
+	// print_r($cantidad_ord);exit();die();
+							if($item_cot == $item_ord  &&  $cantidad_cot == $cantidad_ord){
+
+										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+										$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+															':bed_docentry' => $Data['dvf_baseentry'],
+															':bed_doctype' => $Data['dvf_basetype'],
+															':bed_status' => 3, //ESTADO CERRADO
+															':bed_createby' => $Data['dvf_createby'],
+															':bed_date' => date('Y-m-d'),
+															':bed_baseentry' => $resInsert,
+															':bed_basetype' => $Data['dvf_doctype']
+										));
+
+
+										if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+										}else{
+
+												 $this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resInsertEstado,
+														'mensaje'	=> 'No se pudo registrar la orden de venta'
+													);
+
+
+													$this->response($respuesta);
+
+													return;
+										}
+
 							}
 
-					}else{
+						} else if ($Data['dvf_basetype'] == 2) {
 
+
+							$sqlEstado1 = "SELECT
+																		count(t1.ov1_itemcode) item,
+																		sum(t1.ov1_quantity) cantidad
+																		from dvov t0
+																		inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+																		where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
+
+
+							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+								':vov_docentry' => $Data['dvf_baseentry'],
+								':vov_doctype' => $Data['dvf_basetype']
+							));
+
+
+							$sqlEstado2 = "SELECT
+																			coalesce(count(t3.em1_itemcode),0) item,
+																			coalesce(sum(t3.em1_quantity),0) cantidad
+																			from dvov t0
+																			left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+																			left join dvem t2 on t0.vov_docentry = t2.vem_baseentry
+																			left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
+																			where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
+						$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+							':vov_docentry' => $Data['dvf_baseentry'],
+							':vov_doctype' => $Data['dvf_basetype']
+						));
+
+						$item_ord = $resEstado1[0]['item'];
+						$item_del = $resEstado2[0]['item'];
+						$cantidad_ord = $resEstado1[0]['cantidad'];
+						$cantidad_del = $resEstado2[0]['cantidad'];
+
+
+
+	// print_r($item_cot);
+	// print_r($item_ord);
+	// print_r($cantidad_cot);
+	// print_r($cantidad_ord);exit();die();
+						if($item_ord == $item_del  &&  $cantidad_ord == $cantidad_del){
+
+										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+										$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+															':bed_docentry' => $Data['dvf_baseentry'],
+															':bed_doctype' => $Data['dvf_basetype'],
+															':bed_status' => 3, //ESTADO CERRADO
+															':bed_createby' => $Data['dvf_createby'],
+															':bed_date' => date('Y-m-d'),
+															':bed_baseentry' => $resInsert,
+															':bed_basetype' => $Data['dvf_doctype']
+										));
+
+
+										if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+										}else{
+
+												 $this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resInsertEstado,
+														'mensaje'	=> 'No se pudo registrar la entrega de venta'
+													);
+
+
+													$this->response($respuesta);
+
+													return;
+										}
+
+							}
+
+				}else if ($Data['dvf_basetype'] == 3) {
+
+								 $sqlEstado1 = 'SELECT
+																			count(t1.em1_itemcode) item,
+																			coalesce(sum(t1.em1_quantity),0) cantidad
+																			from dvem t0
+																			inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																			where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype';
+
+									$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+										':vem_docentry' => $Data['dvf_baseentry'],
+										':vem_doctype' => $Data['dvf_basetype']
+									));
+
+									$sqlDev = "SELECT
+																		count(t3.dv1_itemcode) item,
+																		coalesce(sum(t3.dv1_quantity),0) cantidad
+																		from dvem t0
+																		left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																		left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
+																		left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+																		where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+
+								$resDev = $this->pedeo->queryTable($sqlDev, array(
+									':vem_docentry' => $Data['dvf_baseentry'],
+									':vem_doctype' => $Data['dvf_basetype']
+								));
+
+								$resta_cantidad = $resEstado1[0]['cantidad'] - $resDev[0]['cantidad'];
+
+								$sqlEstado2 = "SELECT
+																					count(t3.fv1_itemcode) item,
+																					coalesce(sum(t3.fv1_quantity),0) cantidad
+																					from dvem t0
+																					left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																					left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry and t0.vem_doctype = t2.dvf_basetype
+																					left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.em1_itemcode = t3.fv1_itemcode
+																					where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+							$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+								':vem_docentry' => $Data['dvf_baseentry'],
+								':vem_doctype' => $Data['dvf_basetype']
+							));
+
+							$item_del = $resEstado1[0]['item'];
+							$item_fact = $resEstado2[0]['item'];
+							$cantidad_del = $resta_cantidad;
+							$cantidad_fact = $resEstado2[0]['cantidad'];
+
+
+
+							// print_r($item_cot);
+							// print_r($item_ord);
+							// print_r($cantidad_cot);
+							// print_r($cantidad_ord);exit();die();
+
+
+
+									if($item_del == $item_fact && $cantidad_del == $cantidad_fact){
+
+												$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																						VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+												$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																	':bed_docentry' => $Data['dvf_baseentry'],
+																	':bed_doctype' => $Data['dvf_basetype'],
+																	':bed_status' => 3, //ESTADO CERRADO
+																	':bed_createby' => $Data['dvf_createby'],
+																	':bed_date' => date('Y-m-d'),
+																	':bed_baseentry' => $resInsert,
+																	':bed_basetype' => $Data['dvf_doctype']
+												));
+
+
+												if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+													if ($Data['dvf_basetype'] == 3) {
+														$sqlEstado1 = 'SELECT
+																								 count(t1.em1_itemcode) item,
+																								 coalesce(sum(t1.em1_quantity),0) cantidad
+																								 from dvem t0
+																								 inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																								 where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype';
+
+														 $resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+															 ':vem_docentry' => $Data['dvf_baseentry'],
+															 ':vem_doctype' => $Data['dvf_basetype']
+														 ));
+
+														 $sqlDev1 = "SELECT
+																							 count(t3.dv1_itemcode) item,
+																							 coalesce(sum(t3.dv1_quantity),0) cantidad
+																							 from dvem t0
+																							 left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																							 left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
+																							 left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+																							 where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+
+													 $resDev1 = $this->pedeo->queryTable($sqlDev1, array(
+														 ':vem_docentry' => $Data['dvf_baseentry'],
+														 ':vem_doctype' => $Data['dvf_basetype']
+													 ));
+
+													 $resta_cantidad1 = $resEstado1[0]['cantidad'] - $resDev1[0]['cantidad'];
+
+													 $sqlDev2 = "SELECT
+																						 t2.*
+																						 from dvem t0
+																						 left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																						 left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
+																						 left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+																						 where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+
+												 $resDev2 = $this->pedeo->queryTable($sqlDev2, array(
+													 ':vem_docentry' => $Data['dvf_baseentry'],
+													 ':vem_doctype' => $Data['dvf_basetype']
+												 ));
+
+													 $sqlEstado2 = "SELECT
+																										 count(t3.fv1_itemcode) item,
+																										 coalesce(sum(t3.fv1_quantity),0) cantidad
+																										 from dvem t0
+																										 left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																										 left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry and t0.vem_doctype = t2.dvf_basetype
+																										 left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.em1_itemcode = t3.fv1_itemcode
+																										 where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+												 $resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+													 ':vem_docentry' => $Data['dvf_baseentry'],
+													 ':vem_doctype' => $Data['dvf_basetype']
+												 ));
+
+												 $item_del1 = $resEstado1[0]['item'];
+												 $item_fact1 = $resEstado2[0]['item'];
+												 $cantidad_del1 = $resta_cantidad1;
+												 $cantidad_fact1 = $resEstado2[0]['cantidad'];
+
+
+													// print_r($item_del1);
+													// print_r($item_fact1);
+													// print_r($cantidad_del1);
+													// print_r($cantidad_fact1);exit();die();
+
+																		if($item_del1 == $item_fact1  &&  $cantidad_del1 ==  $cantidad_fact1){
+
+
+																			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																													VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+																			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																								':bed_docentry' => $resDev2[0]['vdv_docentry'],
+																								':bed_doctype' => $resDev2[0]['vdv_doctype'],
+																								':bed_status' => 3, //ESTADO CERRADO
+																								':bed_createby' => $Data['dvf_createby'],
+																								':bed_date' => date('Y-m-d'),
+																								':bed_baseentry' => $resInsert,
+																								':bed_basetype' => $Data['dvf_doctype']
+																			));
+
+																			if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+																			}else{
+
+
+																								 $this->pedeo->trans_rollback();
+
+																									$respuesta = array(
+																										'error'   => true,
+																										'data' => $resInsertEstado,
+																										'mensaje'	=> 'No se pudo registrar la devolucion de venta123'
+																									);
+
+
+																									$this->response($respuesta);
+
+																									return;
+																						}
+														     }
+															}
+											     	}
+           	             }
+                      }
+
+						// FIN VALIDACION DE ESTADOS
+
+						// Si todo sale bien despues de insertar el detalle de la factura de Ventas
+						// se confirma la trasaccion  para que los cambios apliquen permanentemente
+						// en la base de datos y se confirma la operacion exitosa.
+						$this->pedeo->trans_commit();
+						// $this->pedeo->trans_rollback();
+
+
+
+						$respuesta = array(
+							'error' => false,
+							'data' => $resInsert,
+							'mensaje' =>'Factura de ventas registrada con exito'
+						);
+
+
+
+					}else{
+						// Se devuelven los cambios realizados en la transaccion
+						// si occurre un error  y se muestra devuelve el error.
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
 									'error'   => true,
-									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la factura de ventas, el tercero no tiene cuenta asociada'
+									'data' => $resInsert,
+									'mensaje'	=> 'No se pudo registrar la Factura de ventas'
 								);
 
-								 $this->response($respuesta);
+								$this->response($respuesta);
 
-								 return;
-					}
-					//FIN Procedimiento para llenar cuentas por cobrar
-
-
-					// SE VALIDA DIFERENCIA POR DECIMALES
-					// Y SE AGREGA UN ASIENTO DE DIFERENCIA EN DECIMALES
-					// SEGUN SEA EL CASO
-					// $debito  = 0;
-					// $credito = 0;
-					// $debitosys  = 0;
-					// $creditosys = 0;
-					// if($SumaCreditosSYS > $SumaDebitosSYS || $SumaDebitosSYS > $SumaCreditosSYS){
-					//
-					// 			$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
-					// 			$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
-					//
-					// 			if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
-					//
-					// 						if( $SumaCreditosSYS > $SumaDebitosSYS ){ // DIFERENCIA EN CREDITO EL VALOR SE COLOCA EN DEBITO
-					//
-					// 									$debito = ($SumaCreditosSYS - $SumaDebitosSYS);
-					// 									$debitosys = ($SumaCreditosLOC - $SumaCreditosLOC);
-					//
-					// 						}else{ // DIFERENCIA EN DEBITO EL VALOR SE COLOCA EN CREDITO
-					//
-					// 									$credito = ($SumaDebitosSYS - $SumaCreditosSYS);
-					// 									$creditosys = ($SumaDebitoLOC - $SumaDebitoLOC);
-					// 						}
-					//
-					// 						if(round($debito+$credito, 2) > 0){
-					// 								  $AC1LINE = $AC1LINE+1;
-					// 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-					//
-					// 											':ac1_trans_id' => $resInsertAsiento,
-					// 											':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
-					// 											':ac1_debit' => 0,
-					// 											':ac1_credit' => 0,
-					// 											':ac1_debit_sys' => round($debito,2),
-					// 											':ac1_credit_sys' => round($credito,2),
-					// 											':ac1_currex' => 0,
-					// 											':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
-					// 											':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
-					// 											':ac1_debit_import' => 0,
-					// 											':ac1_credit_import' => 0,
-					// 											':ac1_debit_importsys' => 0,
-					// 											':ac1_credit_importsys' => 0,
-					// 											':ac1_font_key' => $resInsert,
-					// 											':ac1_font_line' => 1,
-					// 											':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
-					// 											':ac1_accountvs' => 1,
-					// 											':ac1_doctype' => 18,
-					// 											':ac1_ref1' => "",
-					// 											':ac1_ref2' => "",
-					// 											':ac1_ref3' => "",
-					// 											':ac1_prc_code' => NULL,
-					// 											':ac1_uncode' => NULL,
-					// 											':ac1_prj_code' => NULL,
-					// 											':ac1_rescon_date' => NULL,
-					// 											':ac1_recon_total' => 0,
-					// 											':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
-					// 											':ac1_accperiod' => 1,
-					// 											':ac1_close' => 0,
-					// 											':ac1_cord' => 0,
-					// 											':ac1_ven_debit' => 1,
-					// 											':ac1_ven_credit' => 1,
-					// 											':ac1_fiscal_acct' => 0,
-					// 											':ac1_taxid' => 1,
-					// 											':ac1_isrti' => 0,
-					// 											':ac1_basert' => 0,
-					// 											':ac1_mmcode' => 0,
-					// 											':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
-					// 											':ac1_codref' => 1,
-					// 											':ac1_line'   => 	$AC1LINE
-					// 								));
-					//
-					// 								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-					// 										// Se verifica que el detalle no de error insertando //
-					// 								}else{
-					//
-					// 										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-					// 										// se retorna el error y se detiene la ejecucion del codigo restante.
-					// 											$this->pedeo->trans_rollback();
-					//
-					// 											$respuesta = array(
-					// 												'error'   => true,
-					// 												'data'	  => $resDetalleAsiento,
-					// 												'mensaje'	=> 'No se pudo registrar la factura de ventas'
-					// 											);
-					//
-					// 											 $this->response($respuesta);
-					//
-					// 											 return;
-					// 								}
-					//
-					// 						}
-					//
-					// 			}else{
-					//
-					// 					$this->pedeo->trans_rollback();
-					//
-					// 					$respuesta = array(
-					// 						'error'   => true,
-					// 						'data'	  => $resCuentaDiferenciaDecimal,
-					// 						'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
-					// 					);
-					//
-					// 					 $this->response($respuesta);
-					//
-					// 					 return;
-					// 			}
-				  // }
-
-					// FIN VALIDACION DIFERENCIA EN DECIMALES
-					// FIN DE OPERACIONES VITALES
-
-
-
-					// VALIDANDO ESTADOS DE DOCUMENTOS
-					if ($Data['dvf_basetype'] == 1) {
-
-
-						$sqlEstado = 'SELECT distinct
-													case
-														when (t1.vc1_quantity - sum(t3.fv1_quantity)) = 0
-															then 1
-														else 0
-													end "estado"
-												from dvct t0
-												left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-												left join dvfv t2 on t0.dvc_docentry = t2.dvf_baseentry
-												left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.vc1_itemcode = t3.fv1_itemcode
-												where t0.dvc_docentry = :dvc_docentry
-												group by
-													t1.vc1_quantity';
-
-
-						$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvc_docentry' => $Data['dvf_baseentry']));
-
-						if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-
-									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-									$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-														':bed_docentry' => $Data['dvf_baseentry'],
-														':bed_doctype' => $Data['dvf_basetype'],
-														':bed_status' => 3, //ESTADO CERRADO
-														':bed_createby' => $Data['dvf_createby'],
-														':bed_date' => date('Y-m-d'),
-														':bed_baseentry' => $resInsert,
-														':bed_basetype' => $Data['dvf_doctype']
-									));
-
-
-									if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-									}else{
-
-											 $this->pedeo->trans_rollback();
-
-												$respuesta = array(
-													'error'   => true,
-													'data' => $resInsertEstado,
-													'mensaje'	=> 'No se pudo registrar la Factura de ventas'
-												);
-
-
-												$this->response($respuesta);
-
-												return;
-									}
-
-						}
-
-					} else if ($Data['dvf_basetype'] == 2) {
-
-
-								$sqlEstado = 'SELECT distinct
-																case
-																	when (t1.ov1_quantity - sum(t3.fv1_quantity)) = 0
-																		then 1
-																	else 0
-																end "estado"
-															from dvov t0
-															left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-															left join dvfv t2 on t0.vov_docentry = t2.dvf_baseentry
-															left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.ov1_itemcode = t3.fv1_itemcode
-															where t0.vov_docentry = :vov_docentry
-															group by
-															t1.ov1_quantity';
-
-
-								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vov_docentry' => $Data['dvf_baseentry']));
-
-								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-
-											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-											$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-																':bed_docentry' => $Data['dvf_baseentry'],
-																':bed_doctype' => $Data['dvf_basetype'],
-																':bed_status' => 3, //ESTADO CERRADO
-																':bed_createby' => $Data['dvf_createby'],
-																':bed_date' => date('Y-m-d'),
-																':bed_baseentry' => $resInsert,
-																':bed_basetype' => $Data['dvf_doctype']
-											));
-
-
-											if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-											}else{
-
-													 $this->pedeo->trans_rollback();
-
-														$respuesta = array(
-															'error'   => true,
-															'data' => $resInsertEstado,
-															'mensaje'	=> 'No se pudo registrar la Factura de ventas'
-														);
-
-
-														$this->response($respuesta);
-
-														return;
-											}
-
-								}
-
-
-
-
-					} else if ($Data['dvf_basetype'] == 3) {
-
-							 $sqlEstado = 'SELECT distinct
-															case
-																when (t1.em1_quantity - sum(t3.fv1_quantity)) = 0
-																	then 1
-																else 0
-															end "estado"
-														from dvem t0
-														left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-														left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry
-														left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.em1_itemcode = t3.fv1_itemcode
-														where t0.vem_docentry = :vem_docentry
-														group by t1.em1_quantity';
-
-								$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vem_docentry' => $Data['dvf_baseentry']));
-
-								if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-
-											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-											$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-																':bed_docentry' => $Data['dvf_baseentry'],
-																':bed_doctype' => $Data['dvf_basetype'],
-																':bed_status' => 3, //ESTADO CERRADO
-																':bed_createby' => $Data['dvf_createby'],
-																':bed_date' => date('Y-m-d'),
-																':bed_baseentry' => $resInsert,
-																':bed_basetype' => $Data['dvf_doctype']
-											));
-
-
-											if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-											}else{
-
-													 $this->pedeo->trans_rollback();
-
-														$respuesta = array(
-															'error'   => true,
-															'data' => $resInsertEstado,
-															'mensaje'	=> 'No se pudo registrar la Factura de ventas'
-														);
-
-
-														$this->response($respuesta);
-
-														return;
-											}
-
-								}
+								return;
 
 					}
 
-					// FIN VALIDACION DE ESTADOS
+				} catch (\Exception $e) {
 
-					// Si todo sale bien despues de insertar el detalle de la factura de Ventas
-					// se confirma la trasaccion  para que los cambios apliquen permanentemente
-					// en la base de datos y se confirma la operacion exitosa.
-				  $this->pedeo->trans_commit();
+						$this->pedeo->trans_rollback();
 
+						$respuesta = array(
+							'error'   => true,
+							'data' 		=> $e,
+							'mensaje'	=> 'No se pudo registrar la Factura de ventas'
+						);
 
+						$this->response($respuesta);
 
-          $respuesta = array(
-            'error' => false,
-            'data' => $resInsert,
-            'mensaje' =>'Factura de ventas registrada con exito'
-          );
+						return;
+				}
 
-
-
-        }else{
-					// Se devuelven los cambios realizados en la transaccion
-					// si occurre un error  y se muestra devuelve el error.
-							$this->pedeo->trans_rollback();
-
-              $respuesta = array(
-                'error'   => true,
-                'data' => $resInsert,
-                'mensaje'	=> 'No se pudo registrar la Factura de ventas'
-              );
-
-							$this->response($respuesta);
-
-							return;
-
-        }
-
-         $this->response($respuesta);
+        $this->response($respuesta);
 	}
 
   //ACTUALIZAR Factura de Ventas

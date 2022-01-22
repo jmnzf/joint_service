@@ -35,7 +35,7 @@ class PickingCant extends REST_Controller {
 				$formatter = new NumeroALetras();
 
 				$totalpeso = 0;
-
+				$totalcantidad = 0;
 
 
         $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);
@@ -147,6 +147,7 @@ class PickingCant extends REST_Controller {
 											<td>'.$value['peso'] * $value['cantidad'].'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				 $totalpeso	= ($totalpeso	+ ($value['peso'] * $value['cantidad']));
+				 $totalcantidad =  ($totalcantidad + $value['cantidad']);
 				}
 
 
@@ -202,7 +203,7 @@ class PickingCant extends REST_Controller {
 				</tr>
 				<tr>
 				 <th >
-					 <p class="fondo" >Nombre Proveedor</p>
+					 <p class="fondo" >Nombre Cliente</p>
 	 			 <th style="text-align: left;">
 
 					 <p style="text-align: left;">'.$contenidoEV[0]['cliente'].'</p>
@@ -239,8 +240,11 @@ class PickingCant extends REST_Controller {
         <table width="100%">
 
 				<tr>
-            <td style="text-align: auto;">PESO TOTAL: <span class="sub_ray";>'.$totalpeso.'</span></p></td>
+           <td style="text-align: auto;">PESO TOTAL: <span class="sub_ray";>'.$totalpeso.'</span></p></td>
         </tr>
+				<tr>
+					  <td style="text-align: auto;">TOTAL CANTIDAD: <span class="sub_ray";>'.$totalcantidad.'</span></p></td>
+				</tr>
         <tr>
             <td style="text-align: auto;">PLACA: <span class="sub_ray";>'.$contenidoEV[0]['placa'].'</span></p></td>
         </tr>

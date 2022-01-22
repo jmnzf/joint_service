@@ -28,8 +28,7 @@ class PriceList extends REST_Controller {
       $Data = $this->post();
 
       if(!isset($Data['dmlp_name_list']) OR
-         !isset($Data['dmlp_profit']) OR
-         !isset($Data['dmlp_baselist'])){
+         !isset($Data['dmlp_profit'])){
 
         $respuesta = array(
           'error' => true,
@@ -41,18 +40,29 @@ class PriceList extends REST_Controller {
 
         return;
       }
-
+				// SE BUSCAN LOS PRODUCTOS
+				// INVENTRIABLES
 				$sqlProductos = "SELECT tbdi.bdi_itemcode, tbdi.bdi_avgprice, dmar.dma_item_name FROM tbdi
 													INNER JOIN dmar
 													ON tbdi.bdi_itemcode = dmar.dma_item_code
 													WHERE dmar.dma_enabled = :dma_enabled
 													AND dma_item_sales = :dma_item_sales
+													AND dma_item_inv = :dma_item_inv
 													GROUP BY tbdi.bdi_itemcode,tbdi.bdi_avgprice, dmar.dma_item_name";
 
 
-        $resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1,':dma_item_sales' => '1'));
+        $resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1,':dma_item_sales' => '1', 'dma_item_inv' => '1'));
 
-        if(!isset($resProductos[0])){
+				// NO INVENTARIABLES
+				$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo
+														 FROM dmar
+														 WHERE dma_item_sales = :dma_item_sales
+														 AND dma_enabled = :dma_enabled
+														 AND dma_item_inv = :dma_item_inv";
+
+				$resProductosNinv = $this->pedeo->queryTable($sqlProductosNinv, array(':dma_item_sales' => '1', ':dma_enabled' => 1, ':dma_item_inv' => '0'));
+
+        if( !isset($resProductos[0]) && !isset($resProductosNinv[0]) ){
 
             $respuesta = array(
               'error' => true,
@@ -64,7 +74,7 @@ class PriceList extends REST_Controller {
 
             return;
         }
-
+				//FIN BUSQUEDA PRODUCTOS
 
 				// Se Inicia la transaccion,
 				// Todas las consultas de modificacion siguientes
@@ -73,105 +83,179 @@ class PriceList extends REST_Controller {
 				// la base de datos a su estado original.
 				$this->pedeo->trans_begin();
 
-        $sqlInsert = "INSERT INTO dmpl(dmlp_name_list, dmlp_profit, dmlp_baselist)
-                      VALUES(:dmlp_name_list, :dmlp_profit, :dmlp_baselist)";
+				try {
 
-        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+									$sqlInsert = "INSERT INTO dmpl(dmlp_name_list, dmlp_profit, dmlp_baselist)
+																VALUES(:dmlp_name_list, :dmlp_profit, :dmlp_baselist)";
 
-              ':dmlp_name_list' => $Data['dmlp_name_list'],
-              ':dmlp_profit'    => $Data['dmlp_profit'],
-              ':dmlp_baselist'  => $Data['dmlp_baselist']
-        ));
+									$resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-        if(is_numeric($resInsert) && $resInsert > 0){
+												':dmlp_name_list' => $Data['dmlp_name_list'],
+												':dmlp_profit'    => $Data['dmlp_profit'],
+												':dmlp_baselist'  => isset($Data['dmlp_baselist'])?$Data['dmlp_baselist']:0
+									));
 
-              $sqlDetail = "INSERT INTO mpl1(pl1_id_price_list, pl1_item_code, pl1_item_name, pl1_profit, pl1_price)
-                            VALUES(:pl1_id_price_list, :pl1_item_code, :pl1_item_name, :pl1_profit, :pl1_price)";
+									if(is_numeric($resInsert) && $resInsert > 0){
 
-              $BaseList = $Data['dmlp_baselist'];
-              $Precio = 0;
+												$sqlDetail = "INSERT INTO mpl1(pl1_id_price_list, pl1_item_code, pl1_item_name, pl1_profit, pl1_price)
+																			VALUES(:pl1_id_price_list, :pl1_item_code, :pl1_item_name, :pl1_profit, :pl1_price)";
 
-              foreach ($resProductos as $key => $prod) {
-                $Precio = 0;
-
-                if($BaseList == "0" || $BaseList == 0){
-
-                      $valor = $prod['bdi_avgprice'];
-                      $valorProfit = $Data['dmlp_profit'];
-                      $porcent = ($valorProfit / 100);
-                      $subtt = ($valor * $porcent);
-
-                      $Precio = ($subtt + $valor);
-
-                }else{
-
-                      $res = $this->getPrecio($prod['bdi_itemcode'], $BaseList);
-                      if(isset($res[0]['pl1_price'])){
-                          $valor = $res[0]['pl1_price'];
-                          $valorProfit = $Data['dmlp_profit'];
-                          $porcent = ($valorProfit / 100);
-                          $subtt = ($valor * $porcent);
-
-                          $Precio = ($subtt + $valor);
-
-                      }else{
-
-                          $Precio = 0;
-
-                      }
-                }
-
-                $resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
-
-                      ':pl1_id_price_list' => $resInsert,
-                      ':pl1_item_code' => $prod['bdi_itemcode'],
-                      ':pl1_item_name' => $prod['dma_item_name'],
-                      ':pl1_profit' => $Data['dmlp_profit'],
-                      ':pl1_price' => $Precio
-                ));
+												$BaseList = isset($Data['dmlp_baselist'])?$Data['dmlp_baselist']:0;
+												$Precio = 0;
 
 
-						    if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+												if(isset($resProductos[0])){
 
-								}else{
+													foreach ($resProductos as $key => $prod) {
+															$Precio = 0;
 
-									$this->pedeo->trans_rollback();
+															if($BaseList == "0" || $BaseList == 0){
 
-									$respuesta = array(
-										'error'   => true,
-										'data' 		=> $resInsertDetail,
-										'mensaje'	=> 'No se pudo registrar la lista'
-									);
+																		$valor = $prod['bdi_avgprice'];
+																		$porcent = 0;
+																		$subtt = 0;
 
-									$this->response($respuesta);
+																		$valorProfit = isset($Data['dmlp_profit'])?$Data['dmlp_profit']:0;
 
-									return;
-								}
+																		if($valorProfit > 0){
+																				$porcent = ($valorProfit / 100);
+																				$subtt = ($valor * $porcent);
+																		}
+
+																		$Precio = ($subtt + $valor);
+
+															}else{
+
+																		$res = $this->getPrecio($prod['bdi_itemcode'], $BaseList);
+																		if(isset($res[0]['pl1_price'])){
+																				$valor = $res[0]['pl1_price'];
+																				$porcent = 0;
+																				$subtt = 0;
+																				$valorProfit = isset($Data['dmlp_profit'])?$Data['dmlp_profit']:0;
+
+																				if($valorProfit > 0){
+																					$porcent = ($valorProfit / 100);
+																					$subtt = ($valor * $porcent);
+																				}
+
+																				$Precio = ($subtt + $valor);
+
+																		}else{
+
+																				$Precio = 0;
+
+																		}
+															}
+
+															$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
+
+																		':pl1_id_price_list' => $resInsert,
+																		':pl1_item_code' => $prod['bdi_itemcode'],
+																		':pl1_item_name' => $prod['dma_item_name'],
+																		':pl1_profit' => $Data['dmlp_profit'],
+																		':pl1_price' => $Precio
+															));
 
 
-              }
+															if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
 
-							// Si todo sale bien despues de insertar el detalle de la cotizacion
-							// se confirma la trasaccion  para que los cambios apliquen permanentemente
-							// en la base de datos y se confirma la operacion exitosa.
-							$this->pedeo->trans_commit();
+															}else{
 
-              $respuesta = array(
-                'error' => false,
-                'data' => $resInsert,
-                'mensaje' =>'Lista registrada con exito'
-              );
+																$this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' 		=> $resInsertDetail,
+																	'mensaje'	=> 'No se pudo registrar la lista'
+																);
+
+																$this->response($respuesta);
+
+																return;
+															}
 
 
-        }else{
+														}
 
-              $respuesta = array(
-                'error'   => true,
-                'data' 		=> $resInsert,
-                'mensaje'	=> 'No se pudo registrar la lista'
-              );
+												}
 
-        }
+												if( isset($resProductosNinv[0]) ){
+
+														$BaseList = isset($Data['dmlp_baselist'])?$Data['dmlp_baselist']:0;
+														$Precio = 0;
+
+														foreach ($resProductosNinv as $key => $prod) {
+
+																	$Precio = 0;
+																	$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
+
+																				':pl1_id_price_list' => $resInsert,
+																				':pl1_item_code' => $prod['dma_item_code'],
+																				':pl1_item_name' => $prod['dma_item_name'],
+																				':pl1_profit' => $Data['dmlp_profit'],
+																				':pl1_price' => $Precio
+																	));
+
+
+																	if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+
+																	}else{
+
+																		$this->pedeo->trans_rollback();
+
+																		$respuesta = array(
+																			'error'   => true,
+																			'data' 		=> $resInsertDetail,
+																			'mensaje'	=> 'No se pudo registrar la lista'
+																		);
+
+																		$this->response($respuesta);
+
+																		return;
+																  }
+
+
+														}
+
+												}
+												// Si todo sale bien despues de insertar el detalle de la cotizacion
+												// se confirma la trasaccion  para que los cambios apliquen permanentemente
+												// en la base de datos y se confirma la operacion exitosa.
+												$this->pedeo->trans_commit();
+
+												$respuesta = array(
+													'error' => false,
+													'data' => $resInsert,
+													'mensaje' =>'Lista registrada con exito'
+												);
+
+
+									}else{
+
+												$respuesta = array(
+													'error'   => true,
+													'data' 		=> $resInsert,
+													'mensaje'	=> 'No se pudo registrar la lista'
+												);
+
+									}
+
+				} catch (\Exception $e) {
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' 		=> $e,
+								'mensaje'	=> 'No se pudo registrar la lista'
+							);
+
+							$this->response($respuesta);
+
+							return;
+				}
+
+
 
          $this->response($respuesta);
 	}
@@ -183,7 +267,6 @@ class PriceList extends REST_Controller {
 
 			if(!isset($Data['dmlp_name_list']) OR
          !isset($Data['dmlp_profit']) OR
-         !isset($Data['dmlp_baselist']) OR
 			 	 !isset($Data['dmlp_id'])){
 
         $respuesta = array(
@@ -197,29 +280,72 @@ class PriceList extends REST_Controller {
         return;
       }
 
+			// SE BUSCAN LOS PRODUCTOS
+			// INVENTARIABLES
 			$sqlProductos = "SELECT tbdi.bdi_itemcode, tbdi.bdi_avgprice, dmar.dma_item_name FROM tbdi
 												INNER JOIN dmar
 												ON tbdi.bdi_itemcode = dmar.dma_item_code
 												WHERE dmar.dma_enabled = :dma_enabled
 												AND dma_item_sales = :dma_item_sales
+												AND dma_item_inv = :dma_item_inv
+												AND tbdi.bdi_itemcode NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
 												GROUP BY tbdi.bdi_itemcode,tbdi.bdi_avgprice, dmar.dma_item_name";
 
 
-			$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1,':dma_item_sales' => '1'));
+			$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1,':dma_item_sales' => '1', ':dma_item_inv' => '1', ':pl1_id_price_list' => $Data['dmlp_id']));
 
-			if(!isset($resProductos[0])){
+			// NO INVENTARIABLES
+			$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo
+													 FROM dmar
+													 WHERE dma_item_sales = :dma_item_sales
+													 AND dma_enabled = :dma_enabled
+													 AND dma_item_code NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
+													 AND dma_item_inv = :dma_item_inv";
 
-					$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' =>'No hay productos para asignar a la lista'
-					);
+			$resProductosNinv = $this->pedeo->queryTable($sqlProductosNinv, array(':dma_item_sales' => '1', ':dma_enabled' => 1, ':dma_item_inv' => '0', ':pl1_id_price_list' => $Data['dmlp_id']));
 
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-					return;
+			if( !isset($resProductos[0]) && !isset($resProductosNinv[0]) ){
+
+
+					$sqlUpdate = "UPDATE dmpl SET dmlp_name_list = :dmlp_name_list, dmlp_profit = :dmlp_profit, dmlp_baselist = :dmlp_baselist  WHERE dmlp_id = :dmlp_id";
+
+
+					$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+
+									':dmlp_name_list' => $Data['dmlp_name_list'],
+									':dmlp_profit' 		=> $Data['dmlp_profit'],
+									':dmlp_baselist'  => isset($Data['dmlp_baselist'])?$Data['dmlp_baselist']:0,
+									':dmlp_id'   			=> $Data['dmlp_id']
+					));
+
+					if(is_numeric($resUpdate) && $resUpdate == 1){
+
+							$respuesta = array(
+								'error' => false,
+								'data'  => array(),
+								'mensaje' =>'No hay productos nuevos para agregar a la lista, solo se actualizo el encabezado de la lista seleccionada'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+
+					}else{
+
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' =>'No hay productos para asignar a la lista'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+					}
 			}
 
+			// FIN BUSQUEDA DE PRODUCTOS
 			// Se Inicia la transaccion,
 			// Todas las consultas de modificacion siguientes
 			// aplicaran solo despues que se confirme la transaccion,
@@ -227,112 +353,185 @@ class PriceList extends REST_Controller {
 			// la base de datos a su estado original.
 			$this->pedeo->trans_begin();
 
-      $sqlUpdate = "UPDATE dmpl SET dmlp_name_list = :dmlp_name_list, dmlp_profit = :dmlp_profit, dmlp_baselist = :dmlp_baselist  WHERE dmlp_id = :dmlp_id";
+			try {
+
+							$sqlUpdate = "UPDATE dmpl SET dmlp_name_list = :dmlp_name_list, dmlp_profit = :dmlp_profit, dmlp_baselist = :dmlp_baselist  WHERE dmlp_id = :dmlp_id";
 
 
-      $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+							$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-              ':dmlp_name_list' => $Data['dmlp_name_list'],
-              ':dmlp_profit' 		=> $Data['dmlp_profit'],
-              ':dmlp_baselist'  => $Data['dmlp_baselist'],
-							':dmlp_id'   			=> $Data['dmlp_id']
-      ));
-
-      if(is_numeric($resUpdate) && $resUpdate == 1){
-
-						$sqlDetail = "INSERT INTO mpl1(pl1_id_price_list, pl1_item_code, pl1_item_name, pl1_profit, pl1_price)
-													VALUES(:pl1_id_price_list, :pl1_item_code, :pl1_item_name, :pl1_profit, :pl1_price)";
-
-						$this->pedeo->queryTable("DELETE FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list",array(':pl1_id_price_list' => $Data['dmlp_id']));
-
-						$BaseList = $Data['dmlp_baselist'];
-						$Precio = 0;
-
-						foreach ($resProductos as $key => $prod) {
-							$Precio = 0;
-
-							if($BaseList == "0" || $BaseList == 0){
-
-										$valor = $prod['bdi_avgprice'];
-										$valorProfit = $Data['dmlp_profit'];
-										$porcent = ($valorProfit / 100);
-										$subtt = ($valor * $porcent);
-
-										$Precio = ($subtt + $valor);
-
-							}else{
-
-										$res = $this->getPrecio($prod['bdi_itemcode'], $BaseList);
-										if(isset($res[0]['pl1_price'])){
-												$valor = $res[0]['pl1_price'];
-												$valorProfit = $Data['dmlp_profit'];
-												$porcent = ($valorProfit / 100);
-												$subtt = ($valor * $porcent);
-
-												$Precio = ($subtt + $valor);
-
-										}else{
-
-												$Precio = 0;
-
-										}
-							}
-
-							$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
-
-										':pl1_id_price_list' => $Data['dmlp_id'],
-										':pl1_item_code' => $prod['bdi_itemcode'],
-										':pl1_item_name' => $prod['dma_item_name'],
-										':pl1_profit' => $Data['dmlp_profit'],
-										':pl1_price' => $Precio
+											':dmlp_name_list' => $Data['dmlp_name_list'],
+											':dmlp_profit' 		=> $Data['dmlp_profit'],
+											':dmlp_baselist'  => isset($Data['dmlp_baselist'])?$Data['dmlp_baselist']:0,
+											':dmlp_id'   			=> $Data['dmlp_id']
 							));
 
-							if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+							if(is_numeric($resUpdate) && $resUpdate == 1){
+
+										$sqlDetail = "INSERT INTO mpl1(pl1_id_price_list, pl1_item_code, pl1_item_name, pl1_profit, pl1_price)
+																	VALUES(:pl1_id_price_list, :pl1_item_code, :pl1_item_name, :pl1_profit, :pl1_price)";
+
+										// $this->pedeo->queryTable("DELETE FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list",array(':pl1_id_price_list' => $Data['dmlp_id']));
+										if( isset($resProductos[0])){
+
+														$BaseList = isset($Data['dmlp_baselist'])?$Data['dmlp_baselist']:0;
+														$Precio = 0;
+
+														foreach ($resProductos as $key => $prod) {
+															$Precio = 0;
+
+															if($BaseList == "0" || $BaseList == 0){
+
+																		$valor = $prod['bdi_avgprice'];
+																		$porcent = 0;
+																		$subtt = 0;
+
+																		$valorProfit = isset($Data['dmlp_profit'])?$Data['dmlp_profit']:0;
+
+																		if($valorProfit > 0){
+																				$porcent = ($valorProfit / 100);
+																				$subtt = ($valor * $porcent);
+																		}
+
+																		$Precio = ($subtt + $valor);
+
+															}else{
+
+																		$res = $this->getPrecio($prod['bdi_itemcode'], $BaseList);
+																		if(isset($res[0]['pl1_price'])){
+																				$valor = $res[0]['pl1_price'];
+																				$porcent = 0;
+																				$subtt = 0;
+
+																				$valorProfit = isset($Data['dmlp_profit'])?$Data['dmlp_profit']:0;
+
+																				if($valorProfit > 0){
+																						$porcent = ($valorProfit / 100);
+																						$subtt = ($valor * $porcent);
+																				}
+
+
+																				$Precio = ($subtt + $valor);
+
+																		}else{
+
+																				$Precio = 0;
+
+																		}
+															}
+
+															$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
+
+																		':pl1_id_price_list' => $Data['dmlp_id'],
+																		':pl1_item_code' => $prod['bdi_itemcode'],
+																		':pl1_item_name' => $prod['dma_item_name'],
+																		':pl1_profit' => $Data['dmlp_profit'],
+																		':pl1_price' => $Precio
+															));
+
+															if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+
+															}else{
+
+																$this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' 		=> $resInsertDetail,
+																	'mensaje'	=> 'No se pudo actualizar la lista'
+																);
+
+																$this->response($respuesta);
+
+																return;
+															}
+
+														}
+
+										}
+
+										if( isset($resProductosNinv[0])){
+
+												$BaseList = isset($Data['dmlp_baselist'])?$Data['dmlp_baselist']:0;
+												$Precio = 0;
+
+												foreach ($resProductosNinv as $key => $prod) {
+
+															$Precio = 0;
+															$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
+
+																		':pl1_id_price_list' => $Data['dmlp_id'],
+																		':pl1_item_code' => $prod['dma_item_code'],
+																		':pl1_item_name' => $prod['dma_item_name'],
+																		':pl1_profit' => $Data['dmlp_profit'],
+																		':pl1_price' => $Precio
+															));
+
+
+															if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+
+															}else{
+
+																$this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' 		=> $resInsertDetail,
+																	'mensaje'	=> 'No se pudo registrar la lista'
+																);
+
+																$this->response($respuesta);
+
+																return;
+															}
+
+
+												}
+										}
+
+
+										// Si todo sale bien despues de insertar el detalle de la cotizacion
+										// se confirma la trasaccion  para que los cambios apliquen permanentemente
+										// en la base de datos y se confirma la operacion exitosa.
+										$this->pedeo->trans_commit();
+
+										$respuesta = array(
+											'error' => false,
+											'data' => $resUpdate,
+											'mensaje' =>'Lista actualizada con exito'
+										);
 
 							}else{
 
-								$this->pedeo->trans_rollback();
+										$this->pedeo->trans_rollback();
 
-								$respuesta = array(
-									'error'   => true,
-									'data' 		=> $resInsertDetail,
-									'mensaje'	=> 'No se pudo actualizar la lista'
-								);
+										$respuesta = array(
+											'error'   => true,
+											'data'    => $resUpdate,
+											'mensaje'	=> 'No se pudo actualizar la lista'
+										);
 
-								$this->response($respuesta);
+										$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-								return;
+										return;
 							}
-
-						}
-
-						// Si todo sale bien despues de insertar el detalle de la cotizacion
-						// se confirma la trasaccion  para que los cambios apliquen permanentemente
-						// en la base de datos y se confirma la operacion exitosa.
-						$this->pedeo->trans_commit();
-
-            $respuesta = array(
-              'error' => false,
-              'data' => $resUpdate,
-              'mensaje' =>'Lista actualizada con exito'
-            );
-
-      }else{
-
+			} catch (\Exception $e) {
 						$this->pedeo->trans_rollback();
 
-            $respuesta = array(
-              'error'   => true,
-              'data'    => $resUpdate,
-              'mensaje'	=> 'No se pudo actualizar la lista'
-            );
+						$respuesta = array(
+							'error'   => true,
+							'data'    => $e,
+							'mensaje'	=> 'No se pudo actualizar la lista'
+						);
 
 						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 						return;
-      }
+			}
 
-       $this->response($respuesta);
+
+
+      $this->response($respuesta);
   }
 
 

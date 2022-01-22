@@ -229,6 +229,8 @@ class PurchOrder extends REST_Controller {
 									':bed_status'   => 4 // 4 APROBADO SEGUN MODELO DE APROBACION
 				));
 
+
+
 				if(!isset($resVerificarAprobacion[0])){
 
 							$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
@@ -264,9 +266,21 @@ class PurchOrder extends REST_Controller {
 													$valorDocTotal2 = $value['doctotal2'];
 													$TotalDocumento = $Data['cpo_doctotal'];
 													$doctype =  $value['doctype'];
+													$modelo = $value['modelo'];
 
-													if(trim($Data['cpo_currency']) != $TasaDocLoc){
-															$TotalDocumento = ($TotalDocumento * $TasaDocLoc);
+													if(trim($Data['cpo_currency']) != $MONEDASYS){
+
+														  if(trim($Data['cpo_currency']) != $MONEDALOCAL){
+
+																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), 2);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+
+															}else{
+
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+
+															}
+
 													}
 
 													if( $condicion == ">" ){
@@ -276,17 +290,17 @@ class PurchOrder extends REST_Controller {
 																				INNER JOIN  mau1
 																				on mau_docentry =  au1_docentry
 																				AND :au1_doctotal > au1_doctotal
-																				AND mau_doctype = :mau_doctype";
+																				AND mau_doctype = :mau_doctype
+																				AND mau_docentry = :mau_docentry";
 
 																$ressq = $this->pedeo->queryTable($sq, array(
 
 																					':au1_doctotal' => $TotalDocumento,
-																					':mau_doctype'  => $doctype
+																					':mau_doctype'  => $doctype,
+																					':mau_docentry' => $modelo
 																));
 
-																if(isset($ressq[0]) && count($ressq) > 1){
-																		break;
-																}else if(isset($ressq[0])){
+																if( isset($ressq[0]) ){
 																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'cpo','po1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 
@@ -298,17 +312,17 @@ class PurchOrder extends REST_Controller {
 																				INNER JOIN  mau1
 																				on mau_docentry =  au1_docentry
 																				AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
-																				AND mau_doctype = :mau_doctype";
+																				AND mau_doctype = :mau_doctype
+																				AND mau_docentry = :mau_docentry";
 
 																$ressq = $this->pedeo->queryTable($sq, array(
 
 																					':doctotal' 	 => $TotalDocumento,
-																					':mau_doctype' => $doctype
+																					':mau_doctype' => $doctype,
+																					':mau_docentry' => $modelo
 																));
 
-																if(isset($ressq[0]) && count($ressq) > 1){
-																		break;
-																}else if(isset($ressq[0])){
+																if( isset($ressq[0]) ){
 																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'cpo','po1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 													}
@@ -318,7 +332,6 @@ class PurchOrder extends REST_Controller {
 
 			}
 			// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
-
         $sqlInsert = "INSERT INTO dcpo(cpo_series, cpo_docnum, cpo_docdate, cpo_duedate, cpo_duedev, cpo_pricelist, cpo_cardcode,
                       cpo_cardname, cpo_currency, cpo_contacid, cpo_slpcode, cpo_empid, cpo_comment, cpo_doctotal, cpo_baseamnt, cpo_taxtotal,
                       cpo_discprofit, cpo_discount, cpo_createat, cpo_baseentry, cpo_basetype, cpo_doctype, cpo_idadd, cpo_adress, cpo_paytype,
@@ -405,7 +418,7 @@ class PurchOrder extends REST_Controller {
 
 										':bed_docentry' => $resInsert,
 										':bed_doctype' => $Data['cpo_doctype'],
-										':bed_status' => 1, //ESTADO CERRADO
+										':bed_status' => 1, //ESTADO ABIERTO
 										':bed_createby' => $Data['cpo_createby'],
 										':bed_date' => date('Y-m-d'),
 										':bed_baseentry' => NULL,
@@ -430,6 +443,50 @@ class PurchOrder extends REST_Controller {
 
 								return;
 					}
+
+
+
+					// SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
+					// SI EL DOCTYPE = 21
+					if( $Data['cpo_basetype'] == 21){
+
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+											':bed_docentry' => $Data['cpo_baseentry'],
+											':bed_doctype' => $Data['cpo_basetype'],
+											':bed_status' => 3, //ESTADO CERRADO
+											':bed_createby' => $Data['cpo_createby'],
+											':bed_date' => date('Y-m-d'),
+											':bed_baseentry' => $resInsert,
+											':bed_basetype' => $Data['cpo_doctype']
+						));
+
+
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+
+								 $this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar la solicitud de compras',
+										'proceso' => 'Insertar estado documento'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+						}
+
+					}
+					//FIN SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
 
 					//FIN PROCESO ESTADO DEL DOCUMENTO
 

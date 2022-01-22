@@ -9,7 +9,7 @@ class Approvals extends REST_Controller {
 
 	private $pdo;
 
-	public function __construct(){
+  public function __construct(){
 
 		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
 		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
@@ -47,8 +47,8 @@ class Approvals extends REST_Controller {
 			$this->pedeo->trans_begin();
 
 
-			$sqlInsert = "INSERT INTO tmau(mau_doctype, mau_quantity, mau_status, mau_approvers, mau_decription, mau_createby, mau_date)
-									  VALUES (:mau_doctype, :mau_quantity, :mau_status, :mau_approvers, :mau_decription , :mau_createby, :mau_date)";
+			$sqlInsert = "INSERT INTO tmau(mau_doctype, mau_quantity, mau_status, mau_approvers, mau_decription, mau_createby, mau_date, mau_emp)
+									  VALUES (:mau_doctype, :mau_quantity, :mau_status, :mau_approvers, :mau_decription , :mau_createby, :mau_date, :mau_emp)";
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -58,7 +58,8 @@ class Approvals extends REST_Controller {
 						':mau_approvers'  => $Data['UsuariosAprobadores'],
 						':mau_decription' => $Data['Descripcion'],
 						':mau_createby' 	=> $Data['user'],
-						':mau_date' 			=> date('Y-m-d')
+						':mau_date' 			=> date('Y-m-d'),
+						':mau_emp'				=> $Data['mau_emp']
 
 			));
 
@@ -140,9 +141,11 @@ class Approvals extends REST_Controller {
 				$sqlSelect = "SELECT
 																t0.mau_docentry,
 																t1.mdt_docname,
+																t1.mdt_doctype,
 																t0.mau_quantity,
 																t0.mau_decription,
 																t0.mau_date,
+
 																CASE
 																	WHEN t0.mau_status = 1 THEN 'Activo'
 																	ELSE 'Inactivo'
@@ -173,77 +176,71 @@ class Approvals extends REST_Controller {
 				 $this->response($respuesta);
 	}
 
-	//OBTENER APROBACIONES
+	//OBTENER APROBACIONES PENDIENTES POR USUARIO APROBADOR
 	public function getApproval_get(){
 
 				$Data = $this->get();
 
-			   $sqlApprovers = "SELECT
-																t1.mau_approvers
-													from dpap t0
-													inner join tmau t1 on t0.pap_model = t1.mau_docentry";
-				$resSqlApprovers = $this->pedeo->queryTable($sqlApprovers, array());
+				if(!isset($Data['code_user'])){
 
-				$UserModel = " WHERE t10.pgu_id_usuario in (".$resSqlApprovers[0]['mau_approvers'].")";
-				//
-				// if(!isset($Data['card_code'])){
-				//
-				// 	$respuesta = array(
-				// 		'error' => true,
-				// 		'data'  => array(),
-				// 		'mensaje' =>'La informacion enviada no es valida'
-				// 	);
-				//
-				// 	$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-				//
-				// 	return;
-				// }
+					$respuesta = array(
+						'error'   => true,
+						'data' => array(),
+						'mensaje'	=> 'falta el codigo de usuario'
+					);
 
-				$sqlSelect = "SELECT
-											t3.mdt_docname,
-											t8.mdt_docname as origen,
-											t0.pap_docentry,
-											t0.pap_doctype,
-											t0.pap_docnum,
-											t0.pap_docdate,
-											t0.pap_duedate,
-											t0.pap_cardname,
-											t0.pap_comment,
-											t0.pap_createby,
-											t0.pap_origen AS origin,
-											CASE
-											WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
-											THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
-											ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
-											END direccion,
-											concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_baseamnt,'999,999,999,999.00'))) base ,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_DISCOUNT,'999,999,999,999.00'))) descuento,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_TAXTOTAl,'999,999,999,999.00'))) iva,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
-											case
-											    when coalesce(cast(t11.bad_estado as varchar),'0') = '1' then 'Aprobado Por mi'
-											    when coalesce(cast(t11.bad_estado as varchar),'0') = '2' then 'Rechazado Por mi'
-											    else t1.estado
-											end estado,
-											t2.mev_names as pap_slpcode
-											FROM dpap t0
-											INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
-											INNER JOIN dmev t2 on t0.pap_slpcode = t2.mev_id
-											INNER JOIN dmdt t3 on t0.pap_doctype = t3.mdt_doctype
-											LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
-											LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
-											LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
-											LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
-											LEFT JOIN dmdt t8 on pap_origen = t8.mdt_doctype
-											inner join tmau t9 on t9.mau_docentry = t0.pap_model
-											inner join pgus t10 on t10.pgu_code_user = :pgu_code_user
-											left join tbad t11 on  t11.bad_origen = t0.pap_origen and t11.bad_docentry = t0.pap_docentry
-											and t11.bad_createby = :pgu_code_user".$UserModel;
+					$this->response($respuesta);
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgu_code_user' => $Data['pgu_code_user']));
-// print_r($sqlSelect);exit();die();
+					return;
+
+				}
+
+			 $sqlSelect = "SELECT distinct
+            t3.mdt_docname,
+            t8.mdt_docname as origen,
+            t0.pap_docentry,
+            t0.pap_doctype,
+            t0.pap_docnum,
+            t0.pap_docdate,
+            t0.pap_duedate,
+         	t0.pap_cardname,
+            t0.pap_comment,
+            t0.pap_createby,
+            t0.pap_origen AS origin,
+            T0.pap_CURRENCY,
+            CASE
+            WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
+            THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
+            ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
+            END direccion,
+            concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
+            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_baseamnt,'999,999,999,999.00'))) base ,
+            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_DISCOUNT,'999,999,999,999.00'))) descuento,
+            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
+            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_TAXTOTAl,'999,999,999,999.00'))) iva,
+            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
+			case
+                when  t1.estado in('Aprobado','Rechazado','Pendiente Aprobación') then estado
+            end estado,
+            t2.mev_names as pap_slpcode,
+            t0.pap_createby
+            FROM dpap t0
+            INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
+            INNER JOIN dmev t2 on t0.pap_slpcode = t2.mev_id
+            INNER JOIN dmdt t3 on t0.pap_doctype = t3.mdt_doctype
+            LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
+            LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
+            LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
+            LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
+            LEFT JOIN dmdt t8 on pap_origen = t8.mdt_doctype
+			left join tbad t11 on  t11.bad_origen = t0.pap_origen and t11.bad_docentry = t0.pap_docentry
+            inner join tmau t9 on t9.mau_docentry = t0.pap_model
+            inner join pgus t10 on t10.pgu_code_user = t0.pap_createby
+            left join tmau t12 on t0.pap_model = t12.mau_docentry
+            WHERE t0.pap_createby = :pgu_code_user and estado <> 'Cerrado'";
+
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgu_code_user' => $Data['code_user']));
+				// print_r($sqlSelect);exit();die();
 				if(isset($resSelect[0])){
 
 					$respuesta = array(
@@ -268,52 +265,71 @@ class Approvals extends REST_Controller {
 
 				$Data = $this->get();
 
-				$sqlSelect = "SELECT
-											t3.mdt_docname,
-											t8.mdt_docname as origen,
-											t0.pap_docentry,
-											t0.pap_doctype,
-											t0.pap_docnum,
-											t0.pap_docdate,
-											t0.pap_duedate,
-											t0.pap_cardname,
-											t0.pap_comment,
-											t0.pap_createby,
-											t0.pap_origen AS origin,
-											CASE
-											WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
-											THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
-											ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
-											END direccion,
-											concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_baseamnt,'999,999,999,999.00'))) base ,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_DISCOUNT,'999,999,999,999.00'))) descuento,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_TAXTOTAl,'999,999,999,999.00'))) iva,
-											CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
-											case
-											    when coalesce(cast(t11.bad_estado as varchar),'0') = '1' then 'Aprobado Por mi'
-											    when coalesce(cast(t11.bad_estado as varchar),'0') = '2' then 'Rechazado Por mi'
-											    else t1.estado
-											end estado,
-											t2.mev_names as pap_slpcode,
-											t0.pap_createby
-											FROM dpap t0
-											INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
-											INNER JOIN dmev t2 on t0.pap_slpcode = t2.mev_id
-											INNER JOIN dmdt t3 on t0.pap_doctype = t3.mdt_doctype
-											LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
-											LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
-											LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
-											LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
-											LEFT JOIN dmdt t8 on pap_origen = t8.mdt_doctype
-											inner join tmau t9 on t9.mau_docentry = t0.pap_model
-											inner join pgus t10 on t10.pgu_code_user = t0.pap_createby
-											left join tbad t11 on  t11.bad_origen = t0.pap_origen and t11.bad_docentry = t0.pap_docentry
-											WHERE t0.pap_createby = :pap_createby";
+				if(!isset($Data['code_user'])){
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pap_createby' => $Data['pap_createby']));
-// print_r($sqlSelect);exit();die();
+					$respuesta = array(
+						'error'   => true,
+						'data' => array(),
+						'mensaje'	=> 'falta el codigo de usuario'
+					);
+
+					$this->response($respuesta);
+
+					return;
+
+				}
+
+				$sqlSelect = "SELECT distinct
+								    t3.mdt_docname,
+								    t8.mdt_docname as origen,
+								    t0.pap_docentry,
+								    t0.pap_doctype,
+								    t0.pap_docnum,
+								    t0.pap_docdate,
+								    t0.pap_duedate,
+								    t0.pap_cardname,
+								    t0.pap_comment,
+								    t0.pap_createby,
+								    t0.pap_origen AS origin,
+								    T0.pap_CURRENCY,
+								    CASE
+								    WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
+								    THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
+								    ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
+								    END direccion,
+								    concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
+								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_baseamnt,'999,999,999,999.00'))) base ,
+								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_DISCOUNT,'999,999,999,999.00'))) descuento,
+								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
+								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_TAXTOTAl,'999,999,999,999.00'))) iva,
+								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
+								    case
+								        when lower(statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry)) in('aprobado por mi','rechazado por mi')
+								        then statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry)
+								        else 'Pendiente Aprobación'
+								end estado,
+								    t2.mev_names as pap_slpcode
+								    FROM dpap t0
+										INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
+								    left  join dmev t2 on t0.pap_slpcode = t2.mev_id
+								    left JOIN dmdt t3 on t0.pap_doctype = t3.mdt_doctype
+								    LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
+								    LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
+								    LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
+								    LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
+								    LEFT JOIN dmdt t8 on pap_origen = t8.mdt_doctype
+								    left join tbad t11 on  t11.bad_origen = t0.pap_origen and t11.bad_docentry = t0.pap_docentry
+								    left join tmau t12 on t0.pap_model = t12.mau_docentry
+								    WHERE t0.pap_model IN(
+								    SELECT tmau.mau_docentry
+								    FROM tmau
+								    INNER JOIN pgus
+								    ON pgu_code_user = :pap_createby
+								    AND pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[]))
+										and estado <> 'Aprobado' and  process  = 'ApprovalProcess'";
+
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pap_createby' => $Data['code_user']));
+
 				if(isset($resSelect[0])){
 
 					$respuesta = array(
@@ -339,7 +355,8 @@ class Approvals extends REST_Controller {
 
 				$Data = $this->get();
 
-				if(!isset($Data['dms_card_code'])){
+				if(!isset($Data['dms_card_code']) OR
+					!isset($Data['pap_origen'])){// SOLICITANTE
 
 					$respuesta = array(
 						'error' => true,
@@ -353,12 +370,15 @@ class Approvals extends REST_Controller {
 
 				}
 
-				$sqlSelect = "SELECT distinct t0.*,t1.estado FROM dpap t0
-											left JOIN responsestatus t1 on t0.pap_doctype = t1.tipo
-											where pap_cardcode = :pap_cardcode
-											";
+				$sqlSelect = "SELECT distinct t0.*,(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry) estado FROM dpap t0
+															where t0.pap_cardcode  = CAST(:pap_cardcode AS VARCHAR)  and t0.pap_origen = :pap_origen  AND
+															(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry)  = 'Aprobado' ";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pap_cardcode" => $Data['dms_card_code']));
+
+				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+					":pap_cardcode" => $Data['dms_card_code'],
+					":pap_origen" => $Data['pap_origen']
+				));
 
 				if(isset($resSelect[0])){
 
@@ -582,7 +602,6 @@ class Approvals extends REST_Controller {
 		}
 
 
-
 		//SE ACTUALIZA EL ESTADO DEL USUARIO SEGUN EL MODELO
 		public function updateStatusUserModel_get(){
 
@@ -629,15 +648,166 @@ class Approvals extends REST_Controller {
 										$estado = 0;
 					}
 
-					// $sqlUpdate = "UPDATE taus SET aus_status = :aus_status	WHERE aus_id = :aus_id";
-					//
-					//
-					// $resUpdat
+					$sqlUpdate = "UPDATE taus SET aus_status = :aus_status	WHERE aus_id = :aus_id";
+
+
+					$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+
+								':aus_status' => $estado,
+								':aus_id' 		=> $Data['aus_id']
+					));
+
+
+					if(is_numeric($resUpdate) && $resUpdate == 1){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => $resUpdate,
+									'mensaje' =>'Operacion exitosa'
+								);
+
+
+					}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resUpdate,
+									'mensaje'	=> 'No se puedo actualizar el estado del usaurio'
+								);
+
+					}
+
+					 $this->response($respuesta);
+		}
+
+
+		//SE ACTUALIZA EL ESTADO DEL MODELO
+		public function updateStatusModel_get(){
+
+					$Data = $this->get();
+					$estado = 0;
+
+					if(!isset($Data['mau_docentry'])){
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'La informacion enviada no es valida'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+					}
+
+					$Sql = " SELECT mau_status FROM tmau WHERE mau_docentry = :mau_docentry";
+
+					$resSql = $this->pedeo->queryTable($Sql, array(
+
+								':mau_docentry' => $Data['mau_docentry']
+					));
+
+					if(isset($resSql[0])){
+
+							if( is_null($resSql[0]['mau_status']) ){
+
+										$estado = 0;
+
+							}else if($resSql[0]['mau_status'] == 0){
+
+										$estado = 1;
+
+							}else if( $resSql[0]['mau_status'] == 1 ) {
+
+										$estado = 0;
+							}
+					}else{
+
+										$estado = 0;
+					}
+
+					$sqlUpdate = "UPDATE tmau SET mau_status = :mau_status	WHERE mau_docentry = :mau_docentry";
+
+
+					$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+
+								':mau_status' 	=> $estado,
+								':mau_docentry' => $Data['mau_docentry']
+					));
+
+
+					if(is_numeric($resUpdate) && $resUpdate == 1){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => $resUpdate,
+									'mensaje' =>'Operacion exitosa'
+								);
+
+
+					}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resUpdate,
+									'mensaje'	=> 'No se puedo actualizar el estado del usaurio'
+								);
+
+					}
+
+					 $this->response($respuesta);
+		}
+
+		public function getApprovalDetailsModel_post(){
+			$Data = $this->post();
+			$allData =[];
+			$modelo =[];
+			$Sql = " SELECT mau_approvers,mau_quantity,mau_decription FROM tmau WHERE mau_docentry = :mau_docentry";
+
+			$resSql = $this->pedeo->queryTable($Sql, array(
+						':mau_docentry' => $Data['mau_docentry']
+			));
+			$modelo['cantidad'] = $resSql[0]['mau_quantity'];
+			$modelo['descripcion'] = $resSql[0]['mau_decription'];
+
+
+				$usersId = explode(",", $resSql[0]['mau_approvers']);
+ 				foreach ($usersId as $key => $id) {
+					$sql = "SELECT  CONCAT(pgus.pgu_name_user,' ',pgus.pgu_lname_user) userName,rol.rol_nombre from  pgus
+									inner join rol on pgus.pgu_role = rol.rol_id
+									where pgus.pgu_id_usuario = :user_id";
+					$resSql1 = $this->pedeo->queryTable($sql, array(
+						':user_id' => $id
+						));
+						array_push($allData,$resSql1);
 				}
 
+				$modelo['users'] = $allData;
 
+				$sqldetalle = "SELECT * FROM mau1 WHERE au1_docentry = :au1_docentry";
+				$resdetalle = $this->pedeo->queryTable($sqldetalle ,array( ':au1_docentry' => $Data['mau_docentry'] ));
 
+				if(isset($resdetalle[0])){
+					$modelo['detail'] =$resdetalle;
+				}
 
+				if(count($modelo)){
 
+					$respuesta = array(
+						'error' => false,
+						'data'  => $modelo,
+						'mensaje' => '');
+
+				}else{
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'	=> 'busqueda sin resultados'
+						);
+
+				}
+			$this->response($respuesta);
+		}
 
 }

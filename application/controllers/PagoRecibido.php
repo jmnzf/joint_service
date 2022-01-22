@@ -40,66 +40,97 @@ class PagoRecibido extends REST_Controller {
       }
 
 
-      $resSelect = $this->pedeo->queryTable("SELECT 5 AS tipo,
-                                            t0.dvf_cardcode codigo_proveedor,
-                                            t0.dvf_docentry AS id_origen,
-                                            t0.dvf_docdate AS fecha_doc,
-                                            t0.dvf_duedate fecha_ven,
-                                            CURRENT_DATE - t0.dvf_duedate AS dias_atrasado,
-                                            t0.dvf_doctotal AS total_doc,
-                                            t1.ret_vlret AS retencion,
-                                            t0.dvf_doctotal - t0.dvf_paytoday AS saldo_venc,
-                                            t2.tsa_value tasa_dia,
-                                            t0.dvf_currency,
-                                            t0.dvf_comment comentario
-                                           FROM dvfv t0
-                                           LEFT JOIN dret t1 ON t0.dvf_docentry = t1.ret_absentry
-                                           left join tasa t2 on t0.dvf_currency = t2.tsa_curro and t0.dvf_createat = t2.tsa_date
-                                           WHERE t0.dvf_cardcode = :cardcode and t0.dvf_doctotal <> COALESCE(t0.dvf_paytoday,0)
-
-                                           UNION ALL
-
-                                           SELECT 6 AS tipo,
-                                            t0.vnd_cardcode codigo_proveedor,
-                                            t0.vnd_docentry AS id_origen,
-                                            t0.vnd_docdate AS fecha_doc,
-                                            t0.vnd_duedate fecha_ven,
-                                            CURRENT_DATE - t0.vnd_duedate AS dias_atrasado,
-                                            t0.vnd_doctotal AS total_doc,
-                                            t1.ret_vlret AS retencion,
-                                            0 AS saldo_venc,
-                                            t2.tsa_value tasa_dia,
-                                            t0.vnd_currency,
-                                            t0.vnd_comment comentario
-                                           FROM dvnd t0
-                                           LEFT JOIN dret t1 ON t0.vnd_docentry = t1.ret_absentry
-                                           left join tasa t2 on t0.vnd_currency = t2.tsa_curro and t0.vnd_createat = t2.tsa_date
-                                           WHERE t0.vnd_cardcode = :cardcode
-                                           UNION ALL
-
-                                           SELECT 7 AS tipo,
-                                           t0.vnc_cardcode codigo_proveedor,
-                                           t0.vnc_docentry AS id_origen,
-                                           t0.vnc_docdate AS fecha_doc,
-                                           t0.vnc_duedate fecha_ven,
-                                           CURRENT_DATE - t0.vnc_duedate AS dias_atrasado,
-                                           t0.vnc_doctotal AS total_doc,
-                                           t1.ret_vlret AS retencion,
-                                           0 AS saldo_venc,
-                                           t2.tsa_value tasa_dia,
-                                           t0.vnc_currency,
-                                           t0.vnc_comment comentario
-                                           FROM dvnc t0
-                                           LEFT JOIN dret t1 ON t0.vnc_docentry = t1.ret_absentry
-                                          left join tasa t2 on t0.vnc_currency = t2.tsa_curro and t0.vnc_createat = t2.tsa_date
-                                           WHERE t0.vnc_cardcode = :cardcode",
-      array(':cardcode' => $request['cardcode']));
-
-  		$respuesta = array(
-  			'error'  => true,
-  			'data'   => false,
-  			'mensaje'=> 'No se encontraron registro para pagar'
-  		);
+      $resSelect = $this->pedeo->queryTable("SELECT distinct on(dvf_docnum) dvf_docnum,
+										    mdt_docname tipo,
+										   dvf_docnum id_origen,
+										   dvf_cardcode codigo_proveedor,
+										   dvf_docentry,
+										   ac1_account cuenta,
+										   dvf_docdate fecha_doc,
+										   dvf_duedate fecha_ven,
+										   CURRENT_DATE - dvf_duedate dias_atrasado,
+										   dvf_doctotal total_doc,
+										   saldo saldo_venc,
+										   dvf_doctype numType,
+										   tsa_value tasa_dia,
+										   '' retencion,
+										   dvf_currency,
+										   ac1_font_key,
+										dvf_comment
+										FROM dvfv
+										JOIN SALDO_DOC on dvf_docentry = ac1_font_key and dvf_doctype = ac1_font_type
+										join dmdt on dvf_doctype = mdt_doctype
+										join tasa on dvf_docdate = tsa_date
+										where dvf_cardcode = :cardcode
+										union all
+										SELECT distinct  on (vnc_docnum) vnc_docnum,
+										    mdt_docname tipo,
+										   vnc_docnum id_origen,
+										   vnc_cardcode codigo_proveedor,
+										   vnc_docentry,
+										   ac1_account cuenta,
+										   vnc_docdate fecha_doc,
+										   vnc_duedate fecha_ven,
+										   CURRENT_DATE - vnc_duedate dias_atrasado,
+										   vnc_doctotal total_doc,
+										   saldo saldo_venc,
+										   vnc_doctype numType,
+										   tsa_value tasa_dia,
+										   '' retencion,
+										   vnc_currency,
+										 ac1_font_key,
+										   vnc_comment
+										FROM dvnc
+										JOIN SALDO_DOC on vnc_docentry = ac1_font_key and vnc_doctype = ac1_font_type
+										join dmdt on vnc_doctype = mdt_doctype
+										join tasa on vnc_docdate = tsa_date
+										where  vnc_cardcode = :cardcode
+										union all
+										SELECT distinct on(vnd_docnum) vnd_docnum,
+										   mdt_docname tipo,
+										   vnd_docnum id_origen,
+										   vnd_cardcode codigo_proveedor,
+										   vnd_docentry,
+										   ac1_account cuenta,
+										   vnd_docdate fecha_doc,
+										   vnd_duedate fecha_ven,
+										   CURRENT_DATE - vnd_duedate dias_atrasado,
+										   vnd_doctotal total_doc,
+										   saldo saldo_venc,
+										   vnd_doctype numType,
+										   tsa_value tasa_dia,
+										   '' retencion,
+										   vnd_currency,
+										         ac1_font_key,
+										   vnd_comment
+										FROM dvnd
+										JOIN SALDO_DOC on vnd_docentry = ac1_font_key and vnd_doctype = ac1_font_type
+										join dmdt on vnd_doctype = mdt_doctype
+										join tasa on vnd_docdate = tsa_date
+										where  ac1_legal_num = :cardcode
+										union all
+										SELECT distinct on(bpr_docnum) bpr_docnum,
+										       mdt_docname tipo,
+										       bpr_docnum id_origen,
+										       bpr_cardcode codigo_proveedor,
+										       bpr_docentry,
+										       ac1_account cuenta,
+										       bpr_docdate fecha_doc,
+										       bpr_docdate fecha_ven,
+										       CURRENT_DATE - bpr_docdate dias_atrasado,
+										       bpr_doctotal total_doc,
+										        saldo saldo_venc,
+										       bpr_doctype numType,
+										       tsa_value tasa_dia,
+										       '' retencion,
+										       bpr_currency,
+										       ac1_font_key,
+										       bpr_comments
+										from gbpr
+										join dmdt on mdt_doctype = bpr_doctype
+										join saldo_doc on bpr_doctype = ac1_font_type
+										join tasa on bpr_docdate = tsa_date
+										where bpr_cardcode = :cardcode", array(':cardcode' => $request['cardcode']));
 
   		if(isset($resSelect[0])){
 
@@ -108,7 +139,13 @@ class PagoRecibido extends REST_Controller {
   				'data'   => $resSelect,
   				'mensaje'=> 'ok'
   			);
-  		}
+  		}else{
+				$respuesta = array(
+	  			'error'  => true,
+	  			'data'   => false,
+	  			'mensaje'=> 'No se encontraron registro para pagar'
+	  		);
+			}
 
   		$this->response($respuesta);
 

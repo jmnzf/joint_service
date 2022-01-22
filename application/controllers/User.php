@@ -337,7 +337,7 @@ class User extends REST_Controller {
 							)
 						);
 
-						unset($resSelect[0]['Pgu_Pass']);
+						unset($resSelect[0]['pgu_pass']);
 
 						$respuesta = array(
 							'error'   => false,
@@ -437,7 +437,8 @@ class User extends REST_Controller {
 													when aus_status = 1 then 'Activo'
 													else 'Inactivo'
 												end as estado,
-												tmau.mau_decription
+												tmau.mau_decription,
+												tmau.mau_docentry
 												FROM taus
 												INNER JOIN pgus
 												ON taus.aus_id_usuario = pgus.pgu_id_usuario
@@ -465,6 +466,68 @@ class User extends REST_Controller {
 
 					 $this->response($respuesta);
 		}
+
+
+		// Obtener Solo usuarios autorizados por codigo de modelo
+		public function getUserListAuthById_get(){
+
+					$Data = $this->get();
+
+					if(!isset($Data['modelo'])){
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'La informacion enviada no es valida'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+					}
+
+
+					$sqlSelect = "SELECT aus_id,
+												pgus.pgu_id_usuario as id, concat(pgus.pgu_name_user,' ', COALESCE(pgus.pgu_lname_user,''))as nombre,
+												pgu_code_user as user,
+												case
+													when aus_required = 1 then 'Requerido'
+													else 'NA'
+												end as requerido,
+												case
+													when aus_status = 1 then 'Activo'
+													else 'Inactivo'
+												end as estado,
+												tmau.mau_decription
+												FROM taus
+												INNER JOIN pgus
+												ON taus.aus_id_usuario = pgus.pgu_id_usuario
+												INNER JOIN tmau
+												ON tmau.mau_docentry = taus.aus_id_model
+												WHERE tmau.mau_docentry = :mau_docentry";
+
+					$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mau_docentry' => $Data['modelo']));
+
+					if(isset($resSelect[0])){
+
+						$respuesta = array(
+							'error' => false,
+							'data'  => $resSelect,
+							'mensaje' => '');
+
+					}else{
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => [],
+								'mensaje'	=> 'busqueda sin resultados'
+							);
+
+					}
+
+					 $this->response($respuesta);
+		}
+
 
 
 		// ESTABLECE LOS USUARIOS QUE NECESITAN SER AUTORIZADOS

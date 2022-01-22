@@ -115,7 +115,7 @@ class FacturaVenta extends REST_Controller {
 												from dvfv t0
 												inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
 												left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
-												left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code
+												left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code AND t3.dmd_ppal = 1
 												left join dmsc T4 on T0.dvf_cardcode = t4.dmc_card_code
 												left join dmev T5 on T0.dvf_slpcode = T5.mev_id
 												left join pgdn T6 on T0.dvf_doctype = T6.pgs_id_doc_type and T0.dvf_series = T6.pgs_id
@@ -123,7 +123,8 @@ class FacturaVenta extends REST_Controller {
 												left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
 												left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
 												left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
-												where T0.dvf_docentry = :DVF_DOCENTRY";
+												where T0.dvf_docentry = :DVF_DOCENTRY
+												and t2.dms_card_type = '1'";
 
 				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
 

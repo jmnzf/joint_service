@@ -1,11 +1,11 @@
 <?php
-// SOLICITUD DE COMPRAS
+// ANEXOS DE SOCIOS DE NEGOCIO
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 
-class PurchaseRequest extends REST_Controller {
+class BuyOffert extends REST_Controller {
 
 	private $pdo;
 
@@ -22,10 +22,115 @@ class PurchaseRequest extends REST_Controller {
 
 	}
 
-  //CREAR NUEVA solicitud DE compras
-	public function createPurchaseRequest_post(){
+	public function getOffert_get(){
+		$sqlSelect = self::getColumn('dcoc','coc');
 
-      $Data = $this->post();
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+    if(isset($resSelect[0])){
+
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
+
+    }else{
+
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje'	=> 'busqueda sin resultados'
+        );
+
+    }
+
+     $this->response($respuesta);
+	}
+
+	public function getOffertDetail_get()
+	{
+		$Data = $this->get();
+
+		if(!isset($Data['oc1_docentry'])){
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' =>'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM coc1 WHERE oc1_docentry =:oc1_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":oc1_docentry" => $Data['oc1_docentry']));
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+	}
+
+
+public function getOffertDetailBySN_get(){
+	$Data = $this->get();
+
+	if(!isset($Data['dms_card_code'])){
+
+		$respuesta = array(
+			'error' => true,
+			'data'  => array(),
+			'mensaje' =>'La informacion enviada no es valida'
+		);
+
+		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+		return;
+	}
+
+		$sqlSelect = "SELECT * from dcoc	where coc_cardcode = :dms_card_code";
+
+	$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dms_card_code" => $Data['dms_card_code']));
+	if(isset($resSelect[0])){
+
+		$respuesta = array(
+			'error' => false,
+			'data'  => $resSelect,
+			'mensaje' => '');
+
+	}else{
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+
+	}
+
+	 $this->response($respuesta);
+}
+	//CREAR NUEVA SOLICUTUD DE OFERTA DE COMPRA
+	public function createBuyOffert_post(){
+
+			$Data = $this->post();
 
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 			$DetalleAsientoIva = new stdClass();
@@ -39,7 +144,7 @@ class PurchaseRequest extends REST_Controller {
 			$inArrayIva = array(); // Array para mantener el indice de las llaves para iva
 			$inArrayCostoInventario = array();
 			$inArrayCostoCosto = array();
-		  $llave = ""; // la comnbinacion entre la cuenta contable,proyecto, unidad de negocio y centro de costo
+			$llave = ""; // la comnbinacion entre la cuenta contable,proyecto, unidad de negocio y centro de costo
 			$llaveIva = ""; //segun tipo de iva
 			$llaveCostoInventario = "";
 			$llaveCostoCosto = "";
@@ -63,37 +168,37 @@ class PurchaseRequest extends REST_Controller {
 													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref)";
 
 
-      if(!isset($Data['detail'])){
+			if(!isset($Data['detail'])){
 
-        $respuesta = array(
-          'error' => true,
-          'data'  => array(),
-          'mensaje' =>'La informacion enviada no es valida'
-        );
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'La informacion enviada no es valida'
+				);
 
-        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-        return;
-      }
+				return;
+			}
 
-      $ContenidoDetalle = json_decode($Data['detail'], true);
+			$ContenidoDetalle = json_decode($Data['detail'], true);
 
 
-      if(!is_array($ContenidoDetalle)){
-          $respuesta = array(
-            'error' => true,
-            'data'  => array(),
-            'mensaje' =>'No se encontro el detalle de la solicitud de compras'
-          );
+			if(!is_array($ContenidoDetalle)){
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'No se encontro el detalle de la oferta de compras'
+					);
 
-          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-          return;
-      }
+					return;
+			}
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
-			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+				$sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
-				$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['csc_series']));
+				$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['coc_series']));
 
 				if(isset($resNumeracion[0])){
 
@@ -195,18 +300,18 @@ class PurchaseRequest extends REST_Controller {
 				//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
 				// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
 				$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-				$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['csc_currency'], ':tsa_date' => $Data['csc_docdate']));
+				$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['coc_currency'], ':tsa_date' => $Data['coc_docdate']));
 
 				if(isset($resBusTasa[0])){
 
 				}else{
 
-						if(trim($Data['csc_currency']) != $MONEDALOCAL ){
+						if(trim($Data['coc_currency']) != $MONEDALOCAL ){
 
 							$respuesta = array(
 								'error' => true,
 								'data'  => array(),
-								'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['csc_currency'].' en la actual fecha del documento: '.$Data['csc_docdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
+								'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['coc_currency'].' en la actual fecha del documento: '.$Data['coc_docdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
 							);
 
 							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -217,7 +322,7 @@ class PurchaseRequest extends REST_Controller {
 
 
 				$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-				$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['csc_docdate']));
+				$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['coc_docdate']));
 
 				if(isset($resBusTasa2[0])){
 
@@ -225,7 +330,7 @@ class PurchaseRequest extends REST_Controller {
 						$respuesta = array(
 							'error' => true,
 							'data'  => array(),
-							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['csc_docdate']
+							'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['coc_docdate']
 						);
 
 						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -246,14 +351,41 @@ class PurchaseRequest extends REST_Controller {
 				$sqlVerificarAprobacion = "SELECT * FROM tbed WHERE bed_docentry =:bed_docentry AND bed_doctype =:bed_doctype AND bed_status =:bed_status";
 				$resVerificarAprobacion = $this->pedeo->queryTable($sqlVerificarAprobacion, array(
 
-									':bed_docentry' => $Data['csc_baseentry'],
-									':bed_doctype'  => $Data['csc_basetype'],
+									':bed_docentry' => $Data['coc_baseentry'],
+									':bed_doctype'  => $Data['coc_basetype'],
 									':bed_status'   => 4 // 4 APROBADO SEGUN MODELO DE APROBACION
 				));
 
 
 
 				if(!isset($resVerificarAprobacion[0])){
+
+							// BUSCANDO MODELO PARA EL DOCUMENTO
+
+							$Emmpleado = '';
+
+							$sqlModeloDocumentoEmpleado = "SELECT * FROM tmau	WHERE mau_doctype = :mau_doctype AND mau_emp = :mau_emp AND mau_status = :mau_status";
+							$resModeloDocumentoEmpleado = $this->pedeo->queryTable($sqlModeloDocumentoEmpleado, array(
+								':mau_doctype' => $Data['coc_doctype'],
+								':mau_emp' => 1,
+								':mau_status' => 1
+							));
+
+							if( isset($resModeloDocumentoEmpleado[0]) ){
+								// SE BUSCA EL USUARIO DEL EMPLEADO DE VENTAS
+								$sqlUsuarioEmpleadoVentas = "SELECT pgu_code_user FROM pgus WHERE pgu_id_vendor = :pgu_id_vendor";
+								$resUsuarioEmpleadoVentas = $this->pedeo->queryTable($sqlUsuarioEmpleadoVentas, array(
+									':pgu_id_vendor' => $Data['coc_slpcode']
+								));
+
+								if( isset($resUsuarioEmpleadoVentas[0]) ){
+									$Emmpleado = $resUsuarioEmpleadoVentas[0]['pgu_code_user'];
+								}else{
+									$Emmpleado = $Data['coc_createby'];
+								}
+							}
+
+
 
 							$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
 																au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
@@ -271,8 +403,8 @@ class PurchaseRequest extends REST_Controller {
 
 							$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
 
-										':mau_doctype'   => $Data['csc_doctype'],
-										':pgu_code_user' => $Data['csc_createby'],
+										':mau_doctype'   => $Data['coc_doctype'],
+										':pgu_code_user' => $Emmpleado,
 										':mau_status' 	 => 1,
 										':aus_status' 	 => 1
 
@@ -286,13 +418,13 @@ class PurchaseRequest extends REST_Controller {
 													$condicion = $value['condicion'];
 													$valorDocTotal1 = $value['doctotal'];
 													$valorDocTotal2 = $value['doctotal2'];
-													$TotalDocumento = $Data['csc_doctotal'];
+													$TotalDocumento = $Data['coc_doctotal'];
 													$doctype =  $value['doctype'];
 													$modelo = $value['modelo'];
 
-													if(trim($Data['csc_currency']) != $MONEDASYS){
+													if(trim($Data['coc_currency']) != $MONEDASYS){
 
-															if(trim($Data['csc_currency']) != $MONEDALOCAL){
+															if(trim($Data['coc_currency']) != $MONEDALOCAL){
 
 																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), 2);
 																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
@@ -323,7 +455,7 @@ class PurchaseRequest extends REST_Controller {
 																));
 
 																if( isset($ressq[0]) ){
-																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'csc','sc1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
+																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'coc','oc1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 
 
@@ -345,7 +477,7 @@ class PurchaseRequest extends REST_Controller {
 																));
 
 																if( isset($ressq[0]) ){
-																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'csc','sc1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
+																	$this->setAprobacion($Data,$ContenidoDetalle,$resMainFolder[0]['main_folder'],'coc','oc1',$ressq[0]['mau_quantity'],count(explode(',', $ressq[0]['mau_approvers'])),$ressq[0]['mau_docentry']);
 																}
 													}
 													//VERIFICAR MODELO DE PROBACION
@@ -361,12 +493,12 @@ class PurchaseRequest extends REST_Controller {
 
 
 
-        $sqlInsert = "INSERT INTO dcsc(csc_series, csc_docnum, csc_docdate, csc_duedate, csc_duedev, csc_pricelist, csc_cardcode,
-                      csc_cardname, csc_currency, csc_contacid, csc_slpcode, csc_empid, csc_comment, csc_doctotal, csc_baseamnt, csc_taxtotal,
-                      csc_discprofit, csc_discount, csc_createat, csc_baseentry, csc_basetype, csc_doctype, csc_idadd, csc_adress, csc_paytype,
-                      csc_attch,csc_createby)VALUES(:csc_series, :csc_docnum, :csc_docdate, :csc_duedate, :csc_duedev, :csc_pricelist, :csc_cardcode, :csc_cardname,
-                      :csc_currency, :csc_contacid, :csc_slpcode, :csc_empid, :csc_comment, :csc_doctotal, :csc_baseamnt, :csc_taxtotal, :csc_discprofit, :csc_discount,
-                      :csc_createat, :csc_baseentry, :csc_basetype, :csc_doctype, :csc_idadd, :csc_adress, :csc_paytype, :csc_attch,:csc_createby)";
+				$sqlInsert = "INSERT INTO dcoc(coc_series, coc_docnum, coc_docdate, coc_duedate, coc_duedev, coc_pricelist, coc_cardcode,
+											coc_cardname, coc_currency, coc_contacid, coc_slpcode, coc_empid, coc_comment, coc_doctotal, coc_baseamnt, coc_taxtotal,
+											coc_discprofit, coc_discount, coc_createat, coc_baseentry, coc_basetype, coc_doctype, coc_idadd, coc_adress, coc_paytype,
+											coc_attch,coc_createby)VALUES(:coc_series, :coc_docnum, :coc_docdate, :coc_duedate, :coc_duedev, :coc_pricelist, :coc_cardcode, :coc_cardname,
+											:coc_currency, :coc_contacid, :coc_slpcode, :coc_empid, :coc_comment, :coc_doctotal, :coc_baseamnt, :coc_taxtotal, :coc_discprofit, :coc_discount,
+											:coc_createat, :coc_baseentry, :coc_basetype, :coc_doctype, :coc_idadd, :coc_adress, :coc_paytype, :coc_attch,:coc_createby)";
 
 
 				// Se Inicia la transaccion,
@@ -375,39 +507,39 @@ class PurchaseRequest extends REST_Controller {
 				// de lo contrario no se aplicaran los cambios y se devolvera
 				// la base de datos a su estado original.
 
-			  $this->pedeo->trans_begin();
+				$this->pedeo->trans_begin();
 
-        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':csc_docnum' => $DocNumVerificado,
-              ':csc_series' => is_numeric($Data['csc_series'])?$Data['csc_series']:0,
-              ':csc_docdate' => $this->validateDate($Data['csc_docdate'])?$Data['csc_docdate']:NULL,
-              ':csc_duedate' => $this->validateDate($Data['csc_duedate'])?$Data['csc_duedate']:NULL,
-              ':csc_duedev' => $this->validateDate($Data['csc_duedev'])?$Data['csc_duedev']:NULL,
-              ':csc_pricelist' => is_numeric($Data['csc_pricelist'])?$Data['csc_pricelist']:0,
-              ':csc_cardcode' => isset($Data['csc_cardcode'])?$Data['csc_cardcode']:NULL,
-              ':csc_cardname' => isset($Data['csc_cardname'])?$Data['csc_cardname']:NULL,
-              ':csc_currency' => isset($Data['csc_currency'])?$Data['csc_currency']:NULL,
-              ':csc_contacid' => isset($Data['csc_contacid'])?$Data['csc_contacid']:NULL,
-              ':csc_slpcode' => is_numeric($Data['csc_slpcode'])?$Data['csc_slpcode']:0,
-              ':csc_empid' => is_numeric($Data['csc_empid'])?$Data['csc_empid']:0,
-              ':csc_comment' => isset($Data['csc_comment'])?$Data['csc_comment']:NULL,
-              ':csc_doctotal' => is_numeric($Data['csc_doctotal'])?$Data['csc_doctotal']:0,
-              ':csc_baseamnt' => is_numeric($Data['csc_baseamnt'])?$Data['csc_baseamnt']:0,
-              ':csc_taxtotal' => is_numeric($Data['csc_taxtotal'])?$Data['csc_taxtotal']:0,
-              ':csc_discprofit' => is_numeric($Data['csc_discprofit'])?$Data['csc_discprofit']:0,
-              ':csc_discount' => is_numeric($Data['csc_discount'])?$Data['csc_discount']:0,
-              ':csc_createat' => $this->validateDate($Data['csc_createat'])?$Data['csc_createat']:NULL,
-              ':csc_baseentry' => is_numeric($Data['csc_baseentry'])?$Data['csc_baseentry']:0,
-              ':csc_basetype' => is_numeric($Data['csc_basetype'])?$Data['csc_basetype']:0,
-              ':csc_doctype' => is_numeric($Data['csc_doctype'])?$Data['csc_doctype']:0,
-              ':csc_idadd' => isset($Data['csc_idadd'])?$Data['csc_idadd']:NULL,
-              ':csc_adress' => isset($Data['csc_adress'])?$Data['csc_adress']:NULL,
-              ':csc_paytype' => is_numeric($Data['csc_paytype'])?$Data['csc_paytype']:0,
-							':csc_createby' => isset($Data['csc_createby'])?$Data['csc_createby']:NULL,
-              ':csc_attch' => $this->getUrl(count(trim(($Data['csc_attch']))) > 0 ? $Data['csc_attch']:NULL, $resMainFolder[0]['main_folder'])
+				$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+							':coc_docnum' => $DocNumVerificado,
+							':coc_series' => is_numeric($Data['coc_series'])?$Data['coc_series']:0,
+							':coc_docdate' => $this->validateDate($Data['coc_docdate'])?$Data['coc_docdate']:NULL,
+							':coc_duedate' => $this->validateDate($Data['coc_duedate'])?$Data['coc_duedate']:NULL,
+							':coc_duedev' => $this->validateDate($Data['coc_duedev'])?$Data['coc_duedev']:NULL,
+							':coc_pricelist' => is_numeric($Data['coc_pricelist'])?$Data['coc_pricelist']:0,
+							':coc_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
+							':coc_cardname' => isset($Data['coc_cardname'])?$Data['coc_cardname']:NULL,
+							':coc_currency' => isset($Data['coc_currency'])?$Data['coc_currency']:NULL,
+							':coc_contacid' => isset($Data['coc_contacid'])?$Data['coc_contacid']:NULL,
+							':coc_slpcode' => is_numeric($Data['coc_slpcode'])?$Data['coc_slpcode']:0,
+							':coc_empid' => is_numeric($Data['coc_empid'])?$Data['coc_empid']:0,
+							':coc_comment' => isset($Data['coc_comment'])?$Data['coc_comment']:NULL,
+							':coc_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
+							':coc_baseamnt' => is_numeric($Data['coc_baseamnt'])?$Data['coc_baseamnt']:0,
+							':coc_taxtotal' => is_numeric($Data['coc_taxtotal'])?$Data['coc_taxtotal']:0,
+							':coc_discprofit' => is_numeric($Data['coc_discprofit'])?$Data['coc_discprofit']:0,
+							':coc_discount' => is_numeric($Data['coc_discount'])?$Data['coc_discount']:0,
+							':coc_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
+							':coc_baseentry' => is_numeric($Data['coc_baseentry'])?$Data['coc_baseentry']:0,
+							':coc_basetype' => is_numeric($Data['coc_basetype'])?$Data['coc_basetype']:0,
+							':coc_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
+							':coc_idadd' => isset($Data['coc_idadd'])?$Data['coc_idadd']:NULL,
+							':coc_adress' => isset($Data['coc_adress'])?$Data['coc_adress']:NULL,
+							':coc_paytype' => is_numeric($Data['coc_paytype'])?$Data['coc_paytype']:0,
+							':coc_createby' => isset($Data['coc_createby'])?$Data['coc_createby']:NULL,
+							':coc_attch' => $this->getUrl(count(trim(($Data['coc_attch']))) > 0 ? $Data['coc_attch']:NULL, $resMainFolder[0]['main_folder'])
 						));
 
-        if(is_numeric($resInsert) && $resInsert > 0){
+				if(is_numeric($resInsert) && $resInsert > 0){
 
 					// Se actualiza la serie de la numeracion del documento
 
@@ -415,7 +547,7 @@ class PurchaseRequest extends REST_Controller {
 																			 WHERE pgs_id = :pgs_id";
 					$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
 							':pgs_nextnum' => $DocNumVerificado,
-							':pgs_id'      => $Data['csc_series']
+							':pgs_id'      => $Data['coc_series']
 					));
 
 
@@ -446,9 +578,9 @@ class PurchaseRequest extends REST_Controller {
 
 
 										':bed_docentry' => $resInsert,
-										':bed_doctype' => $Data['csc_doctype'],
+										':bed_doctype' => $Data['coc_doctype'],
 										':bed_status' => 1, //ESTADO ABIERTO
-										':bed_createby' => $Data['csc_createby'],
+										':bed_createby' => $Data['coc_createby'],
 										':bed_date' => date('Y-m-d'),
 										':bed_baseentry' => NULL,
 										':bed_basetype' => NULL
@@ -477,7 +609,7 @@ class PurchaseRequest extends REST_Controller {
 
 					// SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
 					// SI EL DOCTYPE = 21
-					if( $Data['csc_basetype'] == 21){
+					if( $Data['coc_basetype'] == 21){
 
 						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -485,13 +617,13 @@ class PurchaseRequest extends REST_Controller {
 						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-											':bed_docentry' => $Data['csc_baseentry'],
-											':bed_doctype' => $Data['csc_basetype'],
+											':bed_docentry' => $Data['coc_baseentry'],
+											':bed_doctype' => $Data['coc_basetype'],
 											':bed_status' => 3, //ESTADO CERRADO
-											':bed_createby' => $Data['csc_createby'],
+											':bed_createby' => $Data['coc_createby'],
 											':bed_date' => date('Y-m-d'),
 											':bed_baseentry' => $resInsert,
-											':bed_basetype' => $Data['csc_doctype']
+											':bed_basetype' => $Data['coc_doctype']
 						));
 
 
@@ -504,7 +636,7 @@ class PurchaseRequest extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data' => $resInsertEstado,
-										'mensaje'	=> 'No se pudo registrar la solicitud de compras',
+										'mensaje'	=> 'No se pudo registrar la orden de compras',
 										'proceso' => 'Insertar estado documento'
 									);
 
@@ -520,36 +652,36 @@ class PurchaseRequest extends REST_Controller {
 					//FIN PROCESO GUARDAR ESTADO DEL DOCUMENTO
 
 
-          foreach ($ContenidoDetalle as $key => $detail) {
+					foreach ($ContenidoDetalle as $key => $detail) {
 
-                $sqlInsertDetail = "INSERT INTO csc1(sc1_docentry, sc1_itemcode, sc1_itemname, sc1_quantity, sc1_uom, sc1_whscode,
-                                    sc1_price, sc1_vat, sc1_vatsum, sc1_discount, sc1_linetotal, sc1_costcode, sc1_ubusiness, sc1_project,
-                                    sc1_acctcode, sc1_basetype, sc1_doctype, sc1_avprice, sc1_inventory, sc1_acciva)VALUES(:sc1_docentry, :sc1_itemcode, :sc1_itemname, :sc1_quantity,
-                                    :sc1_uom, :sc1_whscode,:sc1_price, :sc1_vat, :sc1_vatsum, :sc1_discount, :sc1_linetotal, :sc1_costcode, :sc1_ubusiness, :sc1_project,
-                                    :sc1_acctcode, :sc1_basetype, :sc1_doctype, :sc1_avprice, :sc1_inventory, :sc1_acciva)";
+								$sqlInsertDetail = "INSERT INTO coc1(oc1_docentry, oc1_itemcode, oc1_itemname, oc1_quantity, oc1_uom, oc1_whscode,
+																		oc1_price, oc1_vat, oc1_vatsum, oc1_discount, oc1_linetotal, oc1_costcode, oc1_ubusiness, oc1_project,
+																		oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva)VALUES(:oc1_docentry, :oc1_itemcode, :oc1_itemname, :oc1_quantity,
+																		:oc1_uom, :oc1_whscode,:oc1_price, :oc1_vat, :oc1_vatsum, :oc1_discount, :oc1_linetotal, :oc1_costcode, :oc1_ubusiness, :oc1_project,
+																		:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva)";
 
-                $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-                        ':sc1_docentry' => $resInsert,
-                        ':sc1_itemcode' => isset($detail['sc1_itemcode'])?$detail['sc1_itemcode']:NULL,
-                        ':sc1_itemname' => isset($detail['sc1_itemname'])?$detail['sc1_itemname']:NULL,
-                        ':sc1_quantity' => is_numeric($detail['sc1_quantity'])?$detail['sc1_quantity']:0,
-                        ':sc1_uom' => isset($detail['sc1_uom'])?$detail['sc1_uom']:NULL,
-                        ':sc1_whscode' => isset($detail['sc1_whscode'])?$detail['sc1_whscode']:NULL,
-                        ':sc1_price' => is_numeric($detail['sc1_price'])?$detail['sc1_price']:0,
-                        ':sc1_vat' => is_numeric($detail['sc1_vat'])?$detail['sc1_vat']:0,
-                        ':sc1_vatsum' => is_numeric($detail['sc1_vatsum'])?$detail['sc1_vatsum']:0,
-                        ':sc1_discount' => is_numeric($detail['sc1_discount'])?$detail['sc1_discount']:0,
-                        ':sc1_linetotal' => is_numeric($detail['sc1_linetotal'])?$detail['sc1_linetotal']:0,
-                        ':sc1_costcode' => isset($detail['sc1_costcode'])?$detail['sc1_costcode']:NULL,
-                        ':sc1_ubusiness' => isset($detail['sc1_ubusiness'])?$detail['sc1_ubusiness']:NULL,
-                        ':sc1_project' => isset($detail['sc1_project'])?$detail['sc1_project']:NULL,
-                        ':sc1_acctcode' => is_numeric($detail['sc1_acctcode'])?$detail['sc1_acctcode']:0,
-                        ':sc1_basetype' => is_numeric($detail['sc1_basetype'])?$detail['sc1_basetype']:0,
-                        ':sc1_doctype' => is_numeric($detail['sc1_doctype'])?$detail['sc1_doctype']:0,
-                        ':sc1_avprice' => is_numeric($detail['sc1_avprice'])?$detail['sc1_avprice']:0,
-                        ':sc1_inventory' => is_numeric($detail['sc1_inventory'])?$detail['sc1_inventory']:NULL,
-												':sc1_acciva'  => is_numeric($detail['sc1_cuentaIva'])?$detail['sc1_cuentaIva']:0,
-                ));
+								$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
+												':oc1_docentry' => $resInsert,
+												':oc1_itemcode' => isset($detail['oc1_itemcode'])?$detail['oc1_itemcode']:NULL,
+												':oc1_itemname' => isset($detail['oc1_itemname'])?$detail['oc1_itemname']:NULL,
+												':oc1_quantity' => is_numeric($detail['oc1_quantity'])?$detail['oc1_quantity']:0,
+												':oc1_uom' => isset($detail['oc1_uom'])?$detail['oc1_uom']:NULL,
+												':oc1_whscode' => isset($detail['oc1_whscode'])?$detail['oc1_whscode']:NULL,
+												':oc1_price' => is_numeric($detail['oc1_price'])?$detail['oc1_price']:0,
+												':oc1_vat' => is_numeric($detail['oc1_vat'])?$detail['oc1_vat']:0,
+												':oc1_vatsum' => is_numeric($detail['oc1_vatsum'])?$detail['oc1_vatsum']:0,
+												':oc1_discount' => is_numeric($detail['oc1_discount'])?$detail['oc1_discount']:0,
+												':oc1_linetotal' => is_numeric($detail['oc1_linetotal'])?$detail['oc1_linetotal']:0,
+												':oc1_costcode' => isset($detail['oc1_costcode'])?$detail['oc1_costcode']:NULL,
+												':oc1_ubusiness' => isset($detail['oc1_ubusiness'])?$detail['oc1_ubusiness']:NULL,
+												':oc1_project' => isset($detail['oc1_project'])?$detail['oc1_project']:NULL,
+												':oc1_acctcode' => is_numeric($detail['oc1_acctcode'])?$detail['oc1_acctcode']:0,
+												':oc1_basetype' => is_numeric($detail['oc1_basetype'])?$detail['oc1_basetype']:0,
+												':oc1_doctype' => is_numeric($detail['oc1_doctype'])?$detail['oc1_doctype']:0,
+												':oc1_avprice' => is_numeric($detail['oc1_avprice'])?$detail['oc1_avprice']:0,
+												':oc1_inventory' => is_numeric($detail['oc1_inventory'])?$detail['oc1_inventory']:NULL,
+												':oc1_acciva'  => is_numeric($detail['oc1_cuentaIva'])?$detail['oc1_cuentaIva']:0,
+								));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
 										// Se verifica que el detalle no de error insertando //
@@ -562,7 +694,7 @@ class PurchaseRequest extends REST_Controller {
 											$respuesta = array(
 												'error'   => true,
 												'data' => $resInsertDetail,
-												'mensaje'	=> 'No se pudo registrar la solicitud de compras',
+												'mensaje'	=> 'No se pudo registrar la orden de oferta de compras',
 												'proceso' => 'Insert detalle solicitud'
 											);
 
@@ -571,7 +703,7 @@ class PurchaseRequest extends REST_Controller {
 											 return;
 								}
 
-          }
+					}
 					//FIN DE OPERACIONES VITALES
 
 					// Si todo sale bien despues de insertar el detalle de la solicitud de compras
@@ -579,376 +711,39 @@ class PurchaseRequest extends REST_Controller {
 					// en la base de datos y se confirma la operacion exitosa.
 					$this->pedeo->trans_commit();
 
-          $respuesta = array(
-            'error' => false,
-            'data' => $resInsert,
-            'mensaje' =>'Solicitud de compras registrada con exito'
-          );
+					$respuesta = array(
+						'error' => false,
+						'data' => $resInsert,
+						'mensaje' =>'Oferta de compras registrada con exito'
+					);
 
 
-        }else{
+				}else{
 					// Se devuelven los cambios realizados en la transaccion
 					// si occurre un error  y se muestra devuelve el error.
 							$this->pedeo->trans_rollback();
 
-              $respuesta = array(
-                'error'   => true,
-                'data' => $resInsert,
-                'mensaje'	=> 'No se pudo registrar la solicitud de compras',
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resInsert,
+								'mensaje'	=> 'No se pudo registrar la solicitud de oferta de compra',
 				'proceso' => 'Insert --- 8'
-              );
-
-        }
-
-         $this->response($respuesta);
-	}
-
-  //ACTUALIZAR solicitud de compras
-  public function updatePurchaseRequest_post(){
-
-      $Data = $this->post();
-
-			if(!isset($Data['csc_docentry']) OR !isset($Data['csc_docnum']) OR
-				 !isset($Data['csc_docdate']) OR !isset($Data['csc_duedate']) OR
-				 !isset($Data['csc_duedev']) OR !isset($Data['csc_pricelist']) OR
-				 !isset($Data['csc_cardcode']) OR !isset($Data['csc_cardname']) OR
-				 !isset($Data['csc_currency']) OR !isset($Data['csc_contacid']) OR
-				 !isset($Data['csc_slpcode']) OR !isset($Data['csc_empid']) OR
-				 !isset($Data['csc_comment']) OR !isset($Data['csc_doctotal']) OR
-				 !isset($Data['csc_baseamnt']) OR !isset($Data['csc_taxtotal']) OR
-				 !isset($Data['csc_discprofit']) OR !isset($Data['csc_discount']) OR
-				 !isset($Data['csc_createat']) OR !isset($Data['csc_baseentry']) OR
-				 !isset($Data['csc_basetype']) OR !isset($Data['csc_doctype']) OR
-				 !isset($Data['csc_idadd']) OR !isset($Data['csc_adress']) OR
-				 !isset($Data['csc_paytype']) OR !isset($Data['csc_attch']) OR
-				 !isset($Data['detail'])){
-
-        $respuesta = array(
-          'error' => true,
-          'data'  => array(),
-          'mensaje' =>'La informacion enviada no es valida'
-        );
-
-        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-        return;
-      }
-
-
-			$ContenidoDetalle = json_decode($Data['detail'], true);
-
-
-      if(!is_array($ContenidoDetalle)){
-          $respuesta = array(
-            'error' => true,
-            'data'  => array(),
-            'mensaje' =>'No se encontro el detalle de la solicitud de compras'
-          );
-
-          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-          return;
-      }
-
-      $sqlUpdate = "UPDATE dcsc	SET csc_docdate=:csc_docdate,csc_duedate=:csc_duedate, csc_duedev=:csc_duedev, csc_pricelist=:csc_pricelist, csc_cardcode=:csc_cardcode,
-			  						csc_cardname=:csc_cardname, csc_currency=:csc_currency, csc_contacid=:csc_contacid, csc_slpcode=:csc_slpcode,
-										csc_empid=:csc_empid, csc_comment=:csc_comment, csc_doctotal=:csc_doctotal, csc_baseamnt=:csc_baseamnt,
-										csc_taxtotal=:csc_taxtotal, csc_discprofit=:csc_discprofit, csc_discount=:csc_discount, csc_createat=:csc_createat,
-										csc_baseentry=:csc_baseentry, csc_basetype=:csc_basetype, csc_doctype=:csc_doctype, csc_idadd=:csc_idadd,
-										csc_adress=:csc_adress, csc_paytype=:csc_paytype, csc_attch=:csc_attch WHERE csc_docentry=:csc_docentry";
-
-      $this->pedeo->trans_begin();
-
-      $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-							':csc_docnum' => is_numeric($Data['csc_docnum'])?$Data['csc_docnum']:0,
-							':csc_docdate' => $this->validateDate($Data['csc_docdate'])?$Data['csc_docdate']:NULL,
-							':csc_duedate' => $this->validateDate($Data['csc_duedate'])?$Data['csc_duedate']:NULL,
-							':csc_duedev' => $this->validateDate($Data['csc_duedev'])?$Data['csc_duedev']:NULL,
-							':csc_pricelist' => is_numeric($Data['csc_pricelist'])?$Data['csc_pricelist']:0,
-							':csc_cardcode' => isset($Data['csc_pricelist'])?$Data['csc_pricelist']:NULL,
-							':csc_cardname' => isset($Data['csc_cardname'])?$Data['csc_cardname']:NULL,
-							':csc_currency' => isset($Data['csc_currency'])?$Data['csc_currency']:NULL,
-							':csc_contacid' => isset($Data['csc_contacid'])?$Data['csc_contacid']:NULL,
-							':csc_slpcode' => is_numeric($Data['csc_slpcode'])?$Data['csc_slpcode']:0,
-							':csc_empid' => is_numeric($Data['csc_empid'])?$Data['csc_empid']:0,
-							':csc_comment' => isset($Data['csc_comment'])?$Data['csc_comment']:NULL,
-							':csc_doctotal' => is_numeric($Data['csc_doctotal'])?$Data['csc_doctotal']:0,
-							':csc_baseamnt' => is_numeric($Data['csc_baseamnt'])?$Data['csc_baseamnt']:0,
-							':csc_taxtotal' => is_numeric($Data['csc_taxtotal'])?$Data['csc_taxtotal']:0,
-							':csc_discprofit' => is_numeric($Data['csc_discprofit'])?$Data['csc_discprofit']:0,
-							':csc_discount' => is_numeric($Data['csc_discount'])?$Data['csc_discount']:0,
-							':csc_createat' => $this->validateDate($Data['csc_createat'])?$Data['csc_createat']:NULL,
-							':csc_baseentry' => is_numeric($Data['csc_baseentry'])?$Data['csc_baseentry']:0,
-							':csc_basetype' => is_numeric($Data['csc_basetype'])?$Data['csc_basetype']:0,
-							':csc_doctype' => is_numeric($Data['csc_doctype'])?$Data['csc_doctype']:0,
-							':csc_idadd' => isset($Data['csc_idadd'])?$Data['csc_idadd']:NULL,
-							':csc_adress' => isset($Data['csc_adress'])?$Data['csc_adress']:NULL,
-							':csc_paytype' => is_numeric($Data['csc_paytype'])?$Data['csc_paytype']:0,
-							':csc_attch' => $this->getUrl(count(trim(($Data['csc_attch']))) > 0 ? $Data['csc_attch']:NULL, $resMainFolder[0]['main_folder']),
-							':csc_docentry' => $Data['csc_docentry']
-      ));
-
-      if(is_numeric($resUpdate) && $resUpdate == 1){
-
-						$this->pedeo->queryTable("DELETE FROM csc1 WHERE sc1_docentry=:sc1_docentry", array(':sc1_docentry' => $Data['csc_docentry']));
-
-						foreach ($ContenidoDetalle as $key => $detail) {
-
-									$sqlInsertDetail = "INSERT INTO csc1(sc1_docentry, sc1_itemcode, sc1_itemname, sc1_quantity, sc1_uom, sc1_whscode,
-																			sc1_price, sc1_vat, sc1_vatsum, sc1_discount, sc1_linetotal, sc1_costcode, sc1_ubusiness, sc1_project,
-																			sc1_acctcode, sc1_basetype, sc1_doctype, sc1_avprice, sc1_inventory, sc1_acciva)VALUES(:sc1_docentry, :sc1_itemcode, :sc1_itemname, :sc1_quantity,
-																			:sc1_uom, :sc1_whscode,:sc1_price, :sc1_vat, :sc1_vatsum, :sc1_discount, :sc1_linetotal, :sc1_costcode, :sc1_ubusiness, :sc1_project,
-																			:sc1_acctcode, :sc1_basetype, :sc1_doctype, :sc1_avprice, :sc1_inventory, :sc1_acciva)";
-
-									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-											':sc1_docentry' => $Data['csc_docentry'],
-											':sc1_itemcode' => isset($detail['sc1_itemcode'])?$detail['sc1_itemcode']:NULL,
-											':sc1_itemname' => isset($detail['sc1_itemname'])?$detail['sc1_itemname']:NULL,
-											':sc1_quantity' => is_numeric($detail['sc1_quantity'])?$detail['sc1_quantity']:0,
-											':sc1_uom' => isset($detail['sc1_uom'])?$detail['sc1_uom']:NULL,
-											':sc1_whscode' => isset($detail['sc1_whscode'])?$detail['sc1_whscode']:NULL,
-											':sc1_price' => is_numeric($detail['sc1_price'])?$detail['sc1_price']:0,
-											':sc1_vat' => is_numeric($detail['sc1_vat'])?$detail['sc1_vat']:0,
-											':sc1_vatsum' => is_numeric($detail['sc1_vatsum'])?$detail['sc1_vatsum']:0,
-											':sc1_discount' => is_numeric($detail['sc1_discount'])?$detail['sc1_discount']:0,
-											':sc1_linetotal' => is_numeric($detail['sc1_linetotal'])?$detail['sc1_linetotal']:0,
-											':sc1_costcode' => isset($detail['sc1_costcode'])?$detail['sc1_costcode']:NULL,
-											':sc1_ubusiness' => isset($detail['sc1_ubusiness'])?$detail['sc1_ubusiness']:NULL,
-											':sc1_project' => isset($detail['sc1_project'])?$detail['sc1_project']:NULL,
-											':sc1_acctcode' => is_numeric($detail['sc1_acctcode'])?$detail['sc1_acctcode']:0,
-											':sc1_basetype' => is_numeric($detail['sc1_basetype'])?$detail['sc1_basetype']:0,
-											':sc1_doctype' => is_numeric($detail['sc1_doctype'])?$detail['sc1_doctype']:0,
-											':sc1_avprice' => is_numeric($detail['sc1_avprice'])?$detail['sc1_avprice']:0,
-											':sc1_inventory' => is_numeric($detail['sc1_inventory'])?$detail['sc1_inventory']:NULL,
-											':sc1_acciva' => is_numeric($detail['sc1_cuentaIva'])?$detail['sc1_cuentaIva']:0
-									));
-
-									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
-											// Se verifica que el detalle no de error insertando //
-									}else{
-
-											// si falla algun insert del detalle de la solicitud de compras se devuelven los cambios realizados por la transaccion,
-											// se retorna el error y se detiene la ejecucion del codigo restante.
-												$this->pedeo->trans_rollback();
-
-												$respuesta = array(
-													'error'   => true,
-													'data' => $resInsert,
-													'mensaje'	=> 'No se pudo registrar la solicitud de compras'
-												);
-
-												 $this->response($respuesta);
-
-												 return;
-									}
-						}
-
-
-						$this->pedeo->trans_commit();
-
-            $respuesta = array(
-              'error' => false,
-              'data' => $resUpdate,
-              'mensaje' =>'Solicitud de compras actualizada con exito'
-            );
-
-
-      }else{
-
-						$this->pedeo->trans_rollback();
-
-            $respuesta = array(
-              'error'   => true,
-              'data'    => $resUpdate,
-              'mensaje'	=> 'No se pudo actualizar la solicitud de compras'
-            );
-
-      }
-
-       $this->response($respuesta);
-  }
-
-
-  //OBTENER solicitud de compras
-  public function getPurchaseRequest_get(){
-
-        $sqlSelect = self::getColumn('dcsc','csc');
-
-
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
-
-        if(isset($resSelect[0])){
-
-          $respuesta = array(
-            'error' => false,
-            'data'  => $resSelect,
-            'mensaje' => '');
-
-        }else{
-
-            $respuesta = array(
-              'error'   => true,
-              'data' => array(),
-              'mensaje'	=> 'busqueda sin resultados'
-            );
-
-        }
-
-         $this->response($respuesta);
-  }
-
-
-	//OBTENER solicitud de compras POR ID
-	public function getPurchaseRequestById_get(){
-
-				$Data = $this->get();
-
-				if(!isset($Data['csc_docentry'])){
-
-					$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' =>'La informacion enviada no es valida'
-					);
-
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-					return;
-				}
-
-				$sqlSelect = " SELECT * FROM dcsc WHERE csc_docentry =:csc_docentry";
-
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":csc_docentry" => $Data['csc_docentry']));
-
-				if(isset($resSelect[0])){
-
-					$respuesta = array(
-						'error' => false,
-						'data'  => $resSelect,
-						'mensaje' => '');
-
-				}else{
-
-						$respuesta = array(
-							'error'   => true,
-							'data' => array(),
-							'mensaje'	=> 'busqueda sin resultados'
-						);
+							);
 
 				}
 
 				 $this->response($respuesta);
 	}
-
-
-	//OBTENER solicitud de compras DETALLE POR ID
-	public function getPurchaseRequestDetail_get(){
-
-				$Data = $this->get();
-
-				if(!isset($Data['sc1_docentry'])){
-
-					$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' =>'La informacion enviada no es valida'
-					);
-
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-					return;
-				}
-
-				$sqlSelect = " SELECT * FROM csc1 WHERE sc1_docentry =:sc1_docentry";
-
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":sc1_docentry" => $Data['sc1_docentry']));
-
-				if(isset($resSelect[0])){
-
-					$respuesta = array(
-						'error' => false,
-						'data'  => $resSelect,
-						'mensaje' => '');
-
-				}else{
-
-						$respuesta = array(
-							'error'   => true,
-							'data' => array(),
-							'mensaje'	=> 'busqueda sin resultados'
-						);
-
-				}
-
-				 $this->response($respuesta);
-	}
-
-
-
-
-	//OBTENER solicitud DE VENTA POR ID SOCIO DE NEGOCIO
-	public function getPurchaseRequestBySN_get(){
-
-				$Data = $this->get();
-
-				if(!isset($Data['dms_card_code'])){
-
-					$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' =>'La informacion enviada no es valida'
-					);
-
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-					return;
-				}
-
-				// $sqlSelect = "SELECT * FROM dcsc WHERE csc_slpcode =:dms_card_code";
-
-				$sqlSelect = "SELECT
-												t0.*
-											FROM dcsc t0
-											left join estado_doc t1 on t0.csc_docentry = t1.entry and t0.csc_doctype = t1.tipo
-											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-											where t2.estado = 'Abierto' and t0.csc_slpcode =:dms_card_code";
-
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dms_card_code" => $Data['dms_card_code']));
-
-				if(isset($resSelect[0])){
-
-					$respuesta = array(
-						'error' => false,
-						'data'  => $resSelect,
-						'mensaje' => '');
-
-				}else{
-
-						$respuesta = array(
-							'error'   => true,
-							'data' => array(),
-							'mensaje'	=> 'busqueda sin resultados'
-						);
-
-				}
-
-				 $this->response($respuesta);
-	}
-
-
-
-
-
 
 
 	private function getUrl($data, $caperta){
-	  $url = "";
+		$url = "";
 
-	  if ($data == NULL){
+		if ($data == NULL){
 
 		return $url;
 
-	  }
+		}
 
 		if (!base64_decode($data, true) ){
 				return $url;
@@ -956,39 +751,26 @@ class PurchaseRequest extends REST_Controller {
 
 		$ruta = '/var/www/html/'.$caperta.'/assets/img/anexos/';
 
-	  $milliseconds = round(microtime(true) * 1000);
+		$milliseconds = round(microtime(true) * 1000);
 
 
-	  $nombreArchivo = $milliseconds.".pdf";
+		$nombreArchivo = $milliseconds.".pdf";
 
-	  touch($ruta.$nombreArchivo);
+		touch($ruta.$nombreArchivo);
 
-	  $file = fopen($ruta.$nombreArchivo,"wb");
+		$file = fopen($ruta.$nombreArchivo,"wb");
 
-	  if(!empty($data)){
+		if(!empty($data)){
 
 			fwrite($file, base64_decode($data));
 
 			fclose($file);
 
 			$url = "assets/img/anexos/".$nombreArchivo;
-	  }
+		}
 
-	  return $url;
+		return $url;
 	}
-
-	private function buscarPosicion($llave, $inArray){
-			$res = 0;
-	  	for($i = 0; $i < count($inArray); $i++) {
-					if($inArray[$i] == "$llave"){
-								$res =  $i;
-								break;
-					}
-			}
-
-			return $res;
-	}
-
 	private function validateDate($fecha){
 			if(strlen($fecha) == 10 OR strlen($fecha) > 10){
 				return true;
@@ -1178,4 +960,5 @@ class PurchaseRequest extends REST_Controller {
 				}
 
 	}
+
 }

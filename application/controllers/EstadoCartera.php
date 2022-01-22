@@ -30,52 +30,45 @@ class EstadoCartera extENDs REST_Controller {
 	public function EstadoCartera_post(){
 
         $Data = $this->post();
-				// $Data = $Data['fecha'];
-				$totalfactura = 0;
+		// $Data = $Data['fecha'];
+		$totalfactura = 0;
 
-				$formatter = new NumeroALetras();
-
-
-
+		$formatter = new NumeroALetras();
 
         $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','orientation' => 'L']);
 
-				//RUTA DE CARPETA EMPRESA
+		//RUTA DE CARPETA EMPRESA
         $company = $this->pedeo->queryTable("SELECT main_folder company FROM PARAMS",array());
 
         if(!isset($company[0])){
-						$respuesta = array(
-		           'error' => true,
-		           'data'  => $company,
-		           'mensaje' =>'no esta registrada la ruta de la empresa'
-		        );
+			$respuesta = array(
+	           'error' => true,
+	           'data'  => $company,
+	           'mensaje' =>'no esta registrada la ruta de la empresa'
+		    );
 
-	          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+          	$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-	          return;
-				}
+          	return;
+		}
 
         //INFORMACION DE LA EMPRESA
 
-				$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
-																					   pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
-																					   CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
-																					   pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
-																						 FROM pgem", array());
+		$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo, CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail, pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type FROM pgem", array());
 
-				if(!isset($empresa[0])){
-						$respuesta = array(
-		           'error' => true,
-		           'data'  => $empresa,
-		           'mensaje' =>'no esta registrada la información de la empresa'
-		        );
+		if(!isset($empresa[0])){
+			$respuesta = array(
+	           'error' => true,
+	           'data'  => $empresa,
+	           'mensaje' =>'no esta registrada la información de la empresa'
+	        );
 
-	          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+          	$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-	          return;
-				}
+	        return;
+		}
 
-				$sqlestadocuenta = "SELECT
+		$sqlestadocuenta = "SELECT
 			 	t0.dvf_cardcode CodigoCliente,
 			 	t0.dvf_cardname NombreCliente,
 			 	t0.dvf_docnum NumeroDocumento,
@@ -111,19 +104,19 @@ class EstadoCartera extENDs REST_Controller {
 			 WHERE '".$Data['fecha']."' >= t0.dvf_duedate
 			order by CodigoCliente,NumeroDocumento asc";
 
-				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
+		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
 
-				if(!isset($contenidoestadocuenta[0])){
-						$respuesta = array(
-							 'error' => true,
-							 'data'  => $contenidoestadocuenta,
-							 'mensaje' =>'No tiene pagos realizados'
-						);
+		if(!isset($contenidoestadocuenta[0])){
+			$respuesta = array(
+				 'error' => true,
+				 'data'  => $contenidoestadocuenta,
+				 'mensaje' =>'No tiene pagos realizados'
+			);
 
-						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-						return;
-				}
+			return;
+		}
 
         $cliente = "";
         $encabezado = "";
@@ -131,96 +124,138 @@ class EstadoCartera extENDs REST_Controller {
         $totaldetalle = "";
         $cuerpo = "";
         $cabecera = "";
-				$gCliente  = "";
-				$hacer = true;
+		$gCliente  = "";
+		$hacer = true;
+
+		$total_0_30 = 0;
+		$total_30_60 = 0;
+		$total_60_90 = 0;
+		$total_mayor_90 = 0;
+		$monedadocumento = '';
 
         foreach ($contenidoestadocuenta as $key => $value) {
-						// print_r($value['codigocliente']);
+			// print_r($value['codigocliente']);
+			if( trim($cliente) == trim($value['codigocliente']) ){
+					$hacer = false;
+			}else{
+				$cliente = $value['codigocliente'];
 
-						if( trim($cliente) == trim($value['codigocliente']) ){
-								$hacer = false;
-						}else{
+				$gCliente = '<th class="fondo2">RIF: '.$value['codigocliente'].'</th>
+										 <th class="fondo2">CLIENTE: '.$value['nombrecliente'].'</th>
+										 <th class="fondo2">FECHA CORTE: '.$value['fechacorte'].'</th>';
+				$hacer = true;
+			}
 
-								$cliente = $value['codigocliente'];
+			$encabezado = '<table width="100%"><tr>'.$gCliente.'</tr></table>';
 
-								$gCliente = '<th class="fondo2">RIF: '.$value['codigocliente'].'</th>
-														 <th class="fondo2">CLIENTE: '.$value['nombrecliente'].'</th>
-														 <th class="fondo2">FECHA CORTE: '.$value['fechacorte'].'</th>';
-								$hacer = true;
-						}
+			$totaldetalle = "";
+			$detail_0_30 = 0;
+			$detail_30_60 = 0;
+			$detail_60_90 = 0;
+			$detail_mayor_90 = 0;
 
-						$encabezado = '<table width="100%"><tr>'.$gCliente.'</tr></table>';
+			if($hacer){
 
-						$totaldetalle = "";
+				$cabecera = '<th class="fondo">Numero Documento</th>
+									<th class="fondo">F. Documento</th>
+									<th class="fondo">Total Documento</th>
+									<th class="fondo">F. Ven Documento</th>
+									<th class="fondo">F. Corte</th>
+									<th class="fondo">Dias Vencidos</th>
+									<th class="fondo">0-30</th>
+									<th class="fondo">31-60</th>
+									<th class="fondo">61-90</th>
+									<th class="fondo">+90</th>';
+				foreach ($contenidoestadocuenta as $key => $value1) {
 
-						if($hacer){
-							foreach ($contenidoestadocuenta as $key => $value1) {
+					if( $cliente == $value1['codigocliente']){
+						// 
+						$monedadocumento = $value1['monedadocumento'];
 
-										if( $cliente == $value1['codigocliente']){
+						
+						$detalle = ' <td style="width: 15%;" class="centro">'.$value1['numerodocumento'].'</td>
+									<td class="centro">'.$value1['fechadocumento'].'</td>
+									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['totalfactura'], 2, ',', '.').'</td>
+									<td class="centro">'.$value1['fechavencimiento'].'</td>
+									<td class="centro">'.$value1['fechacorte'].'</td>
+									<td class="centro">'.$value1['dias'].'</td>
+									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['uno_treinta'], 2, ',', '.').'</td>
+									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['treinta_uno_secenta'], 2, ',', '.').'</td>
+									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['secenta_uno_noventa'], 2, ',', '.').'</td>
+									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['mayor_noventa'], 2, ',', '.').'</td>';
 
-												$cabecera = '<th class="fondo">Numero Documento</th>
-																		 <th class="fondo">Fecha Documento</th>
-																		 <th class="fondo">Total Documento</th>
-																		 <th class="fondo">Fecha Ven Documento</th>
-																		 <th class="fondo">Fecha Corte</th>
-																		 <th class="fondo">Dias Vencidos</th>
-																		 <th class="fondo">0-30</th>
-																		 <th class="fondo">31-60</th>
-																		 <th class="fondo">61-90</th>
-																		 <th class="fondo">+90</th>';
-											 $detalle = ' <td class="centro">'.$value1['numerodocumento'].'</td>
-																	 <td class="centro">'.$value1['fechadocumento'].'</td>
-																	 <td class="centro">'.$value1['monedadocumento']." ".number_format($value1['totalfactura'], 2, ',', '.').'</td>
-																	 <td class="centro">'.$value1['fechavencimiento'].'</td>
-																	 <td class="centro">'.$value1['fechacorte'].'</td>
-																	 <td class="centro">'.$value1['dias'].'</td>
-																	 <td class="centro">'.$value1['monedadocumento']." ".number_format($value1['uno_treinta'], 2, ',', '.').'</td>
-																	 <td class="centro">'.$value1['monedadocumento']." ".number_format($value1['treinta_uno_secenta'], 2, ',', '.').'</td>
-																	 <td class="centro">'.$value1['monedadocumento']." ".number_format($value1['secenta_uno_noventa'], 2, ',', '.').'</td>
-																	 <td class="centro">'.$value1['monedadocumento']." ".number_format($value1['mayor_noventa'], 2, ',', '.').'</td>';
+						$totaldetalle .= '<tr>'.$detalle.'</tr>';
 
-											 $totaldetalle = $totaldetalle.'<tr>'.$cabecera.'</tr><tr>'.$detalle.'</tr>';
+						$detail_0_30 =  $detail_0_30 + ($value1['uno_treinta']);
+ 					   	$detail_30_60 =  $detail_30_60 + ($value1['treinta_uno_secenta']);
+ 						$detail_60_90 =  $detail_60_90 + ($value1['secenta_uno_noventa']);
+ 						$detail_mayor_90 =  $detail_mayor_90 + ($value1['mayor_noventa']);
+					}
+				}
 
-										}
-							}
+				$total_0_30 =  $total_0_30 + $detail_0_30;
+			   	$total_30_60 =  $total_30_60 + $detail_30_60;
+				$total_60_90 =  $total_60_90 + $detail_60_90;
+				$total_mayor_90 =  $total_mayor_90 + $detail_mayor_90;
 
-							$cuerpo = $cuerpo.$encabezado."<table width='100%'>".$totaldetalle."</table>";
-						}
+				$detail_total = '
+							<tr>
+							<th>&nbsp;</th>
+							<th>&nbsp;</th>
+							<th>&nbsp;</th>
+							<th>&nbsp;</th>
+							<th>Total</th>
+							<th style="width: 10%;" class="fondo centro">'.$monedadocumento.' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), 2, ',', '.').'</th>
+							<th class="fondo centro">'.$monedadocumento.' '.number_format($detail_0_30, 2, ',', '.').'</th>
+							<th class="fondo centro">'.$monedadocumento.' '.number_format($detail_30_60, 2, ',', '.').'</th>
+							<th class="fondo centro">'.$monedadocumento.' '.number_format($detail_60_90, 2, ',', '.').'</th>
+							<th class="fondo centro">'.$monedadocumento.' '.number_format($detail_mayor_90, 2, ',', '.').'</th>
+							</tr>';
+
+				$cuerpo .= $encabezado."<table width='100%'><tr>".$cabecera."</tr>".$totaldetalle.$detail_total."</table><br><br>";
+			}
         }
-				// print_r($cuerpo);
-// exit();die();
+
+        $cuerpo .= '
+        			<table width="100%">
+						<tr>
+							<th style="width: 10%;">&nbsp;</th>
+							<th style="width: 10%;">&nbsp;</th>
+							<th style="width: 10%;">&nbsp;</th>
+							<th style="width: 24%;">&nbsp;</th>
+							<th>Total</th>
+							<th class="fondo centro">'.$monedadocumento.' '.number_format(($total_0_30+$total_30_60+$total_60_90+$total_mayor_90), 2, ',', '.').'</th>
+							<th class="fondo centro">'.$monedadocumento.' '.number_format($total_0_30, 2, ',', '.').'</th>
+							<th class="fondo centro">'.$monedadocumento.' '.number_format($total_30_60, 2, ',', '.').'</th>
+							<th class="fondo centro">'.$monedadocumento.' '.number_format($total_60_90, 2, ',', '.').'</th>
+							<th class="fondo centro">'.$monedadocumento.' '.number_format($total_mayor_90, 2, ',', '.').'</th>
+							</tr>
+					</table>';
 
         $header = '
         <table width="100%">
-        <tr>
-            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
-            <th style="text-align: center; margin-left: 600px;">
-                <p>INFORME ESTADO DE CUENTA CLIENTE</p>
-
-            </th>
-						<th>
-							&nbsp;
-							&nbsp;
-						</th>
-
-        </tr>
-
+	        <tr>
+	            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
+	            <th style="text-align: center; margin-left: 600px;">
+	                <p>INFORME ESTADO DE CUENTA CLIENTE</p>
+	            </th>
+				<th>
+					&nbsp;
+					&nbsp;
+				</th>
+	        </tr>
         </table>';
 
         $footer = '
+		    <table width="100%" style="vertical-align: bottom; font-family: serif;
+		        font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+		        <tr>
+		            <th class="fondo" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+		        </tr>
+		    </table>';
 
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th class="fondo" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
-            </tr>
-        </table>';
-
-
-				$html = '
-							'.$cuerpo.'
-        ';
- // print_r($html);exit();die();
+		$html = ''.$cuerpo.'';
+		
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
         $mpdf->SetHTMLHeader($header);
@@ -233,13 +268,8 @@ class EstadoCartera extENDs REST_Controller {
 
         $mpdf->Output('Doc.pdf', 'D');
 
-				header('Content-type: application/force-download');
-				header('Content-Disposition: attachment; filename='.$filename);
-
-
+		header('Content-type: application/force-download');
+		header('Content-Disposition: attachment; filename='.$filename);
 	}
-
-
-
 
 }

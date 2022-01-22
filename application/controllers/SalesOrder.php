@@ -498,27 +498,52 @@ class SalesOrder extends REST_Controller {
           }
 
 					//FIN DETALLE PEDIDO
+
 					if ($Data['vov_basetype'] == 1) {
 
 
-						$sqlEstado = 'SELECT distinct
-													case
-														when (t1.vc1_quantity - sum(t3.ov1_quantity)) = 0
-															then 1
-														else 0
-													end "estado"
-													from dvct t0
-													left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-													left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
-													left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
-													where t0.dvc_docentry = :dvc_docentry
-													group by
-													t1.vc1_quantity';
+						$sqlEstado1 = "SELECT
+																		       count(t1.vc1_itemcode) item,
+																		       sum(t1.vc1_quantity) cantidad
+																		from dvct t0
+																		inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
 
-						$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvc_docentry' => $Data['vov_baseentry']));
+						$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+							':dvc_docentry' => $Data['vov_baseentry'],
+							':dvc_doctype' => $Data['vov_basetype']
+							// ':vc1_itemcode' => $detail['ov1_itemcode']
+						));
 
-						if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+						$sqlEstado2 = "SELECT
+																		       coalesce(count(t3.ov1_itemcode),0) item,
+																		       coalesce(sum(t3.ov1_quantity),0) cantidad
+																		from dvct t0
+																		left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+																		left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
+																		left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
+																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
+
+
+						$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
+							':dvc_docentry' => $Data['vov_baseentry'],
+							':dvc_doctype' => $Data['vov_basetype']
+							// ':vc1_itemcode' => $detail['ov1_itemcode']
+						));
+
+						$item_cot = $resEstado1[0]['item'];
+						$item_ord = $resEstado2[0]['item'];
+						$cantidad_cot = $resEstado1[0]['cantidad'];
+						$cantidad_ord = $resEstado2[0]['cantidad'];
+
+
+
+// print_r($item_cot);
+// print_r($item_ord);
+// print_r($cantidad_cot);
+// print_r($cantidad_ord);exit();die();
+						if($item_cot == $item_ord  &&  $cantidad_cot == $cantidad_ord){
 
 									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";

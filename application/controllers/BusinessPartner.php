@@ -527,7 +527,52 @@ class BusinessPartner extends REST_Controller {
 			 $this->response($respuesta);
 	}
 
+	public function updateAddress_post()
+	{
+		$Data = $this->post();
 
+		if(!isset($Data['dmd_card_code']) OR !isset($Data['dmd_id'])){
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+				return;
+		}
+
+    $resUpdate = NULL;
+    
+    $update = $this->pedeo->updateRow('UPDATE dmsd SET dmd_ppal = 0 WHERE dmd_card_code = :dmd_card_code',[':dmd_card_code' => $Data['dmd_card_code']]);
+		
+    if(is_numeric($update) && $update > 0){
+      // 
+			$resUpdate = $this->pedeo->updateRow("UPDATE dmsd SET dmd_ppal = :dmd_ppal WHERE dmd_id = :dmd_id", 
+        array(
+          ':dmd_ppal' => 1,
+          ':dmd_id' => $Data['dmd_id']
+        )
+      );
+		}
+
+    $respuesta = array(
+      'error'   => true,
+      'data'    => $update,
+      'mensaje'	=> 'No se pudo actualizar la dirreccion del socio de negocio'
+    );
+
+		if(is_numeric($resUpdate) && $resUpdate == 1){
+      $respuesta = array(
+        'error'   => false,
+        'data'    => $resUpdate,
+        'mensaje' =>'Se actualizó la dirreccion del socio de negocio'
+      );
+		}
+
+		$this->response($respuesta);
+	}
 
 
 }

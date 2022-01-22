@@ -38,6 +38,7 @@ class PurchaseOrder extends REST_Controller {
 			$inArrayCuentaArticulo = array();
 			$llaveCuentaArticulo = "";
 			$posicionCuentaArticulo = 0;
+			$MONEDALOCAL = 0;
 
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -78,6 +79,165 @@ class PurchaseOrder extends REST_Controller {
 
           return;
       }
+
+			// SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
+			if(!intval(count($ContenidoDetalle)) > 0 ){
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'Documento sin detalle'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+			//
+			//BUSCANDO LA NUMERACION DEL DOCUMENTO
+			$sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+
+			$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['dpo_series']));
+
+			if(isset($resNumeracion[0])){
+
+					$numeroActual = $resNumeracion[0]['pgs_nextnum'];
+					$numeroFinal  = $resNumeracion[0]['pgs_last_num'];
+					$numeroSiguiente = ($numeroActual + 1);
+
+					if( $numeroSiguiente <= $numeroFinal ){
+
+							$DocNumVerificado = $numeroSiguiente;
+
+					}	else {
+
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' =>'La serie de la numeración esta llena'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+					}
+
+			}else{
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'No se encontro la serie de numeración para el documento'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+			//
+
+			//OBTENER CARPETA PRINCIPAL DEL PROYECTO
+			$sqlMainFolder = " SELECT * FROM params";
+			$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+			if(!isset($resMainFolder[0])){
+					$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'No se encontro la caperta principal del proyecto'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+			}
+		//
+
+		// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+		// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
+		$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
+		$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
+
+		if(isset($resMonedaLoc[0])){
+
+		}else{
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'No se encontro la moneda local.'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+		}
+
+		$MONEDALOCAL = trim($resMonedaLoc[0]['pgm_symbol']);
+
+		// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
+		$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
+		$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
+
+		if(isset($resMonedaSys[0])){
+
+		}else{
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'No se encontro la moneda de sistema.'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+		}
+
+		//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
+		// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
+
+
+		$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+		$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['dpo_currency'], ':tsa_date' => $Data['dpo_docdate']));
+
+		if(isset($resBusTasa[0])){
+
+		}else{
+
+				if(trim($Data['cec_currency']) != $MONEDALOCAL ){
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['dpo_currency'].' en la actual fecha del documento: '.$Data['dpo_docdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+		}
+
+		$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+		$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['dpo_docdate']));
+
+		if(isset($resBusTasa2[0])){
+
+		}else{
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['dpo_docdate']
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+		}
+
+		$TasaDocLoc = isset($resBusTasa[0]['tsa_value']) ? $resBusTasa[0]['tsa_value'] : 1;
+		$TasaLocSys = $resBusTasa2[0]['tsa_value'];
+
+		// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 
         $sqlInsert = "INSERT INTO dcpo (dpo_series, dpo_docnum, dpo_docdate, dpo_duedate, dpo_duedev, dpo_pricelist, dpo_cardcode,
                       dpo_cardname, dpo_currency, dpo_contacid, dpo_slpcode, dpo_empid, dpo_comment, dpo_doctotal, dpo_baseamnt, dpo_taxtotal,
@@ -868,24 +1028,40 @@ class PurchaseOrder extends REST_Controller {
 						if ($Data['cpo_basetype'] == 11) {
 
 
-							$sqlEstado = 'SELECT distinct
-														case
-															when (t1.sc1_quantity - sum(t3.po1_quantity)) = 0
-																then 1
-															else 0
-														end "estado"
+							$sqlEstado1 = 'SELECT distinct
+													  count(t1.sc1_itemcode) item,
+														sum(t1.sc1_quantity) cantidad
 														from dcsc t0
-														left join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-														left join dcpo t2 on t0.csc_docentry = t2.cpo_baseentry
-														left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
-														where t0.csc_docentry = :csc_docentry
-														group by
-														t1.sc1_quantity';
+														inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+														where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype
+														';
 
 
-							$resEstado = $this->pedeo->queryTable($sqlEstado, array(':csc_docentry' => $Data['cpo_baseentry']));
+							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+								':csc_docentry' => $Data['cpo_baseentry'],
+								':csc_doctype' => $Data['cpo_basetype']
+							));
 
-							if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+							$sqlEstado2 = "SELECT
+																			 coalesce(count(t3.po1_itemcode),0) item,
+																			 coalesce(count(t3.po1_quantity),0) cantidad
+																			 FROM dcsc t0
+																			 left join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+																			 left join dcpo t2 on t0.csc_docentry = t2.cpo_docentry and t0.csc_doctype = t2.cpo_basetype
+																			 left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
+																			 where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype";
+
+							$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+								':csc_docentry' => $Data['cpo_baseentry'],
+								':csc_doctype' => $Data['cpo_basetype']
+							));
+
+							$item_sol = $resEstado1[0]['item'];
+							$item_ord = $resEstado2[0]['item'];
+							$cantidad_sol = $resEstado1[0]['cantidad'];
+							$cantidad_ord = $resEstado2[0]['cantidad'];
+
+							if($item_sol == $item_ord  &&  $cantidad_sol == $cantidad_ord){
 
 										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -1319,23 +1495,23 @@ class PurchaseOrder extends REST_Controller {
   }
 
 	private function buscarPosicion($llave, $inArray){
-			$res = 0;
-	  	for($i = 0; $i < count($inArray); $i++) {
-					if($inArray[$i] == "$llave"){
-								$res =  $i;
-								break;
-					}
-			}
+		$res = 0;
+  	for($i = 0; $i < count($inArray); $i++) {
+				if($inArray[$i] == "$llave"){
+							$res =  $i;
+							break;
+				}
+		}
 
-			return $res;
+		return $res;
 	}
 
 	private function validateDate($fecha){
-			if(strlen($fecha) == 10 OR strlen($fecha) > 10){
-				return true;
-			}else{
-				return false;
-			}
+		if(strlen($fecha) == 10 OR strlen($fecha) > 10){
+			return true;
+		}else{
+			return false;
+		}
 	}
 
 

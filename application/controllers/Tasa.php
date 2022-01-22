@@ -155,7 +155,7 @@ class Tasa extends REST_Controller {
 											 	tsa_id,
 												tsa_curro,
 												tsa_currd,
-												concat(tsa_curro,' ',to_char(tsa_value,'999,999,999,999.00')) as tsa_value,
+												concat(tsa_curro,' ',tsa_value) as tsa_value,
 												tsa_date
 											 FROM tasa";
 

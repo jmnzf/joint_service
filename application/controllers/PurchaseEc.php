@@ -53,7 +53,7 @@ class PurchaseEc extends REST_Controller {
 
 			$TasaDocLoc = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL DOCUMENTO
 			$TasaLocSys = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL SISTEMA
-			$MONEDALOCAL = '';
+			$MONEDALOCAL = 0;
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -419,7 +419,7 @@ class PurchaseEc extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'	  => $resInsertAsiento,
-									'mensaje'	=> 'No se pudo registrar la entrada de compras'
+									'mensaje'	=> 'No se pudo registrar la entrada de compras 1'
 								);
 
 								 $this->response($respuesta);
@@ -481,50 +481,121 @@ class PurchaseEc extends REST_Controller {
 								}
 
 
+								// si el item es inventariable
+								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
+								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
+								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
+
+												':dma_item_code' => $detail['ec1_itemcode'],
+												':dma_item_inv'  => 1
+								));
+
+								if(isset($resItemINV[0])){
+
+									$ManejaInvetario = 1;
+
+								}else{
+									$ManejaInvetario = 0;
+								}
+
+								// FIN PROCESO ITEM MANEJA INVENTARIO
+								// si el item es inventariable
+
+
 								//AGREGAR ITEM Y CANTIDAD AL STOCK SI NO EXISTE
 								// //Se aplica el movimiento de inventario
 								// //Solo si el item es inventariable
-								if($detail['ec1_inventory'] == 1 || $detail['ec1_inventory']  == '1'){
+								if( $ManejaInvetario == 1 ){
 
-											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry)
-																						 VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry)";
+									$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+									$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['ec1_whscode'], ':bdi_itemcode' => $detail['ec1_itemcode']));
 
-											$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-													 ':bmi_itemcode' => isset($detail['ec1_itemcode'])?$detail['ec1_itemcode']:NULL,
-													 ':bmi_quantity' => is_numeric($detail['ec1_quantity'])? $detail['ec1_quantity'] * $Data['invtype']:0,
-													 ':bmi_whscode'  => isset($detail['ec1_whscode'])?$detail['ec1_whscode']:NULL,
-													 ':bmi_createat' => $this->validateDate($Data['cec_createat'])?$Data['cec_createat']:NULL,
-													 ':bmi_createby' => isset($Data['cec_createby'])?$Data['cec_createby']:NULL,
-													 ':bmy_doctype'  => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0,
-													 ':bmy_baseentry' => $resInsert
+									if(!isset($resCostoMomentoRegistro[0])){
+										// SE COLOCA EL PRECIO DE LA LINEA COMO EL COSTO
+										//Se aplica el movimiento de inventario
+										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																					VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
 
-											));
+										$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-											if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
-													// Se verifica que el detalle no de error insertando //
-											}else{
+												 ':bmi_itemcode'  => isset($detail['ec1_itemcode'])?$detail['ec1_itemcode']:NULL,
+												 ':bmi_quantity'  => is_numeric($detail['ec1_quantity'])? $detail['ec1_quantity'] * $Data['invtype']:0,
+												 ':bmi_whscode'   => isset($detail['ec1_whscode'])?$detail['ec1_whscode']:NULL,
+												 ':bmi_createat'  => $this->validateDate($Data['cec_createat'])?$Data['cec_createat']:NULL,
+												 ':bmi_createby'  => isset($Data['cec_createby'])?$Data['cec_createby']:NULL,
+												 ':bmy_doctype'   => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0,
+												 ':bmy_baseentry' => $resInsert,
+												 ':bmi_cost'      => $detail['ec1_price'],
+												 ':bmi_currequantity' 	=> 0,
+												 ':bmi_basenum'			=> $DocNumVerificado
 
-													// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
-													// se retorna el error y se detiene la ejecucion del codigo restante.
-														$this->pedeo->trans_rollback();
+										));
 
-														$respuesta = array(
-															'error'   => true,
-															'data' => $sqlInserMovimiento,
-															'mensaje'	=> 'No se pudo registrar la Entrada de Compra'
-														);
+										if(is_numeric($resInserMovimiento) && $resInserMovimiento > 0){
+												// Se verifica que el detalle no de error insertando //
+										}else{
 
-														 $this->response($respuesta);
+												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+												// se retorna el error y se detiene la ejecucion del codigo restante.
+													$this->pedeo->trans_rollback();
 
-														 return;
-											}
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resInserMovimiento,
+														'mensaje'	=> 'No se pudo registrar la entrada en compras'
+													);
+
+													 $this->response($respuesta);
+
+													 return;
+										}
+									}else{
+										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
+																					VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
+
+										$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+
+												 ':bmi_itemcode' => isset($detail['ec1_itemcode'])?$detail['ec1_itemcode']:NULL,
+												 ':bmi_quantity' => is_numeric($detail['ec1_quantity'])? $detail['ec1_quantity'] * $Data['invtype']:0,
+												 ':bmi_whscode'  => isset($detail['ec1_whscode'])?$detail['ec1_whscode']:NULL,
+												 ':bmi_createat' => $this->validateDate($Data['cec_createat'])?$Data['cec_createat']:NULL,
+												 ':bmi_createby' => isset($Data['cec_createby'])?$Data['cec_createby']:NULL,
+												 ':bmy_doctype'  => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0,
+												 ':bmy_baseentry' => $resInsert,
+												 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+												 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+												 ':bmi_basenum'			=> $DocNumVerificado
+										));
+
+										if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){
+												// Se verifica que el detalle no de error insertando //
+										}else{
+
+												// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
+												// se retorna el error y se detiene la ejecucion del codigo restante.
+													$this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' => $sqlInserMovimiento,
+														'mensaje'	=> 'No se pudo registrar la Entrada de Compra 2'
+													);
+
+													 $this->response($respuesta);
+
+													 return;
+										}
+									}
+
+
 								}
+
 
 								//Se Aplica el movimiento en stock y se cambia el costo ponderado
 								//Solo si el articulo es inventariable
 
-								if($detail['ec1_inventory'] == 1 || $detail['ec1_inventory']  == '1'){
+								if(	$ManejaInvetario  == 1){
 
 									$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
 																				FROM tbdi
@@ -539,53 +610,96 @@ class PurchaseEc extends REST_Controller {
 									// SI EXISTE EL ITEM EN EL STOCK
 									if(isset($resCostoCantidad[0])){
 
+										//SI TIENE CANTIDAD POSITIVA
+										if($resCostoCantidad[0]['bdi_quantity'] > 0){
+
+													$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+													$CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
+
+													$CantidadNueva = $detail['ec1_quantity'];
+													$CostoNuevo = $detail['ec1_price'];
+
+													$CantidadTotal = ($CantidadActual + $CantidadNueva);
+
+													if(trim($Data['cec_currency']) != $MONEDALOCAL ){
+														 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
+													}
+
+													$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
+													$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+
+													$sqlUpdateCostoCantidad = "UPDATE tbdi
+																										 SET bdi_quantity = :bdi_quantity
+																										 ,bdi_avgprice = :bdi_avgprice
+																										 WHERE  bdi_id = :bdi_id";
+
+												 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+															 ':bdi_quantity' => $CantidadTotal,
+															 ':bdi_avgprice' => $NuevoCostoPonderado,
+															 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+												 ));
+
+												 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+
+												 }else{
+
+														 $this->pedeo->trans_rollback();
+
+														 $respuesta = array(
+															 'error'   => true,
+															 'data'    => $resUpdateCostoCantidad,
+															 'mensaje'	=> 'No se pudo crear la Entrada de Compra'
+														 );
+
+														 $this->response($respuesta);
+
+														 return;
+												 }
+
+										}else{
+
+													$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+													$CantidadNueva = $detail['ec1_quantity'];
+													$CostoNuevo = $detail['ec1_price'];
 
 
-												$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-												$CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
+													$CantidadTotal = ($CantidadActual + $CantidadNueva);
 
-												$CantidadNueva = $detail['ec1_quantity'];
-												$CostoNuevo = $detail['ec1_price'];
+													if(trim($Data['cec_currency']) != $MONEDALOCAL ){
+														 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
+													}
 
-												$CantidadTotal = ($CantidadActual + $CantidadNueva);
+													$sqlUpdateCostoCantidad = "UPDATE tbdi
+																										 SET bdi_quantity = :bdi_quantity
+																										 ,bdi_avgprice = :bdi_avgprice
+																										 WHERE  bdi_id = :bdi_id";
 
-												if(trim($Data['cec_currency']) != $MONEDALOCAL ){
-													 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
-												}
+													$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
-												$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-												$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+																 ':bdi_quantity' => $CantidadTotal,
+																 ':bdi_avgprice' => $CostoNuevo,
+																 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+													));
 
-												$sqlUpdateCostoCantidad = "UPDATE tbdi
-																									 SET bdi_quantity = :bdi_quantity
-																									 ,bdi_avgprice = :bdi_avgprice
-																									 WHERE  bdi_id = :bdi_id";
+													if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
 
-											 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+													}else{
 
-														 ':bdi_quantity' => $CantidadTotal,
-														 ':bdi_avgprice' => $NuevoCostoPonderado,
-														 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
-											 ));
+															$this->pedeo->trans_rollback();
 
-											 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
-
-											 }else{
-
-													 $this->pedeo->trans_rollback();
-
-													 $respuesta = array(
-														 'error'   => true,
-														 'data'    => $resUpdateCostoCantidad,
-														 'mensaje'	=> 'No se pudo crear la Entrada de Compra'
-													 );
-
-													 $this->response($respuesta);
-
-													 return;
-											 }
+															$respuesta = array(
+																'error'   => true,
+																'data'    => $resUpdateCostoCantidad,
+																'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+															);
 
 
+															$this->response($respuesta);
+
+															return;
+													}
+										}
 
 								// En caso de que no exista el item en el stock
 								// Se inserta en el stock con el precio de compra
@@ -621,7 +735,7 @@ class PurchaseEc extends REST_Controller {
 															$respuesta = array(
 																'error'   => true,
 																'data' 		=> $resInsertCostoCantidad,
-																'mensaje'	=> 'No se pudo registrar la Entrada de Compra'
+																'mensaje'	=> 'No se pudo registrar la Entrada de Compra 3'
 															);
 
 															 $this->response($respuesta);
@@ -641,8 +755,6 @@ class PurchaseEc extends REST_Controller {
 
 								$DetalleAsientoIngreso = new stdClass();
 								$DetalleAsientoIva = new stdClass();
-								$DetalleCostoInventario = new stdClass();
-								$DetalleCostoCosto = new stdClass();
 
 
 								$DetalleAsientoIngreso->ac1_account = is_numeric($detail['ec1_acctcode'])?$detail['ec1_acctcode']: 0;
@@ -673,67 +785,80 @@ class PurchaseEc extends REST_Controller {
 								$DetalleAsientoIva->ec1_whscode = isset($detail['ec1_whscode'])?$detail['ec1_whscode']:NULL;
 
 
+								if(	$ManejaInvetario  == 1){
+									$DetalleCostoInventario = new stdClass();
+									$DetalleCostoCosto = new stdClass();
 
-								// se busca la cuenta contable del costoInventario y costoCosto
-								$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
 
-								$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['ec1_itemcode']));
+									// se busca la cuenta contable del costoInventario y costoCosto
+									// $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+									//
+									// $resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['ec1_itemcode']));
+									//
+									// if(!isset($resArticulo[0])){
+									//
+									// 			$this->pedeo->trans_rollback();
+									//
+									// 			$respuesta = array(
+									// 				'error'   => true,
+									// 				'data' => $resArticulo,
+									// 				'mensaje'	=> 'No se pudo registrar la entrada de compras 2'
+									// 			);
+									//
+									// 			 $this->response($respuesta);
+									//
+									// 			 return;
+									// }
 
-								if(!isset($resArticulo[0])){
 
-											$this->pedeo->trans_rollback();
+									$DetalleCostoInventario->ac1_account = is_numeric($detail['ec1_acctcode'])?$detail['ec1_acctcode']: 0;
+									$DetalleCostoInventario->ac1_prc_code = isset($detail['ec1_costcode'])?$detail['ec1_costcode']:NULL;
+									$DetalleCostoInventario->ac1_uncode = isset($detail['ec1_ubusiness'])?$detail['ec1_ubusiness']:NULL;
+									$DetalleCostoInventario->ac1_prj_code = isset($detail['ec1_project'])?$detail['ec1_project']:NULL;
+									$DetalleCostoInventario->ec1_linetotal = is_numeric($detail['ec1_linetotal'])?$detail['ec1_linetotal']:0;
+									$DetalleCostoInventario->ec1_vat = is_numeric($detail['ec1_vat'])?$detail['ec1_vat']:0;
+									$DetalleCostoInventario->ec1_vatsum = is_numeric($detail['ec1_vatsum'])?$detail['ec1_vatsum']:0;
+									$DetalleCostoInventario->ec1_price = is_numeric($detail['ec1_price'])?$detail['ec1_price']:0;
+									$DetalleCostoInventario->ec1_itemcode = isset($detail['ec1_itemcode'])?$detail['ec1_itemcode']:NULL;
+									$DetalleCostoInventario->ec1_quantity = is_numeric($detail['ec1_quantity'])?$detail['ec1_quantity']:0;
+									$DetalleCostoInventario->ec1_whscode = isset($detail['ec1_whscode'])?$detail['ec1_whscode']:NULL;
+									$DetalleCostoInventario->ec1_inventory = 	$ManejaInvetario;
 
-											$respuesta = array(
-												'error'   => true,
-												'data' => $resArticulo,
-												'mensaje'	=> 'No se pudo registrar la entrada de compras'
-											);
 
-											 $this->response($respuesta);
-
-											 return;
+									$DetalleCostoCosto->ac1_account = is_numeric($detail['ec1_acctcode'])?$detail['ec1_acctcode']: 0;
+									$DetalleCostoCosto->ac1_prc_code = isset($detail['ec1_costcode'])?$detail['ec1_costcode']:NULL;
+									$DetalleCostoCosto->ac1_uncode = isset($detail['ec1_ubusiness'])?$detail['ec1_ubusiness']:NULL;
+									$DetalleCostoCosto->ac1_prj_code = isset($detail['ec1_project'])?$detail['ec1_project']:NULL;
+									$DetalleCostoCosto->ec1_linetotal = is_numeric($detail['ec1_linetotal'])?$detail['ec1_linetotal']:0;
+									$DetalleCostoCosto->ec1_vat = is_numeric($detail['ec1_vat'])?$detail['ec1_vat']:0;
+									$DetalleCostoCosto->ec1_vatsum = is_numeric($detail['ec1_vatsum'])?$detail['ec1_vatsum']:0;
+									$DetalleCostoCosto->ec1_price = is_numeric($detail['ec1_price'])?$detail['ec1_price']:0;
+									$DetalleCostoCosto->ec1_itemcode = isset($detail['ec1_itemcode'])?$detail['ec1_itemcode']:NULL;
+									$DetalleCostoCosto->ec1_quantity = is_numeric($detail['ec1_quantity'])?$detail['ec1_quantity']:0;
+									$DetalleCostoCosto->ec1_whscode = isset($detail['ec1_whscode'])?$detail['ec1_whscode']:NULL;
+									$DetalleCostoCosto->ec1_inventory = 	$ManejaInvetario;
 								}
 
 
-								$DetalleCostoInventario->ac1_account = $resArticulo[0]['mga_acct_inv'];
-								$DetalleCostoInventario->ac1_prc_code = isset($detail['ec1_costcode'])?$detail['ec1_costcode']:NULL;
-								$DetalleCostoInventario->ac1_uncode = isset($detail['ec1_ubusiness'])?$detail['ec1_ubusiness']:NULL;
-								$DetalleCostoInventario->ac1_prj_code = isset($detail['ec1_project'])?$detail['ec1_project']:NULL;
-								$DetalleCostoInventario->ec1_linetotal = is_numeric($detail['ec1_linetotal'])?$detail['ec1_linetotal']:0;
-								$DetalleCostoInventario->ec1_vat = is_numeric($detail['ec1_vat'])?$detail['ec1_vat']:0;
-								$DetalleCostoInventario->ec1_vatsum = is_numeric($detail['ec1_vatsum'])?$detail['ec1_vatsum']:0;
-								$DetalleCostoInventario->ec1_price = is_numeric($detail['ec1_price'])?$detail['ec1_price']:0;
-								$DetalleCostoInventario->ec1_itemcode = isset($detail['ec1_itemcode'])?$detail['ec1_itemcode']:NULL;
-								$DetalleCostoInventario->ec1_quantity = is_numeric($detail['ec1_quantity'])?$detail['ec1_quantity']:0;
-								$DetalleCostoInventario->ec1_whscode = isset($detail['ec1_whscode'])?$detail['ec1_whscode']:NULL;
-								$DetalleCostoInventario->ec1_inventory = is_numeric($detail['ec1_inventory'])?$detail['ec1_inventory']:NULL;
-
-
-								$DetalleCostoCosto->ac1_account = $resArticulo[0]['mga_acct_cost'];
-								$DetalleCostoCosto->ac1_prc_code = isset($detail['ec1_costcode'])?$detail['ec1_costcode']:NULL;
-								$DetalleCostoCosto->ac1_uncode = isset($detail['ec1_ubusiness'])?$detail['ec1_ubusiness']:NULL;
-								$DetalleCostoCosto->ac1_prj_code = isset($detail['ec1_project'])?$detail['ec1_project']:NULL;
-								$DetalleCostoCosto->ec1_linetotal = is_numeric($detail['ec1_linetotal'])?$detail['ec1_linetotal']:0;
-								$DetalleCostoCosto->ec1_vat = is_numeric($detail['ec1_vat'])?$detail['ec1_vat']:0;
-								$DetalleCostoCosto->ec1_vatsum = is_numeric($detail['ec1_vatsum'])?$detail['ec1_vatsum']:0;
-								$DetalleCostoCosto->ec1_price = is_numeric($detail['ec1_price'])?$detail['ec1_price']:0;
-								$DetalleCostoCosto->ec1_itemcode = isset($detail['ec1_itemcode'])?$detail['ec1_itemcode']:NULL;
-								$DetalleCostoCosto->ec1_quantity = is_numeric($detail['ec1_quantity'])?$detail['ec1_quantity']:0;
-								$DetalleCostoCosto->ec1_whscode = isset($detail['ec1_whscode'])?$detail['ec1_whscode']:NULL;
-								$DetalleCostoCosto->ec1_inventory = is_numeric($detail['ec1_inventory'])?$detail['ec1_inventory']:NULL;
-
 								$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
-
 								$DetalleAsientoIngreso->codigoCuenta = $codigoCuenta;
 								$DetalleAsientoIva->codigoCuenta = $codigoCuenta;
-								$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
-								$DetalleCostoCosto->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
+
+								if( $ManejaInvetario == 1){
+									$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
+									$DetalleCostoCosto->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
+
+									$llaveCostoInventario = $DetalleCostoInventario->ac1_account;
+									$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
+
+								}
+
+
 
 
 								$llave = $DetalleAsientoIngreso->ac1_uncode.$DetalleAsientoIngreso->ac1_prc_code.$DetalleAsientoIngreso->ac1_prj_code.$DetalleAsientoIngreso->ac1_account;
 								$llaveIva = $DetalleAsientoIva->ec1_vat;
-								$llaveCostoInventario = $DetalleCostoInventario->ac1_account;
-								$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
+
 
 
 								if(in_array( $llave, $inArrayIngreso )){
@@ -760,28 +885,32 @@ class PurchaseEc extends REST_Controller {
 								}
 
 
-								if(in_array( $llaveCostoInventario, $inArrayCostoInventario )){
+								if ( $ManejaInvetario == 1){
+									if(in_array( $llaveCostoInventario, $inArrayCostoInventario )){
 
-										$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
+											$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
 
-								}else{
+									}else{
 
-										array_push( $inArrayCostoInventario, $llaveCostoInventario );
-										$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
+											array_push( $inArrayCostoInventario, $llaveCostoInventario );
+											$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
 
+									}
+
+
+									if(in_array( $llaveCostoCosto, $inArrayCostoCosto )){
+
+											$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+
+									}else{
+
+											array_push( $inArrayCostoCosto, $llaveCostoCosto );
+											$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+
+									}
 								}
 
 
-								if(in_array( $llaveCostoCosto, $inArrayCostoCosto )){
-
-										$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
-
-								}else{
-
-										array_push( $inArrayCostoCosto, $llaveCostoCosto );
-										$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
-
-								}
 
 
 
@@ -811,30 +940,33 @@ class PurchaseEc extends REST_Controller {
 								array_push( $DetalleConsolidadoIngreso[$posicion], $DetalleAsientoIngreso);
 
 
-								if( isset($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
 
-									if(!is_array($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
+								if ( $ManejaInvetario == 1 ){
+									if( isset($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
+
+										if(!is_array($DetalleConsolidadoCostoInventario[$posicionCostoInventario])){
+											$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
+										}
+
+									}else{
 										$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
 									}
 
-								}else{
-									$DetalleConsolidadoCostoInventario[$posicionCostoInventario] = array();
-								}
-
-								array_push( $DetalleConsolidadoCostoInventario[$posicionCostoInventario], $DetalleCostoInventario );
+									array_push( $DetalleConsolidadoCostoInventario[$posicionCostoInventario], $DetalleCostoInventario );
 
 
-								if( isset($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
+									if( isset($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
 
-									if(!is_array($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
+										if(!is_array($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
+											$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
+										}
+
+									}else{
 										$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
 									}
 
-								}else{
-									$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
+									array_push( $DetalleConsolidadoCostoCosto[$posicionCostoCosto], $DetalleCostoCosto );
 								}
-
-								array_push( $DetalleConsolidadoCostoCosto[$posicionCostoCosto], $DetalleCostoCosto );
 
           }
 
@@ -847,72 +979,24 @@ class PurchaseEc extends REST_Controller {
 							$grantotalCostoInventario = 0 ;
 							$cuentaInventario = "";
 							$sinDatos = 0;
+							$dbito = 0;
+							$cdito = 0;
+							$MontoSysDB = 0;
+							$MontoSysCR = 0;
+
 							foreach ($posicion as $key => $value) {
 
 										// SE ACEPTAN SOLO LOS ARTICULOS QUE SON INVENTARIABLES
 										if( $value->ec1_inventory == 1 || $value->ec1_inventory  == '1' ){
 
-											$sinDatos++;
-
-											$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-
-											$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->ec1_itemcode));
-
-											if(isset($resArticulo[0])){
-													$dbito = 0;
-													$cdito = 0;
-
-													$MontoSysDB = 0;
-													$MontoSysCR = 0;
-
-													$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
-
-													$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->ec1_itemcode, ":bdi_whscode" => $value->ec1_whscode));
-
-													if( isset( $resCosto[0] ) ){
-
-																$cuentaInventario = $resArticulo[0]['mga_acct_inv'];
-
-
-																$costoArticulo = $resCosto[0]['bdi_avgprice'];
-																$cantidadArticulo = $value->ec1_quantity;
-																$grantotalCostoInventario = ($grantotalCostoInventario + ($costoArticulo * $cantidadArticulo));
-
-													}else{
-
-																$this->pedeo->trans_rollback();
-
-																$respuesta = array(
-																	'error'   => true,
-																	'data'	  => $resArticulo,
-																	'mensaje'	=> 'No se encontro el costo para el item: '.$value->ec1_itemcode
-																);
-
-																 $this->response($respuesta);
-
-																 return;
-													}
-
-											}else{
-													// si falla algun insert del detalle de la entrada de compras se devuelven los cambios realizados por la transaccion,
-													// se retorna el error y se detiene la ejecucion del codigo restante.
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data'	  => $resArticulo,
-														'mensaje'	=> 'No se encontro la cuenta de inventario y costo para el item '.$value->ec1_itemcode
-													);
-
-													 $this->response($respuesta);
-
-													 return;
-											}
+													$sinDatos++;
+													$cuentaInventario = $value->ac1_account;
+													$grantotalCostoInventario = ($grantotalCostoInventario + $value->ec1_linetotal);
 
 
 										}
 
-						}
+						  }
 
 							// SE VALIDA QUE EXISTA UN ARTICULO INVENTARIABLE
 							if ($sinDatos > 0 ){
@@ -934,8 +1018,8 @@ class PurchaseEc extends REST_Controller {
 												 $grantotalCostoInventario = ($grantotalCostoInventario * $TasaDocLoc);
 											}
 
-											$cdito = $grantotalCostoInventario;
-											$MontoSysCR = ($cdito / $TasaLocSys);
+											$dbito = $grantotalCostoInventario;
+											$MontoSysDB = ($dbito / $TasaLocSys);
 
 									}else if( $codigo3 == 3 || $codigo3 == "3" ){
 
@@ -943,8 +1027,8 @@ class PurchaseEc extends REST_Controller {
 												 $grantotalCostoInventario = ($grantotalCostoInventario * $TasaDocLoc);
 											}
 
-											$cdito = $grantotalCostoInventario;
-											$MontoSysCR = ($cdito / $TasaLocSys);
+											$dbito = $grantotalCostoInventario;
+											$MontoSysDB = ($dbito / $TasaLocSys);
 
 									}else if( $codigo3 == 4 || $codigo3 == "4" ){
 
@@ -952,8 +1036,8 @@ class PurchaseEc extends REST_Controller {
 												 $grantotalCostoInventario = ($grantotalCostoInventario * $TasaDocLoc);
 											}
 
-											$cdito = $grantotalCostoInventario;
-											$MontoSysCR = ($cdito / $TasaLocSys);
+											$dbito = $grantotalCostoInventario;
+											$MontoSysDB = ($dbito / $TasaLocSys);
 
 									}else if( $codigo3 == 5  || $codigo3 == "5" ){
 
@@ -987,8 +1071,8 @@ class PurchaseEc extends REST_Controller {
 
 											':ac1_trans_id' => $resInsertAsiento,
 											':ac1_account' => $cuentaInventario,
-											':ac1_debit' => $dbito,
-											':ac1_credit' => $cdito,
+											':ac1_debit' => round($dbito, 2),
+											':ac1_credit' => round($cdito, 2),
 											':ac1_debit_sys' => round($MontoSysDB,2),
 											':ac1_credit_sys' => round($MontoSysCR,2),
 											':ac1_currex' => 0,
@@ -1037,7 +1121,7 @@ class PurchaseEc extends REST_Controller {
 											$respuesta = array(
 												'error'   => true,
 												'data'	  => $resDetalleAsiento,
-												'mensaje'	=> 'No se pudo registrar la entrada de compras'
+												'mensaje'	=> 'No se pudo registrar la entrada de compras 3'
 											);
 
 											 $this->response($respuesta);
@@ -1054,9 +1138,33 @@ class PurchaseEc extends REST_Controller {
 
 					// Procedimiento para llenar costo costo
 
+					//se busca la cuenta puente de inventario
+					$sqlArticulo = "SELECT pge_bridge_inv FROM pgem";
+					$resArticulo = $this->pedeo->queryTable($sqlArticulo, array());
+					$cuentaCosto = "";
+					if(isset($resArticulo[0])){
+						$cuentaCosto = $resArticulo[0]['pge_bridge_inv'];
+					}else{
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data'	  => $resArticulo,
+							'mensaje'	=> 'No se pudo registrar la entrada de compras, no se encontro la cuenta puente de inventario'
+						);
+
+						 $this->response($respuesta);
+
+						 return;
+					}
+
 					foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
 							$grantotalCostoCosto = 0 ;
-							$cuentaCosto = "";
+							$dbito = 0;
+							$cdito = 0;
+							$MontoSysDB = 0;
+							$MontoSysCR = 0;
+
 							$sinDatos = 0; // SE ULTILIZA PARA VALIDAR QUE NO EXISTA NINGUN ITEM INVENTARIO
 							foreach ($posicion as $key => $value) {
 
@@ -1065,60 +1173,8 @@ class PurchaseEc extends REST_Controller {
 										if( $value->ec1_inventory == 1 || $value->ec1_inventory  == '1' ){
 
 											$sinDatos++;
+											$grantotalCostoCosto = ($grantotalCostoCosto + $value->ec1_linetotal);
 
-											$sqlArticulo = "SELECT pge_bridge_inv FROM pgem";
-											$resArticulo = $this->pedeo->queryTable($sqlArticulo, array());
-
-
-											if(isset($resArticulo[0])){
-													$dbito = 0;
-													$cdito = 0;
-													$MontoSysDB = 0;
-													$MontoSysCR = 0;
-
-													$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode";
-
-													$resCosto = $this->pedeo->queryTable($sqlCosto, array(":bdi_itemcode" => $value->ec1_itemcode, ":bdi_whscode" => $value->ec1_whscode));
-
-
-													if( isset( $resCosto[0] ) ){
-
-																$cuentaCosto = $resArticulo[0]['pge_bridge_inv']; // En la entrega se coloca la cuenta puente
-
-
-																$costoArticulo = $resCosto[0]['bdi_avgprice'];
-																$cantidadArticulo = $value->ec1_quantity;
-																$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
-
-													}else{
-
-																$this->pedeo->trans_rollback();
-
-																$respuesta = array(
-																	'error'   => true,
-																	'data'	  => $resArticulo,
-																	'mensaje'	=> 'No se encontro el costo para el item: '.$value->ec1_itemcode
-																);
-
-																 $this->response($respuesta);
-
-																 return;
-													}
-
-											}else{
-													// si falla algun insert del detalle de la entrada de compras se devuelven los cambios realizados por la transaccion,
-													// se retorna el error y se detiene la ejecucion del codigo restante.
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data'	  => $resArticulo,
-														'mensaje'	=> 'No se encontro la cuenta puente para costo');
-
-													 $this->response($respuesta);
-
-													 return;
-											}
 										}
 
 							}
@@ -1170,8 +1226,8 @@ class PurchaseEc extends REST_Controller {
 											$grantotalCostoCosto = ($grantotalCostoCosto * $TasaDocLoc);
 										}
 
-										$dbito = 	$grantotalCostoCosto;
-										$MontoSysDB = ($dbito / $TasaLocSys);
+										$cdito = 	$grantotalCostoCosto;
+										$MontoSysCR = ($cdito / $TasaLocSys);
 
 									}else if( $codigo3 == 6 || $codigo3 == "6" ){
 
@@ -1179,8 +1235,8 @@ class PurchaseEc extends REST_Controller {
 											$grantotalCostoCosto = ($grantotalCostoCosto * $TasaDocLoc);
 										}
 
-										$dbito = 	$grantotalCostoCosto;
-										$MontoSysDB = ($dbito / $TasaLocSys);
+										$cdito = 	$grantotalCostoCosto;
+										$MontoSysCR = ($cdito / $TasaLocSys);
 
 									}else if( $codigo3 == 7 || $codigo3 == "7" ){
 
@@ -1188,8 +1244,8 @@ class PurchaseEc extends REST_Controller {
 											$grantotalCostoCosto = ($grantotalCostoCosto * $TasaDocLoc);
 										}
 
-										$dbito = 	$grantotalCostoCosto;
-										$MontoSysDB = ($dbito / $TasaLocSys);
+										$cdito = 	$grantotalCostoCosto;
+										$MontoSysCR = ($cdito / $TasaLocSys);
 
 									}
 
@@ -1197,8 +1253,8 @@ class PurchaseEc extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuentaCosto,
-									':ac1_debit' => $dbito,
-									':ac1_credit' => $cdito,
+									':ac1_debit' => round($dbito, 2),
+									':ac1_credit' => round($cdito, 2),
 									':ac1_debit_sys' => round($MontoSysDB,2),
 									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
@@ -1247,7 +1303,7 @@ class PurchaseEc extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la entrada de compras'
+										'mensaje'	=> 'No se pudo registrar la entrada de compras 4'
 									);
 
 									 $this->response($respuesta);
@@ -1259,27 +1315,50 @@ class PurchaseEc extends REST_Controller {
 
 					}
 				 //FIN Procedimiento para llenar costo costo
+				 //PROCEDIMIENTO PARA CERRAR ESTADO DE DOCUMENTO DE ORIGEN
+
 				 if ($Data['cec_basetype'] == 12) {
 
 
-					 $sqlEstado = 'SELECT distinct
-												 case
-													 when (t1.po1_quantity - sum(t3.ec1_quantity)) = 0
-														 then 1
-													 else 0
-												 end "estado"
+					 $sqlEstado1 = "SELECT distinct
+												 count(t1.po1_itemcode) item,
+												 sum(t1.po1_quantity) cantidad
 												 from dcpo t0
-												 left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
-												 left join dcec t2 on t0.cpo_docentry = t2.cec_baseentry
-												 left join cec1 t3 on t2.cec_docentry = t3.ec1_docentry and t1.po1_itemcode = t3.ec1_itemcode
-												 where t0.cpo_docentry = :cpo_docentry
-												 group by
-												 t1.po1_quantity';
+												 inner join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
+												where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
 
 
-					 $resEstado = $this->pedeo->queryTable($sqlEstado, array(':cpo_docentry' => $Data['cec_baseentry']));
+					 $resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+						 ':cpo_docentry' => $Data['cec_baseentry'],
+						 ':cpo_doctype' => $Data['cec_basetype']
+					 ));
 
-					 if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+					 $sqlEstado2 = "SELECT distinct
+												count(t3.ec1_itemcode) item,
+												sum(t3.ec1_quantity) cantidad
+												from dcpo t0
+												left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
+												left join dcec t2 on t0.cpo_docentry = t2.cec_baseentry  and t0.cpo_doctype = t2.cec_basetype
+												left join cec1 t3 on t2.cec_docentry = t3.ec1_docentry and t1.po1_itemcode = t3.ec1_itemcode
+											 where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
+
+
+					$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
+						':cpo_docentry' => $Data['cec_baseentry'],
+						':cpo_doctype' => $Data['cec_basetype']
+					));
+
+
+					$item_ord = $resEstado1[0]['item'];
+					$item_ec = $resEstado2[0]['item'];
+					$cantidad_ord = $resEstado1[0]['cantidad'];
+					$cantidad_ec = $resEstado2[0]['cantidad'];
+// print_r($item_ord);
+// print_r($item_ec);
+// print_r($cantidad_ord);
+// print_r($cantidad_ec);exit();die();
+
+					 if($item_ord == $item_ec  && $cantidad_ord == $cantidad_ec){
 
 								 $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																		 VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -1306,7 +1385,7 @@ class PurchaseEc extends REST_Controller {
 											 $respuesta = array(
 												 'error'   => true,
 												 'data' => $resInsertEstado,
-												 'mensaje'	=> 'No se pudo registrar la entrada de compra'
+												 'mensaje'	=> 'No se pudo registrar la entrada de compras 6'
 											 );
 
 
@@ -1339,7 +1418,7 @@ class PurchaseEc extends REST_Controller {
               $respuesta = array(
                 'error'   => true,
                 'data' => $resInsert,
-                'mensaje'	=> 'No se pudo registrar la entrada de compra'
+                'mensaje'	=> 'No se pudo registrar la entrada de compra 7'
               );
 
 
@@ -1486,7 +1565,7 @@ class PurchaseEc extends REST_Controller {
 												$respuesta = array(
 													'error'   => true,
 													'data' => $resInsert,
-													'mensaje'	=> 'No se pudo registrar la entrada de compra'
+													'mensaje'	=> 'No se pudo registrar la entrada de compra 8'
 												);
 
 												 $this->response($respuesta);

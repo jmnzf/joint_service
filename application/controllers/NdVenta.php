@@ -106,12 +106,13 @@ class NdVenta extends REST_Controller {
 												FROM DVND t0
 												INNER JOIN VND1 T1 ON t0.VND_docentry = t1.ND1_docentry
 												LEFT JOIN DMSN T2 ON t0.VND_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON T0.VND_ADRESS = CAST(T3.DMD_ID AS VARCHAR)
+												LEFT JOIN DMSD T3 ON T0.VND_ADRESS = CAST(T3.DMD_ID AS VARCHAR) AND t3.dmd_ppal = 1
 												LEFT JOIN DMSC T4 ON T0.VND_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
 												LEFT JOIN DMEV T5 ON T0.VND_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.VND_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.VND_SERIES = T6.PGS_ID
 												LEFT JOIN PGEC T7 ON T0.VND_CURRENCY = T7.PGM_SYMBOL
-												WHERE T0.VND_DOCENTRY = :VND_DOCENTRY";
+												WHERE T0.VND_DOCENTRY = :VND_DOCENTRY
+												and t2.dms_card_type = '1'";
 
 				$contenidoNdV = $this->pedeo->queryTable($sqlcotizacion,array(':VND_DOCENTRY'=>$Data));
 
