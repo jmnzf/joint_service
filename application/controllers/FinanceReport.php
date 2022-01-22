@@ -82,7 +82,7 @@ class FinanceReport extends REST_Controller {
 	// METODO PARA CREAR CABECERA
   public function createFinanceReport_post(){
     $Data = $this->post();
-    if( !isset($Data['mif_name']) OR
+    if( (!isset($Data['mif_name']) AND empty($Data['mif_name'])) OR
         !isset($Data['mif_create_by']) OR
         !isset($Data['mif_status'])
       ){
@@ -162,8 +162,9 @@ class FinanceReport extends REST_Controller {
 	// METODO PARA CREAR EL DETALLE
   public function  createFinanceReportGroup_post(){
     $Data = $this->post();
-    if( !isset($Data['if1_group_name']) OR
-        !isset($Data['if1_mif_id'])
+    if( (!isset($Data['if1_group_name']) OR empty($Data['if1_group_name'])) OR
+        !isset($Data['if1_mif_id']) OR
+        (!isset($Data['if1_order']) OR empty($Data['if1_order'])) 
       ){
       $this->response(array(
         'error'  => true,
@@ -175,9 +176,11 @@ class FinanceReport extends REST_Controller {
     }
 
 
-	$sqlInsert ="INSERT INTO mif1 (if1_group_name, if1_mif_id) VALUES(:if1_group_name,:if1_mif_id)";
+	$sqlInsert ="INSERT INTO mif1 (if1_group_name, if1_mif_id,if1_order) VALUES(:if1_group_name,:if1_mif_id,:if1_order)";
 	$resInsert = $this->pedeo->insertRow($sqlInsert,array(":if1_group_name"=>$Data['if1_group_name'],
-	":if1_mif_id"=>$Data['if1_mif_id']));
+												":if1_mif_id"=>$Data['if1_mif_id'],
+												"if1_order" =>$Data['if1_order']
+											));
 
 
     if(is_numeric($resInsert) && $resInsert > 0){
@@ -188,7 +191,7 @@ class FinanceReport extends REST_Controller {
         'mensaje' => 'informe financiero creado con exito');
 
     }else{
-			$this->pedeo->trans_rollback();
+			// $this->pedeo->trans_rollback();
       $respuesta = array(
         'error' => true,
         'data'  => $resInsert,
@@ -348,8 +351,10 @@ class FinanceReport extends REST_Controller {
 	// METODO PAR ACTUALIZAR GRUPO
 	public function updateGroup_post()	{
 		$Data = $this->post();
-		if( !isset($Data['if1_group_name']) OR
-			!isset($Data['if1_docentry'])
+		if( (!isset($Data['if1_group_name']) OR empty($Data['if1_group_name'])) OR
+			!isset($Data['if1_docentry']) OR
+			(!isset($Data['if1_order']) OR empty($Data['if1_order'])) 
+
 		){
 		$this->response(array(
 			'error'  => true,
@@ -360,11 +365,13 @@ class FinanceReport extends REST_Controller {
 		return ;
 		}
 
-		$sqlUpdate ="UPDATE mif1 set if1_group_name = :if1_group_name
-					WHERE if1_docentry = :if1_docentry";
+		$sqlUpdate ="UPDATE mif1 set if1_group_name = :if1_group_name,
+									if1_order = :if1_order
+									WHERE if1_docentry = :if1_docentry";
 
 		$resUpdate = $this->pedeo->updateRow($sqlUpdate,array(
 										':if1_group_name' =>$Data['if1_group_name'],
+										':if1_order' =>$Data['if1_order'],
 										':if1_docentry' =>$Data['if1_docentry']
 									));
 
@@ -387,9 +394,10 @@ class FinanceReport extends REST_Controller {
 	// METODO PARA CREAR SUBGRUPO
 	public function createSubgroup_post(){
 		$Data = $this->post();
-			if( !isset($Data['if2_subgroup_name']) OR
-				!isset($Data['if2_conduct']) OR
-				!isset($Data['if2_fi1_id'])
+		if( (!isset($Data['if2_subgroup_name']) OR empty($Data['if2_subgroup_name'])) OR
+			(!isset($Data['if2_conduct']) OR empty($Data['if2_conduct'])) OR
+				!isset($Data['if2_fi1_id']) OR
+				(!isset($Data['if2_order']) OR empty($Data['if2_order'])) 
 			){
 			$this->response(array(
 				'error'  => true,
@@ -401,13 +409,14 @@ class FinanceReport extends REST_Controller {
 			}
 
 
-			$sqlInsert ="INSERT INTO mif2 (if2_subgroup_name,if2_conduct, if2_fi1_id)
-			VALUES(:if2_subgroup_name,:if2_conduct,:if2_fi1_id)";
+			$sqlInsert ="INSERT INTO mif2 (if2_subgroup_name,if2_conduct, if2_fi1_id,if2_order)
+			VALUES(:if2_subgroup_name,:if2_conduct,:if2_fi1_id,:if2_order)";
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert,array(
 				":if2_subgroup_name"=>$Data['if2_subgroup_name'],
 				":if2_conduct"=>$Data['if2_conduct'],
-				":if2_fi1_id"=>$Data['if2_fi1_id'])
+				":if2_fi1_id"=>$Data['if2_fi1_id'],
+				':if2_order'=> $Data['if2_order'])
 			);
 
 
@@ -430,9 +439,10 @@ class FinanceReport extends REST_Controller {
 	// METODO PARA ACTUALIZAR SUBGRUPO
 	public function updateSubgroup_post(){
 			$Data = $this->post();
-			if( !isset($Data['if2_subgroup_name']) OR
-				!isset($Data['if2_conduct']) OR
-				!isset($Data['if2_docentry'])
+			if( (!isset($Data['if2_subgroup_name']) OR empty($Data['if2_subgroup_name'])) OR
+			(!isset($Data['if2_conduct']) OR empty($Data['if2_conduct'])) OR
+				!isset($Data['if2_fi1_id']) OR
+				(!isset($Data['if2_order']) OR empty($Data['if2_order'])) 
 			){
 			$this->response(array(
 				'error'  => true,
@@ -445,12 +455,14 @@ class FinanceReport extends REST_Controller {
 
 
 			$sqlUpdate ="UPDATE mif2 SET if2_subgroup_name = :if2_subgroup_name,
-										if2_conduct = :if2_conduct
+										if2_conduct = :if2_conduct,
+										if2_order =:if2_order
 										WHERE if2_docentry = :if2_docentry";
 
 			$resUpdate = $this->pedeo->updateRow($sqlUpdate,array(
 				":if2_subgroup_name"=>$Data['if2_subgroup_name'],
 				":if2_conduct"=>$Data['if2_conduct'],
+				":if2_order"=>$Data['if2_order'],
 				":if2_docentry"=>$Data['if2_docentry']
 				));
 
@@ -463,7 +475,7 @@ class FinanceReport extends REST_Controller {
 				'mensaje' => 'Subgrupo creado con exito');
 
 			}else{
-					$this->pedeo->trans_rollback();
+					// $this->pedeo->trans_rollback();
 			$respuesta = array(
 				'error' => true,
 				'data'  => [],
