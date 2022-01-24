@@ -800,4 +800,95 @@ class Reports extends REST_Controller {
 				 $this->response($respuesta);
 	}
 
+
+	// PARA REPORTE LIBRO DIARIO DE VENTAS
+	public function  logBook_post(){
+		$Data = $this->post();
+
+    if( !isset($Data['dvf_docdate']) OR
+        !isset($Data['dvf_duedate'])
+      ){
+      $this->response(array(
+        'error'  => true,
+        'data'   => [],
+        'mensaje'=>'La informacion enviada no es valida'
+      ), REST_Controller::HTTP_BAD_REQUEST);
+
+      return ;
+    }
+
+		$sqlSelect = "SELECT
+									fv.dvf_docentry, fv.dvf_docdate, dmdt.mdt_docname as dvf_doctype, fv.dvf_docnum, fv.dvf_correl,
+									fv.dvf_cardcode, fv.dvf_cardname, dvf_doctotal, '' excentas, fv.dvf_baseamnt, fv.dvf_taxtotal
+									from dvfv fv
+									inner join dmdt
+									on dvf_doctype = mdt_doctype
+									WHERE fv.dvf_docdate >= :dvf_docdate and fv.dvf_duedate <=:dvf_duedate";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":dvf_docdate" =>$Data['dvf_docdate'],":dvf_duedate"=>$Data['dvf_duedate']));
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+	}
+
+	// PARA REPORTE LIBRO DIARIO DE COMPRAS
+	public function  logShoppingBook_post(){
+		$Data = $this->post();
+
+		if( !isset($Data['cfc_docdate']) OR
+				!isset($Data['cfc_duedate'])
+			){
+			$this->response(array(
+				'error'  => true,
+				'data'   => [],
+				'mensaje'=>'La informacion enviada no es valida'
+			), REST_Controller::HTTP_BAD_REQUEST);
+
+			return ;
+		}
+
+		$sqlSelect = "SELECT
+									fc.cfc_docentry, fc.cfc_docdate, dmdt.mdt_docname as cfc_doctype, fc.cfc_docnum, 0 as cfc_correl,
+									fc.cfc_cardcode, fc.cfc_cardname, cfc_doctotal, '' excentas, fc.cfc_baseamnt, fc.cfc_taxtotal
+									from dcfc fc
+									inner join dmdt
+									on cfc_doctype = mdt_doctype
+									WHERE fc.cfc_docdate >= :cfc_docdate and fc.cfc_duedate <=:cfc_duedate";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":cfc_docdate" =>$Data['cfc_docdate'],":cfc_duedate"=>$Data['cfc_duedate']));
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+	}
+
 }
