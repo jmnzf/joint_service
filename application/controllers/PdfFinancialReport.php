@@ -146,20 +146,20 @@ class PdfFinancialReport extENDs REST_Controller {
             $totalmonto = '';
             $acumulado = 0;
             foreach ($rescuentas as $key => $value) {
-                
-                $sqlmontocuenta = 'SELECT SUM(ac1_debit - ac1_credit) as totalcuenta FROM mac1 WHERE ac1_doc_date BETWEEN :fi AND :ff AND ac1_account = :ac1_account HAVING (SUM(ac1_debit) -  SUM(ac1_credit))  IS NOT NULL';
+
+                $sqlmontocuenta = 'SELECT ABS(SUM(ac1_debit - ac1_credit)) as totalcuenta FROM mac1 WHERE ac1_doc_date BETWEEN :fi AND :ff AND ac1_account = :ac1_account HAVING (SUM(ac1_debit) -  SUM(ac1_credit))  IS NOT NULL';
                 $resmontocuenta = $this->pedeo->queryTable($sqlmontocuenta, array( ':fi' => $Data['fi'], ':ff' =>$Data['ff'], ':ac1_account' => $value['if3_account'] ));
-                
+
                 $cuentas .='<tr><td style="text-align: left;" width="50%">'.$value['acc_name'].'</td>';
                 if(isset($resmontocuenta[0])){
-                  
+
                   $cuentas .='<td style="text-align: right;" width="50%">'.number_format($resmontocuenta[0]['totalcuenta'], 2, ',', '.').'</td></tr>';
                   $acumulado+=(abs($resmontocuenta[0]['totalcuenta'])*$comportamiento);
                 }else{
                   $cuentas.='<td style="text-align: right;">'.number_format(0, 2, ',', '.').'</td></tr>';
                 }
-                
-            } 
+
+            }
 
             $tablacuentas .= $cuentas;
 
@@ -171,7 +171,7 @@ class PdfFinancialReport extENDs REST_Controller {
             </table>';
           }
           $acumuladoGrupo += $acumulado;
-          
+
         }
         $acumuladoTotal += $acumuladoGrupo;
       }
@@ -217,7 +217,7 @@ class PdfFinancialReport extENDs REST_Controller {
 		    $html = $content;
         // print_r($html);
         // exit;
-      
+
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
