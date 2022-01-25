@@ -45,6 +45,8 @@ class Analysis extends REST_Controller {
     $prefix ='';
 		$tables = array(
 			'5' =>  array('table' =>'dvfv','prefix'=>'dvf'),
+			'6' =>  array('table' =>'dvnc','prefix'=>'vnc'),
+			'7' =>  array('table' =>'dvnd','prefix'=>'vnd'),
 			'2' =>  array('table' =>'dvov','prefix'=>'vov'),
 			'12' =>  array('table' =>'dcpo','prefix'=>'cpo'),
 			'15' =>  array('table' =>'dcfc','prefix'=>'cfc')
