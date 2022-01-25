@@ -49,7 +49,7 @@ class PdfFinancialReport extENDs REST_Controller {
 
 	  $formatter = new NumeroALetras();
 
-    $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','orientation' => 'L']);
+    $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);
 
     //RUTA DE CARPETA EMPRESA
     $company = $this->pedeo->queryTable("SELECT main_folder company FROM PARAMS",array());
@@ -82,6 +82,21 @@ class PdfFinancialReport extENDs REST_Controller {
 	        return;
 		}
 
+    $sqlSelect = " SELECT * from tmif where mif_docentry = :mif_docentry";
+    $resSelect = $this->pedeo->queryTable($sqlSelect,array(":mif_docentry"=>$Data['informe']));
+
+    if(!isset($resSelect[0])){
+      $respuesta = array(
+        'error' => true,
+        'data'  => $resSelect,
+        'mensaje' =>'Se encuentran datos relacionados a la busqueda'
+     );
+
+       $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+     return;
+    }
+
 		$sqlinforme = "SELECT * FROM mif1 WHERE if1_mif_id = :if1_mif_id";
 
 		$resinforme = $this->pedeo->queryTable($sqlinforme,array(':if1_mif_id' => $Data['informe']));
@@ -103,11 +118,12 @@ class PdfFinancialReport extENDs REST_Controller {
     $cuentas = '';
     $bloque = '';
     $content = '';
+    $acumuladoTotal = 0;
     foreach ($resinforme as $key => $value) {
+      $acumuladoGrupo = 0;
+			$grupo ='<table width="100%"><tr><th style="text-align: left;">'.$value['if1_group_name'].'</th></tr></table>';
 
-			$grupo ='<table width="100%"><tr><th>'.$value['if1_group_name'].'<th></tr></table>';
-
-
+      $groupName = $value['if1_group_name'];
       $content .= $grupo;
 
 
@@ -119,42 +135,60 @@ class PdfFinancialReport extENDs REST_Controller {
 
         foreach ($ressubgrupo as $key => $value) {
 
-          $subgrupo = '<table width="100%"><tr><th style ="text-align: left;">'.$value['if2_subgroup_name'].'<th></tr></table>';
+          $subgrupo = '<table width="100%"><tr ><th class="fondo" style ="text-align: left;">'.$value['if2_subgroup_name'].'</th></table>';
 
           $sqlcuentas = 'SELECT mif3.* , dacc.acc_name FROM mif3 INNER JOIN dacc ON mif3.if3_account = cast(dacc.acc_code as varchar) WHERE if3_if2_id = :if3_if2_id';
           $rescuentas = $this->pedeo->queryTable($sqlcuentas, array(':if3_if2_id' => $value['if2_docentry']));
-
+          $comportamiento = $value['if2_conduct'];
           if( isset($rescuentas[0]) ){
-            $tablacuentas = '<table width="100%"><tr>';
+            $tablacuentas = '<table width="100%">';
             $cuentas = '';
             $totalmonto = '';
-
+            $acumulado = 0;
             foreach ($rescuentas as $key => $value) {
-
-                $cuentas .='<th>'.$value['acc_name'].'</th>';
-
+                
                 $sqlmontocuenta = 'SELECT SUM(ac1_debit - ac1_credit) as totalcuenta FROM mac1 WHERE ac1_doc_date BETWEEN :fi AND :ff AND ac1_account = :ac1_account HAVING (SUM(ac1_debit) -  SUM(ac1_credit))  IS NOT NULL';
                 $resmontocuenta = $this->pedeo->queryTable($sqlmontocuenta, array( ':fi' => $Data['fi'], ':ff' =>$Data['ff'], ':ac1_account' => $value['if3_account'] ));
-
+                
+                $cuentas .='<tr><td style="text-align: left;" width="50%">'.$value['acc_name'].'</td>';
                 if(isset($resmontocuenta[0])){
-                  $totalmonto .='<td class="centro" >'.$resmontocuenta[0]['totalcuenta'].'</td>';
+                  
+                  $cuentas .='<td style="text-align: right;" width="50%">'.number_format($resmontocuenta[0]['totalcuenta'], 2, ',', '.').'</td></tr>';
+                  $acumulado+=(abs($resmontocuenta[0]['totalcuenta'])*$comportamiento);
                 }else{
-                  $totalmonto .='<td class="centro" >0</td>';
+                  $cuentas.='<td style="text-align: right;">'.number_format(0, 2, ',', '.').'</td></tr>';
                 }
+                
+            } 
 
-            }
+            $tablacuentas .= $cuentas;
 
-            $tablacuentas .= $cuentas.'</tr><tr>'.$totalmonto.'</tr></table>';
-
-            $content.= $subgrupo.$tablacuentas;
+            $content.= $subgrupo.$tablacuentas.'</table>'.'
+            <table width="100%"><tr style="border-top:1px solid #000;">
+            <td style="text-align: right;" width="50%">TOTAL </td>
+            <td style="border-top:1px solid #000; text-align: right;" width="50%">'.number_format($acumulado, 2, ',', '.').'</td>
+            </tr>
+            </table>';
           }
-
+          $acumuladoGrupo += $acumulado;
+          
         }
-
+        $acumuladoTotal += $acumuladoGrupo;
       }
-
+      $content.= '<table width="100%">
+      <tr >
+      <td style="text-align: right;" width="50%">TOTAL '.$groupName.'</td>
+      <td  width="50%" style="text-align: right;">'.number_format($acumuladoGrupo, 2, ',', '.').'</td>
+      </tr>
+      </table>';
     }
 
+    $content.= '<br><table width="100%">
+    <tr >
+    <td style="text-align: right;" width="50%">TOTAL </td>
+    <td style="text-align: right; border-top:1px solid #000;" width="50%">'.number_format($acumuladoTotal, 2, ',', '.').'</td>
+    </tr>
+    </table>';
 
 
 
@@ -162,8 +196,8 @@ class PdfFinancialReport extENDs REST_Controller {
         <table width="100%">
 	        <tr>
 	            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
-	            <th style="text-align: center; margin-left: 600px;">
-	                <p>INFORME DINAMICO</p>
+	            <th style="text-align: right; margin-left: 600px;">
+	                <p>'.$resSelect[0]['mif_name'].'</p>
 	            </th>
 				<th>
 					&nbsp;
@@ -181,6 +215,9 @@ class PdfFinancialReport extENDs REST_Controller {
 		    </table>';
 
 		    $html = $content;
+        // print_r($html);
+        // exit;
+      
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
@@ -193,7 +230,7 @@ class PdfFinancialReport extENDs REST_Controller {
 
 
         $mpdf->Output('Doc.pdf', 'D');
-
+$filename = 'Doc.pdf';
 		header('Content-type: application/force-download');
 		header('Content-Disposition: attachment; filename='.$filename);
 	}
