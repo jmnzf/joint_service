@@ -180,8 +180,8 @@ class BankReconciliation extends REST_Controller {
 
 			// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 
-			$sqlInsert = "INSERT INTO dcrb(crb_description, crb_docdate, crb_createby, crb_startdate, crb_enddate, crb_account)
-										VALUES (:crb_description, :crb_docdate, :crb_createby, :crb_startdate, :crb_enddate, :crb_account)";
+			$sqlInsert = "INSERT INTO dcrb(crb_description, crb_docdate, crb_createby, crb_startdate, crb_enddate, crb_account, crb_gbaccount, crb_ibaccount, crb_cost, crb_tax, crb_posting_stardate, crb_posting_enddate)
+										VALUES (:crb_description, :crb_docdate, :crb_createby, :crb_startdate, :crb_enddate, :crb_account, :crb_gbaccount, :crb_ibaccount, :crb_cost, :crb_tax, :crb_posting_stardate, :crb_posting_enddate)";
 
 
 			// Se Inicia la transaccion,
@@ -194,13 +194,19 @@ class BankReconciliation extends REST_Controller {
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
-
+				
 				':crb_description' => $Data['crb_description'],
 				':crb_docdate'		 => $Data['crb_docdate'],
 				':crb_createby' 	 => $Data['crb_createby'],
 				':crb_startdate'   => $Data['crb_startdate'],
 				':crb_enddate'     => $Data['crb_enddate'],
-				':crb_account'     => $Data['crb_account']
+				':crb_account'     => $Data['crb_account'],
+				':crb_gbaccount'     => $Data['crb_gbaccount'],
+				':crb_ibaccount'     => $Data['crb_ibaccount'],
+				':crb_cost'     => $Data['crb_cost'],
+				':crb_tax'     => $Data['crb_tax'],
+				':crb_posting_stardate'     => $Data['crb_posting_stardate'],
+				':crb_posting_enddate'     => $Data['crb_posting_enddate']
 			));
 
 			if(is_numeric($resInsert) && $resInsert > 0){
