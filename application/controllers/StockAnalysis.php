@@ -27,6 +27,7 @@ class StockAnalysis extends REST_Controller {
     $Data = $this->post();
     if((!isset($Data['dvf_doctype']) or $Data['dvf_doctype'] == '' or $Data['dvf_doctype'] == null) or
       (!isset($Data['dvf_docdate']) or $Data['dvf_docdate'] == '' or $Data['dvf_docdate'] == null) or
+      (!isset($Data['date_filter']) or $Data['date_filter'] == '' or $Data['date_filter'] == null) or
       (!isset($Data['dvf_duedate']) or $Data['dvf_docdate'] == '' or $Data['dvf_docdate'] == null)){
 
       $this->response(array(
@@ -58,13 +59,12 @@ class StockAnalysis extends REST_Controller {
 		$detailTable = $tables[$tipo]['detailTable'];
 		$detailPrefix = $tables[$tipo]['detailPrefix'];
 
-		$req = array('dvf_doctype','dvf_docdate','dvf_duedate');
+		$req = array('dvf_doctype','dvf_docdate','dvf_duedate','date_filter');
 	  $diff = array_diff($options,$req);
 
 		$campos = array(
-      ':dvf_doctype' => $Data['dvf_doctype'],
       ':dvf_docdate' => $Data['dvf_docdate'],
-      ':dvf_duedate'=>$Data['dvf_duedate']
+      ':dvf_duedate'=>$Data['dvf_duedate'],
   	);
 		$fechaI = new DateTime($Data['dvf_docdate']);
 		$FFi = $fechaI->format('Y-m-d');
@@ -77,6 +77,7 @@ class StockAnalysis extends REST_Controller {
 	          $campos[':'.$value] = $Data[$value];
 	        }
 	      }
+		  
 
 				// crea consulta dinamica con las tablas
         // $sqlSelect = "SELECT
@@ -122,10 +123,11 @@ class StockAnalysis extends REST_Controller {
 												join dmdt on {$prefix}_doctype = mdt_doctype
 												join dmar on {$detailPrefix}_itemcode = dma_item_code
 												join dmga on mga_id = dma_group_code
-												where {$prefix}_doctype = :dvf_doctype and {$prefix}_docdate >= :dvf_docdate and {$prefix}_duedate <= :dvf_duedate {$conditions}
+												where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
 												group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname";
         $resSelect = $this->pedeo->queryTable($sqlSelect,$campos);
-
+		//   print_r($sqlSelect);
+		//   exit;
       if(isset($resSelect[0])){
 
         $respuesta = array(
