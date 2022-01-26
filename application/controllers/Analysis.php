@@ -27,6 +27,7 @@ class Analysis extends REST_Controller {
     $Data = $this->post();
     if((!isset($Data['dvf_doctype']) or $Data['dvf_doctype'] == '' or $Data['dvf_doctype'] == null) or
       (!isset($Data['dvf_docdate']) or $Data['dvf_docdate'] == '' or $Data['dvf_docdate'] == null) or
+      // (!isset($Data['date_filter']) or $Data['date_filter'] == '' or $Data['date_filter'] == null) or
       (!isset($Data['dvf_duedate']) or $Data['dvf_docdate'] == '' or $Data['dvf_docdate'] == null)){
 
       $this->response(array(
@@ -62,7 +63,7 @@ class Analysis extends REST_Controller {
       ':dvf_duedate'=>$Data['dvf_duedate']
   );
 
-  $req = array('dvf_doctype','dvf_docdate','dvf_duedate');
+  $req = array('dvf_doctype','dvf_docdate','dvf_duedate','date_filter');
   $diff = array_diff($options,$req);
 
     foreach ($diff as $key => $value) {
@@ -85,7 +86,8 @@ class Analysis extends REST_Controller {
                count(1) cant_docs,
                sum({$prefix}_baseamnt) val_factura,
                sum({$prefix}_taxtotal) val_impuesto,
-               sum({$prefix}_doctotal) total_docums
+               sum({$prefix}_doctotal) total_docums,
+               round(avg(tsa_value),2) tasa
         from
         {$table}
         full join dmsn on {$prefix}_cardcode  = dms_card_code
@@ -93,8 +95,10 @@ class Analysis extends REST_Controller {
         full join dmdt on {$prefix}_doctype = mdt_doctype
         full join tbdc  on dms_classtype = bdc_clasify
         left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
+        full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
         where {$prefix}_doctype = :dvf_doctype
-        and {$prefix}_docdate >= :dvf_docdate and {$prefix}_duedate <= :dvf_duedate ".$conditions." GROUP by {$prefix}_cardcode, mgs_name, {$prefix}_cardname, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city";
+        and ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions." 
+        GROUP by {$prefix}_cardcode, mgs_name, {$prefix}_cardname, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city";
 				// if($Data['dvf_doctype'] == 2){
 				// 	$conditions = str_replace("dvf",$prefix,$conditions);
 				// }
