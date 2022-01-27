@@ -130,7 +130,7 @@ class CloseDoc extends REST_Controller {
 
                 ':bed_docentry' => $Data['vov_baseentry'],
                 ':bed_doctype' => $Data['vov_basetype'],
-                ':bed_status' => 1, //ESTADO CERRADO
+                ':bed_status' => 1, //ESTADO ABIERTO 
                 ':bed_createby' => $Data['createby'],
                 ':bed_date' => date('Y-m-d'),
                 ':bed_baseentry' => NULL,
