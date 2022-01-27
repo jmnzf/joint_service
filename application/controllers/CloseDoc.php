@@ -82,6 +82,91 @@ class CloseDoc extends REST_Controller {
 
     }
 
+    public function setCancelDoc_post(){
+
+      $Data = $this->post();
+      $respuesta = array();
+
+      if(!isset($Data['vov_basetype']) OR !isset($Data['vov_baseentry']) OR !isset($Data['vov_createby'])){
+
+            $respuesta = array(
+              'error' => true,
+              'data'  => array(),
+              'mensaje' =>'La informacion enviada no es valida'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+
+      }
+      // print_r($Data);
+      // exit;
+
+      //SE INSERTA EL ESTADO DEL DOCUMENTO
+
+      $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+                          VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+      $this->pedeo->trans_begin();
+      $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+                ':bed_docentry' => $Data['vov_docentry'],
+                ':bed_doctype' => $Data['vov_doctype'],
+                ':bed_status' => 2, //ESTADO CANCELADO
+                ':bed_createby' => $Data['createby'],
+                ':bed_date' => date('Y-m-d'),
+                ':bed_baseentry' => NULL,
+                ':bed_basetype' =>NULL
+      ));
+
+
+      if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+        $sqlInsertEstado2 = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+                          VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+      $resInsertEstado2 = $this->pedeo->insertRow($sqlInsertEstado2, array(
+
+
+                ':bed_docentry' => $Data['vov_baseentry'],
+                ':bed_doctype' => $Data['vov_basetype'],
+                ':bed_status' => 1, //ESTADO CERRADO
+                ':bed_createby' => $Data['createby'],
+                ':bed_date' => date('Y-m-d'),
+                ':bed_baseentry' => NULL,
+                ':bed_basetype' =>NULL
+      ));
+
+      if(is_numeric($resInsertEstado2) && $resInsertEstado2 > 0){
+        $respuesta = array(
+          'error'   => true,
+          'data' => $resInsertEstado2,
+          'mensaje'	=> 'Documento Cancelado'
+        );
+        }else{
+          $respuesta = array(
+            'error'   => true,
+            'data' => $resInsertEstado2,
+            'mensaje'	=> 'No se pudo cancelar el documento'
+          );
+          $this->pedeo->trans_rollback();
+        }
+      }else{
+
+            $respuesta = array(
+              'error'   => true,
+              'data' => $resInsertEstado,
+              'mensaje'	=> 'No se pudo cancelar el documento'
+            );
+
+            $this->pedeo->trans_rollback();
+      }
+      $this->pedeo->trans_commit();
+      //FIN PROCESO ESTADO DEL DOCUMENTO
+
+      $this->response($respuesta);
+
+}
 
 
 }
