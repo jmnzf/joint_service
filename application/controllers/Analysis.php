@@ -58,7 +58,6 @@ class Analysis extends REST_Controller {
 
     $conditions = '';
     $campos = array(
-      ':dvf_doctype' => $Data['dvf_doctype'],
       ':dvf_docdate' => $Data['dvf_docdate'],
       ':dvf_duedate'=>$Data['dvf_duedate']
   );
@@ -96,8 +95,7 @@ class Analysis extends REST_Controller {
         full join tbdc  on dms_classtype = bdc_clasify
         left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
         full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
-        where {$prefix}_doctype = :dvf_doctype
-        and ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions." 
+        where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions." 
         GROUP by {$prefix}_cardcode, mgs_name, {$prefix}_cardname, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city";
 				// if($Data['dvf_doctype'] == 2){
 				// 	$conditions = str_replace("dvf",$prefix,$conditions);
