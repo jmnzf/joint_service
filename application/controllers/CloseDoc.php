@@ -87,7 +87,7 @@ class CloseDoc extends REST_Controller {
       $Data = $this->post();
       $respuesta = array();
 
-      if(!isset($Data['vov_basetype']) OR !isset($Data['vov_baseentry']) OR !isset($Data['vov_createby'])){
+      if(!isset($Data['basetype']) OR !isset($Data['baseentry']) OR !isset($Data['createby'])){
 
             $respuesta = array(
               'error' => true,
@@ -111,8 +111,8 @@ class CloseDoc extends REST_Controller {
       $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-                ':bed_docentry' => $Data['vov_docentry'],
-                ':bed_doctype' => $Data['vov_doctype'],
+                ':bed_docentry' => $Data['docentry'],
+                ':bed_doctype' => $Data['doctype'],
                 ':bed_status' => 2, //ESTADO CANCELADO
                 ':bed_createby' => $Data['createby'],
                 ':bed_date' => date('Y-m-d'),
@@ -128,8 +128,8 @@ class CloseDoc extends REST_Controller {
       $resInsertEstado2 = $this->pedeo->insertRow($sqlInsertEstado2, array(
 
 
-                ':bed_docentry' => $Data['vov_baseentry'],
-                ':bed_doctype' => $Data['vov_basetype'],
+                ':bed_docentry' => $Data['baseentry'],
+                ':bed_doctype' => $Data['basetype'],
                 ':bed_status' => 1, //ESTADO ABIERTO 
                 ':bed_createby' => $Data['createby'],
                 ':bed_date' => date('Y-m-d'),
@@ -139,9 +139,9 @@ class CloseDoc extends REST_Controller {
 
       if(is_numeric($resInsertEstado2) && $resInsertEstado2 > 0){
         $respuesta = array(
-          'error'   => true,
+          'error'   => false,
           'data' => $resInsertEstado2,
-          'mensaje'	=> 'Documento Cancelado'
+          'mensaje'	=> 'Documento Anulado'
         );
         }else{
           $respuesta = array(
