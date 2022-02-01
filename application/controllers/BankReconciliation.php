@@ -180,8 +180,8 @@ class BankReconciliation extends REST_Controller {
 
 			// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 
-			$sqlInsert = "INSERT INTO dcrb(crb_description, crb_docdate, crb_createby, crb_startdate, crb_enddate, crb_account, crb_gbaccount, crb_ibaccount, crb_cost, crb_tax, crb_posting_stardate, crb_posting_enddate)
-										VALUES (:crb_description, :crb_docdate, :crb_createby, :crb_startdate, :crb_enddate, :crb_account, :crb_gbaccount, :crb_ibaccount, :crb_cost, :crb_tax, :crb_posting_stardate, :crb_posting_enddate)";
+			$sqlInsert = "INSERT INTO dcrb(crb_description, crb_docdate, crb_createby, crb_startdate, crb_enddate, crb_account, crb_gbaccount, crb_ivaccount, crb_cost, crb_tax, crb_posting_stardate, crb_posting_enddate)
+										VALUES (:crb_description, :crb_docdate, :crb_createby, :crb_startdate, :crb_enddate, :crb_account, :crb_gbaccount, :crb_ivaccount, :crb_cost, :crb_tax, :crb_posting_stardate, :crb_posting_enddate)";
 
 
 			// Se Inicia la transaccion,
@@ -194,7 +194,7 @@ class BankReconciliation extends REST_Controller {
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
-				
+
 				':crb_description' => $Data['crb_description'],
 				':crb_docdate'		 => $Data['crb_docdate'],
 				':crb_createby' 	 => $Data['crb_createby'],
@@ -202,7 +202,7 @@ class BankReconciliation extends REST_Controller {
 				':crb_enddate'     => $Data['crb_enddate'],
 				':crb_account'     => $Data['crb_account'],
 				':crb_gbaccount'     => $Data['crb_gbaccount'],
-				':crb_ibaccount'     => $Data['crb_ibaccount'],
+				':crb_ivaccount'     => $Data['crb_ivaccount'],
 				':crb_cost'     => $Data['crb_cost'],
 				':crb_tax'     => $Data['crb_tax'],
 				':crb_posting_stardate'     => $Data['crb_posting_stardate'],
@@ -212,6 +212,8 @@ class BankReconciliation extends REST_Controller {
 			if(is_numeric($resInsert) && $resInsert > 0){
 
 			  foreach ($ContenidoDetalle as $key => $detail) {
+
+
 
 					$sqlInsertDetail = "INSERT INTO crb1(rb1_crbid, rb1_date, rb1_ref, rb1_debit, rb1_credit, rb1_gastob, rb1_imp)
 														 VALUES (:rb1_crbid, :rb1_date, :rb1_ref, :rb1_debit, :rb1_credit, :rb1_gastob, :rb1_imp)";
@@ -273,6 +275,36 @@ class BankReconciliation extends REST_Controller {
 
       $this->response($respuesta);
 	}
+
+	//OBTENER RECONCIALIACIONES REALIZADAS
+	public function getBankReconciliation_get(){
+
+		$sqlSelect = "SELECT *
+									FROM dcrb";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+	}
+
 
 
 
