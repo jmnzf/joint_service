@@ -113,7 +113,7 @@ class CloseDoc extends REST_Controller {
 
                 ':bed_docentry' => $Data['docentry'],
                 ':bed_doctype' => $Data['doctype'],
-                ':bed_status' => 2, //ESTADO CANCELADO
+                ':bed_status' => 2, //ESTADO ANULADO
                 ':bed_createby' => $Data['createby'],
                 ':bed_date' => date('Y-m-d'),
                 ':bed_baseentry' => NULL,
@@ -133,8 +133,8 @@ class CloseDoc extends REST_Controller {
                 ':bed_status' => 1, //ESTADO ABIERTO 
                 ':bed_createby' => $Data['createby'],
                 ':bed_date' => date('Y-m-d'),
-                ':bed_baseentry' => NULL,
-                ':bed_basetype' =>NULL
+                ':bed_baseentry' => $Data['docentry'],
+                ':bed_basetype' =>$Data['doctype']
       ));
 
       if(is_numeric($resInsertEstado2) && $resInsertEstado2 > 0){
@@ -147,7 +147,7 @@ class CloseDoc extends REST_Controller {
           $respuesta = array(
             'error'   => true,
             'data' => $resInsertEstado2,
-            'mensaje'	=> 'No se pudo cancelar el documento'
+            'mensaje'	=> 'No se pudo Anular el documento'
           );
           $this->pedeo->trans_rollback();
         }
@@ -156,7 +156,7 @@ class CloseDoc extends REST_Controller {
             $respuesta = array(
               'error'   => true,
               'data' => $resInsertEstado,
-              'mensaje'	=> 'No se pudo cancelar el documento'
+              'mensaje'	=> 'No se pudo Anular el documento'
             );
 
             $this->pedeo->trans_rollback();
