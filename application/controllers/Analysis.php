@@ -72,6 +72,8 @@ class Analysis extends REST_Controller {
       }
     }
 				$conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
+				$conditions = str_replace("AND ".$prefix."_currency = :dvf_currency","",$conditions);
+				
         $sqlSelect = "SELECT
                mdt_docname tipo_doc_name,
                {$prefix}_cardcode cliente,
@@ -113,6 +115,7 @@ class Analysis extends REST_Controller {
 				}
 
 				unset($campos[':'.$prefix.'_currency']);
+				unset($campos[':dvf_currency']);
 // print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
 
