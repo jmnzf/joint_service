@@ -48,7 +48,7 @@ class StockAnalysis extends REST_Controller {
 			'2' =>  array('table' =>'dvov','prefix'=>'vov','detailTable'=>'vov1','detailPrefix'=>'ov1'),
 			'6' =>  array('table' =>'dvnc','prefix'=>'vnc','detailTable'=>'vnc1','detailPrefix'=>'nc1'),
 			'7' =>  array('table' =>'dvnd','prefix'=>'vnd','detailTable'=>'vnd1','detailPrefix'=>'nd1'),
-			'12' =>  array('table' =>'dcpo','prefix'=>'cpo','detailTable'=>'cpo1','detailPrefix'=>'po1'), 
+			'12' =>  array('table' =>'dcpo','prefix'=>'cpo','detailTable'=>'cpo1','detailPrefix'=>'po1'),
 			'15' =>  array('table' =>'dcfc','prefix'=>'cfc','detailTable'=>'cfc1','detailPrefix'=>'fc1'),
 			'16' =>  array('table' =>'dcnc','prefix'=>'cnc','detailTable'=>'cnc1','detailPrefix'=>'nc1'),
 			'17' =>  array('table' =>'dcnd','prefix'=>'cnd','detailTable'=>'cnd1','detailPrefix'=>'nd1')
@@ -77,7 +77,7 @@ class StockAnalysis extends REST_Controller {
 	          $campos[':'.$value] = $Data[$value];
 	        }
 	      }
-		  
+
 
 				// crea consulta dinamica con las tablas
         // $sqlSelect = "SELECT
@@ -104,6 +104,8 @@ class StockAnalysis extends REST_Controller {
         //               GROUP by {$prefix}_docdate, {$prefix}_docdate, {$prefix}_cardname, {$detailPrefix}_itemname,
 				// 							 mdt_doctype, mdt_docname,{$detailPrefix}_itemcode, {$prefix}_baseamnt,{$detailPrefix}_quantity, mga_name";
 											 // print_r($sqlSelect);
+											 $conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
+											 $conditions = str_replace("AND ".$prefix."_currency = :dvf_currency","",$conditions);
 
 											 $sqlSelect = "SELECT
 												mdt_docname tipo_doc_name,
@@ -113,34 +115,35 @@ class StockAnalysis extends REST_Controller {
 												{$prefix}_docnum docnum,
 												{$detailPrefix}_itemname item_name,
 												{$prefix}_cardname cliente_name,
-												round((avg({$detailPrefix}_price)::numeric * sum({$detailPrefix}_quantity)),2) val_factura,
+												concat({CURR},round((round((avg({$detailPrefix}_price)::numeric * sum({$detailPrefix}_quantity)),2) / {USD} ),2)) val_factura,
 												sum({$detailPrefix}_quantity) cantidad,
-												round(avg({$detailPrefix}_price)::numeric ,2) price,
-												round((avg({$detailPrefix}_price)::numeric *round(avg({$detailPrefix}_vat)))/100) val_impuesto,
-												round(sum({$detailPrefix}_linetotal),2) total_docums,
-												concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
-												concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
-												concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2)) total_docums,
+												concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
+												concat({CURR},round((round((avg({$detailPrefix}_price)::numeric * round(avg({$detailPrefix}_vat)))/100) / {USD} ),2)) val_impuesto,
+												concat({CURR},round((round(sum({$detailPrefix}_linetotal),2) / {USD} ),2)) total_docums,
 												mga_name
+
 												from {$table}
 												join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 												join dmdt on {$prefix}_doctype = mdt_doctype
 												join dmar on {$detailPrefix}_itemcode = dma_item_code
 												join dmga on mga_id = dma_group_code
+												full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 												where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-												group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname,{$prefix}_docnum";
- 
-		if( isset( $Data['dvf_currency'] ) && $Data['dvf_currency'] == 1 ){
-			$sqlSelect =	str_replace("{USD}","tsa_value",$sqlSelect);
-			$sqlSelect =	str_replace("{CURR}","'USD '",$sqlSelect);
-		}else{
-			$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
-			$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
-		}
-		
-		$resSelect = $this->pedeo->queryTable($sqlSelect,$campos);
-		//   print_r($sqlSelect);
-		//   exit;
+												group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value";
+
+        unset($campos[':'.$prefix.'_currency']);
+				unset($campos[':dvf_currency']);
+
+				if( isset( $Data['dvf_currency'] ) && $Data['dvf_currency'] == 1 ){
+					$sqlSelect =	str_replace("{USD}","tsa_value",$sqlSelect);
+					$sqlSelect =	str_replace("{CURR}","'USD '",$sqlSelect);
+				}else{
+					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
+					$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
+				}
+				
+        $resSelect = $this->pedeo->queryTable($sqlSelect,$campos);
+
       if(isset($resSelect[0])){
 
         $respuesta = array(

@@ -40,7 +40,7 @@ class PagoEfectuado extends REST_Controller {
       }
 
 
-      $resSelect = $this->pedeo->queryTable("SELECT mdt_docname tipo,
+      $resSelect = $this->pedeo->queryTable("SELECT distinct mdt_docname tipo,
        cfc_docnum id_origen,
        cfc_cardcode codigo_proveedor,
        cfc_docentry,
@@ -54,7 +54,7 @@ class PagoEfectuado extends REST_Controller {
        tsa_value tasa_dia,
        '' retencion,
        cfc_currency,
-	ac1_font_key,
+			 ac1_font_key,
        cfc_comment
 FROM dcfc
 JOIN SALDO_DOC on cfc_docentry = ac1_font_key and cfc_doctype = ac1_font_type
@@ -62,7 +62,7 @@ join dmdt on cfc_doctype = mdt_doctype
 join tasa on cfc_docdate = tsa_date
 where  cfc_cardcode = :cardcode
 union all
-SELECT mdt_docname tipo,
+SELECT distinct mdt_docname tipo,
        vnc_docnum id_origen,
        vnc_cardcode codigo_proveedor,
        vnc_docentry,
@@ -84,7 +84,7 @@ join dmdt on vnc_doctype = mdt_doctype
 join tasa on vnc_docdate = tsa_date
 where  vnc_cardcode = :cardcode
 union all
-SELECT mdt_docname tipo,
+SELECT distinct mdt_docname tipo,
        cnd_docnum id_origen,
        cnd_cardcode codigo_proveedor,
        cnd_docentry,
