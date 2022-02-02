@@ -492,8 +492,8 @@ class InventoryEntry extends REST_Controller {
 											}
 
 											//Se aplica el movimiento de inventario
-											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
-																						VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
+											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
+																						 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
 
 											$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -506,7 +506,11 @@ class InventoryEntry extends REST_Controller {
 													 ':bmy_baseentry' => $resInsert,
 													 ':bmi_cost'      => $NuevoCostoPonderado,
 													 ':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
-													 ':bmi_basenum'			=> $DocNumVerificado
+													 ':bmi_basenum'			=> $DocNumVerificado,
+													 ':bmi_docdate' => $this->validateDate($Data['iei_docdate'])?$Data['iei_docdate']:NULL,
+													 ':bmi_duedate' => $this->validateDate($Data['iei_duedate'])?$Data['iei_duedate']:NULL,
+													 ':bmi_duedev'  => $this->validateDate($Data['iei_duedev'])?$Data['iei_duedev']:NULL,
+													 ':bmi_comment' => isset($Data['iei_comment'])?$Data['iei_comment']:NULL
 
 											));
 
@@ -549,7 +553,11 @@ class InventoryEntry extends REST_Controller {
 														 ':bmy_baseentry' => $resInsert,
 														 ':bmi_cost'      => $detail['ei1_price'],
 														 ':bmi_currequantity' => $detail['ei1_quantity'],
-														 ':bmi_basenum'			=> $DocNumVerificado
+														 ':bmi_basenum'			=> $DocNumVerificado,
+														 ':bmi_docdate' => $this->validateDate($Data['iei_docdate'])?$Data['iei_docdate']:NULL,
+														 ':bmi_duedate' => $this->validateDate($Data['iei_duedate'])?$Data['iei_duedate']:NULL,
+														 ':bmi_duedev'  => $this->validateDate($Data['iei_duedev'])?$Data['iei_duedev']:NULL,
+														 ':bmi_comment' => isset($Data['iei_comment'])?$Data['iei_comment']:NULL
 
 												));
 

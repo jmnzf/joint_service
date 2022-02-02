@@ -427,6 +427,139 @@ class PurchaseEc extends REST_Controller {
 								 return;
 					}
 
+					//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+					if( isset($Data['cec_baseentry']) && is_numeric($Data['cec_baseentry']) && isset($Data['cec_basetype']) && is_numeric($Data['cec_basetype']) ){
+
+						$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+						$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
+							 ':bmd_doctype' => $Data['cec_basetype'],
+							 ':bmd_docentry' => $Data['cec_baseentry']
+						));
+
+
+						if ( isset(	$resDocInicio[0] ) ){
+
+							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+							$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+								':bmd_doctype' => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0,
+								':bmd_docentry' => $resInsert,
+								':bmd_createat' => $this->validateDate($Data['cec_createat'])?$Data['cec_createat']:NULL,
+								':bmd_doctypeo' => is_numeric($Data['cec_basetype'])?$Data['cec_basetype']:0, //ORIGEN
+								':bmd_docentryo' => is_numeric($Data['cec_baseentry'])?$Data['cec_baseentry']:0,  //ORIGEN
+								':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+								':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+								':bmd_docnum' => $DocNumVerificado,
+								':bmd_doctotal' => is_numeric($Data['cec_doctotal'])?$Data['cec_doctotal']:0,
+								':bmd_cardcode' => isset($Data['cec_cardcode'])?$Data['cec_cardcode']:NULL,
+								':bmd_cardtype' => 2
+							));
+
+							if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								 $respuesta = array(
+									 'error'   => true,
+									 'data' => $resInsertEstado,
+									 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+								 );
+
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+
+						}else{
+
+							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+							$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+								':bmd_doctype' => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0,
+								':bmd_docentry' => $resInsert,
+								':bmd_createat' => $this->validateDate($Data['cec_createat'])?$Data['cec_createat']:NULL,
+								':bmd_doctypeo' => is_numeric($Data['cec_basetype'])?$Data['cec_basetype']:0, //ORIGEN
+								':bmd_docentryo' => is_numeric($Data['cec_baseentry'])?$Data['cec_baseentry']:0,  //ORIGEN
+								':bmd_tdi' => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0, // DOCUMENTO INICIAL
+								':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+								':bmd_docnum' => $DocNumVerificado,
+								':bmd_doctotal' => is_numeric($Data['cec_doctotal'])?$Data['cec_doctotal']:0,
+								':bmd_cardcode' => isset($Data['cec_cardcode'])?$Data['cec_cardcode']:NULL,
+								':bmd_cardtype' => 2
+							));
+
+							if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								 $respuesta = array(
+									 'error'   => true,
+									 'data' => $resInsertEstado,
+									 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+								 );
+
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+						}
+
+					}else{
+
+						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+							':bmd_doctype' => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0,
+							':bmd_docentry' => $resInsert,
+							':bmd_createat' => $this->validateDate($Data['cec_createat'])?$Data['cec_createat']:NULL,
+							':bmd_doctypeo' => is_numeric($Data['cec_basetype'])?$Data['cec_basetype']:0, //ORIGEN
+							':bmd_docentryo' => is_numeric($Data['cec_baseentry'])?$Data['cec_baseentry']:0,  //ORIGEN
+							':bmd_tdi' => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0, // DOCUMENTO INICIAL
+							':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+							':bmd_docnum' => $DocNumVerificado,
+							':bmd_doctotal' => is_numeric($Data['cec_doctotal'])?$Data['cec_doctotal']:0,
+							':bmd_cardcode' => isset($Data['cec_cardcode'])?$Data['cec_cardcode']:NULL,
+							':bmd_cardtype' => 2
+						));
+
+						if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							 $respuesta = array(
+								 'error'   => true,
+								 'data' => $resInsertEstado,
+								 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+							 );
+
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+					}
+					//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+
 
 
           foreach ($ContenidoDetalle as $key => $detail) {
@@ -514,8 +647,8 @@ class PurchaseEc extends REST_Controller {
 									if(!isset($resCostoMomentoRegistro[0])){
 										// SE COLOCA EL PRECIO DE LA LINEA COMO EL COSTO
 										//Se aplica el movimiento de inventario
-										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
-																					VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
+										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
+																					 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
 
 										$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -528,7 +661,12 @@ class PurchaseEc extends REST_Controller {
 												 ':bmy_baseentry' => $resInsert,
 												 ':bmi_cost'      => $detail['ec1_price'],
 												 ':bmi_currequantity' 	=> 0,
-												 ':bmi_basenum'			=> $DocNumVerificado
+												 ':bmi_basenum'			=> $DocNumVerificado,
+												 ':bmi_docdate' => $this->validateDate($Data['cec_docdate'])?$Data['cec_docdate']:NULL,
+												 ':bmi_duedate' => $this->validateDate($Data['cec_duedate'])?$Data['cec_duedate']:NULL,
+												 ':bmi_duedev'  => $this->validateDate($Data['cec_duedev'])?$Data['cec_duedev']:NULL,
+												 ':bmi_comment' => isset($Data['cec_comment'])?$Data['cec_comment']:NULL
+
 
 										));
 
@@ -551,8 +689,8 @@ class PurchaseEc extends REST_Controller {
 													 return;
 										}
 									}else{
-										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
-																					VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
+										$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
+																					 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
 
 										$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -565,7 +703,12 @@ class PurchaseEc extends REST_Controller {
 												 ':bmy_baseentry' => $resInsert,
 												 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
 												 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-												 ':bmi_basenum'			=> $DocNumVerificado
+												 ':bmi_basenum'			=> $DocNumVerificado,
+												 ':bmi_docdate' => $this->validateDate($Data['cec_docdate'])?$Data['cec_docdate']:NULL,
+												 ':bmi_duedate' => $this->validateDate($Data['cec_duedate'])?$Data['cec_duedate']:NULL,
+												 ':bmi_duedev'  => $this->validateDate($Data['cec_duedev'])?$Data['cec_duedev']:NULL,
+												 ':bmi_comment' => isset($Data['cec_comment'])?$Data['cec_comment']:NULL
+
 										));
 
 										if(is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0){

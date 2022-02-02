@@ -364,6 +364,140 @@ class SalesDv extends REST_Controller {
 					//FIN PROCESO ESTADO DEL DOCUMENTO
 
 
+					//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+					if( isset($Data['vdv_baseentry']) && is_numeric($Data['vdv_baseentry']) && isset($Data['vdv_basetype']) && is_numeric($Data['vdv_basetype']) ){
+
+						$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+						$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
+							 ':bmd_doctype' => $Data['vdv_basetype'],
+							 ':bmd_docentry' => $Data['vdv_baseentry']
+						));
+
+
+						if ( isset(	$resDocInicio[0] ) ){
+
+							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+							$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+								':bmd_doctype' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
+								':bmd_docentry' => $resInsert,
+								':bmd_createat' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
+								':bmd_doctypeo' => is_numeric($Data['vdv_basetype'])?$Data['vdv_basetype']:0, //ORIGEN
+								':bmd_docentryo' => is_numeric($Data['vdv_baseentry'])?$Data['vdv_baseentry']:0,  //ORIGEN
+								':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+								':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+								':bmd_docnum' => $DocNumVerificado,
+								':bmd_doctotal' => is_numeric($Data['vdv_doctotal'])?$Data['vdv_doctotal']:0,
+								':bmd_cardcode' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
+								':bmd_cardtype' => 1
+							));
+
+							if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								 $respuesta = array(
+									 'error'   => true,
+									 'data' => $resInsertEstado,
+									 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+								 );
+
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+
+						}else{
+
+							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+							$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+								':bmd_doctype' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
+								':bmd_docentry' => $resInsert,
+								':bmd_createat' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
+								':bmd_doctypeo' => is_numeric($Data['vdv_basetype'])?$Data['vdv_basetype']:0, //ORIGEN
+								':bmd_docentryo' => is_numeric($Data['vdv_baseentry'])?$Data['vdv_baseentry']:0,  //ORIGEN
+								':bmd_tdi' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0, // DOCUMENTO INICIAL
+								':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+								':bmd_docnum' => $DocNumVerificado,
+								':bmd_doctotal' => is_numeric($Data['vdv_doctotal'])?$Data['vdv_doctotal']:0,
+								':bmd_cardcode' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
+								':bmd_cardtype' => 1
+							));
+
+							if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								 $respuesta = array(
+									 'error'   => true,
+									 'data' => $resInsertEstado,
+									 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+								 );
+
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+						}
+
+					}else{
+
+						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+							':bmd_doctype' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
+							':bmd_docentry' => $resInsert,
+							':bmd_createat' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
+							':bmd_doctypeo' => is_numeric($Data['vdv_basetype'])?$Data['vdv_basetype']:0, //ORIGEN
+							':bmd_docentryo' => is_numeric($Data['vdv_baseentry'])?$Data['vdv_baseentry']:0,  //ORIGEN
+							':bmd_tdi' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0, // DOCUMENTO INICIAL
+							':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+							':bmd_docnum' => $DocNumVerificado,
+							':bmd_doctotal' => is_numeric($Data['vdv_doctotal'])?$Data['vdv_doctotal']:0,
+							':bmd_cardcode' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
+							':bmd_cardtype' => 1
+						));
+
+						if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							 $respuesta = array(
+								 'error'   => true,
+								 'data' => $resInsertEstado,
+								 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+							 );
+
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+					}
+					//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+
+
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
@@ -545,8 +679,8 @@ class SalesDv extends REST_Controller {
 
 
 												//Se aplica el movimiento de inventario
-												$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
-																							VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
+												$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
+																							 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
 
 												$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -559,7 +693,11 @@ class SalesDv extends REST_Controller {
 														 ':bmy_baseentry' => $resInsert,
 														 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
 														 ':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
-														 ':bmi_basenum'				=> $DocNumVerificado
+														 ':bmi_basenum'				=> $DocNumVerificado,
+														 ':bmi_docdate' => $this->validateDate($Data['vdv_docdate'])?$Data['vdv_docdate']:NULL,
+														 ':bmi_duedate' => $this->validateDate($Data['vdv_duedate'])?$Data['vdv_duedate']:NULL,
+														 ':bmi_duedev'  => $this->validateDate($Data['vdv_duedev'])?$Data['vdv_duedev']:NULL,
+														 ':bmi_comment' => isset($Data['vdv_comment'])?$Data['vdv_comment']:NULL
 
 
 												));

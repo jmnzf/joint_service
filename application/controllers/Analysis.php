@@ -40,7 +40,7 @@ class Analysis extends REST_Controller {
     }
 
     $options = array_keys($Data);
-		
+
 		//LISTA DE TABLAS POR DOCTYPE
     $table = '';
     $prefix ='';
@@ -69,8 +69,8 @@ class Analysis extends REST_Controller {
       if($Data[$value]!='' and $Data[$value]!=null){
           $conditions .='AND '.str_replace("dvf",$prefix,$value).' = :'.$value.' ';
           $campos[':'.$value] = $Data[$value];
-        }
       }
+    }
 
         $sqlSelect = "SELECT
                mdt_docname tipo_doc_name,
@@ -83,9 +83,9 @@ class Analysis extends REST_Controller {
                min({$prefix}_docdate) fecha_inicio,
                min({$prefix}_duedate) fecha_fin,
                count(1) cant_docs,
-               sum({$prefix}_baseamnt) val_factura,
-               sum({$prefix}_taxtotal) val_impuesto,
-               sum({$prefix}_doctotal) total_docums,
+               concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
+               concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
+               concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2)) total_docums,
                round(avg(tsa_value),2) tasa
         from
         {$table}
@@ -95,11 +95,20 @@ class Analysis extends REST_Controller {
         full join tbdc  on dms_classtype = bdc_clasify
         left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
         full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
-        where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions." 
+        where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions."
         GROUP by {$prefix}_cardcode, mgs_name, {$prefix}_cardname, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city";
-				// if($Data['dvf_doctype'] == 2){
-				// 	$conditions = str_replace("dvf",$prefix,$conditions);
-				// }
+
+
+
+				if( isset( $Data['dvf_currency'] ) && $Data['dvf_currency'] == 1 ){
+					$sqlSelect =	str_replace("{USD}","tsa_value",$sqlSelect);
+					$sqlSelect =	str_replace("{CURR}","'USD '",$sqlSelect);
+				}else{
+					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
+					$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
+				}
+
+// print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
 
 				// print_r($sqlSelect);

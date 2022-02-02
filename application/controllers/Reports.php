@@ -46,7 +46,20 @@ class Reports extends REST_Controller {
 		// FECHA INICIO Y FIN.
 		if (!empty($request['flt_dateint']) && !empty($request['flt_dateend'])) {
 			// CONDICIÓN SQL.
-			$sql .= " AND DATE(tbmi.bmi_createat) BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
+			if( isset($request['flt_dateby']) && $request['flt_dateby'] == 1 ){ // SEGUN FECHA DE CONTABILIZACION
+				$sql .= " AND DATE(tbmi.bmi_docdate) BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
+
+			}else if( isset($request['flt_dateby']) && $request['flt_dateby'] == 2 ){ // SEGUN FECHA DE VENCIMIENTO
+				$sql .= " AND DATE(tbmi.bmi_duedate) BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
+			
+			}else	if( isset($request['flt_dateby']) && $request['flt_dateby'] == 3 ){ // SEGUN FECHA DE DOCUMENTO
+				$sql .= " AND DATE(tbmi.bmi_duedev) BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
+
+			}else{
+				// SEGUN FECHA DE CREACION
+				$sql .= " AND DATE(tbmi.bmi_createat) BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
+			}
+
 		}
 
 		$result = $this->pedeo->queryTable("SELECT tbmi.bmi_itemcode AS codigoarticulo,
@@ -60,7 +73,8 @@ class Reports extends REST_Controller {
 																			tbmi.bmi_cost AS costo,
 																			tbmi.bmi_currequantity + tbmi.bmi_quantity AS cantidadrestante,
 																			tbmi.bmi_currequantity AS cantidadantesdemovimiento,
-																			(tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)) costoacumulado
+																			(tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)) costoacumulado,
+																			tbmi.bmi_createby AS creadopor,tbmi.bmi_docdate AS fechadoc,tbmi.bmi_comment AS comentario
 																			FROM tbmi
 																			INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
 																			INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code

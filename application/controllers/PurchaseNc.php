@@ -439,6 +439,141 @@ class PurchaseNc extends REST_Controller {
 					}
 
 
+					//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+					if( isset($Data['cnc_baseentry']) && is_numeric($Data['cnc_baseentry']) && isset($Data['cnc_basetype']) && is_numeric($Data['cnc_basetype']) ){
+
+						$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+						$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
+							 ':bmd_doctype' => $Data['cnc_basetype'],
+							 ':bmd_docentry' => $Data['cnc_baseentry']
+						));
+
+
+						if ( isset(	$resDocInicio[0] ) ){
+
+							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+							$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+								':bmd_doctype' => is_numeric($Data['cnc_doctype'])?$Data['cnc_doctype']:0,
+								':bmd_docentry' => $resInsert,
+								':bmd_createat' => $this->validateDate($Data['cnc_createat'])?$Data['cnc_createat']:NULL,
+								':bmd_doctypeo' => is_numeric($Data['cnc_basetype'])?$Data['cnc_basetype']:0, //ORIGEN
+								':bmd_docentryo' => is_numeric($Data['cnc_baseentry'])?$Data['cnc_baseentry']:0,  //ORIGEN
+								':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+								':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+								':bmd_docnum' => $DocNumVerificado,
+								':bmd_doctotal' => is_numeric($Data['cnc_doctotal'])?$Data['cnc_doctotal']:0,
+								':bmd_cardcode' => isset($Data['cnc_cardcode'])?$Data['cnc_cardcode']:NULL,
+								':bmd_cardtype' => 2
+							));
+
+							if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								 $respuesta = array(
+									 'error'   => true,
+									 'data' => $resInsertEstado,
+									 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+								 );
+
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+
+						}else{
+
+							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+							$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+								':bmd_doctype' => is_numeric($Data['cnc_doctype'])?$Data['cnc_doctype']:0,
+								':bmd_docentry' => $resInsert,
+								':bmd_createat' => $this->validateDate($Data['cnc_createat'])?$Data['cnc_createat']:NULL,
+								':bmd_doctypeo' => is_numeric($Data['cnc_basetype'])?$Data['cnc_basetype']:0, //ORIGEN
+								':bmd_docentryo' => is_numeric($Data['cnc_baseentry'])?$Data['cnc_baseentry']:0,  //ORIGEN
+								':bmd_tdi' => is_numeric($Data['cnc_doctype'])?$Data['cnc_doctype']:0, // DOCUMENTO INICIAL
+								':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+								':bmd_docnum' => $DocNumVerificado,
+								':bmd_doctotal' => is_numeric($Data['cnc_doctotal'])?$Data['cnc_doctotal']:0,
+								':bmd_cardcode' => isset($Data['cnc_cardcode'])?$Data['cnc_cardcode']:NULL,
+								':bmd_cardtype' => 2
+							));
+
+							if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								 $respuesta = array(
+									 'error'   => true,
+									 'data' => $resInsertEstado,
+									 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+								 );
+
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+						}
+
+					}else{
+
+						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+							':bmd_doctype' => is_numeric($Data['cnc_doctype'])?$Data['cnc_doctype']:0,
+							':bmd_docentry' => $resInsert,
+							':bmd_createat' => $this->validateDate($Data['cnc_createat'])?$Data['cnc_createat']:NULL,
+							':bmd_doctypeo' => is_numeric($Data['cnc_basetype'])?$Data['cnc_basetype']:0, //ORIGEN
+							':bmd_docentryo' => is_numeric($Data['cnc_baseentry'])?$Data['cnc_baseentry']:0,  //ORIGEN
+							':bmd_tdi' => is_numeric($Data['cnc_doctype'])?$Data['cnc_doctype']:0, // DOCUMENTO INICIAL
+							':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+							':bmd_docnum' => $DocNumVerificado,
+							':bmd_doctotal' => is_numeric($Data['cnc_doctotal'])?$Data['cnc_doctotal']:0,
+							':bmd_cardcode' => isset($Data['cnc_cardcode'])?$Data['cnc_cardcode']:NULL,
+							':bmd_cardtype' => 2
+						));
+
+						if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							 $respuesta = array(
+								 'error'   => true,
+								 'data' => $resInsertEstado,
+								 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+							 );
+
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+					}
+					//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+
+
+
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
@@ -616,8 +751,8 @@ class PurchaseNc extends REST_Controller {
 
 
 															//Se aplica el movimiento de inventario
-															$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
-																										VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
+															$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
+																										 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
 
 															$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -630,7 +765,12 @@ class PurchaseNc extends REST_Controller {
 																	 ':bmy_baseentry' => $resInsert,
 																	 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
 																	 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-																	 ':bmi_basenum'			=> $DocNumVerificado
+																	 ':bmi_basenum'			=> $DocNumVerificado,
+																	 ':bmi_docdate' => $this->validateDate($Data['cnc_docdate'])?$Data['cnc_docdate']:NULL,
+																	 ':bmi_duedate' => $this->validateDate($Data['cnc_duedate'])?$Data['cnc_duedate']:NULL,
+																	 ':bmi_duedev'  => $this->validateDate($Data['cnc_duedev'])?$Data['cnc_duedev']:NULL,
+																	 ':bmi_comment' => isset($Data['cnc_comment'])?$Data['cnc_comment']:NULL
+
 
 															));
 

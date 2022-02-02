@@ -523,67 +523,28 @@ class Items extends REST_Controller {
         $this->response($respuesta);
   }
 
-//
-// //OBTENER ARTICULOS FILTRADOS
-//   public function getItemsFilter_get(){
-//
-//         $Data = $this->get();
-//
-//         if(empty($Data)){
-//
-//           $respuesta = array(
-//             'error' => true,
-//             'data'  => array(),
-//             'mensaje' =>'La informacion enviada no es valida'
-//           );
-//
-//           $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-//
-//           return;
-//         }
-//
-// 				$variableSql = 'WHERE 1=1';
-//
-// 				if(isset($Data['sub_artic']) && !empty($Data['sub_artic'])){
-//
-// 						$variableSql = $variableSql." AND cast(dma_group_code as varchar) LIKE '%".$Data['sub_artic']."%'";
-// 				}
-// 				if(isset($Data['cod_artic']) &&  !empty($Data['cod_artic'])){
-//
-// 						$variableSql = $variableSql." AND dma_item_code LIKE '%".$Data['cod_artic']."%'";
-// 				}
-//
-// 				if(isset($Data['nom_artic']) &&  !empty($Data['nom_artic'])){
-//
-// 					  $variableSql = $variableSql." AND dma_item_name LIKE '%".$Data['nom_artic']."%'";
-// 				}
-//
-//         $sqlSelect = "SELECT * FROM dmar ".$variableSql;
-//
-// // print_r($sqlSelect);exit();die();
-//
-//         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
-//
-//         if(isset($resSelect[0])){
-//
-//           $respuesta = array(
-//             'error' => false,
-//             'data'  => $resSelect,
-//             'mensaje' => '');
-//
-//         }else{
-//
-//             $respuesta = array(
-//               'error'   => true,
-//               'data' => array(),
-//               'mensaje'	=> 'busqueda sin resultados'
-//             );
-//
-//         }
-//
-//          $this->response($respuesta);
-//   }
+	/**
+	 * FUNCTION PARA CONTRUIR EL CONDICIONAL DEL FILTRO DEL DATATABLE.
+	*/
+	public function get_Filter($columns,$value) {
+		//
+		$resultSet = "";
+		// CONDICIONAL.
+		$where = " {campo} LIKE '%".$value."%' OR";
+		//
+		try {
+			//
+			foreach ($columns as $column) {
+				// REEMPLAZAR CAMPO.
+				$resultSet.= str_replace('{campo}', $column, $where);
+			}
+			// REMOVER ULTIMO OR DE LA CADENA.
+			$resultSet = substr($resultSet, 0, -2);
 
-
-
+		} catch (Exception $e) {
+			$resultSet = $e->getMessage();
+		}
+		//
+		return $resultSet;
+	}
 }
