@@ -75,13 +75,16 @@ class Analysis extends REST_Controller {
         $sqlSelect = "SELECT
                mdt_docname tipo_doc_name,
                {$prefix}_cardcode cliente,
-               mgs_name ,
+               mgs_name,
+               {$prefix}_docnum,
                {$prefix}_cardname cliente_name,
                concat(dmd_adress,' ',dmd_city) Direccion,
                bdc_clasify ,
                bdc_concept,
                min({$prefix}_docdate) fecha_inicio,
                min({$prefix}_duedate) fecha_fin,
+               min({$prefix}_duedev) fecha_doc,
+               min({$prefix}_docdate) fecha_cont,
                count(1) cant_docs,
                concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
                concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
@@ -97,7 +100,7 @@ class Analysis extends REST_Controller {
         left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
         full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
         where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions."
-        GROUP by {$prefix}_cardcode, mgs_name, {$prefix}_cardname, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city";
+        GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city";
 
 
 
