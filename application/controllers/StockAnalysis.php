@@ -110,6 +110,7 @@ class StockAnalysis extends REST_Controller {
 												{$detailPrefix}_itemcode item_code,
 												'{$FFi}' fecha_inicio,
 												'{$FFf}' fecha_fin,
+												{$prefix}_docnum docnum,
 												{$detailPrefix}_itemname item_name,
 												{$prefix}_cardname cliente_name,
 												round((avg({$detailPrefix}_price)::numeric * sum({$detailPrefix}_quantity)),2) val_factura,
@@ -117,6 +118,9 @@ class StockAnalysis extends REST_Controller {
 												round(avg({$detailPrefix}_price)::numeric ,2) price,
 												round((avg({$detailPrefix}_price)::numeric *round(avg({$detailPrefix}_vat)))/100) val_impuesto,
 												round(sum({$detailPrefix}_linetotal),2) total_docums,
+												concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
+												concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
+												concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2)) total_docums,
 												mga_name
 												from {$table}
 												join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
@@ -124,8 +128,17 @@ class StockAnalysis extends REST_Controller {
 												join dmar on {$detailPrefix}_itemcode = dma_item_code
 												join dmga on mga_id = dma_group_code
 												where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-												group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname";
-        $resSelect = $this->pedeo->queryTable($sqlSelect,$campos);
+												group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname,{$prefix}_docnum";
+ 
+		if( isset( $Data['dvf_currency'] ) && $Data['dvf_currency'] == 1 ){
+			$sqlSelect =	str_replace("{USD}","tsa_value",$sqlSelect);
+			$sqlSelect =	str_replace("{CURR}","'USD '",$sqlSelect);
+		}else{
+			$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
+			$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
+		}
+		
+		$resSelect = $this->pedeo->queryTable($sqlSelect,$campos);
 		//   print_r($sqlSelect);
 		//   exit;
       if(isset($resSelect[0])){
