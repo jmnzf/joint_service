@@ -31,20 +31,6 @@ class BusinessPartner extends REST_Controller {
          !isset($Data['dms_card_name']) OR
          !isset($Data['dms_card_last_name']) OR
          !isset($Data['dms_card_type']) OR
-         !isset($Data['dms_short_name']) OR
-         !isset($Data['dms_phone1']) OR
-         !isset($Data['dms_phone2']) OR
-         !isset($Data['dms_cel']) OR
-         !isset($Data['dms_email']) OR
-				 !isset($Data['dms_inv_mail']) OR
-         !isset($Data['dms_group_num']) OR
-         !isset($Data['dms_web_site']) OR
-         !isset($Data['dms_sip_code']) OR
-         !isset($Data['dms_agent']) OR
-         !isset($Data['dms_pay_type']) OR
-         !isset($Data['dms_limit_cred']) OR
-         !isset($Data['dms_inter']) OR
-         !isset($Data['dms_price_list']) OR
          !isset($Data['dms_enabled'])){
 
         $respuesta = array(
@@ -96,29 +82,29 @@ class BusinessPartner extends REST_Controller {
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-             ':dms_card_code' => $Data['dms_card_code'],
-             ':dms_card_name' => $Data['dms_card_name'],
-             ':dms_card_type' => $Data['dms_card_type'],
-             ':dms_short_name' => $Data['dms_short_name'],
-             ':dms_phone1' => $Data['dms_phone1'],
-             ':dms_phone2' => $Data['dms_phone2'],
-             ':dms_cel' => $Data['dms_cel'],
-             ':dms_email' => $Data['dms_email'],
-             ':dms_inv_mail' => $Data['dms_inv_mail'],
-             ':dms_group_num' => $Data['dms_group_num'],
-             ':dms_web_site' => $Data['dms_web_site'],
-             ':dms_sip_code' => $Data['dms_sip_code'],
-             ':dms_agent' => $Data['dms_agent'],
-             ':dms_pay_type' => $Data['dms_pay_type'],
-             ':dms_limit_cred' => $Data['dms_limit_cred'],
-             ':dms_inter' => $Data['dms_inter'],
-             ':dms_price_list' => $Data['dms_price_list'],
+             ':dms_card_code' => isset($Data['dms_card_code'])?$Data['dms_card_code']:NULL,
+             ':dms_card_name' => isset($Data['dms_card_name'])?$Data['dms_card_name']:NULL,
+             ':dms_card_type' => isset($Data['dms_card_type'])?$Data['dms_card_type']:0,
+             ':dms_short_name' => isset($Data['dms_short_name'])?$Data['dms_short_name']:NULL,
+             ':dms_phone1' => isset($Data['dms_phone1'])?$Data['dms_phone1']:NULL,
+             ':dms_phone2' => isset($Data['dms_phone2'])?$Data['dms_phone2']:NULL,
+             ':dms_cel' => isset($Data['dms_cel'])?$Data['dms_cel']:NULL,
+             ':dms_email' => isset($Data['dms_email'])?$Data['dms_email']:NULL,
+             ':dms_inv_mail' => isset($Data['dms_inv_mail'])?$Data['dms_inv_mail']:NULL,
+             ':dms_group_num' => isset($Data['dms_group_num'])?$Data['dms_group_num']:NULL,
+             ':dms_web_site' => isset($Data['dms_web_site'])?$Data['dms_web_site']:NULL,
+             ':dms_sip_code' => isset($Data['dms_sip_code'])?$Data['dms_sip_code']:NULL,
+             ':dms_agent' => isset($Data['dms_agent'])?$Data['dms_agent']:NULL,
+             ':dms_pay_type' => isset($Data['dms_pay_type'])?$Data['dms_pay_type']:NULL,
+             ':dms_limit_cred' => is_numeric($Data['dms_limit_cred'])?$this->ValidarN($Data['dms_limit_cred']):NULL,
+             ':dms_inter' => isset($Data['dms_inter'])?$Data['dms_inter']:NULL,
+             ':dms_price_list' => isset($Data['dms_price_list'])?$Data['dms_price_list']:0,
              ':dms_acct_sn' => NULL,
              ':dms_acct_asn' => NULL,
-             ':dms_card_last_name' => $Data['dms_card_last_name'],
-             ':dms_enabled' => $Data['dms_enabled'],
-						 ':dms_rtype' => $Data['dms_rtype'],
-						 ':dms_classtype' => $Data['dms_classtype']
+             ':dms_card_last_name' => isset($Data['dms_card_last_name'])?$Data['dms_card_last_name']:NULL,
+             ':dms_enabled' => isset($Data['dms_enabled'])?$Data['dms_enabled']:NULL,
+						 ':dms_rtype' => isset($Data['dms_rtype'])?$Data['dms_rtype']:NULL,
+						 ':dms_classtype' => isset($Data['dms_classtype'])?$Data['dms_classtype']:NULL
 
 
 
@@ -195,26 +181,7 @@ class BusinessPartner extends REST_Controller {
 
       $Data = $this->post();
 
-      if(!isset($Data['dms_card_code']) OR
-         !isset($Data['dms_card_name']) OR
-         !isset($Data['dms_card_last_name']) OR
-         !isset($Data['dms_card_type']) OR
-         !isset($Data['dms_short_name']) OR
-         !isset($Data['dms_phone1']) OR
-         !isset($Data['dms_phone2']) OR
-         !isset($Data['dms_cel']) OR
-         !isset($Data['dms_email']) OR
-         !isset($Data['dms_inv_mail']) OR
-         !isset($Data['dms_group_num']) OR
-         !isset($Data['dms_web_site']) OR
-         !isset($Data['dms_sip_code']) OR
-         !isset($Data['dms_agent']) OR
-         !isset($Data['dms_pay_type']) OR
-         !isset($Data['dms_limit_cred']) OR
-         !isset($Data['dms_inter']) OR
-         !isset($Data['dms_price_list']) OR
-         !isset($Data['dms_enabled']) OR
-         !isset($Data['dms_id'])){
+      if(!isset($Data['dms_id'])){
 
         $respuesta = array(
           'error' => true,
@@ -263,30 +230,30 @@ class BusinessPartner extends REST_Controller {
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-            ':dms_card_code' => $Data['dms_card_code'],
-            ':dms_card_name' => $Data['dms_card_name'],
-            ':dms_card_type' => $Data['dms_card_type'],
-            ':dms_short_name' => $Data['dms_short_name'],
-            ':dms_phone1' => $Data['dms_phone1'],
-            ':dms_phone2' => $Data['dms_phone2'],
-            ':dms_cel' => $Data['dms_cel'],
-            ':dms_email' => $Data['dms_email'],
-            ':dms_inv_mail' => $Data['dms_inv_mail'],
-            ':dms_group_num' => $Data['dms_group_num'],
-            ':dms_web_site' => $Data['dms_web_site'],
-            ':dms_sip_code' => $Data['dms_sip_code'],
-            ':dms_agent' => $Data['dms_agent'],
-            ':dms_pay_type' => $Data['dms_pay_type'],
-            ':dms_limit_cred' => $Data['dms_limit_cred'],
-            ':dms_inter' => $Data['dms_inter'],
-            ':dms_price_list' => $Data['dms_price_list'],
+            ':dms_card_code' => isset($Data['dms_card_code'])?$Data['dms_card_code']:NULL,
+            ':dms_card_name' => isset($Data['dms_card_name'])?$Data['dms_card_name']:NULL,
+            ':dms_card_type' => isset($Data['dms_card_type'])?$Data['dms_card_type']:0,
+            ':dms_short_name' => isset($Data['dms_short_name'])?$Data['dms_short_name']:NULL,
+            ':dms_phone1' => isset($Data['dms_phone1'])?$Data['dms_phone1']:NULL,
+            ':dms_phone2' => isset($Data['dms_phone2'])?$Data['dms_phone2']:NULL,
+            ':dms_cel' => isset($Data['dms_cel'])?$Data['dms_cel']:NULL,
+            ':dms_email' => isset($Data['dms_email'])?$Data['dms_email']:NULL,
+            ':dms_inv_mail' => isset($Data['dms_inv_mail'])?$Data['dms_inv_mail']:NULL,
+            ':dms_group_num' => isset($Data['dms_group_num'])?$Data['dms_group_num']:NULL,
+            ':dms_web_site' => isset($Data['dms_web_site'])?$Data['dms_web_site']:NULL,
+            ':dms_sip_code' => isset($Data['dms_sip_code'])?$Data['dms_sip_code']:NULL,
+            ':dms_agent' => isset($Data['dms_agent'])?$Data['dms_agent']:NULL,
+            ':dms_pay_type' => isset($Data['dms_pay_type'])?$Data['dms_pay_type']:NULL,
+            ':dms_limit_cred' => isset($Data['dms_limit_cred'])?$this->ValidarN($Data['dms_limit_cred']):NULL,
+            ':dms_inter' => isset($Data['dms_inter'])?$Data['dms_inter']:NULL,
+            ':dms_price_list' => isset($Data['dms_price_list'])?$Data['dms_price_list']:NULL,
             ':dms_acct_sn' => NULL,
             ':dms_acct_asn' => NULL,
-            ':dms_card_last_name' => $Data['dms_card_last_name'],
+            ':dms_card_last_name' => isset($Data['dms_card_last_name'])?$Data['dms_card_last_name']:NULL,
             ':dms_id' => $Data['dms_id'],
-            ':dms_enabled' => $Data['dms_enabled'],
-						':dms_rtype' => $Data['dms_rtype'],
-						':dms_classtype' => $Data['dms_classtype']
+            ':dms_enabled' => isset($Data['dms_enabled'])?$Data['dms_enabled']:NULL,
+						':dms_rtype' => isset($Data['dms_rtype'])?$Data['dms_rtype']:NULL,
+						':dms_classtype' => isset($Data['dms_classtype'])?$Data['dms_classtype']:NULL
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -544,12 +511,12 @@ class BusinessPartner extends REST_Controller {
 		}
 
     $resUpdate = NULL;
-    
+
     $update = $this->pedeo->updateRow('UPDATE dmsd SET dmd_ppal = 0 WHERE dmd_card_code = :dmd_card_code',[':dmd_card_code' => $Data['dmd_card_code']]);
-		
+
     if(is_numeric($update) && $update > 0){
-      // 
-			$resUpdate = $this->pedeo->updateRow("UPDATE dmsd SET dmd_ppal = :dmd_ppal WHERE dmd_id = :dmd_id", 
+      //
+			$resUpdate = $this->pedeo->updateRow("UPDATE dmsd SET dmd_ppal = :dmd_ppal WHERE dmd_id = :dmd_id",
         array(
           ':dmd_ppal' => 1,
           ':dmd_id' => $Data['dmd_id']
@@ -572,6 +539,15 @@ class BusinessPartner extends REST_Controller {
 		}
 
 		$this->response($respuesta);
+	}
+
+	private function ValidarN($dato){
+
+		if( is_numeric( $dato ) ){
+			return $dato;
+		}else{
+			return 0;
+		}
 	}
 
 

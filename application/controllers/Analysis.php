@@ -71,7 +71,7 @@ class Analysis extends REST_Controller {
           $campos[':'.$value] = $Data[$value];
       }
     }
-
+				$conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
         $sqlSelect = "SELECT
                mdt_docname tipo_doc_name,
                {$prefix}_cardcode cliente,
@@ -87,6 +87,7 @@ class Analysis extends REST_Controller {
                concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
                concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2)) total_docums,
                round(avg(tsa_value),2) tasa
+
         from
         {$table}
         full join dmsn on {$prefix}_cardcode  = dms_card_code
@@ -108,11 +109,10 @@ class Analysis extends REST_Controller {
 					$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
 				}
 
+				unset($campos[':'.$prefix.'_currency']);
 // print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
 
-				// print_r($sqlSelect);
-				// exit;
 
       if(isset($resSelect[0])){
 
