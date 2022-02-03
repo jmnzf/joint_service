@@ -110,8 +110,10 @@ class StockAnalysis extends REST_Controller {
 											 $sqlSelect = "SELECT
 												mdt_docname tipo_doc_name,
 												{$detailPrefix}_itemcode item_code,
-												'{$FFi}' fecha_inicio,
-												'{$FFf}' fecha_fin,
+												{$prefix}_docdate fecha_inicio,
+												{$prefix}_duedate fecha_fin,
+												min({$prefix}_duedev) fecha_doc,
+               									min({$prefix}_docdate) fecha_cont,
 												{$prefix}_docnum docnum,
 												{$detailPrefix}_itemname item_name,
 												{$prefix}_cardname cliente_name,
@@ -119,7 +121,7 @@ class StockAnalysis extends REST_Controller {
 												sum({$detailPrefix}_quantity) cantidad,
 												concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
 												concat({CURR},round((round((avg({$detailPrefix}_price)::numeric * round(avg({$detailPrefix}_vat)))/100) / {USD} ),2)) val_impuesto,
-												concat({CURR},round((round(sum({$detailPrefix}_linetotal),2) / {USD} ),2)) total_docums,
+												concat({CURR},round((round(sum({$detailPrefix}_linetotal) +(round((avg({$detailPrefix}_price)::numeric * round(avg({$detailPrefix}_vat)))/100)) ,2) / {USD} ),2)) total_docums,
 												mga_name
 
 												from {$table}
@@ -129,9 +131,9 @@ class StockAnalysis extends REST_Controller {
 												join dmga on mga_id = dma_group_code
 												full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 												where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-												group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value";
+												group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum";
 
-        unset($campos[':'.$prefix.'_currency']);
+  				unset($campos[':'.$prefix.'_currency']);
 				unset($campos[':dvf_currency']);
 
 				if( isset( $Data['dvf_currency'] ) && $Data['dvf_currency'] == 1 ){

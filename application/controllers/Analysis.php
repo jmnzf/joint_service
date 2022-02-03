@@ -78,7 +78,7 @@ class Analysis extends REST_Controller {
                mdt_docname tipo_doc_name,
                {$prefix}_cardcode cliente,
                mgs_name,
-               {$prefix}_docnum,
+               {$prefix}_docnum docnum,
                {$prefix}_cardname cliente_name,
                concat(dmd_adress,' ',dmd_city) Direccion,
                bdc_clasify ,
@@ -92,7 +92,6 @@ class Analysis extends REST_Controller {
                concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
                concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2)) total_docums,
                round(avg(tsa_value),2) tasa
-
         from
         {$table}
         full join dmsn on {$prefix}_cardcode  = dms_card_code
