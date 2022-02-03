@@ -1,5 +1,5 @@
 <?php
-// FACTURA DE COMPRAS
+//ANALISIS DE VENTAS - TIPO INFORME ANALISIS DE ARTICULOS
 defined('BASEPATH') OR exit('No direct script access allowed');
 date_default_timezone_set('America/Bogota');
 require_once(APPPATH.'/asset/vendor/autoload.php');
@@ -111,7 +111,7 @@ class StockAnalysis extends REST_Controller {
 												mdt_docname tipo_doc_name,
 												{$detailPrefix}_itemcode item_code,
 												'{$FFi}' fecha_inicio,
-												'{$FFf}' fecha_fin, 
+												'{$FFf}' fecha_fin,
 												min({$prefix}_duedev) fecha_doc,
 												min({$prefix}_docdate) fecha_cont,
 												{$prefix}_docnum docnum,
@@ -143,6 +143,8 @@ class StockAnalysis extends REST_Controller {
 					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
 					$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
 				}
+
+				// print_r($sqlSelect);exit;
 
         $resSelect = $this->pedeo->queryTable($sqlSelect,$campos);
 
