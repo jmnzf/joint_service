@@ -110,18 +110,18 @@ class StockAnalysis extends REST_Controller {
 											 $sqlSelect = "SELECT
 												mdt_docname tipo_doc_name,
 												{$detailPrefix}_itemcode item_code,
-												'{$FFi}' fecha_inicio,
-												'{$FFf}' fecha_fin,
+												min({$prefix}_docdate) fecha_inicio,
+												min({$prefix}_duedate) fecha_fin,
 												min({$prefix}_duedev) fecha_doc,
-												min({$prefix}_docdate) fecha_cont,
+               									min({$prefix}_docdate) fecha_cont,
 												{$prefix}_docnum docnum,
 												{$detailPrefix}_itemname item_name,
 												{$prefix}_cardname cliente_name,
-												concat({CURR},round((round((avg({$detailPrefix}_price)::numeric * sum({$detailPrefix}_quantity)),2) / {USD} ),2)) val_factura,
+												concat({CURR},round((round((avg({$prefix}_baseamnt)),2) / {USD} ),2)) val_factura,
 												sum({$detailPrefix}_quantity) cantidad,
 												concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
-												concat({CURR},round((round((avg({$detailPrefix}_price)::numeric * round(avg({$detailPrefix}_vat)))/100) / {USD} ),2)) val_impuesto,
-												concat({CURR},round((round(sum({$detailPrefix}_linetotal) + (round((avg({$detailPrefix}_price)::numeric * round(avg({$detailPrefix}_vat)))/100)),2) / {USD} ),2)) total_docums,
+												concat({CURR},round((round(( round(avg({$prefix}_taxtotal),2)),2) / {USD} ),2)) val_impuesto,
+												concat({CURR},round((round(avg({$prefix}_taxtotal) + avg({$prefix}_baseamnt),2) / {USD} ),2)) total_docums,
 												mga_name
 
 												from {$table}
@@ -133,7 +133,7 @@ class StockAnalysis extends REST_Controller {
 												where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
 												group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum";
 
-        unset($campos[':'.$prefix.'_currency']);
+  				unset($campos[':'.$prefix.'_currency']);
 				unset($campos[':dvf_currency']);
 
 				if( isset( $Data['dvf_currency'] ) && $Data['dvf_currency'] == 1 ){
@@ -143,6 +143,8 @@ class StockAnalysis extends REST_Controller {
 					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
 					$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
 				}
+				// print_r($sqlSelect);
+				// exit;
 
 				// print_r($sqlSelect);exit;
 
