@@ -143,7 +143,7 @@ class StockAnalysis extends REST_Controller {
 					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
 					$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
 				}
-				
+
         $resSelect = $this->pedeo->queryTable($sqlSelect,$campos);
 
       if(isset($resSelect[0])){
