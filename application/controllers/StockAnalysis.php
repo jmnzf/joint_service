@@ -117,13 +117,12 @@ class StockAnalysis extends REST_Controller {
 												{$prefix}_docnum docnum,
 												{$detailPrefix}_itemname item_name,
 												{$prefix}_cardname cliente_name,
-												concat({CURR},round((round((avg({$prefix}_baseamnt)),2) / {USD} ),2)) val_factura,
+												concat({CURR},round((round((avg({$detailPrefix}_linetotal)),2) / {USD} ),2)) val_factura,
 												sum({$detailPrefix}_quantity) cantidad,
 												concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
-												concat({CURR},round((round(( round(avg({$prefix}_taxtotal),2)),2) / {USD} ),2)) val_impuesto,
-												concat({CURR},round((round(avg({$prefix}_taxtotal) + avg({$prefix}_baseamnt),2) / {USD} ),2)) total_docums,
+												concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2)) val_impuesto,
+												concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2)) total_docums,
 												mga_name
-
 												from {$table}
 												join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 												join dmdt on {$prefix}_doctype = mdt_doctype
@@ -143,8 +142,6 @@ class StockAnalysis extends REST_Controller {
 					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
 					$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
 				}
-				// print_r($sqlSelect);
-				// exit;
 
 				// print_r($sqlSelect);exit;
 

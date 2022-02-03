@@ -45,16 +45,19 @@ class Analysis extends REST_Controller {
     $table = '';
     $prefix ='';
 		$tables = array(
-			'5' =>  array('table' =>'dvfv','prefix'=>'dvf'),
-			'6' =>  array('table' =>'dvnc','prefix'=>'vnc'),
-			'7' =>  array('table' =>'dvnd','prefix'=>'vnd'),
-			'2' =>  array('table' =>'dvov','prefix'=>'vov'),
-			'12' =>  array('table' =>'dcpo','prefix'=>'cpo'),
-			'15' =>  array('table' =>'dcfc','prefix'=>'cfc')
+			'5' =>  array('table' =>'dvfv','prefix'=>'dvf','detailTable'=>'vfv1','detailPrefix'=>'fv1'),
+			'2' =>  array('table' =>'dvov','prefix'=>'vov','detailTable'=>'vov1','detailPrefix'=>'ov1'),
+			'6' =>  array('table' =>'dvnc','prefix'=>'vnc','detailTable'=>'vnc1','detailPrefix'=>'nc1'),
+			'7' =>  array('table' =>'dvnd','prefix'=>'vnd','detailTable'=>'vnd1','detailPrefix'=>'nd1'),
+			'12' =>  array('table' =>'dcpo','prefix'=>'cpo','detailTable'=>'cpo1','detailPrefix'=>'po1'),
+			'15' =>  array('table' =>'dcfc','prefix'=>'cfc','detailTable'=>'cfc1','detailPrefix'=>'fc1'),
+			'16' =>  array('table' =>'dcnc','prefix'=>'cnc','detailTable'=>'cnc1','detailPrefix'=>'nc1'),
+			'17' =>  array('table' =>'dcnd','prefix'=>'cnd','detailTable'=>'cnd1','detailPrefix'=>'nd1')
 		);
 		$table = $tables[$Data['dvf_doctype']]['table'];
 		$prefix = $tables[$Data['dvf_doctype']]['prefix'];
-
+    $detailTable =  $tables[$Data['dvf_doctype']]['detailTable'];
+		$detailPrefix = $tables[$Data['dvf_doctype']]['detailPrefix'];
 
     $conditions = '';
     $campos = array(
@@ -87,15 +90,17 @@ class Analysis extends REST_Controller {
                min({$prefix}_duedate) fecha_fin,
                min({$prefix}_duedev) fecha_doc,
                min({$prefix}_docdate) fecha_cont,
-               count(1) cant_docs,
+               sum({$detailPrefix}_quantity) cant_docs,
                concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
                concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
                concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2)) total_docums,
                round(avg(tsa_value),2) tasa
+
         from
         {$table}
         full join dmsn on {$prefix}_cardcode  = dms_card_code
         full join dmgs on dms_rtype = mgs_id
+        join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
         full join dmdt on {$prefix}_doctype = mdt_doctype
         full join tbdc  on dms_classtype = bdc_clasify
         left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
