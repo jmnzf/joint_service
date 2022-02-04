@@ -809,5 +809,53 @@ class Approvals extends REST_Controller {
 				}
 			$this->response($respuesta);
 		}
+		// METODO PAR OBTENER USUARIOS APROBADORES Y ESTADOS
+		public function getApprovalsUser_post(){
+			$Data = $this->post();
+
+			if(!isset($Data['docentry'])){
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			$sqlSelect = "SELECT concat(pgu_name_user,' ',pgu_lname_user) nombre,
+						case 
+							when statusapprovals(pgu_code_user,pap_doctype,pap_docentry)  = 'Rechazado Por mi' then 'Rechazo'
+							when statusapprovals(pgu_code_user,pap_doctype,pap_docentry)  = 'Aprobado Por mi' then 'Aprobo'
+							else 'Esperando respuesta'
+						end estado,
+						pap_docdate,
+						pap_duedate,
+						date(bad_createdate) fecha_respuesta,
+						age(date(bad_createdate),pap_docdate) diff
+						from dpap
+						join tmau t9 on mau_docentry = pap_model
+						left join tbad on bad_docentry = pap_docentry and bad_origen = pap_origen
+						inner join pgus  on pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[])
+						where pap_docentry = :docentry";
+
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array(':docentry' => $Data['docentry']));
+			if(isset($resSelect[0])){
+				$respuesta = array(
+					'error' => false,
+					'data'  => $resSelect,
+					'mensaje' => ''
+				);
+			}else{
+				$respuesta = array(
+					'error' => true,
+					'data'  => [],
+					'mensaje' => 'busqueda sin resultados'
+				);
+			}
+
+			$this->response($respuesta);
+		}
 
 }
