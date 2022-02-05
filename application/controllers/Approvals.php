@@ -824,7 +824,7 @@ class Approvals extends REST_Controller {
 
 				return;
 			}
-			$sqlSelect = "SELECT concat(pgu_name_user,' ',pgu_lname_user) nombre,
+			$sqlSelect = "SELECT distinct concat(pgu_name_user,' ',pgu_lname_user) nombre,
 						case 
 							when statusapprovals(pgu_code_user,pap_doctype,pap_docentry)  = 'Rechazado Por mi' then 'Rechazo'
 							when statusapprovals(pgu_code_user,pap_doctype,pap_docentry)  = 'Aprobado Por mi' then 'Aprobo'
