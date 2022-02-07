@@ -2817,6 +2817,9 @@ class SalesInv extends REST_Controller {
 
 																		if($item_del1 == $item_fact1  &&  $cantidad_del1 ==  $cantidad_fact1){
 
+																			foreach ($resDev2 as $key => $value) {
+																				// code...
+
 
 																			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																													VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -2824,8 +2827,8 @@ class SalesInv extends REST_Controller {
 																			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-																								':bed_docentry' => $resDev2[0]['vdv_docentry'],
-																								':bed_doctype' => $resDev2[0]['vdv_doctype'],
+																								':bed_docentry' => $value['vdv_docentry'],
+																								':bed_doctype' => $value['vdv_doctype'],
 																								':bed_status' => 3, //ESTADO CERRADO
 																								':bed_createby' => $Data['dvf_createby'],
 																								':bed_date' => date('Y-m-d'),
@@ -2851,6 +2854,7 @@ class SalesInv extends REST_Controller {
 
 																									return;
 																						}
+																					}
 														     }
 															}
 											     	}
