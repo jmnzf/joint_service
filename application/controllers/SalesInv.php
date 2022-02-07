@@ -2778,7 +2778,7 @@ class SalesInv extends REST_Controller {
 
 													 $resta_cantidad1 = $resEstado1[0]['cantidad'] - $resDev1[0]['cantidad'];
 
-													 $sqlDev2 = "SELECT
+													 $sqlDev2 = "SELECT DISTINCT
 																						 t2.*
 																						 from dvem t0
 																						 left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
@@ -2809,16 +2809,13 @@ class SalesInv extends REST_Controller {
 												 $cantidad_del1 = $resta_cantidad1;
 												 $cantidad_fact1 = $resEstado2[0]['cantidad'];
 
-												 	// print_r($resDev2);exit();die();
-													// print_r($item_del1);
+
+											 //	print_r($resDev2);
 													// print_r($item_fact1);
 													// print_r($cantidad_del1);
-													// print_r($cantidad_fact1);
-													// exit();die();
-
+													// print_r($cantidad_fact1);exit();die();
 
 																		if($item_del1 == $item_fact1  &&  $cantidad_del1 ==  $cantidad_fact1){
-
 
 
 																			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
@@ -2827,8 +2824,8 @@ class SalesInv extends REST_Controller {
 																			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-																								':bed_docentry' => $Data['dvf_baseentry'],
-																								':bed_doctype' => $Data['dvf_basetype'],
+																								':bed_docentry' => $resDev2[0]['vdv_docentry'],
+																								':bed_doctype' => $resDev2[0]['vdv_doctype'],
 																								':bed_status' => 3, //ESTADO CERRADO
 																								':bed_createby' => $Data['dvf_createby'],
 																								':bed_date' => date('Y-m-d'),
@@ -2837,24 +2834,6 @@ class SalesInv extends REST_Controller {
 																			));
 
 																			if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-																				if(isset($resDev2) && !empty($resDev2)){
-
-																				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																														VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-																				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-																									':bed_docentry' => $resDev2[0]['vdv_docentry'],
-																									':bed_doctype' => $resDev2[0]['vdv_doctype'],
-																									':bed_status' => 3, //ESTADO CERRADO
-																									':bed_createby' => $Data['dvf_createby'],
-																									':bed_date' => date('Y-m-d'),
-																									':bed_baseentry' => $resInsert,
-																									':bed_basetype' => $Data['dvf_doctype']
-																				));
-																			}
 
 																			}else{
 
