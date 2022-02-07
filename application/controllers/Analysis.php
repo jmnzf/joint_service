@@ -86,10 +86,10 @@ class Analysis extends REST_Controller {
     $cardcode = (isset( $Data['dvf_cardcode']) and $Data['dvf_cardcode'] !=null) ?  true: false;
     switch ($Data['dvf_doctype']) {
       case '-1':
-        $sqlSelect = $this->generalQuery($tables,['15','16','17'],$cardcode) ;
+        $sqlSelect = $this->generalQuery($tables,['15','16','17'],$cardcode,-1) ;
       break;
       case '0':
-        $sqlSelect = $this->generalQuery($tables,['5','6','7'],$cardcode);
+        $sqlSelect = $this->generalQuery($tables,['5','6','7'],$cardcode,0);
         break;
 
       default:
@@ -110,7 +110,8 @@ class Analysis extends REST_Controller {
           concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
           concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
           concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2)) total_docums,
-          round(avg(tsa_value),2) tasa
+          round(avg(tsa_value),2) tasa,
+          (SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado
         from
         {$table}
         full join dmsn on {$prefix}_cardcode  = dms_card_code
@@ -121,8 +122,7 @@ class Analysis extends REST_Controller {
         left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
         full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
         where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions."
-        GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city";
-
+        GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city,{$prefix}_baseentry,{$prefix}_basetype";
         break;
     }
 
@@ -161,7 +161,7 @@ class Analysis extends REST_Controller {
 
   }
   // METODO PARA OBTENER LOS DOCUMENTOS DE FACTURA, NOTA DEBITO, NOTA CREDITO
-  private function generalQuery($tables,$sets,$cardcode){
+  private function generalQuery($tables,$sets,$cardcode,$type){
     $all = "";
     $card = "";
 
@@ -179,7 +179,19 @@ class Analysis extends REST_Controller {
     if($tables[$value]['table'] == 'dvnc' or $tables[$value]['table'] == 'dcnc'){
 			$neg = -1;
 		}
-      $all .= "SELECT
+
+    $origin = '';
+		$originPre = '';
+
+    if($type == 0){
+			$origin = 'dvfv';
+			$originPre = 'dvf';
+		}else if($type == -1){
+			$origin = 'dcfc';
+			$originPre = 'cfc';
+		}
+
+      $all .= "SELECT 
       mdt_docname tipo_doc_name,
       {$prefix}_cardcode cliente,
       mgs_name,
@@ -196,7 +208,8 @@ class Analysis extends REST_Controller {
       concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
       concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
       concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2) * {$neg})  total_docums,
-      round(avg(tsa_value),2) tasa
+      round(avg(tsa_value),2) tasa,
+		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado
       from
       {$table}
       full join dmsn on {$prefix}_cardcode = dms_card_code
@@ -207,7 +220,8 @@ class Analysis extends REST_Controller {
       left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
       full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
       where ({$prefix}_docdate BETWEEN :dvf_docdate and :dvf_duedate) {$card}
-      GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city
+      GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum,
+       mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city,{$prefix}_baseentry,{$prefix}_basetype
       UNION ALL
       ";
     }

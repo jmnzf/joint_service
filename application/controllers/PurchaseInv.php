@@ -2174,7 +2174,7 @@ class PurchaseInv extends REST_Controller {
 												 if(isset($resDev1[0]['cantidad'])){
 												 				$resta_cantidad1 = $resEstado1[0]['cantidad'] - $resDev1[0]['cantidad'];
 											 	}
-												 $sqlDev2 = "SELECT
+												 $sqlDev2 = "SELECT DISTINCT
 																					 t2.*
 																					 from dcec t0
 																					 left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
@@ -2213,6 +2213,9 @@ class PurchaseInv extends REST_Controller {
 
 																	if($item_del1 == $item_fact1  &&  $cantidad_del1 ==  $cantidad_fact1){
 
+																		foreach ($resDev2 as $key => $value) {
+																			// code...
+
 
 																		$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																												VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -2220,8 +2223,8 @@ class PurchaseInv extends REST_Controller {
 																		$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-																							':bed_docentry' => $resDev2[0]['cdc_docentry'],
-																							':bed_doctype' => $resDev2[0]['cdc_doctype'],
+																							':bed_docentry' => $value['cdc_docentry'],
+																							':bed_doctype' => $value['cdc_doctype'],
 																							':bed_status' => 3, //ESTADO CERRADO
 																							':bed_createby' => $Data['cfc_createby'],
 																							':bed_date' => date('Y-m-d'),
@@ -2247,6 +2250,7 @@ class PurchaseInv extends REST_Controller {
 
 																								return;
 																					}
+																				}
 															 }
 														}
 													}
