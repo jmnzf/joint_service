@@ -114,10 +114,10 @@ class StockAnalysis extends REST_Controller {
 						$cardcode = (isset( $Data['dvf_cardcode']) and $Data['dvf_cardcode'] !=null) ?  true: false;
 						switch ($Data['dvf_doctype']) {
 							case '-1':
-							  $sqlSelect = $this->generalQuery($tables,['15','16','17'],$cardcode) ;
+							  $sqlSelect = $this->generalQuery($tables,['15','16','17'],$cardcode,-1) ;
 							break;
 							case '0':
-							  $sqlSelect = $this->generalQuery($tables,['5','6','7'],$cardcode);
+							  $sqlSelect = $this->generalQuery($tables,['5','6','7'],$cardcode,0);
 							  break;
 							
 							default:
@@ -137,7 +137,9 @@ class StockAnalysis extends REST_Controller {
 									concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
 									concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2)) val_impuesto,
 									concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2)) total_docums,
-									mga_name
+									mga_name,
+									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado
+
 									from {$table}
 									join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 									join dmdt on {$prefix}_doctype = mdt_doctype
@@ -187,7 +189,7 @@ class StockAnalysis extends REST_Controller {
 
 
     // METODO PARA OBTENER LOS DOCUMENTOS DE FACTURA, NOTA DEBITO, NOTA CREDITO
-	private function generalQuery($tables,$sets,$cardcode){
+	private function generalQuery($tables,$sets,$cardcode,$type){
 		$all = "";
 		$card = "";
 		$neg = 1;
@@ -199,6 +201,17 @@ class StockAnalysis extends REST_Controller {
 			$detailPrefix = $tables[$value]['detailPrefix'];
 		if ($cardcode) {
 		  $card = "AND {$prefix}_cardcode = :dvf_cardcode";
+		}
+
+		$origin = '';
+		$originPre = '';
+
+		if($type == 0){
+			$origin = 'dvfv';
+			$originPre = 'dvf';
+		}else if($type == -1){
+			$origin = 'dcfc';
+			$originPre = 'cfc';
 		}
 
 		if($tables[$value]['table'] == 'dvnc' or $tables[$value]['table'] == 'dcnc'){
@@ -219,7 +232,8 @@ class StockAnalysis extends REST_Controller {
 		  concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
 		  concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2)) val_impuesto,
 		  concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2) * {$neg})total_docums,
-		  mga_name
+		  mga_name,
+		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado
 		  from {$table}
 		  join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 		  join dmdt on {$prefix}_doctype = mdt_doctype
@@ -227,7 +241,7 @@ class StockAnalysis extends REST_Controller {
 		  join dmga on mga_id = dma_group_code
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card}
-		  group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum
+		  group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype
 		  UNION ALL
 		  ";
 		}
