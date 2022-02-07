@@ -205,8 +205,8 @@ class Analysis extends REST_Controller {
       to_char(min({$prefix}_duedev),'DD-MM-YYYY') fecha_doc,
       to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
       sum({$detailPrefix}_quantity) cant_docs,
-      concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
-      concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
+      concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2) * {$neg}) val_factura,
+      concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2) * {$neg}) val_impuesto,
       concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2) * {$neg})  total_docums,
       round(avg(tsa_value),2) tasa,
 		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado

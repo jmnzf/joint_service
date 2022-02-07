@@ -229,10 +229,10 @@ class StockAnalysis extends REST_Controller {
 		  {$prefix}_docnum docnum,
 		  {$detailPrefix}_itemname item_name,
 		  {$prefix}_cardname cliente_name,
-		  concat({CURR},round((round((avg({$detailPrefix}_linetotal)),2) / {USD} ),2)) val_factura,
+		  concat({CURR},round((round((avg({$detailPrefix}_linetotal)),2) / {USD} ),2) * {$neg}) val_factura,
 		  sum({$detailPrefix}_quantity) cantidad,
 		  concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
-		  concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2)) val_impuesto,
+		  concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2) * {$neg}) val_impuesto,
 		  concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2) * {$neg})total_docums,
 		  mga_name,
 		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado
