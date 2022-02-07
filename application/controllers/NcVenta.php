@@ -265,7 +265,14 @@ class NcVenta extends REST_Controller {
                     <p>'.$formatter->toWords($contenidoNcV[0]['totaldoc'],2)." ".$contenidoNcV[0]['nombremoneda'].'</p>
                 </th>
             </tr>
-        </table>';
+        </table>
+		<br>
+		<table width="100%" style="vertical-align: bottom; font-family: serif;
+            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;" >
+				<tr><th style="text-align: left;">Comentarios:</th></tr>
+				<tr><td style="text-align: left;">'.$contenidoNcV[0]['comentarios'].'</td></tr>
+		</table>
+		';
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
