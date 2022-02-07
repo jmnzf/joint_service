@@ -72,11 +72,11 @@ class Items extends REST_Controller {
 				                    dma_group_code, dma_attach, dma_enabled, dma_firm_code, dma_series_code, dma_sup_set, dma_sku_sup, dma_uom_purch,
 				                    dma_uom_pqty, dma_uom_pemb, dma_uom_pembqty, dma_tax_purch, dma_price_list, dma_price, dma_uom_sale,
 				                    dma_uom_sqty, dma_uom_semb, dma_uom_embqty, dma_tax_sales, dma_acct_type, dma_avprice,dma_uom_weight,dma_uom_umvol,
-														dma_uom_vqty, dma_uom_weightn, dma_uom_sizedim)VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
+														dma_uom_vqty, dma_uom_weightn, dma_uom_sizedim,dma_lotes_code)VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
 														:dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,:dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set,
 														:dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,:dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty,
 														:dma_uom_semb, :dma_uom_embqty, :dma_tax_sales, :dma_acct_type,:dma_avprice,:dma_uom_weight, :dma_uom_umvol, :dma_uom_vqty, :dma_uom_weightn,
-														:dma_uom_sizedim)";
+														:dma_uom_sizedim,:dma_lotes_code)";
 
 
 				      $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -112,7 +112,8 @@ class Items extends REST_Controller {
 										':dma_uom_umvol'    => is_numeric($Data['dma_uom_umvol'])?$Data['dma_uom_umvol']:0,
 										':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty'])?$Data['dma_uom_vqty']:0,
 										':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn'])?$Data['dma_uom_weightn']:0,
-										':dma_uom_sizedim'  => is_numeric($Data['dma_uom_sizedim'])?$Data['dma_uom_sizedim']:0
+										':dma_uom_sizedim'  => is_numeric($Data['dma_uom_sizedim'])?$Data['dma_uom_sizedim']:0,
+										':dma_lotes_code' => isset($Data['dma_lotes_code'])?$Data['dma_lotes_code']:'0'
 				      ));
 
 
@@ -199,7 +200,7 @@ class Items extends REST_Controller {
 											dma_price_list = :dma_price_list, dma_price = :dma_price, dma_uom_sale = :dma_uom_sale, dma_uom_sqty = :dma_uom_sqty,
 											dma_uom_semb = :dma_uom_semb, dma_uom_embqty = :dma_uom_embqty, dma_tax_sales = :dma_tax_sales, dma_acct_type = :dma_acct_type,
 											dma_avprice = :dma_avprice,dma_uom_weight = :dma_uom_weight, dma_uom_umvol = :dma_uom_umvol, dma_uom_vqty = :dma_uom_vqty,
-											dma_uom_weightn = :dma_uom_weightn, dma_uom_sizedim = :dma_uom_sizedim WHERE dma_id = :dma_id";
+											dma_uom_weightn = :dma_uom_weightn, dma_uom_sizedim = :dma_uom_sizedim, dma_lotes_code = :dma_lotes_code WHERE dma_id = :dma_id";
 
 
 				$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -236,6 +237,7 @@ class Items extends REST_Controller {
 							':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty'])?$Data['dma_uom_vqty']:0,
 							':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn'])?$Data['dma_uom_weightn']:0,
 							':dma_uom_sizedim'  => is_numeric($Data['dma_uom_sizedim'])?$Data['dma_uom_sizedim']:0,
+							':dma_lotes_code' => isset($Data['dma_lotes_code'])?$Data['dma_lotes_code']:'0',
 							':dma_id' => $Data['dma_id']
 				));
 
@@ -368,12 +370,12 @@ class Items extends REST_Controller {
 			'cast(t1.bdi_quantity as varchar)',
 			'cast(t0.dma_enabled as varchar)'
 		);
-		// 
+		//
 		if( !empty($request['search']['value']) ) {
 			// OBTENER CONDICIONALES.
 			$variableSql .= " AND ".self::get_Filter($columns,$request['search']['value']);
 		}
-		// 
+		//
         $sqlSelect = "SELECT t0.*, t2.mga_name, COALESCE(SUM(t1.bdi_quantity),0) stock FROM dmar t0 LEFT JOIN tbdi t1 on t0.dma_item_code = t1.bdi_itemcode LEFT JOIN dmga t2 on t0.dma_group_code = t2.mga_id $variableSql GROUP BY t0.dma_id, t0.dma_item_code, t0.dma_item_name, t0.dma_generic_name, t0.dma_item_purch, t0.dma_item_inv, t0.dma_item_sales, t0.dma_group_code, t0.dma_attach, t0.dma_enabled, t0.dma_firm_code, t0.dma_series_code, t0.dma_sup_set, t0.dma_sku_sup, t0.dma_uom_purch, t0.dma_uom_pqty, t0.dma_uom_pemb, t0.dma_uom_pembqty, t0.dma_tax_purch, t0.dma_price_list,t0.dma_price, t0.dma_uom_sale, t0.dma_uom_sqty, t0.dma_uom_semb, t0.dma_uom_embqty, t0.dma_tax_sales, t0.dma_acct_type, t0.dma_avprice, t0.dma_uom_weight, t0.dma_uom_umvol, t0.dma_uom_vqty, t0.dma_uom_weightn, t0.dma_uom_sizedim,t2.mga_name";
 
 		//
