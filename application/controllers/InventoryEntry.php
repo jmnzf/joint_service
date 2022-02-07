@@ -38,6 +38,7 @@ class InventoryEntry extends REST_Controller {
 			$llaveCuentaGrupo = "";
 			$posicionCuentaGrupo = 0;
 			$ManejaInvetario = 0;
+			$ManejaLote = 0;
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -427,8 +428,9 @@ class InventoryEntry extends REST_Controller {
 											 return;
 								}
 
-								// si el item es inventariable
+								// SI EL ITEM ES INVETARIABLE
 								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
+								// Y A SU VES SI MANEJA LOTE
 								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
 								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
 
@@ -437,14 +439,12 @@ class InventoryEntry extends REST_Controller {
 								));
 
 								if(isset($resItemINV[0])){
-
 									$ManejaInvetario = 1;
-
 								}else{
 									$ManejaInvetario = 0;
 								}
 
-								// FIN PROCESO ITEM MANEJA INVENTARIO
+								// FIN PROCESO ITEM MANEJA INVENTARIO Y LOTE
 								// si el item es inventariable
 								if( $ManejaInvetario == 1 ){
 
