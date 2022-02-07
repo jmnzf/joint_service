@@ -44,7 +44,7 @@ class Analysis extends REST_Controller {
 		//LISTA DE TABLAS POR DOCTYPE
     $table = '';
     $prefix ='';
-    
+
 
 		$tables = array(
 			'5' =>  array('table' =>'dvfv','prefix'=>'dvf','detailTable'=>'vfv1','detailPrefix'=>'fv1'),
@@ -80,10 +80,8 @@ class Analysis extends REST_Controller {
           $campos[':'.$value] = $Data[$value];
       }
     }
-				$conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
-				$conditions = str_replace("AND ".$prefix."_currency = :dvf_currency","",$conditions);
-				
-        
+		$conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
+		$conditions = str_replace("AND ".$prefix."_currency = :dvf_currency","",$conditions);
     $sqlSelect = " ";
     $cardcode = (isset( $Data['dvf_cardcode']) and $Data['dvf_cardcode'] !=null) ?  true: false;
     switch ($Data['dvf_doctype']) {
@@ -93,7 +91,7 @@ class Analysis extends REST_Controller {
       case '0':
         $sqlSelect = $this->generalQuery($tables,['5','6','7'],$cardcode,0);
         break;
-      
+
       default:
           $sqlSelect = "SELECT
           mdt_docname tipo_doc_name,
@@ -127,7 +125,6 @@ class Analysis extends REST_Controller {
         GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city,{$prefix}_baseentry,{$prefix}_basetype";
         break;
     }
-        
 
 				if( isset( $Data['dvf_currency'] ) && $Data['dvf_currency'] == 1 ){
 					$sqlSelect =	str_replace("{USD}","tsa_value",$sqlSelect);
