@@ -444,6 +444,19 @@ class InventoryEntry extends REST_Controller {
 									$ManejaInvetario = 0;
 								}
 
+								$sqlLote = "SELECT dma_lotes_code FROM dmar WHERE dma_item_code = :dma_item_code AND dma_lotes_code = :dma_lotes_code";
+								$resLote = $this->pedeo->queryTable($sqlLote, array(
+
+												':dma_item_code' => $detail['ei1_itemcode'],
+												':dma_lotes_code'  => 1
+								));
+
+								if(isset($resLote[0])){
+									$ManejaLote = 1;
+								}else{
+									$ManejaLote = 0;
+								}
+
 								// FIN PROCESO ITEM MANEJA INVENTARIO Y LOTE
 								// si el item es inventariable
 								if( $ManejaInvetario == 1 ){
@@ -490,6 +503,17 @@ class InventoryEntry extends REST_Controller {
 
 														$NuevoCostoPonderado = $CostoNuevo;
 											}
+
+											//SI EL ARTICULO MANEJA LOTE
+											if( $ManejaLote == 1){
+												$sqlCodigoLote = "SELECT ote_code FROM lote WHERE ote_createdate = :ote_createdate AND ote_duedate = :ote_duedate";
+												$resCodigoLote = $this->pedeo->queryTable($sqlCodigoLote, array(
+													':ote_createdate' => $Data['fc_date'],
+													':ote_duedate' => $Data['fv_date']
+												));
+											}
+
+											//FIN MANEJA LOTE
 
 											//Se aplica el movimiento de inventario
 											$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
