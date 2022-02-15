@@ -199,4 +199,44 @@ class StockMM extends REST_Controller {
 
     } 
 
+    public function getStockMMByArticle_post(){
+
+        $Data = $this->post();
+        
+        if(!isset($Data['smm_itemcode'])){
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' =>'No se puede realizar la operacion'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+
+        $sqlSelect = "SELECT * FROM tsmm where smm_itemcode = :smm_itemcode";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':smm_itemcode' => $Data['smm_itemcode']));
+
+        if(isset($resSelect[0])){
+
+        $respuesta = array(
+            'error' => false,
+            'data'  => $resSelect,
+            'mensaje' => '');
+
+        }else{
+
+            $respuesta = array(
+            'error'   => true,
+            'data' => array(),
+            'mensaje'	=> 'busqueda sin resultados'
+            );
+
+        }
+
+        $this->response($respuesta);
+    }
+
 }
