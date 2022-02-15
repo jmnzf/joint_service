@@ -824,21 +824,30 @@ class Approvals extends REST_Controller {
 
 				return;
 			}
-			$sqlSelect = "SELECT distinct concat(pgu_name_user,' ',pgu_lname_user) nombre,
-						case 
-							when statusapprovals(pgu_code_user,pap_doctype,pap_docentry)  = 'Rechazado Por mi' then 'Rechazo'
-							when statusapprovals(pgu_code_user,pap_doctype,pap_docentry)  = 'Aprobado Por mi' then 'Aprobo'
-							else 'Esperando respuesta'
-						end estado,
-						pap_docdate,
-						pap_duedate,
-						date(bad_createdate) fecha_respuesta,
-						age(date(bad_createdate),pap_docdate) diff
-						from dpap
-						join tmau t9 on mau_docentry = pap_model
-						left join tbad on bad_docentry = pap_docentry and bad_origen = pap_origen
-						inner join pgus  on pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[])
-						where pap_docentry = :docentry";
+			$sqlSelect = "SELECT distinct 
+			concat(pgu_name_user,' ',pgu_lname_user) nombre,
+			case
+			when statusapprover(pgu_code_user,pap_doctype,pap_docentry) is null then 'Esperando Respuesta'
+			else statusapprover(pgu_code_user,pap_doctype,pap_docentry)
+			end estado,
+			pap_docdate,
+			pap_duedate,
+			(select date(bad_createdate) 
+			 from tbad 
+			 where bad_createby  = pgu_code_user  
+			 and bad_doctype = pap_doctype  
+			 and bad_docentry= pap_docentry ) fecha_respuesta,
+			to_char(age(((select date(bad_createdate) 
+			 from tbad 
+			 where bad_createby  = pgu_code_user  
+			 and bad_doctype = pap_doctype  
+			 and bad_docentry= pap_docentry )),pap_docdate),'dd  HH:mm') diff
+			from pgus
+			join dpap on  pap_docentry = pap_docentry and pap_doctype = pap_doctype
+			join tmau t9 on mau_docentry = pap_model
+			where pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[]) and pap_docentry =  :docentry
+			group by pgu_name_user,pgu_lname_user,pgu_code_user,pap_doctype,
+			pap_docentry,pap_docdate,pap_duedate";
 
 			$resSelect = $this->pedeo->queryTable($sqlSelect, array(':docentry' => $Data['docentry']));
 			if(isset($resSelect[0])){
