@@ -81,37 +81,30 @@ class StockAnalysis extends REST_Controller {
 	        }
 	      }
 
+		  
 
-				// crea consulta dinamica con las tablas
-        // $sqlSelect = "SELECT
-        //               mdt_docname tipo_doc_name,
-        //               mdt_doctype tipo_doc,
-				// 							{$detailPrefix}_itemcode item_code,
-				// 							{$detailPrefix}_itemname item_name,
-        //               {$prefix}_docdate fecha_inicio,
-        //               {$prefix}_docdate fecha_fin,
-        //               {$prefix}_cardname cliente_name,
-				// 							{$detailPrefix}_quantity cantidad,
-				// 							sum({$detailPrefix}_price) price,
-        //               sum({$prefix}_baseamnt) val_factura,
-				// 							sum({$prefix}_taxtotal) val_impuesto,
-        //               sum({$prefix}_doctotal) total_docums,
-        //               mga_name
-        //               from $table
-        //               join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
-        //               join tbdi on {$detailPrefix}_itemcode = bdi_itemcode
-        //               join dmdt on {$prefix}_doctype = mdt_doctype
-        //               join dmar on {$detailPrefix}_itemcode = dma_item_code
-        //               join dmga on mga_id = dma_group_code
-        //               where {$prefix}_doctype = :dvf_doctype and {$prefix}_docdate >= :dvf_docdate and {$prefix}_duedate <= :dvf_duedate {$conditions}
-        //               GROUP by {$prefix}_docdate, {$prefix}_docdate, {$prefix}_cardname, {$detailPrefix}_itemname,
-				// 							 mdt_doctype, mdt_docname,{$detailPrefix}_itemcode, {$prefix}_baseamnt,{$detailPrefix}_quantity, mga_name";
-											 // print_r($sqlSelect);
+
 						$conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
 						$conditions = str_replace("AND ".$prefix."_currency = :dvf_currency","",$conditions);
 
 						$sqlSelect = " ";
 						$cardcode = (isset( $Data['dvf_cardcode']) and $Data['dvf_cardcode'] !=null) ?  true: false;
+
+						if($tables[$tipo]['table'] == 'dvnc' or $tables[$tipo]['table'] == 'dcnc'){
+							$neg = -1;
+						}else{
+							$neg = 1;
+						}
+
+						$unidad = ",'' unidad  ";
+						if($tables[$tipo]['table'] == 'dvnc' OR 
+						$tables[$tipo]['table'] == 'dvnd' OR
+						$tables[$tipo]['table'] == 'dcnc' OR
+						$tables[$tipo]['table'] == 'dcnd'
+						){
+						$unidad = ",
+						{$detailPrefix}_uom unidad";
+						}
 						switch ($Data['dvf_doctype']) {
 							case '-1':
 							  $sqlSelect = $this->generalQuery($tables,['15','16','17'],$cardcode,-1) ;
@@ -132,14 +125,16 @@ class StockAnalysis extends REST_Controller {
 									{$prefix}_docnum docnum,
 									{$detailPrefix}_itemname item_name,
 									{$prefix}_cardname cliente_name,
-									concat({CURR},round((round((avg({$detailPrefix}_linetotal)),2) / {USD} ),2)) val_factura,
-									sum({$detailPrefix}_quantity) cantidad,
+									concat({CURR},round((round((avg({$detailPrefix}_linetotal)),2) / {USD} ),2) * {$neg}) val_factura,
+									sum({$detailPrefix}_quantity) * {$neg} cantidad,
 									concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
-									concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2)) val_impuesto,
-									concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2)) total_docums,
+									concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2) * {$neg}) val_impuesto,
+									concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2) * {$neg}) total_docums,
 									mga_name,
-									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado
-
+									{$prefix}_createby createby,
+									".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad": "sum({$detailPrefix}_quantity) cantidad").",
+									(SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
+									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado{$unidad}
 									from {$table}
 									join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 									join dmdt on {$prefix}_doctype = mdt_doctype
@@ -147,8 +142,8 @@ class StockAnalysis extends REST_Controller {
 									join dmga on mga_id = dma_group_code
 									full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 									where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-									group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum";
-										break;
+									group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum".(($unidad !=",'' unidad")? ",{$detailPrefix}_uom": "").",{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "");
+									break;
 						}
 
 						
@@ -198,9 +193,9 @@ class StockAnalysis extends REST_Controller {
 	
 		foreach($sets as $key => $value){
 		$table = $tables[$value]['table'];
-			$prefix = $tables[$value]['prefix'];
+		$prefix = $tables[$value]['prefix'];
 		$detailTable =  $tables[$value]['detailTable'];
-			$detailPrefix = $tables[$value]['detailPrefix'];
+		$detailPrefix = $tables[$value]['detailPrefix'];
 		if ($cardcode) {
 		  $card = "AND {$prefix}_cardcode = :dvf_cardcode";
 		}
@@ -216,10 +211,22 @@ class StockAnalysis extends REST_Controller {
 			$originPre = 'cfc';
 		}
 
+		$unidad = ",'' unidad  ";
+		if($tables[$value]['table'] == 'dvnc' OR 
+		$tables[$value]['table'] == 'dvnd' OR
+		$tables[$value]['table'] == 'dcnc' OR
+		$tables[$value]['table'] == 'dcnd'
+		){
+		$unidad = ",
+		{$detailPrefix}_uom unidad";
+		}
+
 		if($tables[$value]['table'] == 'dvnc' or $tables[$value]['table'] == 'dcnc'){
 			$neg = -1;
+		}else{
+			$neg = 1;
 		}
-		  $all .= "SELECT
+		  $all .= "SELECT distinct
 		  mdt_docname tipo_doc_name,
 		  {$detailPrefix}_itemcode item_code,
 		  min({$prefix}_docdate) fecha_inicio,
@@ -230,12 +237,14 @@ class StockAnalysis extends REST_Controller {
 		  {$detailPrefix}_itemname item_name,
 		  {$prefix}_cardname cliente_name,
 		  concat({CURR},round((round((avg({$detailPrefix}_linetotal)),2) / {USD} ),2) * {$neg}) val_factura,
-		  sum({$detailPrefix}_quantity) cantidad,
 		  concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
 		  concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2) * {$neg}) val_impuesto,
 		  concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2) * {$neg})total_docums,
 		  mga_name,
-		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado
+		  {$prefix}_createby createby,
+      	".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad": "sum({$detailPrefix}_quantity) cantidad").",
+		  (SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) createby,
+		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado{$unidad}
 		  from {$table}
 		  join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 		  join dmdt on {$prefix}_doctype = mdt_doctype
@@ -243,7 +252,7 @@ class StockAnalysis extends REST_Controller {
 		  join dmga on mga_id = dma_group_code
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card}
-		  group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype
+		  group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype".(($unidad !=",'' unidad")? ",{$detailPrefix}_uom": "").",{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "")."
 		  UNION ALL
 		  ";
 		}
