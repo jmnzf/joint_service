@@ -427,7 +427,7 @@ class PaymentsReceived extends REST_Controller {
           foreach ($ContenidoDetalle as $key => $detail) {
 
 
-								// SOLO SI NO ES UN ANTICIPO
+								// SOLO SI NO ES UN ANTICIPO CLIENTE
 								if($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0){
 											//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
 											$VlrPayFact = "SELECT COALESCE(dvf_paytoday,0) as dvf_paytoday,dvf_doctotal from dvfv WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
@@ -1140,7 +1140,7 @@ class PaymentsReceived extends REST_Controller {
 
 
 
-					}else{ // EN CASO CONTRARIO ES UN ANTICIPO A CUENTA
+					}else{ // EN CASO CONTRARIO ES UN ANTICIPO A CLIENTE
 
 					//SE AGREGA ASIENTO A CUENTA DE LA LINEA DE ANTICIPO
 
