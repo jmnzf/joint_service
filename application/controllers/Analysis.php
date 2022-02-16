@@ -85,18 +85,6 @@ class Analysis extends REST_Controller {
     $sqlSelect = " ";
     $cardcode = (isset( $Data['dvf_cardcode']) and $Data['dvf_cardcode'] !=null) ?  true: false;
 
-    
-    $unidad = ",'' unidad  ";
-
-    if($tables[$tipo]['table'] == 'dvnc' OR 
-    $tables[$tipo]['table'] == 'dvnd' OR
-    $tables[$tipo]['table'] == 'dcnc' OR
-    $tables[$tipo]['table'] == 'dcnd'
-    ){
-      $unidad = ",
-      {$detailPrefix}_uom unidad";
-    }
-
     if($tables[$tipo]['table'] == 'dvnc' or $tables[$tipo]['table'] == 'dcnc'){
       $neg = -1;
     }else{
@@ -133,7 +121,8 @@ class Analysis extends REST_Controller {
           {$prefix}_createby createby,
           ".(($table =="dvnc")?"{$detailPrefix}_exc_inv invent ,": "'' invent,")."
           (SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
-          (SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado {$unidad}
+          (SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado,
+          {$detailPrefix}_uom  unidad
         from
         {$table}
         join dmsn on {$prefix}_cardcode  = dms_card_code
@@ -145,7 +134,7 @@ class Analysis extends REST_Controller {
         join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
         where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions."
         GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, bdc_concept,dmd_adress,
-        dmd_city,{$prefix}_baseentry,{$prefix}_basetype".(($unidad !=",'' unidad")? ",{$detailPrefix}_uom": "").",{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "");
+        dmd_city,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "");
         break;
     }
 
@@ -204,16 +193,6 @@ class Analysis extends REST_Controller {
 			$neg = -1;
 		}
 // nc1_exc_inv
-$unidad = ",'' unidad  ";
-    if($tables[$value]['table'] == 'dvnc' OR 
-    $tables[$value]['table'] == 'dvnd' OR
-    $tables[$value]['table'] == 'dcnc' OR
-    $tables[$value]['table'] == 'dcnd'
-    ){
-      $unidad = ",
-      {$detailPrefix}_uom unidad";
-    }
-
 
     $origin = '';
 		$originPre = '';
@@ -248,7 +227,8 @@ $unidad = ",'' unidad  ";
       {$prefix}_createby createby,
       ".(($table =="dvnc")?"{$detailPrefix}_exc_inv::text": "'' invent").",
       (SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
-		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado{$unidad}
+		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado,
+      {$detailPrefix}_uom  unidad
       from
       {$table}
       join dmsn on {$prefix}_cardcode = dms_card_code
@@ -260,7 +240,7 @@ $unidad = ",'' unidad  ";
       join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
       where ({$prefix}_docdate BETWEEN :dvf_docdate and :dvf_duedate) {$card}
       GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum,
-       mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city,{$prefix}_baseentry,{$prefix}_basetype".(($unidad !=",'' unidad")? ",{$detailPrefix}_uom": "").",{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "")."
+       mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "")."
       UNION ALL
       ";
     }
