@@ -134,7 +134,8 @@ class StockAnalysis extends REST_Controller {
 									{$prefix}_createby createby,
 									".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad": "sum({$detailPrefix}_quantity) cantidad").",
 									(SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
-									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado{$unidad}
+									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado,
+									{$detailPrefix}_uom  unidad
 									from {$table}
 									join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 									join dmdt on {$prefix}_doctype = mdt_doctype
@@ -142,7 +143,7 @@ class StockAnalysis extends REST_Controller {
 									join dmga on mga_id = dma_group_code
 									full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 									where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-									group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum".(($unidad !=",'' unidad")? ",{$detailPrefix}_uom": "").",{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "");
+									group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "");
 									break;
 						}
 
@@ -244,7 +245,8 @@ class StockAnalysis extends REST_Controller {
 		  {$prefix}_createby createby,
       	".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad": "sum({$detailPrefix}_quantity) cantidad").",
 		  (SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) createby,
-		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado{$unidad}
+		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado,
+		  {$detailPrefix}_uom  unidad
 		  from {$table}
 		  join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 		  join dmdt on {$prefix}_doctype = mdt_doctype
@@ -252,7 +254,7 @@ class StockAnalysis extends REST_Controller {
 		  join dmga on mga_id = dma_group_code
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card}
-		  group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype".(($unidad !=",'' unidad")? ",{$detailPrefix}_uom": "").",{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "")."
+		  group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "")."
 		  UNION ALL
 		  ";
 		}
