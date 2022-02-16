@@ -113,7 +113,7 @@ class Analysis extends REST_Controller {
           to_char(min({$prefix}_duedate),'DD-MM-YYYY') fecha_fin,
           to_char(min({$prefix}_duedev),'DD-MM-YYYY') fecha_doc,
           to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
-          sum({$detailPrefix}_quantity ) * {$neg}cant_docs,
+          ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,": "sum({$detailPrefix}_quantity) cant_docs,")."
           concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
           concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
           concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2)) total_docums,
@@ -219,7 +219,7 @@ class Analysis extends REST_Controller {
       to_char(min({$prefix}_duedate),'DD-MM-YYYY') fecha_fin,
       to_char(min({$prefix}_duedev),'DD-MM-YYYY') fecha_doc,
       to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
-      sum({$detailPrefix}_quantity) * {$neg} cant_docs,
+      ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,": "sum({$detailPrefix}_quantity) cant_docs,")."
       concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2) * {$neg}) val_factura,
       concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2) * {$neg}) val_impuesto,
       concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2) * {$neg})  total_docums,
