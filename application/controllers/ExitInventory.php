@@ -699,10 +699,10 @@ class ExitInventory extends REST_Controller {
 															':ote_code' => $detail['ote_code'],
 															':ote_createdate' => $detail['ote_createdate'],
 															':ote_duedate' => $detail['ote_duedate'],
-															':ote_createby' => $Data['iei_createby'],
+															':ote_createby' => $Data['isi_createby'],
 															':ote_date' => date('Y-m-d'),
 															':ote_baseentry' => $resInsert,
-															':ote_basetype' => $Data['iei_doctype'],
+															':ote_basetype' => $Data['isi_doctype'],
 															':ote_docnum' => $DocNumVerificado
 														));
 
@@ -712,7 +712,7 @@ class ExitInventory extends REST_Controller {
 															$respuesta = array(
 																'error'   => true,
 																'data' 		=> $resInsertLote,
-																'mensaje'	=> 'No se pudo registrar la entrada de inventario'
+																'mensaje'	=> 'No se pudo registrar la salida de inventario'
 															);
 
 															 $this->response($respuesta);
@@ -1070,7 +1070,7 @@ class ExitInventory extends REST_Controller {
 					}
 					//FIN PROCEDIMIENTO PARA LLENAR CUENTA GRUPO
 
-					// Si todo sale bien despues de insertar el detalle de la entrada de
+					// Si todo sale bien despues de insertar el detalle de la salida de inventaro
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.
 					$this->pedeo->trans_commit();
@@ -1142,7 +1142,7 @@ class ExitInventory extends REST_Controller {
   }
 
 
-	//OBTENER ENTRADA DE  POR ID
+	//OBTENER SALIDA DE INVENTARIO  POR ID
 	public function getExitInventoryById_get(){
 
 				$Data = $this->get();
@@ -1229,7 +1229,7 @@ class ExitInventory extends REST_Controller {
 
 
 
-	//OBTENER ENTRADAS DE  POR SOCIO DE NEGOCIO
+	//OBTENER SALIDAS DE INVENTARIO  POR SOCIO DE NEGOCIO
 	public function getExitInventoryBySN_get(){
 
 				$Data = $this->get();
