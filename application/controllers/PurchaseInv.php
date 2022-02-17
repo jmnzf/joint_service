@@ -61,7 +61,7 @@ class PurchaseInv extends REST_Controller {
 			$DocNumVerificado = 0;
 			$ManejaInvetario = 0;
 			$TotalAcuRentencion = 0;
-
+			$ManejaLote = 0;
 			$TasaDocLoc = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL DOCUMENTO
 			$TasaLocSys = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL SISTEMA
 			$MONEDALOCAL = 0;
@@ -725,6 +725,7 @@ class PurchaseInv extends REST_Controller {
 								// FIN PROCESO PARA INSERTAR RETENCIONES
 
 								// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
+								// Y A SU VES SI MANEJA LOTE
 								$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
 								$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
 
@@ -740,7 +741,20 @@ class PurchaseInv extends REST_Controller {
 									$ManejaInvetario = 0;
 								}
 
-								// FIN PROCESO ITEM MANEJA INVENTARIO
+								$sqlLote = "SELECT dma_lotes_code FROM dmar WHERE dma_item_code = :dma_item_code AND dma_lotes_code = :dma_lotes_code";
+								$resLote = $this->pedeo->queryTable($sqlLote, array(
+
+												':dma_item_code' => $detail['si1_itemcode'],
+												':dma_lotes_code'  => 1
+								));
+
+								if(isset($resLote[0])){
+									$ManejaLote = 1;
+								}else{
+									$ManejaLote = 0;
+								}
+
+								// FIN PROCESO ITEM MANEJA INVENTARIO Y LOTE
 
 
 								// si el item es inventariable
@@ -915,6 +929,7 @@ class PurchaseInv extends REST_Controller {
 													//FIN de  Aplicacion del movimiento en stock
 
 											}
+
 										}// EN CASO CONTRARIO NO SE MUEVE INVENTARIO
 
 								}
