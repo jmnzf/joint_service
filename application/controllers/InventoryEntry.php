@@ -879,43 +879,44 @@ class InventoryEntry extends REST_Controller {
 
 											//SE VALIDA SI EXISTE EL LOTE
 
-											$sqlFindLote = "SELECT ote_code FROM lote WHERE ote_code = :ote_code";
-											$resFindLote = $this->pedeo->queryTable($sqlFindLote, array(':ote_code' => $detail['ote_code']));
+											if ( $ManejaLote == 1 ){
+												$sqlFindLote = "SELECT ote_code FROM lote WHERE ote_code = :ote_code";
+												$resFindLote = $this->pedeo->queryTable($sqlFindLote, array(':ote_code' => $detail['ote_code']));
 
-											if( !isset($resFindLote[0]) ){
-												// SI NO SE HA CREADO EL LOTE SE INGRESA
-												$sqlInsertLote = "INSERT INTO lote(ote_code, ote_createdate, ote_duedate, ote_createby, ote_date, ote_baseentry, ote_basetype, ote_docnum)
-																				VALUES(:ote_code, :ote_createdate, :ote_duedate, :ote_createby, :ote_date, :ote_baseentry, :ote_basetype, :ote_docnum)";
-												$resInsertLote = $this->pedeo->insertRow($sqlInsertLote, array(
+												if( !isset($resFindLote[0]) ){
+													// SI NO SE HA CREADO EL LOTE SE INGRESA
+													$sqlInsertLote = "INSERT INTO lote(ote_code, ote_createdate, ote_duedate, ote_createby, ote_date, ote_baseentry, ote_basetype, ote_docnum)
+																					VALUES(:ote_code, :ote_createdate, :ote_duedate, :ote_createby, :ote_date, :ote_baseentry, :ote_basetype, :ote_docnum)";
+													$resInsertLote = $this->pedeo->insertRow($sqlInsertLote, array(
 
-													':ote_code' => $detail['ote_code'],
-													':ote_createdate' => $detail['ote_createdate'],
-													':ote_duedate' => $detail['ote_duedate'],
-													':ote_createby' => $Data['iei_createby'],
-													':ote_date' => date('Y-m-d'),
-													':ote_baseentry' => $resInsert,
-													':ote_basetype' => $Data['iei_doctype'],
-													':ote_docnum' => $DocNumVerificado
-												));
+														':ote_code' => $detail['ote_code'],
+														':ote_createdate' => $detail['ote_createdate'],
+														':ote_duedate' => $detail['ote_duedate'],
+														':ote_createby' => $Data['iei_createby'],
+														':ote_date' => date('Y-m-d'),
+														':ote_baseentry' => $resInsert,
+														':ote_basetype' => $Data['iei_doctype'],
+														':ote_docnum' => $DocNumVerificado
+													));
 
 
-												if( is_numeric($resInsertLote) && $resInsertLote > 0){
+													if( is_numeric($resInsertLote) && $resInsertLote > 0){
 
-												}else{
-													$this->pedeo->trans_rollback();
+													}else{
+														$this->pedeo->trans_rollback();
 
-													$respuesta = array(
-														'error'   => true,
-														'data' 		=> $resInsertLote,
-														'mensaje'	=> 'No se pudo registrar la entrada de inventario'
-													);
+														$respuesta = array(
+															'error'   => true,
+															'data' 		=> $resInsertLote,
+															'mensaje'	=> 'No se pudo registrar la entrada de inventario'
+														);
 
-													 $this->response($respuesta);
+														 $this->response($respuesta);
 
-													 return;
+														 return;
+													}
 												}
 											}
-
 											//FIN VALIDACION DEL LOTE
 								}
 

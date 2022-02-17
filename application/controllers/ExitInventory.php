@@ -599,7 +599,7 @@ class ExitInventory extends REST_Controller {
 												//SE VALIDA SI EL ARTICULO MANEJA LOTE
 												$sqlCostoCantidad = '';
 												$resCostoCantidad = [];
-												
+
 												if ( $ManejaLote == 1 ){
 													$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
 																								FROM tbdi
@@ -682,7 +682,45 @@ class ExitInventory extends REST_Controller {
 															 return;
 												}
 
-													//FIN de  Aplicacion del movimiento en stock
+												//FIN de  Aplicacion del movimiento en stock
+
+												//SE VALIDA SI EXISTE EL LOTE
+
+												if ( $ManejaLote == 1 ){
+													$sqlFindLote = "SELECT ote_code FROM lote WHERE ote_code = :ote_code";
+													$resFindLote = $this->pedeo->queryTable($sqlFindLote, array(':ote_code' => $detail['ote_code']));
+
+													if( !isset($resFindLote[0]) ){
+														// SI NO SE HA CREADO EL LOTE SE INGRESA
+														$sqlInsertLote = "INSERT INTO lote(ote_code, ote_createdate, ote_duedate, ote_createby, ote_date, ote_baseentry, ote_basetype, ote_docnum)
+																						VALUES(:ote_code, :ote_createdate, :ote_duedate, :ote_createby, :ote_date, :ote_baseentry, :ote_basetype, :ote_docnum)";
+														$resInsertLote = $this->pedeo->insertRow($sqlInsertLote, array(
+
+															':ote_code' => $detail['ote_code'],
+															':ote_createdate' => $detail['ote_createdate'],
+															':ote_duedate' => $detail['ote_duedate'],
+															':ote_createby' => $Data['iei_createby'],
+															':ote_date' => date('Y-m-d'),
+															':ote_baseentry' => $resInsert,
+															':ote_basetype' => $Data['iei_doctype'],
+															':ote_docnum' => $DocNumVerificado
+														));
+
+														if( is_numeric($resInsertLote) && $resInsertLote > 0){
+														}else{
+															$this->pedeo->trans_rollback();
+															$respuesta = array(
+																'error'   => true,
+																'data' 		=> $resInsertLote,
+																'mensaje'	=> 'No se pudo registrar la entrada de inventario'
+															);
+
+															 $this->response($respuesta);
+															 return;
+														}
+													}
+												}
+												//FIN VALIDACION DEL LOTE
 								}
 
 
