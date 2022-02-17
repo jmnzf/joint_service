@@ -115,9 +115,9 @@ class Analysis extends REST_Controller {
           to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
           to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
           ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,": "sum({$detailPrefix}_quantity) cant_docs,")."
-          concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2)) val_factura,
-          concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
-          concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2)) total_docums,
+          concat({CURR},round(avg(({$prefix}_baseamnt) / {USD}),2)) val_factura,
+          concat({CURR},round(avg(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
+          concat({CURR},round(avg(({$prefix}_doctotal) / {USD}),2)) total_docums,
           round(avg(tsa_value),2) tasa,
           {$prefix}_createby createby,
           ".(($table =="dvnc")?"{$detailPrefix}_exc_inv invent ,": "'' invent,")."
@@ -222,9 +222,9 @@ class Analysis extends REST_Controller {
       to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
       to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
       ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,": "sum({$detailPrefix}_quantity) cant_docs,")."
-      concat({CURR},round(sum(({$prefix}_baseamnt) / {USD}),2) * {$neg}) val_factura,
-      concat({CURR},round(sum(({$prefix}_taxtotal) / {USD}),2) * {$neg}) val_impuesto,
-      concat({CURR},round(sum(({$prefix}_doctotal) / {USD}),2) * {$neg})  total_docums,
+      concat({CURR},round(avg(({$prefix}_baseamnt) / {USD}),2) * {$neg}) val_factura,
+      concat({CURR},round(avg(({$prefix}_taxtotal) / {USD}),2) * {$neg}) val_impuesto,
+      concat({CURR},round(avg(({$prefix}_doctotal) / {USD}),2) * {$neg})  total_docums,
       round(avg(tsa_value),2) tasa,
       {$prefix}_createby createby,
       ".(($table =="dvnc")?"{$detailPrefix}_exc_inv::text": "'' invent").",
