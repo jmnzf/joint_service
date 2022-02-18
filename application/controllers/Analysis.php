@@ -108,13 +108,13 @@ class Analysis extends REST_Controller {
           {$prefix}_cardname cliente_name,
           concat(dmd_adress,' ',dmd_city) Direccion,
           bdc_clasify ,
-          bdc_concept,
+          {$prefix}_comment bdc_concept,
           to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_inicio,
           to_char(min({$prefix}_duedate),'DD-MM-YYYY') fecha_fin,
           to_char(min({$prefix}_duedev),'DD-MM-YYYY') fecha_doc,
           to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
           to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
-          ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,": "sum({$detailPrefix}_quantity) cant_docs,")."
+          ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,":(($table == 'dvnd') ? "0 cant_docs," : "sum({$detailPrefix}_quantity) cant_docs,") )."
           concat({CURR},round(avg(({$prefix}_baseamnt) / {USD}),2)) val_factura,
           concat({CURR},round(avg(({$prefix}_taxtotal) / {USD}),2)) val_impuesto,
           concat({CURR},round(avg(({$prefix}_doctotal) / {USD}),2)) total_docums,
@@ -130,11 +130,11 @@ class Analysis extends REST_Controller {
         join dmgs on dms_rtype = mgs_id
         join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
         join dmdt on {$prefix}_doctype = mdt_doctype
-        join tbdc  on dms_classtype = bdc_clasify
+        full join tbdc  on dms_classtype = bdc_clasify
         join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
         join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
         where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions."
-        GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, bdc_concept,dmd_adress,
+        GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, {$prefix}_comment,dmd_adress,
         dmd_city,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "");
         break;
     }
@@ -215,13 +215,13 @@ class Analysis extends REST_Controller {
       {$prefix}_cardname cliente_name,
       concat(dmd_adress,' ',dmd_city) Direccion,
       bdc_clasify ,
-      bdc_concept,
+      {$prefix}_comment bdc_concept,
       to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_inicio,
       to_char(min({$prefix}_duedate),'DD-MM-YYYY') fecha_fin,
       to_char(min({$prefix}_duedev),'DD-MM-YYYY') fecha_doc,
       to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
       to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
-      ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,": "sum({$detailPrefix}_quantity) cant_docs,")."
+      ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,":(($table == 'dvnd') ? "0 cant_docs," : "sum({$detailPrefix}_quantity) cant_docs,") )."
       concat({CURR},round(avg(({$prefix}_baseamnt) / {USD}),2) * {$neg}) val_factura,
       concat({CURR},round(avg(({$prefix}_taxtotal) / {USD}),2) * {$neg}) val_impuesto,
       concat({CURR},round(avg(({$prefix}_doctotal) / {USD}),2) * {$neg})  total_docums,
@@ -233,16 +233,16 @@ class Analysis extends REST_Controller {
       {$detailPrefix}_uom  unidad
       from
       {$table}
-      join dmsn on {$prefix}_cardcode = dms_card_code
+      JOIN dmsn on {$prefix}_cardcode = dms_card_code
       join dmgs on dms_rtype = mgs_id
       join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
       join dmdt on {$prefix}_doctype = mdt_doctype
-      join tbdc on dms_classtype = bdc_clasify
+      full join tbdc on dms_classtype = bdc_clasify
       join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
       join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
       where ({$prefix}_docdate BETWEEN :dvf_docdate and :dvf_duedate) {$card}
       GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum,
-       mdt_docname, bdc_clasify, bdc_concept,dmd_adress, dmd_city,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "")."
+       mdt_docname, bdc_clasify, {$prefix}_comment,dmd_adress, dmd_city,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "")."
       UNION ALL
       ";
     }
