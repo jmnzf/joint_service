@@ -127,13 +127,12 @@ class StockAnalysis extends REST_Controller {
 									{$detailPrefix}_itemname item_name,
 									{$prefix}_cardname cliente_name,
 									concat({CURR},round((round((avg({$detailPrefix}_linetotal)),2) / {USD} ),2) * {$neg}) val_factura,
-									sum({$detailPrefix}_quantity) * {$neg} cantidad,
 									concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
 									concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2) * {$neg}) val_impuesto,
 									concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2) * {$neg}) total_docums,
 									mga_name,
 									{$prefix}_createby createby,
-									".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad": "sum({$detailPrefix}_quantity) cantidad").",
+									".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad,":(($table == 'dvnd') ? "0 cantidad," : "sum({$detailPrefix}_quantity) cantidad,") )."
 									(SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
 									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado,
 									{$detailPrefix}_uom  unidad
@@ -245,7 +244,7 @@ class StockAnalysis extends REST_Controller {
 		  concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2) * {$neg})total_docums,
 		  mga_name,
 		  {$prefix}_createby createby,
-      	".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad": "sum({$detailPrefix}_quantity) cantidad").",
+		  ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad,":(($table == 'dvnd') ? "0 cantidad," : "sum({$detailPrefix}_quantity) cantidad,") )."
 		  (SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
 		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado,
 		  {$detailPrefix}_uom  unidad
