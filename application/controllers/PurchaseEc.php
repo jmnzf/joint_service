@@ -637,7 +637,7 @@ class PurchaseEc extends REST_Controller {
 								$sqlLote = "SELECT dma_lotes_code FROM dmar WHERE dma_item_code = :dma_item_code AND dma_lotes_code = :dma_lotes_code";
 								$resLote = $this->pedeo->queryTable($sqlLote, array(
 
-												':dma_item_code' => $detail['si1_itemcode'],
+												':dma_item_code' => $detail['ec1_itemcode'],
 												':dma_lotes_code'  => 1
 								));
 
@@ -663,9 +663,10 @@ class PurchaseEc extends REST_Controller {
 
 										$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
 										$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-										':bdi_whscode' => $detail['ec1_whscode'],
-										':bdi_itemcode' => $detail['ec1_itemcode'],
-										':bdi_lote' => $detail['ote_code']
+											':bdi_whscode' => $detail['ec1_whscode'],
+											':bdi_itemcode' => $detail['ec1_itemcode'],
+											':bdi_lote' => $detail['ote_code']
+										));
 
 									}else{
 
@@ -1050,7 +1051,7 @@ class PurchaseEc extends REST_Controller {
 												$respuesta = array(
 													'error'   => true,
 													'data' 		=> $resInsertLote,
-													'mensaje'	=> 'No se pudo registrar la entrada de inventario'
+													'mensaje'	=> 'No se pudo registrar la entrada en compras'
 												);
 
 												 $this->response($respuesta);

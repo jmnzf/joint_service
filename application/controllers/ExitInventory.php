@@ -519,7 +519,7 @@ class ExitInventory extends REST_Controller {
 															 ':bmi_createby' => isset($Data['isi_createby'])?$Data['isi_createby']:NULL,
 															 ':bmy_doctype'  => is_numeric($Data['isi_doctype'])?$Data['isi_doctype']:0,
 															 ':bmy_baseentry' => $resInsert,
-															 ':bmi_cost'      => $NuevoCostoPonderado,
+															 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
 															 ':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
 															 ':bmi_basenum'			=> $DocNumVerificado,
 															 ':bmi_docdate' => $this->validateDate($Data['isi_docdate'])?$Data['isi_docdate']:NULL,

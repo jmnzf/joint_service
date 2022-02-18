@@ -468,7 +468,7 @@ class StockTransfer extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data' => $resInsertEstado,
-									'mensaje'	=> 'No se pudo registrar la solicitud de compras',
+									'mensaje'	=> 'No se pudo registrar la transferencia',
 									'proceso' => 'Insertar estado documento'
 								);
 
@@ -1006,403 +1006,555 @@ class StockTransfer extends REST_Controller {
 
 				foreach ($ContenidoDetalle as $key => $detail) {
 
-					$sqlInsertDetail = "INSERT INTO its1(ts1_docentry, ts1_itemcode, ts1_itemname, ts1_quantity, ts1_uom, ts1_whscode,
-					                    ts1_price, ts1_vat, ts1_vatsum, ts1_discount, ts1_linetotal, ts1_costcode, ts1_ubusiness, ts1_project,
-					                    ts1_acctcode, ts1_basetype, ts1_doctype, ts1_avprice, ts1_inventory, ts1_acciva, ts1_whscode_dest)VALUES(:ts1_docentry, :ts1_itemcode, :ts1_itemname, :ts1_quantity,
-					                    :ts1_uom, :ts1_whscode,:ts1_price, :ts1_vat, :ts1_vatsum, :ts1_discount, :ts1_linetotal, :ts1_costcode, :ts1_ubusiness, :ts1_project,
-					                    :ts1_acctcode, :ts1_basetype, :ts1_doctype, :ts1_avprice, :ts1_inventory, :ts1_acciva, :ts1_whscode_dest)";
+							$sqlInsertDetail = "INSERT INTO its1(ts1_docentry, ts1_itemcode, ts1_itemname, ts1_quantity, ts1_uom, ts1_whscode,
+							                    ts1_price, ts1_vat, ts1_vatsum, ts1_discount, ts1_linetotal, ts1_costcode, ts1_ubusiness, ts1_project,
+							                    ts1_acctcode, ts1_basetype, ts1_doctype, ts1_avprice, ts1_inventory, ts1_acciva, ts1_whscode_dest)VALUES(:ts1_docentry, :ts1_itemcode, :ts1_itemname, :ts1_quantity,
+							                    :ts1_uom, :ts1_whscode,:ts1_price, :ts1_vat, :ts1_vatsum, :ts1_discount, :ts1_linetotal, :ts1_costcode, :ts1_ubusiness, :ts1_project,
+							                    :ts1_acctcode, :ts1_basetype, :ts1_doctype, :ts1_avprice, :ts1_inventory, :ts1_acciva, :ts1_whscode_dest)";
 
-					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-						':ts1_docentry' => $resInsert,
-						':ts1_itemcode' => isset($detail['ts1_itemcode'])?$detail['ts1_itemcode']:NULL,
-						':ts1_itemname' => isset($detail['ts1_itemname'])?$detail['ts1_itemname']:NULL,
-						':ts1_quantity' => is_numeric($detail['ts1_quantity'])?$detail['ts1_quantity']:0,
-						':ts1_uom' => isset($detail['ts1_uom'])?$detail['ts1_uom']:NULL,
-						':ts1_whscode' => isset($detail['ts1_whscode'])?$detail['ts1_whscode']:NULL,
-						':ts1_price' => is_numeric($detail['ts1_price'])?$detail['ts1_price']:0,
-						':ts1_vat' => is_numeric($detail['ts1_vat'])?$detail['ts1_vat']:0,
-						':ts1_vatsum' => is_numeric($detail['ts1_vatsum'])?$detail['ts1_vatsum']:0,
-						':ts1_discount' => is_numeric($detail['ts1_discount'])?$detail['ts1_discount']:0,
-						':ts1_linetotal' => is_numeric($detail['ts1_linetotal'])?$detail['ts1_linetotal']:0,
-						':ts1_costcode' => isset($detail['ts1_costcode'])?$detail['ts1_costcode']:NULL,
-						':ts1_ubusiness' => isset($detail['ts1_ubusiness'])?$detail['ts1_ubusiness']:NULL,
-						':ts1_project' => isset($detail['ts1_project'])?$detail['ts1_project']:NULL,
-						':ts1_acctcode' => is_numeric($detail['ts1_acctcode'])?$detail['ts1_acctcode']:0,
-						':ts1_basetype' => is_numeric($detail['ts1_basetype'])?$detail['ts1_basetype']:0,
-						':ts1_doctype' => is_numeric($detail['ts1_doctype'])?$detail['ts1_doctype']:0,
-						':ts1_avprice' => is_numeric($detail['ts1_avprice'])?$detail['ts1_avprice']:0,
-						':ts1_inventory' => is_numeric($detail['ts1_inventory'])?$detail['ts1_inventory']:NULL,
-						':ts1_acciva' => is_numeric($detail['ts1_acciva'])?$detail['ts1_acciva']:NULL,
-						':ts1_whscode_dest' => isset($detail['ts1_whscode_dest'])?$detail['ts1_whscode_dest']:NULL
-					));
+							$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
+								':ts1_docentry' => $resInsert,
+								':ts1_itemcode' => isset($detail['ts1_itemcode'])?$detail['ts1_itemcode']:NULL,
+								':ts1_itemname' => isset($detail['ts1_itemname'])?$detail['ts1_itemname']:NULL,
+								':ts1_quantity' => is_numeric($detail['ts1_quantity'])?$detail['ts1_quantity']:0,
+								':ts1_uom' => isset($detail['ts1_uom'])?$detail['ts1_uom']:NULL,
+								':ts1_whscode' => isset($detail['ts1_whscode'])?$detail['ts1_whscode']:NULL,
+								':ts1_price' => is_numeric($detail['ts1_price'])?$detail['ts1_price']:0,
+								':ts1_vat' => is_numeric($detail['ts1_vat'])?$detail['ts1_vat']:0,
+								':ts1_vatsum' => is_numeric($detail['ts1_vatsum'])?$detail['ts1_vatsum']:0,
+								':ts1_discount' => is_numeric($detail['ts1_discount'])?$detail['ts1_discount']:0,
+								':ts1_linetotal' => is_numeric($detail['ts1_linetotal'])?$detail['ts1_linetotal']:0,
+								':ts1_costcode' => isset($detail['ts1_costcode'])?$detail['ts1_costcode']:NULL,
+								':ts1_ubusiness' => isset($detail['ts1_ubusiness'])?$detail['ts1_ubusiness']:NULL,
+								':ts1_project' => isset($detail['ts1_project'])?$detail['ts1_project']:NULL,
+								':ts1_acctcode' => is_numeric($detail['ts1_acctcode'])?$detail['ts1_acctcode']:0,
+								':ts1_basetype' => is_numeric($detail['ts1_basetype'])?$detail['ts1_basetype']:0,
+								':ts1_doctype' => is_numeric($detail['ts1_doctype'])?$detail['ts1_doctype']:0,
+								':ts1_avprice' => is_numeric($detail['ts1_avprice'])?$detail['ts1_avprice']:0,
+								':ts1_inventory' => is_numeric($detail['ts1_inventory'])?$detail['ts1_inventory']:NULL,
+								':ts1_acciva' => is_numeric($detail['ts1_acciva'])?$detail['ts1_acciva']:NULL,
+								':ts1_whscode_dest' => isset($detail['ts1_whscode_dest'])?$detail['ts1_whscode_dest']:NULL
+							));
 
-					if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
-							// Se verifica que el detalle no de error insertando //
-					}else{
+							if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+									// Se verifica que el detalle no de error insertando //
+							}else{
 
-							// si falla algun insert del detalle de el pedido se devuelven los cambios realizados por la transaccion,
-							// se retorna el error y se detiene la ejecucion del codigo restante.
-								$this->pedeo->trans_rollback();
+									// si falla algun insert del detalle de el pedido se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
 
-								$respuesta = array(
-									'error'   => true,
-									'data' => $resInsertDetail,
-									'mensaje'	=> 'No se pudo registrar la transferencia'
-								);
+										$respuesta = array(
+											'error'   => true,
+											'data' => $resInsertDetail,
+											'mensaje'	=> 'No se pudo registrar la transferencia'
+										);
 
-								 $this->response($respuesta);
+										 $this->response($respuesta);
 
-								 return;
-					}
+										 return;
+							}
 
-					// VALIDAR PROCESO DE SALIDA
+							// VALIDAR PROCESO DE SALIDA
 
-					//se busca el costo del item en el momento de la creacion del documento de venta
-					// para almacenar en el movimiento de inventario
 
-					$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
-					$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['ts1_whscode'], ':bdi_itemcode' => $detail['ts1_itemcode']));
+							//SE VALIDA EL SI EL ARTICULO MANEJA LOTE
+							$sqlLote = "SELECT dma_lotes_code FROM dmar WHERE dma_item_code = :dma_item_code AND dma_lotes_code = :dma_lotes_code";
+							$resLote = $this->pedeo->queryTable($sqlLote, array(
 
-					if(isset($resCostoMomentoRegistro[0])){
-						//VALIDANDO CANTIDAD DE ARTICULOS
+											':dma_item_code' => $detail['ts1_itemcode'],
+											':dma_lotes_code'  => 1
+							));
 
-						$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
-						$CANT_ARTICULOLN = is_numeric($detail['ts1_quantity'])? $detail['ts1_quantity'] : 0;
+							if(isset($resLote[0])){
+								$ManejaLote = 1;
+							}else{
+								$ManejaLote = 0;
+							}
 
-						if( ($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0){
+							//se busca el costo del item en el momento de la creacion del documento de venta
+							// para almacenar en el movimiento de inventario
+							$sqlCostoMomentoRegistro = '';
+							$resCostoMomentoRegistro = [];
 
-								$this->pedeo->trans_rollback();
+							//SI MANEJA LOTE
+							if ( $ManejaLote == 1 ) {
+								$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
+								$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+									':bdi_whscode' => $detail['ts1_whscode'],
+									':bdi_itemcode' => $detail['ts1_itemcode'],
+									':bdi_lote' => $detail['ote_code']
+								));
 
-								$respuesta = array(
-									'error'   => true,
-									'data' => [],
-									'mensaje'	=> 'no puede crear el documento porque el articulo '.$detail['ts1_itemcode'].' recae en inventario negativo ('.($CANT_ARTICULOEX - $CANT_ARTICULOLN).')'
-								);
+							}else{
+								$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+								$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['ts1_whscode'], ':bdi_itemcode' => $detail['ts1_itemcode']));
 
-								 $this->response($respuesta);
+							}
 
-								 return;
+
+							if(isset($resCostoMomentoRegistro[0])){
+								//VALIDANDO CANTIDAD DE ARTICULOS
+
+								$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
+								$CANT_ARTICULOLN = is_numeric($detail['ts1_quantity'])? $detail['ts1_quantity'] : 0;
+
+								if( ($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0){
+
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data' => [],
+											'mensaje'	=> 'no puede crear el documento porque el articulo '.$detail['ts1_itemcode'].' recae en inventario negativo ('.($CANT_ARTICULOEX - $CANT_ARTICULOLN).')'
+										);
+
+										 $this->response($respuesta);
+
+										 return;
+								}
+
+							}
+
+							//Se aplica el movimiento de inventario para el almacen destino
+							$sqlInserMovimiento = '';
+							$resInserMovimiento = [];
+							//SI EL ARTICULO MANEJA LOTE
+							if ( $ManejaLote == 1 ) {
+								$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote)
+																			 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote)";
+
+								$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+
+										 ':bmi_itemcode' => isset($detail['ts1_itemcode'])?$detail['ts1_itemcode']:NULL,
+										 ':bmi_quantity' => is_numeric($detail['ts1_quantity'])? $detail['ts1_quantity'] * 1:0,
+										 ':bmi_whscode'  => isset($detail['ts1_whscode_dest'])?$detail['ts1_whscode_dest']:NULL,
+										 ':bmi_createat' => $this->validateDate($Data['its_createat'])?$Data['its_createat']:NULL,
+										 ':bmi_createby' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
+										 ':bmy_doctype'  => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
+										 ':bmy_baseentry' => $resInsert,
+										 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+										 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+										 ':bmi_basenum'			=> $DocNumVerificado,
+										 ':bmi_docdate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+										 ':bmi_duedate' => $this->validateDate($Data['its_duedate'])?$Data['its_duedate']:NULL,
+										 ':bmi_duedev'  => $this->validateDate($Data['its_duedev'])?$Data['its_duedev']:NULL,
+										 ':bmi_comment' => isset($Data['its_comment'])?$Data['its_comment']:NULL,
+										 ':bmi_lote' => isset($detail['ote_code'])?$detail['ote_code']:NULL
+
+								));
+							}else{
+								$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
+																			 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
+
+								$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+
+										 ':bmi_itemcode' => isset($detail['ts1_itemcode'])?$detail['ts1_itemcode']:NULL,
+										 ':bmi_quantity' => is_numeric($detail['ts1_quantity'])? $detail['ts1_quantity'] * 1:0,
+										 ':bmi_whscode'  => isset($detail['ts1_whscode_dest'])?$detail['ts1_whscode_dest']:NULL,
+										 ':bmi_createat' => $this->validateDate($Data['its_createat'])?$Data['its_createat']:NULL,
+										 ':bmi_createby' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
+										 ':bmy_doctype'  => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
+										 ':bmy_baseentry' => $resInsert,
+										 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+										 ':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
+										 ':bmi_basenum'			=> $DocNumVerificado,
+										 ':bmi_docdate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+										 ':bmi_duedate' => $this->validateDate($Data['its_duedate'])?$Data['its_duedate']:NULL,
+										 ':bmi_duedev'  => $this->validateDate($Data['its_duedev'])?$Data['its_duedev']:NULL,
+										 ':bmi_comment' => isset($Data['its_comment'])?$Data['its_comment']:NULL
+
+								));
+							}
+
+
+						if(is_numeric($resInserMovimiento) && $resInserMovimiento > 0){
+								// Se verifica que el detalle no de error insertando //
+						}else{
+
+								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInserMovimiento,
+										'mensaje'	=> 'No se pudo registra la salida de inventario'
+									);
+
+									 $this->response($respuesta);
+									 return;
 						}
 
-					}
 
-					//Se aplica el movimiento de inventario para el almacen destino
-					$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
-																VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
+						//Se aplica el movimiento de inventario para el almacen origen
+						$sqlInserMovimiento = '';
+						$resInserMovimiento = [];
+						//SI EL ARTICULO MANEJA LOTE
+						if ( $ManejaLote == 1 ) {
+							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote)
+																		 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote)";
 
-				$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+							$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-						 ':bmi_itemcode' => isset($detail['ts1_itemcode'])?$detail['ts1_itemcode']:NULL,
-						 ':bmi_quantity' => is_numeric($detail['ts1_quantity'])? $detail['ts1_quantity'] * 1:0,
-						 ':bmi_whscode'  => isset($detail['ts1_whscode_dest'])?$detail['ts1_whscode_dest']:NULL,
-						 ':bmi_createat' => $this->validateDate($Data['its_createat'])?$Data['its_createat']:NULL,
-						 ':bmi_createby' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
-						 ':bmy_doctype'  => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
-						 ':bmy_baseentry' => $resInsert,
-						 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-						 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-						 ':bmi_basenum'			=> $DocNumVerificado
+									 ':bmi_itemcode' => isset($detail['ts1_itemcode'])?$detail['ts1_itemcode']:NULL,
+									 ':bmi_quantity' => is_numeric($detail['ts1_quantity'])? $detail['ts1_quantity'] * -1:0,
+									 ':bmi_whscode'  => isset($detail['ts1_whscode'])?$detail['ts1_whscode']:NULL,
+									 ':bmi_createat' => $this->validateDate($Data['its_createat'])?$Data['its_createat']:NULL,
+									 ':bmi_createby' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
+									 ':bmy_doctype'  => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
+									 ':bmy_baseentry' => $resInsert,
+									 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+									 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+									 ':bmi_basenum'			=> $DocNumVerificado,
+									 ':bmi_docdate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+									 ':bmi_duedate' => $this->validateDate($Data['its_duedate'])?$Data['its_duedate']:NULL,
+									 ':bmi_duedev'  => $this->validateDate($Data['its_duedev'])?$Data['its_duedev']:NULL,
+									 ':bmi_comment' => isset($Data['its_comment'])?$Data['its_comment']:NULL,
+									 ':bmi_lote' => isset($detail['ote_code'])?$detail['ote_code']:NULL
 
-				));
+							));
+						}else{
+							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
+																		 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
 
-				if(is_numeric($resInserMovimiento) && $resInserMovimiento > 0){
-						// Se verifica que el detalle no de error insertando //
-				}else{
+							$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-						// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-						// se retorna el error y se detiene la ejecucion del codigo restante.
-							$this->pedeo->trans_rollback();
+									 ':bmi_itemcode' => isset($detail['ts1_itemcode'])?$detail['ts1_itemcode']:NULL,
+									 ':bmi_quantity' => is_numeric($detail['ts1_quantity'])? $detail['ts1_quantity'] * -1:0,
+									 ':bmi_whscode'  => isset($detail['ts1_whscode'])?$detail['ts1_whscode']:NULL,
+									 ':bmi_createat' => $this->validateDate($Data['its_createat'])?$Data['its_createat']:NULL,
+									 ':bmi_createby' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
+									 ':bmy_doctype'  => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
+									 ':bmy_baseentry' => $resInsert,
+									 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+									 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+									 ':bmi_basenum'			=> $DocNumVerificado,
+									 ':bmi_docdate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+									 ':bmi_duedate' => $this->validateDate($Data['its_duedate'])?$Data['its_duedate']:NULL,
+									 ':bmi_duedev'  => $this->validateDate($Data['its_duedev'])?$Data['its_duedev']:NULL,
+									 ':bmi_comment' => isset($Data['its_comment'])?$Data['its_comment']:NULL
 
-							$respuesta = array(
-								'error'   => true,
-								'data' => $resInserMovimiento,
-								'mensaje'	=> 'No se pudo registra la salida de inventario'
-							);
+							));
+						}
+
+
+						if(is_numeric($resInserMovimiento) && $resInserMovimiento > 0){
+								// Se verifica que el detalle no de error insertando //
+						}else{
+
+								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInserMovimiento,
+										'mensaje'	=> 'No se pudo registra la salida de inventario'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+						}
+
+						// HACIENDO ENTRADA DE STOCK EN ALMACEN DESTINO
+						//SE VALIDA SI EL ARTICULO MANEJA LOTE
+						$ProductoDestino = '';
+						$ResProductoDestino = '';
+
+						if ( $ManejaLote == 1 ) {
+							$ProductoDestino = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+																	FROM tbdi
+																	WHERE bdi_itemcode = :bdi_itemcode
+																	AND bdi_whscode = :bdi_whscode
+																	AND bdi_lote = :bdi_lote";
+
+							$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
+
+									':bdi_itemcode' => $detail['ts1_itemcode'],
+									':bdi_whscode'  => $detail['ts1_whscode_dest'],
+									':bdi_lote' 		=> $detail['ote_code']
+							));
+						}else{
+							$ProductoDestino = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+																	FROM tbdi
+																	WHERE bdi_itemcode = :bdi_itemcode
+																	AND bdi_whscode = :bdi_whscode";
+
+							$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
+
+									':bdi_itemcode' => $detail['ts1_itemcode'],
+									':bdi_whscode'  => $detail['ts1_whscode_dest']
+							));
+						}
+
+
+						// SI EXISTE EN EL STOCK
+						if(isset($ResProductoDestino[0])){
+
+						  $sqlUpdateProductoEnAlmacen = "UPDATE tbdi
+																			 			 SET bdi_quantity = bdi_quantity + :bdi_quantity
+																			 			 WHERE  bdi_id = :bdi_id";
+
+						  $resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
+
+									 ':bdi_quantity' =>  $detail['ts1_quantity'],
+									 ':bdi_id' 			 =>  $ResProductoDestino[0]['bdi_id']
+						  ));
+
+						  if(is_numeric($resUpdateProductoEnAlmacen) && $resUpdateProductoEnAlmacen == 1){
+
+						  }else{
+
+								 $this->pedeo->trans_rollback();
+
+								 $respuesta = array(
+									 'error'   => true,
+									 'data'    => $resUpdateProductoEnAlmacen,
+									 'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								 );
+
+
+								 $this->response($respuesta);
+
+								 return;
+						  }
+
+
+						}else{ //SI NO EXISTE EN EL INVENTARIO
+							//SE VALIDA SI EL ARTICULO MANEJA LOTE
+							if ( $ManejaLote == 1 ) {
+								$sqlInsertProductoAlmacenDestino = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote)
+																										VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
+
+
+								$resInsertProductoAlmacenDestino	= $this->pedeo->insertRow($sqlInsertProductoAlmacenDestino, array(
+
+											':bdi_itemcode' => $detail['ts1_itemcode'],
+											':bdi_whscode'  => $detail['ts1_whscode_dest'],
+											':bdi_quantity' => $detail['ts1_quantity'],
+											':bdi_avgprice' => $detail['ts1_price'],
+											':bdi_lote' 		=> $detail['ote_code'],
+								));
+							}else{
+								$sqlInsertProductoAlmacenDestino = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
+																					 					VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+
+
+								$resInsertProductoAlmacenDestino	= $this->pedeo->insertRow($sqlInsertProductoAlmacenDestino, array(
+
+											':bdi_itemcode' => $detail['ts1_itemcode'],
+											':bdi_whscode'  => $detail['ts1_whscode_dest'],
+											':bdi_quantity' => $detail['ts1_quantity'],
+											':bdi_avgprice' => $detail['ts1_price']
+								));
+							}
+
+
+
+							if(is_numeric($resInsertProductoAlmacenDestino) && $resInsertProductoAlmacenDestino > 0){
+									// Se verifica que el detalle no de error insertando //
+							}else{
+
+									// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data' 		=> $resInsertProductoAlmacenDestino,
+											'mensaje'	=> 'No se pudo registrar el item en el stock'
+										);
+
+										 $this->response($respuesta);
+
+										 return;
+							}
+						}
+						// FIN ENTRADA DE STOCK EN ALMACEN DESTINO
+
+						//SALIDA DE STOCK EN ALMACEN ORIGEN
+
+						//SE VALIDA SI EL ARTICULO MANEJA LOTE
+						if ( $ManejaLote == 1 ) {
+							$sqlUpdateProductoEnAlmacen = "UPDATE tbdi
+																						 SET bdi_quantity = bdi_quantity - :bdi_quantity
+																						 WHERE  bdi_itemcode = :bdi_itemcode
+																						 AND bdi_whscode = :bdi_whscode
+																						 AND bdi_lote = :bdi_lote";
+
+							$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
+
+									 ':bdi_quantity' =>  $detail['ts1_quantity'],
+									 ':bdi_itemcode' =>  $detail['ts1_itemcode'],
+									 ':bdi_whscode'  =>  $detail['ts1_whscode'],
+									 ':bdi_lote' 		 =>  $detail['ote_code']
+							));
+						}else{
+							$sqlUpdateProductoEnAlmacen = "UPDATE tbdi
+																						 SET bdi_quantity = bdi_quantity - :bdi_quantity
+																						 WHERE  bdi_itemcode = :bdi_itemcode
+																						 AND bdi_whscode = :bdi_whscode ";
+
+							$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
+
+									 ':bdi_quantity' =>  $detail['ts1_quantity'],
+									 ':bdi_itemcode'  =>  $detail['ts1_itemcode'],
+									 ':bdi_whscode'  =>  $detail['ts1_whscode']
+							));
+						}
+
+
+
+						if(is_numeric($resUpdateProductoEnAlmacen) && $resUpdateProductoEnAlmacen == 1){
+
+						}else{
+
+							 $this->pedeo->trans_rollback();
+
+							 $respuesta = array(
+								 'error'   => true,
+								 'data'    => $resUpdateProductoEnAlmacen,
+								 'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+							 );
+
 
 							 $this->response($respuesta);
-							 return;
-				}
-
-
-				//Se aplica el movimiento de inventario para el almacen origen
-				$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode, bmi_quantity, bmi_whscode, bmi_createat, bmi_createby, bmy_doctype, bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum)
-															VALUES (:bmi_itemcode, :bmi_quantity, :bmi_whscode, :bmi_createat, :bmi_createby, :bmy_doctype, :bmy_baseentry, :bmi_cost,:bmi_currequantity,:bmi_basenum)";
-
-				$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
-
-						 ':bmi_itemcode' => isset($detail['ts1_itemcode'])?$detail['ts1_itemcode']:NULL,
-						 ':bmi_quantity' => is_numeric($detail['ts1_quantity'])? $detail['ts1_quantity'] * -1:0,
-						 ':bmi_whscode'  => isset($detail['ts1_whscode'])?$detail['ts1_whscode']:NULL,
-						 ':bmi_createat' => $this->validateDate($Data['its_createat'])?$Data['its_createat']:NULL,
-						 ':bmi_createby' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
-						 ':bmy_doctype'  => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
-						 ':bmy_baseentry' => $resInsert,
-						 ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-						 ':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-						 ':bmi_basenum'			=> $DocNumVerificado
-
-				));
-
-				if(is_numeric($resInserMovimiento) && $resInserMovimiento > 0){
-						// Se verifica que el detalle no de error insertando //
-				}else{
-
-						// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-						// se retorna el error y se detiene la ejecucion del codigo restante.
-							$this->pedeo->trans_rollback();
-
-							$respuesta = array(
-								'error'   => true,
-								'data' => $resInserMovimiento,
-								'mensaje'	=> 'No se pudo registra la salida de inventario'
-							);
-
-							 $this->response($respuesta);
 
 							 return;
-				}
+						}
+						//FIN SALIDA DE STOCK EN ALMACEN ORIGEN
 
-				// HACIENDO ENTRADA DE STOCK EN ALMACEN DESTINO
-				$ProductoDestino = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-														FROM tbdi
-														WHERE bdi_itemcode = :bdi_itemcode
-														AND bdi_whscode = :bdi_whscode";
+						$debito = 0;
+						$credito = 0;
+						$MontoSysDB = 0;
+						$MontoSysCR = 0;
+						$MontoSysCR = ($detail['ts1_linetotal'] / $TasaLocSys);
 
-				$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
+						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
-						':bdi_itemcode' => $detail['ts1_itemcode'],
-						':bdi_whscode'  => $detail['ts1_whscode_dest']
-				));
+								':ac1_trans_id' => $resInsertAsiento,
+								':ac1_account' => $detail['ts1_acctcode'],
+								':ac1_debit' => 0,
+								':ac1_credit' => round($Data['its_doctotal'],2),
+								':ac1_debit_sys' => 0,
+								':ac1_credit_sys' => round($MontoSysCR,2),
+								':ac1_currex' => 0,
+								':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+								':ac1_doc_duedate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+								':ac1_debit_import' => 0,
+								':ac1_credit_import' => 0,
+								':ac1_debit_importsys' => 0,
+								':ac1_credit_importsys' => 0,
+								':ac1_font_key' => $resInsert,
+								':ac1_font_line' => 1,
+								':ac1_font_type' => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
+								':ac1_accountvs' => 1,
+								':ac1_doctype' => 18,
+								':ac1_ref1' => "",
+								':ac1_ref2' => "",
+								':ac1_ref3' => "",
+								':ac1_prc_code' => $detail['ts1_costcode'],
+								':ac1_uncode' => $detail['ts1_ubusiness'],
+								':ac1_prj_code' => $detail['ts1_project'],
+								':ac1_rescon_date' => NULL,
+								':ac1_recon_total' => 0,
+								':ac1_made_user' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
+								':ac1_accperiod' => 1,
+								':ac1_close' => 0,
+								':ac1_cord' => 0,
+								':ac1_ven_debit' => 1,
+								':ac1_ven_credit' => 1,
+								':ac1_fiscal_acct' => 0,
+								':ac1_taxid' => 1,
+								':ac1_isrti' => 0,
+								':ac1_basert' => 0,
+								':ac1_mmcode' => 0,
+								':ac1_legal_num' => isset($Data['its_cardcode'])?$Data['its_cardcode']:NULL,
+								':ac1_codref' => 1
+						));
 
-				// SI EXISTE EN EL STOCK
-				if(isset($ResProductoDestino[0])){
-
-				  $sqlUpdateProductoEnAlmacen = "UPDATE tbdi
-																	 			 SET bdi_quantity = bdi_quantity + :bdi_quantity
-																	 			 WHERE  bdi_id = :bdi_id";
-
-				  $resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
-
-							 ':bdi_quantity' =>  $detail['ts1_quantity'],
-							 ':bdi_id' 			 =>  $ResProductoDestino[0]['bdi_id']
-				  ));
-
-				  if(is_numeric($resUpdateProductoEnAlmacen) && $resUpdateProductoEnAlmacen == 1){
-
-				  }else{
-
-						 $this->pedeo->trans_rollback();
-
-						 $respuesta = array(
-							 'error'   => true,
-							 'data'    => $resUpdateProductoEnAlmacen,
-							 'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
-						 );
-
-
-						 $this->response($respuesta);
-
-						 return;
-				  }
-
-
-				}else{ //SI NO EXISTE EN EL INVENTARIO
-					$sqlInsertProductoAlmacenDestino = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
-																		 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
-
-
-					$resInsertProductoAlmacenDestino	= $this->pedeo->insertRow($sqlInsertProductoAlmacenDestino, array(
-
-								':bdi_itemcode' => $detail['ts1_itemcode'],
-								':bdi_whscode'  => $detail['ts1_whscode_dest'],
-								':bdi_quantity' => $detail['ts1_quantity'],
-								':bdi_avgprice' => $detail['ts1_price']
-					));
-
-
-					if(is_numeric($resInsertProductoAlmacenDestino) && $resInsertProductoAlmacenDestino > 0){
+					if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
 							// Se verifica que el detalle no de error insertando //
 					}else{
-
-							// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
+							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 							// se retorna el error y se detiene la ejecucion del codigo restante.
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
 									'error'   => true,
-									'data' 		=> $resInsertProductoAlmacenDestino,
-									'mensaje'	=> 'No se pudo registrar el item en el stock'
+									'data'	  => $resDetalleAsiento,
+									'mensaje'	=> 'No se pudo registrar la factura de ventas'
 								);
 
 								 $this->response($respuesta);
 
 								 return;
 					}
-				}
-				// FIN ENTRADA DE STOCK EN ALMACEN DESTINO
 
-				//SALIDA DE STOCK EN ALMACEN ORIGEN
+					$MontoSysDB = ($detail['ts1_linetotal'] / $TasaLocSys);
 
-				$sqlUpdateProductoEnAlmacen = "UPDATE tbdi
-																			 SET bdi_quantity = bdi_quantity - :bdi_quantity
-																			 WHERE  bdi_itemcode = :bdi_itemcode
-																			 AND bdi_whscode = :bdi_whscode ";
+					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
-				$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
+								':ac1_trans_id' => $resInsertAsiento,
+								':ac1_account' => $detail['ts1_acctcode'],
+								':ac1_debit' => round($Data['its_doctotal'],2),
+								':ac1_credit' => 0,
+								':ac1_debit_sys' => round($MontoSysDB,2),
+								':ac1_credit_sys' => 0,
+								':ac1_currex' => 0,
+								':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+								':ac1_doc_duedate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+								':ac1_debit_import' => 0,
+								':ac1_credit_import' => 0,
+								':ac1_debit_importsys' => 0,
+								':ac1_credit_importsys' => 0,
+								':ac1_font_key' => $resInsert,
+								':ac1_font_line' => 1,
+								':ac1_font_type' => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
+								':ac1_accountvs' => 1,
+								':ac1_doctype' => 18,
+								':ac1_ref1' => "",
+								':ac1_ref2' => "",
+								':ac1_ref3' => "",
+								':ac1_prc_code' => $detail['ts1_costcode'],
+								':ac1_uncode' => $detail['ts1_ubusiness'],
+								':ac1_prj_code' => $detail['ts1_project'],
+								':ac1_rescon_date' => NULL,
+								':ac1_recon_total' => 0,
+								':ac1_made_user' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
+								':ac1_accperiod' => 1,
+								':ac1_close' => 0,
+								':ac1_cord' => 0,
+								':ac1_ven_debit' => 1,
+								':ac1_ven_credit' => 1,
+								':ac1_fiscal_acct' => 0,
+								':ac1_taxid' => 1,
+								':ac1_isrti' => 0,
+								':ac1_basert' => 0,
+								':ac1_mmcode' => 0,
+								':ac1_legal_num' => isset($Data['its_cardcode'])?$Data['its_cardcode']:NULL,
+								':ac1_codref' => 1
+						));
 
-						 ':bdi_quantity' =>  $detail['ts1_quantity'],
-						 ':bdi_itemcode'  =>  $detail['ts1_itemcode'],
-						 ':bdi_whscode'  =>  $detail['ts1_whscode']
-				));
+					if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+							// Se verifica que el detalle no de error insertando //
+					}else{
+							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+							// se retorna el error y se detiene la ejecucion del codigo restante.
+								$this->pedeo->trans_rollback();
 
-				if(is_numeric($resUpdateProductoEnAlmacen) && $resUpdateProductoEnAlmacen == 1){
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resDetalleAsiento,
+									'mensaje'	=> 'No se pudo registrar la factura de ventas'
+								);
 
-				}else{
+								 $this->response($respuesta);
 
-					 $this->pedeo->trans_rollback();
-
-					 $respuesta = array(
-						 'error'   => true,
-						 'data'    => $resUpdateProductoEnAlmacen,
-						 'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
-					 );
-
-
-					 $this->response($respuesta);
-
-					 return;
-				}
-				//FIN SALIDA DE STOCK EN ALMACEN ORIGEN
-
-				$debito = 0;
-				$credito = 0;
-				$MontoSysDB = 0;
-				$MontoSysCR = 0;
-				$MontoSysCR = ($detail['ts1_linetotal'] / $TasaLocSys);
-
-				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-						':ac1_trans_id' => $resInsertAsiento,
-						':ac1_account' => $detail['ts1_acctcode'],
-						':ac1_debit' => 0,
-						':ac1_credit' => round($Data['its_doctotal'],2),
-						':ac1_debit_sys' => 0,
-						':ac1_credit_sys' => round($MontoSysCR,2),
-						':ac1_currex' => 0,
-						':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
-						':ac1_doc_duedate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
-						':ac1_debit_import' => 0,
-						':ac1_credit_import' => 0,
-						':ac1_debit_importsys' => 0,
-						':ac1_credit_importsys' => 0,
-						':ac1_font_key' => $resInsert,
-						':ac1_font_line' => 1,
-						':ac1_font_type' => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
-						':ac1_accountvs' => 1,
-						':ac1_doctype' => 18,
-						':ac1_ref1' => "",
-						':ac1_ref2' => "",
-						':ac1_ref3' => "",
-						':ac1_prc_code' => $detail['ts1_costcode'],
-						':ac1_uncode' => $detail['ts1_ubusiness'],
-						':ac1_prj_code' => $detail['ts1_project'],
-						':ac1_rescon_date' => NULL,
-						':ac1_recon_total' => 0,
-						':ac1_made_user' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
-						':ac1_accperiod' => 1,
-						':ac1_close' => 0,
-						':ac1_cord' => 0,
-						':ac1_ven_debit' => 1,
-						':ac1_ven_credit' => 1,
-						':ac1_fiscal_acct' => 0,
-						':ac1_taxid' => 1,
-						':ac1_isrti' => 0,
-						':ac1_basert' => 0,
-						':ac1_mmcode' => 0,
-						':ac1_legal_num' => isset($Data['its_cardcode'])?$Data['its_cardcode']:NULL,
-						':ac1_codref' => 1
-				));
-
-			if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-					// Se verifica que el detalle no de error insertando //
-			}else{
-					// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-					// se retorna el error y se detiene la ejecucion del codigo restante.
-						$this->pedeo->trans_rollback();
-
-						$respuesta = array(
-							'error'   => true,
-							'data'	  => $resDetalleAsiento,
-							'mensaje'	=> 'No se pudo registrar la factura de ventas'
-						);
-
-						 $this->response($respuesta);
-
-						 return;
-			}
-
-			$MontoSysDB = ($detail['ts1_linetotal'] / $TasaLocSys);
-
-			$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-						':ac1_trans_id' => $resInsertAsiento,
-						':ac1_account' => $detail['ts1_acctcode'],
-						':ac1_debit' => round($Data['its_doctotal'],2),
-						':ac1_credit' => 0,
-						':ac1_debit_sys' => round($MontoSysDB,2),
-						':ac1_credit_sys' => 0,
-						':ac1_currex' => 0,
-						':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
-						':ac1_doc_duedate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
-						':ac1_debit_import' => 0,
-						':ac1_credit_import' => 0,
-						':ac1_debit_importsys' => 0,
-						':ac1_credit_importsys' => 0,
-						':ac1_font_key' => $resInsert,
-						':ac1_font_line' => 1,
-						':ac1_font_type' => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
-						':ac1_accountvs' => 1,
-						':ac1_doctype' => 18,
-						':ac1_ref1' => "",
-						':ac1_ref2' => "",
-						':ac1_ref3' => "",
-						':ac1_prc_code' => $detail['ts1_costcode'],
-						':ac1_uncode' => $detail['ts1_ubusiness'],
-						':ac1_prj_code' => $detail['ts1_project'],
-						':ac1_rescon_date' => NULL,
-						':ac1_recon_total' => 0,
-						':ac1_made_user' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
-						':ac1_accperiod' => 1,
-						':ac1_close' => 0,
-						':ac1_cord' => 0,
-						':ac1_ven_debit' => 1,
-						':ac1_ven_credit' => 1,
-						':ac1_fiscal_acct' => 0,
-						':ac1_taxid' => 1,
-						':ac1_isrti' => 0,
-						':ac1_basert' => 0,
-						':ac1_mmcode' => 0,
-						':ac1_legal_num' => isset($Data['its_cardcode'])?$Data['its_cardcode']:NULL,
-						':ac1_codref' => 1
-				));
-
-			if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-					// Se verifica que el detalle no de error insertando //
-			}else{
-					// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-					// se retorna el error y se detiene la ejecucion del codigo restante.
-						$this->pedeo->trans_rollback();
-
-						$respuesta = array(
-							'error'   => true,
-							'data'	  => $resDetalleAsiento,
-							'mensaje'	=> 'No se pudo registrar la factura de ventas'
-						);
-
-						 $this->response($respuesta);
-
-						 return;
-			}
+								 return;
+					}
 
 
 
