@@ -126,7 +126,7 @@ class Analysis extends REST_Controller {
           {$detailPrefix}_uom  unidad
         from
         {$table}
-        join dmsn on {$prefix}_cardcode  = dms_card_code
+        join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '1'
         join dmgs on dms_rtype = mgs_id
         join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
         join dmdt on {$prefix}_doctype = mdt_doctype
@@ -233,7 +233,7 @@ class Analysis extends REST_Controller {
       {$detailPrefix}_uom  unidad
       from
       {$table}
-      JOIN dmsn on {$prefix}_cardcode = dms_card_code
+      JOIN dmsn on {$prefix}_cardcode = dms_card_code AND dms_card_type = '1'
       join dmgs on dms_rtype = mgs_id
       join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
       join dmdt on {$prefix}_doctype = mdt_doctype
