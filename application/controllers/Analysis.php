@@ -91,6 +91,15 @@ class Analysis extends REST_Controller {
       $neg = 1;
     }
 
+    $cardType = 1;
+    if($tables[$tipo]['table'] == 'dvnc' or
+      $tables[$tipo]['table'] =='dvnd' OR $tables[$tipo]['table'] == 'dvfv'){
+      $cardType = 1;
+
+    }else{
+      $cardType = 2;
+    }
+
     switch ($Data['dvf_doctype']) {
       case '-1':
         $sqlSelect = $this->generalQuery($tables,['15','16','17'],$cardcode,-1) ;
@@ -126,7 +135,7 @@ class Analysis extends REST_Controller {
           {$detailPrefix}_uom  unidad
         from
         {$table}
-        join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '1'
+        join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
         join dmgs on dms_rtype = mgs_id
         join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
         join dmdt on {$prefix}_doctype = mdt_doctype
@@ -207,6 +216,15 @@ class Analysis extends REST_Controller {
 			$originPre = 'cfc';
 		}
 
+    $cardType = 1;
+    if($tables[$value]['table'] == 'dvnc' or
+      $tables[$value]['table'] =='dvnd' OR $tables[$value]['table'] == 'dvfv'){
+      $cardType = 1;
+
+    }else{
+      $cardType = 2;
+    }
+
       $all .= "SELECT 
       mdt_docname tipo_doc_name,
       {$prefix}_cardcode cliente,
@@ -233,7 +251,7 @@ class Analysis extends REST_Controller {
       {$detailPrefix}_uom  unidad
       from
       {$table}
-      JOIN dmsn on {$prefix}_cardcode = dms_card_code AND dms_card_type = '1'
+      JOIN dmsn on {$prefix}_cardcode = dms_card_code AND dms_card_type = '{$cardType}'
       join dmgs on dms_rtype = mgs_id
       join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
       join dmdt on {$prefix}_doctype = mdt_doctype

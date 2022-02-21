@@ -105,6 +105,14 @@ class StockAnalysis extends REST_Controller {
 						$unidad = ",
 						{$detailPrefix}_uom unidad";
 						}
+						$cardType = 1;
+						if($tables[$tipo]['table'] == 'dvnc' or
+						 $tables[$tipo]['table'] =='dvnd' OR $tables[$tipo]['table'] == 'dvfv'){
+							$cardType = 1;
+
+						}else{
+							$cardType = 2;
+						}
 						switch ($Data['dvf_doctype']) {
 							case '-1':
 							  $sqlSelect = $this->generalQuery($tables,['15','16','17'],$cardcode,-1) ;
@@ -140,6 +148,7 @@ class StockAnalysis extends REST_Controller {
 									join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 									join dmdt on {$prefix}_doctype = mdt_doctype
 									join dmar on {$detailPrefix}_itemcode = dma_item_code
+									join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
 									join dmga on mga_id = dma_group_code
 									full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 									where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
@@ -227,6 +236,15 @@ class StockAnalysis extends REST_Controller {
 		}else{
 			$neg = 1;
 		}
+
+		$cardType = 1;
+		if($tables[$value]['table'] == 'dvnc' or
+			$tables[$value]['table'] =='dvnd' OR $tables[$value]['table'] == 'dvfv'){
+			$cardType = 1;
+
+		}else{
+			$cardType = 2;
+		}
 		  $all .= "SELECT distinct
 		  mdt_docname tipo_doc_name,
 		  {$detailPrefix}_itemcode item_code,
@@ -252,7 +270,9 @@ class StockAnalysis extends REST_Controller {
 		  join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 		  join dmdt on {$prefix}_doctype = mdt_doctype
 		  join dmar on {$detailPrefix}_itemcode = dma_item_code
+		  join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
 		  join dmga on mga_id = dma_group_code
+		  join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card}
 		  group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" OR $table =="dcnc")?",{$detailPrefix}_exc_inv": "")."
