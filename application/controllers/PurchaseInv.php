@@ -876,6 +876,8 @@ class PurchaseInv extends REST_Controller {
 												// Buscando item en el stock
 												$sqlCostoCantidad = '';
 												$resCostoCantidad = [];
+												$CantidadPorAlmacen = 0;
+												$CostoPorAlmacen = 0;
 												//SE VALIDA SI EL ARTICULO MANEJA LOTE
 												if ( $ManejaLote == 1 ) {
 													$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
@@ -890,6 +892,24 @@ class PurchaseInv extends REST_Controller {
 																':bdi_whscode'  => $detail['fc1_whscode'],
 																':bdi_lote' 		=> $detail['ote_code']
 													));
+													// se busca la cantidad general del articulo agrupando todos los almacenes y lotes
+													$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode GROUP BY bdi_whscode, bdi_avgprice";
+													$resCGA = $this->pedeo->queryTable($sqlCGA, array(
+														':bdi_itemcode' => $detail['fc1_itemcode'],
+														':bdi_whscode'  => $detail['fc1_whscode']
+													));
+
+													if( isset($resCGA[0]['bdi_quantity']) && is_numeric( $resCGA[0]['bdi_quantity'] ) ){
+
+														$CantidadPorAlmacen = $resCGA[0]['bdi_quantity'];
+														$CostoPorAlmacen = $resCGA[0]['bdi_avgprice'];
+
+													}else{
+
+														$CantidadPorAlmacen = 0;
+														$CostoPorAlmacen = 0;
+
+													}
 												} else {
 													$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
 																								FROM tbdi
@@ -906,110 +926,367 @@ class PurchaseInv extends REST_Controller {
 												// SI EXISTE EL ITEM EN EL STOCK
 												if(isset($resCostoCantidad[0])){
 
-															 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-															 $CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
+															//SI TIENE CANTIDAD POSITIVA
+															if($resCostoCantidad[0]['bdi_quantity'] > 0 && $CantidadPorAlmacen > 0){
+																 $CantidadItem = $resCostoCantidad[0]['bdi_quantity'];
+	 															 $CantidadActual = $CantidadPorAlmacen;
+	 															 $CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
 
-															 $CantidadNueva = $detail['fc1_quantity'];
-															 $CostoNuevo = $detail['fc1_price'];
+	 															 $CantidadNueva = $detail['fc1_quantity'];
+	 															 $CostoNuevo = $detail['fc1_price'];
 
 
-															 $CantidadTotal = ($CantidadActual + $CantidadNueva);
+	 															 $CantidadTotal = ($CantidadActual + $CantidadNueva);
+	 															 $CantidadTotalItemSolo = ($CantidadItem + $CantidadNueva);
 
 
-															 if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
-																	$CostoNuevo = ($CostoNuevo * $TasaDocLoc);
-															 }
+	 															 if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
+	 																	$CostoNuevo = ($CostoNuevo * $TasaDocLoc);
+	 															 }
 
-															 $NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-															 $NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+	 															 $NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
+	 															 $NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
 
-															 $sqlUpdateCostoCantidad =  "UPDATE tbdi
+	 															 $sqlUpdateCostoCantidad =  "UPDATE tbdi
+	 																													 SET bdi_quantity = :bdi_quantity
+	 																													 ,bdi_avgprice = :bdi_avgprice
+	 																													 WHERE  bdi_id = :bdi_id";
+
+	 															 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+	 																		 ':bdi_quantity' => $CantidadTotalItemSolo,
+	 																		 ':bdi_avgprice' => $NuevoCostoPonderado,
+	 																		 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+	 															 ));
+
+	 															 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
+
+	 															 }else{
+
+	 																	 $this->pedeo->trans_rollback();
+
+	 																	 $respuesta = array(
+	 																		 'error'   => true,
+	 																		 'data'    => $resUpdateCostoCantidad,
+	 																		 'mensaje'	=> 'No se pudo crear la factura de compras'
+	 																	 );
+	 															 }
+
+	 															 // SE ACTUALZAN TODOS LOS COSTOS PONDERADOS DE LOS ARTICULOS EN EL ALMACEN
+	 															 if ( $ManejaLote == 1 ) {
+	 																 $sqlUpdateCostoCantidad = "UPDATE tbdi
+	 																														SET bdi_avgprice = :bdi_avgprice
+	 																														WHERE bdi_itemcode = :bdi_itemcode
+	 																														AND bdi_whscode = :bdi_whscode";
+
+	 																 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+	 																			':bdi_avgprice' => $NuevoCostoPonderado,
+	 																			':bdi_itemcode' => $detail['fc1_itemcode'],
+	 																			':bdi_whscode'  => $detail['fc1_whscode']
+	 																 ));
+
+	 																 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad > 0){
+
+	 																 }else{
+
+	 																			$this->pedeo->trans_rollback();
+
+	 																			$respuesta = array(
+	 																				'error'   => true,
+	 																				'data'    => $resUpdateCostoCantidad,
+	 																				'mensaje'	=> 'No se pudo crear la Entrada de Compra'
+	 																			);
+
+	 																			$this->response($respuesta);
+
+	 																			return;
+	 																 }
+	 															 }
+															}else{
+																$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+																$CantidadNueva = $detail['fc1_quantity'];
+																$CostoNuevo = $detail['fc1_price'];
+
+
+																$CantidadTotal = ($CantidadActual + $CantidadNueva);
+
+																if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
+																	 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
+																}
+
+																$sqlUpdateCostoCantidad = "UPDATE tbdi
 																													 SET bdi_quantity = :bdi_quantity
 																													 ,bdi_avgprice = :bdi_avgprice
 																													 WHERE  bdi_id = :bdi_id";
 
-															 $resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+																$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
-																		 ':bdi_quantity' => $CantidadTotal,
-																		 ':bdi_avgprice' => $NuevoCostoPonderado,
-																		 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
-															 ));
-
-															 if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
-
-															 }else{
-
-																	 $this->pedeo->trans_rollback();
-
-																	 $respuesta = array(
-																		 'error'   => true,
-																		 'data'    => $resUpdateCostoCantidad,
-																		 'mensaje'	=> 'No se pudo crear la factura de compras'
-																	 );
-															 }
-
-												 // En caso de que no exista el item en el stock
-												 // Se inserta en el stock con el precio de compra
-												}else{
-
-															$CostoNuevo =  $detail['fc1_price'];
-
-															if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
-																 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
-															}
-
-															//SE VALIDA SI EL ARTICULO MANEJA LOTE
-															$sqlInsertCostoCantidad = '';
-															$resInsertCostoCantidad =	[];
-
-															if ( $ManejaLote == 1 ) {
-																$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote)
-																													 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
-
-
-																$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
-
-																			':bdi_itemcode' => $detail['fc1_itemcode'],
-																			':bdi_whscode'  => $detail['fc1_whscode'],
-																			':bdi_quantity' => $detail['fc1_quantity'],
-																			':bdi_avgprice' => $CostoNuevo,
-																			':bdi_lote' 		=> $detail['ote_code']
+																			 ':bdi_quantity' => $CantidadTotal,
+																			 ':bdi_avgprice' => $CostoNuevo,
+																			 ':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
 																));
 
-															} else {
-																$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
-																													 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+																if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1){
 
+																}else{
 
-																$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
-
-																			':bdi_itemcode' => $detail['fc1_itemcode'],
-																			':bdi_whscode'  => $detail['fc1_whscode'],
-																			':bdi_quantity' => $detail['fc1_quantity'],
-																			':bdi_avgprice' => $CostoNuevo
-																));
-															}
-
-
-
-															if(is_numeric($resInsertCostoCantidad) && $resInsertCostoCantidad > 0){
-																	// Se verifica que el detalle no de error insertando //
-															}else{
-
-																	// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
-																	// se retorna el error y se detiene la ejecucion del codigo restante.
 																		$this->pedeo->trans_rollback();
 
 																		$respuesta = array(
 																			'error'   => true,
-																			'data' 		=> $resInsertCostoCantidad,
-																			'mensaje'	=> 'No se pudo registrar la Entrada de Compra'
+																			'data'    => $resUpdateCostoCantidad,
+																			'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
 																		);
 
-																		 $this->response($respuesta);
 
-																		 return;
+																		$this->response($respuesta);
+
+																		return;
+																}
+
+																// SE ACTUALZAN TODOS LOS COSTOS PONDERADOS DE LOS ARTICULOS EN EL ALMACEN
+																if ( $ManejaLote == 1 ) {
+																	$sqlUpdateCostoCantidad = "UPDATE tbdi
+																														 SET bdi_avgprice = :bdi_avgprice
+																														 WHERE bdi_itemcode = :bdi_itemcode
+																														 AND bdi_whscode = :bdi_whscode";
+
+																	$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+																			 ':bdi_avgprice' => $CostoNuevo,
+																			 ':bdi_itemcode' => $detail['fc1_itemcode'],
+																			 ':bdi_whscode'  => $detail['fc1_whscode']
+																	));
+
+																	if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad  > 0){
+
+																	}else{
+
+																			 $this->pedeo->trans_rollback();
+
+																			 $respuesta = array(
+																				 'error'   => true,
+																				 'data'    => $resUpdateCostoCantidad,
+																				 'mensaje'	=> 'No se pudo crear la Factura de compras'
+																			 );
+
+																			 $this->response($respuesta);
+
+																			 return;
+																	}
+																}
 															}
+
+												 // En caso de que no exista el item en el stock
+												 // Se inserta en el stock con el precio de compra
+												}else{
+															if( $CantidadPorAlmacen > 0 ){
+																$CostoNuevo =  $detail['fc1_price'];
+																$CantidadItem = 0;
+																$CantidadActual = $CantidadPorAlmacen;
+																$CostoActual = $CostoPorAlmacen;
+
+																$CantidadNueva = $detail['fc1_quantity'];
+
+																$CantidadTotal = ($CantidadActual + $CantidadNueva);
+																$CantidadTotalItemSolo = ($CantidadItem + $CantidadNueva);
+
+																if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
+																	 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
+																}
+
+																$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
+																$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+
+																//SE VALIDA SI EL ARTICULO MANEJA LOTE
+																$sqlInsertCostoCantidad = '';
+																$resInsertCostoCantidad =	[];
+
+																if ( $ManejaLote == 1 ) {
+																	$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote)
+																														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
+
+
+																	$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
+
+																				':bdi_itemcode' => $detail['fc1_itemcode'],
+																				':bdi_whscode'  => $detail['fc1_whscode'],
+																				':bdi_quantity' => $detail['fc1_quantity'],
+																				':bdi_avgprice' => $NuevoCostoPonderado,
+																				':bdi_lote' 		=> $detail['ote_code']
+																	));
+
+																} else {
+																	$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
+																														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+
+
+																	$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
+
+																				':bdi_itemcode' => $detail['fc1_itemcode'],
+																				':bdi_whscode'  => $detail['fc1_whscode'],
+																				':bdi_quantity' => $detail['fc1_quantity'],
+																				':bdi_avgprice' => $NuevoCostoPonderado
+																	));
+																}
+
+
+
+																if(is_numeric($resInsertCostoCantidad) && $resInsertCostoCantidad > 0){
+																		// Se verifica que el detalle no de error insertando //
+																}else{
+
+																		// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
+																		// se retorna el error y se detiene la ejecucion del codigo restante.
+																			$this->pedeo->trans_rollback();
+
+																			$respuesta = array(
+																				'error'   => true,
+																				'data' 		=> $resInsertCostoCantidad,
+																				'mensaje'	=> 'No se pudo registrar la Entrada de Compra'
+																			);
+
+																			 $this->response($respuesta);
+
+																			 return;
+																}
+
+																// SE ACTUALZAN TODOS LOS COSTOS PONDERADOS DE LOS ARTICULOS EN EL ALMACEN
+																if ( $ManejaLote == 1 ) {
+																	$sqlUpdateCostoCantidad = "UPDATE tbdi
+																														 SET bdi_avgprice = :bdi_avgprice
+																														 WHERE bdi_itemcode = :bdi_itemcode
+																														 AND bdi_whscode = :bdi_whscode";
+
+																	$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+																			 ':bdi_avgprice' => $NuevoCostoPonderado,
+																			 ':bdi_itemcode' => $detail['fc1_itemcode'],
+																			 ':bdi_whscode'  => $detail['fc1_whscode']
+																	));
+
+
+
+																	if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad > 0){
+
+																	}else{
+
+																			 $this->pedeo->trans_rollback();
+
+																			 $respuesta = array(
+																				 'error'   => true,
+																				 'data'    => $resUpdateCostoCantidad,
+																				 'mensaje'	=> 'No se pudo crear la Factura de Compras'
+																			 );
+
+																			 $this->response($respuesta);
+
+																			 return;
+																	}
+																}
+
+
+
+															}else{
+
+																$CostoNuevo =  $detail['fc1_price'];
+
+																if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
+																	 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
+																}
+
+																//SE VALIDA SI EL ARTICULO MANEJA LOTE
+																$sqlInsertCostoCantidad = '';
+																$resInsertCostoCantidad =	[];
+
+																if ( $ManejaLote == 1 ) {
+																	$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote)
+																														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
+
+
+																	$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
+
+																				':bdi_itemcode' => $detail['fc1_itemcode'],
+																				':bdi_whscode'  => $detail['fc1_whscode'],
+																				':bdi_quantity' => $detail['fc1_quantity'],
+																				':bdi_avgprice' => $CostoNuevo,
+																				':bdi_lote' 		=> $detail['ote_code']
+																	));
+																} else {
+
+																	$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
+																														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+
+
+																	$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
+
+																				':bdi_itemcode' => $detail['fc1_itemcode'],
+																				':bdi_whscode'  => $detail['fc1_whscode'],
+																				':bdi_quantity' => $detail['fc1_quantity'],
+																				':bdi_avgprice' => $CostoNuevo
+																	));
+																}
+
+
+
+																if(is_numeric($resInsertCostoCantidad) && $resInsertCostoCantidad > 0){
+																		// Se verifica que el detalle no de error insertando //
+																}else{
+
+																		// si falla algun insert del detalle de la orden de compra se devuelven los cambios realizados por la transaccion,
+																		// se retorna el error y se detiene la ejecucion del codigo restante.
+																			$this->pedeo->trans_rollback();
+
+																			$respuesta = array(
+																				'error'   => true,
+																				'data' 		=> $resInsertCostoCantidad,
+																				'mensaje'	=> 'No se pudo registrar la Factura de Compras'
+																			);
+
+																			 $this->response($respuesta);
+
+																			 return;
+																}
+
+
+																$sqlInsertCostoCantidad = '';
+																$resInsertCostoCantidad =	[];
+																// SE ACTUALZAN TODOS LOS COSTOS PONDERADOS DE LOS ARTICULOS EN EL ALMACEN
+																if ( $ManejaLote == 1 ) {
+																	$sqlUpdateCostoCantidad = "UPDATE tbdi
+																														 SET bdi_avgprice = :bdi_avgprice
+																														 WHERE bdi_itemcode = :bdi_itemcode
+																														 AND bdi_whscode = :bdi_whscode";
+
+																	$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+
+																			 ':bdi_avgprice' => $CostoNuevo,
+																			 ':bdi_itemcode' => $detail['fc1_itemcode'],
+																			 ':bdi_whscode'  => $detail['fc1_whscode']
+																	));
+
+
+
+																	if(is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad > 0){
+
+																	}else{
+
+																			 $this->pedeo->trans_rollback();
+
+																			 $respuesta = array(
+																				 'error'   => true,
+																				 'data'    => $resUpdateCostoCantidad,
+																				 'mensaje'	=> 'No se pudo crear la Factura de Compras'
+																			 );
+
+																			 $this->response($respuesta);
+
+																			 return;
+																	}
+																}
+															}
+
 												}
 													//FIN de  Aplicacion del movimiento en stock
 													//SE VALIDA SI EXISTE EL LOTE

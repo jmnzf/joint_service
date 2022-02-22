@@ -1,5 +1,6 @@
 <?php
 // PAGOS REALIZADOS
+
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
@@ -283,32 +284,32 @@ class PaymentsMade extends REST_Controller {
 
 
 				// BUSCANDO LA CUENTA DEL TERCERO
-				$sqlCuentaTercero = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
-														 JOIN dmgs  AS f2
-														 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-														 WHERE  f1.dms_card_code = :dms_card_code
-														 AND f1.dms_card_type = '2'"; // 2 para proveedor
-
-				$resCuentaTercero = $this->pedeo->queryTable($sqlCuentaTercero, array(":dms_card_code" => $Data['bpe_cardcode']));
-
-				if(isset($resCuentaTercero[0])){
-
-						$cuentaTercero = $resCuentaTercero[0]['mgs_acct'];
-
-				}else{
-
-						$this->pedeo->trans_rollback();
-
-						$respuesta = array(
-							'error'   => true,
-							'data' => $resInsertDetail,
-							'mensaje'	=> 'No se pudo registrar el pago, el tercero no tiene la cuenta asociada ('.$Data['bpe_cardcode'].')'
-						);
-
-						 $this->response($respuesta);
-
-						 return;
-				}
+				// $sqlCuentaTercero = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
+				// 										 JOIN dmgs  AS f2
+				// 										 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
+				// 										 WHERE  f1.dms_card_code = :dms_card_code
+				// 										 AND f1.dms_card_type = '2'"; // 2 para proveedor
+				//
+				// $resCuentaTercero = $this->pedeo->queryTable($sqlCuentaTercero, array(":dms_card_code" => $Data['bpe_cardcode']));
+				//
+				// if(isset($resCuentaTercero[0])){
+				//
+				// 		$cuentaTercero = $resCuentaTercero[0]['mgs_acct'];
+				//
+				// }else{
+				//
+				// 		$this->pedeo->trans_rollback();
+				//
+				// 		$respuesta = array(
+				// 			'error'   => true,
+				// 			'data' => $resInsertDetail,
+				// 			'mensaje'	=> 'No se pudo registrar el pago, el tercero no tiene la cuenta asociada ('.$Data['bpe_cardcode'].')'
+				// 		);
+				//
+				// 		 $this->response($respuesta);
+				//
+				// 		 return;
+				// }
 				//FIN BUSQUEDA CUENTA TERCERO
 
         $sqlInsert = "INSERT INTO
@@ -591,8 +592,8 @@ class PaymentsMade extends REST_Controller {
 								$DetalleAsientoCuentaTercero->bpe_cardcode  = isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL;
 								$DetalleAsientoCuentaTercero->pe1_doctype   = is_numeric($detail['pe1_doctype'])?$detail['pe1_doctype']:0;
 								$DetalleAsientoCuentaTercero->pe1_docentry  = is_numeric($detail['pe1_docentry'])?$detail['pe1_docentry']:0;
-								$DetalleAsientoCuentaTercero->cuentatercero = $cuentaTercero;
-								$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($cuentaTercero, 0, 1);
+								$DetalleAsientoCuentaTercero->cuentalinea = is_numeric($detail['pe1_accountid'])?$detail['pe1_accountid']:0;
+								$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($DetalleAsientoCuentaTercero->cuentalinea, 0, 1);
 								$DetalleAsientoCuentaTercero->pe1_vlrpaid = is_numeric($detail['pe1_vlrpaid'])?$detail['pe1_vlrpaid']:0;
 								$DetalleAsientoCuentaTercero->pe1_docdate	= $this->validateDate($detail['pe1_docdate'])?$detail['pe1_docdate']:NULL;
 
@@ -649,50 +650,50 @@ class PaymentsMade extends REST_Controller {
 							}
 							switch ($codigoCuentaIngreso) {
 								case 1: // ESTABLECIDO COMO CREDITO
-									$credito = $granTotalIngreso;
+									$debito = $granTotalIngreso;
 									if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-											$MontoSysCR = ($credito / $TasaLocSys);
+											$MontoSysDB = ($debito / $TasaLocSys);
 
 									}else{
 
-											$MontoSysCR = $granTotalIngresoOriginal;
+											$MontoSysDB = $granTotalIngresoOriginal;
 									}
 									break;
 
 								case 2:
-									$credito = $granTotalIngreso;
+									$debito = $granTotalIngreso;
 									if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-											$MontoSysCR = ($credito / $TasaLocSys);
+											$MontoSysDB = ($debito / $TasaLocSys);
 
 									}else{
 
-											$MontoSysCR = $granTotalIngresoOriginal;
+											$MontoSysDB = $granTotalIngresoOriginal;
 									}
 									break;
 
 								case 3:
-									$credito = $granTotalIngreso;
+									$debito = $granTotalIngreso;
 									if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-											$MontoSysCR = ($credito / $TasaLocSys);
+											$MontoSysDB = ($debito / $TasaLocSys);
 
 									}else{
 
-											$MontoSysCR = $granTotalIngresoOriginal;
+											$MontoSysDB = $granTotalIngresoOriginal;
 									}
 									break;
 
 								case 4:
-									$credito = $granTotalIngreso;
+									$debito = $granTotalIngreso;
 									if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-											$MontoSysCR = ($credito / $TasaLocSys);
+											$MontoSysDB = ($debito / $TasaLocSys);
 
 									}else{
 
-											$MontoSysCR = $granTotalIngresoOriginal;
+											$MontoSysDB = $granTotalIngresoOriginal;
 									}
 									break;
 
@@ -808,6 +809,7 @@ class PaymentsMade extends REST_Controller {
 										$TotalDiferencia = 0;
 										$cuenta = 0;
 										$docentry = 0;
+										$cuentaLinea = 0;
 										$doctype = 0;
 										$fechaDocumento = '';
 										$TasaOld = 0;
@@ -822,6 +824,7 @@ class PaymentsMade extends REST_Controller {
 													$docentry = $value->pe1_docentry;
 													$doctype  = $value->pe1_doctype;
 													$cuenta   = $value->cuentaNaturaleza;
+													$cuentaLinea = $value->cuentaLinea;
 													$fechaDocumento =$value->pe1_docdate;
 
 										}
@@ -915,28 +918,28 @@ class PaymentsMade extends REST_Controller {
 
 										switch ($cuenta) {
 											case 1:
-												$debito = $TotalPagoRecibido;
+												$credito = $TotalPagoRecibido;
 
 												if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-														$MontoSysDB = ($debito / $TasaLocSys);
+														$MontoSysCR = ($credito / $TasaLocSys);
 
 												}else{
 
-														$MontoSysDB = $TotalPagoRecibidoOriginal;
+														$MontoSysCR = $TotalPagoRecibidoOriginal;
 												}
 
 												break;
 
 											case 2:
-												$debito = $TotalPagoRecibido;
+												$credito = $TotalPagoRecibido;
 												if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-														$MontoSysDB = ($debito / $TasaLocSys);
+														$MontoSysCR = ($credito / $TasaLocSys);
 
 												}else{
 
-														$MontoSysDB = $TotalPagoRecibidoOriginal;
+														$MontoSysCR = $TotalPagoRecibidoOriginal;
 												}
 												break;
 
@@ -965,38 +968,38 @@ class PaymentsMade extends REST_Controller {
 												break;
 
 											case 5:
-												$debito = $TotalPagoRecibido;
+												$credito = $TotalPagoRecibido;
 												if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-														$MontoSysDB = ($debito / $TasaLocSys);
+														$MontoSysCR = ($credito / $TasaLocSys);
 
 												}else{
 
-														$MontoSysDB = $TotalPagoRecibidoOriginal;
+														$MontoSysCR = $TotalPagoRecibidoOriginal;
 												}
 												break;
 
 											case 6:
-												$debito = $TotalPagoRecibido;
+												$credito = $TotalPagoRecibido;
 												if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-														$MontoSysDB = ($debito / $TasaLocSys);
+														$MontoSysCR = ($credito / $TasaLocSys);
 
 												}else{
 
-														$MontoSysDB = $TotalPagoRecibidoOriginal;
+														$MontoSysCR = $TotalPagoRecibidoOriginal;
 												}
 												break;
 
 											case 7:
-												$debito = $TotalPagoRecibido;
+												$credito = $TotalPagoRecibido;
 												if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-														$MontoSysDB = ($debito / $TasaLocSys);
+														$MontoSysCR = ($credito / $TasaLocSys);
 
 												}else{
 
-														$MontoSysDB = $TotalPagoRecibidoOriginal;
+														$MontoSysCR = $TotalPagoRecibidoOriginal;
 												}
 												break;
 										}
@@ -1047,11 +1050,11 @@ class PaymentsMade extends REST_Controller {
 										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 												':ac1_trans_id' => $resInsertAsiento,
-												':ac1_account' => $cuentaTercero,
-												':ac1_debit' => $debito,
-												':ac1_credit' => $credito,
-												':ac1_debit_sys' => round($MontoSysDB,2),
-												':ac1_credit_sys' => round($MontoSysCR,2),
+												':ac1_account' => $cuentaLinea,
+												':ac1_debit' => round($debito, 2),
+												':ac1_credit' => round($credito, 2),
+												':ac1_debit_sys' => round($MontoSysDB, 2),
+												':ac1_credit_sys' => round($MontoSysCR, 2),
 												':ac1_currex' => 0,
 												':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
 												':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
@@ -1223,7 +1226,7 @@ class PaymentsMade extends REST_Controller {
 														$doctype  = $value->pe1_doctype;
 														$cuenta   = $value->cuentaNaturaleza;
 														$fechaDocumento =$value->pe1_docdate;
-														$cuentaLinea = $value->cuentatercero;
+														$cuentaLinea = $value->cuentalinea;
 
 											}
 
