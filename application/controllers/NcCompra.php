@@ -106,7 +106,7 @@ class NcCompra extends REST_Controller {
 												FROM DCNC t0
 												INNER JOIN CNC1 T1 ON t0.CNC_docentry = t1.NC1_docentry
 												LEFT JOIN DMSN T2 ON t0.CNC_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON T0.CNC_ADRESS = CAST(T3.DMD_ID AS VARCHAR) AND t3.dmd_ppal = 1
+												LEFT JOIN DMSD T3 ON T0.CNC_cardcode = T3.DMD_card_code AND t3.dmd_ppal = 1
 												LEFT JOIN DMSC T4 ON T0.CNC_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
 												LEFT JOIN DMEV T5 ON T0.CNC_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.CNC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.CNC_SERIES = T6.PGS_ID
