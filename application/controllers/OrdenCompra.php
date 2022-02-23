@@ -34,7 +34,7 @@ class OrdenCompra extends REST_Controller {
 
 				$formatter = new NumeroALetras();
 
-
+				// $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);
         $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','default_font' => 'dejavusans']);
 
 				//RUTA DE CARPETA EMPRESA
@@ -399,8 +399,11 @@ The supplier that breaches any of the clause and / or conditions indicated in th
 													CONCAT(T0.CPO_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
 													T0.CPO_CARDCODE Nit,
 													CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
+													T3.dmd_state_mm ciudad,
+													t3.dmd_state estado,
 													T4.DMC_PHONE1 Telefono,
 													T4.DMC_EMAIL Email,
+													T0.CPO_DOCNUM,
 													CONCAT(T6.PGS_PREF_NUM,' ',T0.CPO_DOCNUM) NumeroDocumento,
 													T0.CPO_DOCDATE FechaDocumento,
 													T0.CPO_DUEDATE FechaVenDocumento,
@@ -423,7 +426,9 @@ The supplier that breaches any of the clause and / or conditions indicated in th
 													(T0.CPO_BASEAMNT - T0.CPO_DISCOUNT) subtotal,
 													T0.CPO_TAXTOTAL Iva,
 													T0.CPO_DOCTOTAL TotalDoc,
-													T0.CPO_COMMENT Comentarios
+													T0.CPO_COMMENT Comentarios,
+													t6.pgs_mde,
+													t6.pgs_mpfn
 												FROM dcpo  t0
 												INNER JOIN CPO1 T1 ON t0.CPO_docentry = t1.PO1_docentry
 												LEFT JOIN DMSN T2 ON t0.CPO_cardcode = t2.dms_card_code
@@ -448,6 +453,15 @@ The supplier that breaches any of the clause and / or conditions indicated in th
 						return;
 				}
 				// print_r($contenidoOC);exit();die();
+
+				$consecutivo = '';
+
+				if($contenidoOC[0]['pgs_mpfn'] == 1){
+					$consecutivo = $contenidoOC[0]['numerodocumento'];
+				}else{
+					$consecutivo = $contenidoOC[0]['cpo_docnum'];
+				}
+
 
 				$totaldetalle = '';
 				foreach ($contenidoOC as $key => $value) {
@@ -485,17 +499,7 @@ The supplier that breaches any of the clause and / or conditions indicated in th
 
         </table>';
 
-        $footer = '
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: center;">
-                    <p>Autorización de numeración de facturación N°18764009111647 de 2020-12-22 Modalidad Factura Electrónica Desde N° WT5000 hasta WT10000 con
-                    vigencia hasta 2021-12-22.
-                    </p>
-                </th>
-            </tr>
-        </table>
+				$footer = '
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
@@ -505,46 +509,84 @@ The supplier that breaches any of the clause and / or conditions indicated in th
 
 
         $html = '
-				<html>
-        <table class="bordew" style="width:100%">
-        <tr>
-          <th>
-          	<p class="fondo">SEÑOR(ES):</p>
-          </th>
-          <th style="text-align: left;">
-          	<p>'.$contenidoOC[0]['cliente'].'</p>
-          </th>
-          <th>
-            <p class="fondo">FECHA DE EXPEDICIÓN </p>
-            <p>'.$contenidoOC[0]['fechadocumento'].'</p>
-          </th>
-        </tr>
-        <tr>
-          <th>
-            <p class="fondo">DIRECCIÓN:</p>
-          </th>
-          <th style="text-align: left;">
-            <p>'.$contenidoOC[0]['direccion'].'</p>
-          </th>
-
-        </tr>
-        <tr>
-          <th>
-            <p class="fondo">TELÉFONO:</p>
-          </th>
-          <th style="text-align: left;">
-            <p>
-            	<span>'.$contenidoOC[0]['telefono'].'</span>
-                <span class ="fondo">RIF:</span>
-                <span>'.$contenidoOC[0]['nit'].'</span>
-            </p>
-          </th>
-          <th>
-            <p class="fondo">FECHA DE VENCIMIENTO </p>
-            <p>'.$contenidoOC[0]['fechavendocumento'].'</p>
-          </th>
-        </tr>
-        </table>
+				<table class="bordew" width="100%" >
+				<tr>
+					<th style="text-align: left;">
+						<p class="">RIF: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoOC[0]['nit'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">NOMBRE: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoOC[0]['cliente'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">DIRECCIÓN: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoOC[0]['direccion'].'</p>
+					</th>
+					<th style="text-align: right;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: right;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">CIUDAD: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoOC[0]['ciudad'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">ESTADO: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoOC[0]['estado'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">FECHA DE EMISIÓN: </p>
+					</th>
+					<th style="text-align: right;">
+						<p>'.date("d-m-Y", strtotime($contenidoOC[0]['fechadocumento'])).'</p>
+					</th>
+				</tr>
+				</table>
 
         <br>
 
@@ -601,18 +643,7 @@ The supplier that breaches any of the clause and / or conditions indicated in th
             </tr>
         </table>
 
-        <br><br>
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: left;">
-                    <p>Esta factura se asimila en todos sus efectos a una letra de cambio de conformidad con el Art. 774 del código de
-                    comercio. Autorizo que en caso de incumplimiento de esta obligación sea reportado a las centrales de riesgo, se
-                    cobraran intereses por mora.
-                    </p>
-                </th>
-            </tr>
-        </table>
+
 				<pagebreak/>'
 				.$observaciones.
 				'<br>

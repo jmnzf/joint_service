@@ -9,7 +9,7 @@ require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 use Luecano\NumeroALetras\NumeroALetras;
 
-class NcCompra extends REST_Controller {
+class PdfOfertaCompra extends REST_Controller {
 
 	private $pdo;
 
@@ -27,10 +27,10 @@ class NcCompra extends REST_Controller {
 	}
 
 
-	public function NcCompra_post(){
+	public function OfCompra_post(){
 
         $Data = $this->post();
-				$Data = $Data['CNC_DOCENTRY'];
+				$Data = $Data['COC_DOCENTRY'];
 
 				$formatter = new NumeroALetras();
 
@@ -66,7 +66,7 @@ class NcCompra extends REST_Controller {
 						$respuesta = array(
 		           'error' => true,
 		           'data'  => $empresa,
-		           'mensaje' =>'no esta registrada la información de la contenidoNcC'
+		           'mensaje' =>'no esta registrada la información de la contenidoCoc'
 		        );
 
 	          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -75,55 +75,55 @@ class NcCompra extends REST_Controller {
 				}
 
 				$sqlcotizacion = "SELECT
-													CONCAT(T0.CNC_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
-													T0.CNC_CARDCODE Nit,
-													CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
-													T3.dmd_state_mm ciudad,
-													t3.dmd_state estado,
-													T4.DMC_PHONE1 Telefono,
-													T4.DMC_EMAIL Email,
-													T0.CNC_DOCNUM,
-													CONCAT(T6.PGS_PREF_NUM,' ',T0.CNC_DOCNUM) NumeroDocumento,
-													to_char(T0.CNC_DOCDATE,'DD-MM-YYYY') FechaDocumento,
-													to_char(T0.CNC_DUEDATE,'DD-MM-YYYY') FechaVenDocumento,
-													trim('COP' FROM t0.CNC_CURRENCY) MonedaDocumento,
-													T7.PGM_NAME_MONEDA NOMBREMONEDA,
-													T5.MEV_NAMES Vendedor,
-													'' MedioPago,
-													'' CondPago,
-													T1.NC1_ITEMCODE Referencia,
-													T1.NC1_ITEMNAME descripcion,
-													T1.NC1_WHSCODE Almacen,
-													T1.NC1_UOM UM,
-													T1.NC1_QUANTITY Cantidad,
-													T1.NC1_PRICE VrUnit,
-													T1.NC1_DISCOUNT PrcDes,
-													T1.NC1_VATSUM IVAP,
-													T1.NC1_LINETOTAL ValorTotalL,
-													T0.CNC_BASEAMNT base,
-													T0.CNC_DISCOUNT Descuento,
-													(T0.CNC_BASEAMNT - T0.CNC_DISCOUNT) subtotal,
-													T0.CNC_TAXTOTAL Iva,
-													T0.CNC_DOCTOTAL TotalDoc,
-													T0.CNC_COMMENT Comentarios,
-													t6.pgs_mde,
-													t6.pgs_mpfn
-												FROM DCNC t0
-												INNER JOIN CNC1 T1 ON t0.CNC_docentry = t1.NC1_docentry
-												LEFT JOIN DMSN T2 ON t0.CNC_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON T0.CNC_cardcode = T3.DMD_card_code AND t3.dmd_ppal = 1
-												LEFT JOIN DMSC T4 ON T0.CNC_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
-												LEFT JOIN DMEV T5 ON T0.CNC_SLPCODE = T5.MEV_ID
-												LEFT JOIN PGDN T6 ON T0.CNC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.CNC_SERIES = T6.PGS_ID
-												LEFT JOIN PGEC T7 ON T0.CNC_CURRENCY = T7.PGM_SYMBOL
-												WHERE T0.CNC_DOCENTRY = :CNC_DOCENTRY";
+                          CONCAT(T0.COC_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
+                          T0.COC_CARDCODE Nit,
+                          CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
+                          T3.dmd_state_mm ciudad,
+                          t3.dmd_state estado,
+                          T4.DMC_PHONE1 Telefono,
+                          T4.DMC_EMAIL Email,
+                          T0.COC_DOCNUM,
+                          CONCAT(T6.PGS_PREF_NUM,' ',T0.COC_DOCNUM) NumeroDocumento,
+                          to_char(T0.COC_DOCDATE,'DD-MM-YYYY') FechaDocumento,
+                          to_char(T0.COC_DUEDATE,'DD-MM-YYYY') FechaVenDocumento,
+                          trim('COP' FROM t0.COC_CURRENCY) MonedaDocumento,
+                          T7.PGM_NAME_MONEDA NOMBREMONEDA,
+                          T5.MEV_NAMES Vendedor,
+                          '' MedioPago,
+                          '' CondPago,
+                          T1.OC1_ITEMCODE Referencia,
+                          T1.OC1_ITEMNAME descripcion,
+                          T1.OC1_WHSCODE Almacen,
+                          T1.OC1_UOM UM,
+                          T1.OC1_QUANTITY Cantidad,
+                          T1.OC1_PRICE VrUnit,
+                          T1.OC1_DISCOUNT PrcDes,
+                          T1.OC1_VATSUM IVAP,
+                          T1.OC1_LINETOTAL ValorTotalL,
+                          T0.COC_BASEAMNT base,
+                          T0.COC_DISCOUNT Descuento,
+                          (T0.COC_BASEAMNT - T0.COC_DISCOUNT) subtotal,
+                          T0.COC_TAXTOTAL Iva,
+                          T0.COC_DOCTOTAL TotalDoc,
+                          T0.COC_COMMENT Comentarios,
+                          t6.pgs_mde,
+                          t6.pgs_mpfn
+                          FROM DCOC t0
+                          INNER JOIN COC1 T1 ON t0.COC_docentry = t1.OC1_docentry
+                          LEFT JOIN DMSN T2 ON t0.COC_cardcode = t2.dms_card_code
+                          LEFT JOIN DMSD T3 ON T0.COC_cardcode = T3.DMD_card_code AND t3.dmd_ppal = 1
+                          LEFT JOIN DMSC T4 ON T0.COC_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
+                          LEFT JOIN DMEV T5 ON T0.COC_SLPCODE = T5.MEV_ID
+                          LEFT JOIN PGDN T6 ON T0.COC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.COC_SERIES = T6.PGS_ID
+                          LEFT JOIN PGEC T7 ON T0.COC_CURRENCY = T7.PGM_SYMBOL
+                          WHERE T0.COC_DOCENTRY = :COC_DOCENTRY";
 
-				$contenidoNcC = $this->pedeo->queryTable($sqlcotizacion,array(':CNC_DOCENTRY'=>$Data));
+				$contenidoCoc = $this->pedeo->queryTable($sqlcotizacion,array(':COC_DOCENTRY'=>$Data));
 
-				if(!isset($contenidoNcC[0])){
+				if(!isset($contenidoCoc[0])){
 						$respuesta = array(
 							 'error' => true,
-							 'data'  => $contenidoNcC,
+							 'data'  => $contenidoCoc,
 							 'mensaje' =>'no se encontro el documento'
 						);
 
@@ -131,18 +131,18 @@ class NcCompra extends REST_Controller {
 
 						return;
 				}
-				// print_r($contenidoNcC);exit();die();
+				// print_r($contenidoCoc);exit();die();
 
 				$consecutivo = '';
 
-				if($contenidoNcC[0]['pgs_mpfn'] == 1){
-					$consecutivo = $contenidoNcC[0]['numerodocumento'];
+				if($contenidoCoc[0]['pgs_mpfn'] == 1){
+					$consecutivo = $contenidoCoc[0]['numerodocumento'];
 				}else{
-					$consecutivo = $contenidoNcC[0]['cnc_docnum'];
+					$consecutivo = $contenidoCoc[0]['coc_docnum'];
 				}
 
 				$totaldetalle = '';
-				foreach ($contenidoNcC as $key => $value) {
+				foreach ($contenidoCoc as $key => $value) {
 					// code...
 					$detalle = '<td>'.$value['referencia'].'</td>
 											<td>'.$value['descripcion'].'</td>
@@ -169,8 +169,8 @@ class NcCompra extends REST_Controller {
                 <p>'.$empresa[0]['pge_mail'].'</p>
             </th>
             <th>
-                <p>NOTA CREDITO DE COMPRA</p>
-                <p class="fondo">'.$contenidoNcC[0]['numerodocumento'].'</p>
+                <p>OFERTA DE COMPRA</p>
+                <p class="fondo">'.$contenidoCoc[0]['numerodocumento'].'</p>
 
             </th>
         </tr>
@@ -194,7 +194,7 @@ class NcCompra extends REST_Controller {
 						<p class="">RIF: </p>
 					</th>
 					<th style="text-align: left;">
-						<p> '.$contenidoNcC[0]['nit'].'</p>
+						<p> '.$contenidoCoc[0]['nit'].'</p>
 					</th>
 				</tr>
 				<tr>
@@ -202,7 +202,7 @@ class NcCompra extends REST_Controller {
 						<p class="">NOMBRE: </p>
 					</th>
 					<th style="text-align: left;">
-						<p> '.$contenidoNcC[0]['cliente'].'</p>
+						<p> '.$contenidoCoc[0]['cliente'].'</p>
 					</th>
 				</tr>
 				<tr>
@@ -210,7 +210,7 @@ class NcCompra extends REST_Controller {
 						<p class="">DIRECCIÓN: </p>
 					</th>
 					<th style="text-align: left;">
-						<p> '.$contenidoNcC[0]['direccion'].'</p>
+						<p> '.$contenidoCoc[0]['direccion'].'</p>
 					</th>
 					<th style="text-align: right;">
 						<p class=""></p>
@@ -224,7 +224,7 @@ class NcCompra extends REST_Controller {
 						<p class="">CIUDAD: </p>
 					</th>
 					<th style="text-align: left;">
-						<p> '.$contenidoNcC[0]['ciudad'].'</p>
+						<p> '.$contenidoCoc[0]['ciudad'].'</p>
 					</th>
 				</tr>
 				<tr>
@@ -232,7 +232,7 @@ class NcCompra extends REST_Controller {
 						<p class="">ESTADO: </p>
 					</th>
 					<th style="text-align: left;">
-						<p> '.$contenidoNcC[0]['estado'].'</p>
+						<p> '.$contenidoCoc[0]['estado'].'</p>
 					</th>
 				</tr>
 				<tr>
@@ -262,7 +262,7 @@ class NcCompra extends REST_Controller {
 						<p class="">FECHA DE EMISIÓN: </p>
 					</th>
 					<th style="text-align: right;">
-						<p>'.date("d-m-Y", strtotime($contenidoNcC[0]['fechadocumento'])).'</p>
+						<p>'.date("d-m-Y", strtotime($contenidoCoc[0]['fechadocumento'])).'</p>
 					</th>
 				</tr>
 				</table>
@@ -295,19 +295,19 @@ class NcCompra extends REST_Controller {
         <br>
         <table width="100%">
         <tr>
-            <td style="text-align: right;">Base Documento: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['base'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Base Documento: <span>'.$contenidoCoc[0]['monedadocumento']." ".number_format($contenidoCoc[0]['base'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Descuento: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['descuento'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Descuento: <span>'.$contenidoCoc[0]['monedadocumento']." ".number_format($contenidoCoc[0]['descuento'], 2, ',', '.').'</span></p></td>
         </tr>
 				<tr>
-            <td style="text-align: right;">Sub Total: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['subtotal'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Sub Total: <span>'.$contenidoCoc[0]['monedadocumento']." ".number_format($contenidoCoc[0]['subtotal'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Impuestos: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['iva'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Impuestos: <span>'.$contenidoCoc[0]['monedadocumento']." ".number_format($contenidoCoc[0]['iva'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Total: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Total: <span>'.$contenidoCoc[0]['monedadocumento']." ".number_format($contenidoCoc[0]['totaldoc'], 2, ',', '.').'</span></p></td>
         </tr>
 
         </table>
@@ -317,7 +317,7 @@ class NcCompra extends REST_Controller {
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
                 <th style="text-align: left;" class="fondo">
-                    <p>'.$formatter->toWords($contenidoNcC[0]['totaldoc'],2)." ".$contenidoNcC[0]['nombremoneda'].'</p>
+                    <p>'.$formatter->toWords($contenidoCoc[0]['totaldoc'],2)." ".$contenidoCoc[0]['nombremoneda'].'</p>
                 </th>
             </tr>
         </table>

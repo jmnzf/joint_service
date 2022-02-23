@@ -78,8 +78,11 @@ class EntradaCompra extends REST_Controller {
 													CONCAT(T0.CEC_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
 													T0.CEC_CARDCODE Nit,
 													CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
+													T3.dmd_state_mm ciudad,
+													t3.dmd_state estado,
 													T4.DMC_PHONE1 Telefono,
 													T4.DMC_EMAIL Email,
+													T0.CEC_DOCNUM,
 													CONCAT(T6.PGS_PREF_NUM,' ',T0.CEC_DOCNUM) NumeroDocumento,
 													T0.CEC_DOCDATE FechaDocumento,
 													T0.CEC_DUEDATE FechaVenDocumento,
@@ -102,7 +105,9 @@ class EntradaCompra extends REST_Controller {
 													(T0.CEC_BASEAMNT - T0.CEC_DISCOUNT) subtotal,
 													T0.CEC_TAXTOTAL Iva,
 													T0.CEC_DOCTOTAL TotalDoc,
-													T0.CEC_COMMENT Comentarios
+													T0.CEC_COMMENT Comentarios,
+													t6.pgs_mde,
+													t6.pgs_mpfn
 												FROM DCEC t0
 												INNER JOIN CEC1 T1 ON t0.CEC_docentry = t1.EC1_docentry
 												LEFT JOIN DMSN T2 ON t0.CEC_cardcode = t2.dms_card_code
@@ -127,6 +132,14 @@ class EntradaCompra extends REST_Controller {
 						return;
 				}
 				// print_r($contenidoEC);exit();die();
+
+				$consecutivo = '';
+
+				if($contenidoEC[0]['pgs_mpfn'] == 1){
+					$consecutivo = $contenidoEC[0]['numerodocumento'];
+				}else{
+					$consecutivo = $contenidoEC[0]['cec_docnum'];
+				}
 
 				$totaldetalle = '';
 				foreach ($contenidoEC as $key => $value) {
@@ -157,73 +170,104 @@ class EntradaCompra extends REST_Controller {
             </th>
             <th>
                 <p>ENTRADA DE COMPRA</p>
-                <p class="fondo">'.$contenidoEC[0]['numerodocumento'].'</p>
+                <p class="fondo">'.$consecutivo.'</p>
 
             </th>
         </tr>
 
         </table>';
 
-        $footer = '
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: center;">
-                    <p>Autorización de numeración de facturación N°18764009111647 de 2020-12-22 Modalidad Factura Electrónica Desde N° WT5000 hasta WT10000 con
-                    vigencia hasta 2021-12-22.
-                    </p>
-                </th>
-            </tr>
-        </table>
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th class="fondo" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
-            </tr>
-        </table>';
+				$footer = '
+				<table width="100%" style="vertical-align: bottom; font-family: serif;
+						font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+						<tr>
+								<th class="fondo" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+						</tr>
+				</table>';
+
 
 
         $html = '
 
-        <table class="bordew" style="width:100%">
-        <tr>
-          <th>
-          	<p class="fondo">SEÑOR(ES):</p>
-          </th>
-          <th style="text-align: left;">
-          	<p>'.$contenidoEC[0]['cliente'].'</p>
-          </th>
-          <th>
-            <p class="fondo">FECHA DE EXPEDICIÓN </p>
-            <p>'.$contenidoEC[0]['fechadocumento'].'</p>
-          </th>
-        </tr>
-        <tr>
-          <th>
-            <p class="fondo">DIRECCIÓN:</p>
-          </th>
-          <th style="text-align: left;">
-            <p>'.$contenidoEC[0]['direccion'].'</p>
-          </th>
+				<table class="bordew" style="width:100%">
+				<tr>
+					<th style="text-align: left;">
+						<p class="">RIF: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoEC[0]['nit'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">NOMBRE: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoEC[0]['cliente'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">DIRECCIÓN: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoEC[0]['direccion'].'</p>
+					</th>
+					<th style="text-align: right;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: right;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">CIUDAD: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoEC[0]['ciudad'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">ESTADO: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoEC[0]['estado'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">FECHA DE EMISIÓN: </p>
+					</th>
+					<th style="text-align: right;">
+						<p>'.date("d-m-Y", strtotime($contenidoEC[0]['fechadocumento'])).'</p>
+					</th>
+				</tr>
+				</table>
 
-        </tr>
-        <tr>
-          <th>
-            <p class="fondo">TELÉFONO:</p>
-          </th>
-          <th style="text-align: left;">
-            <p>
-            	<span>'.$contenidoEC[0]['telefono'].'</span>
-                <span class ="fondo">RIF:</span>
-                <span>'.$contenidoEC[0]['nit'].'</span>
-            </p>
-          </th>
-          <th>
-            <p class="fondo">FECHA DE VENCIMIENTO </p>
-            <p>'.$contenidoEC[0]['fechavendocumento'].'</p>
-          </th>
-        </tr>
-        </table>
 
         <br>
 
@@ -280,18 +324,7 @@ class EntradaCompra extends REST_Controller {
             </tr>
         </table>
 
-        <br><br>
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: left;">
-                    <p>Esta factura se asimila en todos sus efectos a una letra de cambio de conformidad con el Art. 774 del código de
-                    comercio. Autorizo que en caso de incumplimiento de esta obligación sea reportado a las centrales de riesgo, se
-                    cobraran intereses por mora.
-                    </p>
-                </th>
-            </tr>
-        </table>';
+      ';
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 

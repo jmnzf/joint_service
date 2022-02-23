@@ -78,8 +78,11 @@ class NdCompra extends REST_Controller {
 													CONCAT(T0.CND_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
 													trim('CN' FROM T0.CND_CARDCODE) Nit,
 													CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
+													T3.dmd_state_mm ciudad,
+													t3.dmd_state estado,
 													T4.DMC_PHONE1 Telefono,
 													T4.DMC_EMAIL Email,
+													T0.CND_DOCNUM,
 													CONCAT(T6.PGS_PREF_NUM,' ',T0.CND_DOCNUM) NumeroDocumento,
 													to_char(T0.CND_DOCDATE,'DD-MM-YYYY') FechaDocumento,
 													to_char(T0.CND_DUEDATE,'DD-MM-YYYY') FechaVenDocumento,
@@ -102,7 +105,9 @@ class NdCompra extends REST_Controller {
 													(T0.CND_BASEAMNT - T0.CND_DISCOUNT) subtotal,
 													T0.CND_TAXTOTAL Iva,
 													T0.CND_DOCTOTAL TotalDoc,
-													T0.CND_COMMENT Comentarios
+													T0.CND_COMMENT Comentarios,
+													t6.pgs_mde,
+													t6.pgs_mpfn
 												FROM DCND t0
 												INNER JOIN CND1 T1 ON t0.CND_docentry = t1.ND1_docentry
 												LEFT JOIN DMSN T2 ON t0.CND_cardcode = t2.dms_card_code
@@ -127,6 +132,15 @@ class NdCompra extends REST_Controller {
 						return;
 				}
 				// print_r($contenidoNdC);exit();die();
+
+				$consecutivo = '';
+
+				if($contenidoNdC[0]['pgs_mpfn'] == 1){
+					$consecutivo = $contenidoNdC[0]['numerodocumento'];
+				}else{
+					$consecutivo = $contenidoNdC[0]['cnd_docnum'];
+				}
+
 
 				$totaldetalle = '';
 				foreach ($contenidoNdC as $key => $value) {
@@ -164,17 +178,7 @@ class NdCompra extends REST_Controller {
 
         </table>';
 
-        $footer = '
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: center;">
-                    <p>Autorización de numeración de facturación N°18764009111647 de 2020-12-22 Modalidad Factura Electrónica Desde N° WT5000 hasta WT10000 con
-                    vigencia hasta 2021-12-22.
-                    </p>
-                </th>
-            </tr>
-        </table>
+				$footer = '
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
@@ -185,45 +189,84 @@ class NdCompra extends REST_Controller {
 
         $html = '
 
-        <table class="bordew" style="width:100%">
-        <tr>
-          <th>
-          	<p class="fondo">SEÑOR(ES):</p>
-          </th>
-          <th style="text-align: left;">
-          	<p>'.$contenidoNdC[0]['cliente'].'</p>
-          </th>
-          <th>
-            <p class="fondo">FECHA DE EXPEDICIÓN </p>
-            <p>'.$contenidoNdC[0]['fechadocumento'].'</p>
-          </th>
-        </tr>
-        <tr>
-          <th>
-            <p class="fondo">DIRECCIÓN:</p>
-          </th>
-          <th style="text-align: left;">
-            <p>'.$contenidoNdC[0]['direccion'].'</p>
-          </th>
-
-        </tr>
-        <tr>
-          <th>
-            <p class="fondo">TELÉFONO:</p>
-          </th>
-          <th style="text-align: left;">
-            <p>
-            	<span>'.$contenidoNdC[0]['telefono'].'</span>
-                <span class ="fondo">RIF:</span>
-                <span>'.$contenidoNdC[0]['nit'].'</span>
-            </p>
-          </th>
-          <th>
-            <p class="fondo">FECHA DE VENCIMIENTO </p>
-            <p>'.$contenidoNdC[0]['fechavendocumento'].'</p>
-          </th>
-        </tr>
-        </table>
+				<table class="bordew" style="width:100%">
+				<tr>
+					<th style="text-align: left;">
+						<p class="">RIF: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoNdC[0]['nit'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">NOMBRE: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoNdC[0]['cliente'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">DIRECCIÓN: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoNdC[0]['direccion'].'</p>
+					</th>
+					<th style="text-align: right;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: right;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">CIUDAD: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoNdC[0]['ciudad'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">ESTADO: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoNdC[0]['estado'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">FECHA DE EMISIÓN: </p>
+					</th>
+					<th style="text-align: right;">
+						<p>'.date("d-m-Y", strtotime($contenidoNdC[0]['fechadocumento'])).'</p>
+					</th>
+				</tr>
+				</table>
 
         <br>
 
@@ -280,18 +323,7 @@ class NdCompra extends REST_Controller {
             </tr>
         </table>
 
-        <br><br>
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: left;">
-                    <p>Esta factura se asimila en todos sus efectos a una letra de cambio de conformidad con el Art. 774 del código de
-                    comercio. Autorizo que en caso de incumplimiento de esta obligación sea reportado a las centrales de riesgo, se
-                    cobraran intereses por mora.
-                    </p>
-                </th>
-            </tr>
-        </table>';
+      ';
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 

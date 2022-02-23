@@ -1,4 +1,4 @@
-<?php
+contenidoNcV<?php
 
 // GENERACION DE DOCUMENTOS EN PDF
 
@@ -77,9 +77,12 @@ class NcVenta extends REST_Controller {
 				$sqlcotizacion = "SELECT
 													CONCAT(T0.VNC_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
 													TRIM('CN' FROM T0.VNC_CARDCODE) Nit,
+													T3.dmd_state_mm ciudad,
+													t3.dmd_state estado,
 													CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
 													T4.DMC_PHONE1 Telefono,
 													T4.DMC_EMAIL Email,
+													T0.VNC_DOCNUM,
 													CONCAT(T6.PGS_PREF_NUM,' ',T0.VNC_DOCNUM) NumeroDocumento,
 													to_char(T0.VNC_DOCDATE,'DD-MM-YYYY') FechaDocumento,
 													to_char(T0.VNC_DUEDATE,'DD-MM-YYYY') FechaVenDocumento,
@@ -102,7 +105,9 @@ class NcVenta extends REST_Controller {
 													(T0.VNC_BASEAMNT - T0.VNC_DISCOUNT) subtotal,
 													T0.VNC_TAXTOTAL Iva,
 													T0.VNC_DOCTOTAL TotalDoc,
-													T0.VNC_COMMENT Comentarios
+													T0.VNC_COMMENT Comentarios,
+													t6.pgs_mde,
+													t6.pgs_mpfn
 												FROM DVNC t0
 												INNER JOIN VNC1 T1 ON t0.VNC_docentry = t1.NC1_docentry
 												LEFT JOIN DMSN T2 ON t0.VNC_cardcode = t2.dms_card_code
@@ -128,6 +133,15 @@ class NcVenta extends REST_Controller {
 						return;
 				}
 				// print_r($contenidoNcV);exit();die();
+
+				$consecutivo = '';
+
+				if($contenidoNcV[0]['pgs_mpfn'] == 1){
+					$consecutivo = $contenidoNcV[0]['numerodocumento'];
+				}else{
+					$consecutivo = $contenidoNcV[0]['vnc_docnum'];
+				}
+
 
 				$totaldetalle = '';
 				foreach ($contenidoNcV as $key => $value) {
@@ -157,7 +171,7 @@ class NcVenta extends REST_Controller {
             </th>
             <th>
                 <p>NOTA CREDITO DE VENTA</p>
-                <p class="fondo">'.$contenidoNcV[0]['numerodocumento'].'</p>
+                <p class="fondo">'.$consecutivo.'</p>
 
             </th>
         </tr>
@@ -178,44 +192,82 @@ class NcVenta extends REST_Controller {
 
 				<table class="bordew" style="width:100%">
 				<tr>
-					<th>
-						<p class="fondo">SEÑOR(ES):</p>
+          <th style="text-align: left;">
+            <p class="">RIF: </p>
+          </th>
+          <th style="text-align: left;">
+            <p> '.$contenidoNcV[0]['nit'].'</p>
+          </th>
+        </tr>
+        <tr>
+          <th style="text-align: left;">
+          	<p class="">NOMBRE: </p>
+          </th>
+          <th style="text-align: left;">
+          	<p> '.$contenidoNcV[0]['cliente'].'</p>
+          </th>
+        </tr>
+        <tr>
+					<th style="text-align: left;">
+						<p class="">DIRECCIÓN: </p>
 					</th>
 					<th style="text-align: left;">
-						<p>'.$contenidoNcV[0]['cliente'].'</p>
+						<p> '.$contenidoNcV[0]['direccion'].'</p>
 					</th>
-					<th>
-						<p class="fondo">FECHA DE EXPEDICIÓN </p>
-						<p>'.$contenidoNcV[0]['fechadocumento'].'</p>
+					<th style="text-align: right;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: right;">
+						<p></p>
+					</th>
+        </tr>
+        <tr>
+          <th style="text-align: left;">
+            <p class="">CIUDAD: </p>
+          </th>
+					<th style="text-align: left;">
+						<p> '.$contenidoNcV[0]['ciudad'].'</p>
+					</th>
+        </tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">ESTADO: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoNcV[0]['estado'].'</p>
 					</th>
 				</tr>
 				<tr>
-					<th>
-						<p class="fondo">DIRECCIÓN:</p>
+					<th style="text-align: left;">
+						<p class=""></p>
 					</th>
 					<th style="text-align: left;">
-						<p>'.$contenidoNcV[0]['direccion'].'</p>
+						<p></p>
 					</th>
-
 				</tr>
 				<tr>
-					<th>
-						<p class="fondo">TELÉFONO:</p>
+					<th style="text-align: left;">
+						<p class=""></p>
 					</th>
 					<th style="text-align: left;">
-						<p>
-							<span>'.$contenidoNcV[0]['telefono'].'</span>
-								<span class ="fondo">RIF:</span>
-								<span>'.$contenidoNcV[0]['nit'].'</span>
-						</p>
-					</th>
-					<th>
-						<p class="fondo">FECHA DE VENCIMIENTO </p>
-						<p>'.$contenidoNcV[0]['fechavendocumento'].'</p>
+						<p></p>
 					</th>
 				</tr>
-				</table>
-
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">FECHA DE EMISIÓN: </p>
+					</th>
+					<th style="text-align: right;">
+						<p>'.date("d-m-Y", strtotime($contenidoNcV[0]['fechadocumento'])).'</p>
+					</th>
+				</tr>
+        </table>
         <br>
 
         <table class="borde" style="width:100%">

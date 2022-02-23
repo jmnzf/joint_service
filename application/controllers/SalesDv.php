@@ -1342,11 +1342,11 @@ class SalesDv extends REST_Controller {
 
 
                                                                                                 $sqlEstado1 = "SELECT
-                                                                                                                                                                                                                                                                                count(t1.em1_itemcode) item,
-                                                                                                                                                                                                                                                                                sum(t1.em1_quantity) cantidad
-                                                                                                                                                                                                                                                                                from dvem t0
-                                                                                                                                                                                                                                                                                inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-                                                                                                                                                                                                                                                                                where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+                                                                                                                    count(t1.em1_itemcode) item,
+                                                                                                                    sum(t1.em1_quantity) cantidad
+                                                                                                                    from dvem t0
+                                                                                                                    inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+                                                                                                                    where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
 
 
                                                                                                 $resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
@@ -1356,13 +1356,13 @@ class SalesDv extends REST_Controller {
 
 
                                                                                                 $sqlEstado2 = "SELECT
-                                                                                                                                                                                                                                                                                                coalesce(count(t3.dv1_itemcode),0) item,
-                                                                                                                                                                                                                                                                                                coalesce(sum(t3.dv1_quantity),0) cantidad
-                                                                                                                                                                                                                                                                                                from dvem t0
-                                                                                                                                                                                                                                                                                                left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-                                                                                                                                                                                                                                                                                                left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry
-                                                                                                                                                                                                                                                                                                left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
-                                                                                                                                                                                                                                                                                                where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+                                                                                                                    coalesce(count(t3.dv1_itemcode),0) item,
+                                                                                                                    coalesce(sum(t3.dv1_quantity),0) cantidad
+                                                                                                                    from dvem t0
+                                                                                                                    left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+                                                                                                                    left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry
+                                                                                                                    left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+                                                                                                                    where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
                                                                                 $resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
                                                                                                 ':vem_docentry' => $Data['vdv_baseentry'],
                                                                                                 ':vem_doctype' => $Data['vdv_basetype']
@@ -1374,53 +1374,48 @@ class SalesDv extends REST_Controller {
                                                                                 $cantidad_dev = $resEstado2[0]['cantidad'];
 
 
-                                                                                if($item_del == $item_dev  &&  $cantidad_del == $cantidad_dev){
+                                if($item_del == $item_dev  &&  $cantidad_del == $cantidad_dev){
 
 
-                                                                                                $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-                                                                                                                                                                                                                                                                VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+                              $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+                                                              VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
-                                                                                                $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+                            $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+                          ':bed_docentry' => $Data['vdv_baseentry'],
+                          ':bed_doctype' => $Data['vdv_basetype'],
+                          ':bed_status' => 3, //ESTADO CERRADO
+                          ':bed_createby' => $Data['vdv_createby'],
+                          ':bed_date' => date('Y-m-d'),
+                          ':bed_baseentry' => $resInsert,
+                          ':bed_basetype' => $Data['vdv_doctype']
+                          ));
 
+                        if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
 
-                                                                                                                                                                                ':bed_docentry' => $Data['vdv_baseentry'],
-                                                                                                                                                                                ':bed_doctype' => $Data['vdv_basetype'],
-                                                                                                                                                                                ':bed_status' => 3, //ESTADO CERRADO
-                                                                                                                                                                                ':bed_createby' => $Data['vdv_createby'],
-                                                                                                                                                                                ':bed_date' => date('Y-m-d'),
-                                                                                                                                                                                ':bed_baseentry' => $resInsert,
-                                                                                                                                                                                ':bed_basetype' => $Data['vdv_doctype']
-                                                                                                ));
-
-                                                                                                if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-                                                                                                }else{
+                        }else{
 
 
-                                                                                                                                                                                $this->pedeo->trans_rollback();
+                            $this->pedeo->trans_rollback();
 
-                                                                                                                                                                                                $respuesta = array(
-                                                                                                                                                                                                                'error'   => true,
-                                                                                                                                                                                                                'data' => $resInsertEstado,
-                                                                                                                                                                                                                'mensaje'                => 'No se pudo registrar la devolucion de venta'
-                                                                                                                                                                                                );
+                            $respuesta = array(
+                            'error'   => true,
+                            'data' => $resInsertEstado,
+                            'mensaje'                => 'No se pudo registrar la devolucion de venta'
+                            );
+                            $this->response($respuesta);
 
+                            return;
+                    }
 
-                                                                                                                                                                                                $this->response($respuesta);
-
-                                                                                                                                                                                                return;
-                                                                                                                                                }
-
-                                                                                                  }
-                                                                                                }
+            }
+  }
 
 
 
-
-                                                                                // Si todo sale bien despues de insertar el detalle de la Devolución de clientes
-                                                                                // se confirma la trasaccion  para que los cambios apliquen permanentemente
-                                                                                // en la base de datos y se confirma la operacion exitosa.
-                                                                                $this->pedeo->trans_commit();
+            // Si todo sale bien despues de insertar el detalle de la Devolución de clientes
+            // se confirma la trasaccion  para que los cambios apliquen permanentemente
+            // en la base de datos y se confirma la operacion exitosa.
+            $this->pedeo->trans_commit();
 
           $respuesta = array(
             'error' => false,

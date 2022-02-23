@@ -1,5 +1,5 @@
 <?php
-// ANEXOS DE SOCIOS DE NEGOCIO
+// OFERTA DE COMPRAS
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');

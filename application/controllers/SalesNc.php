@@ -1968,6 +1968,8 @@ class SalesNc extends REST_Controller {
 
 												}
 
+
+
 									}else{
 
 											$this->pedeo->trans_rollback();
@@ -1983,6 +1985,88 @@ class SalesNc extends REST_Controller {
 											 return;
 									}
 						}
+
+//VALIDACION OARA CIERRE DE DOCUMENTO BASE
+
+						if ($Data['vnc_basetype'] == 5) {
+
+
+														$sqlEstado1 = "SELECT
+																								count(t1.fv1_itemcode) item,
+																								sum(t1.fv1_quantity) cantidad,
+																								t0.dvf_doctotal total
+																								from dvfv t0
+																								inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
+																								where t0.dvf_docentry = :dvf_docentry and t0.dvf_doctype = :dvf_doctype
+																								group by t0.dvf_doctotal";
+
+
+														$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+																						':dvf_docentry' => $Data['vnc_baseentry'],
+																						':dvf_doctype' => $Data['vnc_basetype']
+														));
+
+
+														$sqlEstado2 = "SELECT
+																								coalesce(count(t3.nc1_itemcode),0) item,
+																								coalesce(sum(t3.nc1_quantity),0) cantidad,
+																								coalesce(sum(t2.vnc_doctota),0) total
+																								from dvfv t0
+																								left join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
+																								left join dvnc t2 on t0.dvf_docentry = t2.vnc_baseentry
+																								left join vnc1 t3 on t2.vnc_docentry = t3.nc1_docentry and t1.fv1_itemcode = t3.nc1_itemcode
+																								where t0.dvf_docentry = :dvf_docentry and t0.dvf_doctype = :dvf_doctype";
+						$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+														':dvf_docentry' => $Data['vnc_baseentry'],
+														':dvf_doctype' => $Data['vnc_basetype']
+						));
+
+						$item_del = $resEstado1[0]['item'];
+						$item_dev = $resEstado2[0]['item'];
+						$cantidad_del = $resEstado1[0]['cantidad'];
+						$cantidad_dev = $resEstado2[0]['cantidad'];
+						$total1 = $resEstado1[0]['total'];
+						$total2 = $resEstado2[0]['total'];
+						$total_resta = $total1 - $total2;
+
+						// print_r($total_resta);exit();die();
+
+								if(($item_del == $item_dev  &&  $cantidad_del == $cantidad_dev) or ($total_resta == 0)){
+
+
+									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+									VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+									$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+									':bed_docentry' => $Data['vnc_baseentry'],
+									':bed_doctype' => $Data['vnc_basetype'],
+									':bed_status' => 3, //ESTADO CERRADO
+									':bed_createby' => $Data['vnc_createby'],
+									':bed_date' => date('Y-m-d'),
+									':bed_baseentry' => $resInsert,
+									':bed_basetype' => $Data['vnc_doctype']
+									));
+
+								if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+								}else{
+
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+								'error'   => true,
+								'data' => $resInsertEstado,
+								'mensaje'                => 'No se pudo registrar la nota credito de venta'
+								);
+								$this->response($respuesta);
+
+								return;
+								}
+
+				}
+}
+//FIN DE ACTUALIZACION DE ESTADO DE CIERRE DOCUMENTO BASE
 
 						// FIN VALIDACION DIFERENCIA EN DECIMALES
 						// FIN DE OPERACIONES VITALES

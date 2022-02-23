@@ -78,8 +78,11 @@ class NdVenta extends REST_Controller {
 													CONCAT(T0.VND_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
 													TRIM('CN' FROM T0.VND_CARDCODE) Nit,
 													CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
+													T3.dmd_state_mm ciudad,
+													t3.dmd_state estado,
 													T4.DMC_PHONE1 Telefono,
 													T4.DMC_EMAIL Email,
+													T0.VND_DOCNUM,
 													CONCAT(T6.PGS_PREF_NUM,' ',T0.VND_DOCNUM) NumeroDocumento,
 													to_char(T0.VND_DOCDATE,'DD-MM-YYYY') FechaDocumento,
 													to_char(T0.VND_DUEDATE,'DD-MM-YYYY') FechaVenDocumento,
@@ -102,7 +105,9 @@ class NdVenta extends REST_Controller {
 													(T0.VND_BASEAMNT - T0.VND_DISCOUNT) subtotal,
 													T0.VND_TAXTOTAL Iva,
 													T0.VND_DOCTOTAL TotalDoc,
-													T0.VND_COMMENT Comentarios
+													T0.VND_COMMENT Comentarios,
+													t6.pgs_mde,
+													t6.pgs_mpfn
 												FROM DVND t0
 												INNER JOIN VND1 T1 ON t0.VND_docentry = t1.ND1_docentry
 												LEFT JOIN DMSN T2 ON t0.VND_cardcode = t2.dms_card_code
@@ -128,6 +133,14 @@ class NdVenta extends REST_Controller {
 						return;
 				}
 				// print_r($contenidoNdV);exit();die();
+
+				$consecutivo = '';
+
+				if($contenidoNdV[0]['pgs_mpfn'] == 1){
+					$consecutivo = $contenidoNdV[0]['numerodocumento'];
+				}else{
+					$consecutivo = $contenidoNdV[0]['vnd_docnum'];
+				}
 
 				$totaldetalle = '';
 				foreach ($contenidoNdV as $key => $value) {
@@ -177,40 +190,79 @@ class NdVenta extends REST_Controller {
 
 				<table class="bordew" style="width:100%">
 				<tr>
-					<th>
-						<p class="fondo">SEÑOR(ES):</p>
+					<th style="text-align: left;">
+						<p class="">RIF: </p>
 					</th>
 					<th style="text-align: left;">
-						<p>'.$contenidoNdV[0]['cliente'].'</p>
-					</th>
-					<th>
-						<p class="fondo">FECHA DE EXPEDICIÓN </p>
-						<p>'.$contenidoNdV[0]['fechadocumento'].'</p>
+						<p> '.$contenidoNdV[0]['nit'].'</p>
 					</th>
 				</tr>
 				<tr>
-					<th>
-						<p class="fondo">DIRECCIÓN:</p>
+					<th style="text-align: left;">
+						<p class="">NOMBRE: </p>
 					</th>
 					<th style="text-align: left;">
-						<p>'.$contenidoNdV[0]['direccion'].'</p>
+						<p> '.$contenidoNdV[0]['cliente'].'</p>
 					</th>
-
 				</tr>
 				<tr>
-					<th>
-						<p class="fondo">TELÉFONO:</p>
+					<th style="text-align: left;">
+						<p class="">DIRECCIÓN: </p>
 					</th>
 					<th style="text-align: left;">
-						<p>
-							<span>'.$contenidoNdV[0]['telefono'].'</span>
-								<span class ="fondo">RIF:</span>
-								<span>'.$contenidoNdV[0]['nit'].'</span>
-						</p>
+						<p> '.$contenidoNdV[0]['direccion'].'</p>
 					</th>
-					<th>
-						<p class="fondo">FECHA DE VENCIMIENTO </p>
-						<p>'.$contenidoNdV[0]['fechavendocumento'].'</p>
+					<th style="text-align: right;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: right;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">CIUDAD: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoNdV[0]['ciudad'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class="">ESTADO: </p>
+					</th>
+					<th style="text-align: left;">
+						<p> '.$contenidoNdV[0]['estado'].'</p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+				</tr>
+				<tr>
+					<th style="text-align: left;">
+						<p class=""></p>
+					</th>
+					<th style="text-align: left;">
+						<p></p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">FECHA DE EMISIÓN: </p>
+					</th>
+					<th style="text-align: right;">
+						<p>'.date("d-m-Y", strtotime($contenidoNdV[0]['fechadocumento'])).'</p>
 					</th>
 				</tr>
 				</table>
