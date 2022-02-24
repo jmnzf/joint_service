@@ -23,14 +23,38 @@ class OpenDocumentsPurchase extends REST_Controller {
 	}
 
   //CREAR NUEVA Entrega de Ventas
-	public function OpenRequest_post(){
+	public function OpenOrder_post(){
 
 
-            $sqlSelect = "select
-                                    a.*
-                                from dcsc a
-                                join responsestatus b on a.csc_docentry = b.id and a.csc_doctype = b.tipo
-                                where b.estado = 'Abierto' order by a.csc_docentry asc";
+            $sqlSelect = "SELECT
+																	    a.cpo_docnum documento,
+																	    a.cpo_docdate fecha,
+																	    a.cpo_cardcode codigo_cliente,
+																	    a.cpo_cardname nombre_cliente,
+																	    c.po1_itemcode codigo_item,
+																	    c.po1_itemname nombre_item,
+																	    c.po1_quantity cantidad,
+																	    coalesce(sum(e.ec1_quantity),0) ent,
+																	    coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
+																	    where bb.cfc_basetype = a.cpo_doctype and bb.cfc_baseentry = a.cpo_docentry),0) fact,
+																	    coalesce((c.po1_quantity - (sum(e.ec1_quantity)
+																	    + coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
+																	    where bb.cfc_basetype = a.cpo_doctype and bb.cfc_baseentry = a.cpo_docentry),0))),0) pendiente
+																	from dcpo a
+																	join responsestatus b on a.cpo_docentry = b.id and a.cpo_doctype = b.tipo
+																	left join cpo1 c on a.cpo_docentry = c.po1_docentry
+																	left join dcec d on a.cpo_docentry = d.cec_baseentry and a.cpo_doctype = d.cec_basetype
+																	left join cec1 e on d.cec_docentry = e.ec1_docentry and c.po1_itemcode = e.ec1_itemcode
+																	where b.estado = 'Abierto'
+																	group by a.cpo_docnum,
+																	    a.cpo_docdate,
+																	    a.cpo_cardcode,
+																	    a.cpo_cardname,
+																	    c.po1_itemcode,
+																	    c.po1_itemname,
+																	    c.po1_quantity,
+																	    a.cpo_doctype,
+																	    a.cpo_docentry";
 
 
             $resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -55,210 +79,61 @@ class OpenDocumentsPurchase extends REST_Controller {
              $this->response($respuesta);
       }
 
-      public function OpenOrder_post(){
-
-
-                $sqlSelect = "select
-                                          a.*
-                                      from dcpo a
-                                      join responsestatus b on a.cpo_docentry = b.id and a.cpo_doctype = b.tipo
-                                      where b.estado = 'Abierto'
-                                      order by a.cpo_docentry asc";
-
-
-                $resSelect = $this->pedeo->queryTable($sqlSelect, array());
-
-                if(isset($resSelect[0])){
-
-                  $respuesta = array(
-                    'error' => false,
-                    'data'  => $resSelect,
-                    'mensaje' => 'OK');
-
-                }else{
-
-                    $respuesta = array(
-                      'error'   => true,
-                      'data' => array(),
-                      'mensaje'	=> 'busqueda sin resultados'
-                    );
-
-                }
-
-                 $this->response($respuesta);
-          }
-
-
-          public function OpenEntry_post(){
-
-
-                    $sqlSelect = "select
-                                              a.*
-                                          from dcec a
-                                          join responsestatus b on a.cec_docentry = b.id and a.cec_doctype = b.tipo
-                                          where b.estado = 'Abierto'
-                                          order by a.cec_docentry asc";
-
-
-                    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
-
-                    if(isset($resSelect[0])){
-
-                      $respuesta = array(
-                        'error' => false,
-                        'data'  => $resSelect,
-                        'mensaje' => 'OK');
-
-                    }else{
-
-                        $respuesta = array(
-                          'error'   => true,
-                          'data' => array(),
-                          'mensaje'	=> 'busqueda sin resultados'
-                        );
-
-                    }
-
-                     $this->response($respuesta);
-              }
-
-
-
-              public function OpenInvoice_post(){
-
-
-                        $sqlSelect = "select
-                                                  a.*
-                                              from dcfc a
-                                              join responsestatus b on a.cfc_docentry = b.id and a.cfc_doctype = b.tipo
-                                              where b.estado = 'Abierto'
-                                              order by a.cfc_docentry asc";
-
-
-                        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
-
-                        if(isset($resSelect[0])){
-
-                          $respuesta = array(
-                            'error' => false,
-                            'data'  => $resSelect,
-                            'mensaje' => 'OK');
-
-                        }else{
-
-                            $respuesta = array(
-                              'error'   => true,
-                              'data' => array(),
-                              'mensaje'	=> 'busqueda sin resultados'
-                            );
-
-                        }
-
-                         $this->response($respuesta);
-                  }
-
-                  public function OpenCreditNote_post(){
-
-
-                            $sqlSelect = "select
-                                                      a.*
-                                                  from dcnc a
-                                                  join responsestatus b on a.cnc_docentry = b.id and a.cnc_doctype = b.tipo
-                                                  where b.estado = 'Abierto'
-                                                  order by a.cnc_docentry asc";
-
-
-                            $resSelect = $this->pedeo->queryTable($sqlSelect, array());
-
-                            if(isset($resSelect[0])){
-
-                              $respuesta = array(
-                                'error' => false,
-                                'data'  => $resSelect,
-                                'mensaje' => 'OK');
-
-                            }else{
-
-                                $respuesta = array(
-                                  'error'   => true,
-                                  'data' => array(),
-                                  'mensaje'	=> 'busqueda sin resultados'
-                                );
-
-                            }
-
-                             $this->response($respuesta);
-                      }
-
-
-                      public function OpenDebitNote_post(){
-
-
-                                $sqlSelect = "select
-                                                          a.*
-                                                      from dcnd a
-                                                      join responsestatus b on a.cnd_docentry = b.id and a.cnd_doctype = b.tipo
-                                                      where b.estado = 'Abierto'
-                                                      order by a.cnd_docentry asc";
-
-
-                                $resSelect = $this->pedeo->queryTable($sqlSelect, array());
-
-                                if(isset($resSelect[0])){
-
-                                  $respuesta = array(
-                                    'error' => false,
-                                    'data'  => $resSelect,
-                                    'mensaje' => 'OK');
-
-                                }else{
-
-                                    $respuesta = array(
-                                      'error'   => true,
-                                      'data' => array(),
-                                      'mensaje'	=> 'busqueda sin resultados'
-                                    );
-
-                                }
-
-                                 $this->response($respuesta);
-                          }
-
-                          public function OpenDevo_post(){
-
-
-                                    $sqlSelect = "select
-                                                              a.*
-                                                          from dcdc a
-                                                          join responsestatus b on a.cdc_docentry = b.id and a.cdc_doctype = b.tipo
-                                                          where b.estado = 'Abierto'
-                                                          order by a.cdc_docentry asc";
-
-
-                                    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
-
-                                    if(isset($resSelect[0])){
-
-                                      $respuesta = array(
-                                        'error' => false,
-                                        'data'  => $resSelect,
-                                        'mensaje' => 'OK');
-
-                                    }else{
-
-                                        $respuesta = array(
-                                          'error'   => true,
-                                          'data' => array(),
-                                          'mensaje'	=> 'busqueda sin resultados'
-                                        );
-
-                                    }
-
-                                     $this->response($respuesta);
-                              }
-
-
-
+			public function OpenEntry_post(){
+
+
+								$sqlSelect = "SELECT
+																		    a.cec_docnum documento,
+																		    a.cec_docdate fecha,
+																		    a.cec_cardcode codigo_cliente,
+																		    a.cec_cardname nombre_cliente,
+																		    c.ec1_itemcode codigo_item,
+																		    c.ec1_itemname nombre_item,
+																		    c.ec1_quantity cantidad,
+																		    coalesce(sum(e.dc1_quantity),0) ent,
+																		    coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
+																		    where bb.cfc_basetype = a.cec_doctype and bb.cfc_baseentry = a.cec_docentry),0) fact,
+																		    coalesce((c.ec1_quantity - (coalesce(sum(e.dc1_quantity),0)
+																		    + coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
+																		    where bb.cfc_basetype = a.cec_doctype and bb.cfc_baseentry = a.cec_docentry),0))),0) pendiente
+																		from dcec a
+																		join responsestatus b on a.cec_docentry = b.id and a.cec_doctype = b.tipo
+																		left join cec1 c on a.cec_docentry = c.ec1_docentry
+																		left join dcdc d on a.cec_docentry = d.cdc_baseentry and a.cec_doctype = d.cdc_basetype
+																		left join cdc1 e on d.cdc_docentry = e.dc1_docentry and c.ec1_itemcode = e.dc1_itemcode
+																		where b.estado = 'Abierto'
+																		group by a.cec_docnum,
+																		    a.cec_docdate,
+																		    a.cec_cardcode,
+																		    a.cec_cardname,
+																		    c.ec1_itemcode,
+																		    c.ec1_itemname,
+																		    c.ec1_quantity,
+																		    a.cec_doctype,
+																		    a.cec_docentry";
+
+
+								$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+								if(isset($resSelect[0])){
+
+									$respuesta = array(
+										'error' => false,
+										'data'  => $resSelect,
+										'mensaje' => 'OK');
+
+								}else{
+
+										$respuesta = array(
+											'error'   => true,
+											'data' => array(),
+											'mensaje'	=> 'busqueda sin resultados'
+										);
+
+								}
+
+								 $this->response($respuesta);
+					}
 
 
 }

@@ -2010,7 +2010,7 @@ class SalesNc extends REST_Controller {
 														$sqlEstado2 = "SELECT
 																								coalesce(count(t3.nc1_itemcode),0) item,
 																								coalesce(sum(t3.nc1_quantity),0) cantidad,
-																								coalesce(sum(t2.vnc_doctota),0) total
+																								coalesce(sum(t2.vnc_doctotal),0) total
 																								from dvfv t0
 																								left join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
 																								left join dvnc t2 on t0.dvf_docentry = t2.vnc_baseentry
@@ -2021,15 +2021,22 @@ class SalesNc extends REST_Controller {
 														':dvf_doctype' => $Data['vnc_basetype']
 						));
 
+						if(isset($resEstado2[0]['item']) && !empty($resEstado2[0]['item'])){
 						$item_del = $resEstado1[0]['item'];
-						$item_dev = $resEstado2[0]['item'];
 						$cantidad_del = $resEstado1[0]['cantidad'];
-						$cantidad_dev = $resEstado2[0]['cantidad'];
 						$total1 = $resEstado1[0]['total'];
-						$total2 = $resEstado2[0]['total'];
-						$total_resta = $total1 - $total2;
+					}
+							if(isset($resEstado2[0]['item']) && !empty($resEstado2[0]['item'])){
+								$item_dev = $resEstado2[0]['item'];
+								$cantidad_dev = $resEstado2[0]['cantidad'];
+								$total2 = $resEstado2[0]['total'];
+								$total_resta = $total1 - $total2;
 
-						// print_r($total_resta);exit();die();
+							}
+
+						// print_r($item_del);exit();die();
+
+
 
 								if(($item_del == $item_dev  &&  $cantidad_del == $cantidad_dev) or ($total_resta == 0)){
 
@@ -2065,6 +2072,8 @@ class SalesNc extends REST_Controller {
 								}
 
 				}
+
+
 }
 //FIN DE ACTUALIZACION DE ESTADO DE CIERRE DOCUMENTO BASE
 
