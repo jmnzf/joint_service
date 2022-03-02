@@ -2529,7 +2529,7 @@ class SalesInv extends REST_Controller {
 							));
 
 							$sqlEstado2 = "SELECT
-																			       coalesce(count(t3.ov1_itemcode),0) item,
+																			       coalesce(count(dictinct t3.ov1_itemcode),0) item,
 																			       coalesce(sum(t3.ov1_quantity),0) cantidad
 																			from dvct t0
 																			left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
@@ -2611,7 +2611,7 @@ class SalesInv extends REST_Controller {
 
 
 							$sqlEstado2 = "SELECT
-																			coalesce(count(t3.em1_itemcode),0) item,
+																			coalesce(count(distinct t3.em1_itemcode),0) item,
 																			coalesce(sum(t3.em1_quantity),0) cantidad
 																			from dvov t0
 																			left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
@@ -2703,7 +2703,7 @@ class SalesInv extends REST_Controller {
 								$resta_cantidad = $resEstado1[0]['cantidad'] - $resDev[0]['cantidad'];
 
 								$sqlEstado2 = "SELECT
-																					count(t3.fv1_itemcode) item,
+																					coalesce(count(distinct t3.fv1_itemcode),0) item,
 																					coalesce(sum(t3.fv1_quantity),0) cantidad
 																					from dvem t0
 																					left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
@@ -2792,7 +2792,7 @@ class SalesInv extends REST_Controller {
 												 ));
 
 													 $sqlEstado2 = "SELECT
-																										 count(t3.fv1_itemcode) item,
+																										 coalesce(count(distinct t3.fv1_itemcode),0) item,
 																										 coalesce(sum(t3.fv1_quantity),0) cantidad
 																										 from dvem t0
 																										 left join vem1 t1 on t0.vem_docentry = t1.em1_docentry

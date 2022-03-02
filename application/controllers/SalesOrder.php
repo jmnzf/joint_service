@@ -651,32 +651,35 @@ class SalesOrder extends REST_Controller {
 						));
 
 						$sqlEstado2 = "SELECT
-																		       coalesce(count(t3.ov1_itemcode),0) item,
+																		       coalesce(count(distinct t1.vc1_itemcode),0) item,
 																		       coalesce(sum(t3.ov1_quantity),0) cantidad
 																		from dvct t0
-																		left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+																		inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
 																		left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
 																		left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
-																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
+																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype and t1.vc1_itemcode = :vc1_itemcode";
 
 
 						$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
 							':dvc_docentry' => $Data['vov_baseentry'],
-							':dvc_doctype' => $Data['vov_basetype']
-							// ':vc1_itemcode' => $detail['ov1_itemcode']
+							':dvc_doctype' => $Data['vov_basetype'],
+							':vc1_itemcode' => $detail['ov1_itemcode']
+
 						));
 
 						$item_cot = $resEstado1[0]['item'];
+					  $cantidad_cot = $resEstado1[0]['cantidad'];
 						$item_ord = $resEstado2[0]['item'];
-						$cantidad_cot = $resEstado1[0]['cantidad'];
 						$cantidad_ord = $resEstado2[0]['cantidad'];
 
 
 
+//
 // print_r($item_cot);
 // print_r($item_ord);
 // print_r($cantidad_cot);
 // print_r($cantidad_ord);exit();die();
+
 						if($item_cot == $item_ord  &&  $cantidad_cot == $cantidad_ord){
 
 									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)

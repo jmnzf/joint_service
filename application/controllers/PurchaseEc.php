@@ -1891,8 +1891,8 @@ class PurchaseEc extends REST_Controller {
 					 ));
 
 					 $sqlEstado2 = "SELECT distinct
-												count(t3.ec1_itemcode) item,
-												sum(t3.ec1_quantity) cantidad
+												coalesce(count(distinct t3.ec1_itemcode),0) item,
+												coalesce(sum(t3.ec1_quantity),0) cantidad
 												from dcpo t0
 												left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
 												left join dcec t2 on t0.cpo_docentry = t2.cec_baseentry  and t0.cpo_doctype = t2.cec_basetype

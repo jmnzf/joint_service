@@ -1502,7 +1502,7 @@ class SalesDel extends REST_Controller {
 						));
 
 						$sqlEstado2 = "SELECT
-																					 coalesce(count(t3.em1_itemcode),0) item,
+																					 coalesce(count(distinct t3.em1_itemcode),0) item,
 																					 coalesce(sum(t3.em1_quantity),0) cantidad
 																		from dvct t0
 																		left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
@@ -1584,7 +1584,7 @@ class SalesDel extends REST_Controller {
 
 
 								$sqlEstado2 = "SELECT
-																				coalesce(count(t3.em1_itemcode),0) item,
+																				coalesce(count(distinct t3.em1_itemcode),0) item,
 																				coalesce(sum(t3.em1_quantity),0) cantidad
 																				from dvov t0
 																				left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry

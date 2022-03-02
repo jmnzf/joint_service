@@ -966,25 +966,44 @@ class PurchaseOrder extends REST_Controller {
 									 return;
 						}
 						//FIN Procedimiento para llenar cuentas por pagar
-						if ($Data['cpo_basetype'] == 11) {
+						if ($Data['cpo_basetype'] == 10) {
 
 
-							$sqlEstado = 'SELECT distinct
-														case
-															when (t1.sc1_quantity - sum(t3.ov1_quantity)) = 0
-																then 1
-															else 0
-														end "estado"
-														from dcsc t0
-														left join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-														left join dcpo t2 on t0.csc_docentry = t2.cpo_baseentry
-														left join cpo1 t3 on t2.csc_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
-														where t0.csc_docentry = :csc_docentry
-														group by
-														t1.vc1_quantity';
+							$sqlEstado1 = "SELECT
+																			       count(t1.sc1_itemcode) item,
+																			       sum(t1.sc1_quantity) cantidad
+																			from dcsc t0
+																			inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+																			where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype";
 
 
-							$resEstado = $this->pedeo->queryTable($sqlEstado, array(':csc_docentry' => $Data['cpo_baseentry']));
+							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+								':csc_docentry' => $Data['cpo_baseentry'],
+								':csc_doctype' => $Data['cpo_basetype']
+								// ':vc1_itemcode' => $detail['ov1_itemcode']
+							));
+
+							$sqlEstado2 = "SELECT
+																			       coalesce(count(distinct t3.po1_itemcode),0) item,
+																			       coalesce(sum(t3.po1_quantity),0) cantidad
+																			from dcsc t0
+																			inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+																			left join dcpo t2 on t0.csc_docentry = t2.cpo_baseentry and t0.csc_doctype = t2.cpo_basetype
+																			left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
+																			where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype";
+
+
+							$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
+								':csc_docentry' => $Data['cpo_baseentry'],
+								':csc_doctype' => $Data['cpo_basetype']
+
+							));
+
+							$item_cot = $resEstado1[0]['item'];
+						  $cantidad_cot = $resEstado1[0]['cantidad'];
+							$item_ord = $resEstado2[0]['item'];
+							$cantidad_ord = $resEstado2[0]['cantidad'];
+
 
 							if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
 
@@ -1029,37 +1048,43 @@ class PurchaseOrder extends REST_Controller {
 
 
 							$sqlEstado1 = 'SELECT distinct
-													  count(t1.sc1_itemcode) item,
-														sum(t1.sc1_quantity) cantidad
-														from dcsc t0
-														inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-														where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype
+													  count(t1.oc1_itemcode) item,
+														sum(t1.oc1_quantity) cantidad
+														from dcoc t0
+														inner join coc1 t1 on t0.coc_docentry = t1.oc1_docentry
+														where t0.coc_docentry = :coc_docentry and t0.coc_doctype = :coc_doctype
 														';
 
 
 							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-								':csc_docentry' => $Data['cpo_baseentry'],
-								':csc_doctype' => $Data['cpo_basetype']
+								':coc_docentry' => $Data['cpo_baseentry'],
+								':coc_doctype' => $Data['cpo_basetype']
 							));
 
 							$sqlEstado2 = "SELECT
-																			 coalesce(count(t3.po1_itemcode),0) item,
+																			 coalesce(count(distinct t3.po1_itemcode),0) item,
 																			 coalesce(count(t3.po1_quantity),0) cantidad
-																			 FROM dcsc t0
-																			 left join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-																			 left join dcpo t2 on t0.csc_docentry = t2.cpo_docentry and t0.csc_doctype = t2.cpo_basetype
+																			 FROM dcoc t0
+																			 left join csc1 t1 on t0.coc_docentry = t1.oc1_docentry
+																			 left join dcpo t2 on t0.coc_docentry = t2.cpo_docentry and t0.coc_doctype = t2.cpo_basetype
 																			 left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
-																			 where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype";
+																			 where t0.coc_docentry = :coc_docentry and t0.coc_doctype = :coc_doctype";
 
 							$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
-								':csc_docentry' => $Data['cpo_baseentry'],
-								':csc_doctype' => $Data['cpo_basetype']
+								':coc_docentry' => $Data['cpo_baseentry'],
+								':coc_doctype' => $Data['cpo_basetype']
 							));
 
 							$item_sol = $resEstado1[0]['item'];
 							$item_ord = $resEstado2[0]['item'];
 							$cantidad_sol = $resEstado1[0]['cantidad'];
 							$cantidad_ord = $resEstado2[0]['cantidad'];
+
+
+							print_r($item_sol);
+							print_r($item_ord);
+							print_r($cantidad_sol);
+							print_r($cantidad_ord);exit();die();
 
 							if($item_sol == $item_ord  &&  $cantidad_sol == $cantidad_ord){
 

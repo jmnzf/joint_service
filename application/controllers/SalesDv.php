@@ -1356,7 +1356,7 @@ class SalesDv extends REST_Controller {
 
 
                                                                                                 $sqlEstado2 = "SELECT
-                                                                                                                    coalesce(count(t3.dv1_itemcode),0) item,
+                                                                                                                    coalesce(count(distinct t3.dv1_itemcode),0) item,
                                                                                                                     coalesce(sum(t3.dv1_quantity),0) cantidad
                                                                                                                     from dvem t0
                                                                                                                     left join vem1 t1 on t0.vem_docentry = t1.em1_docentry

@@ -485,7 +485,7 @@ class PaymentsReceived extends REST_Controller {
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':pr1_docnum' => $resInsert,
-                        ':pr1_docentry' => $resInsert,
+                        ':pr1_docentry' => is_numeric($detail['pr1_docentry'])?$detail['pr1_docentry']:0,
                         ':pr1_numref' => isset($detail['pr1_numref'])?$detail['pr1_numref']:NULL,
                         ':pr1_docdate' =>  $this->validateDate($detail['pr1_docdate'])?$detail['pr1_docdate']:NULL,
                         ':pr1_vlrtotal' => is_numeric($detail['pr1_vlrtotal'])?$detail['pr1_vlrtotal']:0,

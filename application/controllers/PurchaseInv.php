@@ -2424,7 +2424,7 @@ class PurchaseInv extends REST_Controller {
 
 
 						$sqlEstado2 = "SELECT
-																		coalesce(count(t3.fc1_itemcode),0) item,
+																		coalesce(count(distinct t3.fc1_itemcode),0) item,
 																		coalesce(sum(t3.fc1_quantity),0) cantidad
 																		from dcpo t0
 																		left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
@@ -2494,7 +2494,7 @@ class PurchaseInv extends REST_Controller {
 								));
 
 								$sqlDev = "SELECT
-																	coalesce(count(t3.dc1_itemcode),0) item,
+																	coalesce(count(distinct t3.dc1_itemcode),0) item,
 																	coalesce(sum(t3.dc1_quantity),0) cantidad
 																	from dcec t0
 																	left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
@@ -2606,7 +2606,7 @@ class PurchaseInv extends REST_Controller {
 											 ));
 
 												 $sqlEstado2 = "SELECT
-					 																count(t3.fc1_itemcode) item,
+					 																coalesce(count(distinct  t3.fc1_itemcode),0) item,
 					 																coalesce(sum(t3.fc1_quantity),0) cantidad
 					 																from dcec t0
 					 																left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
