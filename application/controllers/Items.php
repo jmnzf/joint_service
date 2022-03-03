@@ -367,13 +367,12 @@ class Items extends REST_Controller {
 			't0.dma_item_code',
 			't0.dma_item_name',
 			't2.mga_name',
-			'stock',
 			'cast(t0.dma_enabled as varchar)'
 		);
 		//
 		if( !empty($request['search']['value']) ) {
 			// OBTENER CONDICIONALES.
-			$variableSql .= " AND ".self::get_Filter($columns,$request['search']['value']);
+			$variableSql .= " AND  ".self::get_Filter($columns,$request['search']['value']);
 		}
 		//
 
