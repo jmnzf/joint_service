@@ -255,7 +255,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 										 $this->response($respuesta);
 							}
 
-							public function OpenInvoice_post(){
+							public function OpenInvoices_post(){
 
 
 												$sqlSelect = "SELECT
