@@ -136,7 +136,7 @@ class Analysis extends REST_Controller {
         from
         {$table}
         join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
-        join dmgs on dms_rtype = mgs_id
+        join dmgs on dms_group_num::int = mgs_id
         join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
         join dmdt on {$prefix}_doctype = mdt_doctype
         full join tbdc  on dms_classtype = bdc_clasify
