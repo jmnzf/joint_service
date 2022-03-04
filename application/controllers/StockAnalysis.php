@@ -134,10 +134,10 @@ class StockAnalysis extends REST_Controller {
 									{$prefix}_docnum docnum,
 									{$detailPrefix}_itemname item_name,
 									{$prefix}_cardname cliente_name,
-									concat({CURR},round((round((avg({$detailPrefix}_linetotal)),2) / {USD} ),2) * {$neg}) val_factura,
-									concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
-									concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2) * {$neg}) val_impuesto,
-									concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2) * {$neg}) total_docums,
+									concat({CURR},round((round((getconversion({$prefix}_currency,{CURRD},avg(({$detailPrefix}_linetotal)),tsa_value)),2) * {$neg} ),2) ) val_factura,
+									concat({CURR},round((round(getconversion({$prefix}_currency,{CURRD},avg(({$detailPrefix}_linetotal::numeric)),tsa_value),2)  * {$neg}),2)) price,
+									concat({CURR},round((round(( round(getconversion({$prefix}_currency,{CURRD},avg(({$detailPrefix}_vatsum)),tsa_value),2)),2)  * {$neg} ),2)) val_impuesto,
+									concat({CURR},round((round(getconversion({$prefix}_currency,{CURRD},avg(({$detailPrefix}_linetotal)),tsa_value) + getconversion({$prefix}_currency,'USD',avg(({$detailPrefix}_vatsum)),tsa_value),2) * {$neg} ),2) ) total_docums,
 									mga_name,
 									{$prefix}_createby createby,
 									".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad,":(($table == 'dvnd') ? "0 cantidad," : "sum({$detailPrefix}_quantity) cantidad,") )."
@@ -152,7 +152,7 @@ class StockAnalysis extends REST_Controller {
 									join dmga on mga_id = dma_group_code
 									full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 									where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-									group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
+									group by {$detailPrefix}_itemname,{$prefix}_currency, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
 									break;
 						}
 
@@ -164,9 +164,11 @@ class StockAnalysis extends REST_Controller {
 				if( isset( $Data['dvf_currency'] ) && $Data['dvf_currency'] == 1 ){
 					$sqlSelect =	str_replace("{USD}","tsa_value",$sqlSelect);
 					$sqlSelect =	str_replace("{CURR}","'USD '",$sqlSelect);
+					$sqlSelect =	str_replace("{CURRD}","'USD'",$sqlSelect);
 				}else{
 					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
 					$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
+					$sqlSelect =	str_replace("{CURRD}","'BS'",$sqlSelect);
 				}
 
 				// print_r($sqlSelect);exit;
@@ -256,10 +258,10 @@ class StockAnalysis extends REST_Controller {
 		  {$prefix}_docnum docnum,
 		  {$detailPrefix}_itemname item_name,
 		  {$prefix}_cardname cliente_name,
-		  concat({CURR},round((round((avg({$detailPrefix}_linetotal)),2) / {USD} ),2) * {$neg}) val_factura,
-		  concat({CURR},round((round(avg({$detailPrefix}_price)::numeric ,2) / {USD}),2)) price,
-		  concat({CURR},round((round(( round(avg({$detailPrefix}_vatsum),2)),2) / {USD} ),2) * {$neg}) val_impuesto,
-		  concat({CURR},round((round(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum),2) / {USD} ),2) * {$neg})total_docums,
+		  concat({CURR},round((round((getconversion({$prefix}_currency,{CURRD},avg(({$detailPrefix}_linetotal)),tsa_value)),2) * {$neg} ),2) ) val_factura,
+		  concat({CURR},round((round(getconversion({$prefix}_currency,{CURRD},avg(({$detailPrefix}_linetotal::numeric)),tsa_value),2)  * {$neg}),2)) price,
+		  concat({CURR},round((round(( round(getconversion({$prefix}_currency,{CURRD},avg(({$detailPrefix}_vatsum)),tsa_value),2)),2)  * {$neg} ),2)) val_impuesto,
+		  concat({CURR},round((round(getconversion({$prefix}_currency,{CURRD},avg(({$detailPrefix}_linetotal)),tsa_value) + getconversion({$prefix}_currency,'USD',avg(({$detailPrefix}_vatsum)),tsa_value),2) * {$neg} ),2) ) total_docums,
 		  mga_name,
 		  {$prefix}_createby createby,
 		  ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad,":(($table == 'dvnd') ? "0 cantidad," : "sum({$detailPrefix}_quantity) cantidad,") )."
@@ -275,7 +277,7 @@ class StockAnalysis extends REST_Controller {
 		  join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card}
-		  group by {$detailPrefix}_itemname, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
+		  group by {$detailPrefix}_itemname,{$prefix}_currency, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
 		  UNION ALL
 		  ";
 		}
