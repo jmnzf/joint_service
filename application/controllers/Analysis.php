@@ -141,7 +141,7 @@ class Analysis extends REST_Controller {
         join dmdt on {$prefix}_doctype = mdt_doctype
         full join tbdc  on dms_classtype = bdc_clasify
         join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
-        join tasa on ({$prefix}_currency = tsa_curro or {$prefix}_currency = tsa_currd) and {$prefix}_docdate = tsa_date 
+        join tasa on ({$prefix}_currency = tsa_curro or {$prefix}_currency = tsa_currd) and {$prefix}_docdate = tsa_date
         where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions."
         GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, {$prefix}_comment,dmd_adress,
         dmd_city,{$prefix}_baseentry,{$prefix}_basetype,tsa_value,{$prefix}_currency,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc")?",{$detailPrefix}_exc_inv": "");
@@ -209,7 +209,7 @@ class Analysis extends REST_Controller {
 
     $origin = '';
 		$originPre = '';
-    
+
 
     if($type == 0){
 			$origin = 'dvfv';
@@ -228,7 +228,7 @@ class Analysis extends REST_Controller {
       $cardType = 2;
     }
 
-      $all .= "SELECT 
+      $all .= "SELECT
       mdt_docname tipo_doc_name,
       {$prefix}_cardcode cliente,
       mgs_name,
