@@ -39,7 +39,7 @@ class OpenDocumentsSales extends REST_Controller {
 																	    where bb.dvf_basetype = a.vem_doctype and bb.dvf_baseentry = a.vem_docentry and aa.fv1_itemcode = c.em1_itemcode),0) fact,
 																	    coalesce((c.em1_quantity -coalesce(sum(e.dv1_quantity),0)
 																	    - coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.dvf_docentry
-																	    where bb.dvf_basetype = a.vem_doctype and bb.dvf_baseentry = a.vem_docentry and aa.fv1_itemcode = c.em1_itemcode),0)),0) pendiente
+																	    where bb.dvf_basetype = a.vem_doctype and bb.dvf_baseentry = a.vem_docentry and aa.fv1_itemcode = c.em1_itemcode),0)),0) cantidad_pendiente
 																	from dvem a
 																	join responsestatus b on a.vem_docentry = b.id and a.vem_doctype = b.tipo
 																	left join vem1 c on a.vem_docentry = c.em1_docentry
@@ -96,7 +96,7 @@ class OpenDocumentsSales extends REST_Controller {
 																			    where bb.dvf_basetype = a.vov_doctype and bb.dvf_baseentry = a.vov_docentry and aa.fv1_itemcode = c.ov1_itemcode),0) fact,
 																			    coalesce((c.ov1_quantity - coalesce(sum(e.em1_quantity),0)
 																			    - coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.dvf_docentry
-																			    where bb.dvf_basetype = a.vov_doctype and bb.dvf_baseentry = a.vov_docentry and aa.fv1_itemcode = c.ov1_itemcode),0)),0) pendiente
+																			    where bb.dvf_basetype = a.vov_doctype and bb.dvf_baseentry = a.vov_docentry and aa.fv1_itemcode = c.ov1_itemcode),0)),0) cantidad_pendiente
 																			from dvov a
 																			join responsestatus b on a.vov_docentry = b.id and a.vov_doctype = b.tipo
 																			left join vov1 c on a.vov_docentry = c.ov1_docentry
@@ -166,7 +166,7 @@ class OpenDocumentsSales extends REST_Controller {
 																					    where bb.vem_basetype = a.dvc_doctype and bb.vem_baseentry = a.dvc_docentry and aa.em1_itemcode = c.vc1_itemcode),0))
 																					        - (coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.dvf_docentry
 																					    where bb.dvf_basetype = a.dvc_doctype and bb.dvf_baseentry = a.dvc_docentry and aa.fv1_itemcode = c.vc1_itemcode),0))
-																					        ),0) pendiente
+																					        ),0) cantidad_pendiente
 
 																					from dvct a
 																					join responsestatus b on a.dvc_docentry = b.id and a.dvc_doctype = b.tipo
@@ -227,7 +227,7 @@ class OpenDocumentsSales extends REST_Controller {
 																							    where aa.vnd_basetype = a.dvf_doctype and aa.vnd_baseentry = a.dvf_docentry),0)) - ((coalesce((select  distinct sum(aa.vnc_doctotal) from  dvnc aa
 																							    where aa.vnc_basetype = a.dvf_doctype and aa.vnc_baseentry = a.dvf_docentry),0) +
 																							    coalesce((select distinct sum(aa.pr1_vlrpaid) from bpr1 aa
-																							    where aa.pr1_doctype = a.dvf_doctype and aa.pr1_docentry = a.dvf_docentry),0)))),0) pendiente
+																							    where aa.pr1_doctype = a.dvf_doctype and aa.pr1_docentry = a.dvf_docentry),0)))),0) saldo_pendiente
 
 
 																							from dvfv a

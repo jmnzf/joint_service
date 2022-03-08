@@ -46,7 +46,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																	        coalesce((select sum(aa.oc1_quantity) from coc1 aa left join dcoc bb on aa.oc1_docentry = bb.coc_docentry
 																	    where bb.coc_basetype = a.csc_doctype and bb.coc_baseentry = a.csc_docentry and aa.oc1_itemcode = c.sc1_itemcode),0)
 																	          ) - (coalesce((select sum(aa.po1_quantity) from cpo1 aa left join dcpo bb on aa.po1_docentry = bb.cpo_docentry
-																	    where bb.cpo_basetype = a.csc_doctype and bb.cpo_baseentry = a.csc_docentry and aa.po1_itemcode = c.sc1_itemcode),0))),0) pendiente
+																	    where bb.cpo_basetype = a.csc_doctype and bb.cpo_baseentry = a.csc_docentry and aa.po1_itemcode = c.sc1_itemcode),0))),0) cantidad_pendiente
 
 																	from dcsc a
 																	join responsestatus b on a.csc_docentry = b.id and a.csc_doctype = b.tipo
@@ -103,7 +103,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																	    where bb.cfc_basetype = a.cpo_doctype and bb.cfc_baseentry = a.cpo_docentry),0) fact,
 																	    coalesce((c.po1_quantity - (sum(e.ec1_quantity)
 																	    + coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
-																	    where bb.cfc_basetype = a.cpo_doctype and bb.cfc_baseentry = a.cpo_docentry),0))),0) pendiente
+																	    where bb.cfc_basetype = a.cpo_doctype and bb.cfc_baseentry = a.cpo_docentry),0))),0) cantidad_pendiente
 																	from dcpo a
 																	join responsestatus b on a.cpo_docentry = b.id and a.cpo_doctype = b.tipo
 																	left join cpo1 c on a.cpo_docentry = c.po1_docentry
@@ -159,7 +159,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																		    where bb.cfc_basetype = a.cec_doctype and bb.cfc_baseentry = a.cec_docentry),0) fact,
 																		    coalesce((c.ec1_quantity - (coalesce(sum(e.dc1_quantity),0)
 																		    + coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
-																		    where bb.cfc_basetype = a.cec_doctype and bb.cfc_baseentry = a.cec_docentry),0))),0) pendiente
+																		    where bb.cfc_basetype = a.cec_doctype and bb.cfc_baseentry = a.cec_docentry),0))),0) cantidad_pendiente
 																		from dcec a
 																		join responsestatus b on a.cec_docentry = b.id and a.cec_doctype = b.tipo
 																		left join cec1 c on a.cec_docentry = c.ec1_docentry
@@ -216,7 +216,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 
 
 																						   coalesce((c.oc1_quantity) - ((coalesce((select sum(aa.po1_quantity) from cpo1 aa left join dcpo bb on aa.po1_docentry = bb.cpo_docentry
-																						    where bb.cpo_basetype = a.coc_doctype and bb.cpo_baseentry = a.coc_docentry and aa.po1_itemcode = c.oc1_itemcode),0))),0) pendiente
+																						    where bb.cpo_basetype = a.coc_doctype and bb.cpo_baseentry = a.coc_docentry and aa.po1_itemcode = c.oc1_itemcode),0))),0) cantidad_pendiente
 
 																						from dcoc a
 																						join responsestatus b on a.coc_docentry = b.id and a.coc_doctype = b.tipo
@@ -277,7 +277,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																							    where aa.cnd_basetype = a.cfc_doctype and aa.cnd_baseentry = a.cfc_docentry),0)) - ((coalesce((select  distinct sum(aa.cnc_doctotal) from  dcnc aa
 																							    where aa.cnc_basetype = a.cfc_doctype and aa.cnc_baseentry = a.cfc_docentry),0) +
 																							    coalesce((select distinct sum(aa.pe1_vlrpaid) from bpe1 aa
-																							    where aa.pe1_doctype = a.cfc_doctype and aa.pe1_docentry = a.cfc_docentry),0)))),0) pendiente
+																							    where aa.pe1_doctype = a.cfc_doctype and aa.pe1_docentry = a.cfc_docentry),0)))),0) saldo_pendiente
 
 
 																							from dcfc a
