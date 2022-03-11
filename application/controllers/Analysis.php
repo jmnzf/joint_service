@@ -133,6 +133,10 @@ class Analysis extends REST_Controller {
           (SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
           (SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado,
           {$detailPrefix}_uom  unidad
+          ".(($table =="dcfc")? "
+      ,concat({CURR},round(getconversion({$prefix}_currency,{CURRD},avg({$prefix}_totalret),tsa_value),2)) total_ret,
+      concat({CURR},round(getconversion({$prefix}_currency,{CURRD},avg({$prefix}_totalretiva),tsa_value),2)) totalretiva":",concat({CURR},round(0,2)) total_ret, 
+      concat({CURR},round(0,2)) totalretiva")."
         from
         {$table}
         join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
@@ -144,7 +148,7 @@ class Analysis extends REST_Controller {
         join tasa on ({$prefix}_currency = tsa_curro or {$prefix}_currency = tsa_currd) and {$prefix}_docdate = tsa_date
         where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions."
         GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, {$prefix}_comment,dmd_adress,
-        dmd_city,{$prefix}_baseentry,{$prefix}_basetype,tsa_value,{$prefix}_currency,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc")?",{$detailPrefix}_exc_inv": "");
+        dmd_city,{$prefix}_baseentry,{$prefix}_basetype ".(($table =="dcfc")? ",cfc_totalret, cfc_totalretiva":"").",tsa_value,{$prefix}_currency,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc")?",{$detailPrefix}_exc_inv": "");
         break;
     }
 
@@ -252,6 +256,10 @@ class Analysis extends REST_Controller {
       (SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
 		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado,
       {$detailPrefix}_uom  unidad
+      ".(($table =="dcfc")? "
+      ,concat({CURR},round(getconversion({$prefix}_currency,{CURRD},avg({$prefix}_totalret),tsa_value),2)) total_ret,
+      concat({CURR},round(getconversion({$prefix}_currency,{CURRD},avg({$prefix}_totalretiva),tsa_value),2)) totalretiva":",concat({CURR},round(0,2)) total_ret, 
+      concat({CURR},round(0,2)) totalretiva")."
       from
       {$table}
       JOIN dmsn on {$prefix}_cardcode = dms_card_code AND dms_card_type = '{$cardType}'
@@ -263,7 +271,7 @@ class Analysis extends REST_Controller {
       join tasa on ({$prefix}_currency = tsa_curro or {$prefix}_currency = tsa_currd) and {$prefix}_docdate = tsa_date
       where ({$prefix}_docdate BETWEEN :dvf_docdate and :dvf_duedate) {$card}
       GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum,
-       mdt_docname, bdc_clasify,tsa_value, {$prefix}_comment,dmd_adress,{$prefix}_currency, dmd_city,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc")?",{$detailPrefix}_exc_inv": "")."
+       mdt_docname, bdc_clasify".(($table =="dcfc")? ",{$prefix}_totalret, {$prefix}_totalretiva":"").",tsa_value, {$prefix}_comment,dmd_adress,{$prefix}_currency, dmd_city,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc")?",{$detailPrefix}_exc_inv": "")."
       UNION ALL
       ";
     }

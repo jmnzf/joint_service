@@ -144,15 +144,19 @@ class StockAnalysis extends REST_Controller {
 									(SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
 									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado,
 									{$detailPrefix}_uom  unidad
+									".(($table =="dcfc")? ",mrt_name": ",''" )." rt_name,
+									".(($table =="dcfc")? "concat({CURR},round(getconversion({$prefix}_currency,{CURRD},avg(crt_totalrt),tsa_value),2))": "concat({CURR},round(0,2))" )." rt_total
 									from {$table}
 									join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 									join dmdt on {$prefix}_doctype = mdt_doctype
 									join dmar on {$detailPrefix}_itemcode = dma_item_code
 									join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
-									join dmga on mga_id = dma_group_code
+									join dmga on mga_id = dma_group_code								
 									full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
+									".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum 
+									left join dmrt on mrt_id = crt_type" : "")."
 									where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-									group by {$detailPrefix}_itemname,{$prefix}_currency, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
+									group by {$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "mrt_name,crt_totalrt,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
 									break;
 						}
 
@@ -268,6 +272,8 @@ class StockAnalysis extends REST_Controller {
 		  (SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
 		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado,
 		  {$detailPrefix}_uom  unidad
+		  ".(($table =="dcfc")? ",mrt_name": ",''" )." rt_name,
+		  ".(($table =="dcfc")? "concat({CURR},round(getconversion({$prefix}_currency,{CURRD},avg(crt_totalrt),tsa_value),2))": "concat({CURR},round(0,2))" )." rt_total
 		  from {$table}
 		  join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 		  join dmdt on {$prefix}_doctype = mdt_doctype
@@ -276,8 +282,10 @@ class StockAnalysis extends REST_Controller {
 		  join dmga on mga_id = dma_group_code
 		  join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
+		  ".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum 
+			left join dmrt on mrt_id = crt_type" : "")."
 		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card}
-		  group by {$detailPrefix}_itemname,{$prefix}_currency, mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
+		  group by {$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "mrt_name,crt_totalrt,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
 		  UNION ALL
 		  ";
 		}
