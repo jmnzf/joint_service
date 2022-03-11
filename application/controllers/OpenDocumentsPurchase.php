@@ -25,8 +25,14 @@ class OpenDocumentsPurchase extends REST_Controller {
   //CREAR NUEVA Entrega de Ventas
 	public function OpenRequest_post(){
 
+						$Data = $this->post();
 
-            $sqlSelect = "SELECT
+						$where = '';
+						if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
+							$where = "AND a.csc_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+						}
+
+          $sqlSelect = "SELECT
 																	    a.csc_docnum documento,
 																	    a.csc_docdate fecha,
 																	    a.csc_cardcode SN,
@@ -39,7 +45,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																	    where bb.coc_basetype = a.csc_doctype and bb.coc_baseentry = a.csc_docentry and aa.oc1_itemcode = c.sc1_itemcode),0) oferta,
 
 																	    coalesce((select sum(aa.po1_quantity) from cpo1 aa left join dcpo bb on aa.po1_docentry = bb.cpo_docentry
-																	    where bb.cpo_basetype = a.csc_doctype and bb.cpo_baseentry = a.csc_docentry and aa.po1_itemcode = c.sc1_itemcode),0) pedido,
+																	    where bb.cpo_basetype = a.csc_doctype and bb.cpo_baseentry = a.csc_docentry and aa.po1_itemcode = c.sc1_itemcode),0) pedido_oc,
 
 
 																	   coalesce((c.sc1_quantity) - ((
@@ -51,7 +57,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																	from dcsc a
 																	join responsestatus b on a.csc_docentry = b.id and a.csc_doctype = b.tipo
 																	left join csc1 c on a.csc_docentry = c.sc1_docentry
-																	where b.estado = 'Abierto'
+																	where b.estado = 'Abierto'  $where
 																	group by a.csc_docnum,
 																	    a.csc_docdate,
 																	    a.csc_cardcode,
@@ -88,37 +94,47 @@ class OpenDocumentsPurchase extends REST_Controller {
 
 
 	public function OpenOrder_post(){
+							$Data = $this->post();
 
+							$where = '';
+							if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
+								$where = "AND a.cpo_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+							}
 
             $sqlSelect = "SELECT
-																	    a.cpo_docnum documento,
-																	    a.cpo_docdate fecha,
-																	    a.cpo_cardcode SN,
-																	    a.cpo_cardname N_SN,
-																	    c.po1_itemcode codigo_item,
-																	    c.po1_itemname nombre_item,
-																	    c.po1_quantity cantidad,
-																	    coalesce(sum(e.ec1_quantity),0) ent,
-																	    coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
-																	    where bb.cfc_basetype = a.cpo_doctype and bb.cfc_baseentry = a.cpo_docentry),0) fact,
-																	    coalesce((c.po1_quantity - (sum(e.ec1_quantity)
-																	    + coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
-																	    where bb.cfc_basetype = a.cpo_doctype and bb.cfc_baseentry = a.cpo_docentry),0))),0) cantidad_pendiente
-																	from dcpo a
-																	join responsestatus b on a.cpo_docentry = b.id and a.cpo_doctype = b.tipo
-																	left join cpo1 c on a.cpo_docentry = c.po1_docentry
-																	left join dcec d on a.cpo_docentry = d.cec_baseentry and a.cpo_doctype = d.cec_basetype
-																	left join cec1 e on d.cec_docentry = e.ec1_docentry and c.po1_itemcode = e.ec1_itemcode
-																	where b.estado = 'Abierto'
-																	group by a.cpo_docnum,
-																	    a.cpo_docdate,
-																	    a.cpo_cardcode,
-																	    a.cpo_cardname,
-																	    c.po1_itemcode,
-																	    c.po1_itemname,
-																	    c.po1_quantity,
-																	    a.cpo_doctype,
-																	    a.cpo_docentry";
+																						    a.cpo_docnum documento,
+																						    a.cpo_docdate fecha,
+																						    a.cpo_cardcode SN,
+																						    a.cpo_cardname N_SN,
+																						    c.po1_itemcode codigo_item,
+																						    c.po1_itemname nombre_item,
+																						    c.po1_quantity cantidad,
+																						    coalesce(sum(e.ec1_quantity),0) ent_oc,
+
+																						    coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
+																						    where bb.cfc_basetype = a.cpo_doctype and bb.cfc_baseentry = a.cpo_docentry),0)
+																						       fact_oc,
+
+																						    coalesce((c.po1_quantity - (coalesce(sum(e.ec1_quantity),0)
+																						    + coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
+																						    where bb.cfc_basetype = a.cpo_doctype and bb.cfc_baseentry = a.cpo_docentry),0) )),0) cantidad_pendiente
+																						from dcpo a
+																						join responsestatus b on a.cpo_docentry = b.id and a.cpo_doctype = b.tipo
+																						left join cpo1 c on a.cpo_docentry = c.po1_docentry
+																						left join dcec d on a.cpo_docentry = d.cec_baseentry and a.cpo_doctype = d.cec_basetype
+																						left join cec1 e on d.cec_docentry = e.ec1_docentry and c.po1_itemcode = e.ec1_itemcode
+																						where b.estado = 'Abierto' $where
+																						group by a.cpo_docnum,
+																						    a.cpo_docdate,
+																						    a.cpo_cardcode,
+																						    a.cpo_cardname,
+																						    c.po1_itemcode,
+																						    c.po1_itemname,
+																						    c.po1_quantity,
+																						    a.cpo_doctype,
+																						    a.cpo_docentry,
+																						    d.cec_doctype,
+																						    d.cec_docentry";
 
 
             $resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -145,6 +161,13 @@ class OpenDocumentsPurchase extends REST_Controller {
 
 			public function OpenEntry_post(){
 
+				$Data = $this->post();
+
+				$where = '';
+				if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
+					$where = "AND a.cec_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+				}
+
 
 								$sqlSelect = "SELECT
 																		    a.cec_docnum documento,
@@ -154,9 +177,12 @@ class OpenDocumentsPurchase extends REST_Controller {
 																		    c.ec1_itemcode codigo_item,
 																		    c.ec1_itemname nombre_item,
 																		    c.ec1_quantity cantidad,
-																		    coalesce(sum(e.dc1_quantity),0) ent,
+																		    coalesce(sum(e.dc1_quantity),0) dev,
+
 																		    coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
-																		    where bb.cfc_basetype = a.cec_doctype and bb.cfc_baseentry = a.cec_docentry),0) fact,
+																		    where bb.cfc_basetype = a.cec_doctype and bb.cfc_baseentry = a.cec_docentry),0) fact_oc,
+
+
 																		    coalesce((c.ec1_quantity - (coalesce(sum(e.dc1_quantity),0)
 																		    + coalesce((select sum(aa.fc1_quantity) from cfc1 aa left join dcfc bb on aa.fc1_docentry = bb.cfc_docentry
 																		    where bb.cfc_basetype = a.cec_doctype and bb.cfc_baseentry = a.cec_docentry),0))),0) cantidad_pendiente
@@ -165,7 +191,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																		left join cec1 c on a.cec_docentry = c.ec1_docentry
 																		left join dcdc d on a.cec_docentry = d.cdc_baseentry and a.cec_doctype = d.cdc_basetype
 																		left join cdc1 e on d.cdc_docentry = e.dc1_docentry and c.ec1_itemcode = e.dc1_itemcode
-																		where b.estado = 'Abierto'
+																		where b.estado = 'Abierto' $where
 																		group by a.cec_docnum,
 																		    a.cec_docdate,
 																		    a.cec_cardcode,
@@ -202,6 +228,14 @@ class OpenDocumentsPurchase extends REST_Controller {
 					public function OpenOfert_post(){
 
 
+						$Data = $this->post();
+
+						$where = '';
+						if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
+							$where = "AND a.coc_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+						}
+
+
 										$sqlSelect = "SELECT
 																						    a.coc_docnum documento,
 																						    a.coc_docdate fecha,
@@ -212,7 +246,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																						    c.oc1_quantity cantidad,
 
 																						    coalesce((select sum(aa.po1_quantity) from cpo1 aa left join dcpo bb on aa.po1_docentry = bb.cpo_docentry
-																						    where bb.cpo_basetype = a.coc_doctype and bb.cpo_baseentry = a.coc_docentry and aa.po1_itemcode = c.oc1_itemcode),0) pedido,
+																						    where bb.cpo_basetype = a.coc_doctype and bb.cpo_baseentry = a.coc_docentry and aa.po1_itemcode = c.oc1_itemcode),0) pedido_oc,
 
 
 																						   coalesce((c.oc1_quantity) - ((coalesce((select sum(aa.po1_quantity) from cpo1 aa left join dcpo bb on aa.po1_docentry = bb.cpo_docentry
@@ -221,7 +255,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																						from dcoc a
 																						join responsestatus b on a.coc_docentry = b.id and a.coc_doctype = b.tipo
 																						left join coc1 c on a.coc_docentry = c.oc1_docentry
-																						where b.estado = 'Abierto'
+																						where b.estado = 'Abierto' $where
 																						group by a.coc_docnum,
 																						    a.coc_docdate,
 																						    a.coc_cardcode,
@@ -257,6 +291,13 @@ class OpenDocumentsPurchase extends REST_Controller {
 
 							public function OpenInvoices_post(){
 
+								$Data = $this->post();
+
+								$where = '';
+								if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
+									$where = "AND a.cfc_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+								}
+
 
 												$sqlSelect = "SELECT
 																							    a.cfc_docnum documento,
@@ -271,7 +312,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																							    where aa.cnd_basetype = a.cfc_doctype and aa.cnd_baseentry = a.cfc_docentry),0) nd,
 
 																							    coalesce((select distinct sum(aa.pe1_vlrpaid) from bpe1 aa
-																							    where aa.pe1_doctype = a.cfc_doctype and aa.pe1_docentry = a.cfc_docentry),0) pago,
+																							    where aa.pe1_doctype = a.cfc_doctype and aa.pe1_docentry = a.cfc_docentry),0) pago_oc,
 
 																							    coalesce(((a.cfc_doctotal + coalesce((select distinct sum(aa.cnd_doctotal) from  dcnd aa
 																							    where aa.cnd_basetype = a.cfc_doctype and aa.cnd_baseentry = a.cfc_docentry),0)) - ((coalesce((select  distinct sum(aa.cnc_doctotal) from  dcnc aa
@@ -283,7 +324,7 @@ class OpenDocumentsPurchase extends REST_Controller {
 																							from dcfc a
 																							join responsestatus b on a.cfc_docentry = b.id and a.cfc_doctype = b.tipo
 																							left join cfc1 c on a.cfc_docentry = c.fc1_docentry
-																							where b.estado = 'Abierto'
+																							where b.estado = 'Abierto' $where
 
 																							group by
 																							    a.cfc_docnum ,

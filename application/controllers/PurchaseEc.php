@@ -2326,6 +2326,9 @@ class PurchaseEc extends REST_Controller {
 
 
 
+	// SELECT cec1.*, dma_uom_weight,dma_uom_vqty FROM cec1
+	// INNER JOIN dmar
+	// ON  ec1_itemcode = dma_item_code
 
 
 
