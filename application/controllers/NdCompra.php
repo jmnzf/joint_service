@@ -171,7 +171,7 @@ class NdCompra extends REST_Controller {
             </th>
             <th>
                 <p>NOTA DEBITO DE COMPRA</p>
-                <p class="fondo">'.$contenidoNdC[0]['numerodocumento'].'</p>
+                <p class="">'.$contenidoNdC[0]['numerodocumento'].'</p>
 
             </th>
         </tr>
@@ -182,7 +182,7 @@ class NdCompra extends REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th class="fondo" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+                <th class="" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
             </tr>
         </table>';
 
@@ -272,14 +272,14 @@ class NdCompra extends REST_Controller {
 
         <table class="borde" style="width:100%">
         <tr>
-          <th class="fondo">ITEM</th>
-          <th class="fondo">REFERENCIA</th>
-          <th class="fondo">UNIDAD</th>
-          <th class="fondo">PRECIO</th>
-          <th class="fondo">CANTIDAD</th>
-          <th class="fondo">DESCUENTO</th>
-          <th class="fondo">IVA</th>
-          <th class="fondo">TOTAL</th>
+          <th class="">ITEM</th>
+          <th class="">REFERENCIA</th>
+          <th class="">UNIDAD</th>
+          <th class="">PRECIO</th>
+          <th class="">CANTIDAD</th>
+          <th class="">DESCUENTO</th>
+          <th class="">IVA</th>
+          <th class="">TOTAL</th>
         </tr>
       	'.$totaldetalle.'
         </table>
@@ -287,7 +287,7 @@ class NdCompra extends REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th class="fondo">
+                <th class="">
                     <p></p>
                 </th>
             </tr>
@@ -317,7 +317,7 @@ class NdCompra extends REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th style="text-align: left;" class="fondo">
+                <th style="text-align: left;" class="">
                     <p>'.$formatter->toWords($contenidoNdC[0]['totaldoc'],2)." ".$contenidoNdC[0]['nombremoneda'].'</p>
                 </th>
             </tr>
