@@ -521,7 +521,7 @@ class AccountingAccent extends REST_Controller {
 			return;
 		}
 
-		$sqlSelect = "SELECT tmac.*, dmdt.mdt_docname as origen FROM tmac INNER JOIN dmdt ON dmdt.mdt_doctype = tmac.mac_base_type WHERE tmac.mac_base_type = :mac_base_type AND tmac.mac_base_entry = :mac_base_entry";
+		$sqlSelect = "SELECT tmac.*, dmdt.mdt_docname as origen,tsa_value FROM tmac INNER JOIN dmdt ON dmdt.mdt_doctype = tmac.mac_base_type INNER JOIN tasa ON tsa_date  = mac_doc_date WHERE tmac.mac_base_type = :mac_base_type AND tmac.mac_base_entry = :mac_base_entry";
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_base_type' => $Data['mac_base_type'], ':mac_base_entry' => $Data['mac_base_entry']));
 
 		if(isset($resSelect[0])){
