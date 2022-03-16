@@ -2383,10 +2383,6 @@ class PurchaseEc extends REST_Controller {
 	// ON  ec1_itemcode = dma_item_code
 
 
-
-
-
-
 	private function getUrl($data, $caperta){
       $url = "";
 
