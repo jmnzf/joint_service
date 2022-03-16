@@ -1636,7 +1636,7 @@ class StockTransfer extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM ist1 WHERE st1_docentry =:st1_docentry";
+				$sqlSelect = " SELECT ist1.*,dma_lotes_code FROM ist1 inner join dmar on dma_item_code = st1_itemcode WHERE st1_docentry =:st1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":st1_docentry" => $Data['st1_docentry']));
 
