@@ -350,7 +350,7 @@ class ExitInventory extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'    => $resActualizarNumeracion,
-									'mensaje'	=> 'No se pudo crear la salida  '
+									'mensaje'	=> 'No se pudo crear la salida'
 								);
 
 								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -637,7 +637,7 @@ class ExitInventory extends REST_Controller {
 
 														 $CantidadTotal = ($CantidadActual - $CantidadDevolucion);
 
-														 $CostoPonderado = (($CostoActual * $CantidadActual) + ($CostoDevolucion * $CantidadDevolucion)) / $CantidadTotal;
+														 // $CostoPonderado = (($CostoActual * $CantidadActual) + ($CostoDevolucion * $CantidadDevolucion)) / $CantidadTotal;
 														 // NO SE MUEVE EL COSTO PONDERADO
 														 $sqlUpdateCostoCantidad =  "UPDATE tbdi
 																												 SET bdi_quantity = :bdi_quantity

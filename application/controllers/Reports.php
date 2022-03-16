@@ -766,7 +766,16 @@ class Reports extends REST_Controller {
 								// DIVIDIR NOMBRE DE LA VARIABLE.
 								$prefijo = explode("_", $item);
 								// VALIDAR PREFIJO
-								if (isset($prefijo[1])) $newObj['mac_'.$prefijo[1]] = $obj;
+								if (isset($prefijo[1])) {
+									// VALIDAR SI EL CAMPO ES DE COMENTARIO.
+									if ($prefijo[1] === 'comments') {
+										// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
+										$newObj['mac_comment'] = $obj;
+									} else {
+										// 
+										$newObj['mac_'.$prefijo[1]] = $obj;
+									}
+								}
 							}
 							// AGREGAR NUEVO ARRAY.
 							$newData[] = array_merge($data, $newObj);

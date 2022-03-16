@@ -52,21 +52,19 @@ class InventoryConcepts extends REST_Controller
     }
 
 
-    $sqlSelect = "SELECT icm_name FROM micm WHERE icm_name = :icm_name";
+    $sqlSelect = "SELECT icm_name FROM micm WHERE LOWER(icm_name) = :icm_name AND icm_type = :icm_type";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array(
-
-      ':icm_name' => $Data['icm_name']
-
+      ':icm_name' => strtolower($Data['icm_name']),
+      ':icm_type' => $Data['icm_type']
     ));
-
 
     if (isset($resSelect[0])) {
 
       $respuesta = array(
         'error' => true,
         'data'  => array($Data['icm_name'], $Data['icm_name']),
-        'mensaje' => 'ya existe un Concepto con ese nombre'
+        'mensaje' => 'ya existe un concepto con ese nombre y tipo'
       );
 
       $this->response($respuesta);
@@ -75,8 +73,8 @@ class InventoryConcepts extends REST_Controller
     }
 
 
-    $sqlInsert = "INSERT INTO micm  (icm_name , icm_description, icm_acctcode, icm_type, icm_enabled)
-                      VALUES            (:icm_name, :icm_description, :icm_acctcode, :icm_type, :icm_enabled)";
+    $sqlInsert = "INSERT INTO micm (icm_name , icm_description, icm_acctcode, icm_type, icm_enabled)
+                  VALUES (:icm_name, :icm_description, :icm_acctcode, :icm_type, :icm_enabled)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -87,7 +85,7 @@ class InventoryConcepts extends REST_Controller
       ':icm_enabled'              => $Data['icm_enabled']
     ));
 
-    if ($resInsert > 0) {
+    if (is_numeric($resInsert) && $resInsert > 0) {
       $respuesta = array(
         'error' => false,
         'data' => $resInsert,
@@ -101,20 +99,21 @@ class InventoryConcepts extends REST_Controller
         'mensaje' => 'No se pudo registrar el concepto de inventario'
       );
     }
+
     $this->response($respuesta);
   }
 
 
 
 
-  //ACTUALIZAR LISTA DE PRECIOS
+  //ACTUALIZAR CONCEPTO DE INVENTARIO
   public function updateInventoryConcepts_post()
   {
 
     $Data = $this->post();
     if (
       !isset($Data['icm_name']) or
-      !isset($Data['icm_description'])  or
+      !isset($Data['icm_id'])  or
       !isset($Data['icm_acctcode']) or
       !isset($Data['icm_enabled']) or
       !isset($Data['icm_type'])
@@ -131,7 +130,29 @@ class InventoryConcepts extends REST_Controller
       return;
     }
 
+    // VALIDANDO SI NO EXISTE OTRO CONCEPTO CON LOS MISMOS DATOS ENVIADOS
 
+    $sqlSelect = "SELECT icm_name FROM micm WHERE LOWER(icm_name) = :icm_name AND icm_type = :icm_type AND icm_id != :icm_id";
+
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+      ':icm_name' => strtolower($Data['icm_name']),
+      ':icm_type' => $Data['icm_type'],
+      ':icm_id'   => $Data['icm_id']
+    ));
+
+    if( isset( $resSelect[0] ) ){
+      $respuesta = array(
+        'error' => true,
+        'data'  => [],
+        'mensaje' => 'ya existe un concepto con ese nombre y tipo'
+      );
+
+      $this->response($respuesta);
+
+      return;
+    }
+
+    //
     $sqlUpdate = "UPDATE micm SET icm_name = :icm_name,
                                     icm_description = :icm_description,
                                     icm_acctcode = :icm_acctcode,
@@ -141,8 +162,6 @@ class InventoryConcepts extends REST_Controller
 
 
     $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-
-
       ':icm_id'                   => $Data['icm_id'],
       ':icm_name'                 => $Data['icm_name'],
       ':icm_description'          => $Data['icm_description'],
@@ -159,6 +178,7 @@ class InventoryConcepts extends REST_Controller
         'data' => $resUpdate,
         'mensaje' => 'Concepto de inventario actualizado con exito'
       );
+
     } else {
 
       $respuesta = array(
