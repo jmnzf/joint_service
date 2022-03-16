@@ -326,7 +326,7 @@ class Approvals extends REST_Controller {
 								    INNER JOIN pgus
 								    ON pgu_code_user = :pap_createby
 								    AND pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[]))
-										and estado <> 'Aprobado' and  process  = 'ApprovalProcess'";
+										and estado not in ('Cerrado','Aprobado','Rechazado')  and  process  = 'ApprovalProcess'";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pap_createby' => $Data['code_user']));
 
