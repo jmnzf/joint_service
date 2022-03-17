@@ -279,7 +279,7 @@ class Approvals extends REST_Controller {
 
 				}
 
-				$sqlSelect = "SELECT distinct
+				$sqlSelect = "SELECT distinct  on (pap_docentry)
 								    t3.mdt_docname,
 								    t8.mdt_docname as origen,
 								    t0.pap_docentry,
@@ -326,7 +326,7 @@ class Approvals extends REST_Controller {
 								    INNER JOIN pgus
 								    ON pgu_code_user = :pap_createby
 								    AND pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[]))
-										and estado not in ('Cerrado','Aprobado','Rechazado')  and  process  = 'ApprovalProcess'";
+									and estado not in ('Cerrado','Aprobado','Rechazado')  and  process  = 'ApprovalProcess'";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pap_createby' => $Data['code_user']));
 
