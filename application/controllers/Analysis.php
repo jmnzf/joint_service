@@ -263,10 +263,10 @@ class Analysis extends REST_Controller {
       from
       {$table}
       JOIN dmsn on {$prefix}_cardcode = dms_card_code AND dms_card_type = '{$cardType}'
-      join dmgs on dms_rtype = mgs_id
+      join dmgs on dms_group_num::int = mgs_id
       join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
       join dmdt on {$prefix}_doctype = mdt_doctype
-      full join tbdc on dms_classtype = bdc_clasify
+      left join tbdc on dms_classtype = bdc_clasify
       join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
       join tasa on ({$prefix}_currency = tsa_curro or {$prefix}_currency = tsa_currd) and {$prefix}_docdate = tsa_date
       where ({$prefix}_docdate BETWEEN :dvf_docdate and :dvf_duedate) {$card}
