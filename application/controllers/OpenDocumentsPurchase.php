@@ -11,9 +11,9 @@ class OpenDocumentsPurchase extends REST_Controller {
 
 	public function __construct(){
 
-		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
-		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
-		header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
+header("Access-Control-Allow-Origin: *");
 
 		parent::__construct();
 		$this->load->database();
@@ -29,44 +29,58 @@ class OpenDocumentsPurchase extends REST_Controller {
 
 						$where = '';
 						if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
-							$where = "AND a.csc_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+							$where = "AND a.csc_docdate between '".$Data['doc_from']."'
+							AND '".$Data['doc_to']."'";
 						}
 
           $sqlSelect = "SELECT
-																	    a.csc_docnum documento,
-																	    a.csc_docdate fecha,
-																	    a.csc_cardcode SN,
-																	    a.csc_cardname N_SN,
-																	    c.sc1_itemcode codigo_item,
-																	    c.sc1_itemname nombre_item,
-																	    c.sc1_quantity cantidad,
+												 a.csc_docnum documento,
+												 a.csc_docdate fecha,
+												 a.csc_cardcode SN,
+												 a.csc_cardname N_SN,
+												 c.sc1_itemcode codigo_item,
+												 c.sc1_itemname nombre_item,
+												 c.sc1_quantity cantidad,
 
-																	     coalesce((select sum(aa.oc1_quantity) from coc1 aa left join dcoc bb on aa.oc1_docentry = bb.coc_docentry
-																	    where bb.coc_basetype = a.csc_doctype and bb.coc_baseentry = a.csc_docentry and aa.oc1_itemcode = c.sc1_itemcode),0) oferta,
+												coalesce((select sum(aa.oc1_quantity) from coc1 aa
+												left join dcoc bb on aa.oc1_docentry = bb.coc_docentry
+												where bb.coc_basetype = a.csc_doctype
+												and bb.coc_baseentry = a.csc_docentry
+												and aa.oc1_itemcode = c.sc1_itemcode),0) oferta,
 
-																	    coalesce((select sum(aa.po1_quantity) from cpo1 aa left join dcpo bb on aa.po1_docentry = bb.cpo_docentry
-																	    where bb.cpo_basetype = a.csc_doctype and bb.cpo_baseentry = a.csc_docentry and aa.po1_itemcode = c.sc1_itemcode),0) pedido_oc,
+												coalesce((select sum(aa.po1_quantity) from cpo1 aa
+												left join dcpo bb on aa.po1_docentry = bb.cpo_docentry
+												where bb.cpo_basetype = a.csc_doctype
+												and bb.cpo_baseentry = a.csc_docentry
+												and aa.po1_itemcode = c.sc1_itemcode),0) pedido_oc,
 
 
-																	   coalesce((c.sc1_quantity) - ((
-																	        coalesce((select sum(aa.oc1_quantity) from coc1 aa left join dcoc bb on aa.oc1_docentry = bb.coc_docentry
-																	    where bb.coc_basetype = a.csc_doctype and bb.coc_baseentry = a.csc_docentry and aa.oc1_itemcode = c.sc1_itemcode),0)
-																	          ) - (coalesce((select sum(aa.po1_quantity) from cpo1 aa left join dcpo bb on aa.po1_docentry = bb.cpo_docentry
-																	    where bb.cpo_basetype = a.csc_doctype and bb.cpo_baseentry = a.csc_docentry and aa.po1_itemcode = c.sc1_itemcode),0))),0) cantidad_pendiente
+												coalesce((c.sc1_quantity) -
+												((coalesce((select sum(aa.oc1_quantity) from coc1 aa
+												left join dcoc bb on aa.oc1_docentry = bb.coc_docentry
+												where bb.coc_basetype = a.csc_doctype
+												and bb.coc_baseentry = a.csc_docentry
+												and aa.oc1_itemcode = c.sc1_itemcode),0))
+												- (coalesce((select sum(aa.po1_quantity) from cpo1 aa
+												left join dcpo bb on aa.po1_docentry = bb.cpo_docentry
+												where bb.cpo_basetype = a.csc_doctype
+												and bb.cpo_baseentry = a.csc_docentry
+												and aa.po1_itemcode = c.sc1_itemcode),0))),0) cantidad_pendiente
 
-																	from dcsc a
-																	join responsestatus b on a.csc_docentry = b.id and a.csc_doctype = b.tipo
-																	left join csc1 c on a.csc_docentry = c.sc1_docentry
-																	where b.estado = 'Abierto'  $where
-																	group by a.csc_docnum,
-																	    a.csc_docdate,
-																	    a.csc_cardcode,
-																	    a.csc_cardname,
-																	    c.sc1_itemcode,
-																	    c.sc1_itemname,
-																	    c.sc1_quantity,
-																	    a.csc_doctype,
-																	    a.csc_docentry";
+												from dcsc a
+												join responsestatus b on a.csc_docentry = b.id and a.csc_doctype = b.tipo
+												left join csc1 c on a.csc_docentry = c.sc1_docentry
+												where b.estado = 'Abierto'  $where
+												group by
+													a.csc_docnum,
+													a.csc_docdate,
+													a.csc_cardcode,
+													a.csc_cardname,
+													c.sc1_itemcode,
+													c.sc1_itemname,
+													c.sc1_quantity,
+													a.csc_doctype,
+													a.csc_docentry";
 
 
             $resSelect = $this->pedeo->queryTable($sqlSelect, array());

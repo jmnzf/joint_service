@@ -142,5 +142,58 @@ class Querys extends REST_Controller {
 		 $this->response($respuesta);
 	}
 
+	//OBETENER TIPOS DE CONSULTAS
+	public function getQueryType_get(){
+		$sqlSelect = "SELECT * FROM ttcd";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+	}
+
+	//OBETENER MODELO DE CONSULTAS
+	public function getQueryModel_get(){
+		$sqlSelect = "SELECT * FROM tmcd";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+	}
+
+
 
 }
