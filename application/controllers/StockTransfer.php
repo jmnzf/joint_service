@@ -26,6 +26,16 @@ class StockTransfer extends REST_Controller {
 	public function createSolStockTransfer_post(){
 
 		$Data = $this->post();
+		$DetalleInventario = new stdClass();
+		$DetalleInventario2 = new stdClass();
+		$DetalleConsolidadoInventario = [];
+		$DetalleConsolidadoInventario2 = [];
+		$inArrayInventario = array();
+		$inArrayInventario2 = array();
+		$posicionInventario = 0;
+		$posicionInventario2 = 0;
+		$llaveInventario = "";
+		$llaveInventario2 = "";
 		$DocNumVerificado = 0;
 
 		if(!isset($Data['detail'])){
@@ -599,6 +609,16 @@ class StockTransfer extends REST_Controller {
 
 		$Data = $this->post();
 		$DocNumVerificado = 0;
+		$DetalleInventario = new stdClass();
+		$DetalleInventario2 = new stdClass();
+		$DetalleConsolidadoInventario = [];
+		$DetalleConsolidadoInventario2 = [];
+		$inArrayInventario = array();
+		$inArrayInventario2 = array();
+		$posicionInventario = 0;
+		$posicionInventario2 = 0;
+		$llaveInventario = "";
+		$llaveInventario2 = "";
 
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -1426,140 +1446,266 @@ class StockTransfer extends REST_Controller {
 						}
 						//FIN SALIDA DE STOCK EN ALMACEN ORIGEN
 
-						$debito = 0;
-						$credito = 0;
-						$MontoSysDB = 0;
-						$MontoSysCR = 0;
-						$MontoSysCR = ($detail['ts1_linetotal'] / $TasaLocSys);
 
-						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+						//AGRUPANDO DETALLE DE LOS ASIENTOS CONTABLES
 
-								':ac1_trans_id' => $resInsertAsiento,
-								':ac1_account' => $detail['ts1_acctcode'],
-								':ac1_debit' => 0,
-								':ac1_credit' => round($Data['its_doctotal'],2),
-								':ac1_debit_sys' => 0,
-								':ac1_credit_sys' => round($MontoSysCR,2),
-								':ac1_currex' => 0,
-								':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
-								':ac1_doc_duedate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
-								':ac1_debit_import' => 0,
-								':ac1_credit_import' => 0,
-								':ac1_debit_importsys' => 0,
-								':ac1_credit_importsys' => 0,
-								':ac1_font_key' => $resInsert,
-								':ac1_font_line' => 1,
-								':ac1_font_type' => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
-								':ac1_accountvs' => 1,
-								':ac1_doctype' => 18,
-								':ac1_ref1' => "",
-								':ac1_ref2' => "",
-								':ac1_ref3' => "",
-								':ac1_prc_code' => $detail['ts1_costcode'],
-								':ac1_uncode' => $detail['ts1_ubusiness'],
-								':ac1_prj_code' => $detail['ts1_project'],
-								':ac1_rescon_date' => NULL,
-								':ac1_recon_total' => 0,
-								':ac1_made_user' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
-								':ac1_accperiod' => 1,
-								':ac1_close' => 0,
-								':ac1_cord' => 0,
-								':ac1_ven_debit' => 1,
-								':ac1_ven_credit' => 1,
-								':ac1_fiscal_acct' => 0,
-								':ac1_taxid' => 1,
-								':ac1_isrti' => 0,
-								':ac1_basert' => 0,
-								':ac1_mmcode' => 0,
-								':ac1_legal_num' => isset($Data['its_cardcode'])?$Data['its_cardcode']:NULL,
-								':ac1_codref' => 1
-						));
+						$DetalleInventario = new stdClass();
+						$DetalleInventario2 = new stdClass();
 
-					if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-							// Se verifica que el detalle no de error insertando //
-					}else{
-							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-							// se retorna el error y se detiene la ejecucion del codigo restante.
-								$this->pedeo->trans_rollback();
+						$DetalleInventario->account = is_numeric($detail['ts1_acctcode'])?$detail['ts1_acctcode']: 0;        // Cuenta Contable
+						$DetalleInventario->prc_code = isset($detail['ts1_costcode'])?$detail['ts1_costcode']:NULL;          // Centro de Costo
+						$DetalleInventario->uncode = isset($detail['ts1_ubusiness'])?$detail['ts1_ubusiness']:NULL;          // Unidad de negocio
+						$DetalleInventario->prj_code = isset($detail['ts1_project'])?$detail['ts1_project']:NULL;  			 // Proyecto
+						$DetalleInventario->linetotal = is_numeric($detail['ts1_linetotal'])?$detail['ts1_linetotal']:0; // Total Linea
+						$DetalleInventario->whscode = isset($detail['ts1_whscode'])?$detail['ts1_whscode']:NULL;         // Almacen
 
-								$respuesta = array(
-									'error'   => true,
-									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la factura de ventas'
-								);
 
-								 $this->response($respuesta);
+						$DetalleInventario2->account = is_numeric($detail['ts1_acctcode'])?$detail['ts1_acctcode']: 0;        // Cuenta Contable
+						$DetalleInventario2->prc_code = isset($detail['ts1_costcode'])?$detail['ts1_costcode']:NULL;          // Centro de Costo
+						$DetalleInventario2->uncode = isset($detail['ts1_ubusiness'])?$detail['ts1_ubusiness']:NULL;          // Unidad de negocio
+						$DetalleInventario2->prj_code = isset($detail['ts1_project'])?$detail['ts1_project']:NULL;  			 // Proyecto
+						$DetalleInventario2->linetotal = is_numeric($detail['ts1_linetotal'])?$detail['ts1_linetotal']:0; // Total Linea
+						$DetalleInventario2->whscode = isset($detail['ts1_whscode'])?$detail['ts1_whscode']:NULL;         // Almacen
 
-								 return;
+						$llaveInventario = $DetalleInventario->uncode.$DetalleInventario->prc_code.$DetalleInventario->prj_code.$DetalleInventario->account;
+						$llaveInventario2 = $DetalleInventario->uncode.$DetalleInventario->prc_code.$DetalleInventario->prj_code.$DetalleInventario->account;
+
+						if(in_array( $llaveInventario, $inArrayInventario )){
+
+								$posicionInventario = $this->buscarPosicion( $llaveInventario, $inArrayInventario );
+
+						}else{
+
+								array_push( $inArrayInventario, $llaveInventario );
+								$posicionInventario = $this->buscarPosicion( $llaveInventario, $inArrayInventario );
+
+						}
+						////
+						////
+						if(in_array( $llaveInventario2, $inArrayInventario2 )){
+
+								$posicionInventario2 = $this->buscarPosicion( $llaveInventario2, $inArrayInventario2 );
+
+						}else{
+
+								array_push( $inArrayInventario2, $llaveInventario2 );
+								$posicionInventario2 = $this->buscarPosicion( $llaveInventario2, $inArrayInventario2 );
+
+						}
+						////*********
+						////*********
+						if( isset($DetalleConsolidadoInventario[$posicionInventario])){
+
+							if(!is_array($DetalleConsolidadoInventario[$posicionInventario])){
+								$DetalleConsolidadoInventario[$posicionInventario] = array();
+							}
+
+						}else{
+							$DetalleConsolidadoInventario[$posicionInventario] = array();
+						}
+
+						array_push( $DetalleConsolidadoInventario[$posicionInventario], $DetalleInventario);
+						////
+						////
+						if( isset($DetalleConsolidadoInventario2[$posicionInventario2])){
+
+							if(!is_array($DetalleConsolidadoInventario2[$posicionInventario2])){
+								$DetalleConsolidadoInventario2[$posicionInventario2] = array();
+							}
+
+						}else{
+							$DetalleConsolidadoInventario2[$posicionInventario2] = array();
+						}
+
+						array_push( $DetalleConsolidadoInventario2[$posicionInventario2], $DetalleInventario2 );
+				}
+
+				// EJECUTANDO LLENADO DEL DETALLE DE LOS ASIENTOS CONTABLES
+
+				// DETALLE INVENTARIO 1
+				//
+				foreach ($DetalleConsolidadoInventario as $key => $posicion) {
+					$debito = 0;
+					$credito = 0;
+					$MontoSysDB = 0;
+					$MontoSysCR = 0;
+					$cuentaInventario = 0;
+					$grantotalAcumulado = 0;
+					$CentroCosto = "";
+					$UnidadNegocio = "";
+					$Proyecto = "";
+					// $MontoSysCR = ($detail['ts1_linetotal'] / $TasaLocSys);
+
+					foreach ($posicion as $key => $value) {
+
+						$cuentaInventario = $value->account;
+						$grantotalAcumulado = ($grantotalAcumulado + $value->linetotal);
+
+						$CentroCosto = $value->prc_code;
+						$UnidadNegocio = $value->uncode;
+						$Proyecto = $value->prj_code;
+
 					}
 
-					$MontoSysDB = ($detail['ts1_linetotal'] / $TasaLocSys);
+					$MontoSysCR = ( $grantotalAcumulado / $TasaLocSys);
 
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
-								':ac1_trans_id' => $resInsertAsiento,
-								':ac1_account' => $detail['ts1_acctcode'],
-								':ac1_debit' => round($Data['its_doctotal'],2),
-								':ac1_credit' => 0,
-								':ac1_debit_sys' => round($MontoSysDB,2),
-								':ac1_credit_sys' => 0,
-								':ac1_currex' => 0,
-								':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
-								':ac1_doc_duedate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
-								':ac1_debit_import' => 0,
-								':ac1_credit_import' => 0,
-								':ac1_debit_importsys' => 0,
-								':ac1_credit_importsys' => 0,
-								':ac1_font_key' => $resInsert,
-								':ac1_font_line' => 1,
-								':ac1_font_type' => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
-								':ac1_accountvs' => 1,
-								':ac1_doctype' => 18,
-								':ac1_ref1' => "",
-								':ac1_ref2' => "",
-								':ac1_ref3' => "",
-								':ac1_prc_code' => $detail['ts1_costcode'],
-								':ac1_uncode' => $detail['ts1_ubusiness'],
-								':ac1_prj_code' => $detail['ts1_project'],
-								':ac1_rescon_date' => NULL,
-								':ac1_recon_total' => 0,
-								':ac1_made_user' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
-								':ac1_accperiod' => 1,
-								':ac1_close' => 0,
-								':ac1_cord' => 0,
-								':ac1_ven_debit' => 1,
-								':ac1_ven_credit' => 1,
-								':ac1_fiscal_acct' => 0,
-								':ac1_taxid' => 1,
-								':ac1_isrti' => 0,
-								':ac1_basert' => 0,
-								':ac1_mmcode' => 0,
-								':ac1_legal_num' => isset($Data['its_cardcode'])?$Data['its_cardcode']:NULL,
-								':ac1_codref' => 1
-						));
+					    ':ac1_trans_id' => $resInsertAsiento,
+					    ':ac1_account' => $cuentaInventario,
+					    ':ac1_debit' => 0,
+					    ':ac1_credit' => round($grantotalAcumulado,2),
+					    ':ac1_debit_sys' => 0,
+					    ':ac1_credit_sys' => round($MontoSysCR,2),
+					    ':ac1_currex' => 0,
+					    ':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+					    ':ac1_doc_duedate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+					    ':ac1_debit_import' => 0,
+					    ':ac1_credit_import' => 0,
+					    ':ac1_debit_importsys' => 0,
+					    ':ac1_credit_importsys' => 0,
+					    ':ac1_font_key' => $resInsert,
+					    ':ac1_font_line' => 1,
+					    ':ac1_font_type' => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
+					    ':ac1_accountvs' => 1,
+					    ':ac1_doctype' => 18,
+					    ':ac1_ref1' => "",
+					    ':ac1_ref2' => "",
+					    ':ac1_ref3' => "",
+					    ':ac1_prc_code' => $CentroCosto,
+					    ':ac1_uncode' => $UnidadNegocio,
+					    ':ac1_prj_code' => $Proyecto,
+					    ':ac1_rescon_date' => NULL,
+					    ':ac1_recon_total' => 0,
+					    ':ac1_made_user' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
+					    ':ac1_accperiod' => 1,
+					    ':ac1_close' => 0,
+					    ':ac1_cord' => 0,
+					    ':ac1_ven_debit' => 1,
+					    ':ac1_ven_credit' => 1,
+					    ':ac1_fiscal_acct' => 0,
+					    ':ac1_taxid' => 1,
+					    ':ac1_isrti' => 0,
+					    ':ac1_basert' => 0,
+					    ':ac1_mmcode' => 0,
+					    ':ac1_legal_num' => isset($Data['its_cardcode'])?$Data['its_cardcode']:NULL,
+					    ':ac1_codref' => 1
+					));
 
 					if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-							// Se verifica que el detalle no de error insertando //
+					  // Se verifica que el detalle no de error insertando //
 					}else{
-							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-							// se retorna el error y se detiene la ejecucion del codigo restante.
-								$this->pedeo->trans_rollback();
+					  // si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+					  // se retorna el error y se detiene la ejecucion del codigo restante.
+					    $this->pedeo->trans_rollback();
 
-								$respuesta = array(
-									'error'   => true,
-									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar la factura de ventas'
-								);
+					    $respuesta = array(
+					      'error'   => true,
+					      'data'	  => $resDetalleAsiento,
+					      'mensaje'	=> 'No se pudo registrar la transferencia de stock'
+					    );
 
-								 $this->response($respuesta);
+					     $this->response($respuesta);
 
-								 return;
+					     return;
 					}
-
-
 
 				}
 
+
+				//DETALLE INVENTARIO 2
+				//
+
+				foreach ($DetalleConsolidadoInventario as $key => $posicion) {
+					$debito = 0;
+					$credito = 0;
+					$MontoSysDB = 0;
+					$MontoSysCR = 0;
+					$cuentaInventario = 0;
+					$grantotalAcumulado = 0;
+					$CentroCosto = "";
+					$UnidadNegocio = "";
+					$Proyecto = "";
+					// $MontoSysCR = ($detail['ts1_linetotal'] / $TasaLocSys);
+
+					foreach ($posicion as $key => $value) {
+
+						$cuentaInventario = $value->account;
+						$grantotalAcumulado = ($grantotalAcumulado + $value->linetotal);
+
+						$CentroCosto = $value->prc_code;
+						$UnidadNegocio = $value->uncode;
+						$Proyecto = $value->prj_code;
+
+					}
+
+					$MontoSysDB = ( $grantotalAcumulado / $TasaLocSys);
+
+					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+					    ':ac1_trans_id' => $resInsertAsiento,
+					    ':ac1_account' => $cuentaInventario,
+					    ':ac1_debit' => round($grantotalAcumulado,2),
+					    ':ac1_credit' => 0,
+					    ':ac1_debit_sys' => round($MontoSysDB,2),
+					    ':ac1_credit_sys' => 0,
+					    ':ac1_currex' => 0,
+					    ':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+					    ':ac1_doc_duedate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
+					    ':ac1_debit_import' => 0,
+					    ':ac1_credit_import' => 0,
+					    ':ac1_debit_importsys' => 0,
+					    ':ac1_credit_importsys' => 0,
+					    ':ac1_font_key' => $resInsert,
+					    ':ac1_font_line' => 1,
+					    ':ac1_font_type' => is_numeric($Data['its_doctype'])?$Data['its_doctype']:0,
+					    ':ac1_accountvs' => 1,
+					    ':ac1_doctype' => 18,
+					    ':ac1_ref1' => "",
+					    ':ac1_ref2' => "",
+					    ':ac1_ref3' => "",
+							':ac1_prc_code' => $CentroCosto,
+					    ':ac1_uncode' => $UnidadNegocio,
+					    ':ac1_prj_code' => $Proyecto,
+					    ':ac1_rescon_date' => NULL,
+					    ':ac1_recon_total' => 0,
+					    ':ac1_made_user' => isset($Data['its_createby'])?$Data['its_createby']:NULL,
+					    ':ac1_accperiod' => 1,
+					    ':ac1_close' => 0,
+					    ':ac1_cord' => 0,
+					    ':ac1_ven_debit' => 1,
+					    ':ac1_ven_credit' => 1,
+					    ':ac1_fiscal_acct' => 0,
+					    ':ac1_taxid' => 1,
+					    ':ac1_isrti' => 0,
+					    ':ac1_basert' => 0,
+					    ':ac1_mmcode' => 0,
+					    ':ac1_legal_num' => isset($Data['its_cardcode'])?$Data['its_cardcode']:NULL,
+					    ':ac1_codref' => 1
+					));
+
+					if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+					  // Se verifica que el detalle no de error insertando //
+					}else{
+					  // si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+					  // se retorna el error y se detiene la ejecucion del codigo restante.
+					    $this->pedeo->trans_rollback();
+
+					    $respuesta = array(
+					      'error'   => true,
+					      'data'	  => $resDetalleAsiento,
+					      'mensaje'	=> 'No se pudo registrar la transferencia de stock'
+					    );
+
+					     $this->response($respuesta);
+
+					     return;
+					}
+
+				}
+
+				///
+				///
 
 				$this->pedeo->trans_commit();
 
@@ -1789,6 +1935,19 @@ class StockTransfer extends REST_Controller {
 			}
 
 			return $url;
+	}
+
+
+	private function buscarPosicion($llave, $inArray){
+			$res = 0;
+			for($i = 0; $i < count($inArray); $i++) {
+					if($inArray[$i] == "$llave"){
+								$res =  $i;
+								break;
+					}
+			}
+
+			return $res;
 	}
 
 

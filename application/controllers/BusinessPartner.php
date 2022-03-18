@@ -494,6 +494,8 @@ class BusinessPartner extends REST_Controller {
 			 $this->response($respuesta);
 	}
 
+	//ACTUALIZAR DIRECCION DE SOCIO DE NEGOCIO
+	//COMO LA PRINCIPAL
 	public function updateAddress_post()
 	{
 		$Data = $this->post();

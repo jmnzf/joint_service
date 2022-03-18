@@ -702,113 +702,96 @@ class Reports extends REST_Controller {
 
 
 				if(isset($Data['cardcode']) && !empty($Data['cardcode'])){
-					$where = '  and t0.ac1_legal_num in ('.$Data['cardcode'].')';
+					$where = ' and t0.ac1_legal_num in ('.$Data['cardcode'].')';
 
 				}if(isset($Data['account']) && !empty($Data['account'])){
-					$where = $where. '  and t0.ac1_account in ('.$Data['account'].')';
+					$where = $where. ' and t0.ac1_account in ('.$Data['account'].')';
 
 				}if(isset($Data['fechaini']) && isset($Data['fechafin']) ){
-					$where = $where.'  and t0.ac1_doc_date between '.$Data['fechaini'].' and '.$Data['fechafin'];
+					$where = $where.' and t0.ac1_doc_date between '.$Data['fechaini'].' and '.$Data['fechafin'];
 				}if(isset($Data['costCenter']) && !empty($Data['costCenter'])){
-					$where = $where. '  and t0.ac1_prc_code in ('.$Data['costCenter'].')';
+					$where = $where. ' and t0.ac1_prc_code in ('.$Data['costCenter'].')';
 
 				}if(isset($Data['unitB']) && !empty($Data['unitB'])){
-					$where = $where. '  and t0.ac1_uncode in ('.$Data['unitB'].')';
+					$where = $where. ' and t0.ac1_uncode in ('.$Data['unitB'].')';
 
 				}if(isset($Data['project']) && !empty($Data['project'])){
-					$where = $where. '  and t0.ac1_prj_code in ('.$Data['project'].')';
-
+					$where = $where. ' and t0.ac1_prj_code in ('.$Data['project'].')';
 				}
 
-
-//
-//
-// 				if(!isset($Data['cardcode']) && !empty($Data['cardcode']) OR
-// 			    !isset($Data['fechaini']) && !isset($Data['fechafin']) OR
-// 					!isset($Data['account']) && !empty($Data['account'])){
-// 					$array = array();
-// 					$array1 = array();
-// 					foreach (explode(',',$Data['cardcode']) as $key => $value) {
-// 						array_push($array,"'".$value."'");
-// 					}
-//
-// 					$where = '  and T0.ac1_legal_num IN ('.implode(',',$array).') and t0.ac1_account in ('.$Data['account'].') and t0.ac1_doc_date between '.$Data['fechaini'].' and '.$Data['fechafin'];
-//
-// }
-
 				$sqlSelect = "SELECT
-																t0.ac1_trans_id docnum,
-																t0.ac1_trans_id numero_transaccion,
-																case
-																		when coalesce(t0.ac1_font_type,0) = 3 then 'Entrega'
-																		when coalesce(t0.ac1_font_type,0) = 4 then 'Devolucion'
-																		when coalesce(t0.ac1_font_type,0) = 5 then 'Factura Cliente'
-																		when coalesce(t0.ac1_font_type,0) = 6 then 'Nota Credito Cliente'
-																		when coalesce(t0.ac1_font_type,0) = 7 then 'Nota Debito Cliente'
-																		when coalesce(t0.ac1_font_type,0) = 8 then 'Salida Mercancia'
-																		when coalesce(t0.ac1_font_type,0) = 9 then 'Entrada Mercancia'
-																		when coalesce(t0.ac1_font_type,0) = 13 then 'Entrada Compras'
-																		when coalesce(t0.ac1_font_type,0) = 14 then 'Devolucion Compra'
-																		when coalesce(t0.ac1_font_type,0) = 15 then 'Factura Proveedores'
-																		when coalesce(t0.ac1_font_type,0) = 16 then 'Nota Credito Compras'
-																		when coalesce(t0.ac1_font_type,0) = 17 then 'Nota Debito Compras'
-																		when coalesce(t0.ac1_font_type,0) = 18 then 'Asiento Manual'
-																		when coalesce(t0.ac1_font_type,0) = 19 then 'Pagos Efectuado'
-																		when coalesce(t0.ac1_font_type,0) = 20 then 'Pagos Recibidos'
-																end origen,
-																case
-																		when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_docnum
-																		when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_docnum
-																		when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_docnum
-																		when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_docnum
-																		when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_docnum
-																		when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_docnum
-																		when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_docnum
-																		when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_docnum
-																		when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_docnum
-																		when coalesce(t0.ac1_font_type,0) = 15 then t14.cnc_docnum
-																		when coalesce(t0.ac1_font_type,0) = 16 then t15.cnd_docnum
-																		when coalesce(t0.ac1_font_type,0) = 17 then t12.cec_docnum
-																		when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
-																		when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
-																		when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
-																end numero_origen,
-																COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
-																from mac1 t0
-																left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
-																left join dvdv t2 on t0.ac1_font_key = t2.vdv_docentry and t0.ac1_font_type = t2.vdv_doctype
-																left join dvfv t3 on t0.ac1_font_key = t3.dvf_docentry and t0.ac1_font_type = t3.dvf_doctype
-																Left join dacc t4 on t0.ac1_account = t4.acc_code
-																left join misi t5 on t0.ac1_font_key = t5.isi_docentry and t0.ac1_font_type = t5.isi_doctype
-																left join miei t6 on t0.ac1_font_key = t6.iei_docentry and t0.ac1_font_type = t6.iei_doctype
-																left join dcfc t7 on t0.ac1_font_key = t7.cfc_docentry and t0.ac1_font_type = t7.cfc_doctype
-																left join gbpe t8 on t0.ac1_font_key = t8.bpe_docentry and t0.ac1_font_type = t8.bpe_doctype
-																left join gbpr t9 on t0.ac1_font_key = t9.bpr_docentry and t0.ac1_font_type = t9.bpr_doctype
-																left join dvnc t10 on t0.ac1_font_key = t10.vnc_docentry and t0.ac1_font_type = t10.vnc_doctype
-																left join dvnd t11 on t0.ac1_font_key = t11.vnd_docentry and t0.ac1_font_type = t11.vnd_doctype
-																left join dcec t12 on t0.ac1_font_key = t12.cec_docentry and t0.ac1_font_type = t12.cec_doctype
-																left join dcdc t13 on t0.ac1_font_key = t13.cdc_docentry and t0.ac1_font_type = t13.cdc_doctype
-																left join dcnc t14 on t0.ac1_font_key = t14.cnc_docentry and t0.ac1_font_type = t14.cnc_doctype
-																left join dcnd t15 on t0.ac1_font_key = t15.cnd_docentry and t0.ac1_font_type = t15.cnd_doctype
-																WHERE 1=1 ".$where;
+					t0.ac1_trans_id docnum,
+					t0.ac1_trans_id numero_transaccion,
+					t16.mdt_docname origen,
+					case
+					when coalesce(t0.ac1_font_type,0) = 3 then (SELECT row_to_json(dvem.*) FROM dvem WHERE t0.ac1_font_key = dvem.vem_docentry and t0.ac1_font_type = dvem.vem_doctype)
+					when coalesce(t0.ac1_font_type,0) = 4 then (SELECT row_to_json(dvdv.*) FROM dvdv WHERE t0.ac1_font_key = dvdv.vdv_docentry and t0.ac1_font_type = dvdv.vdv_doctype)
+					when coalesce(t0.ac1_font_type,0) = 5 then (SELECT row_to_json(dvfv.*) FROM dvfv WHERE t0.ac1_font_key = dvfv.dvf_docentry and t0.ac1_font_type = dvfv.dvf_doctype)
+					when coalesce(t0.ac1_font_type,0) = 6 then (SELECT row_to_json(dvnc.*) FROM dvnc WHERE t0.ac1_font_key = dvnc.vnc_docentry and t0.ac1_font_type = dvnc.vnc_doctype)
+					when coalesce(t0.ac1_font_type,0) = 6 then (SELECT row_to_json(dvnd.*) FROM dvnd WHERE t0.ac1_font_key = dvnd.vnd_docentry and t0.ac1_font_type = dvnd.vnd_doctype)
+					when coalesce(t0.ac1_font_type,0) = 8 then (SELECT row_to_json(misi.*) FROM misi WHERE t0.ac1_font_key = misi.isi_docentry and t0.ac1_font_type = misi.isi_doctype)
+					when coalesce(t0.ac1_font_type,0) = 9 then (SELECT row_to_json(miei.*) FROM miei WHERE t0.ac1_font_key = miei.iei_docentry and t0.ac1_font_type = miei.iei_doctype)
+					when coalesce(t0.ac1_font_type,0) = 13 then (SELECT row_to_json(dcec.*) FROM dcec WHERE t0.ac1_font_key = dcec.cec_docentry and t0.ac1_font_type = dcec.cec_doctype)
+					when coalesce(t0.ac1_font_type,0) = 14 then (SELECT row_to_json(dcdc.*) FROM dcdc WHERE t0.ac1_font_key = dcdc.cdc_docentry and t0.ac1_font_type = dcdc.cdc_doctype)
+					when coalesce(t0.ac1_font_type,0) = 15 then (SELECT row_to_json(dcfc.*) FROM dcfc WHERE t0.ac1_font_key = dcfc.cfc_docentry and t0.ac1_font_type = dcfc.cfc_doctype)
+					when coalesce(t0.ac1_font_type,0) = 16 then (SELECT row_to_json(dcnc.*) FROM dcnc WHERE t0.ac1_font_key = dcnc.cnc_docentry and t0.ac1_font_type = dcnc.cnc_doctype)
+					when coalesce(t0.ac1_font_type,0) = 17 then (SELECT row_to_json(dcnd.*) FROM dcnd WHERE t0.ac1_font_key = dcnd.cnd_docentry and t0.ac1_font_type = dcnd.cnd_doctype)
+					when coalesce(t0.ac1_font_type,0) = 18 then row_to_json(t0.*)
+					when coalesce(t0.ac1_font_type,0) = 19 then (SELECT row_to_json(gbpe.*) FROM gbpe WHERE t0.ac1_font_key = gbpe.bpe_docentry and t0.ac1_font_type = gbpe.bpe_doctype)
+					when coalesce(t0.ac1_font_type,0) = 20 then (SELECT row_to_json(gbpr.*) FROM gbpr WHERE t0.ac1_font_key = gbpr.bpr_docentry and t0.ac1_font_type = gbpr.bpr_doctype)
+					end extras,
+					COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
+					FROM mac1 t0
+					INNER JOIN dacc t4 on t0.ac1_account = t4.acc_code
+					INNER JOIN dmdt t16 on coalesce(t0.ac1_font_type,0) = t16.mdt_doctype
+					WHERE 1=1 ".$where;
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect,array());
 // print_r($sqlSelect);exit();die();
 				if(isset($resSelect[0])){
-
+					// 
+					$newData = [];
+					// RECORRER DATOS DE LA CONSULTA.
+					foreach ($resSelect as $key => $data) {
+						// VALIDATE
+						$json = json_decode($data['extras'], true);
+						// ELIMINAR DATA DEL ARRAY
+						unset($data['extras']);
+						// VALIDAR SI ES UNARRAY
+						if (is_array($json)) {
+							// OBJETO
+							$newObj = [];
+							// RECORRER JSON
+							foreach($json as $item => $obj) {
+								// DIVIDIR NOMBRE DE LA VARIABLE.
+								$prefijo = explode("_", $item);
+								// VALIDAR PREFIJO
+								if (isset($prefijo[1])) {
+									// VALIDAR SI EL CAMPO ES DE COMENTARIO.
+									if ($prefijo[1] === 'comments') {
+										// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
+										$newObj['mac_comment'] = $obj;
+									} else {
+										// 
+										$newObj['mac_'.$prefijo[1]] = $obj;
+									}
+								}
+							}
+							// AGREGAR NUEVO ARRAY.
+							$newData[] = array_merge($data, $newObj);
+						}
+					}
 					$respuesta = array(
 						'error' => false,
-						'data'  => $resSelect,
-						'mensaje' => '');
-
+						'data'  => $newData,
+						'mensaje' => ''
+					);
 				}else{
-
 						$respuesta = array(
 							'error'   => true,
 							'data' => array(),
 							'mensaje'	=> 'busqueda sin resultados'
 						);
-
 				}
 
 				 $this->response($respuesta);

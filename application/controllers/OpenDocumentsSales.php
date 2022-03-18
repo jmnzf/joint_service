@@ -25,6 +25,13 @@ class OpenDocumentsSales extends REST_Controller {
   //CREAR NUEVA Entrega de Ventas
 	public function OpenDelivery_post(){
 
+						$Data = $this->post();
+
+						$where = '';
+						if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
+							$where = "AND a.vem_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+						}
+
 
             $sqlSelect = "SELECT DISTINCT
 																	    a.vem_docnum documento,
@@ -35,17 +42,20 @@ class OpenDocumentsSales extends REST_Controller {
 																	    c.em1_itemname nombre_item,
 																	    c.em1_quantity cantidad,
 																	    coalesce(sum(e.dv1_quantity),0) dev,
-																	   coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.dvf_docentry
-																	    where bb.dvf_basetype = a.vem_doctype and bb.dvf_baseentry = a.vem_docentry and aa.fv1_itemcode = c.em1_itemcode),0) fact,
+
+																		coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.vfv_docentry
+ 																		 where bb.vfv_basetype = a.vem_doctype and bb.vfv_baseentry = a.vem_docentry),0) fact,
+
 																	    coalesce((c.em1_quantity -coalesce(sum(e.dv1_quantity),0)
-																	    - coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.dvf_docentry
-																	    where bb.dvf_basetype = a.vem_doctype and bb.dvf_baseentry = a.vem_docentry and aa.fv1_itemcode = c.em1_itemcode),0)),0) cantidad_pendiente
+																	    - 	 coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.vfv_docentry
+	 																		 where bb.vfv_basetype = a.vem_doctype and bb.vfv_baseentry = a.vem_docentry),0)  ),0) cantidad_pendiente
+
 																	from dvem a
 																	join responsestatus b on a.vem_docentry = b.id and a.vem_doctype = b.tipo
 																	left join vem1 c on a.vem_docentry = c.em1_docentry
 																	left join dvdv d on a.vem_docentry = d.vdv_baseentry and a.vem_doctype = d.vdv_basetype
 																	left join vdv1 e on d.vdv_docentry = e.dv1_docentry and c.em1_itemcode = e.dv1_itemcode
-																	where b.estado = 'Abierto'
+																	where b.estado = 'Abierto' $where
 																	group by a.vem_docnum,
 																	    a.vem_docdate,
 																	    a.vem_cardcode,
@@ -83,6 +93,15 @@ class OpenDocumentsSales extends REST_Controller {
 			public function OpenOrder_post(){
 
 
+				$Data = $this->post();
+
+				$where = '';
+				if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
+					$where = "AND a.vov_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+				}
+
+
+
 								$sqlSelect = "SELECT
 																			    a.vov_docnum documento,
 																			    a.vov_docdate fecha,
@@ -92,17 +111,19 @@ class OpenDocumentsSales extends REST_Controller {
 																			    c.ov1_itemname nombre_item,
 																			    c.ov1_quantity cantidad,
 																			    coalesce(sum(e.em1_quantity),0) ent,
-																			    coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.dvf_docentry
-																			    where bb.dvf_basetype = a.vov_doctype and bb.dvf_baseentry = a.vov_docentry and aa.fv1_itemcode = c.ov1_itemcode),0) fact,
+
+																				coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.vfv_docentry
+																					where bb.vfv_basetype = a.vov_doctype and bb.vfv_baseentry = a.vov_docentry),0) fact,
+
 																			    coalesce((c.ov1_quantity - coalesce(sum(e.em1_quantity),0)
-																			    - coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.dvf_docentry
-																			    where bb.dvf_basetype = a.vov_doctype and bb.dvf_baseentry = a.vov_docentry and aa.fv1_itemcode = c.ov1_itemcode),0)),0) cantidad_pendiente
+																			    - 	coalesce((select sum(aa.fv1_quantity) from vfv1 aa left join dvfv bb on aa.fv1_docentry = bb.vfv_docentry
+																							where bb.vfv_basetype = a.vov_doctype and bb.vfv_baseentry = a.vov_docentry),0)),0) cantidad_pendiente
 																			from dvov a
 																			join responsestatus b on a.vov_docentry = b.id and a.vov_doctype = b.tipo
 																			left join vov1 c on a.vov_docentry = c.ov1_docentry
 																			left join dvem d on a.vov_docentry = d.vem_baseentry and a.vov_doctype = d.vem_basetype
 																			left join vem1 e on d.vem_docentry = e.em1_docentry and c.ov1_itemcode = e.em1_itemcode
-																			where b.estado = 'Abierto'
+																			where b.estado = 'Abierto' $where
 																			group by a.vov_docnum,
 																			    a.vov_docdate,
 																			    a.vov_cardcode,
@@ -139,6 +160,12 @@ class OpenDocumentsSales extends REST_Controller {
 
 					public function OpenQuotation_post(){
 
+						$Data = $this->post();
+
+						$where = '';
+						if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
+							$where = "AND a.dvc_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+						}
 
 										$sqlSelect = "SELECT
 																					    a.dvc_docnum documento,
@@ -171,7 +198,7 @@ class OpenDocumentsSales extends REST_Controller {
 																					from dvct a
 																					join responsestatus b on a.dvc_docentry = b.id and a.dvc_doctype = b.tipo
 																					left join vct1 c on a.dvc_docentry = c.vc1_docentry
-																					where b.estado = 'Abierto'
+																					where b.estado = 'Abierto' $where
 																					group by a.dvc_docnum,
 																					    a.dvc_docdate,
 																					    a.dvc_cardcode,
@@ -207,6 +234,13 @@ class OpenDocumentsSales extends REST_Controller {
 
 							public function OpenInvoices_post(){
 
+								$Data = $this->post();
+
+								$where = '';
+								if(!empty($Data['doc_to']) &&  !empty($Data['doc_from'])){
+									$where = "AND a.dvf_docdate between '".$Data['doc_from']."'  AND '".$Data['doc_to']."'";
+								}
+
 
 												$sqlSelect = "SELECT
 																							    a.dvf_docnum documento,
@@ -233,7 +267,7 @@ class OpenDocumentsSales extends REST_Controller {
 																							from dvfv a
 																							join responsestatus b on a.dvf_docentry = b.id and a.dvf_doctype = b.tipo
 																							left join vfv1 c on a.dvf_docentry = c.fv1_docentry
-																							where b.estado = 'Abierto'
+																							where b.estado = 'Abierto' $where
 
 																							group by
 																							    a.dvf_docnum ,
