@@ -655,11 +655,22 @@ public function getOffertDetailBySN_get(){
 					//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 			if( isset($Data['coc_baseentry']) && is_numeric($Data['coc_baseentry']) && isset($Data['coc_basetype']) && is_numeric($Data['coc_basetype']) ){
 
-				$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+				$sqlDocInicio = "SELECT pap_baseentry as bmd_ndi, pap_basetype as bmd_ndi FROM dpap WHERE  pap_baseentry = :pap_baseentry AND pap_basetype = :pap_basetype";
 				$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
-					 ':bmd_doctype' => $Data['coc_basetype'],
-					 ':bmd_docentry' => $Data['coc_baseentry']
+					':pap_baseentry' => $Data['coc_baseentry'],
+					':pap_basetype' => $Data['coc_basetype']
 				));
+
+				// if(!isset($resDocInicio[0])){
+
+				// 	$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+				// 	$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
+				// 	 ':bmd_doctype' => $Data['coc_basetype'],
+				// 	 ':bmd_docentry' => $Data['coc_baseentry']
+				// 	));
+				// }
+
+				
 
 
 				if ( isset(	$resDocInicio[0] ) ){
