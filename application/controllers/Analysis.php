@@ -144,7 +144,7 @@ class Analysis extends REST_Controller {
         join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
         join dmdt on {$prefix}_doctype = mdt_doctype
         full join tbdc  on dms_classtype = bdc_clasify
-        join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
+        left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
         join tasa on ({$prefix}_currency = tsa_curro or {$prefix}_currency = tsa_currd) and {$prefix}_docdate = tsa_date
         where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) ".$conditions."
         GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, {$prefix}_comment,dmd_adress,
@@ -267,7 +267,7 @@ class Analysis extends REST_Controller {
       join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
       join dmdt on {$prefix}_doctype = mdt_doctype
       left join tbdc on dms_classtype = bdc_clasify
-      join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
+      left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
       join tasa on ({$prefix}_currency = tsa_curro or {$prefix}_currency = tsa_currd) and {$prefix}_docdate = tsa_date
       where ({$prefix}_docdate BETWEEN :dvf_docdate and :dvf_duedate) {$card}
       GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum,

@@ -487,7 +487,6 @@ public function getOffertDetailBySN_get(){
 			}
 			// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
 
-
 				$sqlInsert = "INSERT INTO dcoc(coc_series, coc_docnum, coc_docdate, coc_duedate, coc_duedev, coc_pricelist, coc_cardcode,
 											coc_cardname, coc_currency, coc_contacid, coc_slpcode, coc_empid, coc_comment, coc_doctotal, coc_baseamnt, coc_taxtotal,
 											coc_discprofit, coc_discount, coc_createat, coc_baseentry, coc_basetype, coc_doctype, coc_idadd, coc_adress, coc_paytype,
@@ -645,7 +644,7 @@ public function getOffertDetailBySN_get(){
 					//FIN SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
 
 					//FIN PROCESO GUARDAR ESTADO DEL DOCUMENTO
-
+					
 
 					//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 					if( isset($Data['coc_baseentry']) && is_numeric($Data['coc_baseentry']) && isset($Data['coc_basetype']) && is_numeric($Data['coc_basetype']) ){

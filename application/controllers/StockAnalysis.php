@@ -280,7 +280,7 @@ class StockAnalysis extends REST_Controller {
 		  join dmar on {$detailPrefix}_itemcode = dma_item_code
 		  join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
 		  join dmga on mga_id = dma_group_code
-		  join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
+		  left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 		  ".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum 
 			left join dmrt on mrt_id = crt_type" : "")."
