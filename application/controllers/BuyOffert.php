@@ -644,7 +644,7 @@ public function getOffertDetailBySN_get(){
 					//FIN SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
 
 					//FIN PROCESO GUARDAR ESTADO DEL DOCUMENTO
-					
+
 
 					//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 					if( isset($Data['coc_baseentry']) && is_numeric($Data['coc_baseentry']) && isset($Data['coc_basetype']) && is_numeric($Data['coc_basetype']) ){
