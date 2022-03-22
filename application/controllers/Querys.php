@@ -40,7 +40,7 @@ class Querys extends REST_Controller {
 
 		        return;
 		      }
-          $query = $Data['sql'].' LIMIT 10';
+          $query = $Data['sql'].' LIMIT 500';
           $resultQuery = $this->pedeo->queryTable($query, array());
 
 
