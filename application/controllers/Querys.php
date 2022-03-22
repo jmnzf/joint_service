@@ -70,8 +70,6 @@ class Querys extends REST_Controller {
   public function setDataSql_post(){
     $Data = $this->post();
 
-    // print_r($Data);exit;
-
     if(!isset($Data['sql_description']) OR !isset($Data['sql_query'])){
 
       $respuesta = array(
@@ -85,25 +83,62 @@ class Querys extends REST_Controller {
       return;
     }
 
-    $sqlInsert = "INSERT INTO csql(sql_description, sql_query, sql_date, sql_createby)
-	                 VALUES (:sql_description, :sql_query, :sql_date, :sql_createby)";
+    $sqlInsert = "INSERT INTO csql(sql_description, sql_query, sql_date, sql_createby,sql_query_type, sql_query_model)
+	                 VALUES (:sql_description, :sql_query, :sql_date, :sql_createby,:sql_query_type, :sql_query_model)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
       ':sql_description' =>  $Data['sql_description'],
       ':sql_query'       =>  $Data['sql_query'],
       ':sql_date'        =>  date('Y-m-d'),
-      ':sql_createby'    =>  $Data['sql_createby']
+      ':sql_createby'    =>  $Data['sql_createby'],
+			':sql_query_type'  =>	 $Data['tipo'],
+			':sql_query_model' =>  $Data['modelo'],
     ));
 
-    if( is_numeric($resInsert)  && $resInsert > 0 ){
-      $respuesta = array(
-        'error'   => false,
-        'data'    => $resInsert,
-        'mensaje'	=> 'Operacion exitosa'
-      );
+		$this->pedeo->trans_begin();
 
-      $this->response($respuesta);
+    if( is_numeric($resInsert)  && $resInsert > 0 ){
+
+			foreach ( json_decode($Data['users'], true) as $key => $value ) {
+
+				$sqlInsertUser = "INSERT INTO public.truc(ruc_user, ruc_query, ruc_enabled)
+													VALUES (:ruc_user, :ruc_query, :ruc_enabled)";
+
+				$resInsertUser = $this->pedeo->insertRow($sqlInsertUser, array(
+					':ruc_user' 		 =>  $value,
+					':ruc_query'     =>  $resInsert,
+					':ruc_enabled'   =>  1
+				));
+
+
+				if( is_numeric($resInsertUser)  && $resInsertUser > 0 ){
+
+				}else{
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data'    => $resInsertUser,
+						'mensaje'	=> 'No se pudo insertar el query'
+					);
+
+					$this->response($respuesta);
+				}
+
+
+			}
+
+			$this->pedeo->trans_commit();
+
+			$respuesta = array(
+				'error'   => false,
+				'data'    => $resInsert,
+				'mensaje'	=> 'Operacion exitosa'
+			);
+
     }else{
+
+			$this->pedeo->trans_rollback();
 
       $respuesta = array(
         'error'   => true,
@@ -113,6 +148,9 @@ class Querys extends REST_Controller {
 
       $this->response($respuesta);
     }
+
+		$this->response($respuesta);
+
   }
 
 
