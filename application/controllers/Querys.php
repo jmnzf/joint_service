@@ -156,9 +156,20 @@ class Querys extends REST_Controller {
 
 	//OBETENER CONSULTAS GUARDADAS
 	public function getQuerys_get(){
-		$sqlSelect = "SELECT * FROM csql";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$Data = $this->get();
+		
+		if(!empty($Data)){
+			$sqlSelect = "SELECT csql.* FROM
+		csql
+		join truc on ruc_query = sql_id
+		where ruc_user = :ruc_user";
+		}else{
+		$sqlSelect = "SELECT * FROM csql";
+		}
+		
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect,(!empty($Data))?array(":ruc_user" => $Data['pgu_id_usuario']):array());
 
 		if(isset($resSelect[0])){
 
