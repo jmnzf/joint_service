@@ -523,14 +523,10 @@ class PurchaseRequest extends REST_Controller {
 					//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 					if( isset($Data['csc_baseentry']) && is_numeric($Data['csc_baseentry']) && isset($Data['csc_basetype']) && is_numeric($Data['csc_basetype']) ){
 
-						$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
-						$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
-							 ':bmd_doctype' => $Data['csc_basetype'],
-							 ':bmd_docentry' => $Data['csc_baseentry']
-						));
-
-
-						if ( isset(	$resDocInicio[0] ) ){
+						// SE VERIFICA SI EL DOCUMENTO VIENE DE UN DOCUMENTO APROBADO
+						if( $Data['csc_basetype'] == 21 ){
+							print_r("HOla1");
+							//BUSCANDO EL DOCUMENTO APROBADO
 
 							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
 															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
@@ -544,13 +540,15 @@ class PurchaseRequest extends REST_Controller {
 								':bmd_createat' => $this->validateDate($Data['csc_createat'])?$Data['csc_createat']:NULL,
 								':bmd_doctypeo' => is_numeric($Data['csc_basetype'])?$Data['csc_basetype']:0, //ORIGEN
 								':bmd_docentryo' => is_numeric($Data['csc_baseentry'])?$Data['csc_baseentry']:0,  //ORIGEN
-								':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
-								':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+								':bmd_tdi' => $Data['csc_basetype'], // DOCUMENTO INICIAL
+								':bmd_ndi' => $Data['csc_baseentry'], // DOCUMENTO INICIAL
 								':bmd_docnum' => $DocNumVerificado,
 								':bmd_doctotal' => is_numeric($Data['csc_doctotal'])?$Data['csc_doctotal']:0,
 								':bmd_cardcode' => isset($Data['csc_cardcode'])?$Data['csc_cardcode']:NULL,
 								':bmd_cardtype' => 2
 							));
+
+
 
 							if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
 
@@ -560,7 +558,7 @@ class PurchaseRequest extends REST_Controller {
 
 								 $respuesta = array(
 									 'error'   => true,
-									 'data' => $resInsertEstado,
+									 'data' => $resInsertMD,
 									 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
 								 );
 
@@ -569,49 +567,101 @@ class PurchaseRequest extends REST_Controller {
 
 								 return;
 							}
-
+							////
 						}else{
-
-							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
-
-							$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
-								':bmd_doctype' => is_numeric($Data['csc_doctype'])?$Data['csc_doctype']:0,
-								':bmd_docentry' => $resInsert,
-								':bmd_createat' => $this->validateDate($Data['csc_createat'])?$Data['csc_createat']:NULL,
-								':bmd_doctypeo' => is_numeric($Data['csc_basetype'])?$Data['csc_basetype']:0, //ORIGEN
-								':bmd_docentryo' => is_numeric($Data['csc_baseentry'])?$Data['csc_baseentry']:0,  //ORIGEN
-								':bmd_tdi' => is_numeric($Data['csc_doctype'])?$Data['csc_doctype']:0, // DOCUMENTO INICIAL
-								':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
-								':bmd_docnum' => $DocNumVerificado,
-								':bmd_doctotal' => is_numeric($Data['csc_doctotal'])?$Data['csc_doctotal']:0,
-								':bmd_cardcode' => isset($Data['csc_cardcode'])?$Data['csc_cardcode']:NULL,
-								':bmd_cardtype' => 2
+								print_r("HOla3");
+							$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+							$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
+								 ':bmd_doctype' => $Data['csc_basetype'],
+								 ':bmd_docentry' => $Data['csc_baseentry']
 							));
 
-							if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+							if ( isset(	$resDocInicio[0] ) ){
+
+								$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+								$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+									':bmd_doctype' => is_numeric($Data['csc_doctype'])?$Data['csc_doctype']:0,
+									':bmd_docentry' => $resInsert,
+									':bmd_createat' => $this->validateDate($Data['csc_createat'])?$Data['csc_createat']:NULL,
+									':bmd_doctypeo' => is_numeric($Data['csc_basetype'])?$Data['csc_basetype']:0, //ORIGEN
+									':bmd_docentryo' => is_numeric($Data['csc_baseentry'])?$Data['csc_baseentry']:0,  //ORIGEN
+									':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+									':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+									':bmd_docnum' => $DocNumVerificado,
+									':bmd_doctotal' => is_numeric($Data['csc_doctotal'])?$Data['csc_doctotal']:0,
+									':bmd_cardcode' => isset($Data['csc_cardcode'])?$Data['csc_cardcode']:NULL,
+									':bmd_cardtype' => 2
+								));
+
+								if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+								}else{
+
+									$this->pedeo->trans_rollback();
+
+									 $respuesta = array(
+										 'error'   => true,
+										 'data' => $resInsertEstado,
+										 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+									 );
+
+
+									 $this->response($respuesta);
+
+									 return;
+								}
 
 							}else{
 
-								$this->pedeo->trans_rollback();
+								$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
 
-								 $respuesta = array(
-									 'error'   => true,
-									 'data' => $resInsertEstado,
-									 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
-								 );
+								$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+									':bmd_doctype' => is_numeric($Data['csc_doctype'])?$Data['csc_doctype']:0,
+									':bmd_docentry' => $resInsert,
+									':bmd_createat' => $this->validateDate($Data['csc_createat'])?$Data['csc_createat']:NULL,
+									':bmd_doctypeo' => is_numeric($Data['csc_basetype'])?$Data['csc_basetype']:0, //ORIGEN
+									':bmd_docentryo' => is_numeric($Data['csc_baseentry'])?$Data['csc_baseentry']:0,  //ORIGEN
+									':bmd_tdi' => is_numeric($Data['csc_doctype'])?$Data['csc_doctype']:0, // DOCUMENTO INICIAL
+									':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+									':bmd_docnum' => $DocNumVerificado,
+									':bmd_doctotal' => is_numeric($Data['csc_doctotal'])?$Data['csc_doctotal']:0,
+									':bmd_cardcode' => isset($Data['csc_cardcode'])?$Data['csc_cardcode']:NULL,
+									':bmd_cardtype' => 2
+								));
+
+								if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+								}else{
+
+									$this->pedeo->trans_rollback();
+
+									 $respuesta = array(
+										 'error'   => true,
+										 'data' => $resInsertEstado,
+										 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+									 );
 
 
-								 $this->response($respuesta);
+									 $this->response($respuesta);
 
-								 return;
+									 return;
+								}
 							}
 						}
 
 					}else{
+
+						print_r("HOla2");
 
 						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
 														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
@@ -653,7 +703,7 @@ class PurchaseRequest extends REST_Controller {
 					}
 					//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 
-
+					exit;
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
