@@ -542,6 +542,42 @@ class BusinessPartner extends REST_Controller {
 
 		$this->response($respuesta);
 	}
+	//ACTUALIZAR DIRECCION DE SOCIO DE NEGOCIO
+	//HABILITAR/DESABILITAR
+	public function updateAddressStatus_post()
+	{
+		$Data = $this->post();
+
+		if(!isset($Data['dmd_status']) OR !isset($Data['dmd_id'])){
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+				return;
+		}
+
+    $update = $this->pedeo->updateRow('UPDATE dmsd SET dmd_status = :dmd_status WHERE dmd_id = :dmd_id',[':dmd_status' => $Data['dmd_status'], ':dmd_id' => $Data['dmd_id']]);
+
+    $respuesta = array(
+      'error'   => true,
+      'data'    => $update,
+      'mensaje'	=> 'No se pudo actualizar la dirreccion del socio de negocio'
+    );
+
+		if(is_numeric($update) && $update == 1){
+      $respuesta = array(
+        'error'   => false,
+        'data'    => $update,
+        'mensaje' =>'Se actualizó el estado de la dirreccion del socio de negocio'
+      );
+		}
+
+		$this->response($respuesta);
+	}
 
 	private function ValidarN($dato){
 

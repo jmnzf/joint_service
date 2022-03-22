@@ -487,149 +487,6 @@ public function getOffertDetailBySN_get(){
 			}
 			// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
 
-			//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
-			if( isset($Data['coc_baseentry']) && is_numeric($Data['coc_baseentry']) && isset($Data['coc_basetype']) && is_numeric($Data['coc_basetype']) ){
-
-				if( $Data['coc_basetype']  == 21 ){
-					
-				}else{
-
-					$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
-					$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
-						 ':bmd_doctype' => $Data['coc_basetype'],
-						 ':bmd_docentry' => $Data['coc_baseentry']
-					));
-
-
-					if ( isset(	$resDocInicio[0] ) ){
-
-						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
-
-						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
-							':bmd_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
-							':bmd_docentry' => $resInsert,
-							':bmd_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
-							':bmd_doctypeo' => is_numeric($Data['coc_basetype'])?$Data['coc_basetype']:0, //ORIGEN
-							':bmd_docentryo' => is_numeric($Data['coc_baseentry'])?$Data['coc_baseentry']:0,  //ORIGEN
-							':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
-							':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
-							':bmd_docnum' => $DocNumVerificado,
-							':bmd_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
-							':bmd_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
-							':bmd_cardtype' => 2
-						));
-
-						if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
-
-						}else{
-
-							$this->pedeo->trans_rollback();
-
-							 $respuesta = array(
-								 'error'   => true,
-								 'data' => $resInsertEstado,
-								 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
-							 );
-
-
-							 $this->response($respuesta);
-
-							 return;
-						}
-
-					}else{
-
-						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
-
-						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
-							':bmd_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
-							':bmd_docentry' => $resInsert,
-							':bmd_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
-							':bmd_doctypeo' => is_numeric($Data['coc_basetype'])?$Data['coc_basetype']:0, //ORIGEN
-							':bmd_docentryo' => is_numeric($Data['coc_baseentry'])?$Data['coc_baseentry']:0,  //ORIGEN
-							':bmd_tdi' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0, // DOCUMENTO INICIAL
-							':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
-							':bmd_docnum' => $DocNumVerificado,
-							':bmd_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
-							':bmd_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
-							':bmd_cardtype' => 2
-						));
-
-						if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
-
-						}else{
-
-							$this->pedeo->trans_rollback();
-
-							 $respuesta = array(
-								 'error'   => true,
-								 'data' => $resInsertEstado,
-								 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
-							 );
-
-
-							 $this->response($respuesta);
-
-							 return;
-						}
-					}
-				}
-
-
-			}else{
-
-				$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-												bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-												VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-												:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
-
-				$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
-					':bmd_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
-					':bmd_docentry' => $resInsert,
-					':bmd_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
-					':bmd_doctypeo' => is_numeric($Data['coc_basetype'])?$Data['coc_basetype']:0, //ORIGEN
-					':bmd_docentryo' => is_numeric($Data['coc_baseentry'])?$Data['coc_baseentry']:0,  //ORIGEN
-					':bmd_tdi' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0, // DOCUMENTO INICIAL
-					':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
-					':bmd_docnum' => $DocNumVerificado,
-					':bmd_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
-					':bmd_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
-					':bmd_cardtype' => 2
-				));
-
-				if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
-
-				}else{
-
-					$this->pedeo->trans_rollback();
-
-					 $respuesta = array(
-						 'error'   => true,
-						 'data' => $resInsertEstado,
-						 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
-					 );
-
-
-					 $this->response($respuesta);
-
-					 return;
-				}
-			}
-			//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
-
-
-
-
-
 
 				$sqlInsert = "INSERT INTO dcoc(coc_series, coc_docnum, coc_docdate, coc_duedate, coc_duedev, coc_pricelist, coc_cardcode,
 											coc_cardname, coc_currency, coc_contacid, coc_slpcode, coc_empid, coc_comment, coc_doctotal, coc_baseamnt, coc_taxtotal,
@@ -789,6 +646,248 @@ public function getOffertDetailBySN_get(){
 
 					//FIN PROCESO GUARDAR ESTADO DEL DOCUMENTO
 
+
+					//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+					if( isset($Data['coc_baseentry']) && is_numeric($Data['coc_baseentry']) && isset($Data['coc_basetype']) && is_numeric($Data['coc_basetype']) ){
+
+						if( $Data['coc_basetype']  == 21 ){
+
+							$sqlDOrigen = "SELECT *
+														 FROM dpap
+														 WHERE pap_doctype = :pap_doctype AND pap_docentry = :pap_docentry";
+
+							$resDOrigen = $this->pedeo->queryTable($sqlDOrigen, array(
+								':pap_doctype'  => $Data['coc_basetype'],
+								':pap_docentry' => $Data['coc_baseentry']
+							));
+
+
+							if( isset($resDOrigen[0]) ){
+
+								$sqlDInicio = "SELECT *
+															 FROM tbmd
+															 WHERE bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+
+								$resDInicio = $this->pedeo->queryTable($sqlDInicio, array(
+									':bmd_doctype'  => $resDOrigen[0]['pap_basetype'],
+									':bmd_docentry' => $resDOrigen[0]['pap_baseentry']
+
+								));
+
+								$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+								$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+									':bmd_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
+									':bmd_docentry' => $resInsert,
+									':bmd_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
+									':bmd_doctypeo' => $resDOrigen[0]['pap_basetype'], //ORIGEN
+									':bmd_docentryo' => $resDOrigen[0]['pap_baseentry'],  //ORIGEN
+									':bmd_tdi' => $resDInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+									':bmd_ndi' => $resDInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+									':bmd_docnum' => $DocNumVerificado,
+									':bmd_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
+									':bmd_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
+									':bmd_cardtype' => 2
+								));
+
+								if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+								}else{
+
+									$this->pedeo->trans_rollback();
+
+									 $respuesta = array(
+										 'error'   => true,
+										 'data' => $resInsertMD,
+										 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+									 );
+
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+
+							}else{
+								$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+								$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+									':bmd_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
+									':bmd_docentry' => $resInsert,
+									':bmd_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
+									':bmd_doctypeo' => 0, //ORIGEN
+									':bmd_docentryo' => 0,  //ORIGEN
+									':bmd_tdi' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0, // DOCUMENTO INICIAL
+									':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+									':bmd_docnum' => $DocNumVerificado,
+									':bmd_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
+									':bmd_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
+									':bmd_cardtype' => 2
+								));
+
+								if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+								}else{
+
+									$this->pedeo->trans_rollback();
+
+									 $respuesta = array(
+										 'error'   => true,
+										 'data' => $resInsertEstado,
+										 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+									 );
+
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+							}
+
+
+
+
+						}else{
+
+							$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+							$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
+								 ':bmd_doctype' => $Data['coc_basetype'],
+								 ':bmd_docentry' => $Data['coc_baseentry']
+							));
+
+
+							if ( isset(	$resDocInicio[0] ) ){
+
+								$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+								$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+									':bmd_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
+									':bmd_docentry' => $resInsert,
+									':bmd_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
+									':bmd_doctypeo' => is_numeric($Data['coc_basetype'])?$Data['coc_basetype']:0, //ORIGEN
+									':bmd_docentryo' => is_numeric($Data['coc_baseentry'])?$Data['coc_baseentry']:0,  //ORIGEN
+									':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+									':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+									':bmd_docnum' => $DocNumVerificado,
+									':bmd_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
+									':bmd_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
+									':bmd_cardtype' => 2
+								));
+
+								if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+								}else{
+
+									$this->pedeo->trans_rollback();
+
+									 $respuesta = array(
+										 'error'   => true,
+										 'data' => $resInsertEstado,
+										 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+									 );
+
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+
+							}else{
+
+								$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+								$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+									':bmd_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
+									':bmd_docentry' => $resInsert,
+									':bmd_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
+									':bmd_doctypeo' => is_numeric($Data['coc_basetype'])?$Data['coc_basetype']:0, //ORIGEN
+									':bmd_docentryo' => is_numeric($Data['coc_baseentry'])?$Data['coc_baseentry']:0,  //ORIGEN
+									':bmd_tdi' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0, // DOCUMENTO INICIAL
+									':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+									':bmd_docnum' => $DocNumVerificado,
+									':bmd_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
+									':bmd_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
+									':bmd_cardtype' => 2
+								));
+
+								if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+								}else{
+
+									$this->pedeo->trans_rollback();
+
+									 $respuesta = array(
+										 'error'   => true,
+										 'data' => $resInsertEstado,
+										 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+									 );
+
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+							}
+						}
+
+
+					}else{
+
+						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+							':bmd_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
+							':bmd_docentry' => $resInsert,
+							':bmd_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
+							':bmd_doctypeo' => is_numeric($Data['coc_basetype'])?$Data['coc_basetype']:0, //ORIGEN
+							':bmd_docentryo' => is_numeric($Data['coc_baseentry'])?$Data['coc_baseentry']:0,  //ORIGEN
+							':bmd_tdi' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0, // DOCUMENTO INICIAL
+							':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+							':bmd_docnum' => $DocNumVerificado,
+							':bmd_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
+							':bmd_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
+							':bmd_cardtype' => 2
+						));
+
+						if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							 $respuesta = array(
+								 'error'   => true,
+								 'data' => $resInsertEstado,
+								 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+							 );
+
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+					}
+					//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 
 					foreach ($ContenidoDetalle as $key => $detail) {
 
