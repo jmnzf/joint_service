@@ -1579,7 +1579,7 @@ class SalesInv extends REST_Controller {
 
 										if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
 
-												$grantotalCostoInventario = ($grantotalCostoInventario / $TasaLocSys);
+												$grantotalCostoInventario = ($grantotalCostoInventario * $TasaLocSys);
 										}
 
 										if( $codigo3 == 1 || $codigo3 == "1" ){
@@ -1587,7 +1587,7 @@ class SalesInv extends REST_Controller {
 												if(trim($Data['dvf_currency']) != $MONEDASYS ){
 														$MontoSysCR = ($cdito / $TasaLocSys);
 												}else{
-														$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+														$MontoSysCR = $grantotalCostoInventarioOriginal;
 												}
 
 										}else if( $codigo3 == 2 || $codigo3 == "2" ){
@@ -1595,42 +1595,42 @@ class SalesInv extends REST_Controller {
 												if(trim($Data['dvf_currency']) != $MONEDASYS ){
 														$MontoSysCR = ($cdito / $TasaLocSys);
 												}else{
-														$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+														$MontoSysCR = $grantotalCostoInventarioOriginal;
 												}
 										}else if( $codigo3 == 3 || $codigo3 == "3" ){
 												$cdito = $grantotalCostoInventario;
 												if(trim($Data['dvf_currency']) != $MONEDASYS ){
 														$MontoSysCR = ($cdito / $TasaLocSys);
 												}else{
-														$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+														$MontoSysCR = $grantotalCostoInventarioOriginal;
 												}
 										}else if( $codigo3 == 4 || $codigo3 == "4" ){
 												$cdito = $grantotalCostoInventario;
 												if(trim($Data['dvf_currency']) != $MONEDASYS ){
 														$MontoSysCR = ($cdito / $TasaLocSys);
 												}else{
-														$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+														$MontoSysCR = $grantotalCostoInventarioOriginal;
 												}
 										}else if( $codigo3 == 5  || $codigo3 == "5" ){
 												$dbito = $grantotalCostoInventario;
 												if(trim($Data['dvf_currency']) != $MONEDASYS ){
 														$MontoSysDB = ($dbito / $TasaLocSys);
 												}else{
-														$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+														$MontoSysDB = $grantotalCostoInventarioOriginal;
 												}
 										}else if( $codigo3 == 6 || $codigo3 == "6" ){
 												$dbito = $grantotalCostoInventario;
 												if(trim($Data['dvf_currency']) != $MONEDASYS ){
 														$MontoSysDB = ($dbito / $TasaLocSys);
 												}else{
-														$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+														$MontoSysDB = $grantotalCostoInventarioOriginal;
 												}
 										}else if( $codigo3 == 7 || $codigo3 == "7" ){
 												$dbito = $grantotalCostoInventario;
 												if(trim($Data['dvf_currency']) != $MONEDASYS ){
 														$MontoSysDB = ($dbito / $TasaLocSys);
 												}else{
-														$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+														$MontoSysDB = $grantotalCostoInventarioOriginal;
 												}
 										}
 
@@ -1918,7 +1918,7 @@ class SalesInv extends REST_Controller {
 
 									if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
 
-											$grantotalCostoCosto = ($grantotalCostoCosto / $TasaLocSys);
+											$grantotalCostoCosto = ($grantotalCostoCosto * $TasaLocSys);
 									}
 
 
@@ -1927,49 +1927,49 @@ class SalesInv extends REST_Controller {
 										if(trim($Data['dvf_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysCR = $grantotalCostoCostoOriginal;
 										}
 									}else if( $codigo3 == 2 || $codigo3 == "2" ){
 										$cdito = 	$grantotalCostoCosto;
 										if(trim($Data['dvf_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysCR = $grantotalCostoCostoOriginal;
 										}
 									}else if( $codigo3 == 3 || $codigo3 == "3" ){
 										$cdito = 	$grantotalCostoCosto;
 										if(trim($Data['dvf_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysCR = $grantotalCostoCostoOriginal;
 										}
 									}else if( $codigo3 == 4 || $codigo3 == "4" ){
 										$cdito = 	$grantotalCostoCosto;
 										if(trim($Data['dvf_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysCR = $grantotalCostoCostoOriginal;
 										}
 									}else if( $codigo3 == 5  || $codigo3 == "5" ){
 										$dbito = 	$grantotalCostoCosto;
 										if(trim($Data['dvf_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysDB = $grantotalCostoCostoOriginal;
 										}
 									}else if( $codigo3 == 6 || $codigo3 == "6" ){
 										$dbito = 	$grantotalCostoCosto;
 										if(trim($Data['dvf_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysDB = $grantotalCostoCostoOriginal;
 										}
 									}else if( $codigo3 == 7 || $codigo3 == "7" ){
 										$dbito = 	$grantotalCostoCosto;
 										if(trim($Data['dvf_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysDB = $grantotalCostoCostoOriginal;
 										}
 									}
 									$AC1LINE = $AC1LINE+1;
@@ -2122,7 +2122,7 @@ class SalesInv extends REST_Controller {
 
 												if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
 
-														$grantotalCostoCosto = ($grantotalCostoCosto / $TasaLocSys);
+														$grantotalCostoCosto = ($grantotalCostoCosto * $TasaLocSys);
 												}
 
 												if( $codigo3 == 1 || $codigo3 == "1" ){
@@ -2130,49 +2130,49 @@ class SalesInv extends REST_Controller {
 													if(trim($Data['dvf_currency']) != $MONEDASYS ){
 															$MontoSysDB = ($dbito / $TasaLocSys);
 													}else{
-															$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+															$MontoSysDB = $grantotalCostoCostoOriginal;
 													}
 												}else if( $codigo3 == 2 || $codigo3 == "2" ){
 													$cdito = 	$grantotalCostoCosto;
 													if(trim($Data['dvf_currency']) != $MONEDASYS ){
 															$MontoSysCR = ($cdito / $TasaLocSys);
 													}else{
-															$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+															$MontoSysCR = $grantotalCostoCostoOriginal;
 													}
 												}else if( $codigo3 == 3 || $codigo3 == "3" ){
 													$cdito = 	$grantotalCostoCosto;
 													if(trim($Data['dvf_currency']) != $MONEDASYS ){
 															$MontoSysCR = ($cdito / $TasaLocSys);
 													}else{
-															$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+															$MontoSysCR = $grantotalCostoCostoOriginal;
 													}
 												}else if( $codigo3 == 4 || $codigo3 == "4" ){
 													$cdito = 	$grantotalCostoCosto;
 													if(trim($Data['dvf_currency']) != $MONEDASYS ){
 															$MontoSysCR = ($cdito / $TasaLocSys);
 													}else{
-															$MontoSysCR = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+															$MontoSysCR = $grantotalCostoCostoOriginal;
 													}
 												}else if( $codigo3 == 5  || $codigo3 == "5" ){
 													$dbito = 	$grantotalCostoCosto;
 													if(trim($Data['dvf_currency']) != $MONEDASYS ){
 															$MontoSysDB = ($dbito / $TasaLocSys);
 													}else{
-															$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+															$MontoSysDB = $grantotalCostoCostoOriginal;
 													}
 												}else if( $codigo3 == 6 || $codigo3 == "6" ){
 													$dbito = 	$grantotalCostoCosto;
 													if(trim($Data['dvf_currency']) != $MONEDASYS ){
 															$MontoSysDB = ($dbito / $TasaLocSys);
 													}else{
-															$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+															$MontoSysDB = $grantotalCostoCostoOriginal;
 													}
 												}else if( $codigo3 == 7 || $codigo3 == "7" ){
 													$dbito = 	$grantotalCostoCosto;
 													if(trim($Data['dvf_currency']) != $MONEDASYS ){
 															$MontoSysDB = ($dbito / $TasaLocSys);
 													}else{
-															$MontoSysDB = (	$grantotalCostoCostoOriginal / $TasaLocSys );
+															$MontoSysDB = $grantotalCostoCostoOriginal;
 													}
 												}
 												$AC1LINE = $AC1LINE+1;

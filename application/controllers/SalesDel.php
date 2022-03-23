@@ -1254,8 +1254,8 @@ class SalesDel extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuentaInventario,
-									':ac1_debit' => $dbito,
-									':ac1_credit' => $cdito,
+									':ac1_debit' => round($dbito, 2),
+									':ac1_credit' => round($cdito, 2),
 									':ac1_debit_sys' => round($MontoSysDB,2),
 									':ac1_credit_sys' => round($MontoSysCR,2),
 									':ac1_currex' => 0,
