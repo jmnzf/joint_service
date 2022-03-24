@@ -235,7 +235,7 @@ class AccountingAccent extends REST_Controller {
 	// OBTENER ACIENTOS CONTABLES
   public function getAccountingAccent_get(){
 
-        $sqlSelect = "SELECT
+        $sqlSelect = "SELECT	distinct
 																t0.mac_trans_id docnum,
 																t0.mac_trans_id numero_transaccion,
 																case
@@ -272,6 +272,23 @@ class AccountingAccent extends REST_Controller {
 																    when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_docnum
 																    when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_docnum
 																end numero_origen,
+																case
+																    when coalesce(t0.mac_base_type,0) = 3 then t1.vem_currency
+																    when coalesce(t0.mac_base_type,0) = 4 then t2.vdv_currency
+																    when coalesce(t0.mac_base_type,0) = 5 then t3.dvf_currency
+																    when coalesce(t0.mac_base_type,0) = 6 then t10.vnc_currency
+																    when coalesce(t0.mac_base_type,0) = 6 then t11.vnd_currency
+																    when coalesce(t0.mac_base_type,0) = 8 then t5.isi_currency
+																    when coalesce(t0.mac_base_type,0) = 9 then t6.iei_currency
+																    when coalesce(t0.mac_base_type,0) = 13 then t12.cec_currency
+																    when coalesce(t0.mac_base_type,0) = 14 then t13.cdc_currency
+																    when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_currency
+																    when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_currency
+																    when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_currency
+																    when coalesce(t0.mac_base_type,0) = 18 then 'BS'
+																    when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_currency
+																    when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
+																end currency,
 																t16.tsa_value,
 																t0.*
 																from tmac t0
@@ -368,7 +385,7 @@ class AccountingAccent extends REST_Controller {
 																    when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
 																    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
 																    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
-																end numero_origen,
+																end numero_origen,																
 																COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
 																from mac1 t0
 																left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
@@ -466,7 +483,25 @@ class AccountingAccent extends REST_Controller {
 																    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
 																    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
 																end numero_origen,
-																coalesce(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
+																case
+																    when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_currency
+																    when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_currency
+																    when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_currency
+																    when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_currency
+																    when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_currency
+																    when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_currency
+																    when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_currency
+																    when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_currency
+																    when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_currency
+																    when coalesce(t0.ac1_font_type,0) = 15 then t7.cfc_currency
+																    when coalesce(t0.ac1_font_type,0) = 16 then t14.cnc_currency
+																    when coalesce(t0.ac1_font_type,0) = 17 then t15.cnd_currency
+																    when coalesce(t0.ac1_font_type,0) = 18 then 'BS'
+																    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_currency
+																    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_currency
+																end currency,
+																coalesce(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*,
+																tsa_value
 																from mac1 t0
 																left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
 																left join dvdv t2 on t0.ac1_font_key = t2.vdv_docentry and t0.ac1_font_type = t2.vdv_doctype
@@ -483,6 +518,7 @@ class AccountingAccent extends REST_Controller {
 																left join dcdc t13 on t0.ac1_font_key = t13.cdc_docentry and t0.ac1_font_type = t13.cdc_doctype
 																left join dcnc t14 on t0.ac1_font_key = t14.cnc_docentry and t0.ac1_font_type = t14.cnc_doctype
 																left join dcnd t15 on t0.ac1_font_key = t15.cnd_docentry and t0.ac1_font_type = t15.cnd_doctype
+																left join tasa on t0.ac1_doc_date = tsa_date
 																WHERE ac1_trans_id =:ac1_trans_id";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
@@ -523,7 +559,44 @@ class AccountingAccent extends REST_Controller {
 			return;
 		}
 
-		$sqlSelect = "SELECT tmac.*, dmdt.mdt_docname as origen,tsa_value FROM tmac INNER JOIN dmdt ON dmdt.mdt_doctype = tmac.mac_base_type INNER JOIN tasa ON tsa_date  = mac_doc_date WHERE tmac.mac_base_type = :mac_base_type AND tmac.mac_base_entry = :mac_base_entry";
+		$sqlSelect = "SELECT distinct t0.*,
+		dmdt.mdt_docname as origen, tsa_value,
+		case
+		when coalesce(t0.mac_base_type,0) = 3 then t1.vem_currency
+		when coalesce(t0.mac_base_type,0) = 4 then t2.vdv_currency
+		when coalesce(t0.mac_base_type,0) = 5 then t3.dvf_currency
+		when coalesce(t0.mac_base_type,0) = 6 then t10.vnc_currency
+		when coalesce(t0.mac_base_type,0) = 7 then t11.vnd_currency
+		when coalesce(t0.mac_base_type,0) = 8 then t5.isi_currency
+		when coalesce(t0.mac_base_type,0) = 9 then t6.iei_currency
+		when coalesce(t0.mac_base_type,0) = 13 then t12.cec_currency
+		when coalesce(t0.mac_base_type,0) = 14 then t13.cdc_currency
+		when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_currency
+		when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_currency
+		when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_currency
+		when coalesce(t0.mac_base_type,0) = 18 then 'BS'
+		when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_currency
+		when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
+		end  as currency
+		from tmac t0
+		LEFT JOIN dvem t1 ON t0.mac_base_entry = t1.vem_docentry AND t0.mac_base_type= t1.vem_doctype
+		LEFT JOIN dvdv t2 ON t0.mac_base_entry = t2.vdv_docentry AND t0.mac_base_type= t2.vdv_doctype
+		LEFT JOIN dvfv t3 ON t0.mac_base_entry = t3.dvf_docentry AND t0.mac_base_type= t3.dvf_doctype
+		LEFT JOIN misi t5 ON t0.mac_base_entry = t5.isi_docentry AND t0.mac_base_type= t5.isi_doctype
+		LEFT JOIN miei t6 ON t0.mac_base_entry = t6.iei_docentry AND t0.mac_base_type= t6.iei_doctype
+		LEFT JOIN dcfc t7 ON t0.mac_base_entry = t7.cfc_docentry AND t0.mac_base_type= t7.cfc_doctype
+		LEFT JOIN gbpe t8 ON t0.mac_base_entry = t8.bpe_docentry AND t0.mac_base_type= t8.bpe_doctype
+		LEFT JOIN gbpr t9 ON t0.mac_base_entry = t9.bpr_docentry AND t0.mac_base_type= t9.bpr_doctype
+		LEFT JOIN dvnc t10 ON t0.mac_base_entry = t10.vnc_docentry AND t0.mac_base_type= t10.vnc_doctype
+		LEFT JOIN dvnd t11 ON t0.mac_base_entry = t11.vnd_docentry AND t0.mac_base_type= t11.vnd_doctype
+		LEFT JOIN dcec t12 ON t0.mac_base_entry = t12.cec_docentry AND t0.mac_base_type= t12.cec_doctype
+		LEFT JOIN dcdc t13 ON t0.mac_base_entry = t13.cdc_docentry AND t0.mac_base_type= t13.cdc_doctype
+		LEFT JOIN dcnc t14 ON t0.mac_base_entry = t14.cnc_docentry AND t0.mac_base_type= t14.cnc_doctype
+		LEFT JOIN dcnd t15 ON t0.mac_base_entry = t15.cnd_docentry AND t0.mac_base_type= t15.cnd_doctype
+		LEFT JOIN dmdt ON dmdt.mdt_doctype = t0.mac_base_type
+		LEFT JOIN tasa t16 ON mac_doc_date = tsa_date
+		WHERE t0.mac_base_type = :mac_base_type
+		AND t0.mac_base_entry = :mac_base_entry";
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_base_type' => $Data['mac_base_type'], ':mac_base_entry' => $Data['mac_base_entry']));
 
 		if(isset($resSelect[0])){
