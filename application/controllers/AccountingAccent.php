@@ -272,6 +272,7 @@ class AccountingAccent extends REST_Controller {
 																    when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_docnum
 																    when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_docnum
 																end numero_origen,
+																t16.tsa_value,
 																t0.*
 																from tmac t0
 																left join dvem t1 on t0.mac_base_entry = t1.vem_docentry and t0.mac_base_type= t1.vem_doctype
@@ -287,7 +288,8 @@ class AccountingAccent extends REST_Controller {
 																left join dcec t12 on t0.mac_base_entry = t12.cec_docentry and t0.mac_base_type= t12.cec_doctype
 																left join dcdc t13 on t0.mac_base_entry = t13.cdc_docentry and t0.mac_base_type= t13.cdc_doctype
 																left join dcnc t14 on t0.mac_base_entry = t14.cnc_docentry and t0.mac_base_type= t14.cnc_doctype
-																left join dcnd t15 on t0.mac_base_entry = t15.cnd_docentry and t0.mac_base_type= t15.cnd_doctype";
+																left join dcnd t15 on t0.mac_base_entry = t15.cnd_docentry and t0.mac_base_type= t15.cnd_doctype
+																left join tasa t16 on mac_doc_date = tsa_date";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
