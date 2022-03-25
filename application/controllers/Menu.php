@@ -127,7 +127,6 @@
 			//
 			$insertId = $this->pedeo->insertRow("INSERT INTO menu (men_nombre, men_icon, men_controller, men_action, men_sub_menu, men_id_menu, men_id_estado) VALUES (:Men_Nombre, :Men_Icon, :Men_Controller, :Men_Action, :Men_Submenu, :Men_Idmenu, :Men_Idestado)",
 				array(
-
 					':Men_Nombre'    => $request['Men_Nombre'],
 					':Men_Icon'      => $request['Men_Icon'],
 					':Men_Controller'=> $request['Men_Controller'],
@@ -177,7 +176,6 @@
 			//
 			$insertId = $this->pedeo->updateRow("UPDATE menu SET men_nombre=:men_nombre, men_icon=:men_icon, men_controller=:men_controller, men_action=:men_action, men_sub_menu=:men_sub_menu, men_id_menu=:men_id_menu, men_id_estado=:men_id_estado WHERE men_id = :men_id",
 				array(
-
 					':men_nombre'    => $request['Men_Nombre'],
 					':men_icon'      => $request['Men_Icon'],
 					':men_controller'=> $request['Men_Controller'],

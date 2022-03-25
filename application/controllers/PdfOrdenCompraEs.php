@@ -55,7 +55,7 @@ class PdfOrdenCompraEs extends REST_Controller {
         //INFORMACION DE LA EMPRESA
 
 				$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
-																					   pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
+																					   pge_cou_soc, CONCAT(pge_id_soc,' / ',pge_id_type) AS pge_id_type , pge_web_site, pge_logo,
 																					   CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
 																					   pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
 																						 FROM pgem", array());
@@ -248,7 +248,7 @@ class PdfOrdenCompraEs extends REST_Controller {
 													T4.DMC_PHONE1 Telefono,
 													T4.DMC_EMAIL Email,
 													T0.CPO_DOCNUM,
-													CONCAT(T6.PGS_PREF_NUM,' ',T0.CPO_DOCNUM) NumeroDocumento,
+													T0.CPO_DOCNUM NumeroDocumento,
 													T0.CPO_DOCDATE FechaDocumento,
 													T0.CPO_DUEDATE FechaVenDocumento,
 													T0.cpo_duedev fechaentrga,
@@ -275,7 +275,10 @@ class PdfOrdenCompraEs extends REST_Controller {
 													t6.pgs_mde,
 													t6.pgs_mpfn,
 													T8.MPF_NAME cond_pago,
-													t3.dmd_tonw lugar_entrega
+													t3.dmd_tonw lugar_entrega,
+												    CONCAT(T4.dmc_name,' ',T4.dmc_last_name) nombre_contacto,
+												    t4.dmc_email correo_contacto,
+												    t4.dmc_phone1 telefono_contacto
 												FROM dcpo  t0
 												INNER JOIN CPO1 T1 ON t0.CPO_docentry = t1.PO1_docentry
 												LEFT JOIN DMSN T2 ON t0.CPO_cardcode = t2.dms_card_code
@@ -327,25 +330,23 @@ class PdfOrdenCompraEs extends REST_Controller {
 
 
         $header = '
-        <table width="100%">
+				<table width="100%" style="text-align: left;">
         <tr>
             <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
             <th>
-                <p>'.$empresa[0]['pge_name_soc'].'</p>
-                <p>'.$empresa[0]['pge_id_type'].'</p>
-                <p>'.$empresa[0]['pge_add_soc'].'</p>
-                <p>'.$empresa[0]['pge_phone1'].'</p>
-                <p>'.$empresa[0]['pge_web_site'].'</p>
-                <p>'.$empresa[0]['pge_mail'].'</p>
+                <p><b>Andino Pneus de Venezuela, C.A.</b></p>
+                <p><b>Rif: J-00328174</b></p>
+                <p><b>Carretera Nacional Guacara-Los Guayos, Fabrica de Cauchos.</b></p>
+                <p><b>Guaraca, Estados Carabobo, Venezuela</b></p>
+
             </th>
             <th>
-                <p>ORDEN DE COMPRA</p>
-                <p >'.$contenidoOC[0]['numerodocumento'].'</p>
-
+                <p><b>ORDEN DE COMPRA</b></p>
             </th>
         </tr>
 
-        </table>';
+</table>
+        ';
 
 				$footer = '
         <table width="100%" style="vertical-align: bottom; font-family: serif;
@@ -357,13 +358,58 @@ class PdfOrdenCompraEs extends REST_Controller {
 
 
         $html = '
-				<table class="bordew" width="100%" >
+				<table  width="100%">
+        <tr>
+
+            <th style="text-align: left;">
+								<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
+								<p>'.$empresa[0]['pge_add_soc'].'</p>
+                <p>'.$empresa[0]['pge_id_type'].'</p>
+                <p>TELEFONOS: '.$empresa[0]['pge_phone1'].'</p>
+                <p>'.$empresa[0]['pge_web_site'].'</p>
+                <p>'.$empresa[0]['pge_mail'].'</p>
+            </th>
+            <th style="text-align: right;">
+								<p><b>OC: </b></p>
+						</th>
+						<th style="text-align: left;">
+                <p >'.$contenidoOC[0]['numerodocumento'].'</p>
+						</th>
+						<th style="text-align: right;">
+								<th style="text-align: right;">
+									<p><b>FECHA DE EMISIÓN: </b></p>
+						</th>
+									<th style="text-align: left;">
+									<p>'.date("d-m-Y", strtotime($contenidoOC[0]['fechadocumento'])).'</p>
+
+            </th>
+        </tr>
+
+        </table>
+				<table width="100%" style="vertical-align: bottom; font-family: serif;
+            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+            <tr>
+                <th class="fondo">
+                    <p></p>
+                </th>
+            </tr>
+        </table>
+				<table  width="100%" >
 				<tr>
 					<th style="text-align: left;">
+						<p><b>Proveedor</b></p>
 						<p class="">RIF: </p>
 					</th>
 					<th style="text-align: left;">
 						<p> '.$contenidoOC[0]['nit'].'</p>
+					</th>
+
+					<th style="text-align: right;">
+						<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
+						<p class="">NOMBRE CONTACTO: </p>
+					</th>
+					<th style="text-align: right;">
+						<p> '.$contenidoOC[0]['nombre_contacto'].'</p>
 					</th>
 				</tr>
 				<tr>
@@ -373,13 +419,11 @@ class PdfOrdenCompraEs extends REST_Controller {
 					<th style="text-align: left;">
 						<p> '.$contenidoOC[0]['cliente'].'</p>
 					</th>
-				</tr>
-				<tr>
-					<th style="text-align: left;">
-						<p class="">correo contacto: </p>
+					<th style="text-align: right;">
+						<p class="">CORREO CONTACTO: </p>
 					</th>
-					<th style="text-align: left;">
-						<p> '.$contenidoOC[0]['email'].'</p>
+					<th style="text-align: right;">
+						<p> '.$contenidoOC[0]['correo_contacto'].'</p>
 					</th>
 				</tr>
 				<tr>
@@ -388,6 +432,12 @@ class PdfOrdenCompraEs extends REST_Controller {
 					</th>
 					<th style="text-align: left;">
 						<p> '.$contenidoOC[0]['direccion'].'</p>
+					</th>
+					<th style="text-align: right;">
+						<p class="">TELEFONO CONTACTO: </p>
+					</th>
+					<th style="text-align: right;">
+						<p> '.$contenidoOC[0]['telefono_contacto'].'</p>
 					</th>
 					<th style="text-align: right;">
 						<p class=""></p>
@@ -412,51 +462,51 @@ class PdfOrdenCompraEs extends REST_Controller {
 						<p> '.$contenidoOC[0]['estado'].'</p>
 					</th>
 				</tr>
-				<tr>
-					<th style="text-align: left;">
-						<p class="">CONDICION DE PAGO: </p>
-					</th>
-					<th style="text-align: left;">
-						<p>'.$contenidoOC[0]['cond_pago'].'</p>
-					</th>
-				</tr>
-				<tr>
-					<th style="text-align: left;">
-						<p class="">Lugar de Entrega: </p>
-					</th>
-					<th style="text-align: left;">
-						<p>'.$contenidoOC[0]['lugar_entrega'].'</p>
-					</th>
-				</tr>
-				<tr>
-					<th style="text-align: left;">
-						<p class="">FECHA DE ENTREGA:</p>
-					</th>
-					<th style="text-align: left;">
-						<p>'.date("d-m-Y", strtotime($contenidoOC[0]['fechaentrga'])).'</p>
-					</th>
-					<th style="text-align: right;">
-						<p class="">FECHA DE EMISIÓN: </p>
-					</th>
 
-					<th style="text-align: right;">
-						<p>'.date("d-m-Y", strtotime($contenidoOC[0]['fechadocumento'])).'</p>
-					</th>
+
+				</table>
+				<table width="100%" style="vertical-align: bottom; font-family: serif;
+            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+            <tr>
+                <th class="fondo">
+                    <p></p>
+                </th>
+            </tr>
+        </table>
+				<table table  width="100%">
+				<tr>
+				<th style="text-align: center;">
+					<p class=""><b>CONDICION DE PAGO:</b> </p><br>
+					<p>'.$contenidoOC[0]['cond_pago'].'</p>
+				</th>
+
+				<th style="text-align: center;">
+					<p class=""><b>Lugar de Entrega:</b> </p><br>
+					<p>'.$contenidoOC[0]['lugar_entrega'].'</p>
+				</th>
+
+				<th style="text-align: center;">
+					<p class=""><b>FECHA DE ENTREGA:</b></p><br>
+					<p>'.date("d-m-Y", strtotime($contenidoOC[0]['fechaentrga'])).'</p>
+				</th>
+
 				</tr>
 				</table>
-
-        <br>
+				<br>
 
         <table class="borde" style="width:100%">
+
+
+
         <tr>
-          <th >ITEM</th>
-          <th >REFERENCIA</th>
-          <th >UNIDAD</th>
-          <th >PRECIO</th>
-          <th >CANTIDAD</th>
-          <th >DESCUENTO</th>
-          <th >IVA</th>
-          <th >TOTAL</th>
+          <th><b>ITEM</b></th>
+          <th><b>REFERENCIA</b></th>
+          <th><b>UNIDAD</b></th>
+          <th><b>PRECIO</b></th>
+          <th><b>CANTIDAD</b></th>
+          <th><b>DESCUENTO</b></th>
+          <th><b>IVA</b></th>
+          <th><b>TOTAL</b></th>
         </tr>
       	'.$totaldetalle.'
         </table>
@@ -474,25 +524,25 @@ class PdfOrdenCompraEs extends REST_Controller {
         <table width="100%">
 
         <tr>
-            <td style="text-align: right;">Base Documento: <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['base'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Base Documento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['base'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Descuento: <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['descuento'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Descuento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['descuento'], 2, ',', '.').'</span></p></td>
         </tr>
 				<tr>
-            <td style="text-align: right;">Sub Total: <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['subtotal'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Sub Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['subtotal'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Impuestos: <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['iva'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Impuestos:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['iva'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Total: <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
         </tr>
 				</table>
-				<table class="bordew" width="100%">
+				<table  width="100%">
 				<tr>
-            <td style="text-align: left;">comentarios (ver adjunto de instruccion de envio):
-						<p>'.$contenidoOC[0]['comentarios'].'</p>
+            <td style="text-align: left;"><b>comentarios (ver adjunto de instruccion de envio):</b>
+						<br><p>'.$contenidoOC[0]['comentarios'].'</p>
 						</p>
 						</td>
         </tr>
@@ -506,6 +556,7 @@ class PdfOrdenCompraEs extends REST_Controller {
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
                 <th style="text-align: left;" >
+										<p><b>VALOR EN LETRAS:</b></p><br>
                     <p>'.$formatter->toWords($contenidoOC[0]['totaldoc'],2)." ".$contenidoOC[0]['nombremoneda'].'</p>
                 </th>
             </tr>
@@ -525,7 +576,7 @@ class PdfOrdenCompraEs extends REST_Controller {
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
 
-				$filename = $contenidoOC[0]['numerodocumento'].'.pdf';
+				$filename = 'OC_'.$contenidoOC[0]['numerodocumento'].'.pdf';
         $mpdf->Output($filename, 'D');
 
 
