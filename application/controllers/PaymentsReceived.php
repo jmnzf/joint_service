@@ -501,56 +501,90 @@ class PaymentsReceived extends REST_Controller {
 
                 ));
 								// Se verifica que el detalle no de error insertando //
-								// if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
-								// 	  	// SOLO SI NO ES UN ANTICIPO
-								// 			if($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0){
-								//
-								// 						$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
-								//
-								// 						$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
-								//
-								// 							':dvf_paytoday' => $detail['pr1_vlrpaid'],
-								// 							':dvf_docentry' => $detail['pr1_docentry'],
-								// 							':dvf_doctype'  => $detail['pr1_doctype']
-								//
-								//
-								// 						));
-								//
-								// 						if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
-								//
-								//
-								//
-								// 						}else{
-								// 							$this->pedeo->trans_rollback();
-								//
-								// 							$respuesta = array(
-								// 								'error'   => true,
-								// 								'data' => $resUpdateFactPay,
-								// 								'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
-								// 							);
-								//
-								// 							 $this->response($respuesta);
-								//
-								// 							 return;
-								// 						}
-								// 			}
-								//
-								// }else{
-								//
-								// 		// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
-								// 		// se retorna el error y se detiene la ejecucion del codigo restante.
-								// 			$this->pedeo->trans_rollback();
-								//
-								// 			$respuesta = array(
-								// 				'error'   => true,
-								// 				'data' => $resInsertDetail,
-								// 				'mensaje'	=> 'No se pudo registrar el pago'
-								// 			);
-								//
-								// 			 $this->response($respuesta);
-								//
-								// 			 return;
-								// }
+								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+									  	// SOLO SI NO ES UN ANTICIPO
+											if($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0){
+														$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
+
+														$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+															':dvf_paytoday' => $detail['pr1_vlrpaid'],
+															':dvf_docentry' => $detail['pr1_docentry'],
+															':dvf_doctype'  => $detail['pr1_doctype']
+
+
+														));
+
+														if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
+
+														}else{
+															$this->pedeo->trans_rollback();
+
+															$respuesta = array(
+																'error'   => true,
+																'data' => $resUpdateFactPay,
+																'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
+															);
+
+															 $this->response($respuesta);
+
+															 return;
+														}
+
+
+														// ACTUALIZAR REFERENCIA DE PAGO EN ASIENTO CONTABLE DE LA FACTURA
+
+														$slqUpdateVenDebit = "UPDATE mac1
+																									SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																									WHERE ac1_legal_num = :ac1_legal_num
+																									AND ac1_font_key = :ac1_font_key
+																									AND ac1_font_type = :ac1_font_type
+																									AND ac1_account = :ac1_account";
+														$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+															':ac1_ven_credit' => $detail['pr1_vlrpaid'],
+															':ac1_legal_num' => $detail['pr1_tercero'],
+															':ac1_font_key' => $detail['pr1_docentry'],
+															':ac1_font_type' => $detail['pr1_doctype'],
+															':ac1_account' => $detail['pr1_cuenta']
+
+														));
+
+														if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+														}else{
+															$this->pedeo->trans_rollback();
+
+															$respuesta = array(
+																'error'   => true,
+																'data' => $resUpdateFactPay,
+																'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
+															);
+
+															 $this->response($respuesta);
+
+															 return;
+														}
+
+														//
+											}
+
+								}else{
+
+										// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
+										// se retorna el error y se detiene la ejecucion del codigo restante.
+											$this->pedeo->trans_rollback();
+
+											$respuesta = array(
+												'error'   => true,
+												'data' => $resInsertDetail,
+												'mensaje'	=> 'No se pudo registrar el pago'
+											);
+
+											 $this->response($respuesta);
+
+											 return;
+								}
 
 
 								// LLENANDO DETALLE ASIENTOS CONTABLES (AGRUPACION)
@@ -737,8 +771,8 @@ class PaymentsReceived extends REST_Controller {
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
+									':ac1_ven_debit' => 0,
+									':ac1_ven_credit' => 0,
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => 1,
 									':ac1_isrti' => 0,
@@ -1013,8 +1047,8 @@ class PaymentsReceived extends REST_Controller {
 												':ac1_accperiod' => 1,
 												':ac1_close' => 0,
 												':ac1_cord' => 0,
-												':ac1_ven_debit' => 1,
-												':ac1_ven_credit' => 1,
+												':ac1_ven_debit' => round($credito, 2),
+												':ac1_ven_credit' => round($credito, 2),
 												':ac1_fiscal_acct' => 0,
 												':ac1_taxid' => 1,
 												':ac1_isrti' => 0,
@@ -1099,8 +1133,8 @@ class PaymentsReceived extends REST_Controller {
 															':ac1_accperiod' => 1,
 															':ac1_close' => 0,
 															':ac1_cord' => 0,
-															':ac1_ven_debit' => 1,
-															':ac1_ven_credit' => 1,
+															':ac1_ven_debit' => 0,
+															':ac1_ven_credit' => 0,
 															':ac1_fiscal_acct' => 0,
 															':ac1_taxid' => 1,
 															':ac1_isrti' => 0,
@@ -1297,8 +1331,8 @@ class PaymentsReceived extends REST_Controller {
 																		':ac1_accperiod' => 1,
 																		':ac1_close' => 0,
 																		':ac1_cord' => 0,
-																		':ac1_ven_debit' => 1,
-																		':ac1_ven_credit' => 1,
+																		':ac1_ven_debit' => 0,
+																		':ac1_ven_credit' => 0,
 																		':ac1_fiscal_acct' => 0,
 																		':ac1_taxid' => 1,
 																		':ac1_isrti' => 0,
