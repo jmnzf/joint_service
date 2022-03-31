@@ -51,7 +51,7 @@ class Reports extends REST_Controller {
 
 			}else if( isset($request['flt_dateby']) && $request['flt_dateby'] == 2 ){ // SEGUN FECHA DE VENCIMIENTO
 				$sql .= " AND DATE(tbmi.bmi_duedate) BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
-			
+
 			}else	if( isset($request['flt_dateby']) && $request['flt_dateby'] == 3 ){ // SEGUN FECHA DE DOCUMENTO
 				$sql .= " AND DATE(tbmi.bmi_duedev) BETWEEN '".$request['flt_dateint']."' AND '".$request['flt_dateend']."'";
 
@@ -749,7 +749,7 @@ class Reports extends REST_Controller {
 				$resSelect = $this->pedeo->queryTable($sqlSelect,array());
 // print_r($sqlSelect);exit();die();
 				if(isset($resSelect[0])){
-					// 
+					//
 					$newData = [];
 					// RECORRER DATOS DE LA CONSULTA.
 					foreach ($resSelect as $key => $data) {
@@ -772,7 +772,7 @@ class Reports extends REST_Controller {
 										// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
 										$newObj['mac_comment'] = $obj;
 									} else {
-										// 
+										//
 										$newObj['mac_'.$prefijo[1]] = $obj;
 									}
 								}

@@ -584,6 +584,29 @@ class FacturaVenta extends REST_Controller {
 								</th>
 						</tr>
         </table>
+				<table width="100%" style="vertical-align: bottom;">
+				<tr>
+					<th style="text-align: justify;">
+					<br>
+					<br>
+					<p>Nota: El pago, recibido de  este documento, por parte de un SPE en moneda distinta a la de curso legal en el pais  y fuera del
+					sistema bancario, genera un 3% por concepto de IGTF considerando lo establecido en los Art. 4 numeral 6 , Art. 24, ambos de la
+					Gaceta 6.687 y Art.1 de la Gaceta 42.339.</p>
+					</th>
+				</tr>
+				</table>
+				<br>
+				<br>
+				<TABLE width="35%" style="vertical-align: bottom;">
+					<TR><TH style="text-align: left;">75% RET.IVA:</TH>
+						<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalIva * 75) / 100, 2, ',', '.').'</TD>
+					<TR><TH  style="text-align: left;">BASE IMPONIBLE  3% DE IGTF:</TH>
+						<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalDoc - ($valorTotalIva * 75) / 100), 2, ',', '.').'</TD>
+					<TR><TH  style="text-align: left;">TOTAL  3% DE IGTF:</TH>
+						<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format((($valorTotalDoc - ($valorTotalIva * 75) / 100) * 3) / 100, 2, ',', '.').'</TD>
+				    <TR><TH style="text-align: left;">TOTAL:</TH>
+						<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalDoc - ($valorTotalIva * 75) / 100) + ((($valorTotalDoc - ($valorTotalIva * 75) / 100) * 3) / 100), 2, ',', '.').'</TD>
+				</TABLE>
 
 				<br><br>
 
@@ -596,16 +619,20 @@ class FacturaVenta extends REST_Controller {
 							<td style="height: 50px;" >'.$contenidoFV[0]['placa'].'</td>
 							<td style="height: 50px;">'.$contenidoFV[0]['precintos'].'</td>
 					</tr>
+
 				</table>
+
 
 
         <br><br>
         <table width="100%" style="vertical-align: bottom;">
             <tr>
-                <th style="text-align: left;">
+                <th style="text-align: justify;">
                     <span>'.$CommentFinal[0]['cdm_comments'].'</span>
                 </th>
-            </tr>
+								</tr>
+								<br>
+								<br>
         </table>';
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');

@@ -75,43 +75,231 @@ class EstadoCuentaPro extENDs REST_Controller {
 	          return;
 				}
 
-				$sqlestadocuenta = "SELECT
-                        	t0.cfc_cardcode CodigoProveedor,
-                        	t0.cfc_cardname NombreProveedor,
-                        	t0.cfc_docnum NumeroDocumento,
-                        	t0.cfc_docdate FechaDocumento,
-                        	t0.cfc_duedate FechaVencimiento,
-													t0.cfc_doctotal totalfactura,
-													trim('COP' FROM t0.cfc_currency) MonedaDocumento,
-                        	'".$Data['fecha']."' FechaCorte,
-													('".$Data['fecha']."' - t0.cfc_duedate) dias,
-                        	CASE
-                        		WHEN ( '".$Data['fecha']."' - t0.cfc_duedate) >=0 and ( '".$Data['fecha']."' - t0.cfc_duedate) <=30
-                        			then (t0.cfc_doctotal - COALESCE(t0.cfc_paytoday,0))
+				$sqlestadocuenta = "SELECT distinct
+														mac1.ac1_font_key,
+														mac1.ac1_legal_num as codigoproveedor,
+														dmsn.dms_card_name nombreproveedor,
+														mac1.ac1_account as cuenta,
+														dcfc.cfc_currency monedadocumento,
+														'".$Data['fecha']."' fechacorte,
+														'".$Data['fecha']."' - cfc_duedate dias,
+														dcfc.cfc_comment,
+														dcfc.cfc_currency,
+														mac1.ac1_font_key as dvf_docentry,
+														dcfc.cfc_docnum,
+														dcfc.cfc_docdate as FechaDocumento,
+														dcfc.cfc_duedate as FechaVencimiento,
+														cfc_docnum as NumeroDocumento,
+														mac1.ac1_font_type as numtype,
+														mdt_docname as tipo,
+														case
+															when mac1.ac1_font_type = 15 then mac1.ac1_credit
+															else mac1.ac1_debit
+														end	 as totalfactura,
+														(mac1.ac1_ven_debit) - (mac1.ac1_credit)  as saldo,
+														'' retencion,
+														tasa.tsa_value as tasa_dia,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=0 and ( '".$Data['fecha']."' - dcfc.cfc_duedate) <=30
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END uno_treinta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=31 and ( '".$Data['fecha']."' - dcfc.cfc_duedate) <=60
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END treinta_uno_secenta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=61 and ( '".$Data['fecha']."' - dcfc.cfc_duedate) <=90
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END secenta_uno_noventa,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=91
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
 															ELSE 0
-                        	END uno_treinta,
-                        	CASE
-                        		WHEN ( '".$Data['fecha']."' - t0.cfc_duedate) >=31 and ( '".$Data['fecha']."' - t0.cfc_duedate) <=60
-                        			then (t0.cfc_doctotal - COALESCE(t0.cfc_paytoday,0))
-															ELSE 0
-                        	END treinta_uno_secenta,
-                        	CASE
-                        		WHEN ( '".$Data['fecha']."' - t0.cfc_duedate) >=61 and ( '".$Data['fecha']."' - t0.cfc_duedate) <=90
-                        			then (t0.cfc_doctotal - COALESCE(t0.cfc_paytoday,0))
-															ELSE 0
-                        	END secenta_uno_noventa,
-                        	CASE
-                        		WHEN ( '".$Data['fecha']."' - t0.cfc_duedate) >=91
-                        			then (t0.cfc_doctotal - COALESCE(t0.cfc_paytoday,0))
-													ELSE 0
-                        	END mayor_noventa
+														END mayor_noventa
 
-                        FROM dcfc t0
-                        WHERE '".$Data['fecha']."' >= t0.cfc_duedate  and t0.cfc_cardcode = '".$Data['cardcode']."'
-												ORDER BY NumeroDocumento";
+														from  mac1
+														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+														inner join dcfc  on dcfc.cfc_doctype = mac1.ac1_font_type and dcfc.cfc_docentry = mac1.ac1_font_key
+														inner join tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date
+														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+														where mac1.ac1_legal_num = '".$Data['cardcode']."' and ABS((mac1.ac1_credit) - (mac1.ac1_ven_debit)) > 0
+
+														--PAGO EFECTUADO
+														union all
+														select distinct
+														mac1.ac1_font_key,
+														mac1.ac1_legal_num as codigoproveedor,
+														dmsn.dms_card_name nombreproveedor,
+														mac1.ac1_account as cuenta,
+														gbpe.bpe_currency monedadocumento,
+														'".$Data['fecha']."' fechacorte,
+														'".$Data['fecha']."' - gbpe.bpe_docdate as dias,
+														gbpe.bpe_comments as bpr_comment,
+														gbpe.bpe_currency,
+														mac1.ac1_font_key as dvf_docentry,
+														gbpe.bpe_docnum,
+														gbpe.bpe_docdate as FechaDocumento,
+														gbpe.bpe_docdate as FechaVencimiento,
+														gbpe.bpe_docnum as NumeroDocumento,
+														mac1.ac1_font_type as numtype,
+														mdt_docname as tipo,
+														case
+															when mac1.ac1_font_type = 15 then mac1.ac1_debit
+															else mac1.ac1_credit
+														end	 as totalfactura,
+														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
+														'' retencion,
+														tasa.tsa_value as tasa_dia,
+														CASE
+															WHEN ( '".$Data['fecha']."' - gbpe.bpe_docdate) >=0 and ( '".$Data['fecha']."' - gbpe.bpe_docdate) <=30
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END uno_treinta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - gbpe.bpe_docdate) >=31 and ( '".$Data['fecha']."' - gbpe.bpe_docdate) <=60
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END treinta_uno_secenta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - gbpe.bpe_docdate) >=61 and ( '".$Data['fecha']."' - gbpe.bpe_docdate) <=90
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END secenta_uno_noventa,
+														CASE
+															WHEN ( '".$Data['fecha']."' - gbpe.bpe_docdate) >=91
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+															ELSE 0
+														END mayor_noventa
+
+														from  mac1
+														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+														inner join gbpe on gbpe.bpe_doctype = mac1.ac1_font_type and gbpe.bpe_docentry = mac1.ac1_font_key
+														inner join tasa on gbpe.bpe_currency = tasa.tsa_curro and gbpe.bpe_docdate = tasa.tsa_date
+														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+														where mac1.ac1_legal_num = '".$Data['cardcode']."'
+														and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+
+														--NOTA CREDITO
+														union all
+														select distinct
+														mac1.ac1_font_key,
+														mac1.ac1_legal_num as codigoproveedor,
+														dmsn.dms_card_name NombreProveedor,
+														mac1.ac1_account as cuenta,
+														dcnc.cnc_currency monedadocumento,
+														'".$Data['fecha']."' fechacorte,
+														'".$Data['fecha']."' - dcnc.cnc_duedate as dias,
+														dcnc.cnc_comment as bpr_comment,
+														dcnc.cnc_currency,
+														mac1.ac1_font_key as dvf_docentry,
+														dcnc.cnc_docnum,
+														dcnc.cnc_duedate as FechaDocumento,
+														dcnc.cnc_duedate as FechaVencimiento,
+														dcnc.cnc_docnum as NumeroDocumento,
+														mac1.ac1_font_type as numtype,
+														mdt_docname as tipo,
+														case
+															when mac1.ac1_font_type = 15 then mac1.ac1_debit
+															else mac1.ac1_debit
+														end	 as totalfactura,
+														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
+														'' retencion,
+														tasa.tsa_value as tasa_dia,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcnc.cnc_duedate) >=0 and ( '".$Data['fecha']."' - dcnc.cnc_duedate) <=30
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END uno_treinta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcnc.cnc_duedate) >=31 and ( '".$Data['fecha']."' - dcnc.cnc_duedate) <=60
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END treinta_uno_secenta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcnc.cnc_duedate) >=61 and ( '".$Data['fecha']."' - dcnc.cnc_duedate) <=90
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END secenta_uno_noventa,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcnc.cnc_duedate) >=91
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+															ELSE 0
+														END mayor_noventa
+
+
+														from  mac1
+														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+														inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry = mac1.ac1_font_key
+														inner join tasa on dcnc.cnc_currency = tasa.tsa_curro and dcnc.cnc_duedate = tasa.tsa_date
+														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+														where mac1.ac1_legal_num = '".$Data['cardcode']."'
+														and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+
+														--NOTA DEBITO
+														union all
+														select distinct
+														mac1.ac1_font_key,
+														mac1.ac1_legal_num as codigoproveedor,
+														dmsn.dms_card_name nombreproveedor,
+														mac1.ac1_account as cuenta,
+														dcnd.cnd_currency monedadocumento,
+														'".$Data['fecha']."' fechacorte,
+														'".$Data['fecha']."' - dcnd.cnd_docdate as dias,
+														dcnd.cnd_comment as bpr_comment,
+														dcnd.cnd_currency,
+														mac1.ac1_font_key as dvf_docentry,
+														dcnd.cnd_docnum,
+														dcnd.cnd_docdate as FechaDocumento,
+														dcnd.cnd_duedate as FechaVencimiento,
+														dcnd.cnd_docnum as NumeroDocumento,
+														mac1.ac1_font_type as numtype,
+														mdt_docname as tipo,
+														case
+															when mac1.ac1_font_type = 15 then mac1.ac1_debit
+															else mac1.ac1_credit
+														end	 as totalfactura,
+														(mac1.ac1_ven_credit) - (mac1.ac1_debit) as saldo,
+														'' retencion,
+														tasa.tsa_value as tasa_dia,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=0 and ( '".$Data['fecha']."' - dcnd.cnd_duedate) <=30
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END uno_treinta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=31 and ( '".$Data['fecha']."' - dcnd.cnd_duedate) <=60
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END treinta_uno_secenta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=61 and ( '".$Data['fecha']."' - dcnd.cnd_duedate) <=90
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+																	ELSE 0
+														END secenta_uno_noventa,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=91
+																then (mac1.ac1_ven_debit) - (mac1.ac1_credit)
+															ELSE 0
+														END mayor_noventa
+
+
+														from  mac1
+														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+														inner join dcnd on dcnd.cnd_doctype = mac1.ac1_font_type and dcnd.cnd_docentry = mac1.ac1_font_key
+														inner join tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date
+														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+														where mac1.ac1_legal_num = '".$Data['cardcode']."'
+														and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0";
 
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
-         // print_r($contenidoestadocuenta);exit();die();
+          // print_r($sqlestadocuenta);exit();die();
 				if(!isset($contenidoestadocuenta[0])){
 						$respuesta = array(
 							 'error' => true,
@@ -123,12 +311,17 @@ class EstadoCuentaPro extENDs REST_Controller {
 						var_dump($contenidoestadocuenta);exit();die();
 						return;
 				}
-
-
 				$totaldetalle = '';
+				$detail_0_30 = 0;
+				$detail_30_60 = 0;
+				$detail_60_90 = 0;
+				$detail_mayor_90 = 0;
+				$total_valores = '';
 				foreach ($contenidoestadocuenta as $key => $value) {
 					// code...
-					$detalle = '<td class="centro">'.$value['numerodocumento'].'</td>
+					$detalle = '
+											<td class="centro">'.$value['tipo'].'</td>
+											<td class="centro">'.$value['numerodocumento'].'</td>
 											<td class="centro">'.$value['fechadocumento'].'</td>
 											<td class="centro">'.$value['monedadocumento']." ".number_format($value['totalfactura'], 2, ',', '.').'</td>
 											<td class="centro">'.$value['fechavencimiento'].'</td>
@@ -140,6 +333,29 @@ class EstadoCuentaPro extENDs REST_Controller {
                       <td class="centro">'.$value['monedadocumento']." ".number_format($value['mayor_noventa'], 2, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				 $totalfactura = ($totalfactura + $value['totalfactura']);
+
+				 $detail_0_30 =  $detail_0_30 + ($value['uno_treinta']);
+				 $detail_30_60 =  $detail_30_60 + ($value['treinta_uno_secenta']);
+				 $detail_60_90 =  $detail_60_90 + ($value['secenta_uno_noventa']);
+				 $detail_mayor_90 =  $detail_mayor_90 + ($value['mayor_noventa']);
+
+				 $total_valores = '
+							 <tr>
+							 <th>&nbsp;</th>
+							 <th>&nbsp;</th>
+							 <th>&nbsp;</th>
+							 <th>&nbsp;</th>
+							 <th>&nbsp;</th>
+							 <th><b>Total</b></th>
+							 <th style="width: 10%;" class=" centro"><b>'.$value['monedadocumento'].' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), 2, ',', '.').'</b></th>
+							 <th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
+							 <th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
+							 <th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_60_90, 2, ',', '.').'</b></th>
+							 <th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_mayor_90, 2, ',', '.').'</b></th>
+							 </tr>';
+
+				 $totalfactura = ($totalfactura + ($value['totalfactura'] - $value['saldo']));
+
 				}
 
 
@@ -148,7 +364,7 @@ class EstadoCuentaPro extENDs REST_Controller {
         <tr>
             <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
             <th style="text-align: center; margin-left: 600px;">
-                <p>INFORME ESTADO DE CUENTA PROVEEDORES</p>
+                <p><b>INFORME ESTADO DE CUENTA PROVEEDORES</b></p>
 
             </th>
 						<th>
@@ -165,17 +381,17 @@ class EstadoCuentaPro extENDs REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th class="fondo" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+                <th class="" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
             </tr>
         </table>';
 
 
 				$html = '
 
-				<table class="bordew" style="width:100%">
+				<table class="" style="width:100%">
 			 <tr>
 				 <th>
-					 <p class="fondo" style="text-align: left;">RIF:</p>
+					 <p class="" style="text-align: left;"><b>RIF:</b></p>
 				 </th>
 				 <th style="text-align: left;">
 					 <p>'.$contenidoestadocuenta[0]['codigoproveedor'].'</p>
@@ -183,7 +399,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 				</tr>
 				<tr>
 				 <th >
-					 <p class="fondo" >Nombre Proveedor</p>
+					 <p class="" ><b>Nombre Proveedor</b></p>
 	 			 <th style="text-align: left;">
 
 					 <p style="text-align: left;">'.$contenidoestadocuenta[0]['nombreproveedor'].'</p>
@@ -192,7 +408,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 			 	</tr>
 			 <tr>
 				 <th>
-					 <p class="fondo">Saldo</p>
+					 <p class=""><b>Saldo</b></p>
 				 </th>
 				 <th style="text-align: left;">
 					 <p>'.$value['monedadocumento']." ".number_format($totalfactura, 2, ',', '.').'</p>
@@ -201,23 +417,32 @@ class EstadoCuentaPro extENDs REST_Controller {
 			 </tr>
 
 			 </table>
+			 <table width="100%" style="vertical-align: bottom; font-family: serif;
+					 font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+					 <tr>
+							 <th class="fondo">
+									 <p></p>
+							 </th>
+					 </tr>
+			 </table>
 
         <br>
 
         <table class="borde" style="width:100%">
         <tr>
-          <th class="fondo">Numero Documento</th>
-          <th class="fondo">Fecha Documento</th>
-					<th class="fondo">Total Documento</th>
-          <th class="fondo">Fecha Ven Documento</th>
-          <th class="fondo">Fecha Corte</th>
-					<th class="fondo">Dias Vencidos</th>
-          <th class="fondo">0-30</th>
-          <th class="fondo">31-60</th>
-          <th class="fondo">61-90</th>
-          <th class="fondo">+90</th>
+					<th class=""><b>Tipo Documento</b></th>
+          <th class=""><b>Numero Documento</b></th>
+          <th class=""><b>Fecha Documento</b></th>
+					<th class=""><b>Total Documento</b></th>
+          <th class=""><b>Fecha Ven Documento</b></th>
+          <th class=""><b>Fecha Corte</b></th>
+					<th class=""><b>Dias Vencidos</b></th>
+          <th class=""><b>0-30</b></th>
+          <th class=""><b>31-60</b></th>
+          <th class=""><b>61-90</b></th>
+          <th class=""><b>+90</b></th>
         </tr>
-      	'.$totaldetalle.'
+      	'.$totaldetalle.$total_valores.'
         </table>
         <br>
         <table width="100%" style="vertical-align: bottom; font-family: serif;
@@ -242,7 +467,7 @@ class EstadoCuentaPro extENDs REST_Controller {
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
 
 
-        $mpdf->Output('Doc.pdf', 'D');
+        $mpdf->Output('EstadoCuenta_'.$contenidoestadocuenta[0]['codigoproveedor'].'-'.$contenidoestadocuenta[0]['nombreproveedor'].'.pdf', 'D');
 
 				header('Content-type: application/force-download');
 				header('Content-Disposition: attachment; filename='.$filename);

@@ -40,97 +40,149 @@ class PagoRecibido extends REST_Controller {
       }
 
 
-      $resSelect = $this->pedeo->queryTable("SELECT distinct on(dvf_docnum) dvf_docnum,
-										    mdt_docname tipo,
-										   dvf_docnum id_origen,
-										   dvf_cardcode codigo_proveedor,
-										   dvf_docentry,
-										   ac1_account cuenta,
-										   dvf_docdate fecha_doc,
-										   dvf_duedate fecha_ven,
-										   CURRENT_DATE - dvf_duedate dias_atrasado,
-										   dvf_doctotal total_doc,
-										   saldo saldo_venc,
-										   dvf_doctype numType,
-										   tsa_value tasa_dia,
-										   '' retencion,
-										   dvf_currency,
-										   ac1_font_key,
-										dvf_comment
-										FROM dvfv
-										JOIN SALDO_DOC on dvf_docentry = ac1_font_key and dvf_doctype = ac1_font_type
-										join dmdt on dvf_doctype = mdt_doctype
-										join tasa on dvf_docdate = tsa_date
-										where dvf_cardcode = :cardcode
-										union all
-										SELECT distinct  on (vnc_docnum) vnc_docnum,
-										    mdt_docname tipo,
-										   vnc_docnum id_origen,
-										   vnc_cardcode codigo_proveedor,
-										   vnc_docentry,
-										   ac1_account cuenta,
-										   vnc_docdate fecha_doc,
-										   vnc_duedate fecha_ven,
-										   CURRENT_DATE - vnc_duedate dias_atrasado,
-										   vnc_doctotal total_doc,
-										   saldo saldo_venc,
-										   vnc_doctype numType,
-										   tsa_value tasa_dia,
-										   '' retencion,
-										   vnc_currency,
-										 ac1_font_key,
-										   vnc_comment
-										FROM dvnc
-										JOIN SALDO_DOC on vnc_docentry = ac1_font_key and vnc_doctype = ac1_font_type
-										join dmdt on vnc_doctype = mdt_doctype
-										join tasa on vnc_docdate = tsa_date
-										where  vnc_cardcode = :cardcode
-										union all
-										SELECT distinct on(vnd_docnum) vnd_docnum,
-										   mdt_docname tipo,
-										   vnd_docnum id_origen,
-										   vnd_cardcode codigo_proveedor,
-										   vnd_docentry,
-										   ac1_account cuenta,
-										   vnd_docdate fecha_doc,
-										   vnd_duedate fecha_ven,
-										   CURRENT_DATE - vnd_duedate dias_atrasado,
-										   vnd_doctotal total_doc,
-										   saldo saldo_venc,
-										   vnd_doctype numType,
-										   tsa_value tasa_dia,
-										   '' retencion,
-										   vnd_currency,
-										         ac1_font_key,
-										   vnd_comment
-										FROM dvnd
-										JOIN SALDO_DOC on vnd_docentry = ac1_font_key and vnd_doctype = ac1_font_type
-										join dmdt on vnd_doctype = mdt_doctype
-										join tasa on vnd_docdate = tsa_date
-										where  ac1_legal_num = :cardcode
-										union all
-										SELECT distinct on(bpr_docnum) bpr_docnum,
-										       mdt_docname tipo,
-										       bpr_docnum id_origen,
-										       bpr_cardcode codigo_proveedor,
-										       bpr_docentry,
-										       ac1_account cuenta,
-										       bpr_docdate fecha_doc,
-										       bpr_docdate fecha_ven,
-										       CURRENT_DATE - bpr_docdate dias_atrasado,
-										       bpr_doctotal total_doc,
-										        saldo saldo_venc,
-										       bpr_doctype numType,
-										       tsa_value tasa_dia,
-										       '' retencion,
-										       bpr_currency,
-										       ac1_font_key,
-										       bpr_comments
-										from gbpr
-										join dmdt on mdt_doctype = bpr_doctype
-										join saldo_doc on bpr_doctype = ac1_font_type
-										join tasa on bpr_docdate = tsa_date
-										where bpr_cardcode = :cardcode", array(':cardcode' => $request['cardcode']));
+      $resSelect = $this->pedeo->queryTable("SELECT distinct
+																						mac1.ac1_font_key,
+																						mac1.ac1_legal_num as codigo_proveedor,
+																						mac1.ac1_account as cuenta,
+																						CURRENT_DATE - dvf_duedate dias_atrasado,
+																						dvfv.dvf_comment,
+																						dvfv.dvf_currency,
+																						mac1.ac1_font_key as dvf_docentry,
+																						dvfv.dvf_docnum,
+																						dvfv.dvf_docdate as fecha_doc,
+																						dvfv.dvf_duedate as fecha_ven,
+																						dvf_docnum as id_origen,
+																						mac1.ac1_font_type as numtype,
+																						mdt_docname as tipo,
+																						case
+																							when mac1.ac1_font_type = 5 then mac1.ac1_debit
+																							else mac1.ac1_credit
+																						end	 as total_doc,
+																						(mac1.ac1_debit) - (mac1.ac1_ven_credit) as saldo_venc,
+																						'' retencion,
+																						tasa.tsa_value as tasa_dia
+																						from  mac1
+																						inner join dacc
+																						on mac1.ac1_account = dacc.acc_code
+																						and acc_businessp = '1'
+																						inner join dmdt
+																						on mac1.ac1_font_type = dmdt.mdt_doctype
+																						inner join dvfv
+																						on dvfv.dvf_doctype = mac1.ac1_font_type
+																						and dvfv.dvf_docentry = mac1.ac1_font_key
+																						inner join tasa
+																						on dvfv.dvf_currency = tasa.tsa_curro
+																						and dvfv.dvf_docdate = tasa.tsa_date
+																						where mac1.ac1_legal_num = :cardcode
+																						and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0
+																						union all
+																						select distinct
+																						mac1.ac1_font_key,
+																						mac1.ac1_legal_num as codigo_proveedor,
+																						mac1.ac1_account as cuenta,
+																						CURRENT_DATE - gbpr.bpr_docdate as dias_atrasado,
+																						gbpr.bpr_comments as bpr_comment,
+																						gbpr.bpr_currency,
+																						mac1.ac1_font_key as dvf_docentry,
+																						gbpr.bpr_docnum,
+																						gbpr.bpr_docdate as fecha_doc,
+																						gbpr.bpr_docdate as fecha_ven,
+																						gbpr.bpr_docnum as id_origen,
+																						mac1.ac1_font_type as numtype,
+																						mdt_docname as tipo,
+																						case
+																							when mac1.ac1_font_type = 5 then mac1.ac1_debit
+																							else mac1.ac1_credit
+																						end	 as total_doc,
+																						(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
+																						'' retencion,
+																						tasa.tsa_value as tasa_dia
+																						from  mac1
+																						inner join dacc
+																						on mac1.ac1_account = dacc.acc_code
+																						and acc_businessp = '1'
+																						inner join dmdt
+																						on mac1.ac1_font_type = dmdt.mdt_doctype
+																						inner join gbpr
+																						on gbpr.bpr_doctype = mac1.ac1_font_type
+																						and gbpr.bpr_docentry = mac1.ac1_font_key
+																						inner join tasa
+																						on gbpr.bpr_currency = tasa.tsa_curro
+																						and gbpr.bpr_docdate = tasa.tsa_date
+																						where mac1.ac1_legal_num = :cardcode
+																						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+																						union all
+																						select distinct
+																						mac1.ac1_font_key,
+																						mac1.ac1_legal_num as codigo_proveedor,
+																						mac1.ac1_account as cuenta,
+																						CURRENT_DATE - dvnc.vnc_docdate as dias_atrasado,
+																						dvnc.vnc_comment as bpr_comment,
+																						dvnc.vnc_currency,
+																						mac1.ac1_font_key as dvf_docentry,
+																						dvnc.vnc_docnum,
+																						dvnc.vnc_docdate as fecha_doc,
+																						dvnc.vnc_duedate as fecha_ven,
+																						dvnc.vnc_docnum as id_origen,
+																						mac1.ac1_font_type as numtype,
+																						mdt_docname as tipo,
+																						case
+																							when mac1.ac1_font_type = 5 then mac1.ac1_debit
+																							else mac1.ac1_credit
+																						end	 as total_doc,
+																						(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
+																						'' retencion,
+																						tasa.tsa_value as tasa_dia
+																						from  mac1
+																						inner join dacc
+																						on mac1.ac1_account = dacc.acc_code
+																						and acc_businessp = '1'
+																						inner join dmdt
+																						on mac1.ac1_font_type = dmdt.mdt_doctype
+																						inner join dvnc
+																						on dvnc.vnc_doctype = mac1.ac1_font_type
+																						and dvnc.vnc_docentry = mac1.ac1_font_key
+																						inner join tasa
+																						on dvnc.vnc_currency = tasa.tsa_curro
+																						and dvnc.vnc_docdate = tasa.tsa_date
+																						where mac1.ac1_legal_num = :cardcode
+																						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+																						union all
+																						select distinct
+																						mac1.ac1_font_key,
+																						mac1.ac1_legal_num as codigo_proveedor,
+																						mac1.ac1_account as cuenta,
+																						CURRENT_DATE - dvnd.vnd_docdate as dias_atrasado,
+																						dvnd.vnd_comment as bpr_comment,
+																						dvnd.vnd_currency,
+																						mac1.ac1_font_key as dvf_docentry,
+																						dvnd.vnd_docnum,
+																						dvnd.vnd_docdate as fecha_doc,
+																						dvnd.vnd_duedate as fecha_ven,
+																						dvnd.vnd_docnum as id_origen,
+																						mac1.ac1_font_type as numtype,
+																						mdt_docname as tipo,
+																						case
+																							when mac1.ac1_font_type = 5 then mac1.ac1_debit
+																							else mac1.ac1_credit
+																						end	 as total_doc,
+																						(mac1.ac1_debit) - (mac1.ac1_ven_credit) as saldo_venc,
+																						'' retencion,
+																						tasa.tsa_value as tasa_dia
+																						from  mac1
+																						inner join dacc
+																						on mac1.ac1_account = dacc.acc_code
+																						and acc_businessp = '1'
+																						inner join dmdt
+																						on mac1.ac1_font_type = dmdt.mdt_doctype
+																						inner join dvnd
+																						on dvnd.vnd_doctype = mac1.ac1_font_type
+																						and dvnd.vnd_docentry = mac1.ac1_font_key
+																						inner join tasa
+																						on dvnd.vnd_currency = tasa.tsa_curro
+																						and dvnd.vnd_docdate = tasa.tsa_date
+																						where mac1.ac1_legal_num = :cardcode
+																						and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0", array(':cardcode' => $request['cardcode']));
 
   		if(isset($resSelect[0])){
 

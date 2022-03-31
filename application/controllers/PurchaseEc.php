@@ -258,9 +258,9 @@ class PurchaseEc extends REST_Controller {
         $sqlInsert = "INSERT INTO dcec(cec_series, cec_docnum, cec_docdate, cec_duedate, cec_duedev, cec_pricelist, cec_cardcode,
                       cec_cardname, cec_currency, cec_contacid, cec_slpcode, cec_empid, cec_comment, cec_doctotal, cec_baseamnt, cec_taxtotal,
                       cec_discprofit, cec_discount, cec_createat, cec_baseentry, cec_basetype, cec_doctype, cec_idadd, cec_adress, cec_paytype,
-                      cec_attch,cec_createby)VALUES(:cec_series, :cec_docnum, :cec_docdate, :cec_duedate, :cec_duedev, :cec_pricelist, :cec_cardcode, :cec_cardname,
+                      cec_attch,cec_createby,cec_correl)VALUES(:cec_series, :cec_docnum, :cec_docdate, :cec_duedate, :cec_duedev, :cec_pricelist, :cec_cardcode, :cec_cardname,
                       :cec_currency, :cec_contacid, :cec_slpcode, :cec_empid, :cec_comment, :cec_doctotal, :cec_baseamnt, :cec_taxtotal, :cec_discprofit, :cec_discount,
-                      :cec_createat, :cec_baseentry, :cec_basetype, :cec_doctype, :cec_idadd, :cec_adress, :cec_paytype, :cec_attch,:cec_createby)";
+                      :cec_createat, :cec_baseentry, :cec_basetype, :cec_doctype, :cec_idadd, :cec_adress, :cec_paytype, :cec_attch,:cec_createby,:cec_correl)";
 
 
 				// Se Inicia la transaccion,
@@ -298,7 +298,8 @@ class PurchaseEc extends REST_Controller {
               ':cec_adress' => isset($Data['cec_adress'])?$Data['cec_adress']:NULL,
               ':cec_paytype' => is_numeric($Data['cec_paytype'])?$Data['cec_paytype']:0,
 							':cec_createby' => isset($Data['cec_createby'])?$Data['cec_createby']:NULL,
-              ':cec_attch' => $this->getUrl(count(trim(($Data['cec_attch']))) > 0 ? $Data['cec_attch']:NULL, $resMainFolder[0]['main_folder'])
+              ':cec_attch' => $this->getUrl(count(trim(($Data['cec_attch']))) > 0 ? $Data['cec_attch']:NULL, $resMainFolder[0]['main_folder']),
+							':cec_correl' => isset($Data['cec_correl'])?$Data['cec_correl']:NULL
 
 						));
 

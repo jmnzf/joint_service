@@ -301,7 +301,7 @@ class Items extends REST_Controller {
 						$variableSql = $variableSql." AND t0.dma_item_name LIKE '%".$Data['nom_artic']."%'";
 				}
 
-        $sqlSelect = "SELECT
+        $sqlSelect = "SELECT distinct
 												t0.*,
 												t2.mga_name,
 												sum(t1.bdi_quantity) stock

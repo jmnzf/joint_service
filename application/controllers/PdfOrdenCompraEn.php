@@ -283,7 +283,10 @@ class PdfOrdenCompraEn extends REST_Controller {
 													t3.dmd_tonw lugar_entrega,
 													CONCAT(T4.dmc_name,' ',T4.dmc_last_name) nombre_contacto,
 													t4.dmc_email correo_contacto,
-													t4.dmc_phone1 telefono_contacto
+													t4.dmc_phone1 telefono_contacto,
+													t0.cpo_date_inv fecha_fact_pro,
+													t0.cpo_date_del fecha_entre,
+													t0.cpo_place_del lugar_entre
 												FROM dcpo  t0
 												INNER JOIN CPO1 T1 ON t0.CPO_docentry = t1.PO1_docentry
 												LEFT JOIN DMSN T2 ON t0.CPO_cardcode = t2.dms_card_code
@@ -399,74 +402,34 @@ class PdfOrdenCompraEn extends REST_Controller {
                 </th>
             </tr>
         </table>
-				<table  width="100%" >
+				<table  width="100%" font-family: serif>
 				<tr>
-					<th style="text-align: left;">
-						<p><b>supplier</b></p>
-						<p class="">RIF: </p>
-					</th>
-					<th style="text-align: left;">
-						<p> '.$contenidoOC[0]['nit'].'</p>
-					</th>
+					<th><b>supplier</b><th>
+					<th><b>'.$empresa[0]['pge_small_name'].'</b><th>
+       	</th>
+        </tr>
+				<tr>
+					<td><b>RIF:</b> <span>'.$contenidoOC[0]['nit'].'</span></p></td>
+					<td></td>
+					<td><b>Contact name:</b> <span>'.$contenidoOC[0]['nombre_contacto'].'</span></p></td>
+				</tr>
+				<tr>
+					<td><b>provider\'s name:</b> <span>'.$contenidoOC[0]['cliente'].'</span></p></td>
+					<td></td>
+					<td><b>CONTACT MAIL:</b> <span>'.$contenidoOC[0]['correo_contacto'].'</span></p></td>
+				</tr>
+				<tr>
+					<td><b>ADDRESS:</b> <span>'.$contenidoOC[0]['direccion'].'</span></p></td>
+					<td></td>
+					<td><b>telephone contact:</b> <span>'.$contenidoOC[0]['telefono_contacto'].'</span></p></td>
+				</tr>
+				<tr>
+					<td><b>town:</b> <span>'.$contenidoOC[0]['ciudad'].'</span></p></td>
+				</tr>
+				<tr>
+					<td><b>state:</b> <span>'.$contenidoOC[0]['estado'].'</span></p></td>
+				</tr>
 
-					<th style="text-align: right;">
-						<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
-						<p class="">NOMBRE CONTACTO: </p>
-					</th>
-					<th style="text-align: right;">
-						<p> '.$contenidoOC[0]['nombre_contacto'].'</p>
-					</th>
-				</tr>
-				<tr>
-					<th style="text-align: left;">
-						<p class="">NOMBRE: </p>
-					</th>
-					<th style="text-align: left;">
-						<p> '.$contenidoOC[0]['cliente'].'</p>
-					</th>
-					<th style="text-align: right;">
-						<p class="">CORREO CONTACTO: </p>
-					</th>
-					<th style="text-align: right;">
-						<p> '.$contenidoOC[0]['correo_contacto'].'</p>
-					</th>
-				</tr>
-				<tr>
-					<th style="text-align: left;">
-						<p class="">DIRECCIÓN: </p>
-					</th>
-					<th style="text-align: left;">
-						<p> '.$contenidoOC[0]['direccion'].'</p>
-					</th>
-					<th style="text-align: right;">
-						<p class="">TELEFONO CONTACTO: </p>
-					</th>
-					<th style="text-align: right;">
-						<p> '.$contenidoOC[0]['telefono_contacto'].'</p>
-					</th>
-					<th style="text-align: right;">
-						<p class=""></p>
-					</th>
-					<th style="text-align: right;">
-						<p></p>
-					</th>
-				</tr>
-				<tr>
-					<th style="text-align: left;">
-						<p class="">CIUDAD: </p>
-					</th>
-					<th style="text-align: left;">
-						<p> '.$contenidoOC[0]['ciudad'].'</p>
-					</th>
-				</tr>
-				<tr>
-					<th style="text-align: left;">
-						<p class="">ESTADO: </p>
-					</th>
-					<th style="text-align: left;">
-						<p> '.$contenidoOC[0]['estado'].'</p>
-					</th>
-				</tr>
 
 
 				</table>
@@ -480,21 +443,16 @@ class PdfOrdenCompraEn extends REST_Controller {
         </table>
 				<table table  width="100%">
 				<tr>
-				<th style="text-align: center;">
-					<p class=""><b>PAYMENT CONDITION:</b> </p><br>
-					<p>'.$contenidoOC[0]['cond_pago'].'</p>
-				</th>
-
-				<th style="text-align: center;">
-					<p class=""><b>Place of delivery:</b> </p><br>
-					<p>'.$contenidoOC[0]['lugar_entrega'].'</p>
-				</th>
-
-				<th style="text-align: center;">
-					<p class=""><b>DELIVERY DATE:</b></p><br>
-					<p>'.date("d-m-Y", strtotime($contenidoOC[0]['fechaentrga'])).'</p>
-				</th>
-
+				<th style="text-align: center;"><b>PAYMENT CONDITION:</b></th>
+				<th style="text-align: center;"><b>place of delivery:</b></th>
+				<th style="text-align: center;"><b>delivery date:</b></th>
+				<th style="text-align: center;"><b>SUPPLIER INVOICE DATE:</b></th>
+				</tr>
+				<tr>
+				<td>'.$contenidoOC[0]['cond_pago'].'</td>
+				<td>'.$contenidoOC[0]['lugar_entre'].'</td>
+				<td>'.date("d-m-Y", strtotime($contenidoOC[0]['fecha_entre'])).'</td>
+				<td>'.$contenidoOC[0]['fecha_fact_pro'].'</td>
 				</tr>
 				</table>
 				<br>
@@ -546,7 +504,7 @@ class PdfOrdenCompraEn extends REST_Controller {
 				<table  width="100%">
 				<tr>
             <td style="text-align: left;"><b>Comments or Special Instructions:</b>
-						<p>'.$contenidoOC[0]['comentarios'].'</p>
+						<p>'.$this->traslate($contenidoOC[0]['comentarios']).'</p>
 						</p>
 						</td>
         </tr>
@@ -569,7 +527,7 @@ class PdfOrdenCompraEn extends REST_Controller {
 				<pagebreak/>'
 				.$observaciones.
 				'</html>';
-
+// print_r($html);exit();die();
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
         $mpdf->SetHTMLHeader($header);
