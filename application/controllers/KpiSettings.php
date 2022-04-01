@@ -352,7 +352,7 @@
 					// VALIDAR CAMPOS DEL QUERY
 					if (!empty($item['sql_query'])) {
 						// EXECUTAR QUERY DEL KPI.
-						$result = $this->pedeo->queryTable($item['sql_query'], []);
+						$result = $this->pedeo->queryTable(preg_replace("/[\r\n|\n|\r]+/", PHP_EOL, $item['sql_query']), []);
 						// ELIMINAR CAMPO DEL QUERY
 						unset($item['sql_query']);
 						// ASIGNAR DATOS

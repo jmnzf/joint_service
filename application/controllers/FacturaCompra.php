@@ -103,7 +103,9 @@ class FacturaCompra extends REST_Controller {
 													T0.CFC_TAXTOTAL Iva,
 													T0.CFC_DOCTOTAL TotalDoc,
 													T0.CFC_COMMENT Comentarios,
-													t0.CFC_TOTALRET totalret
+													t0.CFC_TOTALRET totalret,
+													t0.cfc_tax_control_num,
+													T0.cfc_correl
 												FROM DCFC t0
 												INNER JOIN CFC1 T1 ON t0.CFC_docentry = t1.FC1_docentry
 												LEFT JOIN DMSN T2 ON t0.CFC_cardcode = t2.dms_card_code
@@ -149,16 +151,16 @@ class FacturaCompra extends REST_Controller {
         <tr>
             <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
             <th>
-                <p>'.$empresa[0]['pge_name_soc'].'</p>
-                <p>'.$empresa[0]['pge_id_type'].'</p>
-                <p>'.$empresa[0]['pge_add_soc'].'</p>
-                <p>'.$empresa[0]['pge_phone1'].'</p>
-                <p>'.$empresa[0]['pge_web_site'].'</p>
-                <p>'.$empresa[0]['pge_mail'].'</p>
+                <p><b>'.$empresa[0]['pge_name_soc'].'</b></p>
+                <p><b>'.$empresa[0]['pge_id_type'].'</b></p>
+                <p><b>'.$empresa[0]['pge_add_soc'].'</b></p>
+                <p><b>'.$empresa[0]['pge_phone1'].'</b></p>
+                <p><b>'.$empresa[0]['pge_web_site'].'</b></p>
+                <p><b>'.$empresa[0]['pge_mail'].'</b></p>
             </th>
             <th>
-                <p>FACTURA DE COMPRA</p>
-                <p class="fondo">'.$contenidoFC[0]['numerodocumento'].'</p>
+                <p><b>FACTURA DE COMPRA</b></p>
+                <p class="">'.$contenidoFC[0]['numerodocumento'].'</p>
 
             </th>
         </tr>
@@ -179,65 +181,55 @@ class FacturaCompra extends REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th class="fondo" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+                <th class="" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
             </tr>
         </table>';
 
 
         $html = '
 
-        <table class="bordew" style="width:100%">
-        <tr>
-          <th>
-          	<p class="fondo">SEÑOR(ES):</p>
-          </th>
-          <th style="text-align: left;">
-          	<p>'.$contenidoFC[0]['cliente'].'</p>
-          </th>
-          <th>
-            <p class="fondo">FECHA DE EXPEDICIÓN </p>
-            <p>'.$contenidoFC[0]['fechadocumento'].'</p>
-          </th>
-        </tr>
-        <tr>
-          <th>
-            <p class="fondo">DIRECCIÓN:</p>
-          </th>
-          <th style="text-align: left;">
-            <p>'.$contenidoFC[0]['direccion'].'</p>
-          </th>
+        <table class="" style="width:100%">
+				<tr>
+          <td ><b>RIF :</b><span>'.$contenidoFC[0]['nit'].'</span></td>
+          <td></td>
+          <td ><b>FECHA EXPEDICION :</b><span>'.$contenidoFC[0]['fechadocumento'].'</span></td>
+         </tr>
+				 <tr>
+         <td><b>NOMBRE PROVEEDOR :</b><span> '.$contenidoFC[0]['cliente'].'</span></td>
+          <td></td>
+          <td><b>FECHA VENCIMIENTO :</b><span> '.$contenidoFC[0]['fechavendocumento'].'</span></td>
+         </tr>
+				 <tr>
+         <td><b>DIRECCION:</b> <span> '.$contenidoFC[0]['direccion'].'</span></td>
+          </tr>
+					<tr>
+          <td><b>TELEFONO :</b><span>'.$contenidoFC[0]['telefono'].'</span></td>
+					<td></td>
+					<td><b>#FISCAL :</b><span> '.$contenidoFC[0]['cfc_tax_control_num'].'</span></td>
+         </tr>
 
-        </tr>
-        <tr>
-          <th>
-            <p class="fondo">TELÉFONO:</p>
-          </th>
-          <th style="text-align: left;">
-            <p>
-            	<span>'.$contenidoFC[0]['telefono'].'</span>
-                <span class ="fondo">RIF:</span>
-                <span>'.$contenidoFC[0]['nit'].'</span>
-            </p>
-          </th>
-          <th>
-            <p class="fondo">FECHA DE VENCIMIENTO </p>
-            <p>'.$contenidoFC[0]['fechavendocumento'].'</p>
-          </th>
-        </tr>
+        </table>
+				<table width="100%" style="vertical-align: bottom; font-family: serif;
+            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+            <tr>
+                <th class="fondo">
+                    <p></p>
+                </th>
+            </tr>
         </table>
 
         <br>
 
         <table class="borde" style="width:100%">
         <tr>
-          <th class="fondo">ITEM</th>
-          <th class="fondo">REFERENCIA</th>
-          <th class="fondo">UNIDAD</th>
-          <th class="fondo">PRECIO</th>
-          <th class="fondo">CANTIDAD</th>
-          <th class="fondo">DESCUENTO</th>
-          <th class="fondo">IVA</th>
-          <th class="fondo">TOTAL</th>
+          <th class=""><b>ITEM</b></th>
+          <th class=""><b>REFERENCIA</b></th>
+          <th class=""><b>UNIDAD</b></th>
+          <th class=""><b>PRECIO</b></th>
+          <th class=""><b>CANTIDAD</b></th>
+          <th class=""><b>DESCUENTO</b></th>
+          <th class=""><b>IVA</b></th>
+          <th class=""><b>TOTAL</b></th>
         </tr>
       	'.$totaldetalle.'
         </table>
@@ -254,22 +246,22 @@ class FacturaCompra extends REST_Controller {
         <br>
         <table width="100%">
         <tr>
-            <td style="text-align: right;">Base Documento: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['base'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Base Documento: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['base'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Descuento: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['descuento'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Descuento: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['descuento'], 2, ',', '.').'</span></p></td>
         </tr>
 				<tr>
-            <td style="text-align: right;">Sub Total: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['subtotal'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Sub Total: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['subtotal'], 2, ',', '.').'</span></p></td>
         </tr>
 				<tr>
-            <td style="text-align: right;">Total Retencion: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totalret'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Total Retencion: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totalret'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Impuestos: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['iva'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Impuestos: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['iva'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Total: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Total: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
         </tr>
 
         </table>
@@ -278,7 +270,8 @@ class FacturaCompra extends REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th style="text-align: left;" class="fondo">
+                <th style="text-align: left;" class="">
+								<p><b>VALOR EN LETRAS:</b></p>
                     <p>'.$formatter->toWords($contenidoFC[0]['totaldoc'],2)." ".$contenidoFC[0]['nombremoneda'].'</p>
                 </th>
             </tr>

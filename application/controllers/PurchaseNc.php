@@ -450,7 +450,7 @@ class PurchaseNc extends REST_Controller {
 						));
 
 
-						if ( isset(	$resDocInicio[0] ) ){
+						if ( isset(	$resDocInicio[0] ) ) {
 
 							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
 															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
@@ -1958,7 +1958,7 @@ class PurchaseNc extends REST_Controller {
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
 										':ac1_ven_debit' => round($TotalDoc,2),
-										':ac1_ven_credit' => 0,
+										':ac1_ven_credit' => round($TotalDoc,2),
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => 1,
 										':ac1_isrti' => 0,
@@ -2237,6 +2237,37 @@ class PurchaseNc extends REST_Controller {
 
 
 					// VALIDANDO ESTADOS DE DOCUMENTOS
+
+					//SE VALIDA QUE EL PAY TO DAY DE LA FACTURA
+					if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
+
+						$sqlUpdateFactPay = "UPDATE  dcfc  SET cfc_paytoday = COALESCE(cfc_paytoday,0)+:cfc_paytoday WHERE cfc_docentry = :cfc_docentry and cfc_doctype = :cfc_doctype";
+
+						$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+							':cfc_paytoday' => $Data['cnc_doctotal'],
+							':cfc_docentry' => $Data['cnc_baseentry'],
+							':cfc_doctype'  => $Data['cnc_basetype']
+
+						));
+
+						if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
+
+						}else{
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resUpdateFactPay,
+								'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$Data['cnc_baseentry']
+							);
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+					}
+
 					// SE ACTUALIZA VALOR EN EL ASIENTO CONTABLE
 					// GENERADO EN LA FACTURA
 					if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
@@ -2267,14 +2298,14 @@ class PurchaseNc extends REST_Controller {
 						$cuentaCxP = $rescuentaCxP[0]['mgs_acct'];
 
 						$slqUpdateVenDebit = "UPDATE mac1
-																	SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																	SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
 																	WHERE ac1_legal_num = :ac1_legal_num
 																	AND ac1_font_key = :ac1_font_key
 																	AND ac1_font_type = :ac1_font_type
 																	AND ac1_account = :ac1_account";
 						$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-							':ac1_ven_credit' => $Data['cnc_doctotal'],
+							':ac1_ven_debit' => $Data['cnc_doctotal'],
 							':ac1_legal_num'  => $Data['cnc_cardcode'],
 							':ac1_font_key'   => $Data['cnc_baseentry'],
 							':ac1_font_type'  => $Data['cnc_basetype'],
@@ -2300,42 +2331,40 @@ class PurchaseNc extends REST_Controller {
 					}
 					//
 					//SE CIERRA LA NOTA CREADA
-					// if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
-					//
-					// 	$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-					// 											VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-					//
-					// 	$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-					//
-					//
-					// 						':bed_docentry' => $resInsert,
-					// 						':bed_doctype' =>  $Data['cnc_doctype'],
-					// 						':bed_status' => 3, //ESTADO CERRADO
-					// 						':bed_createby' => $Data['cnc_createby'],
-					// 						':bed_date' => date('Y-m-d'),
-					// 						':bed_baseentry' => $Data['cnc_baseentry'],
-					// 						':bed_basetype' => $Data['cnc_basetype']
-					// 	));
-					//
-					// 	if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-					//
-					// 	}else{
-					// 		 $this->pedeo->trans_rollback();
-					//
-					// 			$respuesta = array(
-					// 				'error'   => true,
-					// 				'data' => $resInsertEstado,
-					// 				'mensaje'	=> 'No se pudo registrar la nota debito'
-					// 			);
-					//
-					//
-					// 			$this->response($respuesta);
-					//
-					// 			return;
-					// 	}
-					// }
+					if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
+
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
+											':bed_docentry' => $resInsert,
+											':bed_doctype' =>  $Data['cnc_doctype'],
+											':bed_status' => 3, //ESTADO CERRADO
+											':bed_createby' => $Data['cnc_createby'],
+											':bed_date' => date('Y-m-d'),
+											':bed_baseentry' => $Data['cnc_baseentry'],
+											':bed_basetype' => $Data['cnc_basetype']
+						));
+
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la nota debito'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+						}
+					}
 
 					// FIN VALIDACION DE ESTADOS
 

@@ -2061,40 +2061,40 @@ class SalesNc extends REST_Controller {
 						}
 						//
 						//SE CIERRA LA NOTA CREADA
-						// if($Data['vnc_basetype'] == 5) { // SOLO CUANDO ES UNA FACTURA
-						//
-						// 	$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-						// 											VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-						//
-						// 	$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-						//
-						//
-						// 						':bed_docentry' => $resInsert,
-						// 						':bed_doctype' =>  $Data['vnc_doctype'],
-						// 						':bed_status' => 3, //ESTADO CERRADO
-						// 						':bed_createby' => $Data['vnc_createby'],
-						// 						':bed_date' => date('Y-m-d'),
-						// 						':bed_baseentry' => $Data['vnc_baseentry'],
-						// 						':bed_basetype' => $Data['vnc_basetype']
-						// 	));
-						//
-						// 	if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-						//
-						// 	}else{
-						// 		 $this->pedeo->trans_rollback();
-						//
-						// 			$respuesta = array(
-						// 				'error'   => true,
-						// 				'data' => $resInsertEstado,
-						// 				'mensaje'	=> 'No se pudo registrar la nota credito'
-						// 			);
-						//
-						//
-						// 			$this->response($respuesta);
-						//
-						// 			return;
-						// 	}
-						// }
+						if($Data['vnc_basetype'] == 5) { // SOLO CUANDO ES UNA FACTURA
+
+							$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																	VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+							$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+												':bed_docentry' => $resInsert,
+												':bed_doctype' =>  $Data['vnc_doctype'],
+												':bed_status' => 3, //ESTADO CERRADO
+												':bed_createby' => $Data['vnc_createby'],
+												':bed_date' => date('Y-m-d'),
+												':bed_baseentry' => $Data['vnc_baseentry'],
+												':bed_basetype' => $Data['vnc_basetype']
+							));
+
+							if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+							}else{
+								 $this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar la nota credito'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+							}
+						}
 						// FIN DE OPERACIONES VITALES
 
 						// Si todo sale bien despues de insertar el detalle de la Nota crédito de clientes
