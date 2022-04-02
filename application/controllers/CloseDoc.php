@@ -82,91 +82,141 @@ class CloseDoc extends REST_Controller {
 
     }
 
-    public function setCancelDoc_post(){
+  public function setCancelDoc_post()
+  {
 
-      $Data = $this->post();
-      $respuesta = array();
+    $Data = $this->post();
+    $respuesta = array();
+    // print_r($Data);exit;
+    if (!isset($Data['basetype']) or !isset($Data['baseentry']) or !isset($Data['createby'])) {
 
-      if(!isset($Data['basetype']) OR !isset($Data['baseentry']) OR !isset($Data['createby'])){
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'La informacion enviada no es valida'
+      );
 
-            $respuesta = array(
-              'error' => true,
-              'data'  => array(),
-              'mensaje' =>'La informacion enviada no es valida'
-            );
+      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+      return;
+    }
 
-            return;
+    $sqlSelect = "SELECT distinct tbmd.*, mdt_docname,estado
+                    FROM tbmd
+                        INNER JOIN dmdt
+                        ON tbmd.bmd_doctype = dmdt.mdt_doctype
+                        left join responsestatus
+                          on id = bmd_docentry and tipo = bmd_doctype
+                    WHERE concat(bmd_tdi, bmd_ndi) IN (SELECT concat(tb1.bmd_tdi, tb1.bmd_ndi)
+                    FROM tbmd as tb1
+                    WHERE tb1.bmd_doctype  = :cpo_doctype
+                    AND tb1.bmd_docentry = :cpo_docentry)
+                    AND  estado not in ('Anulado')
+                    ORDER BY tbmd.bmd_id ASC";
 
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(":cpo_docentry" => $Data['docentry'], ":cpo_doctype" => $Data['doctype']));
+    $this->pedeo->trans_begin();
+    $posteriores = [];
+    $anterior = [];
+    foreach ($resSelect as $key => $docs) {
+      if ($docs['bmd_doctype'] > $Data['doctype']) {
+        array_push($posteriores, $docs);
       }
-      // print_r($Data);
-      // exit;
 
-      //SE INSERTA EL ESTADO DEL DOCUMENTO
+      // SE SACA EL DOCUMENTO ANTERIOR AL QUE SE ESTA CONSULTANDO
+      if (
+        $docs['bmd_doctype'] == $Data['doctype'] and
+        $docs['bmd_docentry'] == $Data['docentry'] and
+        $key > 0
+      ) {
+        array_push($anterior, $resSelect[$key - 1]);
+      }
+    }
 
-      $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+
+    // SI EXISTEN DOCUMENTOS POSTERIORES SE ENVIA UN MENSAJE
+    if (isset($posteriores[0])) {
+      $this->response(array(
+        'error' => true,
+        'data'  => [],
+        'mensaje' => 'No se puede anular el documento, está relacionado con docuemntos posteriores'
+      ), REST_Controller::HTTP_BAD_REQUEST);
+    }
+
+
+    // print_r($anterior['estado']);exit;
+    //SE INSERTA EL ESTADO DEL DOCUMENTO
+    $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
                           VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-      $this->pedeo->trans_begin();
-      $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+    $this->pedeo->trans_begin();
+    $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+      ':bed_docentry' => $Data['docentry'],
+      ':bed_doctype' => $Data['doctype'],
+      ':bed_status' => 2, //ESTADO ANULADO
+      ':bed_createby' => $Data['createby'],
+      ':bed_date' => date('Y-m-d'),
+      ':bed_baseentry' => NULL,
+      ':bed_basetype' => NULL
+    ));
 
 
-                ':bed_docentry' => $Data['docentry'],
-                ':bed_doctype' => $Data['doctype'],
-                ':bed_status' => 2, //ESTADO ANULADO
-                ':bed_createby' => $Data['createby'],
-                ':bed_date' => date('Y-m-d'),
-                ':bed_baseentry' => NULL,
-                ':bed_basetype' =>NULL
-      ));
+    if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+    // SI EL DOCUMENTO ANTERIOR TIENE COMO ESTADO CERRADO ENTONCES SE CAMBIA SU ESTADO A ABIERTO 
+      if (isset($anterior[0]) AND $anterior[0]['estado'] == 'Cerrado') {
 
-
-      if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
         $sqlInsertEstado2 = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-                          VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+        VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
-      $resInsertEstado2 = $this->pedeo->insertRow($sqlInsertEstado2, array(
+        $resInsertEstado2 = $this->pedeo->insertRow($sqlInsertEstado2, array(
 
 
-                ':bed_docentry' => $Data['baseentry'],
-                ':bed_doctype' => $Data['basetype'],
-                ':bed_status' => 1, //ESTADO ABIERTO 
-                ':bed_createby' => $Data['createby'],
-                ':bed_date' => date('Y-m-d'),
-                ':bed_baseentry' => $Data['docentry'],
-                ':bed_basetype' =>$Data['doctype']
-      ));
+          ':bed_docentry' => $Data['baseentry'],
+          ':bed_doctype' => $Data['basetype'],
+          ':bed_status' => 1, //ESTADO ABIERTO 
+          ':bed_createby' => $Data['createby'],
+          ':bed_date' => date('Y-m-d'),
+          ':bed_baseentry' => $Data['docentry'],
+          ':bed_basetype' => $Data['doctype']
+        ));
 
-      if(is_numeric($resInsertEstado2) && $resInsertEstado2 > 0){
-        $respuesta = array(
-          'error'   => false,
-          'data' => $resInsertEstado2,
-          'mensaje'	=> 'Documento Anulado'
-        );
-        }else{
+        if (is_numeric($resInsertEstado2) && $resInsertEstado2 > 0) {
+
+        } else {
+          $this->pedeo->trans_rollback();
+
           $respuesta = array(
             'error'   => true,
             'data' => $resInsertEstado2,
-            'mensaje'	=> 'No se pudo Anular el documento'
-          );
-          $this->pedeo->trans_rollback();
+            'mensaje'  => 'No se pudo Anular el documento'
+          );          
         }
-      }else{
-
-            $respuesta = array(
-              'error'   => true,
-              'data' => $resInsertEstado,
-              'mensaje'	=> 'No se pudo Anular el documento'
-            );
-
-            $this->pedeo->trans_rollback();
       }
-      $this->pedeo->trans_commit();
-      //FIN PROCESO ESTADO DEL DOCUMENTO
 
-      $this->response($respuesta);
+    } else {
 
-}
+      $this->pedeo->trans_rollback();
+
+      $respuesta = array(
+        'error'   => true,
+        'data' => $resInsertEstado,
+        'mensaje'  => 'No se pudo Anular el documento'
+      );
+
+      
+    }
+
+    $this->pedeo->trans_commit();
+
+    $respuesta = array(
+      'error'   => false,
+      'data' => $resInsertEstado,
+      'mensaje'  => 'Documento Anulado'
+    );
+   
+    //FIN PROCESO ESTADO DEL DOCUMENTO
+
+    $this->response($respuesta);
+  }
 
 
 }
