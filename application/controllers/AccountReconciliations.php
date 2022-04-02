@@ -27,6 +27,12 @@ class AccountReconciliations extends REST_Controller {
   		$Data = $this->post();
       $AC1LINE = 0;
       $DocNumVerificado = 0;
+			$DetalleAsiento = new stdClass();
+			$DetalleAsientoConsolidado = [];
+			$llaveDetalleAsiento = "";
+			$posicionDetalleAsiento = 0;
+			$cuentaTercero = 0;
+			$inArrayDetalleAsiento = array();
 
 
       // Se globaliza la variable sqlDetalleAsiento
@@ -278,7 +284,7 @@ class AccountReconciliations extends REST_Controller {
                       ':bed_createby' => $Data['crc_createby'],
                       ':bed_date' => date('Y-m-d'),
                       ':bed_baseentry' => NULL,
-                      ':bed_basetype' =>NULL
+                      ':bed_basetype' => NULL
             ));
 
 
@@ -381,343 +387,520 @@ class AccountReconciliations extends REST_Controller {
 
                   if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
 
-                        if(  $AC1LINE == 0){
+										// LLENANDO PARA DETALLE DE ASIENTOS CONTABLES
+										$DetalleAsiento = new stdClass();
 
-                              $AC1LINE = 1;
-                        }else{
+										$DetalleAsiento->cuenta  = is_numeric($detail['rc1_acctcode'])?$detail['rc1_acctcode']:0;
+										$DetalleAsiento->tercero = isset($detail['rc1_cardcode'])?$detail['rc1_cardcode']:NULL;
+										$DetalleAsiento->tipodoc = is_numeric($detail['rc1_doctype'])?$detail['rc1_doctype']:0;
+										$DetalleAsiento->pagoaply = is_numeric($detail['rc1_valapply'])?$detail['rc1_valapply']:0;
 
-                             $AC1LINE = $AC1LINE + 1;
-                        }
+										$llaveDetalleAsiento = 	$DetalleAsiento->cuenta.$DetalleAsiento->tipodoc;
 
-                        //CARGANDO DETALLE ASIENTOS
-                        $doctotal = $detail['rc1_doctotal'];
-                        $apply = $detail['rc1_valapply'];
-                        $debito = 0;
-                        $credito = 0;
-												$MontoSysDB = 0;
-												$MontoSysCR = 0;
+										//********************
+										if(in_array( $llaveDetalleAsiento, $inArrayDetalleAsiento)){
 
-												if(trim($Data['crc_currency']) != $MONEDALOCAL ){
+												$posicionDetalleAsiento  = $this->buscarPosicion( $llaveDetalleAsiento, $inArrayDetalleAsiento);
 
-													 $apply = ($apply * $TasaDocLoc);
+										}else{
+
+												array_push( $inArrayDetalleAsiento, $llaveDetalleAsiento );
+												$posicionDetalleAsiento = $this->buscarPosicion( $llaveDetalleAsiento, $inArrayDetalleAsiento);
+
+										}
+										//
+
+										if( isset($DetalleAsientoConsolidado [$posicionDetalleAsiento])){
+
+											if(!is_array($DetalleAsientoConsolidado[$posicionDetalleAsiento])){
+												$DetalleAsientoConsolidado[$posicionDetalleAsiento] = array();
+											}
+
+										}else{
+											$DetalleAsientoConsolidado[$posicionDetalleAsiento] = array();
+										}
+
+										array_push( $DetalleAsientoConsolidado[$posicionDetalleAsiento], $DetalleAsiento);
+
+
+
+										// ACTUALIZANDO VALORES EN DOCUMENTOS
+										//ESPACIO PARA VENTAS
+										//PAYTODAY
+										if($detail['rc1_doctype'] == 5){ // se actualiza la factura
+											$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
+
+											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+												':dvf_paytoday' => $detail['rc1_valapply'],
+												':dvf_docentry' => $detail['rc1_docentry'],
+												':dvf_doctype'  => $detail['rc1_doctype']
+
+
+											));
+
+											if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resUpdateFactPay,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+
+											//ASIENTO
+											$slqUpdateVenDebit = "UPDATE mac1
+																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																						WHERE ac1_line_num = :ac1_line_num";
+											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+												':ac1_ven_credit' => $detail['rc1_valapply'],
+												':ac1_line_num' => $detail['ac1_line_num']
+
+											));
+
+											if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' 		=> $resUpdateVenDebit,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+
+											//VERIFICAR PARA CERRAR DOCUMENTO
+											$sqlEstado = 'SELECT case when (dvf_doctotal - COALESCE(dvf_paytoday,0)) = 0 then 1 else 0 end estado
+																		from dvfv
+																		where dvf_docentry = :dvf_docentry';
+
+
+											$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvf_docentry' => $detail['rc1_docentry']));
+
+											if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+														$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+														$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																			':bed_docentry' => $detail['rc1_docentry'],
+																			':bed_doctype' => $detail['rc1_doctype'],
+																			':bed_status' => 3, //ESTADO CERRADO
+																			':bed_createby' => $Data['crc_createby'],
+																			':bed_date' => date('Y-m-d'),
+																			':bed_baseentry' => $resInsert,
+																			':bed_basetype' => $Data['crc_doctype']
+														));
+
+
+														if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+														}else{
+
+																 $this->pedeo->trans_rollback();
+
+																	$respuesta = array(
+																		'error'   => true,
+																		'data' => $resInsertEstado,
+																		'mensaje'	=> 'No se pudo registrar el pago'
+																	);
+
+
+																	$this->response($respuesta);
+
+																	return;
+														}
+
+											}
+										}
+
+
+										//PAYTODAY
+										if($detail['rc1_doctype'] == 6) { // SE ACTUALIZA EN NOTA DEBITO
+											$sqlUpdateFactPay = "UPDATE  dvnc  SET vnc_paytoday = COALESCE(vnc_paytoday,0)+:vnc_paytoday WHERE vnc_docentry = :vnc_docentry and vnc_doctype = :vnc_doctype";
+
+											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+												':vnc_paytoday' => $detail['rc1_valapply'],
+												':vnc_docentry' => $detail['rc1_docentry'],
+												':vnc_doctype'  => $detail['rc1_doctype']
+
+
+											));
+
+											if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resUpdateFactPay,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en la nota credito '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+
+
+											//Asiento
+
+											$slqUpdateVenDebit = "UPDATE mac1
+																						SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																						WHERE ac1_line_num = :ac1_line_num";
+											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+												':ac1_ven_debit' => $detail['rc1_valapply'],
+												':ac1_line_num'  => $detail['ac1_line_num'],
+
+											));
+
+											if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resUpdateFactPay,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+										}
+										//ASIENTO DEL ANTICIPO CLIENTE
+										if( $detail['rc1_doctype'] == 20 ){
+
+											$slqUpdateVenDebit = "UPDATE mac1
+																						SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																						WHERE ac1_line_num = :ac1_line_num";
+											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+												':ac1_ven_debit' => $detail['rc1_valapply'],
+												':ac1_line_num'  => $detail['ac1_line_num'],
+
+											));
+
+											if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resUpdateFactPay,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en el anticipo '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+										}
+
+										//FIN DE ESPACIO PARA VENTAS
+
+										//EMPIEZA ESPACIO PARA COMPRAS
+										//ACTUALIZAR VALOR PAGADO DE LA FACTURA DE COMPRA
+
+										if( $detail['rc1_doctype'] == 15 ){
+											$sqlUpdateFactPay = "UPDATE  dcfc  SET cfc_paytoday = COALESCE(cfc_paytoday,0)+:cfc_paytoday WHERE cfc_docentry = :cfc_docentry and cfc_doctype = :cfc_doctype";
+
+											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+												':cfc_paytoday' => $detail['rc1_valapply'],
+												':cfc_docentry' => $detail['rc1_docentry'],
+												':cfc_doctype' =>  $detail['rc1_doctype']
+
+											));
+
+											if(is_numeric($resUpdateFactPay) && $resUpdateFactPay > 0){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resUpdateFactPay,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+
+											//ASIENTO
+											$slqUpdateVenDebit = "UPDATE mac1
+																						SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																						WHERE ac1_line_num = :ac1_line_num";
+
+											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+												':ac1_ven_debit'  => $detail['rc1_valapply'],
+												':ac1_line_num'   => $detail['ac1_line_num']
+
+
+											));
+
+											if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resUpdateVenDebit,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+
+											//Estado DOCUMENTO
+											$sqlEstado = 'SELECT case when (cfc_doctotal - COALESCE(cfc_paytoday,0)) = 0 then 1 else 0 end estado
+																		from dcfc
+																		where cfc_docentry = :cfc_docentry';
+
+
+											$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cfc_docentry' => $detail['rc1_docentry']));
+
+											if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+														$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+														$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																			':bed_docentry' => $detail['rc1_docentry'],
+																			':bed_doctype' => $detail['rc1_doctype'],
+																			':bed_status' => 3, //ESTADO CERRADO
+																			':bed_createby' => $Data['crc_createby'],
+																			':bed_date' => date('Y-m-d'),
+																			':bed_baseentry' => $resInsert,
+																			':bed_basetype' => $Data['crc_doctype']
+														));
+
+
+														if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+														}else{
+
+																 $this->pedeo->trans_rollback();
+
+																	$respuesta = array(
+																		'error'   => true,
+																		'data' => $resInsertEstado,
+																		'mensaje'	=> 'No se pudo registrar la reconciliación'
+																	);
+
+
+																	$this->response($respuesta);
+
+																	return;
+														}
+											}
+										}
+
+
+										// SE ACTUALIZA EL VALOR DEL CAMPO PAY TODAY EN NOTA CREDITO
+										if($detail['rc1_doctype'] == 16) { // SOLO CUANDO ES UNA NOTA CREDITO
+											$sqlUpdateFactPay = "UPDATE  dcnc  SET cnc_paytoday = COALESCE(cnc_paytoday,0)+:cnc_paytoday WHERE cnc_docentry = :cnc_docentry and cnc_doctype = :cnc_doctype";
+
+											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+												':cnc_paytoday' => $detail['rc1_valapply'],
+												':cnc_docentry' => $detail['rc1_docentry'],
+												':cnc_doctype'  => $detail['rc1_doctype']
+
+
+											));
+
+											if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resUpdateFactPay,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en la nota credito '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+
+											//ASIENTO
+											$slqUpdateVenDebit = "UPDATE mac1
+																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																						WHERE ac1_line_num = :ac1_line_num";
+
+											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+												':ac1_ven_credit' => $detail['rc1_valapply'],
+												':ac1_line_num'   => $detail['ac1_line_num']
+											));
+
+											if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resUpdateFactPay,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+										}
+
+
+										if($detail['rc1_doctype'] == 19){
+
+											$slqUpdateVenDebit = "UPDATE mac1
+																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																						WHERE ac1_line_num = :ac1_line_num";
+
+											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+												':ac1_ven_credit' => $detail['rc1_valapply'],
+												':ac1_line_num'   => $detail['ac1_line_num']
+											));
+
+											if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+											}else{
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data' => $resUpdateFactPay,
+													'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docentry']
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+											}
+
+										}
+										//FIN ESPACIO PARA COMPRAS
+
+										//MOVIMIENTO DE DOCUMENTOS
+										if( $detail['rc1_doctype'] == 5 || $detail['rc1_doctype'] == 6 || $detail['rc1_doctype'] == 7 || $detail['rc1_doctype'] == 15 || $detail['rc1_doctype'] == 16 || $detail['rc1_doctype'] == 17 || $detail['rc1_doctype'] == 19 || $detail['rc1_doctype'] == 20 ){
+											//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+											if( isset($detail['rc1_docentry']) && is_numeric($detail['rc1_docentry']) && isset($detail['rc1_doctype']) && is_numeric($detail['rc1_doctype']) ){
+
+												$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+												$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
+													 ':bmd_doctype'  => $detail['rc1_doctype'],
+													 ':bmd_docentry' => $detail['rc1_docentry']
+												));
+
+													$tipoCardCode = 0;
+
+													switch ($detail['rc1_doctype']) {
+														case 5:
+																$tipoCardCode = 1;
+															break;
+														case 6:
+																$tipoCardCode = 1;
+															break;
+														case 7:
+																$tipoCardCode = 1;
+															break;
+														case 15:
+																$tipoCardCode = 2;
+															break;
+														case 16:
+																$tipoCardCode = 2;
+															break;
+														case 17:
+																$tipoCardCode = 2;
+															break;
+														case 19:
+																$tipoCardCode = 2;
+															break;
+														case 20:
+																$tipoCardCode = 1;
+															break;
+													}
+
+
+													if ( isset(	$resDocInicio[0] ) ){
+
+														$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+																						bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																						VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+																						:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+
+														$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+															':bmd_doctype' => is_numeric($Data['crc_doctype'])?$Data['crc_doctype']:0,
+															':bmd_docentry' => $resInsert,
+															':bmd_createat' => $this->validateDate($Data['bpr_createat'])?$Data['bpr_createat']:NULL,
+															':bmd_doctypeo' => is_numeric($detail['rc1_doctype'])?$detail['rc1_doctype']:0, //ORIGEN
+															':bmd_docentryo' => is_numeric($detail['rc1_docentry'])?$detail['rc1_docentry']:0,  //ORIGEN
+															':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+															':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+															':bmd_docnum' => $DocNumVerificado,
+															':bmd_doctotal' => is_numeric($detail['rc1_valapply'])?$detail['rc1_valapply']:0,
+															':bmd_cardcode' => isset($detail['rc1_cardcode'])?$detail['rc1_cardcode']:NULL,
+															':bmd_cardtype' => $tipoCardCode
+														));
+
+														if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+														}else{
+
+															$this->pedeo->trans_rollback();
+
+															 $respuesta = array(
+																 'error'   => true,
+																 'data' => $resInsertMD,
+																 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+															 );
+
+
+															 $this->response($respuesta);
+
+															 return;
+														}
+
+													}
 
 												}
 
-                        if( $doctotal < 0 ){
-                          $debito = $apply;
-													$MontoSysDB = ($apply / $TasaLocSys);
-                        }else if( $doctotal > 0){
-                          $credito = $apply;
-													$MontoSysCR = ($apply / $TasaLocSys);
-                        }
+										}
 
-                        $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-                            ':ac1_trans_id' => $resInsertAsiento,
-                            ':ac1_account' => $detail['rc1_acctcode'],
-                            ':ac1_debit' => round($debito, 2),
-                            ':ac1_credit' => round($credito, 2),
-                            ':ac1_debit_sys' => round($MontoSysDB, 2),
-                            ':ac1_credit_sys' => round($MontoSysCR, 2),
-                            ':ac1_currex' => 0,
-                            ':ac1_doc_date' => $this->validateDate($detail['rc1_docdate'])?$detail['rc1_docdate']:NULL,
-                            ':ac1_doc_duedate' => $this->validateDate($detail['rc1_docduedev'])?$detail['rc1_docduedev']:NULL,
-                            ':ac1_debit_import' => 0,
-                            ':ac1_credit_import' => 0,
-                            ':ac1_debit_importsys' => 0,
-                            ':ac1_credit_importsys' => 0,
-                            ':ac1_font_key' => $resInsert,
-                            ':ac1_font_line' => 1,
-                            ':ac1_font_type' => is_numeric($detail['rc1_doctype'])?$detail['rc1_doctype']:0,
-                            ':ac1_accountvs' => 1,
-                            ':ac1_doctype' => 18,
-                            ':ac1_ref1' => "",
-                            ':ac1_ref2' => "",
-                            ':ac1_ref3' => "",
-                            ':ac1_prc_code' => 0,
-                            ':ac1_uncode' => 0,
-                            ':ac1_prj_code' => 0,
-                            ':ac1_rescon_date' => NULL,
-                            ':ac1_recon_total' => 0,
-                            ':ac1_made_user' => isset($Data['crc_createby'])?$Data['crc_createby']:NULL,
-                            ':ac1_accperiod' => 1,
-                            ':ac1_close' => 0,
-                            ':ac1_cord' => 0,
-                            ':ac1_ven_debit' => 1,
-                            ':ac1_ven_credit' => 1,
-                            ':ac1_fiscal_acct' => 0,
-                            ':ac1_taxid' => 1,
-                            ':ac1_isrti' => 0,
-                            ':ac1_basert' => 0,
-                            ':ac1_mmcode' => 0,
-                            ':ac1_legal_num' => isset($detail['rc1_cardcode'])?$detail['rc1_cardcode']:NULL,
-                            ':ac1_codref' => 1,
-                            ':ac1_line'   => $AC1LINE
-                      ));
-
-
-
-                      if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-
-														if( $detail['rc1_doctype'] == 5 ){// 5 DOCUMENTO FACTURA
-															//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
-															$VlrPayFact = "SELECT COALESCE(dvf_paytoday,0) as dvf_paytoday,dvf_doctotal from dvfv WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
-															$resVlrPayFact = $this->pedeo->queryTable($VlrPayFact, array(
-																':dvf_docentry' => $detail['rc1_docentry'],
-																':dvf_doctype' => $detail['rc1_doctype']
-															));
-
-
-															if(isset($resVlrPayFact[0])){
-
-																$VlrPaidActual = $apply;
-																$VlrPaidFact = $resVlrPayFact[0]['dvf_paytoday'];
-
-																$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
-
-																if($SumVlr <= $resVlrPayFact[0]['dvf_doctotal'] ){
-
-
-																}else{
-																	$this->pedeo->trans_rollback();
-
-																	$respuesta = array(
-																		'error'   => true,
-																		'data' => '',
-																		'mensaje'	=> 'El valor a pagar no puede ser mayor al saldo de la factura '.$detail['rc1_docnum'].''
-																	);
-
-																	 $this->response($respuesta);
-
-																	 return;
-																}
-
-															}else{
-																$this->pedeo->trans_rollback();
-																$respuesta = array(
-																	'error'   => true,
-																	'data' => $resVlrPayFact,
-																	'mensaje'	=> 'No se encontro el documento para actualizar el valor cruzado');
-
-																	$this->response($respuesta);
-
-																 return;
-															}
-
-
-															$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
-
-															$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
-
-																':dvf_paytoday' => round($apply, 2),
-																':dvf_docentry' => $detail['rc1_docentry'],
-																':dvf_doctype'  => $detail['rc1_doctype']
-
-
-															));
-
-															if(is_numeric($resUpdateFactPay) && $resUpdateFactPay > 0){
-
-
-
-															}else{
-
-																$this->pedeo->trans_rollback();
-
-																$respuesta = array(
-																	'error'   => true,
-																	'data' => $resUpdateFactPay,
-																	'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docnum']
-																);
-
-																 $this->response($respuesta);
-
-																 return;
-															}
-														}
-
-														if( $detail['rc1_doctype'] == 6 ){// 5 NOTA CREDITO
-
-															//VALIDAR EL VALOR QUE SE ESTA CURZANDO NO SEA MAYOR AL SALDO DE LA NOTA CREDITO
-															$VlrPayNc = "SELECT COALESCE(vnc_paytoday,0) as vnc_paytoday,vnc_doctotal from dvnc WHERE vnc_docentry = :vnc_docentry and vnc_doctype = :vnc_doctype";
-															$resVlrPayNc = $this->pedeo->queryTable($VlrPayNc, array(
-																':vnc_docentry' => $detail['rc1_docentry'],
-																':vnc_doctype' => $detail['rc1_doctype']
-															));
-
-
-															if(isset($resVlrPayNc[0])){
-
-																$VlrPaidActual = $apply;
-																$VlrPaidFact = $resVlrPayNc[0]['vnc_paytoday'];
-
-																$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
-
-																if($SumVlr <= $resVlrPayNc[0]['vnc_doctotal'] ){
-
-
-																}else{
-																	$this->pedeo->trans_rollback();
-
-																	$respuesta = array(
-																		'error'   => true,
-																		'data' => '',
-																		'mensaje'	=> 'El valor a pagar no puede ser mayor al saldo de la factura '.$detail['rc1_docnum'].''
-																	);
-
-																	 $this->response($respuesta);
-
-																	 return;
-																}
-
-															}else{
-
-																$this->pedeo->trans_rollback();
-
-																$respuesta = array(
-																	'error'   => true,
-																	'data' => $resVlrPayNc,
-																	'mensaje'	=> 'No se encontro el documento para actualizar el valor cruzado');
-
-																	$this->response($respuesta);
-
-																 return;
-															}
-
-
-															$sqlUpdateNcPay = "UPDATE  dvnc  SET vnc_paytoday = COALESCE(vnc_paytoday,0)+:vnc_paytoday WHERE vnc_docentry = :vnc_docentry and vnc_doctype = :vnc_doctype";
-
-															$resUpdateNcPay = $this->pedeo->updateRow($sqlUpdateNcPay,array(
-
-																':vnc_paytoday' => round($apply, 2),
-																':vnc_docentry' => $detail['rc1_docentry'],
-																':vnc_doctype'  => $detail['rc1_doctype']
-
-
-															));
-
-															if(is_numeric($resUpdateNcPay) && $resUpdateNcPay > 0){
-
-
-
-															}else{
-
-																$this->pedeo->trans_rollback();
-
-																$respuesta = array(
-																	'error'   => true,
-																	'data' => $resUpdateNcPay,
-																	'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docnum']
-																);
-
-																 $this->response($respuesta);
-
-																 return;
-															}
-
-
-														}
-
-														if( $detail['rc1_doctype'] == 7 ){// 5 NOTA DEBITO
-
-															//VALIDAR EL VALOR QUE SE ESTA CURZANDO NO SEA MAYOR AL SALDO DE LA NOTA DEBITO
-															$VlrPayNd = "SELECT COALESCE(vnd_paytoday,0) as vnd_paytoday,vnd_doctotal from dvnd WHERE vnd_docentry = :vnd_docentry and vnd_doctype = :vnd_doctype";
-															$resVlrPayNd = $this->pedeo->queryTable($VlrPayNd, array(
-																':vnd_docentry' => $detail['rc1_docentry'],
-																':vnd_doctype' => $detail['rc1_doctype']
-															));
-
-
-															if(isset($resVlrPayNd[0])){
-
-																$VlrPaidActual = $apply;
-																$VlrPaidFact = $resVlrPayNd[0]['vnd_paytoday'];
-
-																$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
-
-																if($SumVlr <= $resVlrPayNd[0]['vnd_doctotal'] ){
-
-
-																}else{
-																	$this->pedeo->trans_rollback();
-
-																	$respuesta = array(
-																		'error'   => true,
-																		'data' => '',
-																		'mensaje'	=> 'El valor a pagar no puede ser mayor al saldo de la factura '.$detail['rc1_docnum'].''
-																	);
-
-																	 $this->response($respuesta);
-
-																	 return;
-																}
-
-															}else{
-
-																$this->pedeo->trans_rollback();
-
-																$respuesta = array(
-																	'error'   => true,
-																	'data' => $resVlrPayNd,
-																	'mensaje'	=> 'No se encontro el documento para actualizar el valor cruzado');
-
-																	$this->response($respuesta);
-
-																 return;
-															}
-
-
-															$sqlUpdateNdPay = "UPDATE  dvnd  SET vnd_paytoday = COALESCE(vnd_paytoday,0)+:vnd_paytoday WHERE vnd_docentry = :vnd_docentry and vnd_doctype = :vnd_doctype";
-
-															$resUpdateNdPay = $this->pedeo->updateRow($sqlUpdateNdPay,array(
-
-																':vnd_paytoday' => round($apply, 2),
-																':vnd_docentry' => $detail['rc1_docentry'],
-																':vnd_doctype'  => $detail['rc1_doctype']
-
-
-															));
-
-															if(is_numeric($resUpdateNdPay) && $resUpdateNdPay > 0){
-
-
-
-															}else{
-
-																$this->pedeo->trans_rollback();
-
-																$respuesta = array(
-																	'error'   => true,
-																	'data' => $resUpdateNdPay,
-																	'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['rc1_docnum']
-																);
-
-																 $this->response($respuesta);
-
-																 return;
-															}
-
-
-														}
-
-
-                      }else{
-
-                            $this->pedeo->trans_rollback();
-
-                            $respuesta = array(
-                              'error'   => true,
-                              'data'	  => $resDetalleAsiento,
-                              'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
-                            );
-
-                             $this->response($respuesta);
-
-                             return;
-                      }
-
-
-
+										//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 
                   }else{
 
@@ -736,6 +919,128 @@ class AccountReconciliations extends REST_Controller {
                   }
 
             }
+
+						// INSERTANDO EL DETALLE DE LOS ASIENTOS
+						$ACCLINE = 1;
+						foreach ($DetalleAsientoConsolidado as $key => $posicion) {
+										$TotalPago = 0;
+										$TotalPagoOriginal = 0;
+
+										$cuenta = 0;
+										$doctype = 0;
+
+
+										foreach ($posicion as $key => $value) {
+
+													$TotalPago = ( $TotalPago + $value->pagoaply );
+
+													$cuenta = $value->cuenta;
+													$doctype  = $value->tipodoc;
+										}
+
+
+										$debito = 0;
+										$credito = 0;
+										$MontoSysDB = 0;
+										$MontoSysCR = 0;
+										$TotalPagoOriginal = $TotalPago;
+
+										if(	$doctype == 5 || 	$doctype == 7 || 	$doctype == 19 || $doctype == 16 ){
+
+											$credito = $TotalPago;
+
+											if(trim($Data['crc_currency']) != $MONEDASYS ){
+
+													$MontoSysCR = ($credito / $TasaLocSys);
+
+											}else{
+
+													$MontoSysCR = $TotalPagoOriginal;
+											}
+
+										}else if(	$doctype == 6  ||  $doctype == 20 || $doctype == 15 ||  $doctype == 17){
+
+											$debito = $TotalPago;
+
+											if(trim($Data['crc_currency']) != $MONEDASYS ){
+
+													$MontoSysDB = ($debito / $TasaLocSys);
+
+											}else{
+
+													$MontoSysDB = $TotalPagoOriginal;
+											}
+
+										}
+
+
+
+										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+												':ac1_trans_id' => $resInsertAsiento,
+												':ac1_account' => $cuenta,
+												':ac1_debit' => round($debito, 2),
+												':ac1_credit' => round($credito, 2),
+												':ac1_debit_sys' => round($MontoSysDB,2),
+												':ac1_credit_sys' => round($MontoSysCR,2),
+												':ac1_currex' => 0,
+												':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+												':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+												':ac1_debit_import' => 0,
+												':ac1_credit_import' => 0,
+												':ac1_debit_importsys' => 0,
+												':ac1_credit_importsys' => 0,
+												':ac1_font_key' => $resInsert,
+												':ac1_font_line' => 1,
+												':ac1_font_type' => 22,
+												':ac1_accountvs' => 1,
+												':ac1_doctype' => 18,
+												':ac1_ref1' => "",
+												':ac1_ref2' => "",
+												':ac1_ref3' => "",
+												':ac1_prc_code' => 0,
+												':ac1_uncode' => 0,
+												':ac1_prj_code' => 0,
+												':ac1_rescon_date' => NULL,
+												':ac1_recon_total' => 0,
+												':ac1_made_user' => 0,
+												':ac1_accperiod' => 1,
+												':ac1_close' => 0,
+												':ac1_cord' => 0,
+												':ac1_ven_debit' => 0,
+												':ac1_ven_credit' => 0,
+												':ac1_fiscal_acct' => 0,
+												':ac1_taxid' => 1,
+												':ac1_isrti' => 0,
+												':ac1_basert' => 0,
+												':ac1_mmcode' => 0,
+												':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
+												':ac1_codref' => 1,
+												':ac1_line' => $ACCLINE
+									));
+
+									$ACCLINE = $ACCLINE+1;
+
+									if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+											// Se verifica que el detalle no de error insertando //
+									}else{
+											// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+											// se retorna el error y se detiene la ejecucion del codigo restante.
+												$this->pedeo->trans_rollback();
+
+												$respuesta = array(
+													'error'   => true,
+													'data'	  => $resDetalleAsiento,
+													'mensaje'	=> 'No se pudo continuar con el proceso, occurio un error al insertar el detalle del asiento cuenta tercero'
+												);
+
+												 $this->response($respuesta);
+
+												 return;
+									}
+						}
+
+						//FIN
 
 
             $this->pedeo->trans_commit();
@@ -795,6 +1100,18 @@ class AccountReconciliations extends REST_Controller {
          $this->response($respuesta);
   }
 
+
+	private function buscarPosicion($llave, $inArray){
+			$res = 0;
+			for($i = 0; $i < count($inArray); $i++) {
+					if($inArray[$i] == "$llave"){
+								$res =  $i;
+								break;
+					}
+			}
+
+			return $res;
+	}
 
 
   private function validateDate($fecha){

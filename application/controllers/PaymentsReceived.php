@@ -537,7 +537,7 @@ class PaymentsReceived extends REST_Controller {
 																			':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
 																			':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
 																			':bmd_docnum' => $DocNumVerificado,
-																			':bmd_doctotal' => is_numeric($detail['pr1_vlrtotal'])?$detail['pr1_vlrpaid']:0,
+																			':bmd_doctotal' => is_numeric($detail['pr1_vlrpaid'])?$detail['pr1_vlrpaid']:0,
 																			':bmd_cardcode' => isset($detail['pr1_tercero'])?$detail['pr1_tercero']:NULL,
 																			':bmd_cardtype' => 1
 																		));
@@ -656,7 +656,7 @@ class PaymentsReceived extends REST_Controller {
 
 																$respuesta = array(
 																	'error'   => true,
-																	'data' => $resUpdateFactPay,
+																	'data' => $resUpdateVenDebit,
 																	'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
 																);
 
@@ -1899,7 +1899,7 @@ public function getDetails_get(){
 		return;
 	}
 
-	$sqlSelect = " SELECT * FROM bpr1 WHERE pr1_docentry =:pr1_docentry";
+	$sqlSelect = "SELECT bpr1.*, dmdt.mdt_docname FROM bpr1 INNER JOIN dmdt ON dmdt.mdt_doctype = bpr1.pr1_doctype WHERE pr1_docentry =:pr1_docentry";
 
 	$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pr1_docentry" => $Data['pr1_docentry']));
 

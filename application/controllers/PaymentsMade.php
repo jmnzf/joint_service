@@ -61,7 +61,6 @@ class PaymentsMade extends REST_Controller {
 			$posicionAsientoCuentaTercero = 0;
 			$cuentaTercero = 0;
 			$inArrayAsientoCuentaTercero = array();
-
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -516,9 +515,9 @@ class PaymentsMade extends REST_Controller {
 															':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
 															':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
 															':bmd_docnum' => $DocNumVerificado,
-															':bmd_doctotal' => is_numeric($detail['pe1_vlrtotal'])?$detail['pe1_vlrpaid']:0,
+															':bmd_doctotal' => is_numeric($detail['pe1_vlrpaid'])?$detail['pe1_vlrpaid']:0,
 															':bmd_cardcode' => isset($detail['pe1_tercero'])?$detail['pe1_tercero']:NULL,
-															':bmd_cardtype' => 1
+															':bmd_cardtype' => 2
 														));
 
 														if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
@@ -624,15 +623,6 @@ class PaymentsMade extends REST_Controller {
 																						AND ac1_font_type = :ac1_font_type
 																						AND ac1_account = :ac1_account";
 
-																						// print_r(array(
-																						//
-																						// 	':ac1_ven_debit'  => $detail['pe1_vlrpaid'],
-																						// 	':ac1_legal_num'  => $detail['pe1_tercero'],
-																						// 	':ac1_font_key'   => $detail['pe1_docentry'],
-																						// 	':ac1_font_type'  => $detail['pe1_doctype'],
-																						// 	':ac1_account'    => $detail['pe1_cuenta']
-																						//
-																						// ));exit;
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
 												':ac1_ven_debit'  => $detail['pe1_vlrpaid'],
@@ -1884,7 +1874,7 @@ class PaymentsMade extends REST_Controller {
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM bpe1 WHERE pe1_docnum =:pe1_docentry";
+		$sqlSelect = "SELECT bpe1.*, dmdt.mdt_docname FROM bpe1 INNER JOIN dmdt ON dmdt.mdt_doctype = bpe1.pe1_doctype WHERE pe1_docnum = :pe1_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pe1_docentry" => $Data['pe1_docentry']));
 

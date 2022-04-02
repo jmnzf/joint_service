@@ -93,7 +93,7 @@ mac1.ac1_font_type as numtype,
 mdt_docname as tipo,
 case
 	when mac1.ac1_font_type = 15 then mac1.ac1_debit
-	else mac1.ac1_credit
+	else mac1.ac1_debit
 end	 as total_doc,
 (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 '' retencion,

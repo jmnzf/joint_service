@@ -2508,14 +2508,17 @@ class PurchaseInv extends REST_Controller {
 								':cec_docentry' => $Data['cfc_baseentry'],
 								':cec_doctype' => $Data['cfc_basetype']
 							));
-// print_r($resDev);exit();die();
-							$resta_cantidad = 0;
+
+							$resta_cantidad = $resEstado1[0]['cantidad'];
 							if(isset($resDev[0])  && !empty($resDev[0]['cantidad'])) {
 
 									$resta_cantidad = $resEstado1[0]['cantidad'] - $resDev[0]['cantidad'];
 						}
+
+
+	// print_r($resta_cantidad);exit();die();
 							$sqlEstado2 =  "SELECT
-																count(t3.fc1_itemcode) item,
+																count(distinct t3.fc1_itemcode) item,
 																coalesce(sum(t3.fc1_quantity),0) cantidad
 																from dcec t0
 																left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
@@ -2537,7 +2540,6 @@ class PurchaseInv extends REST_Controller {
 
 
 
-						//
 						// print_r($item_ec);
 						// print_r($item_fact);
 						// print_r($cantidad_ec);
