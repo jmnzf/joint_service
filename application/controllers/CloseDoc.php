@@ -102,20 +102,25 @@ class CloseDoc extends REST_Controller {
     }
 
     $sqlSelect = "SELECT distinct tbmd.*, mdt_docname,estado
-                    FROM tbmd
-                        INNER JOIN dmdt
-                        ON tbmd.bmd_doctype = dmdt.mdt_doctype
-                        left join responsestatus
-                          on id = bmd_docentry and tipo = bmd_doctype
-                    WHERE concat(bmd_tdi, bmd_ndi) IN (SELECT concat(tb1.bmd_tdi, tb1.bmd_ndi)
-                    FROM tbmd as tb1
-                    WHERE tb1.bmd_doctype  = :cpo_doctype
-                    AND tb1.bmd_docentry = :cpo_docentry)
-                    AND  estado not in ('Anulado')
-                    ORDER BY tbmd.bmd_id ASC";
+                        FROM tbmd
+                            INNER JOIN dmdt
+                            ON tbmd.bmd_doctype = dmdt.mdt_doctype
+                            left join responsestatus
+                              on id = bmd_docentry and tipo = bmd_doctype
+                        WHERE concat(bmd_tdi, bmd_ndi) IN (SELECT concat(tb1.bmd_tdi, tb1.bmd_ndi)
+                        FROM tbmd as tb1
+                        WHERE tb1.bmd_doctype  = :cpo_doctype
+                        AND tb1.bmd_docentry = :cpo_docentry)
+                        AND  estado not in ('Anulado')
+                        AND bmd_cardtype = (
+                            select tb2.bmd_cardtype
+                            from tbmd tb2
+                            WHERE tb2.bmd_doctype  = :cpo_doctype
+                            AND tb2.bmd_docentry = :cpo_docentry)
+                        ORDER BY tbmd.bmd_id ASC";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array(":cpo_docentry" => $Data['docentry'], ":cpo_doctype" => $Data['doctype']));
-    $this->pedeo->trans_begin();
+    
     $posteriores = [];
     $anterior = [];
     foreach ($resSelect as $key => $docs) {
@@ -133,6 +138,7 @@ class CloseDoc extends REST_Controller {
       }
     }
 
+    // print_r($resSelect);exit;
 
     // SI EXISTEN DOCUMENTOS POSTERIORES SE ENVIA UN MENSAJE
     if (isset($posteriores[0])) {
@@ -143,8 +149,6 @@ class CloseDoc extends REST_Controller {
       ), REST_Controller::HTTP_BAD_REQUEST);
     }
 
-
-    // print_r($anterior['estado']);exit;
     //SE INSERTA EL ESTADO DEL DOCUMENTO
     $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
                           VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -159,7 +163,7 @@ class CloseDoc extends REST_Controller {
       ':bed_basetype' => NULL
     ));
 
-
+    
     if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
     // SI EL DOCUMENTO ANTERIOR TIENE COMO ESTADO CERRADO ENTONCES SE CAMBIA SU ESTADO A ABIERTO 
       if (isset($anterior[0]) AND $anterior[0]['estado'] == 'Cerrado') {
