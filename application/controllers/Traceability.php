@@ -48,7 +48,12 @@ class Traceability extends REST_Controller {
                     WHERE concat(bmd_tdi, bmd_ndi) IN (SELECT concat(tb1.bmd_tdi, tb1.bmd_ndi)
                     FROM tbmd as tb1
                     WHERE tb1.bmd_doctype  = :bmd_doctype
-                    AND tb1.bmd_docentry = :bmd_docentry) ORDER BY tbmd.bmd_id ASC";
+                    AND tb1.bmd_docentry = :bmd_docentry) 
+                    AND tbmd.bmd_cardtype = (SELECT bmd_cardtype
+                    FROM tbmd tb2
+                    WHERE tb2.bmd_docentry = :bmd_docentry
+                    AND tb2.bmd_doctype = :bmd_doctype)
+                    ORDER BY tbmd.bmd_id ASC";
 
       $resSelect = $this->pedeo->queryTable($sqlSelect, array(
         ':bmd_doctype'  => $Data['bmd_doctype'],
