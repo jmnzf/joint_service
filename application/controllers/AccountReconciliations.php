@@ -865,7 +865,7 @@ class AccountReconciliations extends REST_Controller {
 
 															':bmd_doctype' => is_numeric($Data['crc_doctype'])?$Data['crc_doctype']:0,
 															':bmd_docentry' => $resInsert,
-															':bmd_createat' => $this->validateDate($Data['bpr_createat'])?$Data['bpr_createat']:NULL,
+															':bmd_createat' => $this->validateDate($Data['crc_createat'])?$Data['crc_createat']:NULL,
 															':bmd_doctypeo' => is_numeric($detail['rc1_doctype'])?$detail['rc1_doctype']:0, //ORIGEN
 															':bmd_docentryo' => is_numeric($detail['rc1_docentry'])?$detail['rc1_docentry']:0,  //ORIGEN
 															':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL

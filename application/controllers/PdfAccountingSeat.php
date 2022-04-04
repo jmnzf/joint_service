@@ -159,14 +159,16 @@ class PdfAccountingSeat extends REST_Controller {
 
 
 				$totaldetalle = '';
+				$totaldeb = 0;
+				$totalcre = 0;
+				$totaldebsys = 0;
+				$totalcresys = 0;
 				foreach ($contenidoOC as $key => $value) {
 					// code...
 					$detalle = '<td>'.$value['ac1_line_num'].'</td>
 											<td>'.$value['ct'].'</td>
 											<td>'.$value['ac1_account'].'</td>
 											<td>'.$value['acc_name'].'</td>
-											<td>'.$value['cantidad'].'</td>
-											<td>'.$value['prcdes'].'</td>
 											<td>'.$value['impuesto'].'</td>
 											<td>'.$value['ac1_uncode'].'</td>
                       <td>'.$value['ac1_debit'].'</td>
@@ -175,6 +177,26 @@ class PdfAccountingSeat extends REST_Controller {
                       <td>'.$value['ac1_credit_sys'].'</td>
                       <td>'.$value['moneda'].'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
+
+				 $totaldeb = $totaldeb + ($value['ac1_debit']);
+				 $totalcre = $totalcre + ($value['ac1_credit']);
+				 $totaldebsys = $totaldebsys + ($value['ac1_debit_sys']);
+				 $totalcresys = $totalcresys + ($value['ac1_credit_sys']);
+
+				 $cuerpo = '
+				 						<tr>
+										<th>&nbsp;</th>
+				 						<th>&nbsp;</th>
+										<th>&nbsp;</th>
+										<th>&nbsp;</th>
+										<th>&nbsp;</th>
+										<th><b>total:</b></th>
+										<th><b>'.$totaldeb.'</b></th>
+										<th><b>'.$totalcre.'</b></th>
+										<th><b>'.$totaldebsys.'</b></th>
+										<th><b>'.$totalcresys.'</b></th>
+										</tr>';
+
 				}
 
 
@@ -190,7 +212,7 @@ class PdfAccountingSeat extends REST_Controller {
 
             </th>
             <th>
-                <p><b>ORDEN DE COMPRA</b></p>
+                <p><b>asiento contable</b></p>
             </th>
         </tr>
 
@@ -207,53 +229,17 @@ class PdfAccountingSeat extends REST_Controller {
 
 
         $html = '
-				<table  width="100%">
-        <tr>
-
-            <th style="text-align: left;">
-								<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
-								<p>'.$empresa[0]['pge_add_soc'].'</p>
-                <p>'.$empresa[0]['pge_id_type'].'</p>
-                <p>TELEFONOS: '.$empresa[0]['pge_phone1'].'</p>
-                <p>'.$empresa[0]['pge_web_site'].'</p>
-                <p>'.$empresa[0]['pge_mail'].'</p>
-            </th>
-            <th style="text-align: right;">
-								<p><b>OC: </b></p>
-						</th>
-						<th style="text-align: left;">
-                <p >'.$contenidoOC[0]['mac_doc_num'].'</p>
-						</th>
-						<th style="text-align: right;">
-								<th style="text-align: right;">
-									<p><b>FECHA DE EMISIÓN: </b></p>
-						</th>
-									<th style="text-align: left;">
-									<p>'.date("d-m-Y", strtotime($contenidoOC[0]['mac_doc_date'])).'</p>
-
-            </th>
-        </tr>
-
-        </table>
-				<table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th class="fondo">
-                    <p></p>
-                </th>
-            </tr>
-        </table>
 
 				<table  width="100%" font-family: serif>
 				<tr>
-					<th><b>PROVEEDOR</b><th>
-					<th><b>'.$empresa[0]['pge_small_name'].'</b><th>
-       	</th>
-        </tr>
-				<tr>
-					<td><b>documento:</b> <span>'.$contenidoOC[0]['mac_doc_num'].'</span></p></td>
+					<td><b># asiento:</b> <span>'.$contenidoOC[0]['mac_doc_num'].'</span></p></td>
 					<td></td>
 					<td><b>fecha contabilizacion:</b> <span>'.$contenidoOC[0]['mac_doc_date'].'</span></p></td>
+				</tr>
+				<tr>
+					<td><b>EJERCICIO:</b> <span>'.$contenidoOC[0]['ejercicio'].'</span></p></td>
+					<td></td>
+					<td><b>PERIODO:</b> <span>'.$contenidoOC[0]['periodo'].'</span></p></td>
 				</tr>
 				<tr>
 					<td><b>fecha documento:</b> <span>'.$contenidoOC[0]['mac_legal_date'].'</span></p></td>
@@ -263,13 +249,12 @@ class PdfAccountingSeat extends REST_Controller {
 				<tr>
 					<td><b>ref2:</b> <span>'.$contenidoOC[0]['mac_ref2'].'</span></p></td>
 					<td></td>
-					<td><b>moneda:</b> <span>'.$contenidoOC[0]['moneda_cab'].'</span></p></td>
-				</tr>
-				<tr>
 					<td><b>ref3:</b> <span>'.$contenidoOC[0]['mac_ref3'].'</span></p></td>
 				</tr>
 				<tr>
-					<td><b>estado:</b> <span>'.$contenidoOC[0]['estado'].'</span></p></td>
+					<td><b>moneda:</b> <span>'.$contenidoOC[0]['moneda_cab'].'</span></p></td>
+					<td></td>
+					<td><b>doc origen:</b> <span>'.$contenidoOC[0]['numero'].'</span></p></td>
 				</tr>
 
 
@@ -283,21 +268,7 @@ class PdfAccountingSeat extends REST_Controller {
                 </th>
             </tr>
         </table>
-				<table table  width="100%">
-				<tr>
-				<th style="text-align: center;"><b>CONDICION DE PAGO:</b></th>
-				<th style="text-align: center;"><b>Lugar de Entrega:</b></th>
-				<th style="text-align: center;"><b>FECHA DE ENTREGA:</b></th>
-				<th style="text-align: center;"><b>FECHA FACTURA PROVEEDOR:</b></th>
-				</tr>
-				<tr>
-				<td>'.$contenidoOC[0]['cond_pago'].'</td>
-				<td>'.$contenidoOC[0]['lugar_entre'].'</td>
-				<td>'.date("d-m-Y", strtotime($contenidoOC[0]['fecha_entre'])).'</td>
-				<td>'.$contenidoOC[0]['fecha_fact_pro'].'</td>
-				</tr>
 
-				</table>
 				<br>
 
         <table class="borde" style="width:100%">
@@ -305,16 +276,19 @@ class PdfAccountingSeat extends REST_Controller {
 
 
         <tr>
-          <th><b>ITEM</b></th>
-          <th><b>REFERENCIA</b></th>
-          <th><b>UNIDAD</b></th>
-          <th><b>PRECIO</b></th>
-          <th><b>CANTIDAD</b></th>
-          <th><b>DESCUENTO</b></th>
-          <th><b>IVA</b></th>
-          <th><b>TOTAL</b></th>
+          <th><b>#</b></th>
+          <th><b>CT</b></th>
+          <th><b>Cuneta</b></th>
+          <th><b>Nombre Cuenta</b></th>
+          <th><b>Impuesto</b></th>
+          <th><b>Centro Costos</b></th>
+          <th><b>Debito</b></th>
+          <th><b>Credito</b></th>
+					<th><b>Deb Sys</b></th>
+					<th><b>Cre Sys</b></th>
+					<th><b>Moneda</b></th>
         </tr>
-      	'.$totaldetalle.'
+      	'.$totaldetalle.$cuerpo.'
         </table>
         <br>
 				<table width="100%" style="vertical-align: bottom; font-family: serif;
@@ -327,51 +301,9 @@ class PdfAccountingSeat extends REST_Controller {
         </table>
 
         <br>
-        <table width="100%">
-
-        <tr>
-            <td style="text-align: right;"><b>Base Documento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['base'], 2, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;"><b>Descuento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['descuento'], 2, ',', '.').'</span></p></td>
-        </tr>
-				<tr>
-            <td style="text-align: right;"><b>Sub Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['subtotal'], 2, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;"><b>Impuestos:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['iva'], 2, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;"><b>Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
-        </tr>
-				</table>
-				<table  width="100%">
-				<tr>
-            <td style="text-align: left;"><b>comentarios (ver adjunto de instruccion de envio):</b>
-						<br><p>'.$contenidoOC[0]['comentarios'].'</p>
-						</p>
-						</td>
-        </tr>
-
-
-        </table>
 				<br>
 				<br>
-
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: left;" >
-										<p><b>VALOR EN LETRAS:</b></p><br>
-                    <p>'.$formatter->toWords($contenidoOC[0]['totaldoc'],2)." ".$contenidoOC[0]['nombremoneda'].'</p>
-                </th>
-            </tr>
-        </table>
-
-
-				<pagebreak/>'
-				.$observaciones.
-				'</html>';
+				</html>';
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
@@ -382,7 +314,7 @@ class PdfAccountingSeat extends REST_Controller {
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
 
-				$filename = 'OC_'.$contenidoOC[0]['numerodocumento'].'.pdf';
+				$filename = 'AS_'.$contenidoOC[0]['mac_doc_num'].'.pdf';
         $mpdf->Output($filename, 'D');
 
 

@@ -2510,9 +2510,11 @@ class PurchaseInv extends REST_Controller {
 							));
 
 							$resta_cantidad = $resEstado1[0]['cantidad'];
-							if(isset($resDev[0])  && !empty($resDev[0]['cantidad'])) {
+							$resta_item = $resEstado1[0]['item'];
+							if(($resDev[0]['cantidad']) <> 0 && ($resEstado1[0]['item']) <> 0) {
 
 									$resta_cantidad = $resEstado1[0]['cantidad'] - $resDev[0]['cantidad'];
+									$resta_item = $resEstado1[0]['item'] - $resDev[0]['item'];
 						}
 
 
@@ -2530,7 +2532,7 @@ class PurchaseInv extends REST_Controller {
 							':cec_doctype' => $Data['cfc_basetype']
 						));
 // print_r($resEstado2);exit();die();
-						$item_ec = $resEstado1[0]['item'];
+						$item_ec = $resta_item;
 						// $item_fact = 0;
 						$cantidad_ec = $resta_cantidad;
 						// if(isset($resEstado2[0]) && !empty($resEstado2[0]['cantidad'])){
@@ -2569,7 +2571,7 @@ class PurchaseInv extends REST_Controller {
 
 												if ($Data['cfc_basetype'] == 13) {
 													$sqlEstado1 ='SELECT
-					 																		coalesce(count(t1.ec1_itemcode),0) item,
+					 																		coalesce(count(distinct t1.ec1_itemcode),0) item,
 					 																		coalesce(sum(t1.ec1_quantity),0) cantidad
 					 																		from dcec t0
 					 																		inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
@@ -2581,7 +2583,7 @@ class PurchaseInv extends REST_Controller {
 													 ));
 
 													 $sqlDev1 =  "SELECT
-					 																	coalesce(count(t3.dc1_itemcode),0) item,
+					 																	coalesce(count(distinct t3.dc1_itemcode),0) item,
 					 																	coalesce(sum(t3.dc1_quantity),0) cantidad
 					 																	from dcec t0
 					 																	left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
@@ -2593,8 +2595,12 @@ class PurchaseInv extends REST_Controller {
 													 ':cec_docentry' => $Data['cfc_baseentry'],
 													 ':cec_doctype' => $Data['cfc_basetype']
 												 ));
-												 if(isset($resDev1[0]['cantidad'])){
+
+												 $resta_cantidad1 = $resEstado1[0]['cantidad'];
+												 $resta_item1 = 0;
+												 if(isset($resDev1[0]['cantidad']) && ($resDev1[0]['cantidad']) <> 0){
 												 				$resta_cantidad1 = $resEstado1[0]['cantidad'] - $resDev1[0]['cantidad'];
+																$resta_item1 = $resEstado1[0]['item'] - $resDev1[0]['item'];
 											 	}
 												 $sqlDev2 = "SELECT DISTINCT
 																					 t2.*
@@ -2622,12 +2628,12 @@ class PurchaseInv extends REST_Controller {
 												 ':cec_doctype' => $Data['cfc_basetype']
 											 ));
 
-											 $item_del1 = $resEstado1[0]['item'];
+											 $item_del1 = $resta_item1;
 											 $item_fact1 = $resEstado2[0]['item'];
 											 $cantidad_del1 = $resta_cantidad1;
 											 $cantidad_fact1 = $resEstado2[0]['cantidad'];
 
-
+												//
 												// print_r($item_del1);
 												// print_r($item_fact1);
 												// print_r($cantidad_del1);

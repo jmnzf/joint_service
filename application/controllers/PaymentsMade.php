@@ -411,7 +411,8 @@ class PaymentsMade extends REST_Controller {
 											$VlrPaidActual = $detail['pe1_vlrpaid'];
 											$VlrPaidFact = $resVlrPayFact[0]['cfc_paytoday'];
 
-											$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
+											$SumVlr =  round($VlrPaidActual + $VlrPaidFact, 2);
+											
 										if(isset($resVlrPayFact[0])){
 
 											if($SumVlr <= $resVlrPayFact[0]['cfc_doctotal'] ){

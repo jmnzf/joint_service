@@ -587,9 +587,7 @@ class Reports extends REST_Controller {
 										inner join dvfv
 										on dvfv.dvf_doctype = mac1.ac1_font_type
 										and dvfv.dvf_docentry = mac1.ac1_font_key
-										inner join tasa
-										on dvfv.dvf_currency = tasa.tsa_curro
-										and dvfv.dvf_docdate = tasa.tsa_date
+										inner join  tasa on dvfv.dvf_currency = tasa.tsa_curro and dvfv.dvf_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 										where mac1.ac1_legal_num = ".$Data['cardcode']."
 										and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0
 										--ANTICIPO CLIENTE
@@ -640,9 +638,7 @@ class Reports extends REST_Controller {
 										inner join gbpr
 										on gbpr.bpr_doctype = mac1.ac1_font_type
 										and gbpr.bpr_docentry = mac1.ac1_font_key
-										inner join tasa
-										on gbpr.bpr_currency = tasa.tsa_curro
-										and gbpr.bpr_docdate = tasa.tsa_date
+										inner join  tasa on gbpr.bpr_currency = tasa.tsa_curro and gbpr.bpr_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 										where mac1.ac1_legal_num = ".$Data['cardcode']."
 										and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 										--NOTA CREDITO
@@ -693,9 +689,7 @@ class Reports extends REST_Controller {
 										inner join dvnc
 										on dvnc.vnc_doctype = mac1.ac1_font_type
 										and dvnc.vnc_docentry = mac1.ac1_font_key
-										inner join tasa
-										on dvnc.vnc_currency = tasa.tsa_curro
-										and dvnc.vnc_docdate = tasa.tsa_date
+										inner join  tasa on dvnc.vnc_currency = tasa.tsa_curro and dvnc.vnc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 										where mac1.ac1_legal_num = ".$Data['cardcode']."
 										and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 										--NOTA DEBITO
@@ -746,9 +740,7 @@ class Reports extends REST_Controller {
 										inner join dvnd
 										on dvnd.vnd_doctype = mac1.ac1_font_type
 										and dvnd.vnd_docentry = mac1.ac1_font_key
-										inner join tasa
-										on dvnd.vnd_currency = tasa.tsa_curro
-										and dvnd.vnd_docdate = tasa.tsa_date
+										inner join  tasa on dvnd.vnd_currency = tasa.tsa_curro and dvnd.vnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 										where mac1.ac1_legal_num = ".$Data['cardcode']."
 										and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0";
 
@@ -800,9 +792,7 @@ class Reports extends REST_Controller {
 											inner join dcfc
 											on dcfc.cfc_doctype = mac1.ac1_font_type
 											and dcfc.cfc_docentry = mac1.ac1_font_key
-											inner join tasa
-											on dcfc.cfc_currency = tasa.tsa_curro
-											and dcfc.cfc_docdate = tasa.tsa_date
+											inner join  tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 											where mac1.ac1_legal_num = ".$Data['cardcode']."
 											and ABS((mac1.ac1_credit) - (mac1.ac1_ven_debit)) > 0
 											--PAGO EFECTUADO
@@ -853,9 +843,7 @@ class Reports extends REST_Controller {
 											inner join gbpe
 											on gbpe.bpe_doctype = mac1.ac1_font_type
 											and gbpe.bpe_docentry = mac1.ac1_font_key
-											inner join tasa
-											on gbpe.bpe_currency = tasa.tsa_curro
-											and gbpe.bpe_docdate = tasa.tsa_date
+											inner join  tasa on gbpe.bpe_currency = tasa.tsa_curro and gbpe.bpe_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 											where mac1.ac1_legal_num = ".$Data['cardcode']."
 											and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 											--NOTA CREDITO
@@ -906,9 +894,7 @@ class Reports extends REST_Controller {
 											inner join dcnc
 											on dcnc.cnc_doctype = mac1.ac1_font_type
 											and dcnc.cnc_docentry = mac1.ac1_font_key
-											inner join tasa
-											on dcnc.cnc_currency = tasa.tsa_curro
-											and dcnc.cnc_docdate = tasa.tsa_date
+											inner join  tasa on dcnc.cnc_currency = tasa.tsa_curro and dcnc.cnc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 											where mac1.ac1_legal_num = ".$Data['cardcode']."
 											and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 											--NOTA DEBITO
@@ -959,14 +945,13 @@ class Reports extends REST_Controller {
 											inner join dcnd
 											on dcnd.cnd_doctype = mac1.ac1_font_type
 											and dcnd.cnd_docentry = mac1.ac1_font_key
-											inner join tasa
-											on dcnd.cnd_currency = tasa.tsa_curro
-											and dcnd.cnd_docdate = tasa.tsa_date
+											inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 											where mac1.ac1_legal_num = ".$Data['cardcode']."
 											and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0";
 					}
 
 					$result = $this->pedeo->queryTable($sql,array());
+					// print_r($sql);exit();die();
 
 					if(isset($result[0])){
 

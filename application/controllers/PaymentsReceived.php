@@ -442,7 +442,7 @@ class PaymentsReceived extends REST_Controller {
 													$VlrPaidActual = $detail['pr1_vlrpaid'];
 													$VlrPaidFact = $resVlrPayFact[0]['dvf_paytoday'];
 
-													$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
+													$SumVlr = round($VlrPaidActual + $VlrPaidFact, 2);
 
 													if($SumVlr <= $resVlrPayFact[0]['dvf_doctotal'] ){
 

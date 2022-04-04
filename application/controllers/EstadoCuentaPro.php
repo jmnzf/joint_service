@@ -124,7 +124,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 														inner join dcfc  on dcfc.cfc_doctype = mac1.ac1_font_type and dcfc.cfc_docentry = mac1.ac1_font_key
-														inner join tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date
+														inner join  tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where mac1.ac1_legal_num = '".$Data['cardcode']."' and ABS((mac1.ac1_credit) - (mac1.ac1_ven_debit)) > 0
 
@@ -146,7 +146,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 														gbpe.bpe_docdate as FechaVencimiento,
 														gbpe.bpe_docnum as NumeroDocumento,
 														mac1.ac1_font_type as numtype,
-														mdt_docname as tipo,
+														'ANTICIPO' as tipo,
 														case
 															when mac1.ac1_font_type = 15 then mac1.ac1_debit
 															else mac1.ac1_credit
@@ -179,7 +179,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 														inner join gbpe on gbpe.bpe_doctype = mac1.ac1_font_type and gbpe.bpe_docentry = mac1.ac1_font_key
-														inner join tasa on gbpe.bpe_currency = tasa.tsa_curro and gbpe.bpe_docdate = tasa.tsa_date
+														inner join  tasa on gbpe.bpe_currency = tasa.tsa_curro and gbpe.bpe_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where mac1.ac1_legal_num = '".$Data['cardcode']."'
 														and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
@@ -236,7 +236,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 														inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry = mac1.ac1_font_key
-														inner join tasa on dcnc.cnc_currency = tasa.tsa_curro and dcnc.cnc_duedate = tasa.tsa_date
+														inner join  tasa on dcnc.cnc_currency = tasa.tsa_curro and dcnc.cnc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where mac1.ac1_legal_num = '".$Data['cardcode']."'
 														and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
@@ -293,7 +293,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 														inner join dcnd on dcnd.cnd_doctype = mac1.ac1_font_type and dcnd.cnd_docentry = mac1.ac1_font_key
-														inner join tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date
+														inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where mac1.ac1_legal_num = '".$Data['cardcode']."'
 														and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0";
