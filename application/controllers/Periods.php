@@ -208,7 +208,39 @@ class Periods extends REST_Controller {
          $this->response($respuesta);
   }
 
+  public function updateStatus_post()
+  {
+    $Data = $this->post();
 
+    // print_r($Data);exit;
+
+    $sqlUpdate = "UPDATE bpc1	SET pc1_status = :pc1_status	
+             WHERE pc1_id = :pc1_id AND pc1_subperiod = :pc1_subperiod";
+
+
+    $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+                                        ":pc1_status" => $Data['pc1_status'],
+                                        ":pc1_id"     => $Data['pc1_id'],
+                                        ":pc1_subperiod" =>$Data['pc1_subperiod']));
+
+    if (is_numeric($resUpdate) && $resUpdate == 1) {
+
+      $respuesta = array(
+        'error' => false,
+        'data' => $resUpdate,
+        'mensaje' => 'Empresa actualizada con exito'
+      );
+    } else {
+
+      $respuesta = array(
+        'error'   => true,
+        'data' => $resUpdate,
+        'mensaje'  => 'No se pudo actualizar la empresa'
+      );
+    }
+
+    $this->response($respuesta);
+  }
 
   private function validateDate($fecha){
       if(strlen($fecha) == 10 OR strlen($fecha) > 10){
