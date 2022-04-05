@@ -25,7 +25,6 @@ class CloseDoc extends REST_Controller {
     public function setCloseDoc_post(){
 
           $Data = $this->post();
-
           if(!isset($Data['doctype']) OR !isset($Data['docentry']) OR !isset($Data['createby'])){
 
                 $respuesta = array(
@@ -39,7 +38,8 @@ class CloseDoc extends REST_Controller {
                 return;
 
           }
-
+          
+          
           //SE INSERTA EL ESTADO DEL DOCUMENTO
 
           $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
@@ -100,6 +100,20 @@ class CloseDoc extends REST_Controller {
 
       return;
     }
+
+    // TABLAS
+    $table = array(
+      '1' =>  array('table' =>'dvct','prefix'=>'dvc'),
+      '2' =>  array('table' =>'dvov','prefix'=>'vov'),
+      '10' =>  array('table' =>'dcsc','prefix'=>'csc'),
+      '11' =>  array('table' =>'dcoc','prefix'=>'coc'),
+      '12' =>  array('table' =>'dcpo','prefix'=>'cpo')
+    );
+    $type = $Data['doctype'];
+    
+
+    
+    // print_r($sqlUpdate);exit;
 
     $sqlSelect = "SELECT distinct tbmd.*, mdt_docname,estado
                         FROM tbmd
@@ -184,7 +198,6 @@ class CloseDoc extends REST_Controller {
         ));
 
         if (is_numeric($resInsertEstado2) && $resInsertEstado2 > 0) {
-
         } else {
           $this->pedeo->trans_rollback();
 
@@ -194,6 +207,31 @@ class CloseDoc extends REST_Controller {
             'mensaje'  => 'No se pudo Anular el documento'
           );          
         }
+      }
+
+      $sqlUpdate = "UPDATE {{table}} SET {{prefix}}_canceled = 'Y' 
+                  WHERE {{prefix}}_docentry = :docentry AND {{prefix}}_doctype = :doctype ";
+
+      $sqlUpdate = str_replace("{{table}}", $table[$type]['table'], $sqlUpdate);
+      $sqlUpdate = str_replace("{{prefix}}", $table[$type]['prefix'], $sqlUpdate);
+
+      $resUpdate = $this->pedeo->updateRow(
+        $sqlUpdate,
+        array(
+          ":docentry" => $Data['docentry'],
+          ":doctype" => $Data['doctype']
+        )
+      );
+
+      if (is_numeric($resUpdate) and $resUpdate > 0) {
+      } else {
+        // $this->pedeo->trans_rollback();
+
+        $respuesta = array(
+          'error'   => true,
+          'data' => $resUpdate,
+          'mensaje'  => 'No se pudo Anular el documento'
+        );
       }
 
     } else {
