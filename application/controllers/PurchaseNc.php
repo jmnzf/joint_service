@@ -1903,6 +1903,7 @@ class PurchaseNc extends REST_Controller {
 									$MontoSysDB = 0;
 									$MontoSysCR = 0;
 									$TotalDoc = $Data['cnc_doctotal'];
+									$TotalDoc2 = 0;
 									$TotalDocOri = $TotalDoc;
 
 									$cuentaCxP = $rescuentaCxP[0]['mgs_acct'];
@@ -1923,6 +1924,10 @@ class PurchaseNc extends REST_Controller {
 
 								$AC1LINE = $AC1LINE+1;
 
+
+								if($Data['cnc_basetype'] == 15){
+									$TotalDoc2 = $TotalDoc;
+								}
 
 
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1958,7 +1963,7 @@ class PurchaseNc extends REST_Controller {
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
 										':ac1_ven_debit' => round($TotalDoc,2),
-										':ac1_ven_credit' => round($TotalDoc,2),
+										':ac1_ven_credit' => round($TotalDoc2,2),
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => 1,
 										':ac1_isrti' => 0,

@@ -412,7 +412,7 @@ class PaymentsMade extends REST_Controller {
 											$VlrPaidFact = $resVlrPayFact[0]['cfc_paytoday'];
 
 											$SumVlr =  round($VlrPaidActual + $VlrPaidFact, 2);
-											
+
 										if(isset($resVlrPayFact[0])){
 
 											if($SumVlr <= $resVlrPayFact[0]['cfc_doctotal'] ){
@@ -693,99 +693,99 @@ class PaymentsMade extends REST_Controller {
 										if($detail['pe1_doctype'] == 15) {
 
 
-										$sqlEstado = 'SELECT case when (cfc_doctotal - COALESCE(cfc_paytoday,0)) = 0 then 1 else 0 end estado
-																	from dcfc
-																	where cfc_docentry = :cfc_docentry';
+											$sqlEstado = 'SELECT case when (cfc_doctotal - COALESCE(cfc_paytoday,0)) = 0 then 1 else 0 end estado
+																		from dcfc
+																		where cfc_docentry = :cfc_docentry';
 
 
-										$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cfc_docentry' => $detail['pe1_docentry']));
+											$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cfc_docentry' => $detail['pe1_docentry']));
 
-										if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-													$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																							VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+											if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+														$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
-													$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-																		':bed_docentry' => $detail['pe1_docentry'],
-																		':bed_doctype' => $detail['pe1_doctype'],
-																		':bed_status' => 3, //ESTADO CERRADO
-																		':bed_createby' => $Data['bpe_createby'],
-																		':bed_date' => date('Y-m-d'),
-																		':bed_baseentry' => $resInsert,
-																		':bed_basetype' => $Data['bpe_doctype']
-													));
+														$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-													if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-													}else{
-
-															 $this->pedeo->trans_rollback();
-
-																$respuesta = array(
-																	'error'   => true,
-																	'data' => $resInsertEstado,
-																	'mensaje'	=> 'No se pudo registrar el pago'
-																);
+																			':bed_docentry' => $detail['pe1_docentry'],
+																			':bed_doctype' => $detail['pe1_doctype'],
+																			':bed_status' => 3, //ESTADO CERRADO
+																			':bed_createby' => $Data['bpe_createby'],
+																			':bed_date' => date('Y-m-d'),
+																			':bed_baseentry' => $resInsert,
+																			':bed_basetype' => $Data['bpe_doctype']
+														));
 
 
-																$this->response($respuesta);
+														if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
 
-																return;
-													}
+														}else{
+
+																 $this->pedeo->trans_rollback();
+
+																	$respuesta = array(
+																		'error'   => true,
+																		'data' => $resInsertEstado,
+																		'mensaje'	=> 'No se pudo registrar el pago'
+																	);
+
+
+																	$this->response($respuesta);
+
+																	return;
+														}
+
+											}
 
 										}
 
-									}
+										if($detail['pe1_doctype'] == 16) {
 
-									// if($detail['pe1_doctype'] == 16) {
-									//
-									//
-									// 		$sqlEstado = 'SELECT case when (cnc_doctotal - COALESCE(cnc_paytoday,0)) = 0 then 1 else 0 end estado
-									// 									from dcnc
-									// 									where cnc_docentry = :cnc_docentry';
-									//
-									//
-									// 		$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cnc_docentry' => $detail['pe1_docentry']));
-									//
-									// 		if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-									// 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-									// 															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-									//
-									// 					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-									//
-									//
-									// 										':bed_docentry' => $detail['pe1_docentry'],
-									// 										':bed_doctype' => $detail['pe1_doctype'],
-									// 										':bed_status' => 3, //ESTADO CERRADO
-									// 										':bed_createby' => $Data['bpe_createby'],
-									// 										':bed_date' => date('Y-m-d'),
-									// 										':bed_baseentry' => $resInsert,
-									// 										':bed_basetype' => $Data['bpe_doctype']
-									// 					));
-									//
-									//
-									// 					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-									//
-									// 					}else{
-									//
-									// 							 $this->pedeo->trans_rollback();
-									//
-									// 								$respuesta = array(
-									// 									'error'   => true,
-									// 									'data' => $resInsertEstado,
-									// 									'mensaje'	=> 'No se pudo registrar el pago'
-									// 								);
-									//
-									//
-									// 								$this->response($respuesta);
-									//
-									// 								return;
-									// 					}
-									//
-									// 		}
-									// }
+
+												$sqlEstado = 'SELECT case when (cnc_doctotal - COALESCE(cnc_paytoday,0)) = 0 then 1 else 0 end estado
+																			from dcnc
+																			where cnc_docentry = :cnc_docentry';
+
+
+												$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cnc_docentry' => $detail['pe1_docentry']));
+
+												if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+															$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																									VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+															$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																				':bed_docentry' => $detail['pe1_docentry'],
+																				':bed_doctype' => $detail['pe1_doctype'],
+																				':bed_status' => 3, //ESTADO CERRADO
+																				':bed_createby' => $Data['bpe_createby'],
+																				':bed_date' => date('Y-m-d'),
+																				':bed_baseentry' => $resInsert,
+																				':bed_basetype' => $Data['bpe_doctype']
+															));
+
+
+															if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+															}else{
+
+																	 $this->pedeo->trans_rollback();
+
+																		$respuesta = array(
+																			'error'   => true,
+																			'data' => $resInsertEstado,
+																			'mensaje'	=> 'No se pudo registrar el pago'
+																		);
+
+
+																		$this->response($respuesta);
+
+																		return;
+															}
+
+												}
+										}
 
 
 									}

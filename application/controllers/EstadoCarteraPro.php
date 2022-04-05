@@ -83,34 +83,31 @@ class EstadoCarteraPro extENDs REST_Controller {
 												dcfc.cfc_docnum,
 												dcfc.cfc_docdate as FechaDocumento,
 												dcfc.cfc_duedate as FechaVencimiento,
-												cfc_docnum as NumeroDocumento,
+												dcfc.cfc_docnum as NumeroDocumento,
 												mac1.ac1_font_type as numtype,
 												mdt_docname as tipo,
-												case
-												when mac1.ac1_font_type = 15 then mac1.ac1_debit
-												else mac1.ac1_credit
-												end as totalfactura,
-												(mac1.ac1_debit) - (mac1.ac1_credit) as saldo,
+												dcfc.cfc_doctotal as totalfactura,
+												(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
 												'' retencion,
 												tasa.tsa_value as tasa_dia,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=0 and ( '".$Data['fecha']."' - dcfc.cfc_duedate) <=30
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END uno_treinta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=31 and ( '".$Data['fecha']."' - dcfc.cfc_duedate) <=60
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END treinta_uno_secenta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=61 and ( '".$Data['fecha']."' - dcfc.cfc_duedate) <=90
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END secenta_uno_noventa,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=91
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 												ELSE 0
 												END mayor_noventa
 
@@ -119,9 +116,9 @@ class EstadoCarteraPro extENDs REST_Controller {
 												inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 												inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 												inner join dcfc on dcfc.cfc_doctype = mac1.ac1_font_type and dcfc.cfc_docentry = mac1.ac1_font_key
-												inner join tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date
+												inner join  tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-												where ABS((mac1.ac1_debit) - (mac1.ac1_credit) ) > 0 and dmsn.dms_card_type = '2'
+												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '2'
 
 
 												union all
@@ -142,7 +139,7 @@ class EstadoCarteraPro extENDs REST_Controller {
 												gbpe.bpe_docdate as FechaVencimiento,
 												gbpe.bpe_docnum as NumeroDocumento,
 												mac1.ac1_font_type as numtype,
-												mdt_docname as tipo,
+												'ANTICIPO' as tipo,
 												case
 												when mac1.ac1_font_type = 15 then mac1.ac1_debit
 												else mac1.ac1_debit
@@ -175,7 +172,7 @@ class EstadoCarteraPro extENDs REST_Controller {
 												inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 												inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 												inner join gbpe on gbpe.bpe_doctype = mac1.ac1_font_type and gbpe.bpe_docentry = mac1.ac1_font_key
-												inner join tasa on gbpe.bpe_currency = tasa.tsa_curro and gbpe.bpe_docdate = tasa.tsa_date
+												inner join  tasa on gbpe.bpe_currency = tasa.tsa_curro and gbpe.bpe_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '2'
 
@@ -230,7 +227,7 @@ class EstadoCarteraPro extENDs REST_Controller {
 												inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 												inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 												inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry = mac1.ac1_font_key
-												inner join tasa on dcnc.cnc_currency = tasa.tsa_curro and dcnc.cnc_docdate = tasa.tsa_date
+												inner join  tasa on dcnc.cnc_currency = tasa.tsa_curro and dcnc.cnc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '2'
 
@@ -262,22 +259,22 @@ class EstadoCarteraPro extENDs REST_Controller {
 												tasa.tsa_value as tasa_dia,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=0 and ( '".$Data['fecha']."' - dcnd.cnd_duedate) <=30
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END uno_treinta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=31 and ( '".$Data['fecha']."' - dcnd.cnd_duedate) <=60
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END treinta_uno_secenta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=61 and ( '".$Data['fecha']."' - dcnd.cnd_duedate) <=90
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END secenta_uno_noventa,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=91
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 												ELSE 0
 												END mayor_noventa
 
@@ -285,9 +282,9 @@ class EstadoCarteraPro extENDs REST_Controller {
 												inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 												inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 												inner join dcnd on dcnd.cnd_doctype = mac1.ac1_font_type and dcnd.cnd_docentry = mac1.ac1_font_key
-												inner join tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date
+												inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-												where ABS((mac1.ac1_debit) - (mac1.ac1_credit) ) > 0 and dmsn.dms_card_type = '2'";
+												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '2'";
 
 		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
 // print_r($sqlestadocuenta);exit();die();

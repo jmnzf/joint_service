@@ -1123,6 +1123,13 @@ class SalesNd extends REST_Controller {
 
 													$AC1LINE = $AC1LINE+1;
 
+													//PARA COMPESAR LA NOTA DE CREDITO CON LA FACTURA
+													//SI VIENE DE UN COPIAR FACTURA
+													if ( $Data['vnd_basetype'] == 5 ){
+														$creditoo = $debitoo;
+													}
+
+
 													$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 															':ac1_trans_id' => $resInsertAsiento,

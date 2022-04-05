@@ -90,27 +90,27 @@ class EstadoCartera extENDs REST_Controller {
 												when mac1.ac1_font_type = 5 then mac1.ac1_debit
 												else mac1.ac1_credit
 												end as totalfactura,
-												(mac1.ac1_debit) - (mac1.ac1_credit) as saldo,
+												(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
 												'' retencion,
 												tasa.tsa_value as tasa_dia,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=0 and ( '".$Data['fecha']."' - dvfv.dvf_duedate) <=30
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END uno_treinta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=31 and ( '".$Data['fecha']."' - dvfv.dvf_duedate) <=60
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END treinta_uno_secenta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=61 and ( '".$Data['fecha']."' - dvfv.dvf_duedate) <=90
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END secenta_uno_noventa,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=91
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 												ELSE 0
 												END mayor_noventa
 
@@ -121,7 +121,7 @@ class EstadoCartera extENDs REST_Controller {
 												inner join dvfv on dvfv.dvf_doctype = mac1.ac1_font_type and dvfv.dvf_docentry = mac1.ac1_font_key
 												inner join tasa on dvfv.dvf_currency = tasa.tsa_curro and dvfv.dvf_docdate = tasa.tsa_date
 												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-												where ABS((mac1.ac1_debit) - (mac1.ac1_credit) ) > 0 and dmsn.dms_card_type = '1'
+												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '1'
 
 
 												union all
@@ -143,11 +143,8 @@ class EstadoCartera extENDs REST_Controller {
 												gbpr.bpr_docnum as NumeroDocumento,
 												mac1.ac1_font_type as numtype,
 												mdt_docname as tipo,
-												case
-												when mac1.ac1_font_type = 5 then mac1.ac1_debit
-												else mac1.ac1_credit
-												end as totalfactura,
-												(mac1.ac1_debit) - (mac1.ac1_credit) as saldo,
+												gbpr.bpr_doctotal as totalfactura,
+												(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
 												'' retencion,
 												tasa.tsa_value as tasa_dia,
 												CASE
@@ -157,17 +154,17 @@ class EstadoCartera extENDs REST_Controller {
 												END uno_treinta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - gbpr.bpr_docdate) >=31 and ( '".$Data['fecha']."' - gbpr.bpr_docdate) <=60
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END treinta_uno_secenta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - gbpr.bpr_docdate) >=61 and ( '".$Data['fecha']."' - gbpr.bpr_docdate) <=90
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END secenta_uno_noventa,
 												CASE
 													WHEN ( '".$Data['fecha']."' - gbpr.bpr_docdate) >=91
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 												ELSE 0
 												END mayor_noventa
 
@@ -202,27 +199,27 @@ class EstadoCartera extENDs REST_Controller {
 												when mac1.ac1_font_type = 5 then mac1.ac1_debit
 												else mac1.ac1_credit
 												end as totalfactura,
-												(mac1.ac1_debit) - (mac1.ac1_credit) as saldo,
+												(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
 												'' retencion,
 												tasa.tsa_value as tasa_dia,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=0 and ( '".$Data['fecha']."' - dvnc.vnc_duedate) <=30
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END uno_treinta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=31 and ( '".$Data['fecha']."' - dvnc.vnc_duedate) <=60
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END treinta_uno_secenta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=61 and ( '".$Data['fecha']."' - dvnc.vnc_duedate) <=90
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END secenta_uno_noventa,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=91
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 												ELSE 0
 												END mayor_noventa
 
@@ -257,27 +254,27 @@ class EstadoCartera extENDs REST_Controller {
 												when mac1.ac1_font_type = 5 then mac1.ac1_debit
 												else mac1.ac1_credit
 												end as totalfactura,
-												(mac1.ac1_debit) - (mac1.ac1_credit) as saldo,
+												(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
 												'' retencion,
 												tasa.tsa_value as tasa_dia,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=0 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=30
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END uno_treinta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=31 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=60
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END treinta_uno_secenta,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=61 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=90
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 														ELSE 0
 												END secenta_uno_noventa,
 												CASE
 													WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=91
-														then (mac1.ac1_debit) - (mac1.ac1_credit)
+														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
 												ELSE 0
 												END mayor_noventa
 
@@ -287,7 +284,7 @@ class EstadoCartera extENDs REST_Controller {
 												inner join dvnd on dvnd.vnd_doctype = mac1.ac1_font_type and dvnd.vnd_docentry = mac1.ac1_font_key
 												inner join tasa on dvnd.vnd_currency = tasa.tsa_curro and dvnd.vnd_docdate = tasa.tsa_date
 												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-												where ABS((mac1.ac1_debit) - (mac1.ac1_credit) ) > 0 and dmsn.dms_card_type = '1'";
+												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '1'";
 
 		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
 // print_r($sqlestadocuenta);exit();die();

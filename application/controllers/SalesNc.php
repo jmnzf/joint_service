@@ -1779,6 +1779,12 @@ class SalesNc extends REST_Controller {
 
 									$AC1LINE = $AC1LINE+1;
 
+									//PARA COMPESAR LA NOTA DE CREDITO CON LA FACTURA
+									//SI VIENE DE UN COPIAR FACTURA
+									if ( $Data['vnc_basetype'] == 5 ){
+										$debitoo = $creditoo;
+									}
+
 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 											':ac1_trans_id' => $resInsertAsiento,
@@ -1811,7 +1817,7 @@ class SalesNc extends REST_Controller {
 											':ac1_accperiod' => 1,
 											':ac1_close' => 0,
 											':ac1_cord' => 0,
-											':ac1_ven_debit' => round($creditoo, 2),
+											':ac1_ven_debit' => round($debitoo, 2),
 											':ac1_ven_credit' => round($creditoo, 2),
 											':ac1_fiscal_acct' => 0,
 											':ac1_taxid' => 1,

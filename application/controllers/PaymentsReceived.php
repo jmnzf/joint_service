@@ -752,54 +752,52 @@ class PaymentsReceived extends REST_Controller {
 														 }
 
 														 // SE VALIDA SALDOS PARA CERRAR NOTA CREDITO
-														 // if($detail['pr1_doctype'] == 6) {
-														 //
-														 //
-															// 			 $sqlEstado = 'SELECT case when (vnc_doctotal - COALESCE(vnc_paytoday,0)) = 0 then 1 else 0 end estado
-															// 										 from dvnc
-															// 										 where vnc_docentry = :vnc_docentry';
-														 //
-														 //
-															// 			 $resEstado = $this->pedeo->queryTable($sqlEstado, array(':vnc_docentry' => $detail['pr1_docentry']));
-														 //
-															// 			 if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-															// 						 $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-															// 																 VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-														 //
-															// 						 $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-														 //
-														 //
-															// 											 ':bed_docentry' => $detail['pr1_docentry'],
-															// 											 ':bed_doctype' => $detail['pr1_doctype'],
-															// 											 ':bed_status' => 3, //ESTADO CERRADO
-															// 											 ':bed_createby' => $Data['bpr_createby'],
-															// 											 ':bed_date' => date('Y-m-d'),
-															// 											 ':bed_baseentry' => $resInsert,
-															// 											 ':bed_basetype' => $Data['bpr_doctype']
-															// 						 ));
-														 //
-														 //
-															// 						 if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-														 //
-															// 						 }else{
-														 //
-															// 									$this->pedeo->trans_rollback();
-														 //
-															// 									 $respuesta = array(
-															// 										 'error'   => true,
-															// 										 'data' => $resInsertEstado,
-															// 										 'mensaje'	=> 'No se pudo registrar el pago'
-															// 									 );
-														 //
-														 //
-															// 									 $this->response($respuesta);
-														 //
-															// 									 return;
-															// 						 }
-														 //
-															// 			 }
-														 //
-															// }
+														 if($detail['pr1_doctype'] == 6) {
+
+																		 $sqlEstado = 'SELECT case when (vnc_doctotal - COALESCE(vnc_paytoday,0)) = 0 then 1 else 0 end estado
+																									 from dvnc
+																									 where vnc_docentry = :vnc_docentry';
+
+
+																		 $resEstado = $this->pedeo->queryTable($sqlEstado, array(':vnc_docentry' => $detail['pr1_docentry']));
+
+																		 if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+																					 $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																															 VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+																					 $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																										 ':bed_docentry' => $detail['pr1_docentry'],
+																										 ':bed_doctype' => $detail['pr1_doctype'],
+																										 ':bed_status' => 3, //ESTADO CERRADO
+																										 ':bed_createby' => $Data['bpr_createby'],
+																										 ':bed_date' => date('Y-m-d'),
+																										 ':bed_baseentry' => $resInsert,
+																										 ':bed_basetype' => $Data['bpr_doctype']
+																					 ));
+
+																					 if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+																					 }else{
+
+																								$this->pedeo->trans_rollback();
+
+																								 $respuesta = array(
+																									 'error'   => true,
+																									 'data' => $resInsertEstado,
+																									 'mensaje'	=> 'No se pudo registrar el pago'
+																								 );
+
+
+																								 $this->response($respuesta);
+
+																								 return;
+																					 }
+
+																		 }
+
+															}
 
 														//
 											}
