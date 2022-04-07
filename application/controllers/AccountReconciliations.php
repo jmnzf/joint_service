@@ -34,7 +34,6 @@ class AccountReconciliations extends REST_Controller {
 			$cuentaTercero = 0;
 			$inArrayDetalleAsiento = array();
 
-
       // Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -390,10 +389,11 @@ class AccountReconciliations extends REST_Controller {
 										// LLENANDO PARA DETALLE DE ASIENTOS CONTABLES
 										$DetalleAsiento = new stdClass();
 
-										$DetalleAsiento->cuenta  = is_numeric($detail['rc1_acctcode'])?$detail['rc1_acctcode']:0;
-										$DetalleAsiento->tercero = isset($detail['rc1_cardcode'])?$detail['rc1_cardcode']:NULL;
-										$DetalleAsiento->tipodoc = is_numeric($detail['rc1_doctype'])?$detail['rc1_doctype']:0;
+										$DetalleAsiento->cuenta   = is_numeric($detail['rc1_acctcode'])?$detail['rc1_acctcode']:0;
+										$DetalleAsiento->tercero  = isset($detail['rc1_cardcode'])?$detail['rc1_cardcode']:NULL;
+										$DetalleAsiento->tipodoc  = is_numeric($detail['rc1_doctype'])?$detail['rc1_doctype']:0;
 										$DetalleAsiento->pagoaply = is_numeric($detail['rc1_valapply'])?$detail['rc1_valapply']:0;
+										$DetalleAsiento->cord     = isset($detail['ac1_cord'])?$detail['ac1_cord']:NULL;
 
 										$llaveDetalleAsiento = 	$DetalleAsiento->cuenta.$DetalleAsiento->tipodoc;
 
@@ -1018,6 +1018,7 @@ class AccountReconciliations extends REST_Controller {
 
 										$cuenta = 0;
 										$doctype = 0;
+										$ac1cord = null;
 
 
 										foreach ($posicion as $key => $value) {
@@ -1026,6 +1027,7 @@ class AccountReconciliations extends REST_Controller {
 
 													$cuenta = $value->cuenta;
 													$doctype  = $value->tipodoc;
+													$ac1cord = $value->cord;
 										}
 
 
@@ -1061,9 +1063,31 @@ class AccountReconciliations extends REST_Controller {
 													$MontoSysDB = $TotalPagoOriginal;
 											}
 
+										}else if( $doctype == 18 ){
+											if( $ac1cord == 0 ){
+												$credito = $TotalPago;
+
+												if(trim($Data['crc_currency']) != $MONEDASYS ){
+
+														$MontoSysCR = ($credito / $TasaLocSys);
+
+												}else{
+
+														$MontoSysCR = $TotalPagoOriginal;
+												}
+											}else if( $ac1cord == 1 ){
+												$debito = $TotalPago;
+
+												if(trim($Data['crc_currency']) != $MONEDASYS ){
+
+														$MontoSysDB = ($debito / $TasaLocSys);
+
+												}else{
+
+														$MontoSysDB = $TotalPagoOriginal;
+												}
+											}
 										}
-
-
 
 										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 

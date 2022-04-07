@@ -23,6 +23,7 @@ class PdfPaymentMade extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+			$this->load->library('DateFormat');
 
 	}
 
@@ -54,11 +55,8 @@ class PdfPaymentMade extends REST_Controller {
 
         //INFORMACION DE LA EMPRESA
 
-				$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
-																					   pge_cou_soc, CONCAT(pge_id_soc,' / ',pge_id_type) AS pge_id_type , pge_web_site, pge_logo,
-																					   CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
-																					   pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
-																						 FROM pgem", array());
+				$empresa = $this->pedeo->queryTable("SELECT * FROM pgem", array());
+															// print_r($empresa);exit();die();
 
 				if(!isset($empresa[0])){
 						$respuesta = array(
@@ -74,61 +72,98 @@ class PdfPaymentMade extends REST_Controller {
 
 
 				$sqlcotizacion = "SELECT
-													CONCAT(T0.bpe_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
-													T0.bpe_CARDCODE Nit,
-													CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) AS Direccion,
-													T3.dmd_state_mm ciudad,
-													t3.dmd_state estado,
-													T4.DMC_PHONE1 Telefono,
-													T4.DMC_EMAIL Email,
-													T0.bpe_DOCNUM,
-													T0.bpe_DOCNUM NumeroDocumento,
-													T0.bpe_DOCDATE FechaDocumento,
-													T0.bpe_DUEDATE FechaVenDocumento,
-													T0.bpe_duedev fechaentrga,
-													trim('COP' FROM t0.bpe_CURRENCY) MonedaDocumento,
-													T7.PGM_NAME_MONEDA NOMBREMONEDA,
-													T5.MEV_NAMES Vendedor,
-													'' MedioPago,
-													'' CondPago,
-													T1.pe1_ITEMCODE Referencia,
-													T1.pe1_ITEMNAME descripcion,
-													T1.pe1_WHSCODE Almacen,
-													T1.pe1_UOM UM,
-													T1.pe1_QUANTITY Cantidad,
-													T1.pe1_PRICE VrUnit,
-													T1.pe1_DISCOUNT PrcDes,
-													T1.pe1_VATSUM IVAP,
-													T1.pe1_LINETOTAL ValorTotalL,
-													T0.bpe_BASEAMNT base,
-													T0.bpe_DISCOUNT Descuento,
-													(T0.bpe_BASEAMNT - T0.bpe_DISCOUNT) subtotal,
-													T0.bpe_TAXTOTAL Iva,
-													T0.bpe_DOCTOTAL TotalDoc,
-													T0.bpe_COMMENT Comentarios,
-													t6.pgs_mde,
-													t6.pgs_mpfn,
-													T8.MPF_NAME cond_pago,
-													t3.dmd_tonw lugar_entrega,
-													t5.mev_names nombre_contacto,
-											    t5.mev_mail correo_contacto,
-											    t4.dmc_phone1 telefono_contacto,
-													t0.bpe_date_inv fecha_fact_pro,
-													t0.bpe_date_del fecha_entre,
-													t0.bpe_place_del lugar_entre
-												FROM gbpe  t0
-												INNER JOIN bpe1 T1 ON t0.bpe_docentry = t1.pe1_docnum
-												LEFT JOIN DMSN T2 ON t0.bpe_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON t2.dms_card_code = t3.dmd_card_code AND t3.dmd_ppal = 1
-												LEFT JOIN DMSC T4 ON T0.bpe_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
-												LEFT JOIN DMEV T5 ON T0.bpe_SLPCODE = T5.MEV_ID
-												LEFT JOIN PGDN T6 ON T0.bpe_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.bpe_SERIES = T6.PGS_ID
-												LEFT JOIN PGEC T7 ON T0.bpe_CURRENCY = T7.PGM_SYMBOL
-												LEFT JOIN DMPF T8 ON CAST(T2.DMS_PAY_TYPE AS INT) = T8.MPF_ID
-												WHERE T0.bpe_docentry = :bpe_docentry and t2.dms_card_type = '2'";
+											    t0.bpe_cardcode,
+											    t0.bpe_cardname,
+											    t0.bpe_docdate,
+													t0.bpe_datetransfer,
+											    t0.bpe_docnum,
+											    0 cuenta_bene,
+											    t1.pe1_docnum ,
+											    t1.pe1_doctype,
+											    case
+														when t6.bpe_doctype = t1.pe1_doctype then 'Anticipo'
+														else t5.mdt_docname
+													end tipo,
+											    case
+											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_docnum
+											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_docnum
+											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_docnum
+											        when t6.bpe_doctype = t1.pe1_doctype then t6.bpe_docnum
+											    end docnum,
+											    case
+											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_docdate
+											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_docdate
+											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_docdate
+											        when t6.bpe_doctype = t1.pe1_doctype then t6.bpe_docdate
+											    end docdate,
+											    case
+											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_docdate
+											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_docdate
+											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_docdate
+											        when t6.bpe_doctype = t1.pe1_doctype then t6.bpe_docdate
+											    end docdate,
+											    case
+											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_comment
+											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_comment
+											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_comment
+											        when t6.bpe_doctype = t1.pe1_doctype then t6.bpe_comments
+											    end comentario,
+											    case
+											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_baseamnt
+											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_baseamnt
+											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_baseamnt
+											        when t6.bpe_doctype = t1.pe1_doctype then t6.bpe_doctotal * -1
+											    end base,
+											    case
+											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_taxtotal
+											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_taxtotal
+											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_taxtotal
+											        when t6.bpe_doctype = t1.pe1_doctype then 0
+											    end iva,
+											    coalesce((select sum(a.crt_basert) from fcrt a inner join dmrt b on a.crt_typert = b.mrt_id where b.mrt_tasa = 0
+											        and a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype),0) exento,
+											    case
+											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_baseamnt + t2.cfc_taxtotal
+											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_baseamnt + t3.cnc_taxtotal
+											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_baseamnt + t4.cnd_taxtotal
+											        when t6.bpe_doctype = t1.pe1_doctype then t6.bpe_doctotal * -1
+											    end neto,
+											    coalesce((select sum(a.crt_basert) from fcrt a
+											    where a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype and a.crt_type = 3),0)  base_ret_iva,
+											    (select a.mrt_tasa from dmrt a inner join fcrt b on a.mrt_id = b.crt_typert
+											    where b.crt_baseentry = t2.cfc_docentry and b.crt_basetype = t2.cfc_doctype and b.crt_type = 3 ) porcentaje_ret_iva,
+											    coalesce((select sum(a.crt_basert) from fcrt a
+											    where a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype and a.crt_type = 2),0) base_ret_islr,
+											    (select a.mrt_tasa from dmrt a inner join fcrt b on a.mrt_id = b.crt_typert
+											    where b.crt_baseentry = t2.cfc_docentry and b.crt_basetype = t2.cfc_doctype and b.crt_type = 2) porcentaje_ret_islr,
+											    coalesce((select sum(a.crt_basert) from fcrt a
+											    where a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype and a.crt_type = 1),0) base_ret_ipm,
+											    (select a.mrt_tasa from dmrt a inner join fcrt b on a.mrt_id = b.crt_typert
+											    where b.crt_baseentry = t2.cfc_docentry and b.crt_basetype = t2.cfc_doctype and b.crt_type = 1) porcentaje_ret_ipm,
+											    case
+											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_doctotal
+											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_doctotal
+											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_doctotal
+											        when t6.bpe_doctype = t1.pe1_doctype then t6.bpe_doctotal * -1
+											    end total,
+													case
+														when t6.bpe_doctype = t1.pe1_doctype then t1.pe1_vlrpaid * -1
+														else t1.pe1_vlrpaid
+													end pe1_vlrpaid,
+												t0.bpe_memo,
+												t7.tsa_value tasa
+											from gbpe t0
+											inner join bpe1 t1 on t0.bpe_docentry = t1.pe1_docnum
+											left join dcfc t2 on t1.pe1_docentry = t2.cfc_docentry and t1.pe1_doctype = t2.cfc_doctype
+											left join dcnc t3 on t1.pe1_docentry = t3.cnc_docentry and t1.pe1_doctype = t3.cnc_doctype
+											left join dcnd t4 on t1.pe1_docentry = t4.cnd_docentry and t1.pe1_doctype = t4.cnd_doctype
+											left join gbpe t6 on t1.pe1_docentry = t6.bpe_docentry and t1.pe1_doctype = t6.bpe_doctype
+											inner join dmdt t5 on t1.pe1_doctype = t5.mdt_doctype
+											left join tasa t7 on t0.bpe_currency = t7.tsa_curro and t0.bpe_docdate = t7.tsa_date
+											where t0.bpe_docentry = :bpe_docentry";
 
 				$contenidoOC = $this->pedeo->queryTable($sqlcotizacion,array(':bpe_docentry'=>$Data));
-print_r($sqlcotizacion);exit();die();
+// print_r($sqlcotizacion);exit();die();
 				if(!isset($contenidoOC[0])){
 						$respuesta = array(
 							 'error' => true,
@@ -142,49 +177,51 @@ print_r($sqlcotizacion);exit();die();
 				}
 				// print_r($contenidoOC);exit();die();
 
-				$consecutivo = '';
-
-				if($contenidoOC[0]['pgs_mpfn'] == 1){
-					$consecutivo = $contenidoOC[0]['numerodocumento'];
-				}else{
-					$consecutivo = $contenidoOC[0]['bpe_docnum'];
-				}
-
-
 				$totaldetalle = '';
+				$totales = 0;
 				foreach ($contenidoOC as $key => $value) {
 					// code...
-					$detalle = '<td>'.$value['referencia'].'</td>
-											<td>'.$value['descripcion'].'</td>
-											<td>'.$value['um'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], 2, ',', '.').'</td>
-											<td>'.$value['cantidad'].'</td>
-											<td>'.$value['prcdes'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], 2, ',', '.').'</td>';
+					$detalle = '<td>'.$value['tipo'].'</td>
+											<td>'.$value['docnum'].'</td>
+											<td>'.$this->dateformat->Date($value['docdate']).'</td>
+											<td>'.$value['comentario'].'</td>
+											<td>'.number_format($value['base'], 2, ',', '.').'</td>
+											<td>'.number_format($value['iva'], 2, ',', '.').'</td>
+											<td>'.number_format($value['exento'], 2, ',', '.').'</td>
+											<td>'.$value['porcentaje_ret_iva'].'</td>
+											<td>'.number_format($value['base_ret_iva'], 2, ',', '.').'</td>
+											<td>'.number_format(($value['neto'] + $value['exento']) - $value['base_ret_iva'] , 2, ',', '.').'</td>
+											<td>'.number_format($value['base'], 2, ',', '.').'</td>
+											<td>'.$value['porcentaje_ret_islr'].'</td>
+											<td>'.number_format($value['base_ret_islr'], 2, ',', '.').'</td>
+											<td>'.$value['porcentaje_ret_ipm'].'</td>
+											<td>'.number_format($value['base_ret_ipm'], 2, ',', '.').'</td>
+											<td>'.number_format($value['total'], 2, ',', '.').'</td>
+											<td>'.number_format($value['pe1_vlrpaid'], 2, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
+				 $totales = $totales + ($value['pe1_vlrpaid']);
 				}
 
 
         $header = '
 				<table width="100%" style="text-align: left;">
         <tr>
-            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
+            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40">
+						</img></th>
             <th>
                 <p><b>Andino Pneus de Venezuela, C.A.</b></p>
-                <p><b>Rif: J-00328174</b></p>
+                <p><b>Rif: J-003281174</b></p>
                 <p><b>Carretera Nacional Guacara-Los Guayos, Fabrica de Cauchos.</b></p>
-                <p><b>Guaraca, Estados Carabobo, Venezuela</b></p>
+                <p><b>GUACARA, Estado Carabobo, Venezuela</b></p>
 
-            </th>
-            <th>
-                <p><b>ORDEN DE COMPRA</b></p>
-            </th>
-        </tr>
+						            </th>
+						            <th>
+						                <p><b>PAGO EFECTUADO</b></p>
+						            </th>
+						        </tr>
 
-</table>
-        ';
-
+						</table>';
+					// print_r($header);exit();die();
 				$footer = '
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
@@ -202,22 +239,20 @@ print_r($sqlcotizacion);exit();die();
 								<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
 								<p>'.$empresa[0]['pge_add_soc'].'</p>
                 <p>'.$empresa[0]['pge_id_type'].'</p>
-                <p>TELEFONOS: '.$empresa[0]['pge_phone1'].'</p>
-                <p>'.$empresa[0]['pge_web_site'].'</p>
-                <p>'.$empresa[0]['pge_mail'].'</p>
+								<p>'.$empresa[0]['pge_state_soc'].'</p>
+                <p>TELEFONO:'.$empresa[0]['pge_phone1'].' / '.$empresa[0]['pge_phone2'].'</p>
+                <p>website: '.$empresa[0]['pge_web_site'].'</p>
+                <p>Instagram: @Pneusdevenezuela</p>
             </th>
-            <th style="text-align: right;">
-								<p><b>OC: </b></p>
-						</th>
-						<th style="text-align: left;">
-                <p >'.$contenidoOC[0]['numerodocumento'].'</p>
-						</th>
 						<th style="text-align: right;">
-								<th style="text-align: right;">
+									<p><b>PAGO: </b></p>
 									<p><b>FECHA DE EMISIÓN: </b></p>
+									<p><b>FECHA DE PAGO: </b></p>
 						</th>
 									<th style="text-align: left;">
-									<p>'.date("d-m-Y", strtotime($contenidoOC[0]['fechadocumento'])).'</p>
+									<p >'.$contenidoOC[0]['bpe_docnum'].'</p>
+									<p>'.$this->dateformat->Date($contenidoOC[0]['bpe_docdate']).'</p>
+									<p>'.$this->dateformat->Date($contenidoOC[0]['bpe_datetransfer']).'</p>
 
             </th>
         </tr>
@@ -232,37 +267,18 @@ print_r($sqlcotizacion);exit();die();
             </tr>
         </table>
 
-				<table  width="100%" font-family: serif>
+				<table  width="100%">
 				<tr>
-					<th><b>PROVEEDOR</b><th>
-					<th><b>'.$empresa[0]['pge_small_name'].'</b><th>
-       	</th>
-        </tr>
-				<tr>
-					<td><b>RIF:</b> <span>'.$contenidoOC[0]['nit'].'</span></p></td>
+					<td><b>RIF:</b> <span>'.$contenidoOC[0]['bpe_cardcode'].'</span></p></td>
 					<td></td>
-					<td><b>nombre contacto:</b> <span>'.$contenidoOC[0]['nombre_contacto'].'</span></p></td>
+					<td><b>nombre proveedor:</b> <span>'.$contenidoOC[0]['bpe_cardname'].'</span></p></td>
 				</tr>
 				<tr>
-					<td><b>nombre proveedor:</b> <span>'.$contenidoOC[0]['cliente'].'</span></p></td>
-					<td></td>
-					<td><b>correo contacto:</b> <span>'.$contenidoOC[0]['correo_contacto'].'</span></p></td>
+					<td><b>cuenta:</b> <span>'.$contenidoOC[0]['cuenta_bene'].'</span></p></td>
 				</tr>
-				<tr>
-					<td><b>direccion:</b> <span>'.$contenidoOC[0]['direccion'].'</span></p></td>
-					<td></td>
-					<td><b>telefono contacto:</b> <span>'.$contenidoOC[0]['telefono_contacto'].'</span></p></td>
-				</tr>
-				<tr>
-					<td><b>ciudad:</b> <span>'.$contenidoOC[0]['ciudad'].'</span></p></td>
-				</tr>
-				<tr>
-					<td><b>estado:</b> <span>'.$contenidoOC[0]['estado'].'</span></p></td>
-				</tr>
-
-
 
 				</table>
+
 				<table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
@@ -271,36 +287,27 @@ print_r($sqlcotizacion);exit();die();
                 </th>
             </tr>
         </table>
-				<table table  width="100%">
-				<tr>
-				<th style="text-align: center;"><b>CONDICION DE PAGO:</b></th>
-				<th style="text-align: center;"><b>Lugar de Entrega:</b></th>
-				<th style="text-align: center;"><b>FECHA DE ENTREGA:</b></th>
-				<th style="text-align: center;"><b>FECHA FACTURA PROVEEDOR:</b></th>
-				</tr>
-				<tr>
-				<td>'.$contenidoOC[0]['cond_pago'].'</td>
-				<td>'.$contenidoOC[0]['lugar_entre'].'</td>
-				<td>'.date("d-m-Y", strtotime($contenidoOC[0]['fecha_entre'])).'</td>
-				<td>'.$contenidoOC[0]['fecha_fact_pro'].'</td>
-				</tr>
 
-				</table>
-				<br>
-
-        <table class="borde" style="width:100%">
-
-
+				<table  class="borde" style="width:100%">
 
         <tr>
-          <th><b>ITEM</b></th>
-          <th><b>REFERENCIA</b></th>
-          <th><b>UNIDAD</b></th>
-          <th><b>PRECIO</b></th>
-          <th><b>CANTIDAD</b></th>
-          <th><b>DESCUENTO</b></th>
-          <th><b>IVA</b></th>
-          <th><b>TOTAL</b></th>
+          <th><b>TIPO DOC</b></th>
+					<th><b># DOC</b></th>
+					<th><b>FECHA DOC</b></th>
+					<th><b>COMENTARIO</b></th>
+					<th><b>TOTAL BASE</b></th>
+					<th><b>TOTAL IVA</b></th>
+					<th><b>TOTAL EXE</b></th>
+					<th><b>% R.IVA</b></th>
+					<th><b>TOTAL R.IVA</b></th>
+					<th><b>TOTAL NETO</b></th>
+					<th><b>BASE RET</b></th>
+					<th><b>% ISRL</b></th>
+					<th><b>TOTAL R.ISRL</b></th>
+					<th><b>% R.IPM</b></th>
+					<th><b>TOTAL R.IPM</b></th>
+					<th><b>TOTAL A PAGAR</b></th>
+					<th><b>TOTAL APLICADO</b></th>
         </tr>
       	'.$totaldetalle.'
         </table>
@@ -314,49 +321,25 @@ print_r($sqlcotizacion);exit();die();
             </tr>
         </table>
 
-        <br>
-        <table width="100%">
-
-        <tr>
-            <td style="text-align: right;"><b>Base Documento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['base'], 2, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;"><b>Descuento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['descuento'], 2, ',', '.').'</span></p></td>
-        </tr>
-				<tr>
-            <td style="text-align: right;"><b>Sub Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['subtotal'], 2, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;"><b>Impuestos:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['iva'], 2, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;"><b>Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
-        </tr>
+				<table width="100%">
+					<tr>
+						<td style="text-align: left;"><b>COMENTARIO:</b><span>'.$contenidoOC[0]['bpe_memo'].'</td>
+						<td></td>
+						<td style="text-align: left;"><b>TASA:</b><span>'.number_format($contenidoOC[0]['tasa'], 2, ',', '.').'</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td style="text-align: left;"><b>TOTAL BS:</b><span>'.number_format($totales, 2, ',', '.').'</td>
+					</tr>
+					<tr>
+						<td></td>
+						<td></td>
+						<td style="text-align: left;"><b>TOTAL USD:</b><span>'.number_format(($totales / $contenidoOC[0]['tasa']), 2, ',', '.').'</td>
+					</tr>
 				</table>
-				<table  width="100%">
-				<tr>
-            <td style="text-align: left;"><b>comentarios (ver adjunto de instruccion de envio):</b>
-						<br><p>'.$contenidoOC[0]['comentarios'].'</p>
-						</p>
-						</td>
-        </tr>
-
-
-        </table>
-				<br>
-				<br>
-
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: left;" >
-										<p><b>VALOR EN LETRAS:</b></p><br>
-                    <p>'.$formatter->toWords($contenidoOC[0]['totaldoc'],2)." ".$contenidoOC[0]['nombremoneda'].'</p>
-                </th>
-            </tr>
-        </table>
 				</html>';
-
+// print_r($html);exit();die();
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
         $mpdf->SetHTMLHeader($header);
@@ -366,7 +349,8 @@ print_r($sqlcotizacion);exit();die();
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
 
-				$filename = 'OC_'.$contenidoOC[0]['numerodocumento'].'.pdf';
+				$filename = 'PE_'.$contenidoOC[0]['bpe_docnum'].'.pdf';
+				// print_r($contenidoOC);
         $mpdf->Output($filename, 'D');
 
 

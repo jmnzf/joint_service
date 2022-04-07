@@ -74,7 +74,7 @@ class PagoRecibido extends REST_Controller {
 																						on dvfv.dvf_currency = tasa.tsa_curro
 																						and dvfv.dvf_docdate = tasa.tsa_date
 																						where mac1.ac1_legal_num = :cardcode
-																						and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0
+																						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 																						union all
 																						select distinct
 																						mac1.ac1_font_key,
@@ -182,7 +182,7 @@ class PagoRecibido extends REST_Controller {
 																						on dvnd.vnd_currency = tasa.tsa_curro
 																						and dvnd.vnd_docdate = tasa.tsa_date
 																						where mac1.ac1_legal_num = :cardcode
-																						and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0", array(':cardcode' => $request['cardcode']));
+																						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0", array(':cardcode' => $request['cardcode']));
 
   		if(isset($resSelect[0])){
 

@@ -72,7 +72,7 @@ on dcfc.cfc_doctype = mac1.ac1_font_type
 and dcfc.cfc_docentry = mac1.ac1_font_key
 inner join  tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 where mac1.ac1_legal_num = :cardcode
-and ABS((mac1.ac1_credit) - (mac1.ac1_ven_debit)) > 0
+and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
 --PAGO EFECTUADO
 union all
 select distinct
@@ -177,7 +177,7 @@ on dcnd.cnd_doctype = mac1.ac1_font_type
 and dcnd.cnd_docentry = mac1.ac1_font_key
 inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 where mac1.ac1_legal_num = :cardcode
-and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0",array(':cardcode' => $request['cardcode']));
+and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0",array(':cardcode' => $request['cardcode']));
 
   		$respuesta = array(
   			'error'  => true,

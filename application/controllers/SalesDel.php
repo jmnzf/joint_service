@@ -19,7 +19,6 @@ class SalesDel extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
-
 	}
 
   //CREAR NUEVA Entrega de Ventas
@@ -52,7 +51,6 @@ class SalesDel extends REST_Controller {
 			$ManejaInvetario = 0;
 			$AC1LINE = 1;
 			$AgregarAsiento = true;
-
 
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,

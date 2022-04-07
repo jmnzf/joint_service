@@ -129,7 +129,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 														inner join tasa on dvfv.dvf_currency = tasa.tsa_curro and dvfv.dvf_docdate = tasa.tsa_date
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-														and mac1.ac1_legal_num = '".$Data['cardcode']."'
+														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
 
 
 														union all
@@ -183,6 +183,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 														inner join tasa on gbpr.bpr_currency = tasa.tsa_curro and gbpr.bpr_docdate = tasa.tsa_date
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
 
 														union all
 														select distinct
@@ -238,7 +239,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 														inner join tasa on dvnc.vnc_currency = tasa.tsa_curro and dvnc.vnc_docdate = tasa.tsa_date
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-														and mac1.ac1_legal_num = '".$Data['cardcode']."'
+														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
 
 														union all
 														select distinct
@@ -294,10 +295,10 @@ class EstadoCuentaCl extENDs REST_Controller {
 														inner join tasa on dvnd.vnd_currency = tasa.tsa_curro and dvnd.vnd_docdate = tasa.tsa_date
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-														and mac1.ac1_legal_num = '".$Data['cardcode']."'";
+														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'";
 
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
-         // print_r($contenidoestadocuenta);exit();die();
+         // print_r($sqlestadocuenta);exit();die();
 				if(!isset($contenidoestadocuenta[0])){
 						$respuesta = array(
 							 'error' => true,

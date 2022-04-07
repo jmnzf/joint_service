@@ -125,7 +125,8 @@ class EstadoCuentaPro extENDs REST_Controller {
 														inner join dcfc on dcfc.cfc_doctype = mac1.ac1_font_type and dcfc.cfc_docentry = mac1.ac1_font_key
 														inner join  tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-														where mac1.ac1_legal_num = '".$Data['cardcode']."' and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '2'
+														where mac1.ac1_legal_num = '".$Data['cardcode']."' and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0
+														and dmsn.dms_card_type = '2'
 
 
 														union all
@@ -236,7 +237,8 @@ class EstadoCuentaPro extENDs REST_Controller {
 														inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry = mac1.ac1_font_key
 														inner join  tasa on dcnc.cnc_currency = tasa.tsa_curro and dcnc.cnc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-														where mac1.ac1_legal_num = '".$Data['cardcode']."' and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '2'
+														where mac1.ac1_legal_num = '".$Data['cardcode']."' and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+														and dmsn.dms_card_type = '2'
 
 														union all
 														select distinct
@@ -291,7 +293,8 @@ class EstadoCuentaPro extENDs REST_Controller {
 														inner join dcnd on dcnd.cnd_doctype = mac1.ac1_font_type and dcnd.cnd_docentry = mac1.ac1_font_key
 														inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-														where mac1.ac1_legal_num = '".$Data['cardcode']."' and  ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '2'";
+														where mac1.ac1_legal_num = '".$Data['cardcode']."' and  ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0
+														and dmsn.dms_card_type = '2'";
 
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
           // print_r($sqlestadocuenta);exit();die();

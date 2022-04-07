@@ -23,6 +23,7 @@ class PdfOrdenCompraEs extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('DateFormat');
 
 	}
 
@@ -54,11 +55,7 @@ class PdfOrdenCompraEs extends REST_Controller {
 
         //INFORMACION DE LA EMPRESA
 
-				$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
-																					   pge_cou_soc, CONCAT(pge_id_soc,' / ',pge_id_type) AS pge_id_type , pge_web_site, pge_logo,
-																					   CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
-																					   pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
-																						 FROM pgem", array());
+				$empresa = $this->pedeo->queryTable("SELECT * FROM pgem", array());
 
 				if(!isset($empresa[0])){
 						$respuesta = array(
@@ -290,11 +287,11 @@ class PdfOrdenCompraEs extends REST_Controller {
 												LEFT JOIN DMEV T5 ON T0.CPO_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.CPO_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.CPO_SERIES = T6.PGS_ID
 												LEFT JOIN PGEC T7 ON T0.CPO_CURRENCY = T7.PGM_SYMBOL
-												LEFT JOIN DMPF T8 ON CAST(T2.DMS_PAY_TYPE AS INT) = T8.MPF_ID
+												LEFT JOIN DMPF T8 ON T2.DMS_PAY_TYPE = cast(T8.MPF_ID as  varchar)
 												WHERE T0.CPO_DOCENTRY = :CPO_DOCENTRY and t2.dms_card_type = '2'";
 
 				$contenidoOC = $this->pedeo->queryTable($sqlcotizacion,array(':CPO_DOCENTRY'=>$Data));
-// print_r($sqlcotizacion);exit();die();
+// print_r($contenidoOC);exit();die();
 				if(!isset($contenidoOC[0])){
 						$respuesta = array(
 							 'error' => true,
@@ -338,9 +335,9 @@ class PdfOrdenCompraEs extends REST_Controller {
             <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
             <th>
                 <p><b>Andino Pneus de Venezuela, C.A.</b></p>
-                <p><b>Rif: J-00328174</b></p>
+                <p><b>Rif: J-003281174</b></p>
                 <p><b>Carretera Nacional Guacara-Los Guayos, Fabrica de Cauchos.</b></p>
-                <p><b>Guaraca, Estados Carabobo, Venezuela</b></p>
+                <p><b>GUACARA, Estado Carabobo, Venezuela</b></p>
 
             </th>
             <th>
@@ -365,12 +362,13 @@ class PdfOrdenCompraEs extends REST_Controller {
         <tr>
 
             <th style="text-align: left;">
-								<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
-								<p>'.$empresa[0]['pge_add_soc'].'</p>
-                <p>'.$empresa[0]['pge_id_type'].'</p>
-                <p>TELEFONOS: '.$empresa[0]['pge_phone1'].'</p>
-                <p>'.$empresa[0]['pge_web_site'].'</p>
-                <p>'.$empresa[0]['pge_mail'].'</p>
+						<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
+						<p>'.$empresa[0]['pge_add_soc'].'</p>
+						<p>'.$empresa[0]['pge_id_type'].'</p>
+						<p>'.$empresa[0]['pge_state_soc'].'</p>
+						<p>TELEFONO:'.$empresa[0]['pge_phone1'].' / '.$empresa[0]['pge_phone2'].'</p>
+						<p>website: '.$empresa[0]['pge_web_site'].'</p>
+						<p>Instagram: @Pneusdevenezuela</p>
             </th>
             <th style="text-align: right;">
 								<p><b>OC: </b></p>
@@ -383,7 +381,7 @@ class PdfOrdenCompraEs extends REST_Controller {
 									<p><b>FECHA DE EMISIÓN: </b></p>
 						</th>
 									<th style="text-align: left;">
-									<p>'.date("d-m-Y", strtotime($contenidoOC[0]['fechadocumento'])).'</p>
+									<p>'.$this->dateformat->Date($contenidoOC[0]['fechadocumento']).'</p>
 
             </th>
         </tr>
@@ -400,30 +398,37 @@ class PdfOrdenCompraEs extends REST_Controller {
 
 				<table  width="100%" font-family: serif>
 				<tr>
-					<th><b>PROVEEDOR</b><th>
-					<th><b>'.$empresa[0]['pge_small_name'].'</b><th>
-       	</th>
-        </tr>
+					<th style="text-align: left;"><b>PROVEEDOR</b><th>
+					<th style="text-align: right;"><b>'.$empresa[0]['pge_small_name'].'</b><th>
+				</tr>
+				</table>
+				<table  width="100%" font-family: serif>
 				<tr>
-					<td><b>RIF:</b> <span>'.$contenidoOC[0]['nit'].'</span></p></td>
-					<td></td>
-					<td><b>nombre contacto:</b> <span>'.$contenidoOC[0]['nombre_contacto'].'</span></p></td>
+					<th style="text-align: left;"><b>RIF:</b><span>'.$contenidoOC[0]['nit'].'</span></p></th>
+					<th style="text-align: right;"><b>nombre contacto:</b> <span >'.$contenidoOC[0]['nombre_contacto'].'</span></p></th>
 				</tr>
 				<tr>
-					<td><b>nombre proveedor:</b> <span>'.$contenidoOC[0]['cliente'].'</span></p></td>
-					<td></td>
-					<td><b>correo contacto:</b> <span>'.$contenidoOC[0]['correo_contacto'].'</span></p></td>
+					<th style="text-align: left;"><b>nombre proveedor:</b> <span>'.$contenidoOC[0]['cliente'].'</span></p></th>
+					<th style="text-align: right;"><b>correo contacto:</b> <span>'.$contenidoOC[0]['correo_contacto'].'</span></p></th>
 				</tr>
 				<tr>
-					<td><b>direccion:</b> <span>'.$contenidoOC[0]['direccion'].'</span></p></td>
-					<td></td>
-					<td><b>telefono contacto:</b> <span>'.$contenidoOC[0]['telefono_contacto'].'</span></p></td>
+					<th style="text-align: left;"><b>direccion:</b> <span>'.$contenidoOC[0]['direccion'].'</span></p></th>
+					<th style="text-align: right;"><b>telefono contacto:</b> <span>'.$contenidoOC[0]['telefono_contacto'].'</span></p></th>
 				</tr>
 				<tr>
-					<td><b>ciudad:</b> <span>'.$contenidoOC[0]['ciudad'].'</span></p></td>
+					<th style="text-align: left;"><b>ciudad:</b> <span>'.$contenidoOC[0]['ciudad'].'</span></p></th>
 				</tr>
 				<tr>
-					<td><b>estado:</b> <span>'.$contenidoOC[0]['estado'].'</span></p></td>
+					<th style="text-align: left;"><b>estado:</b> <span>'.$contenidoOC[0]['estado'].'</span></p></th>
+				</tr>
+				<tr>
+					<th style="text-align: left;"><b>nombre contacto:</b> <span>'.$contenidoOC[0]['estado'].'</span></p></th>
+				</tr>
+				<tr>
+					<th style="text-align: left;"><b>telefono contacto:</b> <span>'.$contenidoOC[0]['estado'].'</span></p></th>
+				</tr>
+				<tr>
+					<th style="text-align: left;"><b>correo contacto:</b> <span>'.$contenidoOC[0]['estado'].'</span></p></th>
 				</tr>
 
 

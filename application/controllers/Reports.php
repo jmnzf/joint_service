@@ -577,7 +577,8 @@ class Reports extends REST_Controller {
 										dvfv.dvf_cardname as nombreproveedor,
 										dvfv.dvf_currency as monedadocumento,
 										".$fecha." as  fechacorte,
-										ac1_line_num
+										ac1_line_num,
+										ac1_cord
 										from  mac1
 										inner join dacc
 										on mac1.ac1_account = dacc.acc_code
@@ -589,7 +590,7 @@ class Reports extends REST_Controller {
 										and dvfv.dvf_docentry = mac1.ac1_font_key
 										inner join  tasa on dvfv.dvf_currency = tasa.tsa_curro and dvfv.dvf_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 										where mac1.ac1_legal_num = ".$Data['cardcode']."
-										and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0
+										and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 										--ANTICIPO CLIENTE
 										union all
 										select distinct
@@ -628,7 +629,8 @@ class Reports extends REST_Controller {
 										gbpr.bpr_cardname as nombreproveedor,
 										gbpr.bpr_currency as monedadocumento,
 										".$fecha." as  fechacorte,
-										ac1_line_num
+										ac1_line_num,
+										ac1_cord
 										from  mac1
 										inner join dacc
 										on mac1.ac1_account = dacc.acc_code
@@ -673,13 +675,14 @@ class Reports extends REST_Controller {
 											when mac1.ac1_font_type = 5 then mac1.ac1_debit * -1
 											else mac1.ac1_credit * -1
 										end	 as totalfactura,
-										(mac1.ac1_debit) - (mac1.ac1_ven_credit) as saldo_venc,
+										(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 										'' retencion,
 										tasa.tsa_value as tasa_dia,
 										dvnc.vnc_cardname as nombreproveedor,
 										dvnc.vnc_currency as monedadocumento,
 										".$fecha." as  fechacorte,
-										ac1_line_num
+										ac1_line_num,
+										ac1_cord
 										from  mac1
 										inner join dacc
 										on mac1.ac1_account = dacc.acc_code
@@ -730,7 +733,8 @@ class Reports extends REST_Controller {
 										dvnd.vnd_cardname as nombreproveedor,
 										dvnd.vnd_currency as monedadocumento,
 										".$fecha." as  fechacorte,
-										ac1_line_num
+										ac1_line_num,
+										ac1_cord
 										from  mac1
 										inner join dacc
 										on mac1.ac1_account = dacc.acc_code
@@ -742,7 +746,64 @@ class Reports extends REST_Controller {
 										and dvnd.vnd_docentry = mac1.ac1_font_key
 										inner join  tasa on dvnd.vnd_currency = tasa.tsa_curro and dvnd.vnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 										where mac1.ac1_legal_num = ".$Data['cardcode']."
-										and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0";
+										and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+										--ASIENTOS MANUALES
+										union all
+										select distinct
+										mac1.ac1_font_key,
+										mac1.ac1_legal_num,
+										mac1.ac1_legal_num as codigoproveedor,
+										mac1.ac1_account as cuenta,
+										mac1.ac1_account,
+										CURRENT_DATE - tmac.mac_doc_duedate dias,
+										CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
+										tmac.mac_comments,
+										tmac.mac_currency,
+										0 as dvf_docentry,
+										0 as docentry,
+										0 as docnum,
+										0 as numerodocumento,
+										tmac.mac_doc_date as fecha_doc,
+										tmac.mac_doc_date as fechadocumento,
+										tmac.mac_doc_duedate as fecha_ven,
+										tmac.mac_doc_duedate as fechavencimiento,
+										0 as id_origen,
+										18 as numtype,
+										18 as doctype,
+										mdt_docname as tipo,
+										case
+											when mac1.ac1_cord = 0 then mac1.ac1_debit *-1
+											when mac1.ac1_cord = 1 then mac1.ac1_credit *-1
+										end	 as total_doc,
+										case
+											when mac1.ac1_cord = 0 then mac1.ac1_debit *-1
+											when mac1.ac1_cord  = 1 then mac1.ac1_credit *-1
+										end	 as totalfactura,
+										(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
+										'' retencion,
+										tasa.tsa_value as tasa_dia,
+										dmsn.dms_card_name as nombreproveedor,
+										tmac.mac_currency as monedadocumento,
+										".$fecha." as  fechacorte,
+										ac1_line_num,
+										ac1_cord
+										from  mac1
+										inner join dacc
+										on mac1.ac1_account = dacc.acc_code
+										and acc_businessp = '1'
+										inner join dmdt
+										on mac1.ac1_font_type = dmdt.mdt_doctype
+										inner join tmac
+										on tmac.mac_trans_id = mac1.ac1_font_key
+										and tmac.mac_doctype = mac1.ac1_font_type
+										inner join tasa
+										on tmac.mac_currency = tasa.tsa_curro
+										and tmac.mac_doc_date = tasa.tsa_date
+										inner join dmsn
+										on mac1.ac1_card_type = dmsn.dms_card_type
+										and mac1.ac1_legal_num = dmsn.dms_card_code
+										where mac1.ac1_legal_num = ".$Data['cardcode']."
+										and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 
 					}else if ( $Data['cardtype'] == 2 ){
 
@@ -794,7 +855,7 @@ class Reports extends REST_Controller {
 											and dcfc.cfc_docentry = mac1.ac1_font_key
 											inner join  tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 											where mac1.ac1_legal_num = ".$Data['cardcode']."
-											and ABS((mac1.ac1_credit) - (mac1.ac1_ven_debit)) > 0
+											and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
 											--PAGO EFECTUADO
 											union all
 											select distinct
@@ -947,7 +1008,7 @@ class Reports extends REST_Controller {
 											and dcnd.cnd_docentry = mac1.ac1_font_key
 											inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 											where mac1.ac1_legal_num = ".$Data['cardcode']."
-											and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0";
+											and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 					}
 
 					$result = $this->pedeo->queryTable($sql,array());
@@ -1196,11 +1257,11 @@ class Reports extends REST_Controller {
 		$ff = "";
 
 		if( isset( $Data['ldc_sn'] )  && !empty($Data['ldc_sn']) ){
-			$sn = json_decode($Data['ldc_sn'], true);
+			$sn = $Data['ldc_sn'];
 		}
 
 		if( isset( $Data['ldc_ac'] )  && !empty($Data['ldc_ac']) ){
-			$ac = json_decode($Data['ldc_ac'], true);
+			$ac = $Data['ldc_ac'];
 		}
 
 		if( isset( $Data['ldc_ini'] )  && !empty($Data['ldc_ini']) ){
@@ -1232,7 +1293,7 @@ class Reports extends REST_Controller {
 
 		$sqlSelect = "SELECT distinct
 									mac1.ac1_font_key,
-									mac1.ac1_legal_num as codigo_proveedor,
+									concat('C-',mac1.ac1_legal_num) as codigo_proveedor,
 									mac1.ac1_account as cuenta,
 									CURRENT_DATE - dvf_duedate dias_atrasado,
 									dvfv.dvf_comment,
@@ -1265,12 +1326,12 @@ class Reports extends REST_Controller {
 									and dvfv.dvf_docdate = tasa.tsa_date
 									where 1 = 1
 									".$sql."
-									and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0
+									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 									-- ANTCIPOS CLIENTES
 									union all
 									select distinct
 									mac1.ac1_font_key,
-									mac1.ac1_legal_num as codigo_proveedor,
+									concat('C-',mac1.ac1_legal_num) as codigo_proveedor,
 									mac1.ac1_account as cuenta,
 									CURRENT_DATE - gbpr.bpr_docdate as dias_atrasado,
 									gbpr.bpr_comments as bpr_comment,
@@ -1308,7 +1369,7 @@ class Reports extends REST_Controller {
 									union all
 									select distinct
 									mac1.ac1_font_key,
-									mac1.ac1_legal_num as codigo_proveedor,
+									concat('C-',mac1.ac1_legal_num) as codigo_proveedor,
 									mac1.ac1_account as cuenta,
 									CURRENT_DATE - dvnc.vnc_docdate as dias_atrasado,
 									dvnc.vnc_comment as bpr_comment,
@@ -1346,7 +1407,7 @@ class Reports extends REST_Controller {
 									union all
 									select distinct
 									mac1.ac1_font_key,
-									mac1.ac1_legal_num as codigo_proveedor,
+									concat('C-',mac1.ac1_legal_num) as codigo_proveedor,
 									mac1.ac1_account as cuenta,
 									CURRENT_DATE - dvnd.vnd_docdate as dias_atrasado,
 									dvnd.vnd_comment as bpr_comment,
@@ -1379,14 +1440,14 @@ class Reports extends REST_Controller {
 									and dvnd.vnd_docdate = tasa.tsa_date
 									where 1 = 1
 									".$sql."
-									and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0
+									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 
 									--COMPRAS
 									--FACTURA DE COMPRAS
 									union all
 									select distinct
 									mac1.ac1_font_key,
-									mac1.ac1_legal_num as codigo_proveedor,
+								  concat('P-',mac1.ac1_legal_num) as codigo_proveedor,
 									mac1.ac1_account as cuenta,
 									CURRENT_DATE - cfc_duedate dias_atrasado,
 									dcfc.cfc_comment,
@@ -1417,12 +1478,12 @@ class Reports extends REST_Controller {
 									inner join  tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 									where 1 = 1
 									".$sql."
-									and ABS((mac1.ac1_credit) - (mac1.ac1_ven_debit)) > 0
+									and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
 									-- PAGO EFECTUADO
 									union all
 									select distinct
 									mac1.ac1_font_key,
-									mac1.ac1_legal_num as codigo_proveedor,
+									concat('P-',mac1.ac1_legal_num) as codigo_proveedor,
 									mac1.ac1_account as cuenta,
 									CURRENT_DATE - gbpe.bpe_docdate as dias_atrasado,
 									gbpe.bpe_comments as bpr_comment,
@@ -1458,7 +1519,7 @@ class Reports extends REST_Controller {
 									union all
 									select  distinct
 									mac1.ac1_font_key,
-									mac1.ac1_legal_num as codigo_proveedor,
+									concat('P-',mac1.ac1_legal_num) as codigo_proveedor,
 									mac1.ac1_account as cuenta,
 									CURRENT_DATE - dcnc.cnc_docdate as dias_atrasado,
 									dcnc.cnc_comment as bpr_comment,
@@ -1494,7 +1555,7 @@ class Reports extends REST_Controller {
 									union all
 									select distinct
 									mac1.ac1_font_key,
-									mac1.ac1_legal_num as codigo_proveedor,
+									concat('P-',mac1.ac1_legal_num) as codigo_proveedor,
 									mac1.ac1_account as cuenta,
 									CURRENT_DATE - dcnd.cnd_docdate as dias_atrasado,
 									dcnd.cnd_comment as bpr_comment,
@@ -1525,7 +1586,7 @@ class Reports extends REST_Controller {
 									inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 									where 1 = 1
 									".$sql."
-									and ABS((mac1.ac1_debit) - (mac1.ac1_ven_credit)) > 0";
+									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 // print_r($sqlSelect);exit;
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

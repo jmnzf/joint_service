@@ -108,8 +108,8 @@ class AccountingAccent extends REST_Controller {
 
 				$this->pedeo->trans_begin();
 
-        $sqlInsert = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
-                      VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+        $sqlInsert = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, mac_currency, mac_doctype)
+                      VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :mac_currency, :mac_doctype)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -140,15 +140,20 @@ class AccountingAccent extends REST_Controller {
             ':mac_create_date' => $this->validateDate($Data['mac_create_date'])?$Data['mac_create_date']:NULL,
             ':mac_made_usuer' => isset($Data['mac_made_usuer'])?$Data['mac_made_usuer']:NULL,
             ':mac_update_date' => $this->validateDate($Data['mac_update_date'])?$Data['mac_update_date']:NULL,
-            ':mac_update_user' => isset($Data['mac_update_user'])?$Data['mac_update_user']:NULL
+            ':mac_update_user' => isset($Data['mac_update_user'])?$Data['mac_update_user']:NULL,
+						':mac_currency' => isset($Data['mac_currency'])?$Data['mac_currency']:NULL,
+						':mac_doctype' => 18
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0 ){
 
             foreach ($ContenidoDetalle as $key => $detail) {
 
-                $sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref)
-                                    VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref)";
+                $sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type)
+                                    VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type)";
+
+
+
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
@@ -165,9 +170,9 @@ class AccountingAccent extends REST_Controller {
                     ':ac1_credit_import' => is_numeric($detail['ac1_credit_import'])?$detail['ac1_credit_import']:0,
                     ':ac1_debit_importsys' => is_numeric($detail['ac1_debit_importsys'])?$detail['ac1_debit_importsys']:0,
                     ':ac1_credit_importsys' => is_numeric($detail['ac1_credit_importsys'])?$detail['ac1_credit_importsys']:0,
-                    ':ac1_font_key' => is_numeric($detail['ac1_font_key'])?$detail['ac1_font_key']:0,
+                    ':ac1_font_key' => $resInsert,
                     ':ac1_font_line' => is_numeric($detail['ac1_font_line'])?$detail['ac1_font_line']:0,
-                    ':ac1_font_type' => is_numeric($detail['ac1_font_type'])?$detail['ac1_font_type']:0,
+                    ':ac1_font_type' => 18,
                     ':ac1_accountvs' => is_numeric($detail['ac1_accountvs'])?$detail['ac1_accountvs']:0,
                     ':ac1_doctype' => is_numeric($detail['ac1_doctype'])?$detail['ac1_doctype']:0,
                     ':ac1_ref1' => isset($detail['ac1_ref1'])?$detail['ac1_ref1']:NULL,
@@ -182,15 +187,16 @@ class AccountingAccent extends REST_Controller {
                     ':ac1_accperiod' => is_numeric($detail['ac1_accperiod'])?$detail['ac1_accperiod']:NULL,
                     ':ac1_close' => is_numeric($detail['ac1_close'])?$detail['ac1_close']:0,
                     ':ac1_cord' => is_numeric($detail['ac1_cord'])?$detail['ac1_cord']:0,
-                    ':ac1_ven_debit' => is_numeric($detail['ac1_ven_debit'])?$detail['ac1_ven_debit']:0,
-                    ':ac1_ven_credit' => is_numeric($detail['ac1_ven_credit'])?$detail['ac1_ven_credit']:0,
+                    ':ac1_ven_debit' => is_numeric($detail['ac1_debit'])?round($detail['ac1_debit'], 2):0,
+                    ':ac1_ven_credit' => is_numeric($detail['ac1_credit'])?round($detail['ac1_credit'], 2):0,
                     ':ac1_fiscal_acct' => is_numeric($detail['ac1_fiscal_acct'])?$detail['ac1_fiscal_acct']:0,
                     ':ac1_taxid' => is_numeric($detail['ac1_taxid'])?$detail['ac1_taxid']:0,
                     ':ac1_isrti' => is_numeric($detail['ac1_isrti'])?$detail['ac1_isrti']:0,
                     ':ac1_basert' => is_numeric($detail['ac1_basert'])?$detail['ac1_basert']:0,
                     ':ac1_mmcode' => is_numeric($detail['ac1_mmcode'])?$detail['ac1_mmcode']:0,
                     ':ac1_legal_num' => isset($detail['ac1_legal_num'])?$detail['ac1_legal_num']:NULL,
-                    ':ac1_codref' => is_numeric($detail['ac1_codref'])?$detail['ac1_codref']:0
+                    ':ac1_codref' => is_numeric($detail['ac1_codref'])?$detail['ac1_codref']:0,
+										':ac1_card_type' => isset($detail['ac1_card_type'])?$detail['ac1_card_type']:0
               ));
 
 							if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -385,7 +391,7 @@ class AccountingAccent extends REST_Controller {
 																    when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
 																    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
 																    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
-																end numero_origen,																
+																end numero_origen,
 																COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
 																from mac1 t0
 																left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
