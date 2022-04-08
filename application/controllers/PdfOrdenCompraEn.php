@@ -371,7 +371,7 @@ class PdfOrdenCompraEn extends REST_Controller {
             <th style="text-align: left;">
 						<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
 						<p>'.$empresa[0]['pge_add_soc'].'</p>
-						<p>'.$empresa[0]['pge_id_type'].'</p>
+						<p>'.$empresa[0]['pge_id_soc'].' / '.$empresa[0]['pge_id_type'].'</p>
 						<p>'.$empresa[0]['pge_state_soc'].'</p>
 						<p>TELEFONO:'.$empresa[0]['pge_phone1'].' / '.$empresa[0]['pge_phone2'].'</p>
 						<p>website: '.$empresa[0]['pge_web_site'].'</p>

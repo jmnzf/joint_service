@@ -35,7 +35,7 @@ class PdfAccountingSeat extends REST_Controller {
 				$formatter = new NumeroALetras();
 
 				// $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);
-        $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','default_font' => 'dejavusans']);
+        $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','orientation' => 'L']);
 
 				//RUTA DE CARPETA EMPRESA
         $company = $this->pedeo->queryTable("SELECT main_folder company FROM PARAMS",array());
@@ -73,6 +73,7 @@ class PdfAccountingSeat extends REST_Controller {
 				}
 
 				$sqlcotizacion = "SELECT
+													row_number() over (order by t1.ac1_trans_id)   CONTEO,
                           t0.mac_trans_id,
                           t0.mac_doc_num,
                           t0.mac_doc_date,
@@ -86,15 +87,15 @@ class PdfAccountingSeat extends REST_Controller {
                           extract(month from t0.mac_doc_date) periodo,
                           t1.ac1_line_num,
                           case
-                              when t1.ac1_debit > 0
+                              when (t1.ac1_debit > 0 or t1.ac1_debit_sys > 0)
                                   then 'DB'
-                              when t1.ac1_credit > 0
+                              when (t1.ac1_credit > 0 or t1.ac1_credit_sys > 0)
                                   then 'CR'
                           end ct,
                           t1.ac1_account,
                           t2.acc_name,
                           concat(t16.dmi_code,' - ',t16.dmi_name_tax) impuesto,
-                          t1.ac1_uncode,
+                          coalesce(trim(t1.ac1_uncode),'') ac1_uncode,
                           t1.ac1_debit,
                           t1.ac1_credit,
                           t1.ac1_debit_sys,
@@ -114,7 +115,8 @@ class PdfAccountingSeat extends REST_Controller {
                               when t12.cdc_doctype = t0.mac_base_type then t12.cdc_docnum
                               when t14.crc_doctype = t0.mac_base_type then t14.crc_docnum
                               else t0.mac_doc_num
-                          end numero
+                          end numero,
+													t0.mac_currency moneda
                       from tmac t0
                       inner join mac1 t1 on t0.mac_trans_id = t1.ac1_trans_id
                       left join dacc t2 on t1.ac1_account = t2.acc_code
@@ -132,7 +134,7 @@ class PdfAccountingSeat extends REST_Controller {
                       left join dcrc t14 on t0.mac_base_type = t14.crc_doctype and t0.mac_base_entry = t14.crc_docentry
                       left join dmtx t16 on t1.ac1_taxid = t16.dmi_id
                       where t0.mac_trans_id = :mac_trans_id
-                      order by t1.ac1_line_num ASC";
+                      order by conteo ASC";
 
 				$contenidoOC = $this->pedeo->queryTable($sqlcotizacion,array(':mac_trans_id'=>$Data));
 // print_r($sqlcotizacion);exit();die();
@@ -163,19 +165,19 @@ class PdfAccountingSeat extends REST_Controller {
 				$totalcre = 0;
 				$totaldebsys = 0;
 				$totalcresys = 0;
+				$totales = '';
 				foreach ($contenidoOC as $key => $value) {
 					// code...
-					$detalle = '<td>'.$value['ac1_line_num'].'</td>
+					$detalle = '<td>'.$value['conteo'].'</td>
 											<td>'.$value['ct'].'</td>
 											<td>'.$value['ac1_account'].'</td>
 											<td>'.$value['acc_name'].'</td>
 											<td>'.$value['impuesto'].'</td>
 											<td>'.$value['ac1_uncode'].'</td>
-                      <td>'.$value['ac1_debit'].'</td>
-                      <td>'.$value['ac1_credit'].'</td>
-                      <td>'.$value['ac1_debit_sys'].'</td>
-                      <td>'.$value['ac1_credit_sys'].'</td>
-                      <td>'.$value['moneda'].'</td>';
+                      <td>'.number_format($value['ac1_debit'], 2, ',', '.').'</td>
+                      <td>'.number_format($value['ac1_credit'], 2, ',', '.').'</td>
+                      <td>'.number_format($value['ac1_debit_sys'], 2, ',', '.').'</td>
+                      <td>'.number_format($value['ac1_credit_sys'], 2, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 
 				 $totaldeb = $totaldeb + ($value['ac1_debit']);
@@ -183,7 +185,7 @@ class PdfAccountingSeat extends REST_Controller {
 				 $totaldebsys = $totaldebsys + ($value['ac1_debit_sys']);
 				 $totalcresys = $totalcresys + ($value['ac1_credit_sys']);
 
-				 $cuerpo = '
+				 $totales = '
 				 						<tr>
 										<th>&nbsp;</th>
 				 						<th>&nbsp;</th>
@@ -191,10 +193,10 @@ class PdfAccountingSeat extends REST_Controller {
 										<th>&nbsp;</th>
 										<th>&nbsp;</th>
 										<th><b>total:</b></th>
-										<th><b>'.$totaldeb.'</b></th>
-										<th><b>'.$totalcre.'</b></th>
-										<th><b>'.$totaldebsys.'</b></th>
-										<th><b>'.$totalcresys.'</b></th>
+										<th><b>'.number_format($totaldeb, 2, ',', '.').'</b></th>
+										<th><b>'.number_format($totalcre, 2, ',', '.').'</b></th>
+										<th><b>'.number_format($totaldebsys, 2, ',', '.').'</b></th>
+										<th><b>'.number_format($totalcresys, 2, ',', '.').'</b></th>
 										</tr>';
 
 				}
@@ -232,7 +234,7 @@ class PdfAccountingSeat extends REST_Controller {
 
 				<table  width="100%" font-family: serif>
 				<tr>
-					<td><b># asiento:</b> <span>'.$contenidoOC[0]['mac_doc_num'].'</span></p></td>
+					<td><b># asiento:</b> <span>'.$contenidoOC[0]['mac_trans_id'].'</span></p></td>
 					<td></td>
 					<td><b>fecha contabilizacion:</b> <span>'.$contenidoOC[0]['mac_doc_date'].'</span></p></td>
 				</tr>
@@ -252,9 +254,12 @@ class PdfAccountingSeat extends REST_Controller {
 					<td><b>ref3:</b> <span>'.$contenidoOC[0]['mac_ref3'].'</span></p></td>
 				</tr>
 				<tr>
-					<td><b>moneda:</b> <span>'.$contenidoOC[0]['moneda_cab'].'</span></p></td>
+					<td><b>moneda:</b> <span>'.$contenidoOC[0]['moneda'].'</span></p></td>
 					<td></td>
 					<td><b>doc origen:</b> <span>'.$contenidoOC[0]['numero'].'</span></p></td>
+				</tr>
+				<tr>
+					<td><b>TIPO DOC ORIGEN:</b> <span>'.$contenidoOC[0]['mdt_docname'].'</span></p></td>
 				</tr>
 
 
@@ -271,24 +276,23 @@ class PdfAccountingSeat extends REST_Controller {
 
 				<br>
 
-        <table class="borde" style="width:100%">
+        <table width="100%" font-family: serif>
 
 
 
         <tr>
           <th><b>#</b></th>
           <th><b>CT</b></th>
-          <th><b>Cuneta</b></th>
+          <th><b>Cuenta</b></th>
           <th><b>Nombre Cuenta</b></th>
           <th><b>Impuesto</b></th>
-          <th><b>Centro Costos</b></th>
-          <th><b>Debito</b></th>
-          <th><b>Credito</b></th>
+					<th><b>CC</b></th>
+          <th><b>deb</b></th>
+          <th><b>cre</b></th>
 					<th><b>Deb Sys</b></th>
 					<th><b>Cre Sys</b></th>
-					<th><b>Moneda</b></th>
         </tr>
-      	'.$totaldetalle.$cuerpo.'
+      	'.$totaldetalle.$totales.'
         </table>
         <br>
 				<table width="100%" style="vertical-align: bottom; font-family: serif;
@@ -314,7 +318,7 @@ class PdfAccountingSeat extends REST_Controller {
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
 
-				$filename = 'AS_'.$contenidoOC[0]['mac_doc_num'].'.pdf';
+				$filename = 'AS_'.$contenidoOC[0]['mac_trans_id'].'.pdf';
         $mpdf->Output($filename, 'D');
 
 

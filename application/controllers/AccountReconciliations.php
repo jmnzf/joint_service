@@ -903,6 +903,66 @@ class AccountReconciliations extends REST_Controller {
 										}
 										//FIN ESPACIO PARA COMPRAS
 
+										//ASIENTO MANUALES
+										if($detail['rc1_doctype'] == 18){
+
+											if( $detail['ac1_cord'] == 1){
+
+												$slqUpdateVenDebit = "UPDATE mac1
+																							SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																							WHERE ac1_line_num = :ac1_line_num";
+
+												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+													':ac1_ven_debit' => $detail['rc1_valapply'],
+													':ac1_line_num'   => $detail['ac1_line_num']
+												));
+
+												if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+												}else{
+													$this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resUpdateFactPay,
+														'mensaje'	=> 'No se pudo actualizar el valor del pago'.$detail['rc1_docentry']
+													);
+
+													 $this->response($respuesta);
+
+													 return;
+												}
+											}else if( $detail['ac1_cord'] == 0){
+												$slqUpdateVenDebit = "UPDATE mac1
+																							SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																							WHERE ac1_line_num = :ac1_line_num";
+
+												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+													':ac1_ven_credit' => $detail['rc1_valapply'],
+													':ac1_line_num'   => $detail['ac1_line_num']
+												));
+
+												if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+												}else{
+													$this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resUpdateFactPay,
+														'mensaje'	=> 'No se pudo actualizar el valor del pago'.$detail['rc1_docentry']
+													);
+
+													 $this->response($respuesta);
+
+													 return;
+												}
+											}
+										}
+										//ASIENTOS MANUALES
+
 										//MOVIMIENTO DE DOCUMENTOS
 										if( $detail['rc1_doctype'] == 5 || $detail['rc1_doctype'] == 6 || $detail['rc1_doctype'] == 7 || $detail['rc1_doctype'] == 15 || $detail['rc1_doctype'] == 16 || $detail['rc1_doctype'] == 17 || $detail['rc1_doctype'] == 19 || $detail['rc1_doctype'] == 20 ){
 											//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
