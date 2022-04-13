@@ -32,7 +32,7 @@ class Stage extends REST_Controller
     {
 
         $respuesta = array();
-        $sqlSelect = "SELECT * FROM tbst";
+        $sqlSelect = "SELECT * FROM tbet";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -58,8 +58,8 @@ class Stage extends REST_Controller
         $Data = $this->post();
 
         if (
-            !isset($Data['bst_name']) or
-            !isset($Data['bst_porcent'])
+            !isset($Data['bet_name']) or
+            !isset($Data['bet_porcent'])
         ) {
             $this->response(array(
                 'error'  => true,
@@ -69,12 +69,12 @@ class Stage extends REST_Controller
 
             return;
         }
-        $sqlInsert = "INSERT INTO tbst (bst_name,bst_porcent) VALUES (:bst_name, :bst_porcent)";
+        $sqlInsert = "INSERT INTO tbet (bet_name,bet_porcent) VALUES (:bet_name, :bet_porcent)";
         $resInsert = $this->pedeo->insertRow(
             $sqlInsert,
             array(
-                ":bst_name" => $Data['bst_name'],
-                ":bst_porcent" => $Data['bst_porcent']
+                ":bet_name" => $Data['bet_name'],
+                ":bet_porcent" => $Data['bet_porcent']
             )
         );
 
@@ -98,9 +98,9 @@ class Stage extends REST_Controller
         $Data = $this->post();
 
         if (
-            !isset($Data['bst_name']) or
-            !isset($Data['bst_porcent']) or
-            !isset($Data['bst_id'])
+            !isset($Data['bet_name']) or
+            !isset($Data['bet_porcent']) or
+            !isset($Data['bet_id'])
         ) {
             $this->response(array(
                 'error'  => true,
@@ -111,11 +111,11 @@ class Stage extends REST_Controller
             return;
         }
 
-        $sqlUpdate = "UPDATE tbst SET bst_name = :bst_name,bst_porcent = :bst_porcent WHERE bst_id = :bst_id";
+        $sqlUpdate = "UPDATE tbet SET bet_name = :bet_name,bet_porcent = :bet_porcent WHERE bet_id = :bet_id";
 
-        $resUpdate = $this->pedeo->updateRow($sqlUpdate,array(":bst_name" => $Data['bst_name'],
-                                                              ":bst_porcent" => $Data['bst_porcent'],
-                                                              ":bst_id" => $Data['bst_id']));
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate,array(":bet_name" => $Data['bet_name'],
+                                                              ":bet_porcent" => $Data['bet_porcent'],
+                                                              ":bet_id" => $Data['bet_id']));
 
         if (is_numeric($resUpdate) && $resUpdate > 0) {
             $respuesta = array(
