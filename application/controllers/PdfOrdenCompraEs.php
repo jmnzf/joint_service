@@ -275,13 +275,13 @@ class PdfOrdenCompraEs extends REST_Controller {
 													t3.dmd_tonw lugar_entrega,
 													t5.mev_names nombre_contacto,
 											    t5.mev_mail correo_contacto,
-											    t4.dmc_phone1 telefono_contacto,
+											    t5.mev_phone telefono_contacto,
 													t0.cpo_date_inv fecha_fact_pro,
 													t0.cpo_date_del fecha_entre,
 													t0.cpo_place_del lugar_entre,
 													concat(t9.dmc_name,' ',t9.dmc_last_name) nombre_contacto_p,
-													t9.dmc_cel correo_contacto_p,
-													t4.dmc_email telefono_contacto_p
+													t9.dmc_email correo_contacto_p,
+													t9.dmc_cel telefono_contacto_p
 												FROM dcpo  t0
 												INNER JOIN CPO1 T1 ON t0.CPO_docentry = t1.PO1_docentry
 												LEFT JOIN DMSN T2 ON t0.CPO_cardcode = t2.dms_card_code
@@ -308,6 +308,22 @@ class PdfOrdenCompraEs extends REST_Controller {
 						return;
 				}
 				// print_r($contenidoOC);exit();die();
+				$fecha_entrega = '';
+
+				if(empty($contenidoOC[0]['fecha_entre'])){
+					$fecha_entrega = '';
+				}else{
+					$fecha_entrega = $this->dateformat->Date($contenidoOC[0]['fecha_entre']);
+				}
+				$fecha_fact_pro = '';
+
+				if(empty($contenidoOC[0]['fecha_fact_pro'])){
+					$fecha_fact_pro = '';
+				}else{
+					$fecha_fact_pro = $this->dateformat->Date($contenidoOC[0]['fecha_fact_pro']);
+				}
+
+
 
 				$consecutivo = '';
 
@@ -456,8 +472,8 @@ class PdfOrdenCompraEs extends REST_Controller {
 				<tr>
 				<td>'.$contenidoOC[0]['cond_pago'].'</td>
 				<td>'.$contenidoOC[0]['lugar_entre'].'</td>
-				<td>'.date("d-m-Y", strtotime($contenidoOC[0]['fecha_entre'])).'</td>
-				<td>'.$contenidoOC[0]['fecha_fact_pro'].'</td>
+				<td>'.$fecha_entrega.'</td>
+				<td>'.$fecha_fact_pro.'</td>
 				</tr>
 
 				</table>

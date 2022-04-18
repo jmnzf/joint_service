@@ -9,7 +9,7 @@ require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 use Luecano\NumeroALetras\NumeroALetras;
 
-class PdfAccountingSeat extends REST_Controller {
+class PdfAccountingSeatUsd extends REST_Controller {
 
 	private $pdo;
 
@@ -27,7 +27,7 @@ class PdfAccountingSeat extends REST_Controller {
 	}
 
 
-	public function PdfAccountingSeat_post(){
+	public function PdfAccountingSeatUsd_post(){
 
         $Data = $this->post();
 				$Data = $Data['mac_trans_id'];
@@ -174,8 +174,8 @@ class PdfAccountingSeat extends REST_Controller {
 											<td>'.$value['acc_name'].'</td>
 											<td>'.$value['impuesto'].'</td>
 											<td>'.$value['ac1_uncode'].'</td>
-                      <td>'.number_format($value['ac1_debit'], 2, ',', '.').'</td>
-                      <td>'.number_format($value['ac1_credit'], 2, ',', '.').'</td>';
+                      <td>'.number_format($value['ac1_debit_sys'], 2, ',', '.').'</td>
+                      <td>'.number_format($value['ac1_credit_sys'], 2, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 
 				 $totaldeb = $totaldeb + ($value['ac1_debit']);
@@ -191,8 +191,8 @@ class PdfAccountingSeat extends REST_Controller {
 										<th>&nbsp;</th>
 										<th>&nbsp;</th>
 										<th><b>total:</b></th>
-										<th><b>'.number_format($totaldeb, 2, ',', '.').'</b></th>
-										<th><b>'.number_format($totalcre, 2, ',', '.').'</b></th>
+										<th><b>'.number_format($totaldebsys, 2, ',', '.').'</b></th>
+										<th><b>'.number_format($totalcresys, 2, ',', '.').'</b></th>
 										</tr>';
 
 				}

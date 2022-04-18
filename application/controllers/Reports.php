@@ -772,12 +772,12 @@ class Reports extends REST_Controller {
 										18 as doctype,
 										mdt_docname as tipo,
 										case
-											when mac1.ac1_cord = 0 then mac1.ac1_debit *-1
-											when mac1.ac1_cord = 1 then mac1.ac1_credit *-1
+											when mac1.ac1_cord = 0 then mac1.ac1_debit
+											when mac1.ac1_cord = 1 then mac1.ac1_credit
 										end	 as total_doc,
 										case
-											when mac1.ac1_cord = 0 then mac1.ac1_debit *-1
-											when mac1.ac1_cord  = 1 then mac1.ac1_credit *-1
+											when mac1.ac1_cord = 0 then mac1.ac1_debit
+											when mac1.ac1_cord  = 1 then mac1.ac1_credit
 										end	 as totalfactura,
 										(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 										'' retencion,
@@ -843,7 +843,8 @@ class Reports extends REST_Controller {
 											dcfc.cfc_cardname as nombreproveedor,
 											dcfc.cfc_currency as monedadocumento,
 											".$fecha." as  fechacorte,
-											ac1_line_num
+											ac1_line_num,
+											ac1_cord
 											from  mac1
 											inner join dacc
 											on mac1.ac1_account = dacc.acc_code
@@ -894,7 +895,8 @@ class Reports extends REST_Controller {
 											gbpe.bpe_cardname as nombreproveedor,
 											gbpe.bpe_currency as monedadocumento,
 											".$fecha." as  fechacorte,
-											ac1_line_num
+											ac1_line_num,
+											ac1_cord
 											from  mac1
 											inner join dacc
 											on mac1.ac1_account = dacc.acc_code
@@ -945,7 +947,8 @@ class Reports extends REST_Controller {
 											dcnc.cnc_cardname as nombreproveedor,
 											dcnc.cnc_currency as monedadocumento,
 											".$fecha." as  fechacorte,
-											ac1_line_num
+											ac1_line_num,
+											ac1_cord
 											from  mac1
 											inner join dacc
 											on mac1.ac1_account = dacc.acc_code
@@ -996,7 +999,8 @@ class Reports extends REST_Controller {
 											dcnd.cnd_cardname as nombreproveedor,
 											dcnd.cnd_currency as monedadocumento,
 											".$fecha." as  fechacorte,
-											ac1_line_num
+											ac1_line_num,
+											ac1_cord
 											from  mac1
 											inner join dacc
 											on mac1.ac1_account = dacc.acc_code
@@ -1007,6 +1011,63 @@ class Reports extends REST_Controller {
 											on dcnd.cnd_doctype = mac1.ac1_font_type
 											and dcnd.cnd_docentry = mac1.ac1_font_key
 											inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
+											where mac1.ac1_legal_num = ".$Data['cardcode']."
+											and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+											--ASIENTOS MANUALES
+											union all
+											select distinct
+											mac1.ac1_font_key,
+											mac1.ac1_legal_num,
+											mac1.ac1_legal_num as codigoproveedor,
+											mac1.ac1_account as cuenta,
+											mac1.ac1_account,
+											CURRENT_DATE - tmac.mac_doc_duedate dias,
+											CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
+											tmac.mac_comments,
+											tmac.mac_currency,
+											0 as dvf_docentry,
+											0 as docentry,
+											0 as docnum,
+											0 as numerodocumento,
+											tmac.mac_doc_date as fecha_doc,
+											tmac.mac_doc_date as fechadocumento,
+											tmac.mac_doc_duedate as fecha_ven,
+											tmac.mac_doc_duedate as fechavencimiento,
+											0 as id_origen,
+											18 as numtype,
+											18 as doctype,
+											mdt_docname as tipo,
+											case
+												when mac1.ac1_cord = 0 then mac1.ac1_debit
+												when mac1.ac1_cord = 1 then mac1.ac1_credit
+											end	 as total_doc,
+											case
+												when mac1.ac1_cord = 0 then mac1.ac1_debit
+												when mac1.ac1_cord  = 1 then mac1.ac1_credit
+											end	 as totalfactura,
+											(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
+											'' retencion,
+											tasa.tsa_value as tasa_dia,
+											dmsn.dms_card_name as nombreproveedor,
+											tmac.mac_currency as monedadocumento,
+											".$fecha." as  fechacorte,
+											ac1_line_num,
+											ac1_cord
+											from  mac1
+											inner join dacc
+											on mac1.ac1_account = dacc.acc_code
+											and acc_businessp = '1'
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join tmac
+											on tmac.mac_trans_id = mac1.ac1_font_key
+											and tmac.mac_doctype = mac1.ac1_font_type
+											inner join tasa
+											on tmac.mac_currency = tasa.tsa_curro
+											and tmac.mac_doc_date = tasa.tsa_date
+											inner join dmsn
+											on mac1.ac1_card_type = dmsn.dms_card_type
+											and mac1.ac1_legal_num = dmsn.dms_card_code
 											where mac1.ac1_legal_num = ".$Data['cardcode']."
 											and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 					}
@@ -1236,20 +1297,6 @@ class Reports extends REST_Controller {
 	public function  ListDocumentCompensate_post(){
 
 		$Data = $this->post();
-
-		// if( !isset($Data['ldc_sn']) OR
-		// 		!isset($Data['ldc_date_ini']) OR
-		// 		!isset($Data['ldc_date_end'])
-		// 	){
-		// 	$this->response(array(
-		// 		'error'  => true,
-		// 		'data'   => [],
-		// 		'mensaje'=>'La informacion enviada no es valida'
-		// 	), REST_Controller::HTTP_BAD_REQUEST);
-		//
-		// 	return ;
-		// }
-
 		$sn = "";
 		$ac = "";
 		$sql = "";
@@ -1586,6 +1633,50 @@ class Reports extends REST_Controller {
 									inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 									where 1 = 1
 									".$sql."
+									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+									--ASIENTOS MANUALES
+									union all
+									select distinct
+									mac1.ac1_font_key,
+									case
+										when ac1_card_type = '1' then concat('C',mac1.ac1_legal_num)
+										when ac1_card_type = '2' then concat('P',mac1.ac1_legal_num)
+									end as codigoproveedor,
+									mac1.ac1_account as cuenta,
+									CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
+									tmac.mac_comments,
+									tmac.mac_currency,
+									0 as dvf_docentry,
+									0 as docnum,
+									tmac.mac_doc_date as fecha_doc,
+									tmac.mac_doc_duedate as fecha_ven,
+									0 as id_origen,
+									18 as numtype,
+									mdt_docname as tipo,
+									case
+										when mac1.ac1_cord = 0 then mac1.ac1_debit
+										when mac1.ac1_cord = 1 then mac1.ac1_credit
+									end	 as total_doc,
+									(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
+									'' retencion,
+									tasa.tsa_value as tasa_dia
+									from  mac1
+									inner join dacc
+									on mac1.ac1_account = dacc.acc_code
+									and acc_businessp = '1'
+									inner join dmdt
+									on mac1.ac1_font_type = dmdt.mdt_doctype
+									inner join tmac
+									on tmac.mac_trans_id = mac1.ac1_font_key
+									and tmac.mac_doctype = mac1.ac1_font_type
+									inner join tasa
+									on tmac.mac_currency = tasa.tsa_curro
+									and tmac.mac_doc_date = tasa.tsa_date
+									inner join dmsn
+									on mac1.ac1_card_type = dmsn.dms_card_type
+									and mac1.ac1_legal_num = dmsn.dms_card_code
+									where 1 = 1
+									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 // print_r($sqlSelect);exit;
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -1611,5 +1702,161 @@ class Reports extends REST_Controller {
 		 $this->response($respuesta);
 	}
 
+	//listado de cuentas debito - credito POR año seleccionado
+	public function AccountBalance_post(){
+
+		$Data = $this->post();
+
+		$ac = "";
+		$sql = "";
+	 	$yr  = "";
+
+
+
+		if( isset( $Data['lac_ac'] )  && !empty($Data['lac_ac']) ){
+			$ac = $Data['lac_ac'];
+		}
+
+		if( isset( $Data['lac_year'] )  && !empty($Data['lac_year']) ){
+			$yr = $Data['lac_year'];
+		}
+
+		if( is_array($ac) ){
+			$ac = implode($ac,",");
+			$sql .= ' AND dacc.acc_code IN('.$ac.')';
+		}
+
+
+		$sqlSelect="SELECT acc_code as codigocuenta,
+				acc_name as nombredecuenta,
+				coalesce(get_saldocuentames(acc_code,1,".$yr."),0) as enero,
+				coalesce(get_saldocuentames(acc_code,2,".$yr."),0) as febrero,
+				coalesce(get_saldocuentames(acc_code,3,".$yr."),0) as marzo,
+				coalesce(get_saldocuentames(acc_code,4,".$yr."),0) as abril,
+				coalesce(get_saldocuentames(acc_code,5,".$yr."),0) as mayo,
+				coalesce(get_saldocuentames(acc_code,6,".$yr."),0) as junio,
+				coalesce(get_saldocuentames(acc_code,7,".$yr."),0) as julio,
+				coalesce(get_saldocuentames(acc_code,8,".$yr."),0) as agosto,
+				coalesce(get_saldocuentames(acc_code,9,".$yr."),0) as septiembre,
+				coalesce(get_saldocuentames(acc_code,10,".$yr."),0) as octubre,
+				coalesce(get_saldocuentames(acc_code,11,".$yr."),0) as noviembre,
+				coalesce(get_saldocuentames(acc_code,12,".$yr."),0) as diciembre,
+				coalesce(get_saldocuentaano(acc_code,".$yr."),0) as saldo
+				from dacc ".$sql;
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+	}
+
+
+	//listado de cuentas debito - credito por
+	//rango de fechas
+	public function AccountBalanceByDateRange_post(){
+
+		$Data = $this->post();
+
+		$ac = ""; // CUENTA CONTABLES
+		$sn  = ""; // SOCIOS DE NEGOCIO
+		$sql = "WHERE 1 = 1";
+		$fi = "";	// FECHA INICIO
+		$ff = ""; // FECHA FINAL
+		$td = ""; // TIPO DOCUMENTO
+		$gb = "";
+
+		if( isset( $Data['lac_sn'] )  && !empty($Data['lac_sn']) ){
+			$sn = json_decode($Data['lac_sn'], true);
+		}
+
+		if( isset( $Data['lac_ac'] )  && !empty($Data['lac_ac']) ){
+			$ac = $Data['lac_ac'];
+		}
+
+		if( isset( $Data['lac_td'] )  && !empty($Data['lac_td']) ){
+			$td = json_decode($Data['lac_td'], true);
+		}
+
+
+		if( isset( $Data['lac_ini'] )  && !empty($Data['lac_ini']) ){
+			$fi = "'".$Data['lac_ini']."'";
+			if( isset( $Data['lac_end'] )  && !empty($Data['lac_end']) ){
+				$ff = "'".$Data['lac_end']."'";
+
+				$sql .=' AND  mac1.ac1_doc_date BETWEEN '.$fi.' AND '.$ff.'';
+			}
+		}
+
+		if( is_array($ac) ){
+			$ac = implode($ac,",");
+			$sql .= ' AND dacc.acc_code IN('.$ac.')';
+		}
+
+
+		if( is_array($td) ){
+			$td = implode($td,",");
+			$sql .= ' AND mac1.ac1_font_type IN('.$td.')';
+		}
+
+		if( is_array($sn) ){
+			$opt = "";
+			foreach ($sn as $key => $item) {
+				$opt.= "'".$item."',";
+			}
+			$opt = substr($opt,0,strlen($opt) - 1);
+			$sql .= ' AND mac1.ac1_legal_num IN('.$opt.')';
+		}
+
+
+		$sqlSelect="SELECT sum(ac1_debit) as valordebito,
+								sum(ac1_credit) as valorcredito,
+								sum(ac1_debit) - sum(ac1_credit) as saldo,
+								ac1_legal_num as codigosn,
+								acc_code,
+								acc_name
+								from mac1
+								inner join dacc
+								on  ac1_account = acc_code
+								".$sql."
+								group by ac1_account,ac1_legal_num,acc_code,acc_name";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+	}
 
 }

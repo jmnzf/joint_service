@@ -245,57 +245,63 @@ class EstadoCuentaCl extENDs REST_Controller {
 														select distinct
 														dmdt.mdt_docname,
 														mac1.ac1_font_key,
-														mac1.ac1_legal_num as codigoproveedor,
-														dmsn.dms_card_name nombreproveedor,
+														case
+														    when ac1_card_type = '1'
+														        then concat('C',mac1.ac1_legal_num)
+														    when ac1_card_type = '2'
+														        then concat('P',mac1.ac1_legal_num)
+														end as codigoproveedor,
+														dmsn.dms_card_name NombreCliente,
 														mac1.ac1_account as cuenta,
-														dvnd.vnd_currency monedadocumento,
+														tmac.mac_currency,
 														'".$Data['fecha']."' fechacorte,
-														'".$Data['fecha']."' - dvnd.vnd_docdate as dias,
-														dvnd.vnd_comment as bpr_comment,
-														dvnd.vnd_currency,
-														mac1.ac1_font_key as dvf_docentry,
-														dvnd.vnd_docnum,
-														dvnd.vnd_docdate as FechaDocumento,
-														dvnd.vnd_duedate as FechaVencimiento,
-														dvnd.vnd_docnum as NumeroDocumento,
-														mac1.ac1_font_type as numtype,
+														CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
+														tmac.mac_comments,
+														tmac.mac_currency,
+														mac_trans_id as dvf_docentry,
+														0 as docnum,
+														tmac.mac_doc_date as fecha_doc,
+														tmac.mac_doc_duedate as fecha_ven,
+														mac_trans_id as id_origen,
+														18 as numtype,
 														mdt_docname as tipo,
 														case
-														when mac1.ac1_font_type = 5 then mac1.ac1_debit
-														else mac1.ac1_credit
-														end as totalfactura,
-														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
+														    when mac1.ac1_cord = 0
+														        then mac1.ac1_debit
+														    when mac1.ac1_cord = 1
+														        then mac1.ac1_credit
+														end as total_doc,
+														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 														'' retencion,
 														tasa.tsa_value as tasa_dia,
 														CASE
-															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=0 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=30
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-																ELSE 0
+														    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate) >=0 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=30
+														        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+														    ELSE 0
 														END uno_treinta,
 														CASE
-															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=31 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=60
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-																ELSE 0
+														    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=31 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=60
+														        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+														    ELSE 0
 														END treinta_uno_secenta,
 														CASE
-															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=61 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=90
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-																ELSE 0
+														    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=61 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=90
+														        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+														    ELSE 0
 														END secenta_uno_noventa,
 														CASE
-															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=91
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
+														    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=91
+														        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+														    ELSE 0
 														END mayor_noventa
-
 														from mac1
 														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
-														inner join dvnd on dvnd.vnd_doctype = mac1.ac1_font_type and dvnd.vnd_docentry = mac1.ac1_font_key
-														inner join tasa on dvnd.vnd_currency = tasa.tsa_curro and dvnd.vnd_docdate = tasa.tsa_date
-														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-														where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'";
+														inner join tmac on tmac.mac_trans_id = mac1.ac1_font_key and tmac.mac_doctype = mac1.ac1_font_type
+														inner join tasa on tmac.mac_currency = tasa.tsa_curro and tmac.mac_doc_date = tasa.tsa_date
+														inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type and mac1.ac1_legal_num = dmsn.dms_card_code
+														where dmsn.dms_card_type = '1' and and mac1.ac1_legal_num = '".$Data['cardcode']."'
+														and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
          // print_r($sqlestadocuenta);exit();die();

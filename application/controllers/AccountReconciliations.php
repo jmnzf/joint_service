@@ -925,7 +925,7 @@ class AccountReconciliations extends REST_Controller {
 
 													$respuesta = array(
 														'error'   => true,
-														'data' => $resUpdateFactPay,
+														'data' => $resUpdateVenDebit,
 														'mensaje'	=> 'No se pudo actualizar el valor del pago'.$detail['rc1_docentry']
 													);
 
@@ -951,7 +951,7 @@ class AccountReconciliations extends REST_Controller {
 
 													$respuesta = array(
 														'error'   => true,
-														'data' => $resUpdateFactPay,
+														'data' => $resUpdateVenDebit,
 														'mensaje'	=> 'No se pudo actualizar el valor del pago'.$detail['rc1_docentry']
 													);
 

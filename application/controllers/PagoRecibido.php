@@ -60,7 +60,9 @@ class PagoRecibido extends REST_Controller {
 																						end	 as total_doc,
 																						(mac1.ac1_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 																						'' retencion,
-																						tasa.tsa_value as tasa_dia
+																						tasa.tsa_value as tasa_dia,
+																						ac1_line_num,
+																						ac1_cord
 																						from  mac1
 																						inner join dacc
 																						on mac1.ac1_account = dacc.acc_code
@@ -96,7 +98,9 @@ class PagoRecibido extends REST_Controller {
 																						end	 as total_doc,
 																						(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 																						'' retencion,
-																						tasa.tsa_value as tasa_dia
+																						tasa.tsa_value as tasa_dia,
+																						ac1_line_num,
+																						ac1_cord
 																						from  mac1
 																						inner join dacc
 																						on mac1.ac1_account = dacc.acc_code
@@ -132,7 +136,9 @@ class PagoRecibido extends REST_Controller {
 																						end	 as total_doc,
 																						(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 																						'' retencion,
-																						tasa.tsa_value as tasa_dia
+																						tasa.tsa_value as tasa_dia,
+																						ac1_line_num,
+																						ac1_cord
 																						from  mac1
 																						inner join dacc
 																						on mac1.ac1_account = dacc.acc_code
@@ -168,7 +174,9 @@ class PagoRecibido extends REST_Controller {
 																						end	 as total_doc,
 																						(mac1.ac1_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 																						'' retencion,
-																						tasa.tsa_value as tasa_dia
+																						tasa.tsa_value as tasa_dia,
+																						ac1_line_num,
+																						ac1_cord
 																						from  mac1
 																						inner join dacc
 																						on mac1.ac1_account = dacc.acc_code
@@ -181,6 +189,51 @@ class PagoRecibido extends REST_Controller {
 																						inner join tasa
 																						on dvnd.vnd_currency = tasa.tsa_curro
 																						and dvnd.vnd_docdate = tasa.tsa_date
+																						where mac1.ac1_legal_num = :cardcode
+																						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+																						--ASIENTOS MANUALES
+																						union all
+																						select distinct
+																						mac1.ac1_font_key,
+																						case
+																							when ac1_card_type = '1' then concat('C',mac1.ac1_legal_num)
+																							when ac1_card_type = '2' then concat('P',mac1.ac1_legal_num)
+																						end as codigoproveedor,
+																						mac1.ac1_account as cuenta,
+																						CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
+																						tmac.mac_comments,
+																						tmac.mac_currency,
+																						0 as dvf_docentry,
+																						0 as docnum,
+																						tmac.mac_doc_date as fecha_doc,
+																						tmac.mac_doc_duedate as fecha_ven,
+																						0 as id_origen,
+																						18 as numtype,
+																						mdt_docname as tipo,
+																						case
+																							when mac1.ac1_cord = 0 then mac1.ac1_debit
+																							when mac1.ac1_cord = 1 then mac1.ac1_credit
+																						end	 as total_doc,
+																						(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
+																						'' retencion,
+																						tasa.tsa_value as tasa_dia,
+																						ac1_line_num,
+																						ac1_cord
+																						from  mac1
+																						inner join dacc
+																						on mac1.ac1_account = dacc.acc_code
+																						and acc_businessp = '1'
+																						inner join dmdt
+																						on mac1.ac1_font_type = dmdt.mdt_doctype
+																						inner join tmac
+																						on tmac.mac_trans_id = mac1.ac1_font_key
+																						and tmac.mac_doctype = mac1.ac1_font_type
+																						inner join tasa
+																						on tmac.mac_currency = tasa.tsa_curro
+																						and tmac.mac_doc_date = tasa.tsa_date
+																						inner join dmsn
+																						on mac1.ac1_card_type = dmsn.dms_card_type
+																						and mac1.ac1_legal_num = dmsn.dms_card_code
 																						where mac1.ac1_legal_num = :cardcode
 																						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0", array(':cardcode' => $request['cardcode']));
 

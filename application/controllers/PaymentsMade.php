@@ -61,6 +61,7 @@ class PaymentsMade extends REST_Controller {
 			$posicionAsientoCuentaTercero = 0;
 			$cuentaTercero = 0;
 			$inArrayAsientoCuentaTercero = array();
+
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -787,6 +788,65 @@ class PaymentsMade extends REST_Controller {
 												}
 										}
 
+										//ASIENTO MANUALES
+										if($detail['pe1_doctype'] == 18){
+
+											if( $detail['ac1_cord'] == 1){
+
+												$slqUpdateVenDebit = "UPDATE mac1
+																							SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																							WHERE ac1_line_num = :ac1_line_num";
+
+												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+													':ac1_ven_debit' => $detail['pe1_vlrpaid'],
+													':ac1_line_num'  => $detail['ac1_line_num']
+												));
+
+												if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+												}else{
+													$this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resUpdateVenDebit,
+														'mensaje'	=> 'No se pudo actualizar el valor del pago'.$detail['pe1_docentry']
+													);
+
+													 $this->response($respuesta);
+
+													 return;
+												}
+											}else if( $detail['ac1_cord'] == 0){
+												$slqUpdateVenDebit = "UPDATE mac1
+																							SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																							WHERE ac1_line_num = :ac1_line_num";
+
+												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+													':ac1_ven_credit' => $detail['pe1_vlrpaid'],
+													':ac1_line_num'   => $detail['ac1_line_num']
+												));
+
+												if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+												}else{
+													$this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data' 		=> $resUpdateVenDebit,
+														'mensaje'	=> 'No se pudo actualizar el valor del pago'.$detail['pe1_docentry']
+													);
+
+													 $this->response($respuesta);
+
+													 return;
+												}
+											}
+										}
+										//ASIENTOS MANUALES
 
 									}
 
@@ -824,6 +884,7 @@ class PaymentsMade extends REST_Controller {
 								$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($DetalleAsientoCuentaTercero->cuentalinea, 0, 1);
 								$DetalleAsientoCuentaTercero->pe1_vlrpaid = is_numeric($detail['pe1_vlrpaid'])?$detail['pe1_vlrpaid']:0;
 								$DetalleAsientoCuentaTercero->pe1_docdate	= $this->validateDate($detail['pe1_docdate'])?$detail['pe1_docdate']:NULL;
+								$DetalleAsientoCuentaTercero->cord	= isset($detail['ac1_cord'])?$detail['ac1_cord']:NULL;
 
 
 								$llaveAsientoCuentaTercero = $DetalleAsientoCuentaTercero->bpe_cardcode.$DetalleAsientoCuentaTercero->pe1_docentry.$DetalleAsientoCuentaTercero->pe1_doctype;
@@ -1043,6 +1104,7 @@ class PaymentsMade extends REST_Controller {
 										$TasaOld = 0;
 										$DireferenciaCambio = 0; // SOLO SE USA PARA SABER SI EXISTE UNA DIFERENCIA DE CAMBIO
 										$CuentaDiferenciaCambio = 0;
+										$ac1cord = null;
 
 										foreach ($posicion as $key => $value) {
 
@@ -1054,6 +1116,7 @@ class PaymentsMade extends REST_Controller {
 													$cuenta   = $value->cuentaNaturaleza;
 													$cuentaLinea = $value->cuentalinea;
 													$fechaDocumento =$value->pe1_docdate;
+													$ac1cord = $value->cord;
 
 										}
 
@@ -1233,6 +1296,31 @@ class PaymentsMade extends REST_Controller {
 													}
 													break;
 											}
+										}else if( $doctype == 18 ){
+											if( $ac1cord == 0 ){
+												$credito = $TotalPagoRecibido;
+
+												if(trim($Data['bpe_currency']) != $MONEDASYS ){
+
+														$MontoSysCR = ($credito / $TasaLocSys);
+
+												}else{
+
+														$MontoSysCR = $TotalPagoOriginal;
+												}
+											}else if( $ac1cord == 1 ){
+												$debito = $TotalPagoRecibido;
+
+												if(trim($Data['bpe_currency']) != $MONEDASYS ){
+
+														$MontoSysDB = ($debito / $TasaLocSys);
+
+												}else{
+
+														$MontoSysDB = $TotalPagoOriginal;
+												}
+											}
+
 										}else{
 											switch ($cuenta) {
 												case 1:
