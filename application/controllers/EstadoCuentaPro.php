@@ -250,6 +250,71 @@ class EstadoCuentaPro extENDs REST_Controller {
 
 	}
 
+	public function getEStadoDeCuenta_post(){
+		$Data = $this->post();
+		$sqlestadocuenta = "SELECT
+							'NotaCredito' as tipo,
+                        	t0.cfc_cardcode CodigoProveedor,
+                        	t0.cfc_cardname NombreProveedor,
+                        	t0.cfc_docnum NumeroDocumento,
+                        	t0.cfc_docdate FechaDocumento,
+                        	t0.cfc_duedate FechaVencimiento,
+													t0.cfc_doctotal totalfactura,
+													trim('COP' FROM t0.cfc_currency) MonedaDocumento,
+                        	CURRENT_DATE FechaCorte,
+													(CURRENT_DATE - t0.cfc_duedate) dias,
+                        	CASE
+                        		WHEN ( CURRENT_DATE - t0.cfc_duedate) >=0 and ( CURRENT_DATE - t0.cfc_duedate) <=30
+                        			then (t0.cfc_doctotal - COALESCE(t0.cfc_paytoday,0))
+															ELSE 0
+                        	END uno_treinta,
+                        	CASE
+                        		WHEN ( CURRENT_DATE - t0.cfc_duedate) >=31 and ( CURRENT_DATE - t0.cfc_duedate) <=60
+                        			then (t0.cfc_doctotal - COALESCE(t0.cfc_paytoday,0))
+															ELSE 0
+                        	END treinta_uno_secenta,
+                        	CASE
+                        		WHEN ( CURRENT_DATE - t0.cfc_duedate) >=61 and ( CURRENT_DATE - t0.cfc_duedate) <=90
+                        			then (t0.cfc_doctotal - COALESCE(t0.cfc_paytoday,0))
+															ELSE 0
+                        	END secenta_uno_noventa,
+                        	CASE
+                        		WHEN ( CURRENT_DATE - t0.cfc_duedate) >=91
+                        			then (t0.cfc_doctotal - COALESCE(t0.cfc_paytoday,0))
+													ELSE 0
+                        	END mayor_noventa
+
+                        FROM dcfc t0
+                        WHERE CURRENT_DATE >= t0.cfc_duedate  and t0.cfc_cardcode = :cardcode
+												ORDER BY NumeroDocumento";
+
+					$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta, array(
+						":cardcode" => $Data['cardcode']
+					));
+
+					$totalSaldo =	array_sum(array_column($contenidoestadocuenta,'uno_treinta'));
+					$totalSaldo +=  array_sum(array_column($contenidoestadocuenta,'treinta_uno_secenta'));
+					$totalSaldo +=  array_sum(array_column($contenidoestadocuenta,'secenta_uno_noventa'));
+					$totalSaldo +=  array_sum(array_column($contenidoestadocuenta,'mayor_noventa'));
+
+					// $contenidoestadocuenta['total_saldo'] = round($totalSaldo,2);
+					// array_push($contenidoestadocuenta,['totalSaldo'=>$totalSaldo]);
+					if (isset($contenidoestadocuenta[0])) {
+						$respuesta = array(
+							'error' => false,
+							'data' => $contenidoestadocuenta,
+							'totalSaldos' => round($totalSaldo,2),
+							'mensaje' => ''
+						);
+					} else {
+						$respuesta = array(
+							'error' => true,
+							'data'  => [],
+							'mensaje' => 'Datos no encontrados'
+						);
+					}
+					$this->response($respuesta);
+	}
 
 
 
