@@ -47,19 +47,33 @@ class Opportunity extends REST_Controller
             !isset($Data['bop_dateprev'])    or
             !isset($Data['bop_pvalue'])    or
             !isset($Data['bop_interestl'])  or
-            !isset($Data['bop_rstatus'])
+            !isset($Data['bop_rstatus']) or
+            !isset($Data['bop_stage'])
         ) {
 
             $respuesta = array(
                 'error' => true,
                 'data'  => array(),
-                'mensaje' =>'La informacion enviada no es valida'
+                'mensaje' => 'La informacion enviada no es valida'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
             return;
         }
+
+        if ($Data['bop_stage'] == 100 and $Data['bop_rstatus'] == 1) {
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'La informacion enviada no es valida'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+
         // SE VERIFCA QUE EL DOCUMENTO TENGA DETALLE
         $ContenidoDetalle = json_decode($Data['detail'], true);
 
@@ -88,8 +102,8 @@ class Opportunity extends REST_Controller
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason) 
-                        VALUES ( :bop_type, :bop_invamount, :bop_slpcode, :bop_agent, :bop_balance, :bop_name, :bop_docnum, :bop_status, :bop_date, :bop_duedate, :bop_days, :bop_dateprev, :bop_pvalue, :bop_interestl, :bop_rstatus, :bop_cardcode, :bop_cardcode_name, :bop_reason)";
+        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason, bop_stage) 
+                        VALUES ( :bop_type, :bop_invamount, :bop_slpcode, :bop_agent, :bop_balance, :bop_name, :bop_docnum, :bop_status, :bop_date, :bop_duedate, :bop_days, :bop_dateprev, :bop_pvalue, :bop_interestl, :bop_rstatus, :bop_cardcode, :bop_cardcode_name, :bop_reason, :bop_stage)";
         $this->pedeo->trans_begin();
         $resInsert = $this->pedeo->insertRow(
             $sqlInsert,
@@ -111,8 +125,9 @@ class Opportunity extends REST_Controller
                 ":bop_rstatus" => $Data['bop_rstatus'],
                 ":bop_cardcode" => $Data['bop_cardcode'],
                 ":bop_cardcode_name" => $Data['bop_cardcode_name'],
-                ":bop_reason" => (isset($Data['bop_reason'])) ? $Data['bop_reason'] : null
-                )
+                ":bop_reason" => (isset($Data['bop_reason'])) ? $Data['bop_reason'] : null,
+                ":bop_stage" => $Data['bop_stage']
+            )
         );
 
         if (is_numeric($resInsert) and $resInsert > 0) {
@@ -202,43 +217,45 @@ class Opportunity extends REST_Controller
         $this->response($respuesta);
     }
 
-    public function createStage_post(){
+    public function createStage_post()
+    {
         $Data = $this->post();
 
-        if (!isset($Data['op1_centerc']) OR
-            !isset($Data['op1_comments']) OR
-            !isset($Data['op1_contact_tel']) OR
-            !isset($Data['op1_content']) OR
-            !isset($Data['op1_date']) OR
-            !isset($Data['op1_dclass']) OR
-            !isset($Data['op1_duedate']) OR
-            !isset($Data['op1_duracion']) OR
-            !isset($Data['op1_issue']) OR
-            !isset($Data['op1_num']) OR
-            !isset($Data['op1_priority']) OR
-            !isset($Data['op1_sn']) OR
-            !isset($Data['op1_sn_name']) OR
-            !isset($Data['op1_type']) OR
-            !isset($Data['op1_userfrom']) OR
-            !isset($Data['op1_userto']) OR
-            !isset($Data['op1_opportunity'])) 
-            {
-            
-                $respuesta = array(
-                    'error' => true,
-                    'data'  => array(),
-                    'mensaje' =>'La informacion enviada no es valida'
-                );
-    
-                $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-    
-                return;
+        if (
+            !isset($Data['op1_centerc']) or
+            !isset($Data['op1_comments']) or
+            !isset($Data['op1_contact_tel']) or
+            !isset($Data['op1_content']) or
+            !isset($Data['op1_date']) or
+            !isset($Data['op1_dclass']) or
+            !isset($Data['op1_duedate']) or
+            !isset($Data['op1_duracion']) or
+            !isset($Data['op1_issue']) or
+            !isset($Data['op1_num']) or
+            !isset($Data['op1_priority']) or
+            !isset($Data['op1_sn']) or
+            !isset($Data['op1_sn_name']) or
+            !isset($Data['op1_type']) or
+            !isset($Data['op1_userfrom']) or
+            !isset($Data['op1_userto']) or
+            !isset($Data['op1_opportunity'])
+        ) {
+
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'La informacion enviada no es valida'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
         }
 
         $sqlInsert = "INSERT INTO bop1 ( op1_centerc, op1_comments, op1_content, op1_contact_tel, op1_date, op1_dclass, op1_duedate,op1_duracion, op1_issue, op1_num, op1_priority, op1_sn, op1_sn_name, op1_type, op1_userfrom, op1_userto,op1_opportunity)
                 VALUES(:op1_centerc, :op1_comments, :op1_content, :op1_contact_tel, :op1_date, :op1_dclass, :op1_duedate,:op1_duracion, :op1_issue, :op1_num, :op1_priority, :op1_sn, :op1_sn_name, :op1_type, :op1_userfrom,:op1_userto,:op1_opportunity)";
 
-        $duracion = (!empty($Data['op1_duracion'])) ? explode(' ', $Data['op1_duracion']) : 0;  
+        $duracion = (!empty($Data['op1_duracion'])) ? explode(' ', $Data['op1_duracion']) : 0;
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
             ":op1_centerc"  => $Data['op1_centerc'],
             ":op1_comments" => $Data['op1_comments'],
@@ -263,18 +280,17 @@ class Opportunity extends REST_Controller
             $respuesta = array(
                 'error' => false,
                 'data'  => array(),
-                'mensaje' =>'Operacion exitosa'
+                'mensaje' => 'Operacion exitosa'
             );
         } else {
             $respuesta = array(
                 'error' => true,
                 'data'  => array(),
-                'mensaje' =>'No se pudo agregar etapa a esta oportunidad'
+                'mensaje' => 'No se pudo agregar etapa a esta oportunidad'
             );
         }
 
         $this->response($respuesta);
-        
     }
 
     public function getOpportunityById_get()
@@ -326,13 +342,14 @@ class Opportunity extends REST_Controller
         $this->response($respuesta);
     }
 
-    public function updateOpportunity_post(){
+    public function updateOpportunity_post()
+    {
         $Data = $this->post();
+        // print_r($Data['bop_stage']);exit;
 
-        
         // SE VERIFCA QUE EL DOCUMENTO TENGA DETALLE
         $ContenidoDetalle = json_decode($Data['detail'], true);
-       
+
         $respuesta = array();
         if (!is_array($ContenidoDetalle)) {
             $respuesta = array(
@@ -351,6 +368,18 @@ class Opportunity extends REST_Controller
                 'error' => true,
                 'data'  => array(),
                 'mensaje' => 'Documento sin detalle'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+
+        if ($Data['bop_stage'] == 100 and $Data['bop_rstatus'] == 1) {
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'Por favor seleccionar un estado diferente a abierto, progreso es igual al 100%'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -380,90 +409,90 @@ class Opportunity extends REST_Controller
          bop_reason = :bop_reason,
          bop_stage = :bop_stage
         WHERE bop_id = :bop_id";
-        
+
         $this->pedeo->trans_begin();
 
         $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-        ":bop_type" =>$Data['bop_type'],
-        ":bop_invamount" =>$Data['bop_invamount'],
-        ":bop_slpcode" =>$Data['bop_slpcode_'],
-        ":bop_agent" =>$Data['bop_agent_'],
-        ":bop_balance" =>$Data['bop_balance'],
-        ":bop_name" =>$Data['bop_name'],
-        ":bop_docnum" =>$Data['bop_docnum'],
-        ":bop_status" =>$Data['bop_status'],
-        ":bop_date" =>$Data['bop_date'],
-        ":bop_duedate" =>$Data['bop_duedate'],
-        ":bop_days" =>$Data['bop_days'],
-        ":bop_dateprev" =>$Data['bop_dateprev'],
-        ":bop_pvalue" =>$Data['bop_pvalue'],
-        ":bop_interestl" =>$Data['bop_interestl'],
-        ":bop_rstatus" =>$Data['bop_rstatus'],
-        ":bop_cardcode" =>$Data['bop_cardcode'],
-        ":bop_cardcode_name" =>$Data['bop_cardcode_name'],
-        ":bop_reason" =>(isset($Data['bop_reason'])) ? $Data['bop_reason'] : null,
-        ":bop_stage" =>$Data['bop_stage'],
-        ":bop_id" => $Data['bop_id']));
+            ":bop_type" => $Data['bop_type'],
+            ":bop_invamount" => $Data['bop_invamount'],
+            ":bop_slpcode" => $Data['bop_slpcode_'],
+            ":bop_agent" => $Data['bop_agent_'],
+            ":bop_balance" => $Data['bop_balance'],
+            ":bop_name" => $Data['bop_name'],
+            ":bop_docnum" => $Data['bop_docnum'],
+            ":bop_status" => $Data['bop_status'],
+            ":bop_date" => $Data['bop_date'],
+            ":bop_duedate" => $Data['bop_duedate'],
+            ":bop_days" => $Data['bop_days'],
+            ":bop_dateprev" => $Data['bop_dateprev'],
+            ":bop_pvalue" => $Data['bop_pvalue'],
+            ":bop_interestl" => $Data['bop_interestl'],
+            ":bop_rstatus" => $Data['bop_rstatus'],
+            ":bop_cardcode" => $Data['bop_cardcode'],
+            ":bop_cardcode_name" => $Data['bop_cardcode_name'],
+            ":bop_reason" => (isset($Data['bop_reason'])) ? $Data['bop_reason'] : null,
+            ":bop_stage" => $Data['bop_stage'],
+            ":bop_id" => $Data['bop_id']
+        ));
 
         if (is_numeric($resUpdate) && $resUpdate > 0) {
             // se le cambia el estado de los detalles de la oportunidad
-            $this->pedeo->updateRow('UPDATE bop1 set op1_status = 0 WHERE op1_opportunity = :op1_opportunity',array(":op1_opportunity" => $Data['bop_id']));
+            $this->pedeo->updateRow('UPDATE bop1 set op1_status = 0 WHERE op1_opportunity = :op1_opportunity', array(":op1_opportunity" => $Data['bop_id']));
 
 
             $sqlInsert2 = "INSERT INTO bop1 ( op1_centerc, op1_comments, op1_content, op1_contact_tel, op1_date, op1_dclass, op1_duedate,op1_duracion, op1_issue, op1_num, op1_priority, op1_sn, op1_sn_name, op1_type, op1_userfrom, op1_userto,op1_opportunity, op1_stage, op1_dnumber)
             VALUES(:op1_centerc, :op1_comments, :op1_content, :op1_contact_tel, :op1_date, :op1_dclass, :op1_duedate,:op1_duracion, :op1_issue, :op1_num, :op1_priority, :op1_sn, :op1_sn_name, :op1_type, :op1_userfrom, :op1_userto, :op1_opportunity, :op1_stage, :op1_dnumber )";
-        
-        foreach ($ContenidoDetalle as $key => $detail) {
-            $duracion = (!empty($detail['op1_duracion'])) ? explode(' ', $detail['op1_duracion']) : 0;
-            $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
-                ":op1_centerc"  => $detail['op1_centerc'],
-                ":op1_comments" => $detail['op1_comments'],
-                ":op1_contact_tel" => $detail['op1_contact_tel'],
-                ":op1_content" => $detail['op1_content'],
-                ":op1_date" => $detail['op1_date'],
-                ":op1_dclass" => $detail['op1_dclass'],
-                ":op1_duedate" => $detail['op1_duedate'],
-                ":op1_duracion" => (!empty($detail['op1_duracion'])) ? $duracion[0] : 0,
-                ":op1_issue" => $detail['op1_issue'],
-                ":op1_num" => (!empty($detail['op1_num'])) ? $detail['op1_num'] : 0,
-                ":op1_priority" => (!empty($detail['op1_priority'])) ? $detail['op1_priority'] : 1,
-                ":op1_sn" => $detail['op1_sn'],
-                ":op1_sn_name" => $detail['op1_sn_name'],
-                ":op1_type" => $detail['op1_type'],
-                ":op1_userfrom" => $detail['op1_userfrom'],
-                ":op1_userto" => $detail['op1_userto'],
-                ":op1_opportunity" => $Data['bop_id'],
-                ":op1_stage" => $detail['op1_stage'],
-                ":op1_dnumber" => $detail['op1_dnumber']
-                
-            ));
 
-            if (is_numeric($resInsert2) && $resInsert2 > 0) {
-            } else {
-                $this->pedeo->trans_rollback();
+            foreach ($ContenidoDetalle as $key => $detail) {
+                $duracion = (!empty($detail['op1_duracion'])) ? explode(' ', $detail['op1_duracion']) : 0;
+                $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
+                    ":op1_centerc"  => $detail['op1_centerc'],
+                    ":op1_comments" => $detail['op1_comments'],
+                    ":op1_contact_tel" => $detail['op1_contact_tel'],
+                    ":op1_content" => $detail['op1_content'],
+                    ":op1_date" => $detail['op1_date'],
+                    ":op1_dclass" => $detail['op1_dclass'],
+                    ":op1_duedate" => $detail['op1_duedate'],
+                    ":op1_duracion" => (!empty($detail['op1_duracion'])) ? $duracion[0] : 0,
+                    ":op1_issue" => $detail['op1_issue'],
+                    ":op1_num" => (!empty($detail['op1_num'])) ? $detail['op1_num'] : 0,
+                    ":op1_priority" => (!empty($detail['op1_priority'])) ? $detail['op1_priority'] : 1,
+                    ":op1_sn" => $detail['op1_sn'],
+                    ":op1_sn_name" => $detail['op1_sn_name'],
+                    ":op1_type" => $detail['op1_type'],
+                    ":op1_userfrom" => $detail['op1_userfrom'],
+                    ":op1_userto" => $detail['op1_userto'],
+                    ":op1_opportunity" => $Data['bop_id'],
+                    ":op1_stage" => $detail['op1_stage'],
+                    ":op1_dnumber" => $detail['op1_dnumber']
 
-                $respuesta = array(
-                    'error' => true,
-                    'data' => $resInsert2,
-                    'mensaje' => 'No se puso realizar operacion'
-                );
+                ));
 
-                $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-                return;
+                if (is_numeric($resInsert2) && $resInsert2 > 0) {
+                } else {
+                    $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                        'error' => true,
+                        'data' => $resInsert2,
+                        'mensaje' => 'No se puso realizar operacion'
+                    );
+
+                    $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+                    return;
+                }
             }
-        }
 
-        // $this->pedeo->updateRow('UPDATE tbop set bop_stage = :bop_stage',array(":bop_stage" => $progress));
+            // $this->pedeo->updateRow('UPDATE tbop set bop_stage = :bop_stage',array(":bop_stage" => $progress));
 
-        $this->pedeo->trans_commit();
+            $this->pedeo->trans_commit();
 
-        $respuesta = array(
-            'error' => false,
-            'data' => $resUpdate,
-            'mensaje' => 'Oportunidad registrada con exito'
-        );
-
-        }else{
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Oportunidad registrada con exito'
+            );
+        } else {
             $this->pedeo->trans_rollback();
             $respuesta = array(
                 'error' => true,
@@ -472,6 +501,62 @@ class Opportunity extends REST_Controller
             );
         }
 
+        $this->response($respuesta);
+    }
+
+    // SERVICIO PARA FILTRAR LAS OPORTUNIDADES
+    public function getOpportunityData_post()
+    {
+        $Data = $this->post();
+        if (
+            !isset($Data['bop_date']) or
+            !isset($Data['bop_duedate'])
+        ) {
+            $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'    => 'La informacion enviada no es valida'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            return;
+        }
+
+        $fields = [':bop_date' => $Data['bop_date'],
+                    ':bop_duedate' =>$Data['bop_duedate']];
+        $filters = "";
+
+            $keys = array_keys($Data);
+            foreach ($keys as $key => $value) {
+                if (!in_array($value,['bop_date','bop_duedate','c','a'],true)) {
+                $fields[":{$value}"] = $Data[$value];
+                $filters .= " AND {$value} = :{$value}"; 
+            }
+            
+        }
+
+        
+
+        $sqlSelect = " SELECT * FROM tbop WHERE  bop_date BETWEEN :bop_date  AND :bop_duedate {{filter}}";
+        
+        $sqlSelect = str_replace("{{filter}}",$filters,$sqlSelect);
+        // print_r($sqlSelect);exit;
+        $resSelect = $this->pedeo->queryTable($sqlSelect, $fields);
+        
+        if (isset($resSelect[0])) {
+            $respuesta = array(
+                'error' => false,
+                'data'  => $resSelect,
+                'mensaje' => ''
+            );
+        } else {
+
+            $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'    => 'busqueda sin resultados'
+            );
+        }
         $this->response($respuesta);
     }
 }
