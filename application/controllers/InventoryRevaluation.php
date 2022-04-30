@@ -23,7 +23,7 @@ class InventoryRevaluation extends REST_Controller {
 
 	}
 
-  //CREAR NUEVO PEDIDO
+  //CREAR NUEVA REVALORIZACION
 	public function createSalesOrder_post(){
 
       $Data = $this->post();

@@ -19,6 +19,7 @@ class PurchaseInv extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -123,6 +124,25 @@ class PurchaseInv extends REST_Controller {
 
 					return;
 			}
+			//
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['cfc_duedev'], $Data['cfc_docdate'],$Data['cfc_duedate'],0);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
 			//
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -1601,6 +1621,7 @@ class PurchaseInv extends REST_Controller {
 
 					$granTotalIva = 0;
 					$MontoSysCR = 0;
+					$MontoSysDB = 0;
 					foreach ($DetalleConsolidadoIva as $key => $posicion) {
 							$granTotalIva = 0;
 							$granTotalIvaOriginal = 0;
@@ -1627,7 +1648,6 @@ class PurchaseInv extends REST_Controller {
 
 							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
-
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1743,7 +1763,7 @@ class PurchaseInv extends REST_Controller {
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 
 												}else if( $codigo3 == 2 || $codigo3 == "2" ){
@@ -1751,47 +1771,49 @@ class PurchaseInv extends REST_Controller {
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 3 || $codigo3 == "3" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 4 || $codigo3 == "4" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 5  || $codigo3 == "5" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 6 || $codigo3 == "6" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 7 || $codigo3 == "7" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}
 
 												$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 												$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+
 												$AC1LINE = $AC1LINE+1;
 												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1862,10 +1884,6 @@ class PurchaseInv extends REST_Controller {
 					//FIN Procedimiento para llenar costo inventario CUANDO ES FACTURA DIRECTA
 
 
-
-
-
-
 					if($Data['cfc_basetype'] == 13){ // CUANDO VIENE DE UNA ENTRADA
 							//Procedimiento para llenar costo inventario Y NO ES FACTURA DIRECTA
 
@@ -1932,7 +1950,7 @@ class PurchaseInv extends REST_Controller {
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 
 												}else if( $codigo3 == 2 || $codigo3 == "2" ){
@@ -1940,47 +1958,48 @@ class PurchaseInv extends REST_Controller {
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 3 || $codigo3 == "3" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 4 || $codigo3 == "4" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 5  || $codigo3 == "5" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 6 || $codigo3 == "6" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 7 || $codigo3 == "7" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}
 
 												$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 												$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
 												$AC1LINE = $AC1LINE+1;
 												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2054,6 +2073,7 @@ class PurchaseInv extends REST_Controller {
 
 					// PROCEDIMIENTO PARA LLENAR ASIENTO ARTICULO NO INVENTARIABLE
 
+
 					foreach ($DetalleConsolidadoItemNoInventariable as $key => $posicion) {
 							$grantotalItemNoInventariable = 0 ;
 							$grantotalItemNoInventariableOriginal = 0;
@@ -2091,6 +2111,8 @@ class PurchaseInv extends REST_Controller {
 
 								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+
 								$AC1LINE = $AC1LINE+1;
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2159,7 +2181,6 @@ class PurchaseInv extends REST_Controller {
 				//FIN PROCEDIMIENTO PARA LLENAR ASIENTO ARTICULO NO INVENTARIABLE
 
 
-
 				//Procedimiento para llenar cuentas por pagar
 
 					$sqlcuentaCxP = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
@@ -2199,6 +2220,8 @@ class PurchaseInv extends REST_Controller {
 
 								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+
 								$AC1LINE = $AC1LINE+1;
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2335,6 +2358,7 @@ class PurchaseInv extends REST_Controller {
 
 							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
 							$AC1LINE = $AC1LINE+1;
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 

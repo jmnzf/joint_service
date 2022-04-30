@@ -19,6 +19,7 @@ class AccountReconciliations extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -86,6 +87,26 @@ class AccountReconciliations extends REST_Controller {
 
 					return;
 			}
+
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['crc_docdate'], $Data['crc_docdate'],$Data['crc_docdate'],0);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
+			//
 
       //BUSCANDO LA NUMERACION DEL DOCUMENTO
       $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -427,12 +448,20 @@ class AccountReconciliations extends REST_Controller {
 										// ACTUALIZANDO VALORES EN DOCUMENTOS
 										//ESPACIO PARA VENTAS
 										//PAYTODAY
-										if($detail['rc1_doctype'] == 5){ // se actualiza la factura
+										if($detail['rc1_doctype'] == 5){
+										   // se actualiza la factura
+
+											 $VlrPay = $detail['rc1_valapply'];
+
+											 if(trim($Data['crc_currency']) != $MONEDALOCAL ){
+												 $VlrPay = ($detail['rc1_valapply'] * $TasaDocLoc);
+											 }
+
 											$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
 
 											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-												':dvf_paytoday' => $detail['rc1_valapply'],
+												':dvf_paytoday' => $VlrPay,
 												':dvf_docentry' => $detail['rc1_docentry'],
 												':dvf_doctype'  => $detail['rc1_doctype']
 
@@ -456,13 +485,15 @@ class AccountReconciliations extends REST_Controller {
 											}
 
 											//ASIENTO
+
+
 											$slqUpdateVenDebit = "UPDATE mac1
 																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
 																						WHERE ac1_line_num = :ac1_line_num";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $detail['rc1_valapply'],
-												':ac1_line_num' => $detail['ac1_line_num']
+												':ac1_ven_credit' => $VlrPay,
+												':ac1_line_num'   => $detail['ac1_line_num']
 
 											));
 
@@ -483,14 +514,11 @@ class AccountReconciliations extends REST_Controller {
 											}
 
 											//VERIFICAR PARA CERRAR DOCUMENTO
-											$sqlEstado = 'SELECT case when (dvf_doctotal - COALESCE(dvf_paytoday,0)) = 0 then 1 else 0 end estado
-																		from dvfv
-																		where dvf_docentry = :dvf_docentry';
+
+											$resEstado = $this->generic->validateBalanceAndClose($detail['rc1_docentry'],$detail['rc1_doctype'],'dvfv','dvf');
 
 
-											$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvf_docentry' => $detail['rc1_docentry']));
-
-											if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+											if(isset($resEstado['error']) && $resEstado['error'] === true){
 														$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
@@ -531,11 +559,19 @@ class AccountReconciliations extends REST_Controller {
 
 										//PAYTODAY
 										if($detail['rc1_doctype'] == 6) { // SE ACTUALIZA EN NOTA DEBITO
+
+											$VlrPay = $detail['rc1_valapply'];
+
+											if(trim($Data['crc_currency']) != $MONEDALOCAL ){
+												$VlrPay = ($detail['rc1_valapply'] * $TasaDocLoc);
+											}
+
+
 											$sqlUpdateFactPay = "UPDATE  dvnc  SET vnc_paytoday = COALESCE(vnc_paytoday,0)+:vnc_paytoday WHERE vnc_docentry = :vnc_docentry and vnc_doctype = :vnc_doctype";
 
 											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-												':vnc_paytoday' => $detail['rc1_valapply'],
+												':vnc_paytoday' => $VlrPay,
 												':vnc_docentry' => $detail['rc1_docentry'],
 												':vnc_doctype'  => $detail['rc1_doctype']
 
@@ -566,7 +602,7 @@ class AccountReconciliations extends REST_Controller {
 																						WHERE ac1_line_num = :ac1_line_num";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_debit' => $detail['rc1_valapply'],
+												':ac1_ven_debit' => $VlrPay,
 												':ac1_line_num'  => $detail['ac1_line_num'],
 
 											));
@@ -588,14 +624,10 @@ class AccountReconciliations extends REST_Controller {
 											}
 
 											//ESTADO
-											$sqlEstado = 'SELECT case when (vnc_doctotal - COALESCE(vnc_paytoday,0)) = 0 then 1 else 0 end estado
-																		from dvnc
-																		where vnc_docentry = :vnc_docentry';
+											$resEstado = $this->generic->validateBalanceAndClose($detail['rc1_docentry'],$detail['rc1_doctype'],'dvnc','vnc');
 
 
-											$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vnc_docentry' => $detail['rc1_docentry']));
-
-											if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+											if(isset($resEstado['error']) && $resEstado['error'] === true){
 														$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
@@ -635,12 +667,18 @@ class AccountReconciliations extends REST_Controller {
 										//ASIENTO DEL ANTICIPO CLIENTE
 										if( $detail['rc1_doctype'] == 20 ){
 
+											$VlrPay = $detail['rc1_valapply'];
+
+											if(trim($Data['crc_currency']) != $MONEDALOCAL ){
+												$VlrPay = ($detail['rc1_valapply'] * $TasaDocLoc);
+											}
+
 											$slqUpdateVenDebit = "UPDATE mac1
 																						SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
 																						WHERE ac1_line_num = :ac1_line_num";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_debit' => $detail['rc1_valapply'],
+												':ac1_ven_debit' => $VlrPay,
 												':ac1_line_num'  => $detail['ac1_line_num'],
 
 											));
@@ -668,11 +706,18 @@ class AccountReconciliations extends REST_Controller {
 										//ACTUALIZAR VALOR PAGADO DE LA FACTURA DE COMPRA
 
 										if( $detail['rc1_doctype'] == 15 ){
+
+											$VlrPay = $detail['rc1_valapply'];
+
+											if(trim($Data['crc_currency']) != $MONEDALOCAL ){
+												$VlrPay = ($detail['rc1_valapply'] * $TasaDocLoc);
+											}
+
 											$sqlUpdateFactPay = "UPDATE  dcfc  SET cfc_paytoday = COALESCE(cfc_paytoday,0)+:cfc_paytoday WHERE cfc_docentry = :cfc_docentry and cfc_doctype = :cfc_doctype";
 
 											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-												':cfc_paytoday' => $detail['rc1_valapply'],
+												':cfc_paytoday' => $VlrPay,
 												':cfc_docentry' => $detail['rc1_docentry'],
 												':cfc_doctype' =>  $detail['rc1_doctype']
 
@@ -701,7 +746,7 @@ class AccountReconciliations extends REST_Controller {
 
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_debit'  => $detail['rc1_valapply'],
+												':ac1_ven_debit'  => $VlrPay,
 												':ac1_line_num'   => $detail['ac1_line_num']
 
 
@@ -724,14 +769,12 @@ class AccountReconciliations extends REST_Controller {
 											}
 
 											//Estado DOCUMENTO
-											$sqlEstado = 'SELECT case when (cfc_doctotal - COALESCE(cfc_paytoday,0)) = 0 then 1 else 0 end estado
-																		from dcfc
-																		where cfc_docentry = :cfc_docentry';
+
+											$resEstado = $this->generic->validateBalanceAndClose($detail['rc1_docentry'],$detail['rc1_doctype'],'dcfc','cfc');
 
 
-											$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cfc_docentry' => $detail['rc1_docentry']));
 
-											if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+											if(isset($resEstado['error']) && $resEstado['error'] === true){
 														$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
@@ -771,11 +814,18 @@ class AccountReconciliations extends REST_Controller {
 
 										// SE ACTUALIZA EL VALOR DEL CAMPO PAY TODAY EN NOTA CREDITO
 										if($detail['rc1_doctype'] == 16) { // SOLO CUANDO ES UNA NOTA CREDITO
+											$VlrPay = $detail['rc1_valapply'];
+
+											if(trim($Data['crc_currency']) != $MONEDALOCAL ){
+												$VlrPay = ($detail['rc1_valapply'] * $TasaDocLoc);
+											}
+
+
 											$sqlUpdateFactPay = "UPDATE  dcnc  SET cnc_paytoday = COALESCE(cnc_paytoday,0)+:cnc_paytoday WHERE cnc_docentry = :cnc_docentry and cnc_doctype = :cnc_doctype";
 
 											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-												':cnc_paytoday' => $detail['rc1_valapply'],
+												':cnc_paytoday' => $VlrPay,
 												':cnc_docentry' => $detail['rc1_docentry'],
 												':cnc_doctype'  => $detail['rc1_doctype']
 
@@ -805,7 +855,7 @@ class AccountReconciliations extends REST_Controller {
 
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $detail['rc1_valapply'],
+												':ac1_ven_credit' => $VlrPay,
 												':ac1_line_num'   => $detail['ac1_line_num']
 											));
 
@@ -826,14 +876,11 @@ class AccountReconciliations extends REST_Controller {
 											}
 
 											//ESTADO DOCUMENTO
-											$sqlEstado = 'SELECT case when (cnc_doctotal - COALESCE(cnc_paytoday,0)) = 0 then 1 else 0 end estado
-																		from dcnc
-																		where cnc_docentry = :cnc_docentry';
+
+											$resEstado = $this->generic->validateBalanceAndClose($detail['rc1_docentry'],$detail['rc1_doctype'],'dcnc','cnc');
 
 
-											$resEstado = $this->pedeo->queryTable($sqlEstado, array(':cnc_docentry' => $detail['rc1_docentry']));
-
-											if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+											if(isset($resEstado['error']) && $resEstado['error'] === true){
 														$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
@@ -874,13 +921,19 @@ class AccountReconciliations extends REST_Controller {
 
 										if($detail['rc1_doctype'] == 19){
 
+											$VlrPay = $detail['rc1_valapply'];
+
+											if(trim($Data['crc_currency']) != $MONEDALOCAL ){
+												$VlrPay = ($detail['rc1_valapply'] * $TasaDocLoc);
+											}
+
 											$slqUpdateVenDebit = "UPDATE mac1
 																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
 																						WHERE ac1_line_num = :ac1_line_num";
 
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $detail['rc1_valapply'],
+												':ac1_ven_credit' => $VlrPay,
 												':ac1_line_num'   => $detail['ac1_line_num']
 											));
 
@@ -906,6 +959,13 @@ class AccountReconciliations extends REST_Controller {
 										//ASIENTO MANUALES
 										if($detail['rc1_doctype'] == 18){
 
+											$VlrPay = $detail['rc1_valapply'];
+
+											if(trim($Data['crc_currency']) != $MONEDALOCAL ){
+												$VlrPay = ($detail['rc1_valapply'] * $TasaDocLoc);
+											}
+
+
 											if( $detail['ac1_cord'] == 1){
 
 												$slqUpdateVenDebit = "UPDATE mac1
@@ -914,7 +974,7 @@ class AccountReconciliations extends REST_Controller {
 
 												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-													':ac1_ven_debit' => $detail['rc1_valapply'],
+													':ac1_ven_debit' => $VlrPay,
 													':ac1_line_num'   => $detail['ac1_line_num']
 												));
 
@@ -940,7 +1000,7 @@ class AccountReconciliations extends REST_Controller {
 
 												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-													':ac1_ven_credit' => $detail['rc1_valapply'],
+													':ac1_ven_credit' => $VlrPay,
 													':ac1_line_num'   => $detail['ac1_line_num']
 												));
 

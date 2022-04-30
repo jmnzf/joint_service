@@ -19,6 +19,7 @@ class PurchaseNd extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -111,6 +112,25 @@ class PurchaseNd extends REST_Controller {
 
 					return;
 			}
+			//
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['cnd_duedev'], $Data['cnd_docdate'],$Data['cnd_duedate'],0);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
 			//
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";

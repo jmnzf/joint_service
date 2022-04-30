@@ -19,6 +19,7 @@ class PaymentsReceived extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -111,6 +112,25 @@ class PaymentsReceived extends REST_Controller {
 
 					return;
 			}
+			//
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['bpr_docdate'], $Data['bpr_docdate'],$Data['bpr_docdate'],0);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
 			//
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -430,49 +450,40 @@ class PaymentsReceived extends REST_Controller {
 								if($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0){
 											//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
 											if($detail['pr1_doctype'] == 5) { // SOLO CUANDO ES UNA FACTURA
-												$VlrPayFact = "SELECT COALESCE(dvf_paytoday,0) as dvf_paytoday,dvf_doctotal from dvfv WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
-												$resVlrPayFact = $this->pedeo->queryTable($VlrPayFact, array(
-													':dvf_docentry' => $detail['pr1_docentry'],
-													':dvf_doctype' => $detail['pr1_doctype']
-												));
 
+												$resVlrPay = $this->generic->validateBalance($detail['pr1_docentry'],$detail['pr1_doctype'],'dvfv','dvf',$detail['pr1_vlrpaid']);
+												if( isset( $resVlrPay['error'] ) ){
 
-												if(isset($resVlrPayFact[0])){
+															if( $resVlrPay['error'] === false ){
 
-													$VlrPaidActual = $detail['pr1_vlrpaid'];
-													$VlrPaidFact = $resVlrPayFact[0]['dvf_paytoday'];
+															}else{
+																$this->pedeo->trans_rollback();
 
-													$SumVlr = round($VlrPaidActual + $VlrPaidFact, 2);
+																$respuesta = array(
+																		'error'   => true,
+																		'data'    => [],
+																		'mensaje'	=> $resVlrPay['mensaje']);
 
-													if($SumVlr <= $resVlrPayFact[0]['dvf_doctotal'] ){
+																$this->response($respuesta);
 
+																return;
 
-													}else{
-														$this->pedeo->trans_rollback();
-
-														$respuesta = array(
-															'error'   => true,
-															'data' => '',
-															'mensaje'	=> 'El valor a pagar no puede ser mayor al saldo de la factura'
-														);
-
-														 $this->response($respuesta);
-
-														 return;
-													}
+															}
 
 												}else{
+
 													$this->pedeo->trans_rollback();
+
 													$respuesta = array(
-														'error'   => true,
-														'data' => $resVlrPayFact,
-														'mensaje'	=> 'No tiene valor para realizar la operacion');
+															'error'   => true,
+															'data'    => [],
+															'mensaje'	=> 'No se pudo validar el saldo actual del documento '.$detail['pe1_docentry']);
 
-														$this->response($respuesta);
+													$this->response($respuesta);
 
-													 return;
-
+													return;
 												}
+
 											}
 								}
 
@@ -570,11 +581,19 @@ class PaymentsReceived extends REST_Controller {
 
 														//
 														if($detail['pr1_doctype'] == 5) { // SOLO CUANDO ES UNA FACTURA
+
+															$VlrPay = $detail['pr1_vlrpaid'];
+
+															if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+															}
+
+
 															$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
 
 															$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-																':dvf_paytoday' => $detail['pr1_vlrpaid'],
+																':dvf_paytoday' => $VlrPay,
 																':dvf_docentry' => $detail['pr1_docentry'],
 																':dvf_doctype'  => $detail['pr1_doctype']
 
@@ -600,11 +619,18 @@ class PaymentsReceived extends REST_Controller {
 
 														// SE ACTUALIZA EL VALOR DEL CAMPO PAY TODAY EN NOTA CREDITO
 														if($detail['pr1_doctype'] == 6) { // SOLO CUANDO ES UNA NOTA CREDITO
+
+															$VlrPay = $detail['pr1_vlrpaid'];
+
+															if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+															}
+
 															$sqlUpdateFactPay = "UPDATE  dvnc  SET vnc_paytoday = COALESCE(vnc_paytoday,0)+:vnc_paytoday WHERE vnc_docentry = :vnc_docentry and vnc_doctype = :vnc_doctype";
 
 															$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-																':vnc_paytoday' => $detail['pr1_vlrpaid'],
+																':vnc_paytoday' => $VlrPay,
 																':vnc_docentry' => $detail['pr1_docentry'],
 																':vnc_doctype'  => $detail['pr1_doctype']
 
@@ -633,12 +659,19 @@ class PaymentsReceived extends REST_Controller {
 
 														// ACTUALIZAR REFERENCIA DE PAGO EN ASIENTO CONTABLE DE LA FACTURA
 														if($detail['pr1_doctype'] == 5) { // SOLO CUANDO ES UNA FACTURA
+
+															$VlrPay = $detail['pr1_vlrpaid'];
+
+															if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+															}
+
 															$slqUpdateVenDebit = "UPDATE mac1
 																										SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
 																										WHERE ac1_line_num = :ac1_line_num";
 															$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-																':ac1_ven_credit' => $detail['pr1_vlrpaid'],
+																':ac1_ven_credit' => $VlrPay,
 																':ac1_line_num' => $detail['ac1_line_num']
 
 
@@ -664,13 +697,20 @@ class PaymentsReceived extends REST_Controller {
 														// SE ACTUALIZA EL VALOR DEL ANTICIPO PARA IR DESCONTANDO LO USADO
 														// O EN SU DEFECTO TAMBIEN LA NOTA CREDITO
 														if($detail['pr1_doctype'] == 20 || $detail['pr1_doctype'] == 6) {
+
+															$VlrPay = $detail['pr1_vlrpaid'];
+
+															if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+															}
+
 															$slqUpdateVenDebit = "UPDATE mac1
 																										SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
 																										WHERE ac1_line_num = :ac1_line_num";
 
 															$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-																':ac1_ven_debit' => $detail['pr1_vlrpaid'],
+																':ac1_ven_debit' => $VlrPay,
 																':ac1_line_num' => $detail['ac1_line_num']
 
 															));
@@ -694,15 +734,9 @@ class PaymentsReceived extends REST_Controller {
 														// SE VALIDA SALDOS PARA CERRAR FACTURA
 														if($detail['pr1_doctype'] == 5) {
 
+																		$resEstado = $this->generic->validateBalanceAndClose($detail['pr1_docentry'],$detail['pr1_doctype'],'dvfv','dvf');
 
-																		$sqlEstado = 'SELECT case when (dvf_doctotal - COALESCE(dvf_paytoday,0)) = 0 then 1 else 0 end estado
-																									from dvfv
-																									where dvf_docentry = :dvf_docentry';
-
-
-																		$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvf_docentry' => $detail['pr1_docentry']));
-
-																		if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+																		if(isset($resEstado['error']) && $resEstado['error'] === true){
 																					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
@@ -744,14 +778,9 @@ class PaymentsReceived extends REST_Controller {
 														 // SE VALIDA SALDOS PARA CERRAR NOTA CREDITO
 														 if($detail['pr1_doctype'] == 6) {
 
-																		 $sqlEstado = 'SELECT case when (vnc_doctotal - COALESCE(vnc_paytoday,0)) = 0 then 1 else 0 end estado
-																									 from dvnc
-																									 where vnc_docentry = :vnc_docentry';
+															 			 $resEstado = $this->generic->validateBalanceAndClose($detail['pr1_docentry'],$detail['pr1_doctype'],'dvnc','vnc');
 
-
-																		 $resEstado = $this->pedeo->queryTable($sqlEstado, array(':vnc_docentry' => $detail['pr1_docentry']));
-
-																		 if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
+																		 if(isset($resEstado['error']) && $resEstado['error'] === true){
 																					 $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																															 VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
@@ -792,6 +821,12 @@ class PaymentsReceived extends REST_Controller {
 															//ASIENTO MANUALES
 															if($detail['pr1_doctype'] == 18){
 
+																$VlrPay = $detail['pr1_vlrpaid'];
+
+																if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																	$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+																}
+
 																if( $detail['ac1_cord'] == 1){
 
 																	$slqUpdateVenDebit = "UPDATE mac1
@@ -800,7 +835,7 @@ class PaymentsReceived extends REST_Controller {
 
 																	$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-																		':ac1_ven_debit' => $detail['pr1_vlrpaid'],
+																		':ac1_ven_debit' => $VlrPay,
 																		':ac1_line_num'  => $detail['ac1_line_num']
 																	));
 
@@ -826,7 +861,7 @@ class PaymentsReceived extends REST_Controller {
 
 																	$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-																		':ac1_ven_credit' => $detail['pr1_vlrpaid'],
+																		':ac1_ven_credit' => $VlrPay,
 																		':ac1_line_num'   => $detail['ac1_line_num']
 																	));
 
@@ -1037,9 +1072,9 @@ class PaymentsReceived extends REST_Controller {
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => 0,
+									':ac1_font_key' => $resInsert,
 									':ac1_font_line' => 1,
-									':ac1_font_type' => 0,
+									':ac1_font_type' => 20,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",

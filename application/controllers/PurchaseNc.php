@@ -19,6 +19,7 @@ class PurchaseNc extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -122,6 +123,25 @@ class PurchaseNc extends REST_Controller {
 
 					return;
 			}
+			//
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['cnc_duedev'], $Data['cnc_docdate'],$Data['cnc_duedate'],0);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
 			//
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -2246,11 +2266,19 @@ class PurchaseNc extends REST_Controller {
 					//SE VALIDA QUE EL PAY TO DAY DE LA FACTURA
 					if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
 
+
+						$valorAppl =  $Data['cnc_doctotal'];
+
+						if(trim($Data['cnc_currency']) != $MONEDALOCAL ){
+								$valorAppl = $Data['cnc_doctotal'] * $TasaDocLoc;
+						}
+
+
 						$sqlUpdateFactPay = "UPDATE  dcfc  SET cfc_paytoday = COALESCE(cfc_paytoday,0)+:cfc_paytoday WHERE cfc_docentry = :cfc_docentry and cfc_doctype = :cfc_doctype";
 
 						$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-							':cfc_paytoday' => $Data['cnc_doctotal'],
+							':cfc_paytoday' => $valorAppl,
 							':cfc_docentry' => $Data['cnc_baseentry'],
 							':cfc_doctype'  => $Data['cnc_basetype']
 
@@ -2276,6 +2304,13 @@ class PurchaseNc extends REST_Controller {
 					// SE ACTUALIZA VALOR EN EL ASIENTO CONTABLE
 					// GENERADO EN LA FACTURA
 					if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
+
+						$valorAppl =  $Data['cnc_doctotal'];
+
+						if(trim($Data['cnc_currency']) != $MONEDALOCAL ){
+								$valorAppl = $Data['cnc_doctotal'] * $TasaDocLoc;
+						}
+
 
 						$sqlcuentaCxP = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 														 JOIN dmgs  AS f2
@@ -2310,7 +2345,7 @@ class PurchaseNc extends REST_Controller {
 																	AND ac1_account = :ac1_account";
 						$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-							':ac1_ven_debit' => $Data['cnc_doctotal'],
+							':ac1_ven_debit'  => $valorAppl,
 							':ac1_legal_num'  => $Data['cnc_cardcode'],
 							':ac1_font_key'   => $Data['cnc_baseentry'],
 							':ac1_font_type'  => $Data['cnc_basetype'],
@@ -2370,6 +2405,50 @@ class PurchaseNc extends REST_Controller {
 								return;
 						}
 					}
+
+					// SE VALIDA SALDOS PARA CERRAR FACTURA
+					if($Data['cnc_basetype'] == 15) {
+
+									$resEstado = $this->generic->validateBalanceAndClose($Data['cnc_baseentry'],$Data['cnc_basetype'],'dcfc','cfc');
+
+									if(isset($resEstado['error']) && $resEstado['error'] === true){
+												$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																						VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+												$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																	':bed_docentry' => $Data['cnc_baseentry'],
+																	':bed_doctype' => $Data['cnc_basetype'],
+																	':bed_status' => 3, //ESTADO CERRADO
+																	':bed_createby' => $Data['cnc_createby'],
+																	':bed_date' => date('Y-m-d'),
+																	':bed_baseentry' => $resInsert,
+																	':bed_basetype' => $Data['cnc_doctype']
+												));
+
+
+												if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+												}else{
+
+														 $this->pedeo->trans_rollback();
+
+															$respuesta = array(
+																'error'   => true,
+																'data' => $resInsertEstado,
+																'mensaje'	=> 'No se pudo registrar el pago'
+															);
+
+
+															$this->response($respuesta);
+
+															return;
+												}
+
+									}
+
+					 }
 
 					// FIN VALIDACION DE ESTADOS
 

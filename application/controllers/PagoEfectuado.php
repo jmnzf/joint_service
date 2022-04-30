@@ -60,7 +60,7 @@ case
 end	 as total_doc,
 (mac1.ac1_ven_debit) - (mac1.ac1_credit)  as saldo_venc,
 '' retencion,
-tasa.tsa_value as tasa_dia,
+get_tax_currency(dcfc.cfc_currency,dcfc.cfc_docdate) as tasa_dia,
 ac1_line_num,
 ac1_cord
 from  mac1
@@ -72,7 +72,6 @@ on mac1.ac1_font_type = dmdt.mdt_doctype
 inner join dcfc
 on dcfc.cfc_doctype = mac1.ac1_font_type
 and dcfc.cfc_docentry = mac1.ac1_font_key
-inner join  tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 where mac1.ac1_legal_num = :cardcode
 and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
 --PAGO EFECTUADO
@@ -97,7 +96,7 @@ case
 end	 as total_doc,
 (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 '' retencion,
-tasa.tsa_value as tasa_dia,
+get_tax_currency(gbpe.bpe_currency,gbpe.bpe_docdate) as tasa_dia,
 ac1_line_num,
 ac1_cord
 from  mac1
@@ -109,7 +108,6 @@ on mac1.ac1_font_type = dmdt.mdt_doctype
 inner join gbpe
 on gbpe.bpe_doctype = mac1.ac1_font_type
 and gbpe.bpe_docentry = mac1.ac1_font_key
-inner join  tasa on gbpe.bpe_currency = tasa.tsa_curro and gbpe.bpe_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 where mac1.ac1_legal_num = :cardcode
 and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 --NOTA CREDITO
@@ -134,7 +132,7 @@ case
 end	 as total_doc,
 (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 '' retencion,
-tasa.tsa_value as tasa_dia,
+get_tax_currency(dcnc.cnc_currency,dcnc.cnc_docdate ) as tasa_dia,
 ac1_line_num,
 ac1_cord
 from  mac1
@@ -146,7 +144,6 @@ on mac1.ac1_font_type = dmdt.mdt_doctype
 inner join dcnc
 on dcnc.cnc_doctype = mac1.ac1_font_type
 and dcnc.cnc_docentry = mac1.ac1_font_key
-inner join  tasa on dcnc.cnc_currency = tasa.tsa_curro and dcnc.cnc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 where mac1.ac1_legal_num = :cardcode
 and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 --NOTA DEBITO
@@ -171,7 +168,7 @@ case
 end	 as total_doc,
 (mac1.ac1_ven_credit) - (mac1.ac1_debit) as saldo_venc,
 '' retencion,
-tasa.tsa_value as tasa_dia,
+get_tax_currency(dcnd.cnd_currency, dcnd.cnd_docdate) as tasa_dia,
 ac1_line_num,
 ac1_cord
 from  mac1
@@ -183,7 +180,6 @@ on mac1.ac1_font_type = dmdt.mdt_doctype
 inner join dcnd
 on dcnd.cnd_doctype = mac1.ac1_font_type
 and dcnd.cnd_docentry = mac1.ac1_font_key
-inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
 where mac1.ac1_legal_num = :cardcode
 and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 --ASIENTOS MANUALES
@@ -211,7 +207,7 @@ case
 end	 as total_doc,
 (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 '' retencion,
-tasa.tsa_value as tasa_dia,
+get_tax_currency(tmac.mac_currency, tmac.mac_doc_date) as tasa_dia,
 ac1_line_num,
 ac1_cord
 from  mac1
@@ -223,9 +219,6 @@ on mac1.ac1_font_type = dmdt.mdt_doctype
 inner join tmac
 on tmac.mac_trans_id = mac1.ac1_font_key
 and tmac.mac_doctype = mac1.ac1_font_type
-inner join tasa
-on tmac.mac_currency = tasa.tsa_curro
-and tmac.mac_doc_date = tasa.tsa_date
 inner join dmsn
 on mac1.ac1_card_type = dmsn.dms_card_type
 and mac1.ac1_legal_num = dmsn.dms_card_code

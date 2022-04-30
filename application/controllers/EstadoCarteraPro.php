@@ -68,286 +68,358 @@ class EstadoCarteraPro extENDs REST_Controller {
 	        return;
 		}
 
-		$sqlestadocuenta = "SELECT distinct
-												dmdt.mdt_docname,
-												mac1.ac1_font_key,
-												mac1.ac1_legal_num as CodigoCliente,
-												dmsn.dms_card_name NombreCliente,
-												mac1.ac1_account as cuenta,
-												dcfc.cfc_currency monedadocumento,
-												'".$Data['fecha']."' fechacorte,
-												'".$Data['fecha']."' - cfc_duedate dias,
-												dcfc.cfc_comment,
-												dcfc.cfc_currency,
-												mac1.ac1_font_key as cfc_docentry,
-												dcfc.cfc_docnum,
-												dcfc.cfc_docdate as FechaDocumento,
-												dcfc.cfc_duedate as FechaVencimiento,
-												dcfc.cfc_docnum as NumeroDocumento,
-												mac1.ac1_font_type as numtype,
-												mdt_docname as tipo,
-												dcfc.cfc_doctotal as totalfactura,
-												(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
-												'' retencion,
-												tasa.tsa_value as tasa_dia,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=0 and ( '".$Data['fecha']."' - dcfc.cfc_duedate) <=30
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END uno_treinta,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=31 and ( '".$Data['fecha']."' - dcfc.cfc_duedate) <=60
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END treinta_uno_secenta,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=61 and ( '".$Data['fecha']."' - dcfc.cfc_duedate) <=90
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END secenta_uno_noventa,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcfc.cfc_duedate) >=91
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-												ELSE 0
-												END mayor_noventa
+		$sqlestadocuenta = "SELECT distinct dmdt.mdt_docname,
+                mac1.ac1_font_key,
+                mac1.ac1_legal_num                                    as codigocliente,
+                dmsn.dms_card_name                                       nombrecliente,
 
+                dcfc.cfc_currency                                        monedadocumento,
+                '".$Data['fecha']."'                                            fechacorte,
+                '".$Data['fecha']."'- cfc_duedate                               dias,
+                dcfc.cfc_comment,
+                dcfc.cfc_currency,
+                mac1.ac1_font_key                                     as cfc_docentry,
+                dcfc.cfc_docnum,
+                dcfc.cfc_docdate                                      as FechaDocumento,
+                dcfc.cfc_duedate                                      as FechaVencimiento,
+                dcfc.cfc_docnum                                       as NumeroDocumento,
+                mac1.ac1_font_type                                    as numtype,
+                mdt_docname                                           as tipo,
+                dcfc.cfc_doctotal                                     as totalfactura,
+                SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))     as saldo,
+                ''                                                       retencion,
+                get_tax_currency(dcfc.cfc_currency, dcfc.cfc_docdate) as tasa_dia,
+                CASE
+                    WHEN ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 0 and ('".$Data['fecha']."'- dcfc.cfc_duedate) <= 30
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           uno_treinta,
+                CASE
+                    WHEN ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 31 and ('".$Data['fecha']."'-
+                                                                      dcfc.cfc_duedate) <= 60
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           treinta_uno_secenta,
+                CASE
+                    WHEN
+                                ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 61 and ('".$Data['fecha']."'- dcfc.cfc_duedate) <= 90
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           secenta_uno_noventa,
+                CASE
+                    WHEN ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 91
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0
+                    END                                                  mayor_noventa
+from mac1
+         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+         inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+         inner join dcfc on dcfc.cfc_doctype = mac1.ac1_font_type and dcfc.cfc_docentry = mac1.ac1_font_key
+         inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+where dmsn.dms_card_type = '2'
 
-												from mac1
-												inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
-												inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
-												inner join dcfc on dcfc.cfc_doctype = mac1.ac1_font_type and dcfc.cfc_docentry = mac1.ac1_font_key
-												inner join  tasa on dcfc.cfc_currency = tasa.tsa_curro and dcfc.cfc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
-												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '2'
+GROUP BY dmdt.mdt_docname,
+         mac1.ac1_font_key,
+         mac1.ac1_legal_num,
+         dmsn.dms_card_name,
 
+         dcfc.cfc_currency,
+         dcfc.cfc_comment,
+         dcfc.cfc_currency,
+         mac1.ac1_font_key,
+         dcfc.cfc_docnum,
+         dcfc.cfc_docdate,
+         dcfc.cfc_duedate,
+         dcfc.cfc_docnum,
+         mac1.ac1_font_type,
+         mdt_docname,
+         dcfc.cfc_doctotal
+HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0
 
-												union all
-												select distinct
-												dmdt.mdt_docname,
-												mac1.ac1_font_key,
-												mac1.ac1_legal_num as CodigoCliente,
-												dmsn.dms_card_name NombreCliente,
-												mac1.ac1_account as cuenta,
-												gbpe.bpe_currency monedadocumento,
-												'".$Data['fecha']."' fechacorte,
-												'".$Data['fecha']."' - gbpe.bpe_docdate as dias,
-												gbpe.bpe_comments as bpe_comment,
-												gbpe.bpe_currency,
-												mac1.ac1_font_key as cfc_docentry,
-												gbpe.bpe_docnum,
-												gbpe.bpe_docdate as FechaDocumento,
-												gbpe.bpe_docdate as FechaVencimiento,
-												gbpe.bpe_docnum as NumeroDocumento,
-												mac1.ac1_font_type as numtype,
-												'ANTICIPO' as tipo,
-												case
-												when mac1.ac1_font_type = 15 then mac1.ac1_debit
-												else mac1.ac1_debit
-												end as totalfactura,
-												(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
-												'' retencion,
-												tasa.tsa_value as tasa_dia,
-												CASE
-													WHEN ( '".$Data['fecha']."' - gbpe.bpe_docdate) >=0 and ( '".$Data['fecha']."' - gbpe.bpe_docdate) <=30
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END uno_treinta,
-												CASE
-													WHEN ( '".$Data['fecha']."' - gbpe.bpe_docdate) >=31 and ( '".$Data['fecha']."' - gbpe.bpe_docdate) <=60
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END treinta_uno_secenta,
-												CASE
-													WHEN ( '".$Data['fecha']."' - gbpe.bpe_docdate) >=61 and ( '".$Data['fecha']."' - gbpe.bpe_docdate) <=90
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END secenta_uno_noventa,
-												CASE
-													WHEN ( '".$Data['fecha']."' - gbpe.bpe_docdate) >=91
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-												ELSE 0
-												END mayor_noventa
+union all
+select distinct dmdt.mdt_docname,
+                mac1.ac1_font_key,
+                mac1.ac1_legal_num                                    as codigoproveedor,
+                dmsn.dms_card_name                                       nombreproveedor,
 
-												from mac1
-												inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
-												inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
-												inner join gbpe on gbpe.bpe_doctype = mac1.ac1_font_type and gbpe.bpe_docentry = mac1.ac1_font_key
-												inner join  tasa on gbpe.bpe_currency = tasa.tsa_curro and gbpe.bpe_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
-												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '2'
+                gbpe.bpe_currency                                        monedadocumento,
+                '".$Data['fecha']."'                                            fechacorte,
+                '".$Data['fecha']."'- gbpe.bpe_docdate                       as dias,
+                gbpe.bpe_comments                                     as bpe_comment,
+                gbpe.bpe_currency,
+                mac1.ac1_font_key                                     as cfc_docentry,
+                gbpe.bpe_docnum,
+                gbpe.bpe_docdate                                      as FechaDocumento,
+                gbpe.bpe_docdate                                      as FechaVencimiento,
+                gbpe.bpe_docnum                                       as NumeroDocumento,
+                mac1.ac1_font_type                                    as numtype,
+                'ANTICIPO'                                            as tipo,
+                case
+                    when mac1.ac1_font_type = 15 then sum(mac1.ac1_debit)
+                    else sum(mac1.ac1_debit)
+                    end                                               as totalfactura,
+                SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))     as saldo,
+                ''                                                       retencion,
+                get_tax_currency(gbpe.bpe_currency, gbpe.bpe_docdate) as tasa_dia,
+                CASE
+                    WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 0 and ('".$Data['fecha']."'- gbpe.bpe_docdate) <= 30 then
+                        SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           uno_treinta,
+                CASE
+                    WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 31 and ('".$Data['fecha']."'- gbpe.bpe_docdate) <= 60
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           treinta_uno_secenta,
+                CASE
+                    WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 61 and ('".$Data['fecha']."'- gbpe.bpe_docdate) <= 90
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           secenta_uno_noventa,
+                CASE
+                    WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 91
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0
+                    END                                                  mayor_noventa
 
-												union all
-												select distinct
-												dmdt.mdt_docname,
-												mac1.ac1_font_key,
-												mac1.ac1_legal_num as CodigoCliente,
-												dmsn.dms_card_name NombreCliente,
-												mac1.ac1_account as cuenta,
-												dcnc.cnc_currency monedadocumento,
-												'".$Data['fecha']."' fechacorte,
-												'".$Data['fecha']."' - dcnc.cnc_docdate as dias,
-												dcnc.cnc_comment as bpe_comment,
-												dcnc.cnc_currency,
-												mac1.ac1_font_key as cfc_docentry,
-												dcnc.cnc_docnum,
-												dcnc.cnc_docdate as FechaDocumento,
-												dcnc.cnc_duedate as FechaVencimiento,
-												dcnc.cnc_docnum as NumeroDocumento,
-												mac1.ac1_font_type as numtype,
-												mdt_docname as tipo,
-												case
-												when mac1.ac1_font_type = 15 then mac1.ac1_debit
-												else mac1.ac1_debit
-												end as totalfactura,
-												(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
-												'' retencion,
-												tasa.tsa_value as tasa_dia,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcnc.cnc_duedate) >=0 and ( '".$Data['fecha']."' - dcnc.cnc_duedate) <=30
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END uno_treinta,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcnc.cnc_duedate) >=31 and ( '".$Data['fecha']."' - dcnc.cnc_duedate) <=60
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END treinta_uno_secenta,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcnc.cnc_duedate) >=61 and ( '".$Data['fecha']."' - dcnc.cnc_duedate) <=90
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END secenta_uno_noventa,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcnc.cnc_duedate) >=91
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-												ELSE 0
-												END mayor_noventa
+from mac1
+         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+         inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+         inner join gbpe on gbpe.bpe_doctype = mac1.ac1_font_type and gbpe.bpe_docentry =
+                                                                      mac1.ac1_font_key
+         inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+where  dmsn.dms_card_type = '2'
 
-												from mac1
-												inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
-												inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
-												inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry = mac1.ac1_font_key
-												inner join  tasa on dcnc.cnc_currency = tasa.tsa_curro and dcnc.cnc_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
-												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '2'
+GROUP BY dmdt.mdt_docname,
+         mac1.ac1_font_key,
+         mac1.ac1_legal_num,
+         dmsn.dms_card_name,
+         gbpe.bpe_currency,
+         gbpe.bpe_comments,
+         gbpe.bpe_currency,
+         mac1.ac1_font_key,
+         gbpe.bpe_docnum,
+         gbpe.bpe_docdate,
+         gbpe.bpe_docdate,
+         gbpe.bpe_docnum,
+         mac1.ac1_font_type
+HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0
+union all
+select distinct dmdt.mdt_docname,
+                mac1.ac1_font_key,
+                mac1.ac1_legal_num                                    as codigoproveedor,
+                dmsn.dms_card_name                                       nombreproveedor,
 
-												union all
-												select distinct
-												dmdt.mdt_docname,
-												mac1.ac1_font_key,
-												mac1.ac1_legal_num as CodigoCliente,
-												dmsn.dms_card_name NombreCliente,
-												mac1.ac1_account as cuenta,
-												dcnd.cnd_currency monedadocumento,
-												'".$Data['fecha']."' fechacorte,
-												'".$Data['fecha']."' - dcnd.cnd_docdate as dias,
-												dcnd.cnd_comment as bpe_comment,
-												dcnd.cnd_currency,
-												mac1.ac1_font_key as cfc_docentry,
-												dcnd.cnd_docnum,
-												dcnd.cnd_docdate as FechaDocumento,
-												dcnd.cnd_duedate as FechaVencimiento,
-												dcnd.cnd_docnum as NumeroDocumento,
-												mac1.ac1_font_type as numtype,
-												mdt_docname as tipo,
-												case
-												when mac1.ac1_font_type = 5 then mac1.ac1_debit
-												else mac1.ac1_credit
-												end as totalfactura,
-												(mac1.ac1_ven_credit) - (mac1.ac1_credit) as saldo,
-												'' retencion,
-												tasa.tsa_value as tasa_dia,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=0 and ( '".$Data['fecha']."' - dcnd.cnd_duedate) <=30
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END uno_treinta,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=31 and ( '".$Data['fecha']."' - dcnd.cnd_duedate) <=60
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END treinta_uno_secenta,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=61 and ( '".$Data['fecha']."' - dcnd.cnd_duedate) <=90
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-														ELSE 0
-												END secenta_uno_noventa,
-												CASE
-													WHEN ( '".$Data['fecha']."' - dcnd.cnd_duedate) >=91
-														then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-												ELSE 0
-												END mayor_noventa
+                dcnc.cnc_currency                                        monedadocumento,
+                '".$Data['fecha']."'                                            fechacorte,
+                '".$Data['fecha']."'- dcnc.cnc_docdate                       as dias,
+                dcnc.cnc_comment                                      as bpe_comment,
+                dcnc.cnc_currency,
+                mac1.ac1_font_key                                     as cfc_docentry,
+                dcnc.cnc_docnum,
+                dcnc.cnc_docdate                                      as FechaDocumento,
+                dcnc.cnc_duedate                                      as FechaVencimiento,
+                dcnc.cnc_docnum                                       as NumeroDocumento,
+                mac1.ac1_font_type                                    as numtype,
+                mdt_docname                                           as tipo,
+                case
+                    when mac1.ac1_font_type = 15 then sum(mac1.ac1_debit)
+                    else sum(mac1.ac1_debit)
+                    end                                               as totalfactura,
+                SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))     as saldo,
+                ''                                                       retencion,
+                get_tax_currency(dcnc.cnc_currency, dcnc.cnc_docdate) as tasa_dia,
+                CASE
+                    WHEN ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 0 and ('".$Data['fecha']."'- dcnc.cnc_duedate) <= 30 then
+                        SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           uno_treinta,
+                CASE
+                    WHEN
+                                ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 31 and ('".$Data['fecha']."'- dcnc.cnc_duedate) <= 60 then
+                        SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           treinta_uno_secenta,
+                CASE
+                    WHEN
+                                ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 61 and ('".$Data['fecha']."'- dcnc.cnc_duedate) <= 90 then
+                        SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           secenta_uno_noventa,
+                CASE
+                    WHEN ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 91
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0
+                    END                                                  mayor_noventa
 
-												from mac1
-												inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
-												inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
-												inner join dcnd on dcnd.cnd_doctype = mac1.ac1_font_type and dcnd.cnd_docentry = mac1.ac1_font_key
-												inner join  tasa on dcnd.cnd_currency = tasa.tsa_curro and dcnd.cnd_docdate = tasa.tsa_date and tasa.tsa_curro != tasa.tsa_currd
-												inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
-												where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '2'
+from mac1
+         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+         inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+         inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry =
+                                                                      mac1.ac1_font_key
+         inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+where dmsn.dms_card_type = '2'
 
-												union all
+GROUP BY dmdt.mdt_docname,
+         mac1.ac1_font_key,
+         mac1.ac1_legal_num,
+         dmsn.dms_card_name,
+         dcnc.cnc_currency,
+         dcnc.cnc_comment,
+         dcnc.cnc_currency,
+         mac1.ac1_font_key,
+         dcnc.cnc_docnum,
+         dcnc.cnc_docdate,
+         dcnc.cnc_duedate,
+         dcnc.cnc_docnum,
+         mac1.ac1_font_type,
+         mdt_docname
+HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0
 
-												select distinct
-												dmdt.mdt_docname,
-												mac1.ac1_font_key,
-												case
-												    when ac1_card_type = '1'
-												        then concat('C',mac1.ac1_legal_num)
-												    when ac1_card_type = '2'
-												        then concat('P',mac1.ac1_legal_num)
-												end as codigoproveedor,
-												dmsn.dms_card_name NombreCliente,
-												mac1.ac1_account as cuenta,
-												tmac.mac_currency,
-												'".$Data['fecha']."' fechacorte,
-												CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
-												tmac.mac_comments,
-												tmac.mac_currency,
-												mac_trans_id as dvf_docentry,
-												0 as docnum,
-												tmac.mac_doc_date as fecha_doc,
-												tmac.mac_doc_duedate as fecha_ven,
-												mac_trans_id as id_origen,
-												18 as numtype,
-												mdt_docname as tipo,
-												case
-												    when mac1.ac1_cord = 0
-												        then mac1.ac1_debit
-												    when mac1.ac1_cord = 1
-												        then mac1.ac1_credit
-												end as total_doc,
-												(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
-												'' retencion,
-												tasa.tsa_value as tasa_dia,
-												CASE
-												    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate) >=0 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=30
-												        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-												    ELSE 0
-												END uno_treinta,
-												CASE
-												    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=31 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=60
-												        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-												    ELSE 0
-												END treinta_uno_secenta,
-												CASE
-												    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=61 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=90
-												        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-												    ELSE 0
-												END secenta_uno_noventa,
-												CASE
-												    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=91
-												        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-												    ELSE 0
-												END mayor_noventa
-												from mac1
-												inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
-												inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
-												inner join tmac on tmac.mac_trans_id = mac1.ac1_font_key and tmac.mac_doctype = mac1.ac1_font_type
-												inner join tasa on tmac.mac_currency = tasa.tsa_curro and tmac.mac_doc_date = tasa.tsa_date
-												inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type and mac1.ac1_legal_num = dmsn.dms_card_code
-												where dmsn.dms_card_type = '1'
-												and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
+union all
+
+select distinct dmdt.mdt_docname,
+                mac1.ac1_font_key,
+                mac1.ac1_legal_num                                    as CodigoCliente,
+                dmsn.dms_card_name                                       NombreCliente,
+
+                dcnd.cnd_currency                                        monedadocumento,
+                '".$Data['fecha']."'                                            fechacorte,
+                '".$Data['fecha']."'- dcnd.cnd_docdate                       as dias,
+                dcnd.cnd_comment                                      as bpe_comment,
+                dcnd.cnd_currency,
+                mac1.ac1_font_key                                     as cfc_docentry,
+                dcnd.cnd_docnum,
+                dcnd.cnd_docdate                                      as FechaDocumento,
+                dcnd.cnd_duedate                                      as FechaVencimiento,
+                dcnd.cnd_docnum                                       as NumeroDocumento,
+                mac1.ac1_font_type                                    as numtype,
+                mdt_docname                                           as tipo,
+                case
+                    when mac1.ac1_font_type = 5 then sum(mac1.ac1_debit)
+                    else sum(mac1.ac1_credit)
+                    end                                               as totalfactura,
+                sum((mac1.ac1_ven_credit) - (mac1.ac1_credit))        as saldo,
+                ''                                                       retencion,
+                get_tax_currency(dcnd.cnd_currency, dcnd.cnd_docdate) as tasa_dia,
+                CASE
+                    WHEN ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 0 and ('".$Data['fecha']."'- dcnd.cnd_duedate)
+                        <= 30 then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           uno_treinta,
+                CASE
+                    WHEN ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 31 and ('".$Data['fecha']."'-
+                                                                      dcnd.cnd_duedate) <= 60
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0
+                    END                                                  treinta_uno_secenta,
+                CASE
+                    WHEN ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 61
+                        and ('".$Data['fecha']."'- dcnd.cnd_duedate) <= 90
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                           secenta_uno_noventa,
+                CASE
+                    WHEN
+                        ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 91
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0
+                    END                                                  mayor_noventa
+
+from mac1
+         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp =
+                                                                 '1'
+         inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+         inner join dcnd on dcnd.cnd_doctype = mac1.ac1_font_type and
+                            dcnd.cnd_docentry = mac1.ac1_font_key
+         inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+where dmsn.dms_card_type = '2'
+
+group by dmdt.mdt_docname,
+         mac1.ac1_font_key,
+         mac1.ac1_legal_num,
+         dmsn.dms_card_name,
+         dcnd.cnd_currency,
+         dcnd.cnd_comment,
+         dcnd.cnd_currency,
+         mac1.ac1_font_key,
+         dcnd.cnd_docnum,
+         dcnd.cnd_docdate,
+         dcnd.cnd_duedate,
+         dcnd.cnd_docnum,
+         mac1.ac1_font_type,
+         mdt_docname
+HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0
+
+union all
+select distinct dmdt.mdt_docname,
+                mac1.ac1_font_key,
+                case
+                    when ac1_card_type = '1'
+                        then mac1.ac1_legal_num
+                    when ac1_card_type = '2'
+                        then mac1.ac1_legal_num
+                    end                                                as codigoproveedor,
+                dmsn.dms_card_name                                        NombreCliente,
+
+                tmac.mac_currency,
+                '".$Data['fecha']."'                                             fechacorte,
+                CURRENT_DATE - tmac.mac_doc_duedate                       dias_atrasado,
+                tmac.mac_comments,
+                tmac.mac_currency,
+                mac_trans_id                                           as dvf_docentry,
+                0                                                      as docnum,
+                tmac.mac_doc_date                                      as fecha_doc,
+                tmac.mac_doc_duedate                                   as fecha_ven,
+                mac_trans_id                                           as id_origen,
+                18                                                     as numtype,
+                mdt_docname                                            as tipo,
+                case
+                    when mac1.ac1_cord = 0
+                        then sum(mac1.ac1_debit)
+                    when mac1.ac1_cord = 1
+                        then sum(mac1.ac1_credit)
+                    end                                                as total_doc,
+                SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))      as saldo_venc,
+                ''                                                        retencion,
+                get_tax_currency(tmac.mac_currency, tmac.mac_doc_date) as tasa_dia,
+                CASE
+                    WHEN ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 0 and ('".$Data['fecha']."'-
+                                                                         tmac.mac_doc_duedate) <= 30
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                            uno_treinta,
+                CASE
+                    WHEN
+                                ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 31 and ('".$Data['fecha']."'-
+                                                                                 tmac.mac_doc_duedate) <= 60
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                            treinta_uno_secenta,
+                CASE
+                    WHEN
+                                ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 61 and ('".$Data['fecha']."'-
+                                                                                 tmac.mac_doc_duedate) <= 90
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0 END                                            secenta_uno_noventa,
+                CASE
+                    WHEN ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 91
+                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ELSE 0
+                    END                                                   mayor_noventa
+from mac1
+         inner join dacc on mac1.ac1_account = dacc.acc_code and
+                            acc_businessp = '1'
+         inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+         inner join tmac on tmac.mac_trans_id = mac1.ac1_font_key and
+                            tmac.mac_doctype = mac1.ac1_font_type
+         inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type
+    and mac1.ac1_legal_num = dmsn.dms_card_code
+where dmsn.dms_card_type = '2'
+group by dmdt.mdt_docname,
+         mac1.ac1_font_key,
+         case
+             when ac1_card_type = '1'
+                 then mac1.ac1_legal_num
+             when ac1_card_type = '2'
+                 then mac1.ac1_legal_num
+             end,
+         dmsn.dms_card_name,
+         tmac.mac_currency,
+         tmac.mac_comments,
+         tmac.mac_currency,
+         mac_trans_id,
+         tmac.mac_doc_date,
+         tmac.mac_doc_duedate,
+         mac_trans_id,
+         mdt_docname, mac1.ac1_cord";
 
 		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
 // print_r($sqlestadocuenta);exit();die();

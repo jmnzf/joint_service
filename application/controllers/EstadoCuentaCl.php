@@ -99,7 +99,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 														end as totalfactura,
 														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
 														'' retencion,
-														tasa.tsa_value as tasa_dia,
+														get_tax_currency(dvfv.dvf_currency,dvfv.dvf_docdate) as tasa_dia,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=0 and ( '".$Data['fecha']."' - dvfv.dvf_duedate) <=30
 																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
@@ -126,7 +126,6 @@ class EstadoCuentaCl extENDs REST_Controller {
 														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 														inner join dvfv on dvfv.dvf_doctype = mac1.ac1_font_type and dvfv.dvf_docentry = mac1.ac1_font_key
-														inner join tasa on dvfv.dvf_currency = tasa.tsa_curro and dvfv.dvf_docdate = tasa.tsa_date
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
@@ -154,7 +153,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 														gbpr.bpr_doctotal as totalfactura,
 														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
 														'' retencion,
-														tasa.tsa_value as tasa_dia,
+														get_tax_currency(gbpr.bpr_currency,gbpr.bpr_docdate) as tasa_dia,
 														CASE
 															WHEN ( '".$Data['fecha']."' - gbpr.bpr_docdate) >=0 and ( '".$Data['fecha']."' - gbpr.bpr_docdate) <=30
 																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
@@ -180,7 +179,6 @@ class EstadoCuentaCl extENDs REST_Controller {
 														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 														inner join gbpr on gbpr.bpr_doctype = mac1.ac1_font_type and gbpr.bpr_docentry = mac1.ac1_font_key
-														inner join tasa on gbpr.bpr_currency = tasa.tsa_curro and gbpr.bpr_docdate = tasa.tsa_date
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
@@ -210,7 +208,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 														end as totalfactura,
 														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
 														'' retencion,
-														tasa.tsa_value as tasa_dia,
+														get_tax_currency(dvnc.vnc_currency,dvnc.vnc_docdate) as tasa_dia,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=0 and ( '".$Data['fecha']."' - dvnc.vnc_duedate) <=30
 																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
@@ -236,9 +234,64 @@ class EstadoCuentaCl extENDs REST_Controller {
 														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 														inner join dvnc on dvnc.vnc_doctype = mac1.ac1_font_type and dvnc.vnc_docentry = mac1.ac1_font_key
-														inner join tasa on dvnc.vnc_currency = tasa.tsa_curro and dvnc.vnc_docdate = tasa.tsa_date
 														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 														where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
+
+														union all
+														
+														select distinct
+														dmdt.mdt_docname,
+														mac1.ac1_font_key,
+														mac1.ac1_legal_num as CodigoCliente,
+														dmsn.dms_card_name NombreCliente,
+														mac1.ac1_account as cuenta,
+														dvnd.vnd_currency monedadocumento,
+														'".$Data['fecha']."' fechacorte,
+														'".$Data['fecha']."' - dvnd.vnd_docdate as dias,
+														dvnd.vnd_comment as bpr_comment,
+														dvnd.vnd_currency,
+														mac1.ac1_font_key as dvf_docentry,
+														dvnd.vnd_docnum,
+														dvnd.vnd_docdate as FechaDocumento,
+														dvnd.vnd_duedate as FechaVencimiento,
+														dvnd.vnd_docnum as NumeroDocumento,
+														mac1.ac1_font_type as numtype,
+														mdt_docname as tipo,
+														case
+														when mac1.ac1_font_type = 5 then mac1.ac1_debit
+														else mac1.ac1_credit
+														end as totalfactura,
+														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
+														'' retencion,
+														get_tax_currency(dvnd.vnd_currency,dvnd.vnd_docdate) as tasa_dia,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=0 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=30
+																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																ELSE 0
+														END uno_treinta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=31 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=60
+																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																ELSE 0
+														END treinta_uno_secenta,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=61 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=90
+																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																ELSE 0
+														END secenta_uno_noventa,
+														CASE
+															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=91
+																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+														ELSE 0
+														END mayor_noventa
+
+														from mac1
+														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+														inner join dvnd on dvnd.vnd_doctype = mac1.ac1_font_type and dvnd.vnd_docentry = mac1.ac1_font_key
+														inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+														where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0
 														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
 
 														union all
@@ -247,9 +300,9 @@ class EstadoCuentaCl extENDs REST_Controller {
 														mac1.ac1_font_key,
 														case
 														    when ac1_card_type = '1'
-														        then concat('C',mac1.ac1_legal_num)
+														        then mac1.ac1_legal_num
 														    when ac1_card_type = '2'
-														        then concat('P',mac1.ac1_legal_num)
+														        then mac1.ac1_legal_num
 														end as codigoproveedor,
 														dmsn.dms_card_name NombreCliente,
 														mac1.ac1_account as cuenta,
@@ -273,7 +326,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 														end as total_doc,
 														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 														'' retencion,
-														tasa.tsa_value as tasa_dia,
+														get_tax_currency(tmac.mac_currency,tmac.mac_doc_date) tasa_dia,
 														CASE
 														    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate) >=0 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=30
 														        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
@@ -298,7 +351,6 @@ class EstadoCuentaCl extENDs REST_Controller {
 														inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 														inner join tmac on tmac.mac_trans_id = mac1.ac1_font_key and tmac.mac_doctype = mac1.ac1_font_type
-														inner join tasa on tmac.mac_currency = tasa.tsa_curro and tmac.mac_doc_date = tasa.tsa_date
 														inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type and mac1.ac1_legal_num = dmsn.dms_card_code
 														where dmsn.dms_card_type = '1' and and mac1.ac1_legal_num = '".$Data['cardcode']."'
 														and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
@@ -345,7 +397,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 				  $detail_30_60 =  $detail_30_60 + ($value['treinta_uno_secenta']);
 				  $detail_60_90 =  $detail_60_90 + ($value['secenta_uno_noventa']);
 				  $detail_mayor_90 =  $detail_mayor_90 + ($value['mayor_noventa']);
-
+					$total_saldo = $detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90;
 					$total_valores = '
 								<tr>
 								<th>&nbsp;</th>
@@ -354,14 +406,14 @@ class EstadoCuentaCl extENDs REST_Controller {
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
 								<th><b>Total</b></th>
-								<th style="width: 10%;" class=" centro"><b>'.$value['monedadocumento'].' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), 2, ',', '.').'</b></th>
+								<th style="width: 10%;" class=" centro"><b>'.$value['monedadocumento'].' '.number_format(($total_saldo), 2, ',', '.').'</b></th>
 								<th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
 								<th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
 								<th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_60_90, 2, ',', '.').'</b></th>
 								<th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_mayor_90, 2, ',', '.').'</b></th>
 								</tr>';
 
-				  $totalfactura = ($totalfactura + ($value['totalfactura'] - $value['saldo']));
+				  $totalfactura = ($total_saldo);
 				}
 
 

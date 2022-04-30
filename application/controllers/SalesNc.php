@@ -19,6 +19,7 @@ class SalesNc extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -120,6 +121,26 @@ class SalesNc extends REST_Controller {
 					return;
 			}
 			//
+
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['vnc_duedev'], $Data['vnc_docdate'],$Data['vnc_duedate'],1);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
+			//
+
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
@@ -1387,8 +1408,7 @@ class SalesNc extends REST_Controller {
 								$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
 
 								if(trim($Data['vnc_currency']) != $MONEDALOCAL ){
-
-										$grantotalCostoInventario = ($grantotalCostoInventario / $TasaLocSys);
+										$grantotalCostoInventario = ($grantotalCostoInventario * $TasaLocSys);
 								}
 
 								if( $codigo3 == 1 || $codigo3 == "1" ){
@@ -1396,7 +1416,7 @@ class SalesNc extends REST_Controller {
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys);
 										}else{
-												$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												$MontoSysDB = ($grantotalCostoInventarioOriginal);
 										}
 
 								}else if( $codigo3 == 2 || $codigo3 == "2" ){
@@ -1404,42 +1424,42 @@ class SalesNc extends REST_Controller {
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys);
 										}else{
-												$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												$MontoSysDB = ($grantotalCostoInventarioOriginal);
 										}
 								}else if( $codigo3 == 3 || $codigo3 == "3" ){
 										$dbito = $grantotalCostoInventario;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys);
 										}else{
-												$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												$MontoSysDB = ($grantotalCostoInventarioOriginal);
 										}
 								}else if( $codigo3 == 4 || $codigo3 == "4" ){
 										$dbito = $grantotalCostoInventario;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys);
 										}else{
-												$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												$MontoSysDB = ($grantotalCostoInventarioOriginal);
 										}
 								}else if( $codigo3 == 5  || $codigo3 == "5" ){
 										$cdito = $grantotalCostoInventario;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys);
 										}else{
-												$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												$MontoSysCR = ($grantotalCostoInventarioOriginal);
 										}
 								}else if( $codigo3 == 6 || $codigo3 == "6" ){
 										$cdito = $grantotalCostoInventario;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys);
 										}else{
-												$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												$MontoSysCR = ($grantotalCostoInventarioOriginal);
 										}
 								}else if( $codigo3 == 7 || $codigo3 == "7" ){
 										$cdito = $grantotalCostoInventario;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys);
 										}else{
-												$MontoSysCR = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+												$MontoSysCR = ($grantotalCostoInventarioOriginal);
 										}
 								}
 
@@ -1596,49 +1616,49 @@ class SalesNc extends REST_Controller {
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysDB = ($grantotalCostoCostoOriginal);
 										}
 									}else if( $codigo3 == 2 || $codigo3 == "2" ){
 										$dbito = 	$grantotalCostoCosto;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysDB = ($grantotalCostoCostoOriginal);
 										}
 									}else if( $codigo3 == 3 || $codigo3 == "3" ){
 										$dbito = 	$grantotalCostoCosto;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysDB = ($grantotalCostoCostoOriginal);
 										}
 									}else if( $codigo3 == 4 || $codigo3 == "4" ){
 										$dbito = 	$grantotalCostoCosto;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysDB = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysDB = ($grantotalCostoCostoOriginal);
 										}
 									}else if( $codigo3 == 5  || $codigo3 == "5" ){
 										$cdito = 	$grantotalCostoCosto;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysCR = ($grantotalCostoCostoOriginal);
 										}
 									}else if( $codigo3 == 6 || $codigo3 == "6" ){
 										$cdito = 	$grantotalCostoCosto;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysCR = ($grantotalCostoCostoOriginal);
 										}
 									}else if( $codigo3 == 7 || $codigo3 == "7" ){
 										$cdito = 	$grantotalCostoCosto;
 										if(trim($Data['vnc_currency']) != $MONEDASYS ){
 												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
 										}else{
-												$MontoSysCR = ($grantotalCostoCostoOriginal / $TasaLocSys);
+												$MontoSysCR = ($grantotalCostoCostoOriginal);
 										}
 									}
 
@@ -1783,6 +1803,7 @@ class SalesNc extends REST_Controller {
 									//SI VIENE DE UN COPIAR FACTURA
 									if ( $Data['vnc_basetype'] == 5 ){
 										$debitoo = $creditoo;
+										$creditoo = 0;
 									}
 
 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1973,14 +1994,20 @@ class SalesNc extends REST_Controller {
 						}
 						// FIN VALIDACION DIFERENCIA EN DECIMALES
 
-						//SE VALIDA QUE EL PAY TO DAY DE LA FACTURA
+						//SE ACTUALIZA EL PAY TO DAY DE LA FACTURA
 						if($Data['vnc_basetype'] == 5) { // SOLO CUANDO ES UNA FACTURA
+
+							$valorAppl =  $Data['vnc_doctotal'];
+
+							if(trim($Data['vnc_currency']) != $MONEDALOCAL ){
+									$valorAppl = $Data['vnc_doctotal'] * $TasaDocLoc;
+							}
 
 							$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
 
 							$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-								':dvf_paytoday' => $Data['vnc_doctotal'],
+								':dvf_paytoday' => $valorAppl,
 								':dvf_docentry' => $Data['vnc_baseentry'],
 								':dvf_doctype'  => $Data['vnc_basetype']
 
@@ -2008,6 +2035,12 @@ class SalesNc extends REST_Controller {
 						// SE ACTUALIZA VALOR EN EL ASIENTO CONTABLE
 						// GENERADO EN LA FACTURA
 						if($Data['vnc_basetype'] == 5) { // SOLO CUANDO ES UNA FACTURA
+
+							$valorAppl =  $Data['vnc_doctotal'];
+
+							if(trim($Data['vnc_currency']) != $MONEDALOCAL ){
+									$valorAppl = $Data['vnc_doctotal'] * $TasaDocLoc;
+							}
 
 							$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 															 JOIN dmgs  AS f2
@@ -2041,7 +2074,7 @@ class SalesNc extends REST_Controller {
 																		AND ac1_account = :ac1_account";
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-								':ac1_ven_credit' => $Data['vnc_doctotal'],
+								':ac1_ven_credit' => $valorAppl,
 								':ac1_legal_num'  => $Data['vnc_cardcode'],
 								':ac1_font_key'   => $Data['vnc_baseentry'],
 								':ac1_font_type'  => $Data['vnc_basetype'],
@@ -2101,6 +2134,51 @@ class SalesNc extends REST_Controller {
 									return;
 							}
 						}
+
+
+						// SE VALIDA SALDOS PARA CERRAR FACTURA
+						if($Data['vnc_basetype'] == 5) {
+
+										$resEstado = $this->generic->validateBalanceAndClose($Data['vnc_baseentry'],$Data['vnc_basetype'],'dvfv','dvf');
+
+										if(isset($resEstado['error']) && $resEstado['error'] === true){
+													$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																							VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+													$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																		':bed_docentry' => $Data['vnc_baseentry'],
+																		':bed_doctype' => $Data['vnc_basetype'],
+																		':bed_status' => 3, //ESTADO CERRADO
+																		':bed_createby' => $Data['vnc_createby'],
+																		':bed_date' => date('Y-m-d'),
+																		':bed_baseentry' => $resInsert,
+																		':bed_basetype' => $Data['vnc_doctype']
+													));
+
+
+													if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+													}else{
+
+															 $this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' => $resInsertEstado,
+																	'mensaje'	=> 'No se pudo registrar el pago'
+																);
+
+
+																$this->response($respuesta);
+
+																return;
+													}
+
+										}
+
+						 }
 						// FIN DE OPERACIONES VITALES
 
 						// Si todo sale bien despues de insertar el detalle de la Nota crédito de clientes
