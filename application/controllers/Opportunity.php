@@ -48,7 +48,8 @@ class Opportunity extends REST_Controller
             !isset($Data['bop_pvalue'])    or
             !isset($Data['bop_interestl'])  or
             !isset($Data['bop_rstatus']) or
-            !isset($Data['bop_stage'])
+            !isset($Data['bop_stage']) or 
+            !isset($Data['bop_mponderado']) 
         ) {
 
             $respuesta = array(
@@ -102,8 +103,8 @@ class Opportunity extends REST_Controller
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason, bop_stage) 
-                        VALUES ( :bop_type, :bop_invamount, :bop_slpcode, :bop_agent, :bop_balance, :bop_name, :bop_docnum, :bop_status, :bop_date, :bop_duedate, :bop_days, :bop_dateprev, :bop_pvalue, :bop_interestl, :bop_rstatus, :bop_cardcode, :bop_cardcode_name, :bop_reason, :bop_stage)";
+        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason, bop_stage, bop_mponderado) 
+                        VALUES ( :bop_type, :bop_invamount, :bop_slpcode, :bop_agent, :bop_balance, :bop_name, :bop_docnum, :bop_status, :bop_date, :bop_duedate, :bop_days, :bop_dateprev, :bop_pvalue, :bop_interestl, :bop_rstatus, :bop_cardcode, :bop_cardcode_name, :bop_reason, :bop_stage, :bop_mponderado)";
         $this->pedeo->trans_begin();
         $resInsert = $this->pedeo->insertRow(
             $sqlInsert,
@@ -126,7 +127,8 @@ class Opportunity extends REST_Controller
                 ":bop_cardcode" => $Data['bop_cardcode'],
                 ":bop_cardcode_name" => $Data['bop_cardcode_name'],
                 ":bop_reason" => (isset($Data['bop_reason'])) ? $Data['bop_reason'] : null,
-                ":bop_stage" => $Data['bop_stage']
+                ":bop_stage" => $Data['bop_stage'],
+                ":bop_mponderado" => $Data['bop_mponderado']
             )
         );
 
@@ -522,26 +524,15 @@ class Opportunity extends REST_Controller
             return;
         }
 
-        $fields = [':bop_date' => $Data['bop_date'],
-                    ':bop_duedate' =>$Data['bop_duedate']];
-        $filters = "";
-
-            $keys = array_keys($Data);
-            foreach ($keys as $key => $value) {
-                if (!in_array($value,['bop_date','bop_duedate','c','a'],true)) {
-                $fields[":{$value}"] = $Data[$value];
-                $filters .= " AND {$value} = :{$value}"; 
-            }
-            
-        }
-
-        
+        $info = $this->validateFields($Data);       
 
         $sqlSelect = " SELECT * FROM tbop WHERE  bop_date BETWEEN :bop_date  AND :bop_duedate {{filter}}";
         
-        $sqlSelect = str_replace("{{filter}}",$filters,$sqlSelect);
+        
+        $sqlSelect = str_replace("{{filter}}",$info['filters'],$sqlSelect);
         // print_r($sqlSelect);exit;
-        $resSelect = $this->pedeo->queryTable($sqlSelect, $fields);
+        $resSelect = $this->pedeo->queryTable($sqlSelect, $info['fields']);
+        
         
         if (isset($resSelect[0])) {
             $respuesta = array(
@@ -559,4 +550,119 @@ class Opportunity extends REST_Controller
         }
         $this->response($respuesta);
     }
+
+     public function getOpportunityStatistics_post(){
+        $Data = $this->post();
+        $statisticsInfo = array();
+        if (
+            !isset($Data['bop_date']) or
+            !isset($Data['bop_duedate'])
+        ) {
+            $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'    => 'La informacion enviada no es valida'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            return;
+        }
+        // se crean los filtros y los campos para el mismo
+        $info = $this->validateFields($Data);    
+        
+        $sqlSelect = " SELECT 
+                        count ( case when bop_rstatus = 1 then bop_rstatus end) abierta,
+                        count ( case when bop_rstatus = 2 then bop_rstatus end)ganada ,
+                        count ( case when bop_rstatus = 3 then bop_rstatus end) perdida,
+                        sum(bop_pvalue) valor_p
+                        from tbop WHERE  bop_date BETWEEN :bop_date  AND :bop_duedate {{filter}}";
+        
+        
+        $sqlSelect = str_replace("{{filter}}",$info['filters'],$sqlSelect);
+
+        // print_r($sqlSelect);exit;
+        $resSelect = $this->pedeo->queryTable($sqlSelect, $info['fields']);
+
+        // porcentaje de oportunidades por estado
+            $sqlOpProfit = "SELECT 
+                case
+                    when bop_rstatus = 1 then 'Abierta'
+                    when bop_rstatus = 2 then 'Ganada'
+                    when bop_rstatus = 3 then 'Perdida'
+                    end label,
+                    round((count(bop_rstatus)*100)/t.total) value
+                from tbop
+                cross join (select count(1) total from tbop WHERE bop_date between :bop_date  AND :bop_duedate {{filter}}) t
+                WHERE bop_date between :bop_date  AND :bop_duedate  {{filter}}
+                GROUP BY t.total,bop_rstatus";
+
+        $sqlOpProfit = str_replace("{{filter}}",$info['filters'],$sqlOpProfit);
+
+        $resProfit = $this->pedeo->queryTable($sqlOpProfit,$info['fields']);
+
+        // porcentaje de oportunidades por vendedor
+        $sqlOpvend = "SELECT
+        mev_names label,
+        count(1) value
+        from tbop
+        join dmev on bop_slpcode = mev_id
+        WHERE bop_date between :bop_date AND :bop_duedate {{filter}}
+        GROUP BY mev_names";
+
+        $sqlOpvend = str_replace("{{filter}}",$info['filters'],$sqlOpvend);
+
+        $resvend = $this->pedeo->queryTable($sqlOpvend,$info['fields']);
+
+        // grafica de valores esperados
+        $sqlValores = "SELECT distinct
+                        case
+                            when bop_rstatus = 1 then 'Abierta'
+                            when bop_rstatus = 2 then 'Ganada'
+                            when bop_rstatus = 3 then 'Perdida'
+                        end label,
+                        sum(bop_pvalue) value
+                        from tbop
+                        WHERE bop_date between :bop_date AND :bop_duedate {{filter}}
+                        GROUP BY bop_rstatus";
+
+        $sqlValores = str_replace("{{filter}}",$info['filters'],$sqlValores);
+        
+        $resValores = $this->pedeo->queryTable($sqlValores, $info['fields']);
+        // se agregan los porcentajes a la respuesta
+        array_push($resSelect,$resProfit,$resvend,$resValores);
+        if (isset($resSelect[0])) {
+            $respuesta = array(
+                'error' => false,
+                'data'  => $resSelect,
+                'mensaje' => ''
+            );
+        } else {
+
+            $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'    => 'busqueda sin resultados'
+            );
+        }
+        $this->response($respuesta);
+
+        
+     }
+
+    // funcion par estructurar campos y condicionales para queries 
+     private function  validateFields($Data){
+        $fields = [':bop_date' => $Data['bop_date'],
+        ':bop_duedate' =>$Data['bop_duedate']];
+            $filters = "";
+
+            $keys = array_keys($Data);
+            foreach ($keys as $key => $value) {
+                if (!in_array($value,['bop_date','bop_duedate','c','a'],true)) {
+                $fields[":{$value}"] = $Data[$value];
+                $filters .= " AND {$value} = :{$value}"; 
+            }
+
+            }
+        return ['fields' => $fields, 'filters' => $filters];
+     }
 }
