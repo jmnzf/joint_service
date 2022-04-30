@@ -23,6 +23,7 @@ class FacturaVenta extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('DateFormat');
 
 	}
 
@@ -111,7 +112,8 @@ class FacturaVenta extends REST_Controller {
 												  t0.dvf_docdate,
 												  t6.pgs_mpfn,
 												  t6.pgs_mde,
-													t1.fv1_quantity
+													t1.fv1_quantity,
+													t2.dms_rtype regimen
 												from dvfv t0
 												inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
 												left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
@@ -140,6 +142,9 @@ class FacturaVenta extends REST_Controller {
 						return;
 				}
 				// print_r();exit();die
+
+
+
 
 				// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 				// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
@@ -313,6 +318,8 @@ class FacturaVenta extends REST_Controller {
 
 				}
 
+
+
 				$consecutivo = '';
 
 				if($contenidoFV[0]['pgs_mpfn'] == 1){
@@ -342,6 +349,34 @@ class FacturaVenta extends REST_Controller {
 													 	</table>';
 				}
 
+
+				$regimen = '';
+
+				if($contenidoFV[0]['regimen'] == '1' OR $contenidoFV[0]['regimen'] == '3'){
+
+					$regimen = '<TABLE width="35%" style="vertical-align: bottom;">
+						<TR><TH style="text-align: left;">75% RET.IVA:</TH>
+							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalIva * 75) / 100, 2, ',', '.').'</TD>
+						<TR><TH  style="text-align: left;">BASE IMPONIBLE  3% DE IGTF:</TH>
+							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalDoc - ($valorTotalIva * 75) / 100), 2, ',', '.').'</TD>
+						<TR><TH  style="text-align: left;">TOTAL  3% DE IGTF:</TH>
+							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format((($valorTotalDoc - ($valorTotalIva * 75) / 100) * 3) / 100, 2, ',', '.').'</TD>
+					    <TR><TH style="text-align: left;">TOTAL:</TH>
+							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalDoc - ($valorTotalIva * 75) / 100) + ((($valorTotalDoc - ($valorTotalIva * 75) / 100) * 3) / 100), 2, ',', '.').'</TD>
+					</TABLE>';
+
+				}else if ($contenidoFV[0]['regimen'] == '2' OR $contenidoFV[0]['regimen'] == '4'){
+
+					$regimen = '<TABLE width="35%" style="vertical-align: bottom;">
+						<TR><TH  style="text-align: left;">BASE IMPONIBLE  3% DE IGTF:</TH>
+							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalDoc, 2, ',', '.').'</TD>
+						<TR><TH  style="text-align: left;">TOTAL  3% DE IGTF:</TH>
+							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalDoc   * 3) / 100, 2, ',', '.').'</TD>
+					    <TR><TH style="text-align: left;">TOTAL:</TH>
+							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalDoc  + (($valorTotalDoc  * 3) / 100), 2, ',', '.').'</TD>
+					</TABLE>';
+
+				}
 
 
         $header = '
@@ -494,7 +529,7 @@ class FacturaVenta extends REST_Controller {
 						<p class="">FECHA DE EMISIÓN: </p>
 					</th>
 					<th style="text-align: right;">
-						<p>'.date("d-m-Y", strtotime($contenidoFV[0]['fechadocumento'])).'</p>
+						<p>'.$this->dateformat->Date($contenidoFV[0]['fechadocumento']).'</p>
 					</th>
 				</tr>
         </table>
@@ -523,7 +558,6 @@ class FacturaVenta extends REST_Controller {
         </table>
 
         <br>
-				<br>
 
 				'.$DatosExportacion.'
 
@@ -584,8 +618,21 @@ class FacturaVenta extends REST_Controller {
 								</th>
 						</tr>
         </table>
+				<table width="100%" style="vertical-align: bottom;">
+				<tr>
+					<th style="text-align: justify;">
+					<br>
 
-				<br><br>
+					<p>NOTA: EL PAGO, RECIBIDO DE ESTE DOCUMENTO, EN MONEDA DISTINTA A LA DE CURSO LEGAL EN EL PAIS Y FUERA DEL SISTEMA
+						BANCARIO, GENERA UN 3% POR CONCEPTO DE IMPUESTOS A LAS GRANDES TRANSACCIONES FINANCIERAS (IGTF) CONSIDERANDO
+						LO ESTABLECIDO EN LOS ART. 4 NUMERAL 6 , ART. 24, AMBOS DE LA GACETA 6.687 Y ART.1 DE LA GACETA 42.339.
+						</p>
+					</th>
+				</tr>
+				</table>
+				<br>
+				'.$regimen.'
+				<br>
 
 				<table border=1 width="50%">
 					<tr>
@@ -596,18 +643,22 @@ class FacturaVenta extends REST_Controller {
 							<td style="height: 50px;" >'.$contenidoFV[0]['placa'].'</td>
 							<td style="height: 50px;">'.$contenidoFV[0]['precintos'].'</td>
 					</tr>
+
 				</table>
 
 
-        <br><br>
+
+        <br>
         <table width="100%" style="vertical-align: bottom;">
             <tr>
-                <th style="text-align: left;">
+                <th style="text-align: justify;">
                     <span>'.$CommentFinal[0]['cdm_comments'].'</span>
                 </th>
-            </tr>
+								</tr>
+								<br>
+								<br>
         </table>';
-
+				// print_r($html);exit();die();
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
         // $mpdf->SetHTMLHeader($header);

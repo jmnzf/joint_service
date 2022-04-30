@@ -69,9 +69,9 @@
 			// OBTENER DATOS REQUEST.
 			$request = $this->post();
 
-			if( !isset($request['kst_name']) OR
-                !isset($request['kst_type']) OR
-			    !isset($request['kst_kpi']) OR
+			if( !isset($request['kst_kpiname']) OR
+                !isset($request['kst_kpitype']) OR
+			    !isset($request['kst_queryid']) OR
                 !isset($request['kst_config'])){
 
 				$this->response(array(
@@ -94,9 +94,9 @@
 			// 
 			$stmt = $this->pdo->prepare("INSERT INTO tkpi (kst_name, kst_type, kst_kpi, kst_config, kst_status) VALUES (:kst_name, :kst_type, :kst_kpi, :kst_config, :kst_status)");
 			// 
-			$stmt->bindParam(':kst_name', $request['kst_name']);
-			$stmt->bindParam(':kst_type', $request['kst_type']);
-			$stmt->bindParam(':kst_kpi', $request['kst_kpi']);
+			$stmt->bindParam(':kst_name', $request['kst_kpiname']);
+			$stmt->bindParam(':kst_type', $request['kst_kpitype']);
+			$stmt->bindParam(':kst_kpi', $request['kst_queryid']);
 			$stmt->bindParam(':kst_config', $config, PDO::PARAM_STR);
 			$stmt->bindParam(':kst_status', $status);
 			//
@@ -119,6 +119,7 @@
 			$request = $this->post();
 
 			if( !isset($request['gkp_name']) OR
+				!isset($request['gkp_order']) OR
 			    !isset($request['gkp_description'])){
 
 				$this->response(array(
@@ -136,11 +137,12 @@
 				'mensaje' => 'No se pudo guardar los datos'
 			);
 			//
-			$insertId = $this->pedeo->insertRow("INSERT INTO tkpig (gkp_name, gkp_description, gkp_status) VALUES (:gkp_name, :gkp_description, :gkp_status)",
+			$insertId = $this->pedeo->insertRow("INSERT INTO tkpig (gkp_name, gkp_description, gkp_status, gkp_order) VALUES (:gkp_name, :gkp_description, :gkp_status, :gkp_order)",
 				array(
 					':gkp_name'        => $request['gkp_name'],
 					':gkp_description' => $request['gkp_description'],
-					':gkp_status'      => 1
+					':gkp_status'      => 1,
+					':gkp_order'       => $request['gkp_order']
 				)
 			);
 			//
@@ -217,9 +219,9 @@
 			// OBTENER DATOS REQUEST.
 			$request = $this->post();
 
-			if( !isset($request['kst_name']) OR
-                !isset($request['kst_type']) OR
-			    !isset($request['kst_kpi']) OR
+			if( !isset($request['kst_kpiname']) OR
+                !isset($request['kst_kpitype']) OR
+			    !isset($request['kst_queryid']) OR
                 !isset($request['kst_config']) OR
 			    !isset($request['kst_id'])){
 
@@ -243,9 +245,9 @@
 			// 
 			$stmt = $this->pdo->prepare("UPDATE tkpi SET kst_name=:kst_name, kst_type=:kst_type, kst_kpi=:kst_kpi, kst_config=:kst_config, kst_status=:kst_status WHERE kst_id = :kst_id");
 			// 
-			$stmt->bindParam(':kst_name', $request['kst_name']);
-			$stmt->bindParam(':kst_type', $request['kst_type']);
-			$stmt->bindParam(':kst_kpi', $request['kst_kpi']);
+			$stmt->bindParam(':kst_name', $request['kst_kpiname']);
+			$stmt->bindParam(':kst_type', $request['kst_kpitype']);
+			$stmt->bindParam(':kst_kpi', $request['kst_queryid']);
 			$stmt->bindParam(':kst_config', $config, PDO::PARAM_STR);
 			$stmt->bindParam(':kst_status', $status);
 			$stmt->bindParam(':kst_id', $request['kst_id']);
@@ -277,6 +279,7 @@
 			if( !isset($request['gkp_name']) OR
 			    !isset($request['gkp_description']) OR
 			    !isset($request['gkp_status']) OR
+				!isset($request['gkp_order']) OR
 			    !isset($request['gkp_id'])){
 
 				$this->response(array(
@@ -294,11 +297,12 @@
 				'mensaje' => 'No se pudo guardar los datos'
 			);
 			//
-			$insertId = $this->pedeo->updateRow("UPDATE tkpig SET gkp_name=:gkp_name, gkp_description=:gkp_description, gkp_status=:gkp_status WHERE gkp_id = :gkp_id",
+			$insertId = $this->pedeo->updateRow("UPDATE tkpig SET gkp_name=:gkp_name, gkp_description=:gkp_description, gkp_status=:gkp_status, gkp_order=:gkp_order WHERE gkp_id = :gkp_id",
 				array(
 					':gkp_name'        => $request['gkp_name'],
 					':gkp_description' => $request['gkp_description'],
 					':gkp_status'      => $request['gkp_status'],
+					':gkp_order'       => $request['gkp_order'],
 					':gkp_id'          => $request['gkp_id']
 				)
 			);
@@ -342,7 +346,7 @@
 				'mensaje' => 'busqueda sin resultados'
             );
 			// 
-	        $config = $this->pedeo->queryTable("SELECT tkpig.gkp_name, tkpig.gkp_description, tkpi.kst_type, tkpi.kst_config, csql.sql_query FROM rkpig INNER JOIN tkpig ON tkpig.gkp_id=rkpig.rkg_groupid INNER JOIN tkpi ON tkpi.kst_id=rkpig.rkg_kpiid INNER JOIN csql ON csql.sql_id=tkpi.kst_kpi INNER JOIN truc ON truc.ruc_query=csql.sql_id WHERE truc.ruc_user=:ruc_user AND tkpig.gkp_status=:kst_status AND tkpi.kst_status=:kst_status", [':ruc_user' => $request['ruc_user'], ':kst_status' => 1]);
+	        $config = $this->pedeo->queryTable("SELECT tkpig.gkp_name, tkpig.gkp_description, tkpi.kst_type, tkpi.kst_config, csql.sql_query, tkpi.kst_kpi FROM rkpig INNER JOIN tkpig ON tkpig.gkp_id=rkpig.rkg_groupid INNER JOIN tkpi ON tkpi.kst_id=rkpig.rkg_kpiid INNER JOIN csql ON csql.sql_id=tkpi.kst_kpi INNER JOIN truc ON truc.ruc_query=csql.sql_id WHERE truc.ruc_user=:ruc_user AND tkpig.gkp_status=:kst_status AND tkpi.kst_status=:kst_status ORDER BY gkp_order ASC", [':ruc_user' => $request['ruc_user'], ':kst_status' => 1]);
 	        // VALIDAR RETORNO DE DATOS DE LA CONSULTA.
 	        if(isset($config[0])){
 				// 
@@ -352,7 +356,7 @@
 					// VALIDAR CAMPOS DEL QUERY
 					if (!empty($item['sql_query'])) {
 						// EXECUTAR QUERY DEL KPI.
-						$result = $this->pedeo->queryTable($item['sql_query'], []);
+						$result = $this->pedeo->queryTable(preg_replace("/[\r\n|\n|\r]+/", PHP_EOL, $item['sql_query']), []);
 						// ELIMINAR CAMPO DEL QUERY
 						unset($item['sql_query']);
 						// ASIGNAR DATOS

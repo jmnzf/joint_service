@@ -19,6 +19,7 @@ class PurchaseInv extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -123,6 +124,25 @@ class PurchaseInv extends REST_Controller {
 
 					return;
 			}
+			//
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['cfc_duedev'], $Data['cfc_docdate'],$Data['cfc_duedate'],0);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
 			//
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -275,9 +295,9 @@ class PurchaseInv extends REST_Controller {
         $sqlInsert = "INSERT INTO dcfc(cfc_series, cfc_docnum, cfc_docdate, cfc_duedate, cfc_duedev, cfc_pricelist, cfc_cardcode,
                       cfc_cardname, cfc_currency, cfc_contacid, cfc_slpcode, cfc_empid, cfc_comment, cfc_doctotal, cfc_baseamnt, cfc_taxtotal,
                       cfc_discprofit, cfc_discount, cfc_createat, cfc_baseentry, cfc_basetype, cfc_doctype, cfc_idadd, cfc_adress, cfc_paytype,
-                      cfc_attch,cfc_createby,cfc_totalret,cfc_totalretiva)VALUES(:cfc_series, :cfc_docnum, :cfc_docdate, :cfc_duedate, :cfc_duedev, :cfc_pricelist, :cfc_cardcode, :cfc_cardname,
+                      cfc_attch,cfc_createby,cfc_totalret,cfc_totalretiva,cfc_correl, cfc_tax_control_num)VALUES(:cfc_series, :cfc_docnum, :cfc_docdate, :cfc_duedate, :cfc_duedev, :cfc_pricelist, :cfc_cardcode, :cfc_cardname,
                       :cfc_currency, :cfc_contacid, :cfc_slpcode, :cfc_empid, :cfc_comment, :cfc_doctotal, :cfc_baseamnt, :cfc_taxtotal, :cfc_discprofit, :cfc_discount,
-                      :cfc_createat, :cfc_baseentry, :cfc_basetype, :cfc_doctype, :cfc_idadd, :cfc_adress, :cfc_paytype, :cfc_attch,:cfc_createby,:cfc_totalret,:cfc_totalretiva)";
+                      :cfc_createat, :cfc_baseentry, :cfc_basetype, :cfc_doctype, :cfc_idadd, :cfc_adress, :cfc_paytype, :cfc_attch,:cfc_createby,:cfc_totalret,:cfc_totalretiva,:cfc_correl, :cfc_tax_control_num)";
 
 
 				// Se Inicia la transaccion,
@@ -317,7 +337,9 @@ class PurchaseInv extends REST_Controller {
 							':cfc_createby' => isset($Data['cfc_createby'])?$Data['cfc_createby']:NULL,
 							':cfc_totalret' => is_numeric($Data['cfc_totalret'])?$Data['cfc_totalret']:0,
 							':cfc_totalretiva' => is_numeric($Data['cfc_totalretiva'])?$Data['cfc_totalretiva']:0,
-              ':cfc_attch' => $this->getUrl(count(trim(($Data['cfc_attch']))) > 0 ? $Data['cfc_attch']:NULL, $resMainFolder[0]['main_folder'])
+              ':cfc_attch' => $this->getUrl(count(trim(($Data['cfc_attch']))) > 0 ? $Data['cfc_attch']:NULL, $resMainFolder[0]['main_folder']),
+							'cfc_correl' => isset($Data['cfc_correl'])?$Data['cfc_correl']:NULL,
+							'cfc_tax_control_num' => isset($Data['cfc_tax_control_num'])?$Data['cfc_tax_control_num']:NULL
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -1599,6 +1621,7 @@ class PurchaseInv extends REST_Controller {
 
 					$granTotalIva = 0;
 					$MontoSysCR = 0;
+					$MontoSysDB = 0;
 					foreach ($DetalleConsolidadoIva as $key => $posicion) {
 							$granTotalIva = 0;
 							$granTotalIvaOriginal = 0;
@@ -1625,7 +1648,6 @@ class PurchaseInv extends REST_Controller {
 
 							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
-
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1659,8 +1681,8 @@ class PurchaseInv extends REST_Controller {
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
+									':ac1_ven_debit' => round($granTotalIva, 2),
+									':ac1_ven_credit' => 0,
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => 1,
 									':ac1_isrti' => 0,
@@ -1741,7 +1763,7 @@ class PurchaseInv extends REST_Controller {
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 
 												}else if( $codigo3 == 2 || $codigo3 == "2" ){
@@ -1749,47 +1771,49 @@ class PurchaseInv extends REST_Controller {
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 3 || $codigo3 == "3" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 4 || $codigo3 == "4" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 5  || $codigo3 == "5" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 6 || $codigo3 == "6" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 7 || $codigo3 == "7" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}
 
 												$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 												$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+
 												$AC1LINE = $AC1LINE+1;
 												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1823,8 +1847,8 @@ class PurchaseInv extends REST_Controller {
 														':ac1_accperiod' => 1,
 														':ac1_close' => 0,
 														':ac1_cord' => 0,
-														':ac1_ven_debit' => 1,
-														':ac1_ven_credit' => 1,
+														':ac1_ven_debit' => round($dbito, 2),
+														':ac1_ven_credit' => round($cdito, 2),
 														':ac1_fiscal_acct' => 0,
 														':ac1_taxid' => 1,
 														':ac1_isrti' => 0,
@@ -1858,10 +1882,6 @@ class PurchaseInv extends REST_Controller {
 							}
 					}
 					//FIN Procedimiento para llenar costo inventario CUANDO ES FACTURA DIRECTA
-
-
-
-
 
 
 					if($Data['cfc_basetype'] == 13){ // CUANDO VIENE DE UNA ENTRADA
@@ -1930,7 +1950,7 @@ class PurchaseInv extends REST_Controller {
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 
 												}else if( $codigo3 == 2 || $codigo3 == "2" ){
@@ -1938,47 +1958,48 @@ class PurchaseInv extends REST_Controller {
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 3 || $codigo3 == "3" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 4 || $codigo3 == "4" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 5  || $codigo3 == "5" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 6 || $codigo3 == "6" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}else if( $codigo3 == 7 || $codigo3 == "7" ){
 														$dbito = $grantotalCostoInventario;
 														if(trim($Data['cfc_currency']) != $MONEDASYS ){
 																$MontoSysDB = ($dbito / $TasaLocSys);
 														}else{
-																$MontoSysDB = ($grantotalCostoInventarioOriginal / $TasaLocSys);
+																$MontoSysDB = ($grantotalCostoInventarioOriginal);
 														}
 												}
 
 												$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 												$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
 												$AC1LINE = $AC1LINE+1;
 												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2012,8 +2033,8 @@ class PurchaseInv extends REST_Controller {
 														':ac1_accperiod' => 1,
 														':ac1_close' => 0,
 														':ac1_cord' => 0,
-														':ac1_ven_debit' => 1,
-														':ac1_ven_credit' => 1,
+														':ac1_ven_debit' => round($dbito, 2),
+														':ac1_ven_credit' => round($cdito, 2),
 														':ac1_fiscal_acct' => 0,
 														':ac1_taxid' => 1,
 														':ac1_isrti' => 0,
@@ -2052,6 +2073,7 @@ class PurchaseInv extends REST_Controller {
 
 					// PROCEDIMIENTO PARA LLENAR ASIENTO ARTICULO NO INVENTARIABLE
 
+
 					foreach ($DetalleConsolidadoItemNoInventariable as $key => $posicion) {
 							$grantotalItemNoInventariable = 0 ;
 							$grantotalItemNoInventariableOriginal = 0;
@@ -2089,6 +2111,8 @@ class PurchaseInv extends REST_Controller {
 
 								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+
 								$AC1LINE = $AC1LINE+1;
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2122,8 +2146,8 @@ class PurchaseInv extends REST_Controller {
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
+									':ac1_ven_debit' => round($dbito, 2),
+									':ac1_ven_credit' => 0,
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => 1,
 									':ac1_isrti' => 0,
@@ -2155,7 +2179,6 @@ class PurchaseInv extends REST_Controller {
 
 					}
 				//FIN PROCEDIMIENTO PARA LLENAR ASIENTO ARTICULO NO INVENTARIABLE
-
 
 
 				//Procedimiento para llenar cuentas por pagar
@@ -2197,6 +2220,8 @@ class PurchaseInv extends REST_Controller {
 
 								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+
 								$AC1LINE = $AC1LINE+1;
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2230,8 +2255,8 @@ class PurchaseInv extends REST_Controller {
 										':ac1_accperiod' => 1,
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
-										':ac1_ven_debit' => 1,
-										':ac1_ven_credit' => 1,
+										':ac1_ven_debit' => 0,
+										':ac1_ven_credit' => round($TotalDoc, 2),
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => 1,
 										':ac1_isrti' => 0,
@@ -2333,6 +2358,7 @@ class PurchaseInv extends REST_Controller {
 
 							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
 							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
 							$AC1LINE = $AC1LINE+1;
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2366,8 +2392,8 @@ class PurchaseInv extends REST_Controller {
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
-									':ac1_ven_debit' => 1,
-									':ac1_ven_credit' => 1,
+									':ac1_ven_debit' => 0,
+									':ac1_ven_credit' => round($totalRetencion, 2),
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => 1,
 									':ac1_isrti' => 0,
@@ -2506,14 +2532,19 @@ class PurchaseInv extends REST_Controller {
 								':cec_docentry' => $Data['cfc_baseentry'],
 								':cec_doctype' => $Data['cfc_basetype']
 							));
-// print_r($resDev);exit();die();
-							$resta_cantidad = 0;
-							if(isset($resDev[0])  && !empty($resDev[0]['cantidad'])) {
+
+							$resta_cantidad = $resEstado1[0]['cantidad'];
+							$resta_item = $resEstado1[0]['item'];
+							if(($resDev[0]['cantidad']) <> 0 && ($resEstado1[0]['item']) <> 0) {
 
 									$resta_cantidad = $resEstado1[0]['cantidad'] - $resDev[0]['cantidad'];
+									$resta_item = $resEstado1[0]['item'] - $resDev[0]['item'];
 						}
+
+
+	// print_r($resta_cantidad);exit();die();
 							$sqlEstado2 =  "SELECT
-																count(t3.fc1_itemcode) item,
+																count(distinct t3.fc1_itemcode) item,
 																coalesce(sum(t3.fc1_quantity),0) cantidad
 																from dcec t0
 																left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
@@ -2525,7 +2556,7 @@ class PurchaseInv extends REST_Controller {
 							':cec_doctype' => $Data['cfc_basetype']
 						));
 // print_r($resEstado2);exit();die();
-						$item_ec = $resEstado1[0]['item'];
+						$item_ec = $resta_item;
 						// $item_fact = 0;
 						$cantidad_ec = $resta_cantidad;
 						// if(isset($resEstado2[0]) && !empty($resEstado2[0]['cantidad'])){
@@ -2535,7 +2566,6 @@ class PurchaseInv extends REST_Controller {
 
 
 
-						//
 						// print_r($item_ec);
 						// print_r($item_fact);
 						// print_r($cantidad_ec);
@@ -2565,7 +2595,7 @@ class PurchaseInv extends REST_Controller {
 
 												if ($Data['cfc_basetype'] == 13) {
 													$sqlEstado1 ='SELECT
-					 																		coalesce(count(t1.ec1_itemcode),0) item,
+					 																		coalesce(count(distinct t1.ec1_itemcode),0) item,
 					 																		coalesce(sum(t1.ec1_quantity),0) cantidad
 					 																		from dcec t0
 					 																		inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
@@ -2577,7 +2607,7 @@ class PurchaseInv extends REST_Controller {
 													 ));
 
 													 $sqlDev1 =  "SELECT
-					 																	coalesce(count(t3.dc1_itemcode),0) item,
+					 																	coalesce(count(distinct t3.dc1_itemcode),0) item,
 					 																	coalesce(sum(t3.dc1_quantity),0) cantidad
 					 																	from dcec t0
 					 																	left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
@@ -2589,8 +2619,12 @@ class PurchaseInv extends REST_Controller {
 													 ':cec_docentry' => $Data['cfc_baseentry'],
 													 ':cec_doctype' => $Data['cfc_basetype']
 												 ));
-												 if(isset($resDev1[0]['cantidad'])){
+
+												 $resta_cantidad1 = $resEstado1[0]['cantidad'];
+												 $resta_item1 = 0;
+												 if(isset($resDev1[0]['cantidad']) && ($resDev1[0]['cantidad']) <> 0){
 												 				$resta_cantidad1 = $resEstado1[0]['cantidad'] - $resDev1[0]['cantidad'];
+																$resta_item1 = $resEstado1[0]['item'] - $resDev1[0]['item'];
 											 	}
 												 $sqlDev2 = "SELECT DISTINCT
 																					 t2.*
@@ -2618,12 +2652,12 @@ class PurchaseInv extends REST_Controller {
 												 ':cec_doctype' => $Data['cfc_basetype']
 											 ));
 
-											 $item_del1 = $resEstado1[0]['item'];
+											 $item_del1 = $resta_item1;
 											 $item_fact1 = $resEstado2[0]['item'];
 											 $cantidad_del1 = $resta_cantidad1;
 											 $cantidad_fact1 = $resEstado2[0]['cantidad'];
 
-
+												//
 												// print_r($item_del1);
 												// print_r($item_fact1);
 												// print_r($cantidad_del1);
@@ -2731,8 +2765,8 @@ class PurchaseInv extends REST_Controller {
 																':ac1_accperiod' => 1,
 																':ac1_close' => 0,
 																':ac1_cord' => 0,
-																':ac1_ven_debit' => 1,
-																':ac1_ven_credit' => 1,
+																':ac1_ven_debit' => round($debito,2),
+																':ac1_ven_credit' => round($credito,2),
 																':ac1_fiscal_acct' => 0,
 																':ac1_taxid' => 1,
 																':ac1_isrti' => 0,

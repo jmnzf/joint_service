@@ -20,6 +20,7 @@ class SalesNd extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -119,6 +120,24 @@ class SalesNd extends REST_Controller {
 
 										return;
 								}
+								//
+								//VALIDANDO PERIODO CONTABLE
+								$periodo = $this->generic->ValidatePeriod($Data['vnd_duedev'], $Data['vnd_docdate'],$Data['vnd_duedate'],1);
+
+								if( isset($periodo['error']) && $periodo['error'] == false){
+
+								}else{
+									$respuesta = array(
+										'error'   => true,
+										'data'    => [],
+										'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+									);
+
+									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+									return;
+								}
+								//PERIODO CONTABLE
 								//
 									//BUSCANDO LA NUMERACION DEL DOCUMENTO
 								  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -907,8 +926,8 @@ class SalesNd extends REST_Controller {
 														':ac1_accperiod' => 1,
 														':ac1_close' => 0,
 														':ac1_cord' => 0,
-														':ac1_ven_debit' => 1,
-														':ac1_ven_credit' => 1,
+														':ac1_ven_debit' => round($debito, 2),
+														':ac1_ven_credit' => round($credito, 2),
 														':ac1_fiscal_acct' => 0,
 														':ac1_taxid' => 1,
 														':ac1_isrti' => 0,
@@ -1019,8 +1038,8 @@ class SalesNd extends REST_Controller {
 														':ac1_accperiod' => 1,
 														':ac1_close' => 0,
 														':ac1_cord' => 0,
-														':ac1_ven_debit' => 1,
-														':ac1_ven_credit' => 1,
+														':ac1_ven_debit' => 0,
+														':ac1_ven_credit' => round($granTotalIva, 2),
 														':ac1_fiscal_acct' => 0,
 														':ac1_taxid' => 1,
 														':ac1_isrti' => 0,
@@ -1123,6 +1142,13 @@ class SalesNd extends REST_Controller {
 
 													$AC1LINE = $AC1LINE+1;
 
+													//PARA COMPESAR LA NOTA DE CREDITO CON LA FACTURA
+													//SI VIENE DE UN COPIAR FACTURA
+													if ( $Data['vnd_basetype'] == 5 ){
+														$creditoo = $debitoo;
+													}
+
+
 													$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 															':ac1_trans_id' => $resInsertAsiento,
@@ -1155,8 +1181,8 @@ class SalesNd extends REST_Controller {
 															':ac1_accperiod' => 1,
 															':ac1_close' => 0,
 															':ac1_cord' => 0,
-															':ac1_ven_debit' => 1,
-															':ac1_ven_credit' => 1,
+															':ac1_ven_debit' => round($debitoo, 2),
+															':ac1_ven_credit' => round($creditoo, 2),
 															':ac1_fiscal_acct' => 0,
 															':ac1_taxid' => 1,
 															':ac1_isrti' => 0,

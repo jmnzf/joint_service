@@ -19,6 +19,7 @@ class PurchaseNc extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -122,6 +123,25 @@ class PurchaseNc extends REST_Controller {
 
 					return;
 			}
+			//
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['cnc_duedev'], $Data['cnc_docdate'],$Data['cnc_duedate'],0);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
 			//
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -450,7 +470,7 @@ class PurchaseNc extends REST_Controller {
 						));
 
 
-						if ( isset(	$resDocInicio[0] ) ){
+						if ( isset(	$resDocInicio[0] ) ) {
 
 							$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
 															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
@@ -1116,6 +1136,22 @@ class PurchaseNc extends REST_Controller {
 											$DetalleItemNoInventariable->nc1_quantity = is_numeric($detail['nc1_quantity'])?$detail['nc1_quantity']:0;
 											$DetalleItemNoInventariable->em1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 										}
+									}else{
+
+										if( $ManejaInvetario == 1 ){
+											$DetalleCostoCosto->ac1_account =  is_numeric($detail['nc1_acctcode'])?$detail['nc1_acctcode']: 0;
+											$DetalleCostoCosto->ac1_prc_code = isset($detail['nc1_costcode'])?$detail['nc1_costcode']:NULL;
+											$DetalleCostoCosto->ac1_uncode = isset($detail['nc1_ubusiness'])?$detail['nc1_ubusiness']:NULL;
+											$DetalleCostoCosto->ac1_prj_code = isset($detail['nc1_project'])?$detail['nc1_project']:NULL;
+											$DetalleCostoCosto->nc1_linetotal = is_numeric($detail['nc1_linetotal'])?$detail['nc1_linetotal']:0;
+											$DetalleCostoCosto->nc1_vat = is_numeric($detail['nc1_vat'])?$detail['nc1_vat']:0;
+											$DetalleCostoCosto->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
+											$DetalleCostoCosto->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
+											$DetalleCostoCosto->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
+											$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity'])?$detail['nc1_quantity']:0;
+											$DetalleCostoCosto->em1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
+											$DetalleCostoCosto->ac1_inventory = $ManejaInvetario;
+										}
 									}
 
 
@@ -1135,8 +1171,6 @@ class PurchaseNc extends REST_Controller {
 										// VALIDANDO ITEM INVENTARIABLE
 										if( $ManejaInvetario == 1 ){
 
-
-
 											$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 											$DetalleCostoInventario->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 
@@ -1145,6 +1179,12 @@ class PurchaseNc extends REST_Controller {
 										}else{
 											$llaveItemNoInventariable = $DetalleItemNoInventariable->ac1_uncode.$DetalleItemNoInventariable->ac1_prc_code.$DetalleItemNoInventariable->ac1_prj_code.$DetalleItemNoInventariable->ac1_account;
 										}
+									}else{
+
+											if( $ManejaInvetario == 1 ){
+												$DetalleCostoCosto->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
+												$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
+											}
 									}
 
 
@@ -1211,10 +1251,20 @@ class PurchaseNc extends REST_Controller {
 
 											}
 										}
+									}else{
+										if( $ManejaInvetario == 1 ){
+											if(in_array( $llaveCostoCosto, $inArrayCostoCosto )){
+
+													$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+
+											}else{
+
+													array_push( $inArrayCostoCosto, $llaveCostoCosto );
+													$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+
+											}
+										}
 									}
-
-
-
 
 
 									if( isset($DetalleConsolidadoIva[$posicionIva])){
@@ -1284,6 +1334,20 @@ class PurchaseNc extends REST_Controller {
 
 											array_push( $DetalleConsolidadoItemNoInventariable[$posicionItemNoInventariable], $DetalleItemNoInventariable );
 
+										}
+									}else{
+										if( $ManejaInvetario == 1 ){
+											if( isset($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
+
+												if(!is_array($DetalleConsolidadoCostoCosto[$posicionCostoCosto])){
+													$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
+												}
+
+											}else{
+												$DetalleConsolidadoCostoCosto[$posicionCostoCosto] = array();
+											}
+
+											array_push( $DetalleConsolidadoCostoCosto[$posicionCostoCosto], $DetalleCostoCosto );
 										}
 									}
           }
@@ -1360,8 +1424,6 @@ class PurchaseNc extends REST_Controller {
 									':ac1_line'   => 	$AC1LINE
 						));
 
-
-
 						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
 								// Se verifica que el detalle no de error insertando //
 						}else{
@@ -1386,7 +1448,6 @@ class PurchaseNc extends REST_Controller {
 
 						if($Data['cnc_basetype'] != 13){ // solo si el documento no viene de una entrada
 								//Procedimiento para llenar costo inventario
-
 								foreach ($DetalleConsolidadoCostoInventario as $key => $posicion) {
 										$grantotalCostoInventario = 0 ;
 										$grantotalCostoInventarioOriginal = 0;
@@ -1491,8 +1552,113 @@ class PurchaseNc extends REST_Controller {
 								}
 
 						}	//FIN Procedimiento para llenar costo inventario
-
 						// PROCEDIMIENTO PARA LLENAR ASIENTO DELVOLUCION COMPRA ARTICULO NO INVENTARIABLE
+
+
+						// ASIENTO PARA GASTO CUANDO NO MUEVE INVENTARIO
+						if(!isset($DetalleConsolidadoCostoInventario[0])){
+							foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
+									$grantotalCostoInventario = 0 ;
+									$grantotalCostoInventarioOriginal = 0;
+									$cuentaInventario = "";
+									$cdito = 0;
+									$dbito = 0;
+									$MontoSysDB = 0;
+									$MontoSysCR = 0;
+									$sinDatos = 0;
+
+									foreach ($posicion as $key => $value) {
+
+													if( $value->ac1_inventory == 1 || $value->ac1_inventory  == '1' ){
+														$sinDatos++;
+														$cuentaInventario = $value->ac1_account;
+														$grantotalCostoInventario = ($grantotalCostoInventario + $value->nc1_linetotal );
+													}
+											}
+
+											$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
+
+											if(trim($Data['cnc_currency']) != $MONEDALOCAL ){
+													$grantotalCostoInventario = ($grantotalCostoInventario * $TasaDocLoc);
+											}
+
+											$cdito = $grantotalCostoInventario;
+
+											if(trim($Data['cnc_currency']) != $MONEDASYS ){
+													$MontoSysCR = ($cdito / $TasaLocSys);
+											}else{
+													$MontoSysCR = $grantotalCostoInventarioOriginal;
+											}
+
+										$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+										$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+										$AC1LINE = $AC1LINE+1;
+									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+											':ac1_trans_id' => $resInsertAsiento,
+											':ac1_account' => $cuentaInventario,
+											':ac1_debit' => 0,
+											':ac1_credit' => round($cdito,2),
+											':ac1_debit_sys' =>0,
+											':ac1_credit_sys' => round($MontoSysCR,2),
+											':ac1_currex' => 0,
+											':ac1_doc_date' => $this->validateDate($Data['cnc_docdate'])?$Data['cnc_docdate']:NULL,
+											':ac1_doc_duedate' => $this->validateDate($Data['cnc_duedate'])?$Data['cnc_duedate']:NULL,
+											':ac1_debit_import' => 0,
+											':ac1_credit_import' => 0,
+											':ac1_debit_importsys' => 0,
+											':ac1_credit_importsys' => 0,
+											':ac1_font_key' => $resInsert,
+											':ac1_font_line' => 1,
+											':ac1_font_type' => is_numeric($Data['cnc_doctype'])?$Data['cnc_doctype']:0,
+											':ac1_accountvs' => 1,
+											':ac1_doctype' => 18,
+											':ac1_ref1' => "",
+											':ac1_ref2' => "",
+											':ac1_ref3' => "",
+											':ac1_prc_code' => NULL,
+											':ac1_uncode' => NULL,
+											':ac1_prj_code' => NULL,
+											':ac1_rescon_date' => NULL,
+											':ac1_recon_total' => 0,
+											':ac1_made_user' => isset($Data['cnc_createby'])?$Data['cnc_createby']:NULL,
+											':ac1_accperiod' => 1,
+											':ac1_close' => 0,
+											':ac1_cord' => 0,
+											':ac1_ven_debit' => 0,
+											':ac1_ven_credit' => 0,
+											':ac1_fiscal_acct' => 0,
+											':ac1_taxid' => 1,
+											':ac1_isrti' => 0,
+											':ac1_basert' => 0,
+											':ac1_mmcode' => 0,
+											':ac1_legal_num' => isset($Data['cnc_cardcode'])?$Data['cnc_cardcode']:NULL,
+											':ac1_codref' => 1,
+											':ac1_line'   => 	$AC1LINE
+								));
+
+								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+										// Se verifica que el detalle no de error insertando //
+								}else{
+
+										// si falla algun insert del detalle  de nota credito se devuelven los cambios realizados por la transaccion,
+										// se retorna el error y se detiene la ejecucion del codigo restante.
+											$this->pedeo->trans_rollback();
+
+											$respuesta = array(
+												'error'   => true,
+												'data'	  => $resDetalleAsiento,
+												'mensaje'	=> 'No se pudo registrar la nota credito'
+											);
+
+											 $this->response($respuesta);
+
+											 return;
+								}
+
+							}
+						}
+						//
 
 						foreach ($DetalleConsolidadoItemNoInventariable as $key => $posicion) {
 								$grantotalItemNoInventariable = 0 ;
@@ -1757,6 +1923,7 @@ class PurchaseNc extends REST_Controller {
 									$MontoSysDB = 0;
 									$MontoSysCR = 0;
 									$TotalDoc = $Data['cnc_doctotal'];
+									$TotalDoc2 = 0;
 									$TotalDocOri = $TotalDoc;
 
 									$cuentaCxP = $rescuentaCxP[0]['mgs_acct'];
@@ -1777,6 +1944,10 @@ class PurchaseNc extends REST_Controller {
 
 								$AC1LINE = $AC1LINE+1;
 
+
+								if($Data['cnc_basetype'] == 15){
+									$TotalDoc2 = $TotalDoc;
+								}
 
 
 								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1811,8 +1982,8 @@ class PurchaseNc extends REST_Controller {
 										':ac1_accperiod' => 1,
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
-										':ac1_ven_debit' => 1,
-										':ac1_ven_credit' => 1,
+										':ac1_ven_debit' => round($TotalDoc,2),
+										':ac1_ven_credit' => round($TotalDoc2,2),
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => 1,
 										':ac1_isrti' => 0,
@@ -2092,181 +2263,192 @@ class PurchaseNc extends REST_Controller {
 
 					// VALIDANDO ESTADOS DE DOCUMENTOS
 
+					//SE VALIDA QUE EL PAY TO DAY DE LA FACTURA
+					if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
 
-					// if ($Data['cnc_basetype'] == 1) {
+
+						$valorAppl =  $Data['cnc_doctotal'];
+
+						if(trim($Data['cnc_currency']) != $MONEDALOCAL ){
+								$valorAppl = $Data['cnc_doctotal'] * $TasaDocLoc;
+						}
+
+
+						$sqlUpdateFactPay = "UPDATE  dcfc  SET cfc_paytoday = COALESCE(cfc_paytoday,0)+:cfc_paytoday WHERE cfc_docentry = :cfc_docentry and cfc_doctype = :cfc_doctype";
+
+						$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+							':cfc_paytoday' => $valorAppl,
+							':cfc_docentry' => $Data['cnc_baseentry'],
+							':cfc_doctype'  => $Data['cnc_basetype']
+
+						));
+
+						if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
+
+						}else{
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resUpdateFactPay,
+								'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$Data['cnc_baseentry']
+							);
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+					}
+
+					// SE ACTUALIZA VALOR EN EL ASIENTO CONTABLE
+					// GENERADO EN LA FACTURA
+					if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
+
+						$valorAppl =  $Data['cnc_doctotal'];
+
+						if(trim($Data['cnc_currency']) != $MONEDALOCAL ){
+								$valorAppl = $Data['cnc_doctotal'] * $TasaDocLoc;
+						}
+
+
+						$sqlcuentaCxP = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
+														 JOIN dmgs  AS f2
+														 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
+														 WHERE  f1.dms_card_code = :dms_card_code
+														 AND f1.dms_card_type = '2'";//2 para proveedores";
+
+
+						$rescuentaCxP = $this->pedeo->queryTable($sqlcuentaCxP, array(":dms_card_code" => $Data['cnc_cardcode']));
+
+						if(!isset( $rescuentaCxP[0] )){
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $rescuentaCxP,
+								'mensaje'	=> 'No se pudo registrar la factura de ventas, el socio de negocio no tiene cuenta asociada'
+							);
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+
+						$cuentaCxP = $rescuentaCxP[0]['mgs_acct'];
+
+						$slqUpdateVenDebit = "UPDATE mac1
+																	SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																	WHERE ac1_legal_num = :ac1_legal_num
+																	AND ac1_font_key = :ac1_font_key
+																	AND ac1_font_type = :ac1_font_type
+																	AND ac1_account = :ac1_account";
+						$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+							':ac1_ven_debit'  => $valorAppl,
+							':ac1_legal_num'  => $Data['cnc_cardcode'],
+							':ac1_font_key'   => $Data['cnc_baseentry'],
+							':ac1_font_type'  => $Data['cnc_basetype'],
+							':ac1_account'    => $cuentaCxP
+
+						));
+
+						if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+						}else{
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resUpdateVenDebit,
+								'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '. $Data['cnc_baseentry']
+							);
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+					}
 					//
-					//
-					// 	$sqlEstado = 'SELECT distinct
-					// 	case
-					// 	when (sum(t3.ov1_quantity) - t1.vc1_quantity) = 0
-					// 	then 1
-					// 	else 0
-					// 	end "estado"
-					// 	from dvct t0
-					// 	left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-					// 	left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
-					// 	left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
-					// 	where t0.dvc_docentry = :dvc_docentry
-					// 	group by
-					// 	t1.vc1_quantity';
-					//
-					// 	$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvc_docentry' => $Data['cnc_baseentry']));
-					//
-					// 	if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-					//
-					// 				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-					// 														VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-					//
-					// 				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-					//
-					//
-					// 									':bed_docentry' => $Data['cnc_baseentry'],
-					// 									':bed_doctype' => $Data['cnc_basetype'],
-					// 									':bed_status' => 3, //ESTADO CERRADO
-					// 									':bed_createby' => $Data['cnc_createby'],
-					// 									':bed_date' => date('Y-m-d'),
-					// 									':bed_baseentry' => $resInsert,
-					// 									':bed_basetype' => $Data['cnc_doctype']
-					// 				));
-					//
-					//
-					// 				if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-					//
-					// 				}else{
-					//
-					// 						 $this->pedeo->trans_rollback();
-					//
-					// 							$respuesta = array(
-					// 								'error'   => true,
-					// 								'data' => $resInsertEstado,
-					// 								'mensaje'	=> 'No se pudo registrar la nota credito'
-					// 							);
-					//
-					//
-					// 							$this->response($respuesta);
-					//
-					// 							return;
-					// 				}
-					//
-					// 	}
-					//
-					// } else if ($Data['cnc_basetype'] == 2) {
-					//
-					//
-					// 			$sqlEstado = 'SELECT distinct
-					// 											case
-					// 												when (sum(t3.em1_quantity) - t1.ov1_quantity) = 0
-					// 													then 1
-					// 												else 0
-					// 											end "estado"
-					// 										from dvov t0
-					// 										left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-					// 										left join dvem t2 on t0.vov_docentry = t2.vem_baseentry
-					// 										left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
-					// 										where t0.vov_docentry = :vov_docentry
-					// 										group by
-					// 										t1.ov1_quantity';
-					//
-					//
-					// 			$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vov_docentry' => $Data['cnc_baseentry']));
-					//
-					// 			if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-					//
-					// 						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-					// 																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-					//
-					// 						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-					//
-					//
-					// 											':bed_docentry' => $Data['cnc_baseentry'],
-					// 											':bed_doctype' => $Data['cnc_basetype'],
-					// 											':bed_status' => 3, //ESTADO CERRADO
-					// 											':bed_createby' => $Data['cnc_createby'],
-					// 											':bed_date' => date('Y-m-d'),
-					// 											':bed_baseentry' => $resInsert,
-					// 											':bed_basetype' => $Data['cnc_doctype']
-					// 						));
-					//
-					//
-					// 						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-					//
-					// 						}else{
-					//
-					// 								 $this->pedeo->trans_rollback();
-					//
-					// 									$respuesta = array(
-					// 										'error'   => true,
-					// 										'data' => $resInsertEstado,
-					// 										'mensaje'	=> 'No se pudo registrar la nota credito'
-					// 									);
-					//
-					//
-					// 									$this->response($respuesta);
-					//
-					// 									return;
-					// 						}
-					//
-					// 			}
-					//
-					//
-					//
-					//
-					// } else if ($Data['cnc_basetype'] == 3) {
-					//
-					// 		 $sqlEstado = 'SELECT distinct
-					// 										case
-					// 											when (sum(t3.nc1_quantity) - t1.em1_quantity) = 0
-					// 												then 1
-					// 											else 0
-					// 										end "estado"
-					// 									from dvem t0
-					// 									left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-					// 									left join dcnc t2 on t0.vem_docentry = t2.cnc_baseentry
-					// 									left join cnc1 t3 on t2.cnc_docentry = t3.nc1_docentry and t1.em1_itemcode = t3.nc1_itemcode
-					// 									where t0.vem_docentry = :vem_docentry
-					// 									group by t1.em1_quantity';
-					//
-					// 			$resEstado = $this->pedeo->queryTable($sqlEstado, array(':vem_docentry' => $Data['cnc_baseentry']));
-					//
-					// 			if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-					//
-					// 						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-					// 																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-					//
-					// 						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-					//
-					//
-					// 											':bed_docentry' => $Data['cnc_baseentry'],
-					// 											':bed_doctype' => $Data['cnc_basetype'],
-					// 											':bed_status' => 3, //ESTADO CERRADO
-					// 											':bed_createby' => $Data['cnc_createby'],
-					// 											':bed_date' => date('Y-m-d'),
-					// 											':bed_baseentry' => $resInsert,
-					// 											':bed_basetype' => $Data['cnc_doctype']
-					// 						));
-					//
-					//
-					// 						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-					//
-					// 						}else{
-					//
-					// 								 $this->pedeo->trans_rollback();
-					//
-					// 									$respuesta = array(
-					// 										'error'   => true,
-					// 										'data' => $resInsertEstado,
-					// 										'mensaje'	=> 'No se pudo registrar la nota credito'
-					// 									);
-					//
-					//
-					// 									$this->response($respuesta);
-					//
-					// 									return;
-					// 						}
-					//
-					// 			}
-					//
-					// }
+					//SE CIERRA LA NOTA CREADA
+					if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
+
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+											':bed_docentry' => $resInsert,
+											':bed_doctype' =>  $Data['cnc_doctype'],
+											':bed_status' => 3, //ESTADO CERRADO
+											':bed_createby' => $Data['cnc_createby'],
+											':bed_date' => date('Y-m-d'),
+											':bed_baseentry' => $Data['cnc_baseentry'],
+											':bed_basetype' => $Data['cnc_basetype']
+						));
+
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la nota debito'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+						}
+					}
+
+					// SE VALIDA SALDOS PARA CERRAR FACTURA
+					if($Data['cnc_basetype'] == 15) {
+
+									$resEstado = $this->generic->validateBalanceAndClose($Data['cnc_baseentry'],$Data['cnc_basetype'],'dcfc','cfc');
+
+									if(isset($resEstado['error']) && $resEstado['error'] === true){
+												$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																						VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+												$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																	':bed_docentry' => $Data['cnc_baseentry'],
+																	':bed_doctype' => $Data['cnc_basetype'],
+																	':bed_status' => 3, //ESTADO CERRADO
+																	':bed_createby' => $Data['cnc_createby'],
+																	':bed_date' => date('Y-m-d'),
+																	':bed_baseentry' => $resInsert,
+																	':bed_basetype' => $Data['cnc_doctype']
+												));
+
+
+												if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+												}else{
+
+														 $this->pedeo->trans_rollback();
+
+															$respuesta = array(
+																'error'   => true,
+																'data' => $resInsertEstado,
+																'mensaje'	=> 'No se pudo registrar el pago'
+															);
+
+
+															$this->response($respuesta);
+
+															return;
+												}
+
+									}
+
+					 }
 
 					// FIN VALIDACION DE ESTADOS
 

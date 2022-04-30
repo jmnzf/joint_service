@@ -335,9 +335,9 @@ class PurchOrder extends REST_Controller {
         $sqlInsert = "INSERT INTO dcpo(cpo_series, cpo_docnum, cpo_docdate, cpo_duedate, cpo_duedev, cpo_pricelist, cpo_cardcode,
                       cpo_cardname, cpo_currency, cpo_contacid, cpo_slpcode, cpo_empid, cpo_comment, cpo_doctotal, cpo_baseamnt, cpo_taxtotal,
                       cpo_discprofit, cpo_discount, cpo_createat, cpo_baseentry, cpo_basetype, cpo_doctype, cpo_idadd, cpo_adress, cpo_paytype,
-                      cpo_attch,cpo_createby)VALUES(:cpo_series, :cpo_docnum, :cpo_docdate, :cpo_duedate, :cpo_duedev, :cpo_pricelist, :cpo_cardcode, :cpo_cardname,
+                      cpo_attch,cpo_createby,cpo_correl, cpo_date_inv, cpo_date_del, cpo_place_del)VALUES(:cpo_series, :cpo_docnum, :cpo_docdate, :cpo_duedate, :cpo_duedev, :cpo_pricelist, :cpo_cardcode, :cpo_cardname,
                       :cpo_currency, :cpo_contacid, :cpo_slpcode, :cpo_empid, :cpo_comment, :cpo_doctotal, :cpo_baseamnt, :cpo_taxtotal, :cpo_discprofit, :cpo_discount,
-                      :cpo_createat, :cpo_baseentry, :cpo_basetype, :cpo_doctype, :cpo_idadd, :cpo_adress, :cpo_paytype, :cpo_attch,:cpo_createby)";
+                      :cpo_createat, :cpo_baseentry, :cpo_basetype, :cpo_doctype, :cpo_idadd, :cpo_adress, :cpo_paytype, :cpo_attch,:cpo_createby,:cpo_correl, :cpo_date_inv, :cpo_date_del, :cpo_place_del)";
 
 
 				// Se Inicia la transaccion,
@@ -375,7 +375,11 @@ class PurchOrder extends REST_Controller {
               ':cpo_adress' => isset($Data['cpo_adress'])?$Data['cpo_adress']:NULL,
               ':cpo_paytype' => is_numeric($Data['cpo_paytype'])?$Data['cpo_paytype']:0,
 							':cpo_createby' => isset($Data['cpo_createby'])?$Data['cpo_createby']:NULL,
-              ':cpo_attch' => $this->getUrl(count(trim(($Data['cpo_attch']))) > 0 ? $Data['cpo_attch']:NULL, $resMainFolder[0]['main_folder'])
+              ':cpo_attch' => $this->getUrl(count(trim(($Data['cpo_attch']))) > 0 ? $Data['cpo_attch']:NULL, $resMainFolder[0]['main_folder']),
+							'cpo_correl' => isset($Data['cpo_correl'])?$Data['cpo_correl']:NULL,
+							'cpo_date_inv' => $this->validateDate($Data['cpo_date_inv'])?$Data['cpo_date_inv']:NULL,
+							'cpo_date_del' => $this->validateDate($Data['cpo_date_del'])?$Data['cpo_date_del']:NULL,
+							'cpo_place_del' => isset($Data['cpo_place_del'])?$Data['cpo_place_del']:NULL
 
 						));
 
@@ -506,6 +510,7 @@ class PurchOrder extends REST_Controller {
 							));
 
 							if( isset($resDOrigen[0]) ){
+
 								$sqlDInicio = "SELECT *
 															 FROM tbmd
 															 WHERE bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
@@ -521,15 +526,36 @@ class PurchOrder extends REST_Controller {
 																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
 																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
 
+								$bmd_tdi = 0;
+								$bmd_ndi = 0;
+								$bmd_doctypeo = 0;
+								$bmd_docentryo = 0;
+
+								if ( !isset($resDInicio[0]['bmd_tdi']) ){
+
+									$bmd_tdi = $Data['cpo_basetype'];
+									$bmd_ndi = $Data['cpo_baseentry'];
+									$bmd_doctypeo = 0;
+									$bmd_docentryo = 0;
+
+								}else{
+
+									$bmd_doctypeo  = $resDOrigen[0]['pap_basetype']; //ORIGEN
+									$bmd_docentryo = $resDOrigen[0]['pap_baseentry'];  //ORIGEN
+									$bmd_tdi = $resDInicio[0]['bmd_tdi']; // DOCUMENTO INICIAL
+									$bmd_ndi = $resDInicio[0]['bmd_ndi']; // DOCUMENTO INICIAL
+
+								}
+
 								$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
 									':bmd_doctype' => is_numeric($Data['cpo_doctype'])?$Data['cpo_doctype']:0,
 									':bmd_docentry' => $resInsert,
 									':bmd_createat' => $this->validateDate($Data['cpo_createat'])?$Data['cpo_createat']:NULL,
-									':bmd_doctypeo' => $resDOrigen[0]['pap_basetype'], //ORIGEN
-									':bmd_docentryo' => $resDOrigen[0]['pap_baseentry'],  //ORIGEN
-									':bmd_tdi' => $resDInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
-									':bmd_ndi' => $resDInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+									':bmd_doctypeo' => $bmd_doctypeo, //ORIGEN
+									':bmd_docentryo' => $bmd_docentryo,  //ORIGEN
+									':bmd_tdi' => $bmd_tdi, // DOCUMENTO INICIAL
+									':bmd_ndi' => $bmd_ndi, // DOCUMENTO INICIAL
 									':bmd_docnum' => $DocNumVerificado,
 									':bmd_doctotal' => is_numeric($Data['cpo_doctotal'])?$Data['cpo_doctotal']:0,
 									':bmd_cardcode' => isset($Data['cpo_cardcode'])?$Data['cpo_cardcode']:NULL,
@@ -1372,9 +1398,9 @@ class PurchOrder extends REST_Controller {
 		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
 									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
 									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
-									pap_attch,pap_createby,pap_origen,pap_qtyrq,pap_qtyap,pap_model)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									pap_attch,pap_createby,pap_origen,pap_qtyrq,pap_qtyap,pap_model,pap_correl, pap_date_inv, pap_date_del, pap_place_del)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
 									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
-									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen,:pap_qtyrq,:pap_qtyap,:pap_model)";
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen,:pap_qtyrq,:pap_qtyap,:pap_model,:pap_correl, :pap_date_inv, :pap_date_del, :pap_place_del)";
 
 		// Se Inicia la transaccion,
 		// Todas las consultas de modificacion siguientes
@@ -1415,7 +1441,12 @@ class PurchOrder extends REST_Controller {
 					':pap_origen' => is_numeric($Encabezado[$prefijoe.'_doctype'])?$Encabezado[$prefijoe.'_doctype']:0,
 					':pap_qtyrq' => $Cantidad,
 					':pap_qtyap' => $CantidadAP,
-					':pap_model' => $Model
+					':pap_model' => $Model,
+					':pap_correl' => isset($Encabezado[$prefijoe.'_correl'])?$Encabezado[$prefijoe.'_correl']:NULL,
+					':pap_date_inv' => $this->validateDate($Encabezado[$prefijoe.'_date_inv'])?$Encabezado[$prefijoe.'_date_inv']:NULL,
+					':pap_date_del' => $this->validateDate($Encabezado[$prefijoe.'_date_del'])?$Encabezado[$prefijoe.'_date_del']:NULL,
+					':pap_place_del' => isset($Encabezado[$prefijoe.'_place_del'])?$Encabezado[$prefijoe.'_place_del']:NULL
+
 
 				));
 

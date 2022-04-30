@@ -19,6 +19,7 @@ class PurchaseNd extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -111,6 +112,25 @@ class PurchaseNd extends REST_Controller {
 
 					return;
 			}
+			//
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['cnd_duedev'], $Data['cnd_docdate'],$Data['cnd_duedate'],0);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
 			//
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -1275,6 +1295,7 @@ class PurchaseNd extends REST_Controller {
 										$MontoSysDB = 0;
 										$MontoSysCR = 0;
 										$TotalDoc = $Data['cnd_doctotal'];
+										$TotalDoc2 = 0;
 										$TotalDocOri = $TotalDoc;
 
 										$cuentaCxP = $rescuentaCxP[0]['mgs_acct'];
@@ -1290,7 +1311,9 @@ class PurchaseNd extends REST_Controller {
 												$MontoSysCR = $TotalDocOri;
 										}
 
-
+									  if ($Data['cnd_basetype'] == 15) {
+										 $TotalDoc2 = $TotalDoc;
+									  }
 
 										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1324,8 +1347,8 @@ class PurchaseNd extends REST_Controller {
 												':ac1_accperiod' => 1,
 												':ac1_close' => 0,
 												':ac1_cord' => 0,
-												':ac1_ven_debit' => 1,
-												':ac1_ven_credit' => 1,
+												':ac1_ven_debit' => round($TotalDoc2,2),
+												':ac1_ven_credit' => round($TotalDoc,2),
 												':ac1_fiscal_acct' => 0,
 												':ac1_taxid' => 1,
 												':ac1_isrti' => 0,
@@ -1456,8 +1479,8 @@ class PurchaseNd extends REST_Controller {
 											':ac1_accperiod' => 1,
 											':ac1_close' => 0,
 											':ac1_cord' => 0,
-											':ac1_ven_debit' => 1,
-											':ac1_ven_credit' => 1,
+											':ac1_ven_debit' => 0,
+											':ac1_ven_credit' => 0,
 											':ac1_fiscal_acct' => 0,
 											':ac1_taxid' => 1,
 											':ac1_isrti' => 0,

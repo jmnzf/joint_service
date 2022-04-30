@@ -19,6 +19,7 @@ class SalesInv extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -121,6 +122,24 @@ class SalesInv extends REST_Controller {
 
 					return;
 			}
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['dvf_duedev'], $Data['dvf_docdate'],$Data['dvf_duedate'],1);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
 			//
 
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
@@ -982,26 +1001,6 @@ class SalesInv extends REST_Controller {
 
 
 
-									// se busca la cuenta contable del costoInventario y costoCosto
-									// $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-									//
-									// $resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['fv1_itemcode']));
-									//
-									// if(!isset($resArticulo[0])){
-									//
-									// 			$this->pedeo->trans_rollback();
-									//
-									// 			$respuesta = array(
-									// 				'error'   => true,
-									// 				'data' => $resArticulo,
-									// 				'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro la cuenta contable (costo, inventario) del grupo de articulo para el item '.$detail['fv1_itemcode']
-									// 			);
-									//
-									// 			 $this->response($respuesta);
-									//
-									// 			 return;
-									// }
-
 									// VALIDANDO ITEM INVENTARIABLE
 									if ( $ManejaInvetario == 1 ){
 										$DetalleCostoInventario->ac1_account = is_numeric($detail['fv1_acctcode'])?$detail['fv1_acctcode']: 0;
@@ -1382,23 +1381,6 @@ class SalesInv extends REST_Controller {
 
 						//Procedimiento para llenar Impuestos
 						//
-						// $cuentaIVAAsumido = "SELECT pge_acc_impas FROM  pgem";
-						// $rescuentaIVAAsumido = $this->pedeo->queryTable($cuentaIVAAsumido,array());
-						//
-						// if(!isset($rescuentaIVAAsumido[0])){
-						// 		$this->pedeo->trans_rollback();
-						//
-						// 		$respuesta = array(
-						// 			'error'   => true,
-						// 			'data'	  => $rescuentaIVAAsumido,
-						// 			'mensaje'	=> 'No se encontro la cuenta contable para el IVA asumido'
-						// 		);
-						//
-						// 		 $this->response($respuesta);
-						//
-						// 		 return;
-						// }
-
 
 						$granTotalIva = 0;
 
@@ -2515,11 +2497,11 @@ class SalesInv extends REST_Controller {
 
 
 							$sqlEstado1 = "SELECT
-																			       count(t1.vc1_itemcode) item,
-																			       sum(t1.vc1_quantity) cantidad
-																			from dvct t0
-																			inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-																			where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
+														count(t1.vc1_itemcode) item,
+														sum(t1.vc1_quantity) cantidad
+														from dvct t0
+														inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+														where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
 
 							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
@@ -2810,10 +2792,7 @@ class SalesInv extends REST_Controller {
 												 $cantidad_fact1 = $resEstado2[0]['cantidad'];
 
 
-											 //	print_r($resDev2);
-													// print_r($item_fact1);
-													// print_r($cantidad_del1);
-													// print_r($cantidad_fact1);exit();die();
+
 
 																		if($item_del1 == $item_fact1  &&  $cantidad_del1 ==  $cantidad_fact1){
 

@@ -19,6 +19,7 @@ class AccountingAccent extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -55,6 +56,26 @@ class AccountingAccent extends REST_Controller {
 
             return;
         }
+
+				//
+				//VALIDANDO PERIODO CONTABLE
+				$periodo = $this->generic->ValidatePeriod($Data['mac_legal_date'], $Data['mac_doc_date'],$Data['mac_doc_duedate'],0);
+
+				if( isset($periodo['error']) && $periodo['error'] == false){
+
+				}else{
+					$respuesta = array(
+						'error'   => true,
+						'data'    => [],
+						'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+				}
+				//PERIODO CONTABLE
+				//
 
 
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
@@ -108,8 +129,8 @@ class AccountingAccent extends REST_Controller {
 
 				$this->pedeo->trans_begin();
 
-        $sqlInsert = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
-                      VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+        $sqlInsert = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, mac_currency, mac_doctype)
+                      VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :mac_currency, :mac_doctype)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -140,15 +161,20 @@ class AccountingAccent extends REST_Controller {
             ':mac_create_date' => $this->validateDate($Data['mac_create_date'])?$Data['mac_create_date']:NULL,
             ':mac_made_usuer' => isset($Data['mac_made_usuer'])?$Data['mac_made_usuer']:NULL,
             ':mac_update_date' => $this->validateDate($Data['mac_update_date'])?$Data['mac_update_date']:NULL,
-            ':mac_update_user' => isset($Data['mac_update_user'])?$Data['mac_update_user']:NULL
+            ':mac_update_user' => isset($Data['mac_update_user'])?$Data['mac_update_user']:NULL,
+						':mac_currency' => isset($Data['mac_currency'])?$Data['mac_currency']:NULL,
+						':mac_doctype' => 18
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0 ){
 
             foreach ($ContenidoDetalle as $key => $detail) {
 
-                $sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref)
-                                    VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref)";
+                $sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type)
+                                    VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type)";
+
+
+
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
@@ -165,9 +191,9 @@ class AccountingAccent extends REST_Controller {
                     ':ac1_credit_import' => is_numeric($detail['ac1_credit_import'])?$detail['ac1_credit_import']:0,
                     ':ac1_debit_importsys' => is_numeric($detail['ac1_debit_importsys'])?$detail['ac1_debit_importsys']:0,
                     ':ac1_credit_importsys' => is_numeric($detail['ac1_credit_importsys'])?$detail['ac1_credit_importsys']:0,
-                    ':ac1_font_key' => is_numeric($detail['ac1_font_key'])?$detail['ac1_font_key']:0,
+                    ':ac1_font_key' => $resInsert,
                     ':ac1_font_line' => is_numeric($detail['ac1_font_line'])?$detail['ac1_font_line']:0,
-                    ':ac1_font_type' => is_numeric($detail['ac1_font_type'])?$detail['ac1_font_type']:0,
+                    ':ac1_font_type' => 18,
                     ':ac1_accountvs' => is_numeric($detail['ac1_accountvs'])?$detail['ac1_accountvs']:0,
                     ':ac1_doctype' => is_numeric($detail['ac1_doctype'])?$detail['ac1_doctype']:0,
                     ':ac1_ref1' => isset($detail['ac1_ref1'])?$detail['ac1_ref1']:NULL,
@@ -182,15 +208,16 @@ class AccountingAccent extends REST_Controller {
                     ':ac1_accperiod' => is_numeric($detail['ac1_accperiod'])?$detail['ac1_accperiod']:NULL,
                     ':ac1_close' => is_numeric($detail['ac1_close'])?$detail['ac1_close']:0,
                     ':ac1_cord' => is_numeric($detail['ac1_cord'])?$detail['ac1_cord']:0,
-                    ':ac1_ven_debit' => is_numeric($detail['ac1_ven_debit'])?$detail['ac1_ven_debit']:0,
-                    ':ac1_ven_credit' => is_numeric($detail['ac1_ven_credit'])?$detail['ac1_ven_credit']:0,
+                    ':ac1_ven_debit' => is_numeric($detail['ac1_debit'])?round($detail['ac1_debit'], 2):0,
+                    ':ac1_ven_credit' => is_numeric($detail['ac1_credit'])?round($detail['ac1_credit'], 2):0,
                     ':ac1_fiscal_acct' => is_numeric($detail['ac1_fiscal_acct'])?$detail['ac1_fiscal_acct']:0,
                     ':ac1_taxid' => is_numeric($detail['ac1_taxid'])?$detail['ac1_taxid']:0,
                     ':ac1_isrti' => is_numeric($detail['ac1_isrti'])?$detail['ac1_isrti']:0,
                     ':ac1_basert' => is_numeric($detail['ac1_basert'])?$detail['ac1_basert']:0,
                     ':ac1_mmcode' => is_numeric($detail['ac1_mmcode'])?$detail['ac1_mmcode']:0,
                     ':ac1_legal_num' => isset($detail['ac1_legal_num'])?$detail['ac1_legal_num']:NULL,
-                    ':ac1_codref' => is_numeric($detail['ac1_codref'])?$detail['ac1_codref']:0
+                    ':ac1_codref' => is_numeric($detail['ac1_codref'])?$detail['ac1_codref']:0,
+										':ac1_card_type' => isset($detail['ac1_card_type'])?$detail['ac1_card_type']:0
               ));
 
 							if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -385,7 +412,7 @@ class AccountingAccent extends REST_Controller {
 																    when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
 																    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
 																    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
-																end numero_origen,																
+																end numero_origen,
 																COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
 																from mac1 t0
 																left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
@@ -446,80 +473,360 @@ class AccountingAccent extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT DISTINCT
-																t0.ac1_trans_id docnum,
-																t0.ac1_trans_id numero_transaccion,
-																case
-																    when coalesce(t0.ac1_font_type,0) = 3 then 'Entrega'
-																    when coalesce(t0.ac1_font_type,0) = 4 then 'Devolucion'
-																    when coalesce(t0.ac1_font_type,0) = 5 then 'Factura Cliente'
-																    when coalesce(t0.ac1_font_type,0) = 6 then 'Nota Credito Cliente'
-																    when coalesce(t0.ac1_font_type,0) = 7 then 'Nota Debito Cliente'
-																    when coalesce(t0.ac1_font_type,0) = 8 then 'Salida Mercancia'
-																    when coalesce(t0.ac1_font_type,0) = 9 then 'Entrada Mercancia'
-																    when coalesce(t0.ac1_font_type,0) = 13 then 'Entrada Compras'
-																    when coalesce(t0.ac1_font_type,0) = 14 then 'Devolucion Compra'
-																    when coalesce(t0.ac1_font_type,0) = 15 then 'Factura Proveedores'
-																    when coalesce(t0.ac1_font_type,0) = 16 then 'Nota Credito Compras'
-																    when coalesce(t0.ac1_font_type,0) = 17 then 'Nota Debito Compras'
-																    when coalesce(t0.ac1_font_type,0) = 18 then 'Asiento Manual'
-																    when coalesce(t0.ac1_font_type,0) = 19 then 'Pagos Efectuado'
-																    when coalesce(t0.ac1_font_type,0) = 20 then 'Pagos Recibidos'
-																end origen,
-																case
-																    when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_docnum
-																    when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_docnum
-																    when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_docnum
-																    when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_docnum
-																    when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_docnum
-																    when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_docnum
-																    when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_docnum
-																    when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_docnum
-																    when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_docnum
-																    when coalesce(t0.ac1_font_type,0) = 15 then t14.cnc_docnum
-																    when coalesce(t0.ac1_font_type,0) = 16 then t15.cnd_docnum
-																    when coalesce(t0.ac1_font_type,0) = 17 then t12.cec_docnum
-																    when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
-																    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
-																    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
-																end numero_origen,
-																case
-																    when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_currency
-																    when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_currency
-																    when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_currency
-																    when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_currency
-																    when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_currency
-																    when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_currency
-																    when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_currency
-																    when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_currency
-																    when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_currency
-																    when coalesce(t0.ac1_font_type,0) = 15 then t7.cfc_currency
-																    when coalesce(t0.ac1_font_type,0) = 16 then t14.cnc_currency
-																    when coalesce(t0.ac1_font_type,0) = 17 then t15.cnd_currency
-																    when coalesce(t0.ac1_font_type,0) = 18 then 'BS'
-																    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_currency
-																    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_currency
-																end currency,
-																coalesce(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*,
-																tsa_value
-																from mac1 t0
-																left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
-																left join dvdv t2 on t0.ac1_font_key = t2.vdv_docentry and t0.ac1_font_type = t2.vdv_doctype
-																left join dvfv t3 on t0.ac1_font_key = t3.dvf_docentry and t0.ac1_font_type = t3.dvf_doctype
-																left join dacc t4 on t0.ac1_account = t4.acc_code
-																left join misi t5 on t0.ac1_font_key = t5.isi_docentry and t0.ac1_font_type = t5.isi_doctype
-																left join miei t6 on t0.ac1_font_key = t6.iei_docentry and t0.ac1_font_type = t6.iei_doctype
-																left join dcfc t7 on t0.ac1_font_key = t7.cfc_docentry and t0.ac1_font_type = t7.cfc_doctype
-																left join gbpe t8 on t0.ac1_font_key = t8.bpe_docentry and t0.ac1_font_type = t8.bpe_doctype
-																left join gbpr t9 on t0.ac1_font_key = t9.bpr_docentry and t0.ac1_font_type = t9.bpr_doctype
-																left join dvnc t10 on t0.ac1_font_key = t10.vnc_docentry and t0.ac1_font_type = t10.vnc_doctype
-																left join dvnd t11 on t0.ac1_font_key = t11.vnd_docentry and t0.ac1_font_type = t11.vnd_doctype
-																left join dcec t12 on t0.ac1_font_key = t12.cec_docentry and t0.ac1_font_type = t12.cec_doctype
-																left join dcdc t13 on t0.ac1_font_key = t13.cdc_docentry and t0.ac1_font_type = t13.cdc_doctype
-																left join dcnc t14 on t0.ac1_font_key = t14.cnc_docentry and t0.ac1_font_type = t14.cnc_doctype
-																left join dcnd t15 on t0.ac1_font_key = t15.cnd_docentry and t0.ac1_font_type = t15.cnd_doctype
-																left join tasa on t0.ac1_doc_date = tsa_date
-																WHERE ac1_trans_id =:ac1_trans_id";
+				// $sqlSelect = " SELECT DISTINCT
+				// 												t0.ac1_trans_id docnum,
+				// 												t0.ac1_trans_id numero_transaccion,
+				// 												case
+				// 												    when coalesce(t0.ac1_font_type,0) = 3 then 'Entrega'
+				// 												    when coalesce(t0.ac1_font_type,0) = 4 then 'Devolucion'
+				// 												    when coalesce(t0.ac1_font_type,0) = 5 then 'Factura Cliente'
+				// 												    when coalesce(t0.ac1_font_type,0) = 6 then 'Nota Credito Cliente'
+				// 												    when coalesce(t0.ac1_font_type,0) = 7 then 'Nota Debito Cliente'
+				// 												    when coalesce(t0.ac1_font_type,0) = 8 then 'Salida Mercancia'
+				// 												    when coalesce(t0.ac1_font_type,0) = 9 then 'Entrada Mercancia'
+				// 												    when coalesce(t0.ac1_font_type,0) = 13 then 'Entrada Compras'
+				// 												    when coalesce(t0.ac1_font_type,0) = 14 then 'Devolucion Compra'
+				// 												    when coalesce(t0.ac1_font_type,0) = 15 then 'Factura Proveedores'
+				// 												    when coalesce(t0.ac1_font_type,0) = 16 then 'Nota Credito Compras'
+				// 												    when coalesce(t0.ac1_font_type,0) = 17 then 'Nota Debito Compras'
+				// 												    when coalesce(t0.ac1_font_type,0) = 18 then 'Asiento Manual'
+				// 												    when coalesce(t0.ac1_font_type,0) = 19 then 'Pagos Efectuado'
+				// 												    when coalesce(t0.ac1_font_type,0) = 20 then 'Pagos Recibidos'
+				// 												end origen,
+				// 												case
+				// 												    when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 15 then t14.cnc_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 16 then t15.cnd_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 17 then t12.cec_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
+				// 												    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
+				// 												    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
+				// 												end numero_origen,
+				// 												case
+				// 												    when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 15 then t7.cfc_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 16 then t14.cnc_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 17 then t15.cnd_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 18 then 'BS'
+				// 												    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_currency
+				// 												    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_currency
+				// 												end currency,
+				// 												coalesce(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*,
+				// 												tsa_value
+				// 												from mac1 t0
+				// 												left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
+				// 												left join dvdv t2 on t0.ac1_font_key = t2.vdv_docentry and t0.ac1_font_type = t2.vdv_doctype
+				// 												left join dvfv t3 on t0.ac1_font_key = t3.dvf_docentry and t0.ac1_font_type = t3.dvf_doctype
+				// 												left join dacc t4 on t0.ac1_account = t4.acc_code
+				// 												left join misi t5 on t0.ac1_font_key = t5.isi_docentry and t0.ac1_font_type = t5.isi_doctype
+				// 												left join miei t6 on t0.ac1_font_key = t6.iei_docentry and t0.ac1_font_type = t6.iei_doctype
+				// 												left join dcfc t7 on t0.ac1_font_key = t7.cfc_docentry and t0.ac1_font_type = t7.cfc_doctype
+				// 												left join gbpe t8 on t0.ac1_font_key = t8.bpe_docentry and t0.ac1_font_type = t8.bpe_doctype
+				// 												left join gbpr t9 on t0.ac1_font_key = t9.bpr_docentry and t0.ac1_font_type = t9.bpr_doctype
+				// 												left join dvnc t10 on t0.ac1_font_key = t10.vnc_docentry and t0.ac1_font_type = t10.vnc_doctype
+				// 												left join dvnd t11 on t0.ac1_font_key = t11.vnd_docentry and t0.ac1_font_type = t11.vnd_doctype
+				// 												left join dcec t12 on t0.ac1_font_key = t12.cec_docentry and t0.ac1_font_type = t12.cec_doctype
+				// 												left join dcdc t13 on t0.ac1_font_key = t13.cdc_docentry and t0.ac1_font_type = t13.cdc_doctype
+				// 												left join dcnc t14 on t0.ac1_font_key = t14.cnc_docentry and t0.ac1_font_type = t14.cnc_doctype
+				// 												left join dcnd t15 on t0.ac1_font_key = t15.cnd_docentry and t0.ac1_font_type = t15.cnd_doctype
+				// 												left join tasa on t0.ac1_doc_date = tsa_date
+				// 												WHERE ac1_trans_id =:ac1_trans_id";
+
+				$sqlSelect = "--ENTREGA DE VENTAS
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dvem.vem_docnum as numero_origen,
+											dvem.vem_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dvem.vem_currency,dvem.vem_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dvem
+											on dvem.vem_doctype = mac1.ac1_font_type
+											and dvem.vem_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											-- DEVOLUCION DE VENTAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dvdv.vdv_docnum as numero_origen,
+											dvdv.vdv_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dvdv.vdv_currency,dvdv.vdv_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dvdv
+											on dvdv.vdv_doctype = mac1.ac1_font_type
+											and dvdv.vdv_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--FACTURA DE VENTAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dvfv.dvf_docnum as numero_origen,
+											dvfv.dvf_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dvfv.dvf_currency,dvfv.dvf_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dvfv
+											on dvfv.dvf_doctype = mac1.ac1_font_type
+											and dvfv.dvf_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--NOTA CREDITO DE VENTAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dvnc.vnc_docnum as numero_origen,
+											dvnc.vnc_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dvnc.vnc_currency,dvnc.vnc_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dvnc
+											on dvnc.vnc_doctype = mac1.ac1_font_type
+											and dvnc.vnc_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--NOTA DEBITO DE VENTAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dvnd.vnd_docnum as numero_origen,
+											dvnd.vnd_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dvnd.vnd_currency,dvnd.vnd_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dvnd
+											on dvnd.vnd_doctype = mac1.ac1_font_type
+											and dvnd.vnd_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--ENTRADA DE COMPRAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dcec.cec_docnum as numero_origen,
+											dcec.cec_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dcec.cec_currency,dcec.cec_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dcec
+											on dcec.cec_doctype = mac1.ac1_font_type
+											and dcec.cec_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--DEVOLUCION DE COMPRAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dcdc.cdc_docnum as numero_origen,
+											dcdc.cdc_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dcdc.cdc_currency,dcdc.cdc_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dcdc
+											on dcdc.cdc_doctype = mac1.ac1_font_type
+											and dcdc.cdc_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--FACTURA DE COMPRAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dcfc.cfc_docnum as numero_origen,
+											dcfc.cfc_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dcfc.cfc_currency,dcfc.cfc_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dcfc
+											on dcfc.cfc_doctype = mac1.ac1_font_type
+											and dcfc.cfc_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--NOTA CREDITO DE COMPRAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dcnc.cnc_docnum as numero_origen,
+											dcnc.cnc_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dcnc.cnc_currency,dcnc.cnc_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dcnc
+											on dcnc.cnc_doctype = mac1.ac1_font_type
+											and dcnc.cnc_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--NOTA DEBITO DE COMPRAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dcnd.cnd_docnum as numero_origen,
+											dcnd.cnd_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dcnd.cnd_currency,dcnd.cnd_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dcnd
+											on dcnd.cnd_doctype = mac1.ac1_font_type
+											and dcnd.cnd_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--SALIDA DE INVENTARIO
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											misi.isi_docnum as numero_origen,
+											misi.isi_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(misi.isi_currency,misi.isi_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join misi
+											on misi.isi_doctype = mac1.ac1_font_type
+											and misi.isi_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--ENTRADA DE INVENTARIO
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											miei.iei_docnum as numero_origen,
+											miei.iei_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(miei.iei_currency,miei.iei_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join miei
+											on miei.iei_doctype = mac1.ac1_font_type
+											and miei.iei_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--GESTION DE BANCO PAGOS EFECTUADOS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											gbpe.bpe_docnum as numero_origen,
+											gbpe.bpe_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(gbpe.bpe_currency,gbpe.bpe_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join gbpe
+											on gbpe.bpe_doctype = mac1.ac1_font_type
+											and gbpe.bpe_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--GESTION DE BANCO PAGOS RECIBIDOS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											gbpr.bpr_docnum as numero_origen,
+											gbpr.bpr_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(gbpr.bpr_currency,gbpr.bpr_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join gbpr
+											on gbpr.bpr_doctype = mac1.ac1_font_type
+											and gbpr.bpr_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
 

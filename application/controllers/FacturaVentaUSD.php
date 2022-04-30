@@ -597,7 +597,7 @@ class FacturaVentaUSD extends REST_Controller {
 								</th>
 						</tr>
         </table>
-
+				
 				<br><br>
 				<table border=1 width="50%">
 					<tr>

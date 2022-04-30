@@ -19,6 +19,7 @@ class PaymentsReceived extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -111,6 +112,25 @@ class PaymentsReceived extends REST_Controller {
 
 					return;
 			}
+			//
+			//
+			//VALIDANDO PERIODO CONTABLE
+			$periodo = $this->generic->ValidatePeriod($Data['bpr_docdate'], $Data['bpr_docdate'],$Data['bpr_docdate'],0);
+
+			if( isset($periodo['error']) && $periodo['error'] == false){
+
+			}else{
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			//PERIODO CONTABLE
 			//
 				//BUSCANDO LA NUMERACION DEL DOCUMENTO
 			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
@@ -426,51 +446,43 @@ class PaymentsReceived extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
-
 								// SOLO SI NO ES UN ANTICIPO CLIENTE
 								if($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0){
 											//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
-											$VlrPayFact = "SELECT COALESCE(dvf_paytoday,0) as dvf_paytoday,dvf_doctotal from dvfv WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
-											$resVlrPayFact = $this->pedeo->queryTable($VlrPayFact, array(
-												':dvf_docentry' => $detail['pr1_docentry'],
-												':dvf_doctype' => $detail['pr1_doctype']
-											));
+											if($detail['pr1_doctype'] == 5) { // SOLO CUANDO ES UNA FACTURA
 
+												$resVlrPay = $this->generic->validateBalance($detail['pr1_docentry'],$detail['pr1_doctype'],'dvfv','dvf',$detail['pr1_vlrpaid']);
+												if( isset( $resVlrPay['error'] ) ){
 
-											if(isset($resVlrPayFact[0])){
+															if( $resVlrPay['error'] === false ){
 
-												$VlrPaidActual = $detail['pr1_vlrpaid'];
-												$VlrPaidFact = $resVlrPayFact[0]['dvf_paytoday'];
+															}else{
+																$this->pedeo->trans_rollback();
 
-												$SumVlr =  $VlrPaidActual + $VlrPaidFact ;
+																$respuesta = array(
+																		'error'   => true,
+																		'data'    => [],
+																		'mensaje'	=> $resVlrPay['mensaje']);
 
-												if($SumVlr <= $resVlrPayFact[0]['dvf_doctotal'] ){
+																$this->response($respuesta);
 
+																return;
+
+															}
 
 												}else{
+
 													$this->pedeo->trans_rollback();
 
 													$respuesta = array(
-														'error'   => true,
-														'data' => '',
-														'mensaje'	=> 'El valor a pagar no puede ser mayor al saldo de la factura'
-													);
-
-													 $this->response($respuesta);
-
-													 return;
-												}
-
-											}else{
-												$this->pedeo->trans_rollback();
-												$respuesta = array(
-													'error'   => true,
-													'data' => $resVlrPayFact,
-													'mensaje'	=> 'No tiene valor para realizar la operacion');
+															'error'   => true,
+															'data'    => [],
+															'mensaje'	=> 'No se pudo validar el saldo actual del documento '.$detail['pe1_docentry']);
 
 													$this->response($respuesta);
 
-												 return;
+													return;
+												}
 
 											}
 								}
@@ -500,72 +512,377 @@ class PaymentsReceived extends REST_Controller {
 												':pr1_accountid' => is_numeric($detail['pr1_accountid'])?$detail['pr1_accountid']:0
 
                 ));
+
 								// Se verifica que el detalle no de error insertando //
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
-									  	// SOLO SI NO ES UN ANTICIPO
+									  	// SI NO ES UN ANTICIPO
 											if($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0){
-														$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
-
-														$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
-
-															':dvf_paytoday' => $detail['pr1_vlrpaid'],
-															':dvf_docentry' => $detail['pr1_docentry'],
-															':dvf_doctype'  => $detail['pr1_doctype']
 
 
-														));
+														//MOVIMIENTO DE DOCUMENTOS
+														if($detail['pr1_doctype'] == 5 || $detail['pr1_doctype'] == 6 || $detail['pr1_doctype'] == 7){
+															//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+															if( isset($detail['pr1_docentry']) && is_numeric($detail['pr1_docentry']) && isset($detail['pr1_doctype']) && is_numeric($detail['pr1_doctype']) ){
 
-														if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
+																$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+																$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
+																	 ':bmd_doctype' => $detail['pr1_doctype'],
+																	 ':bmd_docentry' => $detail['pr1_docentry']
+																));
 
-														}else{
-															$this->pedeo->trans_rollback();
 
-															$respuesta = array(
-																'error'   => true,
-																'data' => $resUpdateFactPay,
-																'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
-															);
+																	if ( isset(	$resDocInicio[0] ) ){
 
-															 $this->response($respuesta);
+																		$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+																										bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																										VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+																										:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
 
-															 return;
+																		$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+																			':bmd_doctype' => is_numeric($Data['bpr_doctype'])?$Data['bpr_doctype']:0,
+																			':bmd_docentry' => $resInsert,
+																			':bmd_createat' => $this->validateDate($Data['bpr_createat'])?$Data['bpr_createat']:NULL,
+																			':bmd_doctypeo' => is_numeric($detail['pr1_doctype'])?$detail['pr1_doctype']:0, //ORIGEN
+																			':bmd_docentryo' => is_numeric($detail['pr1_docentry'])?$detail['pr1_docentry']:0,  //ORIGEN
+																			':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+																			':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+																			':bmd_docnum' => $DocNumVerificado,
+																			':bmd_doctotal' => is_numeric($detail['pr1_vlrpaid'])?$detail['pr1_vlrpaid']:0,
+																			':bmd_cardcode' => isset($detail['pr1_tercero'])?$detail['pr1_tercero']:NULL,
+																			':bmd_cardtype' => 1
+																		));
+
+																		if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
+
+																		}else{
+
+																			$this->pedeo->trans_rollback();
+
+																			 $respuesta = array(
+																				 'error'   => true,
+																				 'data' => $resInsertMD,
+																				 'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+																			 );
+
+
+																			 $this->response($respuesta);
+
+																			 return;
+																		}
+
+																	}
+
+																}
+
 														}
+
+															//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+
+														//
+														if($detail['pr1_doctype'] == 5) { // SOLO CUANDO ES UNA FACTURA
+
+															$VlrPay = $detail['pr1_vlrpaid'];
+
+															if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+															}
+
+
+															$sqlUpdateFactPay = "UPDATE  dvfv  SET dvf_paytoday = COALESCE(dvf_paytoday,0)+:dvf_paytoday WHERE dvf_docentry = :dvf_docentry and dvf_doctype = :dvf_doctype";
+
+															$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+																':dvf_paytoday' => $VlrPay,
+																':dvf_docentry' => $detail['pr1_docentry'],
+																':dvf_doctype'  => $detail['pr1_doctype']
+
+
+															));
+
+															if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
+
+															}else{
+																$this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' => $resUpdateFactPay,
+																	'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
+																);
+
+																 $this->response($respuesta);
+
+																 return;
+															}
+														}
+
+														// SE ACTUALIZA EL VALOR DEL CAMPO PAY TODAY EN NOTA CREDITO
+														if($detail['pr1_doctype'] == 6) { // SOLO CUANDO ES UNA NOTA CREDITO
+
+															$VlrPay = $detail['pr1_vlrpaid'];
+
+															if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+															}
+
+															$sqlUpdateFactPay = "UPDATE  dvnc  SET vnc_paytoday = COALESCE(vnc_paytoday,0)+:vnc_paytoday WHERE vnc_docentry = :vnc_docentry and vnc_doctype = :vnc_doctype";
+
+															$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
+
+																':vnc_paytoday' => $VlrPay,
+																':vnc_docentry' => $detail['pr1_docentry'],
+																':vnc_doctype'  => $detail['pr1_doctype']
+
+
+															));
+
+															if(is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1){
+
+															}else{
+																$this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' => $resUpdateFactPay,
+																	'mensaje'	=> 'No se pudo actualizar el valor del pago en la nota credito '.$detail['pr1_docentry']
+																);
+
+																 $this->response($respuesta);
+
+																 return;
+															}
+														}
+
+
 
 
 														// ACTUALIZAR REFERENCIA DE PAGO EN ASIENTO CONTABLE DE LA FACTURA
+														if($detail['pr1_doctype'] == 5) { // SOLO CUANDO ES UNA FACTURA
 
-														$slqUpdateVenDebit = "UPDATE mac1
-																									SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
-																									WHERE ac1_legal_num = :ac1_legal_num
-																									AND ac1_font_key = :ac1_font_key
-																									AND ac1_font_type = :ac1_font_type
-																									AND ac1_account = :ac1_account";
-														$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+															$VlrPay = $detail['pr1_vlrpaid'];
 
-															':ac1_ven_credit' => $detail['pr1_vlrpaid'],
-															':ac1_legal_num' => $detail['pr1_tercero'],
-															':ac1_font_key' => $detail['pr1_docentry'],
-															':ac1_font_type' => $detail['pr1_doctype'],
-															':ac1_account' => $detail['pr1_cuenta']
+															if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+															}
 
-														));
+															$slqUpdateVenDebit = "UPDATE mac1
+																										SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																										WHERE ac1_line_num = :ac1_line_num";
+															$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-														if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+																':ac1_ven_credit' => $VlrPay,
+																':ac1_line_num' => $detail['ac1_line_num']
 
-														}else{
-															$this->pedeo->trans_rollback();
 
-															$respuesta = array(
-																'error'   => true,
-																'data' => $resUpdateFactPay,
-																'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
-															);
+															));
 
-															 $this->response($respuesta);
+															if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
 
-															 return;
+															}else{
+																$this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' => $resUpdateVenDebit,
+																	'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
+																);
+
+																 $this->response($respuesta);
+
+																 return;
+															}
 														}
 
+														// SE ACTUALIZA EL VALOR DEL ANTICIPO PARA IR DESCONTANDO LO USADO
+														// O EN SU DEFECTO TAMBIEN LA NOTA CREDITO
+														if($detail['pr1_doctype'] == 20 || $detail['pr1_doctype'] == 6) {
+
+															$VlrPay = $detail['pr1_vlrpaid'];
+
+															if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+															}
+
+															$slqUpdateVenDebit = "UPDATE mac1
+																										SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																										WHERE ac1_line_num = :ac1_line_num";
+
+															$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+																':ac1_ven_debit' => $VlrPay,
+																':ac1_line_num' => $detail['ac1_line_num']
+
+															));
+
+															if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+															}else{
+																$this->pedeo->trans_rollback();
+
+																$respuesta = array(
+																	'error'   => true,
+																	'data' => $resUpdateFactPay,
+																	'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pr1_docentry']
+																);
+
+																 $this->response($respuesta);
+
+																 return;
+															}
+														}
+														// SE VALIDA SALDOS PARA CERRAR FACTURA
+														if($detail['pr1_doctype'] == 5) {
+
+																		$resEstado = $this->generic->validateBalanceAndClose($detail['pr1_docentry'],$detail['pr1_doctype'],'dvfv','dvf');
+
+																		if(isset($resEstado['error']) && $resEstado['error'] === true){
+																					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+																					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																										':bed_docentry' => $detail['pr1_docentry'],
+																										':bed_doctype' => $detail['pr1_doctype'],
+																										':bed_status' => 3, //ESTADO CERRADO
+																										':bed_createby' => $Data['bpr_createby'],
+																										':bed_date' => date('Y-m-d'),
+																										':bed_baseentry' => $resInsert,
+																										':bed_basetype' => $Data['bpr_doctype']
+																					));
+
+
+																					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+																					}else{
+
+																							 $this->pedeo->trans_rollback();
+
+																								$respuesta = array(
+																									'error'   => true,
+																									'data' => $resInsertEstado,
+																									'mensaje'	=> 'No se pudo registrar el pago'
+																								);
+
+
+																								$this->response($respuesta);
+
+																								return;
+																					}
+
+																		}
+
+														 }
+
+														 // SE VALIDA SALDOS PARA CERRAR NOTA CREDITO
+														 if($detail['pr1_doctype'] == 6) {
+
+															 			 $resEstado = $this->generic->validateBalanceAndClose($detail['pr1_docentry'],$detail['pr1_doctype'],'dvnc','vnc');
+
+																		 if(isset($resEstado['error']) && $resEstado['error'] === true){
+																					 $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																															 VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+																					 $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+																										 ':bed_docentry' => $detail['pr1_docentry'],
+																										 ':bed_doctype' => $detail['pr1_doctype'],
+																										 ':bed_status' => 3, //ESTADO CERRADO
+																										 ':bed_createby' => $Data['bpr_createby'],
+																										 ':bed_date' => date('Y-m-d'),
+																										 ':bed_baseentry' => $resInsert,
+																										 ':bed_basetype' => $Data['bpr_doctype']
+																					 ));
+
+																					 if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+																					 }else{
+
+																								$this->pedeo->trans_rollback();
+
+																								 $respuesta = array(
+																									 'error'   => true,
+																									 'data' => $resInsertEstado,
+																									 'mensaje'	=> 'No se pudo registrar el pago'
+																								 );
+
+
+																								 $this->response($respuesta);
+
+																								 return;
+																					 }
+
+																		 }
+
+															}
+
+															//ASIENTO MANUALES
+															if($detail['pr1_doctype'] == 18){
+
+																$VlrPay = $detail['pr1_vlrpaid'];
+
+																if(trim($Data['bpr_currency']) != $MONEDALOCAL ){
+																	$VlrPay = ($detail['pr1_vlrpaid'] * $TasaDocLoc);
+																}
+
+																if( $detail['ac1_cord'] == 1){
+
+																	$slqUpdateVenDebit = "UPDATE mac1
+																												SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																												WHERE ac1_line_num = :ac1_line_num";
+
+																	$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+																		':ac1_ven_debit' => $VlrPay,
+																		':ac1_line_num'  => $detail['ac1_line_num']
+																	));
+
+																	if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+																	}else{
+																		$this->pedeo->trans_rollback();
+
+																		$respuesta = array(
+																			'error'   => true,
+																			'data' => $resUpdateVenDebit,
+																			'mensaje'	=> 'No se pudo actualizar el valor del pago'.$detail['pr1_docentry']
+																		);
+
+																		 $this->response($respuesta);
+
+																		 return;
+																	}
+																}else if( $detail['ac1_cord'] == 0){
+																	$slqUpdateVenDebit = "UPDATE mac1
+																												SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																												WHERE ac1_line_num = :ac1_line_num";
+
+																	$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+																		':ac1_ven_credit' => $VlrPay,
+																		':ac1_line_num'   => $detail['ac1_line_num']
+																	));
+
+																	if(is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1){
+
+																	}else{
+																		$this->pedeo->trans_rollback();
+
+																		$respuesta = array(
+																			'error'   => true,
+																			'data' 		=> $resUpdateVenDebit,
+																			'mensaje'	=> 'No se pudo actualizar el valor del pago'.$detail['pr1_docentry']
+																		);
+
+																		 $this->response($respuesta);
+
+																		 return;
+																	}
+																}
+															}
+															//ASIENTOS MANUALES
 														//
 											}
 
@@ -598,6 +915,7 @@ class PaymentsReceived extends REST_Controller {
 								$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($DetalleAsientoCuentaTercero->cuentatercero, 0, 1);
 								$DetalleAsientoCuentaTercero->pr1_vlrpaid = is_numeric($detail['pr1_vlrpaid'])?$detail['pr1_vlrpaid']:0;
 								$DetalleAsientoCuentaTercero->pr1_docdate	= $this->validateDate($detail['pr1_docdate'])?$detail['pr1_docdate']:NULL;
+								$DetalleAsientoCuentaTercero->cord	= isset($detail['ac1_cord'])?$detail['ac1_cord']:NULL;
 
 								$llaveAsientoCuentaTercero = $DetalleAsientoCuentaTercero->bpr_cardcode.$DetalleAsientoCuentaTercero->pr1_docentry.$DetalleAsientoCuentaTercero->pr1_doctype;
 
@@ -754,9 +1072,9 @@ class PaymentsReceived extends REST_Controller {
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
 									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => 0,
+									':ac1_font_key' => $resInsert,
 									':ac1_font_line' => 1,
-									':ac1_font_type' => 0,
+									':ac1_font_type' => 20,
 									':ac1_accountvs' => 1,
 									':ac1_doctype' => 18,
 									':ac1_ref1' => "",
@@ -804,7 +1122,7 @@ class PaymentsReceived extends REST_Controller {
 
 					// FIN PROCESO ASIENTO INGRESO
 
-
+					// echo "stop";exit;
 
 
 					if($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0){
@@ -824,6 +1142,7 @@ class PaymentsReceived extends REST_Controller {
 										$TasaOld = 0;
 										$DireferenciaCambio = 0; // SOLO SE USA PARA SABER SI EXISTE UNA DIFERENCIA DE CAMBIO
 										$CuentaDiferenciaCambio = 0;
+										$ac1cord = null;
 
 										foreach ($posicion as $key => $value) {
 
@@ -835,6 +1154,7 @@ class PaymentsReceived extends REST_Controller {
 													$cuenta   = $value->cuentaNaturaleza;
 													$fechaDocumento = $value->pr1_docdate;
 													$cuentaLinea = $value->cuentatercero;
+													$ac1cord = $value->cord;
 
 										}
 
@@ -926,8 +1246,98 @@ class PaymentsReceived extends REST_Controller {
 
 										}
 
-										switch ($cuenta) {
-											case 1:
+										if($doctype == 20 || $doctype == 6) {
+											switch ($cuenta) {
+												case 1:
+													$debito = $TotalPagoRecibido;
+
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysDB = ($debito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysDB = $TotalPagoRecibidoOriginal;
+													}
+
+													break;
+
+												case 2:
+													$debito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysDB = ($debito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysDB = $TotalPagoRecibidoOriginal;
+													}
+													break;
+
+												case 3:
+													$debito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysDB = ($debito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysDB = $TotalPagoRecibidoOriginal;
+													}
+													break;
+
+												case 4:
+													$debito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysDB = ($debito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysDB = $TotalPagoRecibidoOriginal;
+													}
+													break;
+
+												case 5:
+													$debito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysDB = ($debito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysDB = $TotalPagoRecibidoOriginal;
+													}
+													break;
+
+												case 6:
+													$debito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysDB = ($debito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysDB = $TotalPagoRecibidoOriginal;
+													}
+													break;
+
+												case 7:
+													$debito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysDB = ($debito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysDB = $TotalPagoRecibidoOriginal;
+													}
+													break;
+											}
+
+										}else if( $doctype == 18 ){
+
+											if( $ac1cord == 0 ){
 												$credito = $TotalPagoRecibido;
 
 												if(trim($Data['bpr_currency']) != $MONEDASYS ){
@@ -936,83 +1346,113 @@ class PaymentsReceived extends REST_Controller {
 
 												}else{
 
-														$MontoSysCR = $TotalPagoRecibidoOriginal;
+														$MontoSysCR = $TotalPagoOriginal;
 												}
+											}else if( $ac1cord == 1 ){
+												$debito = $TotalPagoRecibido;
 
-												break;
-
-											case 2:
-												$credito = $TotalPagoRecibido;
 												if(trim($Data['bpr_currency']) != $MONEDASYS ){
 
-														$MontoSysCR = ($credito / $TasaLocSys);
+														$MontoSysDB = ($debito / $TasaLocSys);
 
 												}else{
 
-														$MontoSysCR = $TotalPagoRecibidoOriginal;
+														$MontoSysDB = $TotalPagoOriginal;
 												}
-												break;
+											}
 
-											case 3:
-												$credito = $TotalPagoRecibido;
-												if(trim($Data['bpr_currency']) != $MONEDASYS ){
+										}else{
 
-														$MontoSysCR = ($credito / $TasaLocSys);
+											switch ($cuenta) {
+												case 1:
+													$credito = $TotalPagoRecibido;
 
-												}else{
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
 
-														$MontoSysCR = $TotalPagoRecibidoOriginal;
-												}
-												break;
+															$MontoSysCR = ($credito / $TasaLocSys);
 
-											case 4:
-												$credito = $TotalPagoRecibido;
-												if(trim($Data['bpr_currency']) != $MONEDASYS ){
+													}else{
 
-														$MontoSysCR = ($credito / $TasaLocSys);
+															$MontoSysCR = $TotalPagoRecibidoOriginal;
+													}
 
-												}else{
+													break;
 
-														$MontoSysCR = $TotalPagoRecibidoOriginal;
-												}
-												break;
+												case 2:
+													$credito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
 
-											case 5:
-												$credito = $TotalPagoRecibido;
-												if(trim($Data['bpr_currency']) != $MONEDASYS ){
+															$MontoSysCR = ($credito / $TasaLocSys);
 
-														$MontoSysCR = ($credito / $TasaLocSys);
+													}else{
 
-												}else{
+															$MontoSysCR = $TotalPagoRecibidoOriginal;
+													}
+													break;
 
-														$MontoSysCR = $TotalPagoRecibidoOriginal;
-												}
-												break;
+												case 3:
+													$credito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
 
-											case 6:
-												$credito = $TotalPagoRecibido;
-												if(trim($Data['bpr_currency']) != $MONEDASYS ){
+															$MontoSysCR = ($credito / $TasaLocSys);
 
-														$MontoSysCR = ($credito / $TasaLocSys);
+													}else{
 
-												}else{
+															$MontoSysCR = $TotalPagoRecibidoOriginal;
+													}
+													break;
 
-														$MontoSysCR = $TotalPagoRecibidoOriginal;
-												}
-												break;
+												case 4:
+													$credito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
 
-											case 7:
-												$credito = $TotalPagoRecibido;
-												if(trim($Data['bpr_currency']) != $MONEDASYS ){
+															$MontoSysCR = ($credito / $TasaLocSys);
 
-														$MontoSysCR = ($credito / $TasaLocSys);
+													}else{
 
-												}else{
+															$MontoSysCR = $TotalPagoRecibidoOriginal;
+													}
+													break;
 
-														$MontoSysCR = $TotalPagoRecibidoOriginal;
-												}
-												break;
+												case 5:
+													$credito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysCR = ($credito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysCR = $TotalPagoRecibidoOriginal;
+													}
+													break;
+
+												case 6:
+													$credito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysCR = ($credito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysCR = $TotalPagoRecibidoOriginal;
+													}
+													break;
+
+												case 7:
+													$credito = $TotalPagoRecibido;
+													if(trim($Data['bpr_currency']) != $MONEDASYS ){
+
+															$MontoSysCR = ($credito / $TasaLocSys);
+
+													}else{
+
+															$MontoSysCR = $TotalPagoRecibidoOriginal;
+													}
+													break;
+											}
+
 										}
+
 
 
 										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1116,9 +1556,9 @@ class PaymentsReceived extends REST_Controller {
 															':ac1_credit_import' => 0,
 															':ac1_debit_importsys' => 0,
 															':ac1_credit_importsys' => 0,
-															':ac1_font_key' => ($detail['pr1_docentry']== null)? 18 : $detail['pr1_docentry'],
+															':ac1_font_key' => $resInsert,
 															':ac1_font_line' => 1,
-															':ac1_font_type' => ($detail['pr1_doctype']== null)? $Data['bpr_doctype'] : $detail['bpr_doctype'],
+															':ac1_font_type' => 20,
 															':ac1_accountvs' => 1,
 															':ac1_doctype' => 18,
 															':ac1_ref1' => "",
@@ -1172,10 +1612,7 @@ class PaymentsReceived extends REST_Controller {
 						//FIN Procedimiento PARA LLENAR ASIENTO CON CUENTA TERCERO SEGUN GRUPO DE CUENTAS
 
 
-
-
 					}else{ // EN CASO CONTRARIO ES UN ANTICIPO A CLIENTE
-
 					//SE AGREGA ASIENTO A CUENTA DE LA LINEA DE ANTICIPO
 
 												foreach ($DetalleConsolidadoAsientoCuentaTercero as $key => $posicion) {
@@ -1332,7 +1769,7 @@ class PaymentsReceived extends REST_Controller {
 																		':ac1_close' => 0,
 																		':ac1_cord' => 0,
 																		':ac1_ven_debit' => 0,
-																		':ac1_ven_credit' => 0,
+																		':ac1_ven_credit' => round($credito, 2),
 																		':ac1_fiscal_acct' => 0,
 																		':ac1_taxid' => 1,
 																		':ac1_isrti' => 0,
@@ -1367,55 +1804,6 @@ class PaymentsReceived extends REST_Controller {
 					// FIN PROCESO ANTERIOR
 
 
-
-					if($detail['pr1_doctype'] == 5) {
-
-
-									$sqlEstado = 'SELECT case when (dvf_doctotal - COALESCE(dvf_paytoday,0)) = 0 then 1 else 0 end estado
-																from dvfv
-																where dvf_docentry = :dvf_docentry';
-
-
-									$resEstado = $this->pedeo->queryTable($sqlEstado, array(':dvf_docentry' => $detail['pr1_docentry']));
-
-									if(isset($resEstado[0]) && $resEstado[0]['estado'] == 1){
-												$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																						VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-												$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-																	':bed_docentry' => $detail['pr1_docentry'],
-																	':bed_doctype' => $detail['pr1_doctype'],
-																	':bed_status' => 3, //ESTADO CERRADO
-																	':bed_createby' => $Data['bpr_createby'],
-																	':bed_date' => date('Y-m-d'),
-																	':bed_baseentry' => $resInsert,
-																	':bed_basetype' => $Data['bpr_doctype']
-												));
-
-
-												if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-												}else{
-
-														 $this->pedeo->trans_rollback();
-
-															$respuesta = array(
-																'error'   => true,
-																'data' => $resInsertEstado,
-																'mensaje'	=> 'No se pudo registrar el pago'
-															);
-
-
-															$this->response($respuesta);
-
-															return;
-												}
-
-									}
-
-					 }
 
 					// Si todo sale bien despues de insertar el detalle de la cotizacion
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
@@ -1622,7 +2010,7 @@ public function getDetails_get(){
 		return;
 	}
 
-	$sqlSelect = " SELECT * FROM bpr1 WHERE pr1_docentry =:pr1_docentry";
+	$sqlSelect = "SELECT bpr1.*, dmdt.mdt_docname FROM bpr1 INNER JOIN dmdt ON dmdt.mdt_doctype = bpr1.pr1_doctype WHERE pr1_docentry =:pr1_docentry";
 
 	$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pr1_docentry" => $Data['pr1_docentry']));
 

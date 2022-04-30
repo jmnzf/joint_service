@@ -677,16 +677,37 @@ public function getOffertDetailBySN_get(){
 																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
 																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
 																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+								$bmd_tdi = 0;
+								$bmd_ndi = 0;
+								$bmd_doctypeo = 0;
+								$bmd_docentryo = 0;
+
+								if ( !isset($resDInicio[0]['bmd_tdi']) ){
+
+									$bmd_tdi = $Data['coc_basetype'];
+									$bmd_ndi = $Data['coc_baseentry'];
+									$bmd_doctypeo = 0;
+									$bmd_docentryo = 0;
+
+								}else{
+
+									$bmd_doctypeo  = $resDOrigen[0]['pap_basetype']; //ORIGEN
+									$bmd_docentryo = $resDOrigen[0]['pap_baseentry'];  //ORIGEN
+									$bmd_tdi = $resDInicio[0]['bmd_tdi']; // DOCUMENTO INICIAL
+									$bmd_ndi = $resDInicio[0]['bmd_ndi']; // DOCUMENTO INICIAL
+
+								}
+
 
 								$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
 									':bmd_doctype' => is_numeric($Data['coc_doctype'])?$Data['coc_doctype']:0,
 									':bmd_docentry' => $resInsert,
 									':bmd_createat' => $this->validateDate($Data['coc_createat'])?$Data['coc_createat']:NULL,
-									':bmd_doctypeo' => $resDOrigen[0]['pap_basetype'], //ORIGEN
-									':bmd_docentryo' => $resDOrigen[0]['pap_baseentry'],  //ORIGEN
-									':bmd_tdi' => $resDInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
-									':bmd_ndi' => $resDInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+									':bmd_doctypeo' => $bmd_doctypeo, //ORIGEN
+									':bmd_docentryo' => $bmd_docentryo,  //ORIGEN
+									':bmd_tdi' => $bmd_tdi, // DOCUMENTO INICIAL
+									':bmd_ndi' => $bmd_ndi, // DOCUMENTO INICIAL
 									':bmd_docnum' => $DocNumVerificado,
 									':bmd_doctotal' => is_numeric($Data['coc_doctotal'])?$Data['coc_doctotal']:0,
 									':bmd_cardcode' => isset($Data['coc_cardcode'])?$Data['coc_cardcode']:NULL,
