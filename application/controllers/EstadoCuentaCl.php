@@ -239,7 +239,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
 
 														union all
-														
+
 														select distinct
 														dmdt.mdt_docname,
 														mac1.ac1_font_key,
@@ -393,24 +393,30 @@ class EstadoCuentaCl extENDs REST_Controller {
                       <td class="centro">'.$value['monedadocumento']." ".number_format($value['mayor_noventa'], 2, ',', '.').'</td>';
 				  $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 
+				  $totalfactura = $totalfactura + ($value['totalfactura']);
+
 				  $detail_0_30 =  $detail_0_30 + ($value['uno_treinta']);
 				  $detail_30_60 =  $detail_30_60 + ($value['treinta_uno_secenta']);
 				  $detail_60_90 =  $detail_60_90 + ($value['secenta_uno_noventa']);
 				  $detail_mayor_90 =  $detail_mayor_90 + ($value['mayor_noventa']);
-					$total_saldo = $detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90;
+
+				  $total_saldo = $detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90;
+
+
 					$total_valores = '
 								<tr>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
-								<th>&nbsp;</th>
-								<th><b>Total</b></th>
-								<th style="width: 10%;" class=" centro"><b>'.$value['monedadocumento'].' '.number_format(($total_saldo), 2, ',', '.').'</b></th>
-								<th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
-								<th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
-								<th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_60_90, 2, ',', '.').'</b></th>
-								<th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_mayor_90, 2, ',', '.').'</b></th>
+
+								<th>Total</th>
+								<th style="width: 10%;" class="fondo centro">'.$value['monedadocumento'].' '.number_format(($total_saldo), 2, ',', '.').'</th>
+								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_0_30, 2, ',', '.').'</th>
+								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_30_60, 2, ',', '.').'</th>
+								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_60_90, 2, ',', '.').'</th>
+								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_mayor_90, 2, ',', '.').'</th>
+
 								</tr>';
 
 				  $totalfactura = ($total_saldo);
@@ -530,6 +536,150 @@ class EstadoCuentaCl extENDs REST_Controller {
 				header('Content-Disposition: attachment; filename='.$filename);
 
 
+	}
+
+	public function getEstadoDeCuenta_post()
+	{
+		$Data = $this->post();
+		$sqlestadocuenta = "SELECT
+				'Factura' as tipo,
+				t0.dvf_cardcode CodigoProveedor,
+				t0.dvf_cardname NombreProveedor,
+				t0.dvf_docnum NumeroDocumento,
+				t0.dvf_docdate FechaDocumento,
+				t0.dvf_duedate FechaVencimiento,
+				t0.dvf_doctotal totalfactura,
+				coalesce(T0.dvf_paytoday,0) saldo,
+				trim('COP' FROM t0.dvf_currency) MonedaDocumento,
+				CURRENT_DATE FechaCorte,
+				(CURRENT_DATE - t0.dvf_duedate) dias,
+				CASE
+					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=0 and ( CURRENT_DATE - t0.dvf_duedate) <=30
+						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+						ELSE 0
+				END uno_treinta,
+				CASE
+					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=31 and ( CURRENT_DATE - t0.dvf_duedate) <=60
+						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+						ELSE 0
+				END treinta_uno_secenta,
+				CASE
+					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=61 and ( CURRENT_DATE - t0.dvf_duedate) <=90
+						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+						ELSE 0
+				END secenta_uno_noventa,
+				CASE
+					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=91
+						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+						ELSE 0
+				END mayor_noventa
+
+			FROM dvfv t0
+			WHERE CURRENT_DATE >= t0.dvf_duedate  and t0.dvf_cardcode = :cardcode
+
+			union all
+
+			SELECT
+				'NotaCredito' as tipo,
+				t0.vnc_cardcode CodigoProveedor,
+				t0.vnc_cardname NombreProveedor,
+				t0.vnc_docnum NumeroDocumento,
+				t0.vnc_docdate FechaDocumento,
+				t0.vnc_duedate FechaVencimiento,
+				t0.vnc_doctotal * -1 totalfactura,
+				coalesce(t0.vnc_doctotal ,0) saldo,
+				trim('COP' FROM t0.vnc_currency) MonedaDocumento,
+				CURRENT_DATE FechaCorte,
+				(CURRENT_DATE - t0.vnc_duedate) dias,
+				CASE
+					WHEN ( CURRENT_DATE - t0.vnc_duedate) >=0 and ( CURRENT_DATE - t0.vnc_duedate) <=30
+						then (t0.vnc_doctotal * -1)
+						ELSE 0
+				END uno_treinta,
+				CASE
+					WHEN ( CURRENT_DATE - t0.vnc_duedate) >=31 and ( CURRENT_DATE - t0.vnc_duedate) <=60
+						then (t0.vnc_doctotal * -1)
+						ELSE 0
+				END treinta_uno_secenta,
+				CASE
+					WHEN ( CURRENT_DATE - t0.vnc_duedate) >=61 and ( CURRENT_DATE - t0.vnc_duedate) <=90
+						then (t0.vnc_doctotal * -1)
+						ELSE 0
+				END secenta_uno_noventa,
+				CASE
+					WHEN ( CURRENT_DATE - t0.vnc_duedate) >=91
+						then (t0.vnc_doctotal * -1)
+						ELSE 0
+				END mayor_noventa
+
+			FROM dvnc t0
+			WHERE CURRENT_DATE >= t0.vnc_duedate  and t0.vnc_cardcode = :cardcode
+
+			union all
+
+			SELECT
+				'NotaDebito' as tipo,
+				t0.vnd_cardcode CodigoProveedor,
+				t0.vnd_cardname NombreProveedor,
+				t0.vnd_docnum NumeroDocumento,
+				t0.vnd_docdate FechaDocumento,
+				t0.vnd_duedate FechaVencimiento,
+				t0.vnd_doctotal totalfactura,
+				coalesce(t0.vnd_doctotal ,0) saldo,
+				trim('COP' FROM t0.vnd_currency) MonedaDocumento,
+				CURRENT_DATE FechaCorte,
+				(CURRENT_DATE - t0.vnd_duedate) dias,
+				CASE
+					WHEN ( CURRENT_DATE - t0.vnd_duedate) >=0 and ( CURRENT_DATE - t0.vnd_duedate) <=30
+						then (t0.vnd_doctotal )
+						ELSE 0
+				END uno_treinta,
+				CASE
+					WHEN ( CURRENT_DATE - t0.vnd_duedate) >=31 and ( CURRENT_DATE - t0.vnd_duedate) <=60
+						then (t0.vnd_doctotal )
+						ELSE 0
+				END treinta_uno_secenta,
+				CASE
+					WHEN ( CURRENT_DATE - t0.vnd_duedate) >=61 and ( CURRENT_DATE - t0.vnd_duedate) <=90
+						then (t0.vnd_doctotal )
+						ELSE 0
+				END secenta_uno_noventa,
+				CASE
+					WHEN ( CURRENT_DATE - t0.vnd_duedate) >=91
+						then (t0.vnd_doctotal )
+						ELSE 0
+				END mayor_noventa
+
+			FROM dvnd t0
+			WHERE CURRENT_DATE >= t0.vnd_duedate  and t0.vnd_cardcode = :cardcode
+			ORDER BY NumeroDocumento";
+		$respuesta = array();
+
+		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta, array(
+			":cardcode" => $Data['cardcode']
+		));
+		$totalSaldo =	array_sum(array_column($contenidoestadocuenta,'uno_treinta'));
+		$totalSaldo +=  array_sum(array_column($contenidoestadocuenta,'treinta_uno_secenta'));
+		$totalSaldo +=  array_sum(array_column($contenidoestadocuenta,'secenta_uno_noventa'));
+		$totalSaldo +=  array_sum(array_column($contenidoestadocuenta,'mayor_noventa'));
+
+		// $contenidoestadocuenta['total_saldo'] = round($totalSaldo,2);
+		// array_push($contenidoestadocuenta,['totalSaldo'=>$totalSaldo]);
+		if (isset($contenidoestadocuenta[0])) {
+			$respuesta = array(
+				'error' => false,
+				'data' => $contenidoestadocuenta,
+				'totalSaldos' => round($totalSaldo,2),
+				'mensaje' => ''
+			);
+		} else {
+			$respuesta = array(
+				'error' => true,
+				'data'  => [],
+				'mensaje' => 'Datos no encontrados'
+			);
+		}
+		$this->response($respuesta);
 	}
 
 
