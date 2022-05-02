@@ -402,7 +402,6 @@ class EstadoCuentaCl extENDs REST_Controller {
 
 				  $total_saldo = $detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90;
 
-
 					$total_valores = '
 								<tr>
 								<th>&nbsp;</th>
