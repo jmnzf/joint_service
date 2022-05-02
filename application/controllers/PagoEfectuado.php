@@ -26,7 +26,8 @@ class PagoEfectuado extends REST_Controller {
 
       $request = $this->post();
 
-      if(!isset($request['cardcode'])){
+      if(!isset($request['cardcode']) OR
+	  !isset($request['currency'])){
 
         $respuesta = array(
           'error' => true,
@@ -224,7 +225,7 @@ class PagoEfectuado extends REST_Controller {
 	  and mac1.ac1_legal_num = dmsn.dms_card_code
 	  where mac1.ac1_legal_num = :cardcode
 	  and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0",array(
-		  ':cardcode' => $request['cardcode'],
+		 ':cardcode' => $request['cardcode'],
 		 ':currency' => $request['currency']));
 
   		$respuesta = array(
