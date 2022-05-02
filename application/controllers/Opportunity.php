@@ -103,8 +103,8 @@ class Opportunity extends REST_Controller
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason, bop_stage, bop_mponderado) 
-                        VALUES ( :bop_type, :bop_invamount, :bop_slpcode, :bop_agent, :bop_balance, :bop_name, :bop_docnum, :bop_status, :bop_date, :bop_duedate, :bop_days, :bop_dateprev, :bop_pvalue, :bop_interestl, :bop_rstatus, :bop_cardcode, :bop_cardcode_name, :bop_reason, :bop_stage, :bop_mponderado)";
+        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason, bop_stage, bop_mponderado, bop_currency) 
+                        VALUES ( :bop_type, :bop_invamount, :bop_slpcode, :bop_agent, :bop_balance, :bop_name, :bop_docnum, :bop_status, :bop_date, :bop_duedate, :bop_days, :bop_dateprev, :bop_pvalue, :bop_interestl, :bop_rstatus, :bop_cardcode, :bop_cardcode_name, :bop_reason, :bop_stage, :bop_mponderado, :bop_currency)";
         $this->pedeo->trans_begin();
         $resInsert = $this->pedeo->insertRow(
             $sqlInsert,
@@ -128,7 +128,8 @@ class Opportunity extends REST_Controller
                 ":bop_cardcode_name" => $Data['bop_cardcode_name'],
                 ":bop_reason" => (isset($Data['bop_reason'])) ? $Data['bop_reason'] : null,
                 ":bop_stage" => $Data['bop_stage'],
-                ":bop_mponderado" => $Data['bop_mponderado']
+                ":bop_mponderado" => $Data['bop_mponderado'],
+                ":bop_currency" => $Data['bop_currency']
             )
         );
 
