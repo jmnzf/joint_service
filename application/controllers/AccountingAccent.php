@@ -18,8 +18,8 @@ class AccountingAccent extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    	$this->load->library('pedeo', [$this->pdo]);
-		// $this->load->library('generic');
+    $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -934,66 +934,6 @@ class AccountingAccent extends REST_Controller {
 			}else{
 				return false;
 			}
-	}
-
-	//FUNCION PARA ACTUALIZAR COMENTARIO 
-	public function updateComments_post()
-	{
-		$Data = $this->post();
-		$respuesta = array();
-
-		if(!isset($Data['mac_base_entry']) OR
-		   !isset($Data['mac_base_type']) OR
-		   !isset($Data['mac_comments'])){
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' =>'La informacion enviada no es valida'
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-
-		}
-
-		$sqlSelect = " SELECT * from tmac where mac_base_entry  = :mac_base_entry  and mac_base_type  = :mac_base_type and mac_status = 1";
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-			":mac_base_entry" => $Data['mac_base_entry'],
-			":mac_base_type" => $Data['mac_base_type']
-		));
-
-		if (isset($resSelect[0])) {
-			$sqlUpdate = "UPDATE tmac SET mac_comments = :mac_comments WHERE mac_base_entry  = :mac_base_entry  and mac_base_type  = :mac_base_type";
-			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-				":mac_base_entry" => $Data['mac_base_entry'],
-				":mac_base_type" => $Data['mac_base_type'],
-				"mac_comments" => $Data['mac_comments']
-			));
-
-			if (is_numeric($resUpdate) && $resUpdate > 0) {
-				$respuesta = array(
-					'error' => false,
-					'data' => $resUpdate,
-					'mensaje' => 'Aciento contable modificado con exito'
-				);
-			} else {
-				$respuesta = array(
-					'error' => true,
-					'data' => $resUpdate,
-					'mensaje' => 'No se pudo realizar la operacion'
-				);
-			}
-		}else{
-			$respuesta = array(
-				'error' => true,
-				'data' => [],
-				'mensaje' => 'No se pudo realizar la operacion'
-			);
-		}		
-
-		$this->response($respuesta);
-
 	}
 
 
