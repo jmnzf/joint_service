@@ -56,10 +56,10 @@ class PagoRecibido extends REST_Controller {
 	  mac1.ac1_font_type as numtype,
 	  mdt_docname as tipo,
 	  case
-	  when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,dvf_currency,dvf_docdate,mac1.ac1_debit, get_localcur())
-	  else get_dynamic_conversion(:currency,dvf_currency,dvf_docdate,mac1.ac1_credit, get_localcur())
+	  when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,mac1.ac1_debit, get_localcur())
+	  else get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,mac1.ac1_credit, get_localcur())
 	  end	 as total_doc,
-	  get_dynamic_conversion(:currency,dvf_currency,dvf_docdate,(mac1.ac1_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+	  get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
 	  '' retencion,
 	  get_tax_currency(dvfv.dvf_currency, dvfv.dvf_docdate) as tasa_dia,
 	  ac1_line_num,
@@ -92,10 +92,10 @@ class PagoRecibido extends REST_Controller {
 	  mac1.ac1_font_type as numtype,
 	  mdt_docname as tipo,
 	  case
-		  when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,bpr_currency,bpr_docdate,mac1.ac1_debit, get_localcur())
-		  else get_dynamic_conversion(:currency,bpr_currency,bpr_docdate,mac1.ac1_credit, get_localcur())
+		  when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,mac1.ac1_debit, get_localcur())
+		  else get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,mac1.ac1_credit, get_localcur())
 	  end	 as total_doc,
-	  get_dynamic_conversion(:currency,bpr_currency,bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+	  get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
 	  '' retencion,
 	  get_tax_currency(gbpr.bpr_currency,gbpr.bpr_docdate) as tasa_dia,
 	  ac1_line_num,
@@ -128,10 +128,10 @@ class PagoRecibido extends REST_Controller {
 	  mac1.ac1_font_type as numtype,
 	  mdt_docname as tipo,
 	  case
-		  when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,vnc_currency,vnc_docdate,mac1.ac1_debit, get_localcur())
-		  else get_dynamic_conversion(:currency,vnc_currency,vnc_docdate,mac1.ac1_credit, get_localcur())
+		  when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,mac1.ac1_debit, get_localcur())
+		  else get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,mac1.ac1_credit, get_localcur())
 	  end	 as total_doc,
-	  get_dynamic_conversion(:currency,vnc_currency,vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+	  get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
 	  '' retencion,
 	  get_tax_currency(dvnc.vnc_currency, dvnc.vnc_docdate) as tasa_dia,
 	  ac1_line_num,
@@ -164,10 +164,10 @@ class PagoRecibido extends REST_Controller {
 	  mac1.ac1_font_type as numtype,
 	  mdt_docname as tipo,
 	  case
-		  when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,vnd_currency,vnd_docdate,mac1.ac1_debit, get_localcur())
-		  else get_dynamic_conversion(:currency,vnd_currency,vnd_docdate,mac1.ac1_credit, get_localcur())
+		  when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,mac1.ac1_debit, get_localcur())
+		  else get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,mac1.ac1_credit, get_localcur())
 	  end	 as total_doc,
-	  get_dynamic_conversion(:currency,vnd_currency,vnd_docdate,(mac1.ac1_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+	  get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,(mac1.ac1_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
 	  '' retencion,
 	  get_tax_currency(dvnd.vnd_currency, dvnd.vnd_docdate) as tasa_dia,
 	  ac1_line_num,
@@ -203,10 +203,10 @@ class PagoRecibido extends REST_Controller {
 	  18 as numtype,
 	  mdt_docname as tipo,
 	  case
-		  when mac1.ac1_cord = 0 then get_dynamic_conversion(:currency,mac_currency,mac_doc_date,mac1.ac1_debit, get_localcur())
-		  when mac1.ac1_cord = 1 then get_dynamic_conversion(:currency,mac_currency,mac_doc_date,mac1.ac1_credit, get_localcur())
+		  when mac1.ac1_cord = 0 then get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_debit, get_localcur())
+		  when mac1.ac1_cord = 1 then get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_credit, get_localcur())
 	  end	 as total_doc,
-	  get_dynamic_conversion(:currency,mac_currency,mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+	  get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
 	  '' retencion,
 	  get_tax_currency(tmac.mac_currency, tmac.mac_doc_date) as tasa_dia,
 	  ac1_line_num,
