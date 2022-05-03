@@ -24,7 +24,7 @@ class MaterialList extends REST_Controller {
 
 	public function createMaterialList_post(){
 
-		$request = $this->post();
+		$Data = $this->post();
 
 
 		if(!isset($Data['detail'])){
@@ -94,7 +94,7 @@ class MaterialList extends REST_Controller {
 		$resInsert = $this->pedeo->insertRow(	$sqlInsert, array(
 			':rlm_item_code' => isset($Data['rlm_item_code'])?$Data['rlm_item_code']:NULL,
 			':rlm_quantity' => is_numeric($Data['rlm_quantity'])?$Data['rlm_quantity']:0,
-			':rlm_bom_type' => isset($Data['rlm_bom_type'])?$Data['rlm_bom_type']:NULL,
+			':rlm_bom_type' => is_numeric($Data['rlm_bom_type'])?$Data['rlm_bom_type']:NULL,
 			':rlm_whscode' => isset($Data['rlm_whscode'])?$Data['rlm_whscode']:NULL,
 			':rlm_pricelist' => is_numeric($Data['rlm_pricelist'])?$Data['rlm_pricelist']:0,
 			':rlm_nom_dist' => isset($Data['rlm_nom_dist'])?$Data['rlm_nom_dist']:NULL,
@@ -121,20 +121,20 @@ class MaterialList extends REST_Controller {
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
 					':lm1_iddoc' => $resInsert,
-					':lm1_linenum' => is_numeric($Data['lm1_linenum'])?$Data['lm1_linenum']:0,
-					':lm1_type' => is_numeric($Data['lm1_type'])?$Data['lm1_type']:0,
-					':lm1_itemcode' => isset($Data['lm1_itemcode'])?$Data['lm1_itemcode']:NULL,
-					':lm1_itemname' => isset($Data['lm1_itemname'])?$Data['lm1_itemname']:NULL,
-					':lm1_quantity' => is_numeric($Data['lm1_quantity'])?$Data['lm1_quantity']:NULL,
-					':lm1_uom' => isset($Data['lm1_uom'])?$Data['lm1_uom']:NULL,
-					':lm1_whscode' =>  isset($Data['lm1_whscode'])?$Data['lm1_whscode']:NULL,
-					':lm1_emission_method' => is_numeric($Data['lm1_emission_method'])?$Data['lm1_emission_method']:NULL,
-					':lm1_standard_cost' => is_numeric($Data['lm1_standard_cost'])?$Data['lm1_standard_cost']:NULL,
-					':lm1_standard_costt' => is_numeric($Data['lm1_standard_costt'])?$Data['lm1_standard_costt']:NULL,
-					':lm1_pricelist' =>is_numeric($Data['lm1_pricelist'])?$Data['lm1_pricelist']:NULL,
-					':lm1_price' => is_numeric($Data['lm1_price'])?$Data['lm1_price']:NULL,
-					':lm1_total' => is_numeric($Data['lm1_total'])?$Data['lm1_total']:NULL,
-					':lm1_comment' =>isset($Data['lm1_comment'])?$Data['lm1_comment']:NULL
+					':lm1_linenum' => is_numeric($detail['lm1_linenum'])?$detail['lm1_linenum']:0,
+					':lm1_type' => is_numeric($detail['lm1_type'])?$detail['lm1_type']:0,
+					':lm1_itemcode' => isset($detail['lm1_itemcode'])?$detail['lm1_itemcode']:NULL,
+					':lm1_itemname' => isset($detail['lm1_itemname'])?$detail['lm1_itemname']:NULL,
+					':lm1_quantity' => is_numeric($detail['lm1_quantity'])?$detail['lm1_quantity']:NULL,
+					':lm1_uom' => isset($detail['lm1_uom'])?$detail['lm1_uom']:NULL,
+					':lm1_whscode' =>  isset($detail['lm1_whscode'])?$detail['lm1_whscode']:NULL,
+					':lm1_emission_method' => is_numeric($detail['lm1_emission_method'])?$detail['lm1_emission_method']:NULL,
+					':lm1_standard_cost' => is_numeric($detail['lm1_standard_cost'])?$detail['lm1_standard_cost']:NULL,
+					':lm1_standard_costt' => is_numeric($detail['lm1_standard_costt'])?$detail['lm1_standard_costt']:NULL,
+					':lm1_pricelist' =>is_numeric($detail['lm1_pricelist'])?$detail['lm1_pricelist']:NULL,
+					':lm1_price' => is_numeric($detail['lm1_price'])?$detail['lm1_price']:NULL,
+					':lm1_total' => is_numeric($detail['lm1_total'])?$detail['lm1_total']:NULL,
+					':lm1_comment' =>isset($detail['lm1_comment'])?$detail['lm1_comment']:NULL
 				));
 
 
