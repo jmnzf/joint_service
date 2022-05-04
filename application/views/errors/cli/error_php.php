@@ -19,3 +19,6 @@ Backtrace:
 <?php	endforeach ?>
 
 <?php endif ?>
+<?php
+	exit();
+?>

@@ -6,3 +6,5 @@ echo "\nDatabase error: ",
 	"\n\n",
 	$message,
 	"\n\n";
+
+exit;	
