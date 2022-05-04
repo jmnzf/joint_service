@@ -92,27 +92,28 @@ class EstadoCuentaPro extENDs REST_Controller {
                 dcfc.cfc_docnum                                       as NumeroDocumento,
                 mac1.ac1_font_type                                    as numtype,
                 mdt_docname                                           as tipo,
-                dcfc.cfc_doctotal                                     as totalfactura,
-                SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))     as saldo,
+                get_dynamic_conversion(:currency,dcfc.cfc_currency,dcfc.cfc_docdate,dcfc.cfc_doctotal ,get_localcur()) as totalfactura,
+                get_dynamic_conversion(:currency,get_localcur(),dcfc.cfc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())    as saldo,
                 ''                                                       retencion,
                 get_tax_currency(dcfc.cfc_currency, dcfc.cfc_docdate) as tasa_dia,
                 CASE
                     WHEN ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 0 and ('".$Data['fecha']."'- dcfc.cfc_duedate) <= 30
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
-                    ELSE 0 END                                           uno_treinta,
+                    then get_dynamic_conversion(:currency,get_localcur(),dcfc.cfc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
+                    ELSE 0 END uno_treinta,
                 CASE
                     WHEN ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 31 and ('".$Data['fecha']."'-
                                                                       dcfc.cfc_duedate) <= 60
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
-                    ELSE 0 END                                           treinta_uno_secenta,
+                then get_dynamic_conversion(:currency,get_localcur(),dcfc.cfc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
+                ELSE 0 END   treinta_uno_secenta,
                 CASE
                     WHEN
-                                ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 61 and ('".$Data['fecha']."'- dcfc.cfc_duedate) <= 90
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                     ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 61 and ('".$Data['fecha']."'- dcfc.cfc_duedate) <= 90
+                    then get_dynamic_conversion(:currency,get_localcur(),dcfc.cfc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
+
                     ELSE 0 END                                           secenta_uno_noventa,
                 CASE
                     WHEN ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 91
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    then get_dynamic_conversion(:currency,get_localcur(),dcfc.cfc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0
                     END                                                  mayor_noventa
 from mac1
@@ -160,27 +161,27 @@ select distinct dmdt.mdt_docname,
                 mac1.ac1_font_type                                    as numtype,
                 'ANTICIPO'                                            as tipo,
                 case
-                    when mac1.ac1_font_type = 15 then sum(mac1.ac1_debit)
-                    else sum(mac1.ac1_debit)
+                    when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,sum(mac1.ac1_debit) ,get_localcur())
+                    else get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,sum(mac1.ac1_debit) ,get_localcur())
                     end                                               as totalfactura,
-                SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))     as saldo,
+                 get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())    as saldo,
                 ''                                                       retencion,
                 get_tax_currency(gbpe.bpe_currency, gbpe.bpe_docdate) as tasa_dia,
                 CASE
                     WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 0 and ('".$Data['fecha']."'- gbpe.bpe_docdate) <= 30 then
-                        SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                      get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0 END                                           uno_treinta,
                 CASE
                     WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 31 and ('".$Data['fecha']."'- gbpe.bpe_docdate) <= 60
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0 END                                           treinta_uno_secenta,
                 CASE
                     WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 61 and ('".$Data['fecha']."'- gbpe.bpe_docdate) <= 90
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0 END                                           secenta_uno_noventa,
                 CASE
                     WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 91
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0
                     END                                                  mayor_noventa
 
@@ -226,29 +227,29 @@ select distinct dmdt.mdt_docname,
                 mac1.ac1_font_type                                    as numtype,
                 mdt_docname                                           as tipo,
                 case
-                    when mac1.ac1_font_type = 15 then sum(mac1.ac1_debit)
-                    else sum(mac1.ac1_debit)
+                    when mac1.ac1_font_type = 15 then  get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,sum(mac1.ac1_debit) ,get_localcur())
+                    else get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,sum(mac1.ac1_debit) ,get_localcur())
                     end                                               as totalfactura,
-                SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))     as saldo,
+                 get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur()) as saldo,
                 ''                                                       retencion,
                 get_tax_currency(dcnc.cnc_currency, dcnc.cnc_docdate) as tasa_dia,
                 CASE
                     WHEN ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 0 and ('".$Data['fecha']."'- dcnc.cnc_duedate) <= 30 then
-                        SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0 END                                           uno_treinta,
                 CASE
                     WHEN
                                 ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 31 and ('".$Data['fecha']."'- dcnc.cnc_duedate) <= 60 then
-                        SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0 END                                           treinta_uno_secenta,
                 CASE
                     WHEN
-                                ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 61 and ('".$Data['fecha']."'- dcnc.cnc_duedate) <= 90 then
-                        SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                    ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 61 and ('".$Data['fecha']."'- dcnc.cnc_duedate) <= 90 then
+                        get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0 END                                           secenta_uno_noventa,
                 CASE
                     WHEN ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 91
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0
                     END                                                  mayor_noventa
 
@@ -299,31 +300,31 @@ select distinct dmdt.mdt_docname,
                 mac1.ac1_font_type                                    as numtype,
                 mdt_docname                                           as tipo,
                 case
-                    when mac1.ac1_font_type = 5 then sum(mac1.ac1_debit)
-                    else sum(mac1.ac1_credit)
+                    when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, sum(mac1.ac1_debit) ,get_localcur())
+                    else get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, sum(mac1.ac1_credit) ,get_localcur())
                     end                                               as totalfactura,
-                sum((mac1.ac1_ven_credit) - (mac1.ac1_credit))        as saldo,
+                get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, sum((mac1.ac1_ven_credit) - (mac1.ac1_credit)) ,get_localcur())     as saldo,
                 ''                                                       retencion,
                 get_tax_currency(dcnd.cnd_currency, dcnd.cnd_docdate) as tasa_dia,
                 CASE
                     WHEN ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 0 and ('".$Data['fecha']."'- dcnd.cnd_duedate)
-                        <= 30 then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        <= 30 then  get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0 END                                           uno_treinta,
                 CASE
                     WHEN ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 31 and ('".$Data['fecha']."'-
                                                                       dcnd.cnd_duedate) <= 60
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then  get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0
                     END                                                  treinta_uno_secenta,
                 CASE
                     WHEN ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 61
                         and ('".$Data['fecha']."'- dcnd.cnd_duedate) <= 90
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then  get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0 END                                           secenta_uno_noventa,
                 CASE
                     WHEN
                         ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 91
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then  get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0
                     END                                                  mayor_noventa
 
@@ -380,33 +381,33 @@ select distinct dmdt.mdt_docname,
                 mdt_docname                                            as tipo,
                 case
                     when mac1.ac1_cord = 0
-                        then sum(mac1.ac1_debit)
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date, sum(mac1.ac1_debit),get_localcur())
                     when mac1.ac1_cord = 1
-                        then sum(mac1.ac1_credit)
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date, sum(mac1.ac1_credit),get_localcur())
                     end                                                as total_doc,
-                SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))      as saldo_venc,
+                get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())    as saldo_venc,
                 ''                                                        retencion,
                 get_tax_currency(tmac.mac_currency, tmac.mac_doc_date) as tasa_dia,
                 CASE
                     WHEN ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 0 and ('".$Data['fecha']."'-
                                                                          tmac.mac_doc_duedate) <= 30
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0 END                                            uno_treinta,
                 CASE
                     WHEN
                                 ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 31 and ('".$Data['fecha']."'-
                                                                                  tmac.mac_doc_duedate) <= 60
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0 END                                            treinta_uno_secenta,
                 CASE
                     WHEN
                                 ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 61 and ('".$Data['fecha']."'-
                                                                                  tmac.mac_doc_duedate) <= 90
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0 END                                            secenta_uno_noventa,
                 CASE
                     WHEN ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 91
-                        then SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0
                     END                                                   mayor_noventa
 from mac1
@@ -438,8 +439,8 @@ group by dmdt.mdt_docname,
          mac_trans_id,
          mdt_docname, mac1.ac1_cord";
 
-				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
-          // print_r($sqlestadocuenta);exit();die();
+				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array(":currency" => $Data['currency']));
+        //   print_r($sqlestadocuenta);exit();die();
 				if(!isset($contenidoestadocuenta[0])){
 						$respuesta = array(
 							 'error' => true,

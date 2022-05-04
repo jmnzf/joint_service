@@ -97,27 +97,27 @@ class EstadoCuentaCl extENDs REST_Controller {
 														when mac1.ac1_font_type = 5 then mac1.ac1_debit
 														else mac1.ac1_credit
 														end as totalfactura,
-														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
+														get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) as saldo,
 														'' retencion,
 														get_tax_currency(dvfv.dvf_currency,dvfv.dvf_docdate) as tasa_dia,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=0 and ( '".$Data['fecha']."' - dvfv.dvf_duedate) <=30
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then  get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END uno_treinta,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=31 and ( '".$Data['fecha']."' - dvfv.dvf_duedate) <=60
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END treinta_uno_secenta,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=61 and ( '".$Data['fecha']."' - dvfv.dvf_duedate) <=90
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END secenta_uno_noventa,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=91
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 														ELSE 0
 														END mayor_noventa
 
@@ -156,22 +156,22 @@ class EstadoCuentaCl extENDs REST_Controller {
 														get_tax_currency(gbpr.bpr_currency,gbpr.bpr_docdate) as tasa_dia,
 														CASE
 															WHEN ( '".$Data['fecha']."' - gbpr.bpr_docdate) >=0 and ( '".$Data['fecha']."' - gbpr.bpr_docdate) <=30
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then  get_dynamic_conversion(:currency,get_localcur(),gbpr.bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END uno_treinta,
 														CASE
 															WHEN ( '".$Data['fecha']."' - gbpr.bpr_docdate) >=31 and ( '".$Data['fecha']."' - gbpr.bpr_docdate) <=60
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),gbpr.bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END treinta_uno_secenta,
 														CASE
 															WHEN ( '".$Data['fecha']."' - gbpr.bpr_docdate) >=61 and ( '".$Data['fecha']."' - gbpr.bpr_docdate) <=90
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),gbpr.bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END secenta_uno_noventa,
 														CASE
 															WHEN ( '".$Data['fecha']."' - gbpr.bpr_docdate) >=91
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),gbpr.bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 														ELSE 0
 														END mayor_noventa
 
@@ -211,22 +211,22 @@ class EstadoCuentaCl extENDs REST_Controller {
 														get_tax_currency(dvnc.vnc_currency,dvnc.vnc_docdate) as tasa_dia,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=0 and ( '".$Data['fecha']."' - dvnc.vnc_duedate) <=30
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then  get_dynamic_conversion(:currency,get_localcur(),dvnc.vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END uno_treinta,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=31 and ( '".$Data['fecha']."' - dvnc.vnc_duedate) <=60
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvnc.vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END treinta_uno_secenta,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=61 and ( '".$Data['fecha']."' - dvnc.vnc_duedate) <=90
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvnc.vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END secenta_uno_noventa,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=91
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvnc.vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 														ELSE 0
 														END mayor_noventa
 
@@ -267,22 +267,22 @@ class EstadoCuentaCl extENDs REST_Controller {
 														get_tax_currency(dvnd.vnd_currency,dvnd.vnd_docdate) as tasa_dia,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=0 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=30
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvnd.vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END uno_treinta,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=31 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=60
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvnd.vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END treinta_uno_secenta,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=61 and ( '".$Data['fecha']."' - dvnd.vnd_duedate) <=90
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvnd.vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 																ELSE 0
 														END secenta_uno_noventa,
 														CASE
 															WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=91
-																then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+																then get_dynamic_conversion(:currency,get_localcur(),dvnd.vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 														ELSE 0
 														END mayor_noventa
 
@@ -329,22 +329,22 @@ class EstadoCuentaCl extENDs REST_Controller {
 														get_tax_currency(tmac.mac_currency,tmac.mac_doc_date) tasa_dia,
 														CASE
 														    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate) >=0 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=30
-														        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+														        then  get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 														    ELSE 0
 														END uno_treinta,
 														CASE
 														    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=31 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=60
-														        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+														        then   get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 														    ELSE 0
 														END treinta_uno_secenta,
 														CASE
 														    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=61 and ( '".$Data['fecha']."' - tmac.mac_doc_duedate) <=90
-														        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+														        then   get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 														    ELSE 0
 														END secenta_uno_noventa,
 														CASE
 														    WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=91
-														        then (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+														        then   get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 														    ELSE 0
 														END mayor_noventa
 														from mac1
@@ -352,10 +352,10 @@ class EstadoCuentaCl extENDs REST_Controller {
 														inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 														inner join tmac on tmac.mac_trans_id = mac1.ac1_font_key and tmac.mac_doctype = mac1.ac1_font_type
 														inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type and mac1.ac1_legal_num = dmsn.dms_card_code
-														where dmsn.dms_card_type = '1' and and mac1.ac1_legal_num = '".$Data['cardcode']."'
+														where dmsn.dms_card_type = '1' and  mac1.ac1_legal_num = '".$Data['cardcode']."'
 														and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
-
-				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array());
+				// print_r($sqlestadocuenta);exit;
+				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array(":currency" => $Data['currency']));
          // print_r($sqlestadocuenta);exit();die();
 				if(!isset($contenidoestadocuenta[0])){
 						$respuesta = array(
@@ -554,22 +554,22 @@ class EstadoCuentaCl extENDs REST_Controller {
 				(CURRENT_DATE - t0.dvf_duedate) dias,
 				CASE
 					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=0 and ( CURRENT_DATE - t0.dvf_duedate) <=30
-						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+						then  get_dynamic_conversion(:currency,t0.dvf_currency,t0.dvf_docdate,(t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)),get_localcur())
 						ELSE 0
 				END uno_treinta,
 				CASE
 					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=31 and ( CURRENT_DATE - t0.dvf_duedate) <=60
-						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+						then  get_dynamic_conversion(:currency,t0.dvf_currency,t0.dvf_docdate,(t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)),get_localcur())
 						ELSE 0
 				END treinta_uno_secenta,
 				CASE
 					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=61 and ( CURRENT_DATE - t0.dvf_duedate) <=90
-						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+						then  get_dynamic_conversion(:currency,t0.dvf_currency,t0.dvf_docdate,(t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)),get_localcur())
 						ELSE 0
 				END secenta_uno_noventa,
 				CASE
 					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=91
-						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
+						then  get_dynamic_conversion(:currency,t0.dvf_currency,t0.dvf_docdate,(t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)),get_localcur())
 						ELSE 0
 				END mayor_noventa
 
