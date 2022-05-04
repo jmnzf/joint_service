@@ -69,12 +69,13 @@ class Stage extends REST_Controller
 
             return;
         }
-        $sqlInsert = "INSERT INTO tbet (bet_name,bet_porcent) VALUES (:bet_name, :bet_porcent)";
+        $sqlInsert = "INSERT INTO tbet (bet_name,bet_porcent,bet_status) VALUES (:bet_name, :bet_porcent, :bet_status)";
         $resInsert = $this->pedeo->insertRow(
             $sqlInsert,
             array(
                 ":bet_name" => $Data['bet_name'],
-                ":bet_porcent" => $Data['bet_porcent']
+                ":bet_porcent" => $Data['bet_porcent'],
+                ":bet_status" => $Data['bet_status']
             )
         );
 
@@ -111,10 +112,11 @@ class Stage extends REST_Controller
             return;
         }
 
-        $sqlUpdate = "UPDATE tbet SET bet_name = :bet_name,bet_porcent = :bet_porcent WHERE bet_id = :bet_id";
+        $sqlUpdate = "UPDATE tbet SET bet_name = :bet_name,bet_porcent = :bet_porcent, bet_status = :bet_status WHERE bet_id = :bet_id";
 
         $resUpdate = $this->pedeo->updateRow($sqlUpdate,array(":bet_name" => $Data['bet_name'],
                                                               ":bet_porcent" => $Data['bet_porcent'],
+                                                              ":bet_status" => $Data['bet_status'],
                                                               ":bet_id" => $Data['bet_id']));
 
         if (is_numeric($resUpdate) && $resUpdate > 0) {
