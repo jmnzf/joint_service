@@ -464,14 +464,14 @@ group by dmdt.mdt_docname,
 											<td class="centro">'.$value['tipo'].'</td>
 											<td class="centro">'.$value['numerodocumento'].'</td>
 											<td class="centro">'.$value['fechadocumento'].'</td>
-											<td class="centro">'.$value['monedadocumento']." ".number_format($value['totalfactura'], 2, ',', '.').'</td>
+											<td class="centro">'.$Data['currency']." ".number_format($value['totalfactura'], 2, ',', '.').'</td>
 											<td class="centro">'.$value['fechavencimiento'].'</td>
 											<td class="centro">'.$value['fechacorte'].'</td>
 											<td class="centro">'.$value['dias'].'</td>
-											<td class="centro">'.$value['monedadocumento']." ".number_format($value['uno_treinta'], 2, ',', '.').'</td>
-											<td class="centro">'.$value['monedadocumento']." ".number_format($value['treinta_uno_secenta'], 2, ',', '.').'</td>
-                      <td class="centro">'.$value['monedadocumento']." ".number_format($value['secenta_uno_noventa'], 2, ',', '.').'</td>
-                      <td class="centro">'.$value['monedadocumento']." ".number_format($value['mayor_noventa'], 2, ',', '.').'</td>';
+											<td class="centro">'.$Data['currency']." ".number_format($value['uno_treinta'], 2, ',', '.').'</td>
+											<td class="centro">'.$Data['currency']." ".number_format($value['treinta_uno_secenta'], 2, ',', '.').'</td>
+                      <td class="centro">'.$Data['currency']." ".number_format($value['secenta_uno_noventa'], 2, ',', '.').'</td>
+                      <td class="centro">'.$Data['currency']." ".number_format($value['mayor_noventa'], 2, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				 // $totalfactura = ($totalfactura + $value['totalfactura']);
 
@@ -490,11 +490,11 @@ group by dmdt.mdt_docname,
 							 <th>&nbsp;</th>
 							 <th>&nbsp;</th>
 							 <th><b>Total</b></th>
-							 <th style="width: 10%;" class=" centro"><b>'.$value['monedadocumento'].' '.number_format(($total_saldo), 2, ',', '.').'</b></th>
-							 <th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
-							 <th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
-							 <th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_60_90, 2, ',', '.').'</b></th>
-							 <th class=" centro"><b>'.$value['monedadocumento'].' '.number_format($detail_mayor_90, 2, ',', '.').'</b></th>
+							 <th style="width: 10%;" class=" centro"><b>'.$Data['currency'].' '.number_format(($total_saldo), 2, ',', '.').'</b></th>
+							 <th class=" centro"><b>'.$Data['currency'].' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
+							 <th class=" centro"><b>'.$Data['currency'].' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
+							 <th class=" centro"><b>'.$Data['currency'].' '.number_format($detail_60_90, 2, ',', '.').'</b></th>
+							 <th class=" centro"><b>'.$Data['currency'].' '.number_format($detail_mayor_90, 2, ',', '.').'</b></th>
 							 </tr>';
 
 				 $totalfactura = ($total_saldo);

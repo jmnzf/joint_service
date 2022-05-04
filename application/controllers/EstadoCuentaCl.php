@@ -9,7 +9,7 @@ require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 use Luecano\NumeroALetras\NumeroALetras;
 
-class EstadoCuentaCl extENDs REST_Controller {
+class EstadoCuentaCl extends REST_Controller {
 
 	private $pdo;
 
@@ -34,6 +34,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 				$totalfactura = 0;
 
 				$formatter = new NumeroALetras();
+
 
 
 
@@ -356,7 +357,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 														and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 				// print_r($sqlestadocuenta);exit;
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array(":currency" => $Data['currency']));
-         // print_r($sqlestadocuenta);exit();die();
+        //  print_r($sqlestadocuenta);exit();die();
 				if(!isset($contenidoestadocuenta[0])){
 						$respuesta = array(
 							 'error' => true,
@@ -376,21 +377,21 @@ class EstadoCuentaCl extENDs REST_Controller {
 				$detail_60_90 = 0;
 				$detail_mayor_90 = 0;
 				$total_valores = '';
-
 				foreach ($contenidoestadocuenta as $key => $value) {
+					
 					// code...
 					$detalle = '
 											<td class="centro">'.$value['mdt_docname'].'</td>
 											<td style="width: 12%;" class="centro">'.$value['numerodocumento'].'</td>
 											<td class="centro">'.$value['fechadocumento'].'</td>
-											<td class="centro">'.$value['monedadocumento']." ".number_format($value['totalfactura'], 2, ',', '.').'</td>
+											<td class="centro">'.$Data['currency']." ".number_format($value['totalfactura'], 2, ',', '.').'</td>
 											<td class="centro">'.$value['fechavencimiento'].'</td>
 											<td class="centro">'.$value['fechacorte'].'</td>
 											<td class="centro">'.$value['dias'].'</td>
-											<td class="centro">'.$value['monedadocumento']." ".number_format($value['uno_treinta'], 2, ',', '.').'</td>
-											<td class="centro">'.$value['monedadocumento']." ".number_format($value['treinta_uno_secenta'], 2, ',', '.').'</td>
-                      <td class="centro">'.$value['monedadocumento']." ".number_format($value['secenta_uno_noventa'], 2, ',', '.').'</td>
-                      <td class="centro">'.$value['monedadocumento']." ".number_format($value['mayor_noventa'], 2, ',', '.').'</td>';
+											<td class="centro">'.$Data['currency']." ".number_format($value['uno_treinta'], 2, ',', '.').'</td>
+											<td class="centro">'.$Data['currency']." ".number_format($value['treinta_uno_secenta'], 2, ',', '.').'</td>
+                      <td class="centro">'.$Data['currency']." ".number_format($value['secenta_uno_noventa'], 2, ',', '.').'</td>
+                      <td class="centro">'.$Data['currency']." ".number_format($value['mayor_noventa'], 2, ',', '.').'</td>';
 				  $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 
 				  $totalfactura = $totalfactura + ($value['totalfactura']);
@@ -408,11 +409,11 @@ class EstadoCuentaCl extENDs REST_Controller {
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
 								<th>Total</th>
-								<th style="width: 10%;" class="fondo centro">'.$value['monedadocumento'].' '.number_format(($total_saldo), 2, ',', '.').'</th>
-								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_0_30, 2, ',', '.').'</th>
-								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_30_60, 2, ',', '.').'</th>
-								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_60_90, 2, ',', '.').'</th>
-								<th class="fondo centro">'.$value['monedadocumento'].' '.number_format($detail_mayor_90, 2, ',', '.').'</th>
+								<th style="width: 10%;" class="fondo centro">'.$Data['currency'].' '.number_format(($total_saldo), 2, ',', '.').'</th>
+								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_0_30, 2, ',', '.').'</th>
+								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_30_60, 2, ',', '.').'</th>
+								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_60_90, 2, ',', '.').'</th>
+								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_mayor_90, 2, ',', '.').'</th>
 								</tr>';
 
 				  $totalfactura = ($total_saldo);
@@ -471,7 +472,7 @@ class EstadoCuentaCl extENDs REST_Controller {
 					 <p class=""><b>Saldo:</b></p>
 				 </th>
 				 <th style="text-align: left;">
-					 <p>'.$value['monedadocumento']." ".number_format($totalfactura, 2, ',', '.').'</p>
+					 <p>'.$Data['currency']." ".number_format($totalfactura, 2, ',', '.').'</p>
 				 </th>
 
 			 </tr>
@@ -551,22 +552,22 @@ class EstadoCuentaCl extENDs REST_Controller {
 				(CURRENT_DATE - t0.dvf_duedate) dias,
 				CASE
 					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=0 and ( CURRENT_DATE - t0.dvf_duedate) <=30
-						then  get_dynamic_conversion(:currency,t0.dvf_currency,t0.dvf_docdate,(t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)),get_localcur())
+						then  (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
 						ELSE 0
 				END uno_treinta,
 				CASE
 					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=31 and ( CURRENT_DATE - t0.dvf_duedate) <=60
-						then  get_dynamic_conversion(:currency,t0.dvf_currency,t0.dvf_docdate,(t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)),get_localcur())
+						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
 						ELSE 0
 				END treinta_uno_secenta,
 				CASE
 					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=61 and ( CURRENT_DATE - t0.dvf_duedate) <=90
-						then  get_dynamic_conversion(:currency,t0.dvf_currency,t0.dvf_docdate,(t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)),get_localcur())
+						then  (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
 						ELSE 0
 				END secenta_uno_noventa,
 				CASE
 					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=91
-						then  get_dynamic_conversion(:currency,t0.dvf_currency,t0.dvf_docdate,(t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)),get_localcur())
+						then  t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)
 						ELSE 0
 				END mayor_noventa
 

@@ -410,21 +410,21 @@ class EstadoCartera extENDs REST_Controller {
 
 					if( $cliente == $value1['codigocliente']){
 						//
-						$monedadocumento = $value1['monedadocumento'];
+						$monedadocumento = $Data['currency'];
 
 
 						$detalle = '
 									<td class="centro">'.$value1['mdt_docname'].'</td>
 									<td style="width: 15%;" class="centro">'.$value1['numerodocumento'].'</td>
 									<td class="centro">'.$value1['fechadocumento'].'</td>
-									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['totalfactura'], 2, ',', '.').'</td>
+									<td class="centro">'.$Data['currency']." ".number_format($value1['totalfactura'], 2, ',', '.').'</td>
 									<td class="centro">'.$value1['fechavencimiento'].'</td>
 									<td class="centro">'.$value1['fechacorte'].'</td>
 									<td class="centro">'.$value1['dias'].'</td>
-									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['uno_treinta'], 2, ',', '.').'</td>
-									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['treinta_uno_secenta'], 2, ',', '.').'</td>
-									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['secenta_uno_noventa'], 2, ',', '.').'</td>
-									<td class="centro">'.$value1['monedadocumento']." ".number_format($value1['mayor_noventa'], 2, ',', '.').'</td>';
+									<td class="centro">'.$Data['currency']." ".number_format($value1['uno_treinta'], 2, ',', '.').'</td>
+									<td class="centro">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], 2, ',', '.').'</td>
+									<td class="centro">'.$Data['currency']." ".number_format($value1['secenta_uno_noventa'], 2, ',', '.').'</td>
+									<td class="centro">'.$Data['currency']." ".number_format($value1['mayor_noventa'], 2, ',', '.').'</td>';
 
 
 
