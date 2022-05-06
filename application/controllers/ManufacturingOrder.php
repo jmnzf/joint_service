@@ -1,0 +1,341 @@
+<?php
+// MODELO DE APROBACIONES
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+require_once(APPPATH.'/libraries/REST_Controller.php');
+use Restserver\libraries\REST_Controller;
+
+class ManufacturingOrder extends REST_Controller {
+
+	private $pdo;
+
+  public function __construct(){
+
+		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
+		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
+		header("Access-Control-Allow-Origin: *");
+
+		parent::__construct();
+		$this->load->database();
+		$this->pdo = $this->load->database('pdo', true)->conn_id;
+        $this->load->library('pedeo', [$this->pdo]);
+
+	}
+
+    public function setManufacturingOrder_post(){
+        $Data = $this->post();
+
+        if(
+        !isset($Data['bof_docnum']) OR
+        !isset($Data['bof_item_code']) OR
+        !isset($Data['bof_item_description']) OR
+        !isset($Data['bof_quantity']) OR
+        !isset($Data['bof_cardcode']) OR
+        !isset($Data['bof_fatorydate']) OR
+        !isset($Data['bof_date']) OR
+        !isset($Data['bof_duedate']) OR
+        !isset($Data['bof_user']) OR
+        !isset($Data['bof_cust_order']) OR
+        !isset($Data['bof_ccost']) OR
+        !isset($Data['bof_project'])){
+
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'La informacion enviada no es valida'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+
+
+        
+        // SE VERIFCA QUE EL DOCUMENTO TENGA DETALLE
+        $ContenidoDetalle = json_decode($Data['detail'], true);
+        
+        if (!is_array($ContenidoDetalle)) {
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'No se encontro el detalle de la entrada de oportunidad'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+
+        // SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
+        if (!intval(count($ContenidoDetalle)) > 0) {
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'Documento sin detalle'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+
+        $sqlInsert = "INSERT INTO tbof(bof_docnum ,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type) VALUES (:bof_docnum, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type)";
+        
+        $this->pedeo->trans_begin();
+
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(            
+            ":bof_docnum" => $Data['bof_docnum'],
+            ":bof_item_code" => $Data['bof_item_code'],
+            ":bof_item_description" => $Data['bof_item_description'],
+            ":bof_quantity" => $Data['bof_quantity'],
+            ":bof_cardcode" => $Data['bof_cardcode'],
+            ":bof_fatorydate" => $Data['bof_fatorydate'],
+            ":bof_date" => $Data['bof_date'],
+            ":bof_duedate" => $Data['bof_duedate'],
+            ":bof_user" => $Data['bof_user'],
+            ":bof_cust_order" => $Data['bof_cust_order'],
+            ":bof_ccost" => $Data['bof_ccost'],
+            ":bof_project" => $Data['bof_project'],
+            ":bof_type" => $Data['bof_type']
+        ));
+
+        if( is_numeric($resInsert) AND $resInsert > 0){
+            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code)";
+            foreach ($ContenidoDetalle as $key => $detail){
+                $resInsert2 = $this->pedeo->insertRow($sqlInsert2,
+                array(":of1_type" =>$detail['of1_type'],
+                ":of1_description" =>$detail['of1_description'],
+                ":of1_quantitybase" =>$detail['of1_quantitybase'],
+                ":of1_ratiobase" =>$detail['of1_ratiobase'],
+                ":of1_uom" =>$detail['of1_uom'],
+                ":of1_whscode" =>$detail['of1_whscode'],
+                ":of1_emimet" =>$detail['of1_emimet'],
+                ":of1_costcode" =>$detail['of1_costcode'],
+                ":of1_unity" =>$detail['of1_unity'],
+                ":of1_acc" =>$detail['of1_acc'],
+                ":of1_ing" =>$detail['of1_ing'],
+                ":of1_uom_code" =>$detail['of1_uom_code'],
+                ":of1_docentry" => $resInsert));
+
+                if(is_numeric($resInsert2) AND $resInsert2 > 0){
+
+                }else{
+                    $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                        'error' => true,
+                        'data' => $resInsert2,
+                        'mensaje' => 'No se puso realizar operacion segundo'
+                    );
+
+                    $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+                    return;
+                }
+            }
+
+            // GUARDA LOS CAMBIOS SI TODO VA BIEN
+            $this->pedeo->trans_commit();
+
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Orden de fabricación registrada con exito'
+            );
+
+        }else{
+            $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                        'error' => true,
+                        'data' => $resInsert,
+                        'mensaje' => 'No se puso realizar operacion'
+                    );
+
+                    $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+                    return;
+        }
+
+        $this->response($respuesta);
+
+    }
+
+    public function getManufacturingOrder_get()
+    {
+        $sqlSelect = "SELECT * from tbof";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+        if (isset($resSelect[0])) {
+            $respuesta = array(
+                'error' => false,
+                'data'  => $resSelect,
+                'mensaje' => ''
+            );
+        } else {
+
+            $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'    => 'busqueda sin resultados'
+            );
+        }
+
+        $this->response($respuesta);
+    }
+
+    public function updateManufacturingOrder_post()
+    {
+        $Data = $this->post();
+        if(
+        !isset($Data['bof_docentry']) OR
+        !isset($Data['bof_docnum']) OR
+        !isset($Data['bof_item_code']) OR
+        !isset($Data['bof_item_description']) OR
+        !isset($Data['bof_quantity']) OR
+        !isset($Data['bof_cardcode']) OR
+        !isset($Data['bof_fatorydate']) OR
+        !isset($Data['bof_date']) OR
+        !isset($Data['bof_duedate']) OR
+        !isset($Data['bof_user']) OR
+        !isset($Data['bof_cust_order']) OR
+        !isset($Data['bof_ccost']) OR
+        !isset($Data['bof_project'])){
+        $respuesta = array(
+            'error' => true,
+            'data'  => array(),
+            'mensaje' => 'La informacion enviada no es valida'
+        );
+
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+        return;
+        }
+
+        // SE VERIFCA QUE EL DOCUMENTO TENGA DETALLE
+        $ContenidoDetalle = json_decode($Data['detail'], true);
+
+        if (!is_array($ContenidoDetalle)) {
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'No se encontro el detalle de orden de fabricación'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+        // SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
+        if (!intval(count($ContenidoDetalle)) > 0) {
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'Documento sin detalle'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+
+        $sqlUpdate = "UPDATE tbof set 
+                        bof_type = :bof_type,
+                        bof_docnum = :bof_docnum,
+                        bof_item_code = :bof_item_code,
+                        bof_item_description = :bof_item_description,
+                        bof_quantity = :bof_quantity,
+                        bof_cardcode = :bof_cardcode,
+                        bof_fatorydate = :bof_fatorydate,
+                        bof_date = :bof_date,
+                        bof_duedate = :bof_duedate,
+                        bof_user = :bof_user,
+                        bof_cust_order = :bof_cust_order,
+                        bof_ccost = :bof_ccost,
+                        bof_project = :bof_project
+                        where bof_docentry = :bof_docentry";    
+
+        $this->pedeo->trans_begin();
+
+
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+        ":bof_type" =>$Data['bof_type'],
+        ":bof_docnum" =>$Data['bof_docnum'],
+        ":bof_item_code" =>$Data['bof_item_code'],
+        ":bof_item_description" =>$Data['bof_item_description'],
+        ":bof_quantity" =>$Data['bof_quantity'],
+        ":bof_cardcode" =>$Data['bof_cardcode'],
+        ":bof_fatorydate" =>$Data['bof_fatorydate'],
+        ":bof_date" =>$Data['bof_date'],
+        ":bof_duedate" =>$Data['bof_duedate'],
+        ":bof_user" =>$Data['bof_user'],
+        ":bof_cust_order" =>$Data['bof_cust_order'],
+        ":bof_ccost" =>$Data['bof_ccost'],
+        ":bof_project" =>$Data['bof_project'],
+        ":bof_docentry" => $Data['bof_docentry']));
+
+        if( is_numeric($resUpdate) AND $resUpdate > 0){
+
+            $this->pedeo->queryTable("DELETE FROM bof1 WHERE of1_docentry = :of1_docentry", array(':of1_docentry' => $Data['bof_docentry']));
+
+
+            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code)";
+            foreach ($ContenidoDetalle as $key => $detail){
+                $resInsert2 = $this->pedeo->insertRow($sqlInsert2,
+                array(":of1_type" =>$detail['of1_type'],
+                ":of1_description" =>$detail['of1_description'],
+                ":of1_quantitybase" =>$detail['of1_quantitybase'],
+                ":of1_ratiobase" =>$detail['of1_ratiobase'],
+                ":of1_uom" =>$detail['of1_uom'],
+                ":of1_whscode" =>$detail['of1_whscode'],
+                ":of1_emimet" =>$detail['of1_emimet'],
+                ":of1_costcode" =>$detail['of1_costcode'],
+                ":of1_unity" =>$detail['of1_unity'],
+                ":of1_acc" =>$detail['of1_acc'],
+                ":of1_ing" =>$detail['of1_ing'],
+                ":of1_uom_code" =>$detail['of1_uom_code'],
+                ":of1_docentry" => $Data['bof_docentry']));
+
+                if(is_numeric($resInsert2) AND $resInsert2 > 0){
+
+                }else{
+                    $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                        'error' => true,
+                        'data' => $resInsert2,
+                        'mensaje' => 'No se puso realizar operacion segundo'
+                    );
+
+                    $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+                    return;
+                }
+            }
+
+            // GUARDA LOS CAMBIOS SI TODO VA BIEN
+            $this->pedeo->trans_commit();
+
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Orden de fabricación actualizada con exito'
+            );
+            
+        }else{
+            $this->pedeo->trans_rollback();
+
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se puso realizar operacion'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            return;
+        }
+
+        $this->response($respuesta);
+
+        
+    }
+}
