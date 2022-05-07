@@ -35,7 +35,6 @@ class Opportunity extends REST_Controller
 
         if (
             !isset($Data['bop_type'])    or
-            !isset($Data['bop_invamount'])  or
             !isset($Data['bop_slpcode_']) or
             !isset($Data['bop_agent_'])     or
             !isset($Data['bop_balance']) or
@@ -67,7 +66,7 @@ class Opportunity extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data'  => array(),
-                'mensaje' => 'La informacion enviada no es valida'
+                'mensaje' => 'No puede realizar la operacion'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -348,7 +347,7 @@ class Opportunity extends REST_Controller
     public function updateOpportunity_post()
     {
         $Data = $this->post();
-        // print_r($Data['bop_stage']);exit;
+        // print_r($Data);exit;
 
         // SE VERIFCA QUE EL DOCUMENTO TENGA DETALLE
         $ContenidoDetalle = json_decode($Data['detail'], true);
@@ -418,7 +417,7 @@ class Opportunity extends REST_Controller
         $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
             ":bop_type" => $Data['bop_type'],
             ":bop_invamount" => $Data['bop_invamount'],
-            ":bop_slpcode" => $Data['bop_slpcode_'],
+            ":bop_slpcode" => $Data['bop_slpcode'],
             ":bop_agent" => $Data['bop_agent_'],
             ":bop_balance" => $Data['bop_balance'],
             ":bop_name" => $Data['bop_name'],
