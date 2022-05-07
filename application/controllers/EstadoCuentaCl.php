@@ -240,7 +240,7 @@ class EstadoCuentaCl extends REST_Controller {
 														and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
 
 														union all
-														
+
 														select distinct
 														dmdt.mdt_docname,
 														mac1.ac1_font_key,
@@ -400,6 +400,7 @@ class EstadoCuentaCl extends REST_Controller {
 				  $detail_30_60 =  $detail_30_60 + ($value['treinta_uno_secenta']);
 				  $detail_60_90 =  $detail_60_90 + ($value['secenta_uno_noventa']);
 				  $detail_mayor_90 =  $detail_mayor_90 + ($value['mayor_noventa']);
+
 				  $total_saldo = $detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90;
 
 					$total_valores = '
@@ -408,6 +409,7 @@ class EstadoCuentaCl extends REST_Controller {
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
+
 								<th>Total</th>
 								<th style="width: 10%;" class="fondo centro">'.$Data['currency'].' '.number_format(($total_saldo), 2, ',', '.').'</th>
 								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_0_30, 2, ',', '.').'</th>
