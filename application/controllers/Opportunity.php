@@ -32,11 +32,11 @@ class Opportunity extends REST_Controller
 
         $Data = $this->post();
         $respuesta = array();
-
+       
         if (
             !isset($Data['bop_type'])    or
-            !isset($Data['bop_slpcode_']) or
-            !isset($Data['bop_agent_'])     or
+            !isset($Data['bop_slpcode']) or
+            !isset($Data['bop_agent'])     or
             !isset($Data['bop_balance']) or
             !isset($Data['bop_name'])    or
             !isset($Data['bop_status'])    or
@@ -110,8 +110,8 @@ class Opportunity extends REST_Controller
             array(
                 ":bop_type" => $Data['bop_type'],
                 ":bop_invamount" => $Data['bop_invamount'],
-                ":bop_slpcode" => $Data['bop_slpcode_'],
-                ":bop_agent" => (!empty($Data['bop_agent_'])) ? $Data['bop_agent_'] : 0,
+                ":bop_slpcode" => $Data['bop_slpcode'],
+                ":bop_agent" => (!empty($Data['bop_agent'])) ? $Data['bop_agent'] : 0,
                 ":bop_balance" => (!empty($Data['bop_balance'])) ? $Data['bop_balance'] : 0,
                 ":bop_name" => $Data['bop_name'],
                 ":bop_docnum" => (!empty($Data['docnum'])) ? $Data['bop_docnum'] : 0,
@@ -418,7 +418,7 @@ class Opportunity extends REST_Controller
             ":bop_type" => $Data['bop_type'],
             ":bop_invamount" => $Data['bop_invamount'],
             ":bop_slpcode" => $Data['bop_slpcode'],
-            ":bop_agent" => $Data['bop_agent_'],
+            ":bop_agent" => $Data['bop_agent'],
             ":bop_balance" => $Data['bop_balance'],
             ":bop_name" => $Data['bop_name'],
             ":bop_docnum" => $Data['bop_docnum'],
