@@ -411,13 +411,11 @@ class EstadoCuentaCl extends REST_Controller {
 								<th>&nbsp;</th>
 
 								<th>Total</th>
-
 								<th style="width: 10%;" class="fondo centro">'.$Data['currency'].' '.number_format(($total_saldo), 2, ',', '.').'</th>
 								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_0_30, 2, ',', '.').'</th>
 								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_30_60, 2, ',', '.').'</th>
 								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_60_90, 2, ',', '.').'</th>
 								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_mayor_90, 2, ',', '.').'</th>
-
 								</tr>';
 
 				  $totalfactura = ($total_saldo);

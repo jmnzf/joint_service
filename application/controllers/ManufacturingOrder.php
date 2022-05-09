@@ -80,7 +80,7 @@ class ManufacturingOrder extends REST_Controller {
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbof(bof_docnum ,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type) VALUES (:bof_docnum, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type)";
+        $sqlInsert = "INSERT INTO tbof(bof_docnum ,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype) VALUES (:bof_docnum, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype)";
         
         $this->pedeo->trans_begin();
 
@@ -97,7 +97,9 @@ class ManufacturingOrder extends REST_Controller {
             ":bof_cust_order" => $Data['bof_cust_order'],
             ":bof_ccost" => $Data['bof_ccost'],
             ":bof_project" => $Data['bof_project'],
-            ":bof_type" => $Data['bof_type']
+            ":bof_type" => $Data['bof_type'],
+            ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] :0,
+            ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0
         ));
 
         if( is_numeric($resInsert) AND $resInsert > 0){
@@ -252,7 +254,9 @@ class ManufacturingOrder extends REST_Controller {
                         bof_user = :bof_user,
                         bof_cust_order = :bof_cust_order,
                         bof_ccost = :bof_ccost,
-                        bof_project = :bof_project
+                        bof_project = :bof_project,
+                        bof_baseentry = :bof_baseentry,
+                        bof_basetype = :bof_basetype
                         where bof_docentry = :bof_docentry";    
 
         $this->pedeo->trans_begin();
@@ -272,7 +276,9 @@ class ManufacturingOrder extends REST_Controller {
         ":bof_cust_order" =>$Data['bof_cust_order'],
         ":bof_ccost" =>$Data['bof_ccost'],
         ":bof_project" =>$Data['bof_project'],
-        ":bof_docentry" => $Data['bof_docentry']));
+        ":bof_docentry" => $Data['bof_docentry'],
+        ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] :0,
+        ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0));
 
         if( is_numeric($resUpdate) AND $resUpdate > 0){
 
@@ -304,7 +310,7 @@ class ManufacturingOrder extends REST_Controller {
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se puso realizar operacion segundo'
+                        'mensaje' => 'No se puso realizar operacion'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -337,5 +343,81 @@ class ManufacturingOrder extends REST_Controller {
         $this->response($respuesta);
 
         
+    }
+
+    public function getManufacturingOrderById_get(){
+
+        $Data = $this->get();
+
+        if (!isset($Data['bof_docentry'])) {
+            $respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+        }
+
+        $sqlSelect = "SELECT * FROM tbof WHERE bof_docentry = :bof_docentry";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(":bof_docentry" => $Data['bof_docentry']));
+
+        if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+    }
+
+    public function getManufacturingOrderDetailById_get(){
+
+        $Data = $this->get();
+        
+        if (!isset($Data['bof_docentry'])) {
+            $respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+        }
+
+        $sqlSelect = "SELECT * FROM bof1 WHERE of1_docentry = :bof_docentry";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(":bof_docentry" => $Data['bof_docentry']));
+
+        if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
     }
 }

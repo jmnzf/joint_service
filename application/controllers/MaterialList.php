@@ -291,6 +291,45 @@ class MaterialList extends REST_Controller {
 				 $this->response($respuesta);
 	}
 
+	// OBTENER LISTA DE MATERIALES POR CODIGO DE ITEM
+	public function getMaterialListByItemCode_get()
+	{
+		$Data = $this->get();
+
+		if (!isset($Data['rlm_item_code'])) {
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM prlm WHERE rlm_item_code = :rlm_item_code";
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":rlm_item_code" => $Data['rlm_item_code']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
 
 
 }
