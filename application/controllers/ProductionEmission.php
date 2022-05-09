@@ -98,7 +98,7 @@ class ProductionEmission extends REST_Controller
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbep ( bep_doctype, bep_docnum, bep_cardcode, bep_cardname, bep_duedev, bep_docdate, bep_ref, bep_serie) VALUES(:bep_doctype, :bep_docnum, :bep_cardcode, :bep_cardname, :bep_duedev, :bep_docdate, :bep_ref, :bep_serie)";
+        $sqlInsert = "INSERT INTO tbep ( bep_doctype, bep_docnum, bep_cardcode, bep_cardname, bep_duedev, bep_docdate, bep_ref, bep_serie, bep_baseentry, bep_basetype, bep_description) VALUES(:bep_doctype, :bep_docnum, :bep_cardcode, :bep_cardname, :bep_duedev, :bep_docdate, :bep_ref, :bep_serie, :bep_baseentry, :bep_basetype, :bep_description)";
 
         $this->pedeo->trans_begin();
 
@@ -110,7 +110,10 @@ class ProductionEmission extends REST_Controller
             ":bep_duedev" => $Data['bep_duedev'],
             ":bep_docdate" => $Data['bep_docdate'],
             ":bep_ref" => $Data['bep_ref'],
-            ":bep_serie" => $Data['bep_serie']
+            ":bep_serie" => $Data['bep_serie'],
+            ":bep_baseentry" => isset($Data['bep_baseentry']) ? $Data['bep_baseentry'] :0,
+            ":bep_basetype" => isset($Data['bep_basetype']) ? $Data['bep_basetype'] :0,
+            ":bep_description" => isset($Data['bep_description']) ? $Data['bep_description'] :null
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
@@ -231,7 +234,10 @@ class ProductionEmission extends REST_Controller
                     bep_docdate = :bep_docdate,
                     bep_ref = :bep_ref,
                     bep_serie = :bep_serie,
-                    bep_cardname = :bep_cardname
+                    bep_cardname = :bep_cardname,
+                    bep_baseentry = :bep_baseentry,
+                    bep_basetype = :bep_basetype,
+                    bep_description = :bep_description
                     WHERE bep_docentry = :bep_docentry";
 
          $this->pedeo->trans_begin();
@@ -246,6 +252,9 @@ class ProductionEmission extends REST_Controller
          ":bep_docdate" => $Data['bep_docdate'],
          ":bep_ref" => $Data['bep_ref'],
          ":bep_serie" => $Data['bep_serie'],
+         ":bep_baseentry" => isset($Data['bep_baseentry']) ? $Data['bep_baseentry'] :0,
+         ":bep_basetype" => isset($Data['bep_basetype']) ? $Data['bep_basetype'] :0,
+         ":bep_description" => isset($Data['bep_description']) ? $Data['bep_description'] :null,
          ":bep_docentry" => $Data['bep_docentry']
         ));
 
@@ -277,7 +286,7 @@ class ProductionEmission extends REST_Controller
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se pudo realizar operacion segundo'
+                        'mensaje' => 'No se pudo realizar operacion'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -296,7 +305,7 @@ class ProductionEmission extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data'  => $resUpdate,
-                'mensaje' => 'No se pudo realizar operacion primero'
+                'mensaje' => 'No se pudo realizar operacion'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
