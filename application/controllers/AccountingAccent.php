@@ -26,7 +26,6 @@ class AccountingAccent extends REST_Controller {
   //CREAR NUEVO ACIENTO CONTABLE
 	public function createAccountingAccent_post(){
       $Data = $this->post();
-
 			$DocNumVerificado = 0;
 
       if(!isset($Data['detail'])){
@@ -936,7 +935,7 @@ class AccountingAccent extends REST_Controller {
 			}
 	}
 
-	//FUNCION PARA ACTUALIZAR COMENTARIO 
+	//FUNCION PARA ACTUALIZAR COMENTARIO
 	public function updateComments_post()
 	{
 		$Data = $this->post();
@@ -990,7 +989,7 @@ class AccountingAccent extends REST_Controller {
 				'data' => [],
 				'mensaje' => 'No se pudo realizar la operacion'
 			);
-		}		
+		}
 
 		$this->response($respuesta);
 
