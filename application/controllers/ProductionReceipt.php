@@ -99,7 +99,7 @@ class ProductionReceipt extends REST_Controller
 
         // print_r($ContenidoDetalle);exit;
 
-        $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref)";
+        $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref, brp_baseentry, brp_basetype, brp_description) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref, :brp_baseentry, :brp_basetype, :brp_description)";
 
         $this->pedeo->trans_begin();
 
@@ -110,7 +110,10 @@ class ProductionReceipt extends REST_Controller
             ":brp_cardname" => $Data['brp_cardname'],
             ":brp_duedev" => $Data['brp_duedev'],
             ":brp_docdate" => $Data['brp_docdate'],
-            ":brp_ref" => $Data['brp_ref']
+            ":brp_ref" => $Data['brp_ref'],
+            ":brp_baseentry" => isset($Data['brp_baseentry']) ? $Data['brp_baseentry'] : 0,
+            ":brp_basetype" => isset($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
+            ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
@@ -225,7 +228,10 @@ class ProductionReceipt extends REST_Controller
          brp_cardname = :brp_cardname,
          brp_duedev = :brp_duedev,
          brp_docdate = :brp_docdate,
-         brp_ref = :brp_ref
+         brp_ref = :brp_ref,
+         brp_baseentry = :brp_baseentry,
+         brp_basetype = :brp_basetype,
+         brp_description = :brp_description
          WHERE brp_docentry = :brp_docentry ";
 
          $this->pedeo->trans_begin();
@@ -238,6 +244,9 @@ class ProductionReceipt extends REST_Controller
          ":brp_duedev" => $Data['brp_duedev'],
          ":brp_docdate" => $Data['brp_docdate'],
          ":brp_ref" => $Data['brp_ref'],
+         ":brp_baseentry" => isset($Data['brp_baseentry']) ? $Data['brp_baseentry'] : 0,
+         ":brp_basetype" => isset($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
+         ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null,
          ":brp_docentry" => $Data['brp_docentry']));
 
          if(is_numeric($resUpdate) and $resUpdate > 0){
