@@ -61,9 +61,7 @@ class Gestion extends REST_Controller
 			!isset($Data['mgt_duedate']) or
 			!isset($Data['mgt_priority']) or
 			!isset($Data['mgt_content']) or
-			!isset($Data['mgt_dclass']) or
 			!isset($Data['mgt_comments']) or
-			!isset($Data['mgt_dnumber']) or
 			!isset($Data['mgt_num'])
 		) {
 
@@ -93,8 +91,8 @@ class Gestion extends REST_Controller
 			":mgt_duedate" => $Data['mgt_duedate'],
 			":mgt_priority" => $Data['mgt_priority'],
 			":mgt_content" => $Data['mgt_content'],
-			":mgt_dclass" => $Data['mgt_dclass'],
-			":mgt_dnumber" => $Data['mgt_dnumber'],
+			":mgt_dclass" => isset($Data['mgt_dclass']) ? $Data['mgt_dclass'] :0,
+			":mgt_dnumber" => isset($Data['mgt_dnumber']) ? $Data['mgt_dnumber'] :0,
 			":mgt_comments" => $Data['mgt_comments'],
 			":mgt_centerc" => $Data['mgt_centerc'],
 			":mgt_docnum" => (!empty($Data['mgt_num']) ? $Data['mgt_num'] : 1)

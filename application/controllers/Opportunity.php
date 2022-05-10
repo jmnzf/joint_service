@@ -580,7 +580,6 @@ class Opportunity extends REST_Controller
         
         $sqlSelect = str_replace("{{filter}}",$info['filters'],$sqlSelect);
 
-        // print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $info['fields']);
 
         // porcentaje de oportunidades por estado
@@ -589,8 +588,8 @@ class Opportunity extends REST_Controller
                     when bop_rstatus = 1 then 'Abierta'
                     when bop_rstatus = 2 then 'Ganada'
                     when bop_rstatus = 3 then 'Perdida'
-                    end label,
-                    round((count(bop_rstatus)*100)/t.total) value
+                    end as label,
+                    round((count(bop_rstatus)*100)/t.total) as value
                 from tbop
                 cross join (select count(1) total from tbop WHERE bop_date between :bop_date  AND :bop_duedate {{filter}}) t
                 WHERE bop_date between :bop_date  AND :bop_duedate  {{filter}}
@@ -602,15 +601,15 @@ class Opportunity extends REST_Controller
 
         // porcentaje de oportunidades por vendedor
         $sqlOpvend = "SELECT
-        mev_names label,
-        count(1) value
+        mev_names as label,
+        count(1) as value
         from tbop
         join dmev on bop_slpcode = mev_id
         WHERE bop_date between :bop_date AND :bop_duedate {{filter}}
         GROUP BY mev_names";
 
         $sqlOpvend = str_replace("{{filter}}",$info['filters'],$sqlOpvend);
-
+        
         $resvend = $this->pedeo->queryTable($sqlOpvend,$info['fields']);
 
         // grafica de valores esperados
@@ -619,8 +618,8 @@ class Opportunity extends REST_Controller
                             when bop_rstatus = 1 then 'Abierta'
                             when bop_rstatus = 2 then 'Ganada'
                             when bop_rstatus = 3 then 'Perdida'
-                        end label,
-                        sum(bop_pvalue) value
+                        end as label,
+                        sum(bop_pvalue) as value
                         from tbop
                         WHERE bop_date between :bop_date AND :bop_duedate {{filter}}
                         GROUP BY bop_rstatus";
