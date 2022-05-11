@@ -450,8 +450,18 @@ group by dmdt.mdt_docname,
 		$total_mayor_90 = 0;
 		$monedadocumento = '';
 
-        foreach ($contenidoestadocuenta as $key => $value) {
-			// print_r($value['codigocliente']);
+        $contenidoestadocuenta1 = array_map(function($card){ 
+            $temp = array(
+                'codigocliente' => $card['codigocliente'],
+                'nombrecliente' => $card['nombrecliente'],
+                'fechacorte' => $card['fechacorte']
+            );
+            return $temp;},$contenidoestadocuenta);    
+
+        $contenidoestadocuenta1 = array_unique($contenidoestadocuenta1,SORT_REGULAR); // se filtran los cardcode para que no esten repetidos
+
+    
+        foreach ($contenidoestadocuenta1 as $key => $value) {
 			if( trim($cliente) == trim($value['codigocliente']) ){
 					$hacer = false;
 			}else{
@@ -463,6 +473,7 @@ group by dmdt.mdt_docname,
 
 										 ';
 				$hacer = true;
+
 			}
 
 			$encabezado = '<table width="100%"><tr>'.$gCliente.'</tr></table>

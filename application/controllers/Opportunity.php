@@ -580,7 +580,6 @@ class Opportunity extends REST_Controller
 
         $sqlSelect = str_replace("{{filter}}",$info['filters'],$sqlSelect);
 
-        // print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $info['fields']);
 
         // porcentaje de oportunidades por estado
@@ -602,15 +601,15 @@ class Opportunity extends REST_Controller
 
         // porcentaje de oportunidades por vendedor
         $sqlOpvend = "SELECT
-        mev_names as  label,
-        count(1) as  value
+        mev_names as label,
+        count(1) as value
         from tbop
         join dmev on bop_slpcode = mev_id
         WHERE bop_date between :bop_date AND :bop_duedate {{filter}}
         GROUP BY mev_names";
 
         $sqlOpvend = str_replace("{{filter}}",$info['filters'],$sqlOpvend);
-
+        
         $resvend = $this->pedeo->queryTable($sqlOpvend,$info['fields']);
 
         // grafica de valores esperados
