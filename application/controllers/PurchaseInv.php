@@ -3010,9 +3010,13 @@ class PurchaseInv extends REST_Controller {
 
   //OBTENER Factura de compras
   public function getPurchaseInv_get(){
-
-        $sqlSelect = self::getColumn('dcfc','cfc');
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+	// CAMPOS DE RETENCIONES
+		$campos = ",CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalret,'999,999,999,999.00'))) {prefix}_totalret,
+		CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalretiva,'999,999,999,999.00'))) {prefix}_totalretiva";
+        
+		$sqlSelect = self::getColumn('dcfc','cfc',$campos);
+        
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
         if(isset($resSelect[0])){
 
