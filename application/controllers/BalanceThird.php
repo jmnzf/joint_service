@@ -105,7 +105,7 @@ class BalanceThird extends REST_Controller {
         ':to_date' => $Data['to_date'],
         ':level' => $Data['level']
       ));
-
+print_r($sqlSelect);exit();
       if(isset($resSelect[0])){
 
         $respuesta = array(
