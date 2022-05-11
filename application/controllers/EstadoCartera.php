@@ -329,6 +329,7 @@ class EstadoCartera extENDs REST_Controller {
 		where dmsn.dms_card_type = '1'
 		and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 		order by NombreCliente asc";
+
 		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,
 		array(
 			":currency" =>$Data['currency']));
@@ -361,7 +362,18 @@ class EstadoCartera extENDs REST_Controller {
 		$total_mayor_90 = 0;
 		$monedadocumento = '';
 
-        foreach ($contenidoestadocuenta as $key => $value) {
+		$contenidoestadocuenta1 = array_map(function($card){ 
+            $temp = array(
+                'codigocliente' => $card['codigocliente'],
+                'nombrecliente' => $card['nombrecliente'],
+                'fechacorte' => $card['fechacorte']
+            );
+            return $temp;},$contenidoestadocuenta);    
+
+        $contenidoestadocuenta1 = array_unique($contenidoestadocuenta1,SORT_REGULAR); // se filtran los cardcode para que no esten repetidos
+
+
+        foreach ($contenidoestadocuenta1 as $key => $value) {
 			// print_r($value['codigocliente']);
 			if( trim($cliente) == trim($value['codigocliente']) ){
 					$hacer = false;
