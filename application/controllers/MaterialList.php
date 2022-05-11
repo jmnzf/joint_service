@@ -308,7 +308,7 @@ class MaterialList extends REST_Controller {
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM prlm WHERE rlm_item_code = :rlm_item_code";
+		$sqlSelect = "SELECT * FROM prlm WHERE rlm_item_code = :rlm_item_code";
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":rlm_item_code" => $Data['rlm_item_code']));
 
 		if (isset($resSelect[0])) {

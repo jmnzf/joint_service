@@ -88,7 +88,7 @@ class StockAnalysis extends REST_Controller {
 	        }
 	      }
 
-		  
+
 
 
 						$conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
@@ -104,7 +104,7 @@ class StockAnalysis extends REST_Controller {
 						}
 
 						$unidad = ",'' unidad  ";
-						if($tables[$tipo]['table'] == 'dvnc' OR 
+						if($tables[$tipo]['table'] == 'dvnc' OR
 						$tables[$tipo]['table'] == 'dvnd' OR
 						$tables[$tipo]['table'] == 'dcnc' OR
 						$tables[$tipo]['table'] == 'dcnd'
@@ -127,7 +127,7 @@ class StockAnalysis extends REST_Controller {
 							case '0':
 							  $sqlSelect = $this->generalQuery($tables,['5','6','7'],$cardcode,0,$original);
 							  break;
-							
+
 							default:
 
 							$sqlSelect = "SELECT distinct
@@ -142,9 +142,10 @@ class StockAnalysis extends REST_Controller {
 									{$detailPrefix}_itemname item_name,
 									{$prefix}_cardname cliente_name,
 									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_linetotal),{MAIN}),2) )) * {$neg}) val_factura,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),2) )) * {$neg}) price,	
+									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),2) )) * {$neg}) price,
 									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_vatsum),{MAIN}),2) )) * {$neg}) val_impuesto,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),2) )) * {$neg}) total_docums,									mga_name,
+									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),2) )) * {$neg}) total_docums,
+									mga_name,
 									get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
 									{$prefix}_createby createby,
 									".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cantidad,":(($table == 'dvnd') ? "0 cantidad," : "sum({$detailPrefix}_quantity) cantidad,") )."
@@ -158,18 +159,18 @@ class StockAnalysis extends REST_Controller {
 									join dmdt on {$prefix}_doctype = mdt_doctype
 									join dmar on {$detailPrefix}_itemcode = dma_item_code
 									join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
-									join dmga on mga_id = dma_group_code								
+									join dmga on mga_id = dma_group_code
 									full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
-									".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum 
+									".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum
 									left join dmrt on mrt_id = crt_type" : "")."
 									where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
 									group by {$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "mrt_name,crt_totalrt,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
 									break;
 						}
 
-						
 
-  				
+
+
 
 				if( isset( $Data['dvf_currency'] ) &&  isset($Data['symbol'])){
 					$sqlSelect =	str_replace("{USD}","tsa_value",$sqlSelect);
@@ -218,7 +219,7 @@ class StockAnalysis extends REST_Controller {
 		$all = "";
 		$card = "";
 		$neg = 1;
-	
+
 		foreach($sets as $key => $value){
 		$table = $tables[$value]['table'];
 		$prefix = $tables[$value]['prefix'];
@@ -240,7 +241,7 @@ class StockAnalysis extends REST_Controller {
 		}
 
 		$unidad = ",'' unidad  ";
-		if($tables[$value]['table'] == 'dvnc' OR 
+		if($tables[$value]['table'] == 'dvnc' OR
 		$tables[$value]['table'] == 'dvnd' OR
 		$tables[$value]['table'] == 'dcnc' OR
 		$tables[$value]['table'] == 'dcnd'
@@ -263,7 +264,7 @@ class StockAnalysis extends REST_Controller {
 		}else{
 			$cardType = 2;
 		}
-		
+
 		$convertir = ($org == 0 ) ? "{$prefix}_currency  " : "{CURR}";
 		// print_r($convertir);
 		  $all .= "SELECT distinct
@@ -278,9 +279,9 @@ class StockAnalysis extends REST_Controller {
 		  {$detailPrefix}_itemname item_name,
 		  {$prefix}_cardname cliente_name,
 		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_linetotal),{MAIN}),2) )) * {$neg}) val_factura,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),2) )) * {$neg}) price,	
+		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),2) )) * {$neg}) price,
 		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_vatsum),{MAIN}),2) )) * {$neg}) val_impuesto,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),2) )) * {$neg}) total_docums,	
+		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),2) )) * {$neg}) total_docums,
 		  get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
 		  mga_name,
 		  {$prefix}_createby createby,
@@ -298,7 +299,7 @@ class StockAnalysis extends REST_Controller {
 		  join dmga on mga_id = dma_group_code
 		  left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
-		  ".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum 
+		  ".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum
 			left join dmrt on mrt_id = crt_type" : "")."
 		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card}
 		  group by {$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "mrt_name,crt_totalrt,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
@@ -306,9 +307,9 @@ class StockAnalysis extends REST_Controller {
 		  ";
 		}
 		$all = substr($all, 0, -18);
-	
+
 		return $all;
-	
+
 	  }
 
 }

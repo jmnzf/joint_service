@@ -32,7 +32,7 @@ class Opportunity extends REST_Controller
 
         $Data = $this->post();
         $respuesta = array();
-       
+
         if (
             !isset($Data['bop_type'])    or
             !isset($Data['bop_slpcode']) or
@@ -47,8 +47,8 @@ class Opportunity extends REST_Controller
             !isset($Data['bop_pvalue'])    or
             !isset($Data['bop_interestl'])  or
             !isset($Data['bop_rstatus']) or
-            !isset($Data['bop_stage']) or 
-            !isset($Data['bop_mponderado']) 
+            !isset($Data['bop_stage']) or
+            !isset($Data['bop_mponderado'])
         ) {
 
             $respuesta = array(
@@ -102,7 +102,7 @@ class Opportunity extends REST_Controller
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason, bop_stage, bop_mponderado, bop_currency) 
+        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason, bop_stage, bop_mponderado, bop_currency)
                         VALUES ( :bop_type, :bop_invamount, :bop_slpcode, :bop_agent, :bop_balance, :bop_name, :bop_docnum, :bop_status, :bop_date, :bop_duedate, :bop_days, :bop_dateprev, :bop_pvalue, :bop_interestl, :bop_rstatus, :bop_cardcode, :bop_cardcode_name, :bop_reason, :bop_stage, :bop_mponderado, :bop_currency)";
         $this->pedeo->trans_begin();
         $resInsert = $this->pedeo->insertRow(
@@ -390,7 +390,7 @@ class Opportunity extends REST_Controller
         }
 
 
-        $sqlUpdate = "UPDATE tbop SET 
+        $sqlUpdate = "UPDATE tbop SET
          bop_type = :bop_type,
          bop_invamount = :bop_invamount,
          bop_slpcode = :bop_slpcode,
@@ -524,16 +524,16 @@ class Opportunity extends REST_Controller
             return;
         }
 
-        $info = $this->validateFields($Data);       
+        $info = $this->validateFields($Data);
 
         $sqlSelect = " SELECT * FROM tbop WHERE  bop_date BETWEEN :bop_date  AND :bop_duedate {{filter}}";
-        
-        
+
+
         $sqlSelect = str_replace("{{filter}}",$info['filters'],$sqlSelect);
         // print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $info['fields']);
-        
-        
+
+
         if (isset($resSelect[0])) {
             $respuesta = array(
                 'error' => false,
@@ -568,29 +568,29 @@ class Opportunity extends REST_Controller
             return;
         }
         // se crean los filtros y los campos para el mismo
-        $info = $this->validateFields($Data);    
-        
-        $sqlSelect = " SELECT 
+        $info = $this->validateFields($Data);
+
+        $sqlSelect = " SELECT
                         count ( case when bop_rstatus = 1 then bop_rstatus end) abierta,
                         count ( case when bop_rstatus = 2 then bop_rstatus end)ganada ,
                         count ( case when bop_rstatus = 3 then bop_rstatus end) perdida,
                         sum(bop_pvalue) valor_p
                         from tbop WHERE  bop_date BETWEEN :bop_date  AND :bop_duedate {{filter}}";
-        
-        
+
+
         $sqlSelect = str_replace("{{filter}}",$info['filters'],$sqlSelect);
 
         // print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $info['fields']);
 
         // porcentaje de oportunidades por estado
-            $sqlOpProfit = "SELECT 
+            $sqlOpProfit = "SELECT
                 case
                     when bop_rstatus = 1 then 'Abierta'
                     when bop_rstatus = 2 then 'Ganada'
                     when bop_rstatus = 3 then 'Perdida'
-                    end label,
-                    round((count(bop_rstatus)*100)/t.total) value
+                    end as label,
+                    round((count(bop_rstatus)*100)/t.total) as value
                 from tbop
                 cross join (select count(1) total from tbop WHERE bop_date between :bop_date  AND :bop_duedate {{filter}}) t
                 WHERE bop_date between :bop_date  AND :bop_duedate  {{filter}}
@@ -602,8 +602,8 @@ class Opportunity extends REST_Controller
 
         // porcentaje de oportunidades por vendedor
         $sqlOpvend = "SELECT
-        mev_names label,
-        count(1) value
+        mev_names as  label,
+        count(1) as  value
         from tbop
         join dmev on bop_slpcode = mev_id
         WHERE bop_date between :bop_date AND :bop_duedate {{filter}}
@@ -619,14 +619,14 @@ class Opportunity extends REST_Controller
                             when bop_rstatus = 1 then 'Abierta'
                             when bop_rstatus = 2 then 'Ganada'
                             when bop_rstatus = 3 then 'Perdida'
-                        end label,
-                        sum(bop_pvalue) value
+                        end as label,
+                        sum(bop_pvalue) as value
                         from tbop
                         WHERE bop_date between :bop_date AND :bop_duedate {{filter}}
                         GROUP BY bop_rstatus";
 
         $sqlValores = str_replace("{{filter}}",$info['filters'],$sqlValores);
-        
+
         $resValores = $this->pedeo->queryTable($sqlValores, $info['fields']);
         // se agregan los porcentajes a la respuesta
         array_push($resSelect,$resProfit,$resvend,$resValores);
@@ -646,10 +646,10 @@ class Opportunity extends REST_Controller
         }
         $this->response($respuesta);
 
-        
+
      }
 
-    // funcion par estructurar campos y condicionales para queries 
+    // funcion par estructurar campos y condicionales para queries
      private function  validateFields($Data){
         $fields = [':bop_date' => $Data['bop_date'],
         ':bop_duedate' =>$Data['bop_duedate']];
@@ -659,7 +659,7 @@ class Opportunity extends REST_Controller
             foreach ($keys as $key => $value) {
                 if (!in_array($value,['bop_date','bop_duedate','c','a'],true)) {
                 $fields[":{$value}"] = $Data[$value];
-                $filters .= " AND {$value} = :{$value}"; 
+                $filters .= " AND {$value} = :{$value}";
             }
 
             }
