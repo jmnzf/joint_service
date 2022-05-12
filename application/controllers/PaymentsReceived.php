@@ -2407,7 +2407,7 @@ class PaymentsReceived extends REST_Controller {
 public function getDetails_get(){
 	$Data = $this->get();
 
-	if(!isset($Data['pr1_docentry'])){
+	if(!isset($Data['pr1_docnum'])){
 
 		$respuesta = array(
 			'error' => true,
@@ -2420,9 +2420,9 @@ public function getDetails_get(){
 		return;
 	}
 
-	$sqlSelect = "SELECT bpr1.*, dmdt.mdt_docname FROM bpr1 INNER JOIN dmdt ON dmdt.mdt_doctype = bpr1.pr1_doctype WHERE pr1_docentry =:pr1_docentry";
+	$sqlSelect = "SELECT bpr1.*, dmdt.mdt_docname FROM bpr1 INNER JOIN dmdt ON dmdt.mdt_doctype = bpr1.pr1_doctype WHERE pr1_docnum =:pr1_docnum";
 
-	$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pr1_docentry" => $Data['pr1_docentry']));
+	$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pr1_docnum" => $Data['pr1_docnum']));
 
 	var_dump($resSelect);exit;
 
