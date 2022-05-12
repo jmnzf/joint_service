@@ -1163,7 +1163,7 @@ class AccountReconciliations extends REST_Controller {
 									$DetalleAsiento->vlrpaiddesc	= $VlrTotalOpc;
 									$DetalleAsiento->tasaoriginaldoc = $TasaOrg ;
 
-									$llaveDetalleAsiento = 	$DetalleAsiento->cuenta.$DetalleAsiento->tipodoc;
+									$llaveDetalleAsiento = $DetalleAsiento->tipodoc.$DetalleAsiento->tasaoriginaldoc;
 
 									//********************
 									if(in_array( $llaveDetalleAsiento, $inArrayDetalleAsiento)){
@@ -1228,7 +1228,7 @@ class AccountReconciliations extends REST_Controller {
 
 											if(trim($Data['crc_currency']) != $MONEDASYS ){
 
-													$MontoSysCR = $credito;
+													$MontoSysCR = ($credito / $TasaLocSys);
 
 											}else{
 
@@ -1242,7 +1242,7 @@ class AccountReconciliations extends REST_Controller {
 
 											if(trim($Data['crc_currency']) != $MONEDASYS ){
 
-													$MontoSysDB = $debito;
+													$MontoSysDB = ($debito / $TasaLocSys);
 
 											}else{
 
@@ -1256,7 +1256,7 @@ class AccountReconciliations extends REST_Controller {
 
 												if(trim($Data['crc_currency']) != $MONEDASYS ){
 
-													  $MontoSysCR = $TotalPagoOriginal;
+													  $MontoSysCR = ($credito / $TasaLocSys);
 
 												}else{
 														$MontoSysCR = ($credito / $tasadoc);
@@ -1269,7 +1269,7 @@ class AccountReconciliations extends REST_Controller {
 
 												if(trim($Data['crc_currency']) != $MONEDASYS ){
 
-														$MontoSysDB = $TotalPagoOriginal;
+														$MontoSysDB = ($debito / $TasaLocSys);
 
 												}else{
 
@@ -1347,390 +1347,503 @@ class AccountReconciliations extends REST_Controller {
 
 						//VALIDAR DIFERENCIA EN CAMBIO
 						//se verifica si existe diferencia en cambio
-						$sqlCuentaDiferenciaCambio = "SELECT pge_acc_dcp, pge_acc_dcn FROM pgem";
-						$resCuentaDiferenciaCambio = $this->pedeo->queryTable($sqlCuentaDiferenciaCambio, array());
+						if(trim($Data['crc_currency']) != $MONEDALOCAL ){
+							$sqlCuentaDiferenciaCambio = "SELECT pge_acc_dcp, pge_acc_dcn FROM pgem";
+							$resCuentaDiferenciaCambio = $this->pedeo->queryTable($sqlCuentaDiferenciaCambio, array());
 
-						$CuentaDiferenciaCambio = [];
+							$CuentaDiferenciaCambio = [];
 
-						if(isset($resCuentaDiferenciaCambio[0])){
+							if(isset($resCuentaDiferenciaCambio[0])){
 
-										$CuentaDiferenciaCambio = $resCuentaDiferenciaCambio[0];
+											$CuentaDiferenciaCambio = $resCuentaDiferenciaCambio[0];
 
-						}else{
+							}else{
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error' => true,
+										'data'  => array(),
+										'mensaje' =>'No se encontro la cuenta para aplicar la diferencia en cambio'
+									);
+
+									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+									return;
+							}
+
+							// SI ES VENTAS O COMPRAS 1 = ventas 2 = compras
+							if ( $OP == 1 ){
+
+								if ( $VlrDiff  <  0 ){
+
+									$VlrDiffN = abs($VlrDiff);
+
+								}else if ( $VlrDiff > 0 ){
+
+									$VlrDiffP = abs($VlrDiff);
+
+								}else if ( $VlrDiff  == 0 ){
+
+									$VlrDiffN = 0;
+									$VlrDiffP = 0;
+
+								}
+
+
+
+								if ( $VlrDiffP > 0 ){
+												$cuentaD = "";
+												$credito = 0;
+												$debito  = 0;
+												$MontoSysDB = 0;
+												$MontoSysCR = 0;
+
+
+
+												$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
+												$debito    = $VlrDiffP;
+												$MontoSysDB = ($debito / $TasaLocSys);
+
+
+
+
+												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+														':ac1_trans_id' => $resInsertAsiento,
+														':ac1_account' => $cuentaD,
+														':ac1_debit' => round($debito,2),
+														':ac1_credit' => 0,
+														':ac1_debit_sys' => 0,
+														':ac1_credit_sys' => 0,
+														':ac1_currex' => 0,
+														':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+														':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+														':ac1_debit_import' => 0,
+														':ac1_credit_import' => 0,
+														':ac1_debit_importsys' => 0,
+														':ac1_credit_importsys' => 0,
+														':ac1_font_key' => $resInsert,
+														':ac1_font_line' => 1,
+														':ac1_font_type' => 22,
+														':ac1_accountvs' => 1,
+														':ac1_doctype' => 18,
+														':ac1_ref1' => "",
+														':ac1_ref2' => "",
+														':ac1_ref3' => "",
+														':ac1_prc_code' => 0,
+														':ac1_uncode' => 0,
+														':ac1_prj_code' => 0,
+														':ac1_rescon_date' => NULL,
+														':ac1_recon_total' => 0,
+														':ac1_made_user' => 0,
+														':ac1_accperiod' => 1,
+														':ac1_close' => 0,
+														':ac1_cord' => 0,
+														':ac1_ven_debit' => 0,
+														':ac1_ven_credit' => 0,
+														':ac1_fiscal_acct' => 0,
+														':ac1_taxid' => 1,
+														':ac1_isrti' => 0,
+														':ac1_basert' => 0,
+														':ac1_mmcode' => 0,
+														':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
+														':ac1_codref' => 1,
+														':ac1_line' => 1
+											));
+
+
+
+											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+													// Se verifica que el detalle no de error insertando //
+											}else{
+													// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+													// se retorna el error y se detiene la ejecucion del codigo restante.
+														$this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data'	  => $resDetalleAsiento,
+															'mensaje'	=> 'No se pudo completar el proceso, occurio un error al insertar el detalle del asiento diferencia en cambio'
+														);
+
+														 $this->response($respuesta);
+
+														 return;
+											}
+								}
+
+
+								if ( $VlrDiffN > 0 ){
+
+												$cuentaD = "";
+												$credito = 0;
+												$debito  = 0;
+												$MontoSysDB = 0;
+												$MontoSysCR = 0;
+
+
+
+												$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
+												$credito    = $VlrDiffN;
+												$MontoSysCR = ($credito / $TasaLocSys);
+
+
+
+
+												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+														':ac1_trans_id' => $resInsertAsiento,
+														':ac1_account' => $cuentaD,
+														':ac1_debit' => 0,
+														':ac1_credit' => round($credito, 2),
+														':ac1_debit_sys' => 0,
+														':ac1_credit_sys' => 0,
+														':ac1_currex' => 0,
+														':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+														':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+														':ac1_debit_import' => 0,
+														':ac1_credit_import' => 0,
+														':ac1_debit_importsys' => 0,
+														':ac1_credit_importsys' => 0,
+														':ac1_font_key' => $resInsert,
+														':ac1_font_line' => 1,
+														':ac1_font_type' => 22,
+														':ac1_accountvs' => 1,
+														':ac1_doctype' => 18,
+														':ac1_ref1' => "",
+														':ac1_ref2' => "",
+														':ac1_ref3' => "",
+														':ac1_prc_code' => 0,
+														':ac1_uncode' => 0,
+														':ac1_prj_code' => 0,
+														':ac1_rescon_date' => NULL,
+														':ac1_recon_total' => 0,
+														':ac1_made_user' => 0,
+														':ac1_accperiod' => 1,
+														':ac1_close' => 0,
+														':ac1_cord' => 0,
+														':ac1_ven_debit' => 0,
+														':ac1_ven_credit' => 0,
+														':ac1_fiscal_acct' => 0,
+														':ac1_taxid' => 1,
+														':ac1_isrti' => 0,
+														':ac1_basert' => 0,
+														':ac1_mmcode' => 0,
+														':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
+														':ac1_codref' => 1,
+														':ac1_line' => 1
+											));
+
+
+
+											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+													// Se verifica que el detalle no de error insertando //
+											}else{
+													// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+													// se retorna el error y se detiene la ejecucion del codigo restante.
+														$this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data'	  => $resDetalleAsiento,
+															'mensaje'	=> 'No se pudo completar el proceso, occurio un error al insertar el detalle del asiento diferencia en cambio'
+														);
+
+														 $this->response($respuesta);
+
+														 return;
+											}
+								}
+
+
+
+
+
+							}else if ( $OP == 2 ){
+
+								if ( $VlrDiff  <  0 ){
+
+									$VlrDiffP = abs($VlrDiff);
+
+								}else if ( $VlrDiff > 0 ){
+
+									$VlrDiffN = abs($VlrDiff);
+
+								}else if ( $VlrDiff  == 0 ){
+
+									$VlrDiffN = 0;
+									$VlrDiffP = 0;
+
+								}
+
+								if( $VlrDiffP > 0 ){
+
+
+												$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
+												$credito    = $VlrDiffP;
+												$MontoSysCR = ($credito / $TasaLocSys);
+
+
+
+												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+														':ac1_trans_id' => $resInsertAsiento,
+														':ac1_account' => $cuentaD,
+														':ac1_debit' => 0,
+														':ac1_credit' => round( $VlrDiffP, 2 ),
+														':ac1_debit_sys' => 0,
+														':ac1_credit_sys' => 0,
+														':ac1_currex' => 0,
+														':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+														':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+														':ac1_debit_import' => 0,
+														':ac1_credit_import' => 0,
+														':ac1_debit_importsys' => 0,
+														':ac1_credit_importsys' => 0,
+														':ac1_font_key' => $resInsert,
+														':ac1_font_line' => 1,
+														':ac1_font_type' => 22,
+														':ac1_accountvs' => 1,
+														':ac1_doctype' => 18,
+														':ac1_ref1' => "",
+														':ac1_ref2' => "",
+														':ac1_ref3' => "",
+														':ac1_prc_code' => 0,
+														':ac1_uncode' => 0,
+														':ac1_prj_code' => 0,
+														':ac1_rescon_date' => NULL,
+														':ac1_recon_total' => 0,
+														':ac1_made_user' => 0,
+														':ac1_accperiod' => 1,
+														':ac1_close' => 0,
+														':ac1_cord' => 0,
+														':ac1_ven_debit' => 0,
+														':ac1_ven_credit' => 0,
+														':ac1_fiscal_acct' => 0,
+														':ac1_taxid' => 1,
+														':ac1_isrti' => 0,
+														':ac1_basert' => 0,
+														':ac1_mmcode' => 0,
+														':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
+														':ac1_codref' => 1,
+														':ac1_line' => 1
+											));
+
+
+
+											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+													// Se verifica que el detalle no de error insertando //
+											}else{
+													// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+													// se retorna el error y se detiene la ejecucion del codigo restante.
+														$this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data'	  => $resDetalleAsiento,
+															'mensaje'	=> 'No se pudo completar el proceso, occurio un error al insertar el detalle del asiento diferencia en cambio'
+														);
+
+														 $this->response($respuesta);
+
+														 return;
+											}
+
+
+								}
+
+								if( $VlrDiffN > 0 ){
+
+
+												$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcn'];
+												$debito     =  $VlrDiffN;
+												$MontoSysDB = ($debito / $TasaLocSys);
+
+
+												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+														':ac1_trans_id' => $resInsertAsiento,
+														':ac1_account' => $cuentaD,
+														':ac1_debit' =>  round( $VlrDiffN, 2 ),
+														':ac1_credit' => 0,
+														':ac1_debit_sys' => 0,
+														':ac1_credit_sys' => 0,
+														':ac1_currex' => 0,
+														':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+														':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+														':ac1_debit_import' => 0,
+														':ac1_credit_import' => 0,
+														':ac1_debit_importsys' => 0,
+														':ac1_credit_importsys' => 0,
+														':ac1_font_key' => $resInsert,
+														':ac1_font_line' => 1,
+														':ac1_font_type' => 22,
+														':ac1_accountvs' => 1,
+														':ac1_doctype' => 18,
+														':ac1_ref1' => "",
+														':ac1_ref2' => "",
+														':ac1_ref3' => "",
+														':ac1_prc_code' => 0,
+														':ac1_uncode' => 0,
+														':ac1_prj_code' => 0,
+														':ac1_rescon_date' => NULL,
+														':ac1_recon_total' => 0,
+														':ac1_made_user' => 0,
+														':ac1_accperiod' => 1,
+														':ac1_close' => 0,
+														':ac1_cord' => 0,
+														':ac1_ven_debit' => 0,
+														':ac1_ven_credit' => 0,
+														':ac1_fiscal_acct' => 0,
+														':ac1_taxid' => 1,
+														':ac1_isrti' => 0,
+														':ac1_basert' => 0,
+														':ac1_mmcode' => 0,
+														':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
+														':ac1_codref' => 1,
+														':ac1_line' => 1
+											));
+
+
+
+											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+													// Se verifica que el detalle no de error insertando //
+											}else{
+													// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+													// se retorna el error y se detiene la ejecucion del codigo restante.
+														$this->pedeo->trans_rollback();
+
+														$respuesta = array(
+															'error'   => true,
+															'data'	  => $resDetalleAsiento,
+															'mensaje'	=> 'No se pudo completar el proceso, occurio un error al insertar el detalle del asiento diferencia en cambio'
+														);
+
+														 $this->response($respuesta);
+
+														 return;
+											}
+								}
+
+							}
+						}
+						//FIN VALIDACION
+						//FIN
+
+						//AJUSTE AL PESO EN LA
+						//MONEDA DEL SISTEMA
+						$sqlDiffPeso = "SELECT sum(coalesce(ac1_debit_sys,0)) as debito, sum(coalesce(ac1_credit_sys,0)) as credito
+														from mac1
+														where ac1_trans_id = :ac1_trans_id";
+
+						$resDiffPeso = $this->pedeo->queryTable($sqlDiffPeso, array(
+							':ac1_trans_id' => $resInsertAsiento
+						));
+
+						if( isset($resDiffPeso[0]['debito']) && abs(($resDiffPeso[0]['debito'] - $resDiffPeso[0]['credito'])) > 0 ){
+
+							$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+							$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+
+							if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+
+							}else{
 
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
-									'error' => true,
-									'data'  => array(),
-									'mensaje' =>'No se encontro la cuenta para aplicar la diferencia en cambio'
+									'error'   => true,
+									'data'	  => $resCuentaDiferenciaDecimal,
+									'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
 								);
 
-								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+								 $this->response($respuesta);
 
-								return;
-						}
+								 return;
+							}
 
-						// SI ES VENTAS O COMPRAS 1 = ventas 2 = compras
-						if ( $OP == 1 ){
+							$debito  = $resDiffPeso[0]['debito'];
+							$credito = $resDiffPeso[0]['credito'];
 
-							if ( $VlrDiff  <  0 ){
+							if( $debito > $credito ){
+								$credito = abs(($debito - $credito));
+								$debito = 0;
+							}else{
+								$debito = abs(($credito - $debito));
+								$credito = 0;
+							}
 
-								$VlrDiffN = abs($VlrDiff);
+							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
-							}else if ( $VlrDiff > 0 ){
+										':ac1_trans_id' => $resInsertAsiento,
+										':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+										':ac1_debit' => 0,
+										':ac1_credit' => 0,
+										':ac1_debit_sys' => round($debito, 2),
+										':ac1_credit_sys' => round($credito, 2),
+										':ac1_currex' => 0,
+										':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+										':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
+										':ac1_debit_import' => 0,
+										':ac1_credit_import' => 0,
+										':ac1_debit_importsys' => 0,
+										':ac1_credit_importsys' => 0,
+										':ac1_font_key' => $resInsert,
+										':ac1_font_line' => 1,
+										':ac1_font_type' => 22,
+										':ac1_accountvs' => 1,
+										':ac1_doctype' => 18,
+										':ac1_ref1' => "",
+										':ac1_ref2' => "",
+										':ac1_ref3' => "",
+										':ac1_prc_code' => 0,
+										':ac1_uncode' => 0,
+										':ac1_prj_code' => 0,
+										':ac1_rescon_date' => NULL,
+										':ac1_recon_total' => 0,
+										':ac1_made_user' => isset($Data['crc_createby'])?$Data['crc_createby']:NULL,
+										':ac1_accperiod' => 1,
+										':ac1_close' => 0,
+										':ac1_cord' => 0,
+										':ac1_ven_debit' => 0,
+										':ac1_ven_credit' => 0,
+										':ac1_fiscal_acct' => 0,
+										':ac1_taxid' => 1,
+										':ac1_isrti' => 0,
+										':ac1_basert' => 0,
+										':ac1_mmcode' => 0,
+										':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
+										':ac1_codref' => 1,
+										':ac1_line' => 1
+							));
 
-								$VlrDiffP = abs($VlrDiff);
 
-							}else if ( $VlrDiff  == 0 ){
 
-								$VlrDiffN = 0;
-								$VlrDiffP = 0;
+							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+									// Se verifica que el detalle no de error insertando //
+							}else{
+									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
 
+										$respuesta = array(
+											'error'   => true,
+											'data'	  => $resDetalleAsiento,
+											'mensaje'	=> 'No se pudo registrar el pago recibido, occurio un error al insertar el detalle del asiento diferencia en cambio'
+										);
+
+										 $this->response($respuesta);
+
+										 return;
 							}
 
 
-
-							if ( $VlrDiffP > 0 ){
-											$cuentaD = "";
-											$credito = 0;
-											$debito  = 0;
-											$MontoSysDB = 0;
-											$MontoSysCR = 0;
-
-
-
-											$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
-											$debito    = $VlrDiffP;
-											$MontoSysDB = ($debito / $TasaLocSys);
-
-
-
-
-											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-													':ac1_trans_id' => $resInsertAsiento,
-													':ac1_account' => $cuentaD,
-													':ac1_debit' => round($debito,2),
-													':ac1_credit' => 0,
-													':ac1_debit_sys' => 0,
-													':ac1_credit_sys' => 0,
-													':ac1_currex' => 0,
-													':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
-													':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
-													':ac1_debit_import' => 0,
-													':ac1_credit_import' => 0,
-													':ac1_debit_importsys' => 0,
-													':ac1_credit_importsys' => 0,
-													':ac1_font_key' => $resInsert,
-													':ac1_font_line' => 1,
-													':ac1_font_type' => 22,
-													':ac1_accountvs' => 1,
-													':ac1_doctype' => 18,
-													':ac1_ref1' => "",
-													':ac1_ref2' => "",
-													':ac1_ref3' => "",
-													':ac1_prc_code' => 0,
-													':ac1_uncode' => 0,
-													':ac1_prj_code' => 0,
-													':ac1_rescon_date' => NULL,
-													':ac1_recon_total' => 0,
-													':ac1_made_user' => 0,
-													':ac1_accperiod' => 1,
-													':ac1_close' => 0,
-													':ac1_cord' => 0,
-													':ac1_ven_debit' => 0,
-													':ac1_ven_credit' => 0,
-													':ac1_fiscal_acct' => 0,
-													':ac1_taxid' => 1,
-													':ac1_isrti' => 0,
-													':ac1_basert' => 0,
-													':ac1_mmcode' => 0,
-													':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
-													':ac1_codref' => 1,
-													':ac1_line' => 1
-										));
-
-
-
-										if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-												// Se verifica que el detalle no de error insertando //
-										}else{
-												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-												// se retorna el error y se detiene la ejecucion del codigo restante.
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data'	  => $resDetalleAsiento,
-														'mensaje'	=> 'No se pudo completar el proceso, occurio un error al insertar el detalle del asiento diferencia en cambio'
-													);
-
-													 $this->response($respuesta);
-
-													 return;
-										}
-							}
-
-
-							if ( $VlrDiffN > 0 ){
-
-											$cuentaD = "";
-											$credito = 0;
-											$debito  = 0;
-											$MontoSysDB = 0;
-											$MontoSysCR = 0;
-
-
-
-											$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
-											$credito    = $VlrDiffN;
-											$MontoSysCR = ($credito / $TasaLocSys);
-
-
-
-
-											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-													':ac1_trans_id' => $resInsertAsiento,
-													':ac1_account' => $cuentaD,
-													':ac1_debit' => 0,
-													':ac1_credit' => round($credito, 2),
-													':ac1_debit_sys' => 0,
-													':ac1_credit_sys' => 0,
-													':ac1_currex' => 0,
-													':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
-													':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
-													':ac1_debit_import' => 0,
-													':ac1_credit_import' => 0,
-													':ac1_debit_importsys' => 0,
-													':ac1_credit_importsys' => 0,
-													':ac1_font_key' => $resInsert,
-													':ac1_font_line' => 1,
-													':ac1_font_type' => 22,
-													':ac1_accountvs' => 1,
-													':ac1_doctype' => 18,
-													':ac1_ref1' => "",
-													':ac1_ref2' => "",
-													':ac1_ref3' => "",
-													':ac1_prc_code' => 0,
-													':ac1_uncode' => 0,
-													':ac1_prj_code' => 0,
-													':ac1_rescon_date' => NULL,
-													':ac1_recon_total' => 0,
-													':ac1_made_user' => 0,
-													':ac1_accperiod' => 1,
-													':ac1_close' => 0,
-													':ac1_cord' => 0,
-													':ac1_ven_debit' => 0,
-													':ac1_ven_credit' => 0,
-													':ac1_fiscal_acct' => 0,
-													':ac1_taxid' => 1,
-													':ac1_isrti' => 0,
-													':ac1_basert' => 0,
-													':ac1_mmcode' => 0,
-													':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
-													':ac1_codref' => 1,
-													':ac1_line' => 1
-										));
-
-
-
-										if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-												// Se verifica que el detalle no de error insertando //
-										}else{
-												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-												// se retorna el error y se detiene la ejecucion del codigo restante.
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data'	  => $resDetalleAsiento,
-														'mensaje'	=> 'No se pudo completar el proceso, occurio un error al insertar el detalle del asiento diferencia en cambio'
-													);
-
-													 $this->response($respuesta);
-
-													 return;
-										}
-							}
-
-
-
-
-
-						}else if ( $OP == 2 ){
-
-							if ( $VlrDiff  <  0 ){
-
-								$VlrDiffP = abs($VlrDiff);
-
-							}else if ( $VlrDiff > 0 ){
-
-								$VlrDiffN = abs($VlrDiff);
-
-							}else if ( $VlrDiff  == 0 ){
-
-								$VlrDiffN = 0;
-								$VlrDiffP = 0;
-
-							}
-
-							if( $VlrDiffP > 0 ){
-
-
-											$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
-											$credito    = $VlrDiffP;
-											$MontoSysCR = ($credito / $TasaLocSys);
-
-
-
-											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-													':ac1_trans_id' => $resInsertAsiento,
-													':ac1_account' => $cuentaD,
-													':ac1_debit' => 0,
-													':ac1_credit' => round( $VlrDiffP, 2 ),
-													':ac1_debit_sys' => 0,
-													':ac1_credit_sys' => 0,
-													':ac1_currex' => 0,
-													':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
-													':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
-													':ac1_debit_import' => 0,
-													':ac1_credit_import' => 0,
-													':ac1_debit_importsys' => 0,
-													':ac1_credit_importsys' => 0,
-													':ac1_font_key' => $resInsert,
-													':ac1_font_line' => 1,
-													':ac1_font_type' => 22,
-													':ac1_accountvs' => 1,
-													':ac1_doctype' => 18,
-													':ac1_ref1' => "",
-													':ac1_ref2' => "",
-													':ac1_ref3' => "",
-													':ac1_prc_code' => 0,
-													':ac1_uncode' => 0,
-													':ac1_prj_code' => 0,
-													':ac1_rescon_date' => NULL,
-													':ac1_recon_total' => 0,
-													':ac1_made_user' => 0,
-													':ac1_accperiod' => 1,
-													':ac1_close' => 0,
-													':ac1_cord' => 0,
-													':ac1_ven_debit' => 0,
-													':ac1_ven_credit' => 0,
-													':ac1_fiscal_acct' => 0,
-													':ac1_taxid' => 1,
-													':ac1_isrti' => 0,
-													':ac1_basert' => 0,
-													':ac1_mmcode' => 0,
-													':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
-													':ac1_codref' => 1,
-													':ac1_line' => 1
-										));
-
-
-
-										if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-												// Se verifica que el detalle no de error insertando //
-										}else{
-												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-												// se retorna el error y se detiene la ejecucion del codigo restante.
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data'	  => $resDetalleAsiento,
-														'mensaje'	=> 'No se pudo completar el proceso, occurio un error al insertar el detalle del asiento diferencia en cambio'
-													);
-
-													 $this->response($respuesta);
-
-													 return;
-										}
-
-
-							}
-
-							if( $VlrDiffN > 0 ){
-
-
-											$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcn'];
-											$debito     =  $VlrDiffN;
-											$MontoSysDB = ($debito / $TasaLocSys);
-
-
-											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-													':ac1_trans_id' => $resInsertAsiento,
-													':ac1_account' => $cuentaD,
-													':ac1_debit' =>  round( $VlrDiffN, 2 ),
-													':ac1_credit' => 0,
-													':ac1_debit_sys' => 0,
-													':ac1_credit_sys' => 0,
-													':ac1_currex' => 0,
-													':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
-													':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
-													':ac1_debit_import' => 0,
-													':ac1_credit_import' => 0,
-													':ac1_debit_importsys' => 0,
-													':ac1_credit_importsys' => 0,
-													':ac1_font_key' => $resInsert,
-													':ac1_font_line' => 1,
-													':ac1_font_type' => 22,
-													':ac1_accountvs' => 1,
-													':ac1_doctype' => 18,
-													':ac1_ref1' => "",
-													':ac1_ref2' => "",
-													':ac1_ref3' => "",
-													':ac1_prc_code' => 0,
-													':ac1_uncode' => 0,
-													':ac1_prj_code' => 0,
-													':ac1_rescon_date' => NULL,
-													':ac1_recon_total' => 0,
-													':ac1_made_user' => 0,
-													':ac1_accperiod' => 1,
-													':ac1_close' => 0,
-													':ac1_cord' => 0,
-													':ac1_ven_debit' => 0,
-													':ac1_ven_credit' => 0,
-													':ac1_fiscal_acct' => 0,
-													':ac1_taxid' => 1,
-													':ac1_isrti' => 0,
-													':ac1_basert' => 0,
-													':ac1_mmcode' => 0,
-													':ac1_legal_num' => isset($Data['crc_cardcode'])?$Data['crc_cardcode']:NULL,
-													':ac1_codref' => 1,
-													':ac1_line' => 1
-										));
-
-
-
-										if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-												// Se verifica que el detalle no de error insertando //
-										}else{
-												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-												// se retorna el error y se detiene la ejecucion del codigo restante.
-													$this->pedeo->trans_rollback();
-
-													$respuesta = array(
-														'error'   => true,
-														'data'	  => $resDetalleAsiento,
-														'mensaje'	=> 'No se pudo completar el proceso, occurio un error al insertar el detalle del asiento diferencia en cambio'
-													);
-
-													 $this->response($respuesta);
-
-													 return;
-										}
-							}
 
 						}
-
-						//FIN VALIDACION
-						//FIN
-
 						//
+
+
 						// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
 						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
 						// print_r(json_encode($ressqlmac1));
