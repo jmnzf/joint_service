@@ -427,6 +427,7 @@ class PaymentsMade extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 								$VrlPagoDetalleNormal  = 0;
+								$Equiv = 0;
 								//SE VALIDA SI ES UN ANTICIPO AL proveedor
 								//SE OMITE LA VALIDACION DE LA FACTURA EN CASO DE ANTICIPO
 
@@ -460,8 +461,12 @@ class PaymentsMade extends REST_Controller {
 
 
 														$VlrTotalOpc = $resVlrPay['vlrop'];
-														$VlrDiff = ($VlrDiff + $resVlrPay['vlrdiff']);
-														$TasaOrg =  $resVlrPay['tasadoc'];
+														$VlrDiff     = ($VlrDiff + $resVlrPay['vlrdiff']);
+														$TasaOrg     = $resVlrPay['tasadoc'];
+														$Equiv       = $resVlrPay['equiv'];
+
+														$VlrTotalOpc = ($VlrTotalOpc + $Equiv);
+
 
 
 														// echo "\n ".$detail['pe1_docentry']." ".$VlrDiff;
@@ -1909,7 +1914,8 @@ class PaymentsMade extends REST_Controller {
 
 					//VALIDANDDO DIFERENCIA EN PESO DE MONEDA DE SISTEMA
 
-					$sqlDiffPeso = "SELECT sum(coalesce(ac1_debit_sys,0)) as debito, sum(coalesce(ac1_credit_sys,0)) as credito
+					$sqlDiffPeso = "SELECT sum(coalesce(ac1_debit_sys,0)) as debito, sum(coalesce(ac1_credit_sys,0)) as credito,
+													sum(coalesce(ac1_debit,0)) as ldebito, sum(coalesce(ac1_credit,0)) as lcredito
 													from mac1
 													where ac1_trans_id = :ac1_trans_id";
 
@@ -2015,6 +2021,101 @@ class PaymentsMade extends REST_Controller {
 
 
 
+					}else if( isset($resDiffPeso[0]['ldebito']) && abs(($resDiffPeso[0]['ldebito'] - $resDiffPeso[0]['lcredito'])) > 0 ){
+
+						$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+						$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+
+						if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resCuentaDiferenciaDecimal,
+								'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+							);
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+
+						$ldebito  = $resDiffPeso[0]['ldebito'];
+						$lcredito = $resDiffPeso[0]['lcredito'];
+
+						if( $ldebito > $lcredito ){
+							$lcredito = abs(($ldebito - $lcredito));
+							$ldebito = 0;
+						}else{
+							$ldebito = abs(($lcredito - $ldebito));
+							$lcredito = 0;
+						}
+
+						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+									':ac1_trans_id' => $resInsertAsiento,
+									':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+									':ac1_debit' => round($ldebito, 2),
+									':ac1_credit' => round($lcredito, 2),
+									':ac1_debit_sys' => 0,
+									':ac1_credit_sys' => 0,
+									':ac1_currex' => 0,
+									':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+									':ac1_debit_import' => 0,
+									':ac1_credit_import' => 0,
+									':ac1_debit_importsys' => 0,
+									':ac1_credit_importsys' => 0,
+									':ac1_font_key' => $resInsert,
+									':ac1_font_line' => 1,
+									':ac1_font_type' => 19,
+									':ac1_accountvs' => 1,
+									':ac1_doctype' => 18,
+									':ac1_ref1' => "",
+									':ac1_ref2' => "",
+									':ac1_ref3' => "",
+									':ac1_prc_code' => 0,
+									':ac1_uncode' => 0,
+									':ac1_prj_code' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
+									':ac1_rescon_date' => NULL,
+									':ac1_recon_total' => 0,
+									':ac1_made_user' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
+									':ac1_accperiod' => 1,
+									':ac1_close' => 0,
+									':ac1_cord' => 0,
+									':ac1_ven_debit' => 0,
+									':ac1_ven_credit' => 0,
+									':ac1_fiscal_acct' => 0,
+									':ac1_taxid' => 1,
+									':ac1_isrti' => 0,
+									':ac1_basert' => 0,
+									':ac1_mmcode' => 0,
+									':ac1_legal_num' => isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL,
+									':ac1_codref' => 1
+						));
+
+
+
+						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+								// Se verifica que el detalle no de error insertando //
+						}else{
+								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resDetalleAsiento,
+										'mensaje'	=> 'No se pudo registrar el pago recibido, occurio un error al insertar el detalle del asiento diferencia en cambio'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+						}
 					}
 					// $debito = 0;
 					// $credito = 0;
