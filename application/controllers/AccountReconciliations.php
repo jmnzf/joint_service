@@ -40,6 +40,7 @@ class AccountReconciliations extends REST_Controller {
 			$VlrDiff = 0; // valor diferencia total
 			$VlrPagoEfectuado = 0;
 			$OP = 0;
+			$TasaOrg = 0;
 
       // Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -467,8 +468,7 @@ class AccountReconciliations extends REST_Controller {
 
 														$VlrTotalOpc = $resVlrPay['vlrop'];
 														$VlrDiff = ($VlrDiff + $resVlrPay['vlrdiff']);
-
-														echo " Doc ".$detail['rc1_doctype']." MOnto ".$VlrDiff;
+														$TasaOrg = $resVlrPay['tasadoc'];
 
 													}else{
 
@@ -501,44 +501,6 @@ class AccountReconciliations extends REST_Controller {
 
 
                   if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
-
-										// LLENANDO PARA DETALLE DE ASIENTOS CONTABLES
-										$DetalleAsiento = new stdClass();
-
-										$DetalleAsiento->cuenta   = is_numeric($detail['rc1_acctcode'])?$detail['rc1_acctcode']:0;
-										$DetalleAsiento->tercero  = isset($detail['rc1_cardcode'])?$detail['rc1_cardcode']:NULL;
-										$DetalleAsiento->tipodoc  = is_numeric($detail['rc1_doctype'])?$detail['rc1_doctype']:0;
-										$DetalleAsiento->pagoaply = is_numeric($detail['rc1_valapply'])?$detail['rc1_valapply']:0;
-										$DetalleAsiento->cord     = isset($detail['ac1_cord'])?$detail['ac1_cord']:NULL;
-										$DetalleAsiento->vlrpaiddesc	= $VlrTotalOpc;
-
-										$llaveDetalleAsiento = 	$DetalleAsiento->cuenta.$DetalleAsiento->tipodoc;
-
-										//********************
-										if(in_array( $llaveDetalleAsiento, $inArrayDetalleAsiento)){
-
-												$posicionDetalleAsiento  = $this->buscarPosicion( $llaveDetalleAsiento, $inArrayDetalleAsiento);
-
-										}else{
-
-												array_push( $inArrayDetalleAsiento, $llaveDetalleAsiento );
-												$posicionDetalleAsiento = $this->buscarPosicion( $llaveDetalleAsiento, $inArrayDetalleAsiento);
-
-										}
-										//
-
-										if( isset($DetalleAsientoConsolidado [$posicionDetalleAsiento])){
-
-											if(!is_array($DetalleAsientoConsolidado[$posicionDetalleAsiento])){
-												$DetalleAsientoConsolidado[$posicionDetalleAsiento] = array();
-											}
-
-										}else{
-											$DetalleAsientoConsolidado[$posicionDetalleAsiento] = array();
-										}
-
-										array_push( $DetalleAsientoConsolidado[$posicionDetalleAsiento], $DetalleAsiento);
-
 
 
 										// ACTUALIZANDO VALORES EN DOCUMENTOS
@@ -1083,7 +1045,7 @@ class AccountReconciliations extends REST_Controller {
 												}
 											}
 										}
-										//ASIENTOS MANUALES
+
 
 										//MOVIMIENTO DE DOCUMENTOS
 										if( $detail['rc1_doctype'] == 5 || $detail['rc1_doctype'] == 6 || $detail['rc1_doctype'] == 7 || $detail['rc1_doctype'] == 15 || $detail['rc1_doctype'] == 16 || $detail['rc1_doctype'] == 17 || $detail['rc1_doctype'] == 19 || $detail['rc1_doctype'] == 20 ){
@@ -1189,6 +1151,45 @@ class AccountReconciliations extends REST_Controller {
 
                          return;
                   }
+									//ASIENTOS MANUALES
+									// LLENANDO PARA DETALLE DE ASIENTOS CONTABLES
+									$DetalleAsiento = new stdClass();
+
+									$DetalleAsiento->cuenta   = is_numeric($detail['rc1_acctcode'])?$detail['rc1_acctcode']:0;
+									$DetalleAsiento->tercero  = isset($detail['rc1_cardcode'])?$detail['rc1_cardcode']:NULL;
+									$DetalleAsiento->tipodoc  = is_numeric($detail['rc1_doctype'])?$detail['rc1_doctype']:0;
+									$DetalleAsiento->pagoaply = is_numeric($detail['rc1_valapply'])?$detail['rc1_valapply']:0;
+									$DetalleAsiento->cord     = isset($detail['ac1_cord'])?$detail['ac1_cord']:NULL;
+									$DetalleAsiento->vlrpaiddesc	= $VlrTotalOpc;
+									$DetalleAsiento->tasaoriginaldoc = $TasaOrg ;
+
+									$llaveDetalleAsiento = 	$DetalleAsiento->cuenta.$DetalleAsiento->tipodoc;
+
+									//********************
+									if(in_array( $llaveDetalleAsiento, $inArrayDetalleAsiento)){
+
+											$posicionDetalleAsiento  = $this->buscarPosicion( $llaveDetalleAsiento, $inArrayDetalleAsiento);
+
+									}else{
+
+											array_push( $inArrayDetalleAsiento, $llaveDetalleAsiento );
+											$posicionDetalleAsiento = $this->buscarPosicion( $llaveDetalleAsiento, $inArrayDetalleAsiento);
+
+									}
+									//
+
+									if( isset($DetalleAsientoConsolidado [$posicionDetalleAsiento])){
+
+										if(!is_array($DetalleAsientoConsolidado[$posicionDetalleAsiento])){
+											$DetalleAsientoConsolidado[$posicionDetalleAsiento] = array();
+										}
+
+									}else{
+										$DetalleAsientoConsolidado[$posicionDetalleAsiento] = array();
+									}
+
+									array_push( $DetalleAsientoConsolidado[$posicionDetalleAsiento], $DetalleAsiento);
+
 
             }
 
@@ -1201,15 +1202,17 @@ class AccountReconciliations extends REST_Controller {
 										$cuenta = 0;
 										$doctype = 0;
 										$ac1cord = null;
+										$tasadoc = 0;
 
 
 										foreach ($posicion as $key => $value) {
 
-													$TotalPago = ( $TotalPago + $value->pagoaply );
+													$TotalPago = ( $TotalPago + $value->vlrpaiddesc );
 
-													$cuenta = $value->cuenta;
-													$doctype  = $value->tipodoc;
+													$cuenta  = $value->cuenta;
+													$doctype = $value->tipodoc;
 													$ac1cord = $value->cord;
+													$tasadoc = $value->tasaoriginaldoc;
 										}
 
 
@@ -1228,7 +1231,8 @@ class AccountReconciliations extends REST_Controller {
 													$MontoSysCR = $credito;
 
 											}else{
-													$MontoSysCR = ($credito / $TasaLocSys);
+
+													$MontoSysCR = ($credito / $tasadoc);
 
 											}
 
@@ -1237,33 +1241,40 @@ class AccountReconciliations extends REST_Controller {
 											$debito = $TotalPago;
 
 											if(trim($Data['crc_currency']) != $MONEDASYS ){
+
 													$MontoSysDB = $debito;
+
 											}else{
-													$MontoSysDB = ($debito / $TasaLocSys);
+
+													$MontoSysDB = ($debito / $tasadoc);
 											}
 
 										}else if( $doctype == 18 ){
 											if( $ac1cord == 0 ){
+
 												$credito = $TotalPago;
 
 												if(trim($Data['crc_currency']) != $MONEDASYS ){
 
-														$MontoSysCR = ($credito / $TasaLocSys);
+													  $MontoSysCR = $TotalPagoOriginal;
 
 												}else{
+														$MontoSysCR = ($credito / $tasadoc);
 
-														$MontoSysCR = $TotalPagoOriginal;
 												}
+
 											}else if( $ac1cord == 1 ){
+
 												$debito = $TotalPago;
 
 												if(trim($Data['crc_currency']) != $MONEDASYS ){
 
-														$MontoSysDB = ($debito / $TasaLocSys);
+														$MontoSysDB = $TotalPagoOriginal;
 
 												}else{
 
-														$MontoSysDB = $TotalPagoOriginal;
+														$MontoSysDB = ($debito / $tasadoc);
+
 												}
 											}
 										}
@@ -1402,7 +1413,7 @@ class AccountReconciliations extends REST_Controller {
 													':ac1_account' => $cuentaD,
 													':ac1_debit' => round($debito,2),
 													':ac1_credit' => 0,
-													':ac1_debit_sys' => round($MontoSysDB, 2),
+													':ac1_debit_sys' => 0,
 													':ac1_credit_sys' => 0,
 													':ac1_currex' => 0,
 													':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
@@ -1486,7 +1497,7 @@ class AccountReconciliations extends REST_Controller {
 													':ac1_debit' => 0,
 													':ac1_credit' => round($credito, 2),
 													':ac1_debit_sys' => 0,
-													':ac1_credit_sys' => round($MontoSysCR, 2),
+													':ac1_credit_sys' => 0,
 													':ac1_currex' => 0,
 													':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
 													':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
@@ -1581,7 +1592,7 @@ class AccountReconciliations extends REST_Controller {
 													':ac1_debit' => 0,
 													':ac1_credit' => round( $VlrDiffP, 2 ),
 													':ac1_debit_sys' => 0,
-													':ac1_credit_sys' => round( $MontoSysCR, 2 ),
+													':ac1_credit_sys' => 0,
 													':ac1_currex' => 0,
 													':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
 													':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
@@ -1655,7 +1666,7 @@ class AccountReconciliations extends REST_Controller {
 													':ac1_account' => $cuentaD,
 													':ac1_debit' =>  round( $VlrDiffN, 2 ),
 													':ac1_credit' => 0,
-													':ac1_debit_sys' => round( $MontoSysDB, 2 ),
+													':ac1_debit_sys' => 0,
 													':ac1_credit_sys' => 0,
 													':ac1_currex' => 0,
 													':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
@@ -1719,11 +1730,11 @@ class AccountReconciliations extends REST_Controller {
 						//FIN VALIDACION
 						//FIN
 
-
-						$sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
-						$ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
-						print_r(json_encode($ressqlmac1));
-						exit;
+						//
+						// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
+						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
+						// print_r(json_encode($ressqlmac1));
+						// exit;
 
 
             $this->pedeo->trans_commit();
@@ -1752,7 +1763,7 @@ class AccountReconciliations extends REST_Controller {
   //OBTENER RECONCILIACION
   public function getAccountReconciliations_get(){
 
-        $sqlSelect = "SELECT dcrc.*, tded.ded_description, tded.ded_id
+        $sqlSelect = "SELECT DISTINCT dcrc.*, tded.ded_description, tded.ded_id
 											FROM dcrc
 											INNER JOIN tbed
 											ON dcrc.crc_docentry = tbed.bed_docentry
