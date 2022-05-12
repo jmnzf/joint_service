@@ -39,8 +39,6 @@ class Business extends REST_Controller {
          !isset($DataCompany['Pge_Cel']) OR
          !isset($DataCompany['Pge_Branch']) OR
          !isset($DataCompany['Pge_Mail']) OR
-         !isset($DataCompany['Pge_CurrFirst']) OR
-         !isset($DataCompany['Pge_CurrSys']) OR
          !isset($DataCompany['Pge_CouBank']) OR
          !isset($DataCompany['Pge_BankDef']) OR
          !isset($DataCompany['Pge_BankAcct']) OR
@@ -128,8 +126,6 @@ class Business extends REST_Controller {
          !isset($DataCompany['Pge_Cel']) OR
          !isset($DataCompany['Pge_Branch']) OR
          !isset($DataCompany['Pge_Mail']) OR
-         !isset($DataCompany['Pge_CurrFirst']) OR
-         !isset($DataCompany['Pge_CurrSys']) OR
          !isset($DataCompany['Pge_CouBank']) OR
          !isset($DataCompany['Pge_BankDef']) OR
          !isset($DataCompany['Pge_BankAcct']) OR
@@ -149,8 +145,7 @@ class Business extends REST_Controller {
       $sqlUpdate = "UPDATE pgem SET pge_name_soc = :Pge_NameSoc, pge_small_name = :Pge_SmallName, pge_add_soc = :Pge_AddSoc,
                     pge_state_soc = :Pge_StateSoc, pge_city_soc = :Pge_CitySoc, pge_cou_soc = :Pge_CouSoc, pge_id_type = :Pge_IdType,
                     pge_id_soc = :Pge_IdSoc,  pge_web_site = :Pge_WebSite, pge_phone1 = :Pge_Phone1,
-                    pge_phone2 = :Pge_Phone2, pge_cel = :Pge_Cel, pge_branch = :Pge_Branch, pge_mail = :Pge_Mail, pge_curr_first = :Pge_CurrFirst,
-                    pge_curr_sys = :Pge_CurrSys, pge_cou_bank = :Pge_CouBank, pge_bank_def = :Pge_BankDef, pge_bank_acct = :Pge_BankAcct,
+                    pge_phone2 = :Pge_Phone2, pge_cel = :Pge_Cel, pge_branch = :Pge_Branch, pge_mail = :Pge_Mail,pge_cou_bank = :Pge_CouBank, pge_bank_def = :Pge_BankDef, pge_bank_acct = :Pge_BankAcct,
                     pge_acc_type = :Pge_AccType, pge_bridge_inv = :pge_bridge_inv, pge_acc_dcp = :pge_acc_dcp, pge_acc_dcn = :pge_acc_dcn, pge_acc_ajp = :pge_acc_ajp WHERE pge_id = :Pge_Id";
 
 
@@ -170,8 +165,6 @@ class Business extends REST_Controller {
             ':Pge_Cel' => $DataCompany['Pge_Cel'],
             ':Pge_Branch' => $DataCompany['Pge_Branch'],
             ':Pge_Mail' => $DataCompany['Pge_Mail'],
-            ':Pge_CurrFirst' => $DataCompany['Pge_CurrFirst'],
-            ':Pge_CurrSys' => $DataCompany['Pge_CurrSys'],
             ':Pge_CouBank' => $DataCompany['Pge_CouBank'],
             ':Pge_BankDef' => $DataCompany['Pge_BankDef'],
             ':Pge_BankAcct' => $DataCompany['Pge_BankAcct'],
