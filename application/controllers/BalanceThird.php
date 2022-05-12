@@ -26,7 +26,7 @@ class BalanceThird extends REST_Controller {
 
       $Data = $this->post();
 
-			if($Data['tipo'] == 'A'){
+			if($Data['tipo'] == 'L'){
       $sqlSelect = "SELECT
 										'' tercero,
                     t0.acc_level,t1.levels,

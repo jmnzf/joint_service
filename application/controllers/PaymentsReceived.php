@@ -2424,6 +2424,8 @@ public function getDetails_get(){
 
 	$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pr1_docentry" => $Data['pr1_docentry']));
 
+	var_dump($resSelect);exit;
+
 	if(isset($resSelect[0])){
 
 		$respuesta = array(
