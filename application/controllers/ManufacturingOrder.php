@@ -37,6 +37,7 @@ class ManufacturingOrder extends REST_Controller {
         !isset($Data['bof_user']) OR
         !isset($Data['bof_cust_order']) OR
         !isset($Data['bof_ccost']) OR
+        !isset($Data['bof_status']) OR
         !isset($Data['bof_project'])){
 
             $respuesta = array(
@@ -80,7 +81,7 @@ class ManufacturingOrder extends REST_Controller {
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbof(bof_docnum ,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype) VALUES (:bof_docnum, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype)";
+        $sqlInsert = "INSERT INTO tbof(bof_docnum ,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype, bof_status) VALUES (:bof_docnum, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype, :bof_status)";
         
         $this->pedeo->trans_begin();
 
@@ -99,7 +100,8 @@ class ManufacturingOrder extends REST_Controller {
             ":bof_project" => $Data['bof_project'],
             ":bof_type" => $Data['bof_type'],
             ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] :0,
-            ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0
+            ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0,
+            ":bof_status" => $Data['bof_status']
         ));
 
         if( is_numeric($resInsert) AND $resInsert > 0){
@@ -256,7 +258,8 @@ class ManufacturingOrder extends REST_Controller {
                         bof_ccost = :bof_ccost,
                         bof_project = :bof_project,
                         bof_baseentry = :bof_baseentry,
-                        bof_basetype = :bof_basetype
+                        bof_basetype = :bof_basetype,
+                        bof_status = :bof_status
                         where bof_docentry = :bof_docentry";    
 
         $this->pedeo->trans_begin();
@@ -278,7 +281,8 @@ class ManufacturingOrder extends REST_Controller {
         ":bof_project" =>$Data['bof_project'],
         ":bof_docentry" => $Data['bof_docentry'],
         ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] :0,
-        ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0));
+        ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0,
+        ":bof_status" => $Data['bof_status']));
 
         if( is_numeric($resUpdate) AND $resUpdate > 0){
 
