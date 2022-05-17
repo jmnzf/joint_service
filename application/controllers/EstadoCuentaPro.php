@@ -554,7 +554,7 @@ group by dmdt.mdt_docname,
 					 <p class=""><b>Saldo</b></p>
 				 </th>
 				 <th style="text-align: left;">
-					 <p>'.$value['monedadocumento']." ".number_format($totalfactura, 2, ',', '.').'</p>
+					 <p>'.$Data['currency']." ".number_format($totalfactura, 2, ',', '.').'</p>
 				 </th>
 
 			 </tr>
