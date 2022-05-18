@@ -474,6 +474,8 @@ class AccountReconciliations extends REST_Controller {
 
 														$VlrTotalOpc = ($VlrTotalOpc + $Equiv);
 
+														// echo $detail['rc1_doctype']."  \n".$Equiv." \n";
+
 													}else{
 
 														$this->pedeo->trans_rollback();
