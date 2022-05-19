@@ -51,10 +51,10 @@ class ManufacturingOrder extends REST_Controller {
         }
 
 
-        
+
         // SE VERIFCA QUE EL DOCUMENTO TENGA DETALLE
         $ContenidoDetalle = json_decode($Data['detail'], true);
-        
+
         if (!is_array($ContenidoDetalle)) {
             $respuesta = array(
                 'error' => true,
@@ -81,10 +81,10 @@ class ManufacturingOrder extends REST_Controller {
         }
 
         $sqlInsert = "INSERT INTO tbof(bof_docnum ,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype) VALUES (:bof_docnum, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype)";
-        
+
         $this->pedeo->trans_begin();
 
-        $resInsert = $this->pedeo->insertRow($sqlInsert, array(            
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
             ":bof_docnum" => $Data['bof_docnum'],
             ":bof_item_code" => $Data['bof_item_code'],
             ":bof_item_description" => $Data['bof_item_description'],
@@ -98,6 +98,7 @@ class ManufacturingOrder extends REST_Controller {
             ":bof_ccost" => $Data['bof_ccost'],
             ":bof_project" => $Data['bof_project'],
             ":bof_type" => $Data['bof_type'],
+						":bof_status" => $Data['bof_status'],
             ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] :0,
             ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0
         ));
@@ -241,7 +242,7 @@ class ManufacturingOrder extends REST_Controller {
             return;
         }
 
-        $sqlUpdate = "UPDATE tbof set 
+        $sqlUpdate = "UPDATE tbof set
                         bof_type = :bof_type,
                         bof_docnum = :bof_docnum,
                         bof_item_code = :bof_item_code,
@@ -257,7 +258,7 @@ class ManufacturingOrder extends REST_Controller {
                         bof_project = :bof_project,
                         bof_baseentry = :bof_baseentry,
                         bof_basetype = :bof_basetype
-                        where bof_docentry = :bof_docentry";    
+                        where bof_docentry = :bof_docentry";
 
         $this->pedeo->trans_begin();
 
@@ -326,7 +327,7 @@ class ManufacturingOrder extends REST_Controller {
                 'data' => $resUpdate,
                 'mensaje' => 'Orden de fabricación actualizada con exito'
             );
-            
+
         }else{
             $this->pedeo->trans_rollback();
 
@@ -342,7 +343,7 @@ class ManufacturingOrder extends REST_Controller {
 
         $this->response($respuesta);
 
-        
+
     }
 
     public function getManufacturingOrderById_get(){
@@ -386,18 +387,18 @@ class ManufacturingOrder extends REST_Controller {
     public function getManufacturingOrderDetailById_get(){
 
         $Data = $this->get();
-        
-        if (!isset($Data['bof_docentry'])) {
-            $respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'La informacion enviada no es valida'
-			);
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+				if (!isset($Data['bof_docentry'])) {
+				    $respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' => 'La informacion enviada no es valida'
+						);
 
-			return;
-        }
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
 
         $sqlSelect = "SELECT * FROM bof1 WHERE of1_docentry = :bof_docentry";
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(":bof_docentry" => $Data['bof_docentry']));
@@ -420,4 +421,30 @@ class ManufacturingOrder extends REST_Controller {
 
 		$this->response($respuesta);
     }
+
+		//OBTENER ORDENES DE FABRICACION CON ESTADO LIBERADAS
+		public function getManufacturingOrderReleased_get(){
+
+			$sqlSelect = "SELECT * from tmos WHERE mos_id = :mos_id";
+
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mos_id' => 1));
+
+			if (isset($resSelect[0])) {
+					$respuesta = array(
+							'error' => false,
+							'data'  => $resSelect,
+							'mensaje' => ''
+					);
+			} else {
+
+					$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'    => 'busqueda sin resultados'
+					);
+			}
+
+			$this->response($respuesta);
+
+		}
 }

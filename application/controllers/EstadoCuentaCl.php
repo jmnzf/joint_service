@@ -260,7 +260,7 @@ class EstadoCuentaCl extends REST_Controller {
 														mac1.ac1_font_type as numtype,
 														mdt_docname as tipo,
 														case
-														when mac1.ac1_font_type = 5 then mac1.ac1_debit
+														when mac1.ac1_font_type = dvnc.vnc_doctype then mac1.ac1_debit
 														else mac1.ac1_credit
 														end as totalfactura,
 														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
@@ -357,7 +357,7 @@ class EstadoCuentaCl extends REST_Controller {
 														and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 				// print_r($sqlestadocuenta);exit;
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array(":currency" => $Data['currency']));
-        //  print_r($sqlestadocuenta);exit();die();
+         // print_r($sqlestadocuenta);exit();die();
 				if(!isset($contenidoestadocuenta[0])){
 						$respuesta = array(
 							 'error' => true,
@@ -407,10 +407,10 @@ class EstadoCuentaCl extends REST_Controller {
 								<tr>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
-								<th>&nbsp;</th>
-								<th>&nbsp;</th>
-
 								<th>Total</th>
+								<th>&nbsp;</th>
+								<th>&nbsp;</th>
+								<th>&nbsp;</th>
 								<th style="width: 10%;" class="fondo centro">'.$Data['currency'].' '.number_format(($total_saldo), 2, ',', '.').'</th>
 								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_0_30, 2, ',', '.').'</th>
 								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_30_60, 2, ',', '.').'</th>

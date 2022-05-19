@@ -353,7 +353,7 @@ class BalanceThird extends REST_Controller {
                 from dacc t0
 								left join (select * from balancess(:from_date,:to_date,'b')) t1 on t0.acc_code = t1.account
 								left join dmsn t2 on t1.tercero = t2.dms_card_code
-                where t0.acc_level = ('6')
+                where t0.acc_level in ('5','6')
 								$where_tercero
 								$where_cc
 								$where_un
@@ -397,7 +397,7 @@ class BalanceThird extends REST_Controller {
 				':from_date' => $Data['from_date'],
 				':to_date' => $Data['to_date']
 			));
-print_r($sqlSelect);exit();
+// print_r($sqlSelect);exit();
 }else if($Data['tipo'] == 'A'  && $Data['level'] <= 4){
 
 
@@ -546,7 +546,7 @@ print_r($sqlSelect);exit();
 	));
 
 
-}else if($Data['tipo'] == 'A' && $Data['level'] = 6){
+}else if($Data['tipo'] == 'A' && $Data['level'] >= 5){
 
 
 
