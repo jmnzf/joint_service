@@ -98,7 +98,7 @@ class ProductionEmission extends REST_Controller
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbep ( bep_doctype, bep_docnum, bep_cardcode, bep_cardname, bep_duedev, bep_docdate, bep_ref, bep_serie, bep_baseentry, bep_basetype, bep_description) VALUES(:bep_doctype, :bep_docnum, :bep_cardcode, :bep_cardname, :bep_duedev, :bep_docdate, :bep_ref, :bep_serie, :bep_baseentry, :bep_basetype, :bep_description)";
+        $sqlInsert = "INSERT INTO tbep ( bep_doctype, bep_docnum, bep_cardcode, bep_cardname, bep_duedev, bep_docdate, bep_ref, bep_serie, bep_baseentry, bep_basetype, bep_description, bep_createat, bep_createby, bep_status) VALUES(:bep_doctype, :bep_docnum, :bep_cardcode, :bep_cardname, :bep_duedev, :bep_docdate, :bep_ref, :bep_serie, :bep_baseentry, :bep_basetype, :bep_description, :bep_createat, :bep_createby, :bep_status)";
 
         $this->pedeo->trans_begin();
 
@@ -113,11 +113,15 @@ class ProductionEmission extends REST_Controller
             ":bep_serie" => $Data['bep_serie'],
             ":bep_baseentry" => isset($Data['bep_baseentry']) ? $Data['bep_baseentry'] :0,
             ":bep_basetype" => isset($Data['bep_basetype']) ? $Data['bep_basetype'] :0,
-            ":bep_description" => isset($Data['bep_description']) ? $Data['bep_description'] :null
+            ":bep_description" => isset($Data['bep_description']) ? $Data['bep_description'] :null,
+            ":bep_createat" => isset($Data['bep_createat']) ? $Data['bep_createat'] :null,
+            ":bep_createby" => isset($Data['bep_createby']) ? $Data['bep_createby'] :null,
+            ":bep_status" => isset($Data['bep_status']) ? $Data['bep_status'] :null
+
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
-            $sqlInsert2 = "INSERT INTO bep1 (ep1_item_description, ep1_quantity, ep1_itemcost, ep1_im, ep1_ccost, ep1_ubusiness, ep1_item_code, ep1_listmat, ep1_baseentry, ep1_plan) values (:ep1_item_description, :ep1_quantity, :ep1_itemcost, :ep1_im, :ep1_ccost, :ep1_ubusiness, :ep1_item_code, :ep1_listmat, :ep1_baseentry, :ep1_plan)";
+            $sqlInsert2 = "INSERT INTO bep1 (ep1_item_description, ep1_quantity, ep1_itemcost, ep1_im, ep1_ccost, ep1_ubusiness, ep1_item_code, ep1_listmat, ep1_baseentry, ep1_plan, ep1_basenum) values (:ep1_item_description, :ep1_quantity, :ep1_itemcost, :ep1_im, :ep1_ccost, :ep1_ubusiness, :ep1_item_code, :ep1_listmat, :ep1_baseentry, :ep1_plan, :ep1_basenum)";
 
             foreach ($ContenidoDetalle as $key => $detail) {
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
@@ -130,7 +134,9 @@ class ProductionEmission extends REST_Controller
                     ":ep1_item_code" => $detail['ep1_item_code'],
                     ":ep1_listmat" => $detail['ep1_listmat'],
                     ":ep1_baseentry" => $resInsert,
-                    ":ep1_plan" => $detail['ep1_plan']
+                    ":ep1_plan" => $detail['ep1_plan'],
+                    ":ep1_basenum" => $detail['ep1_basenum']
+
                 ));
 
                 if (is_numeric($resInsert2) and $resInsert2 > 0) {
@@ -226,7 +232,6 @@ class ProductionEmission extends REST_Controller
         }
 
         $sqlUpdate = "UPDATE tbep SET 
-                    bep_docentry = :bep_docentry,
                     bep_doctype = :bep_doctype,
                     bep_docnum = :bep_docnum,
                     bep_cardcode = :bep_cardcode,
@@ -237,13 +242,15 @@ class ProductionEmission extends REST_Controller
                     bep_cardname = :bep_cardname,
                     bep_baseentry = :bep_baseentry,
                     bep_basetype = :bep_basetype,
-                    bep_description = :bep_description
+                    bep_description = :bep_description,
+                    bep_createat = :bep_createat,
+                    bep_createby = :bep_createby,
+                    bep_status = :bep_status
                     WHERE bep_docentry = :bep_docentry";
 
          $this->pedeo->trans_begin();
 
          $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-         ":bep_docentry" => $Data['bep_docentry'],
          ":bep_doctype" => $Data['bep_doctype'],
          ":bep_docnum" => $Data['bep_docnum'],
          ":bep_cardcode" => $Data['bep_cardcode'],
@@ -255,6 +262,9 @@ class ProductionEmission extends REST_Controller
          ":bep_baseentry" => isset($Data['bep_baseentry']) ? $Data['bep_baseentry'] :0,
          ":bep_basetype" => isset($Data['bep_basetype']) ? $Data['bep_basetype'] :0,
          ":bep_description" => isset($Data['bep_description']) ? $Data['bep_description'] :null,
+         ":bep_createat" => isset($Data['bep_createat']) ? $Data['bep_createat'] :null,
+         ":bep_createby" => isset($Data['bep_createby']) ? $Data['bep_createby'] :null,
+         ":bep_status" => isset($Data['bep_status']) ? $Data['bep_status'] :null,
          ":bep_docentry" => $Data['bep_docentry']
         ));
 
@@ -263,7 +273,7 @@ class ProductionEmission extends REST_Controller
             $this->pedeo->queryTable("DELETE FROM bep1 WHERE ep1_baseentry = :bep_docentry", array(':bep_docentry' => $Data['bep_docentry']));
 
 
-            $sqlInsert2 = "INSERT INTO bep1 (ep1_item_description, ep1_quantity, ep1_itemcost, ep1_im, ep1_ccost, ep1_ubusiness, ep1_item_code, ep1_listmat, ep1_baseentry, ep1_plan) values (:ep1_item_description, :ep1_quantity, :ep1_itemcost, :ep1_im, :ep1_ccost, :ep1_ubusiness, :ep1_item_code, :ep1_listmat, :ep1_baseentry, :ep1_plan)";
+            $sqlInsert2 = "INSERT INTO bep1 (ep1_item_description, ep1_quantity, ep1_itemcost, ep1_im, ep1_ccost, ep1_ubusiness, ep1_item_code, ep1_listmat, ep1_baseentry, ep1_plan, ep1_basenum) values (:ep1_item_description, :ep1_quantity, :ep1_itemcost, :ep1_im, :ep1_ccost, :ep1_ubusiness, :ep1_item_code, :ep1_listmat, :ep1_baseentry, :ep1_plan, :ep1_basenum)";
 
             foreach ($ContenidoDetalle as $key => $detail) {
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
@@ -276,7 +286,8 @@ class ProductionEmission extends REST_Controller
                     ":ep1_item_code" => $detail['ep1_item_code'],
                     ":ep1_listmat" => $detail['ep1_listmat'],
                     ":ep1_baseentry" => $Data['bep_docentry'],
-                    ":ep1_plan" => $detail['ep1_plan']
+                    ":ep1_plan" => $detail['ep1_plan'],
+                    ":ep1_basenum" => isset($detail['ep1_basenum']) ? $detail['ep1_basenum'] :null                    
                 ));
 
                 if (is_numeric($resInsert2) and $resInsert2 > 0) {

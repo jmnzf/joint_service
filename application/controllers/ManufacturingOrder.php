@@ -60,7 +60,7 @@ class ManufacturingOrder extends REST_Controller {
             $respuesta = array(
                 'error' => true,
                 'data'  => array(),
-                'mensaje' => 'No se encontro el detalle de la entrada de oportunidad'
+                'mensaje' => 'No se encontro el detalle de la orden de facturacion'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -81,7 +81,7 @@ class ManufacturingOrder extends REST_Controller {
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbof(bof_docnum ,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype, bof_status) VALUES (:bof_docnum, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype, :bof_status)";
+        $sqlInsert = "INSERT INTO tbof(bof_docnum ,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype, bof_status, bof_createat, bof_createby) VALUES (:bof_docnum, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype, :bof_status, :bof_createat, :bof_createby)";
         
         $this->pedeo->trans_begin();
 
@@ -101,11 +101,13 @@ class ManufacturingOrder extends REST_Controller {
             ":bof_type" => $Data['bof_type'],
             ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] :0,
             ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0,
-            ":bof_status" => $Data['bof_status']
+            ":bof_status" => $Data['bof_status'],
+            ":bof_createat" => isset($Data['bof_createat']) ? $Data['bof_createat'] :null,
+            ":bof_createby" =>  isset($Data['bof_createby']) ? $Data['bof_createby'] :null
         ));
 
         if( is_numeric($resInsert) AND $resInsert > 0){
-            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code)";
+            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum)";
             foreach ($ContenidoDetalle as $key => $detail){
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2,
                 array(":of1_type" =>$detail['of1_type'],
@@ -120,6 +122,8 @@ class ManufacturingOrder extends REST_Controller {
                 ":of1_acc" =>$detail['of1_acc'],
                 ":of1_ing" =>$detail['of1_ing'],
                 ":of1_uom_code" =>$detail['of1_uom_code'],
+                ":of1_listmat" =>isset($detail['of1_listmat']) ? $detail['of1_listmat'] : null,
+                ":of1_basenum" =>  isset($Data['of1_basenum']) ? $detail['of1_basenum'] : null,
                 ":of1_docentry" => $resInsert));
 
                 if(is_numeric($resInsert2) AND $resInsert2 > 0){
@@ -130,7 +134,7 @@ class ManufacturingOrder extends REST_Controller {
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se puso realizar operacion segundo'
+                        'mensaje' => 'No se puso realizar operación'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -289,7 +293,7 @@ class ManufacturingOrder extends REST_Controller {
             $this->pedeo->queryTable("DELETE FROM bof1 WHERE of1_docentry = :of1_docentry", array(':of1_docentry' => $Data['bof_docentry']));
 
 
-            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code)";
+            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum)";
             foreach ($ContenidoDetalle as $key => $detail){
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2,
                 array(":of1_type" =>$detail['of1_type'],
@@ -304,6 +308,8 @@ class ManufacturingOrder extends REST_Controller {
                 ":of1_acc" =>$detail['of1_acc'],
                 ":of1_ing" =>$detail['of1_ing'],
                 ":of1_uom_code" =>$detail['of1_uom_code'],
+                ":of1_listmat" =>isset($detail['of1_listmat']) ? $detail['of1_listmat'] :null,
+                ":of1_basenum" =>isset($detail['of1_basenum']) ? $detail['of1_basenum'] :null,
                 ":of1_docentry" => $Data['bof_docentry']));
 
                 if(is_numeric($resInsert2) AND $resInsert2 > 0){

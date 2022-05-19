@@ -32,7 +32,7 @@ class ProductionReceipt extends REST_Controller
             'mensaje' => 'busqueda sin resultados'
         );
 
-        $sqlSelect = "SELECT * from tbep";
+        $sqlSelect = "SELECT * from tbrp";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -99,7 +99,7 @@ class ProductionReceipt extends REST_Controller
 
         // print_r($ContenidoDetalle);exit;
 
-        $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref, brp_baseentry, brp_basetype, brp_description) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref, :brp_baseentry, :brp_basetype, :brp_description)";
+        $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref, brp_baseentry, brp_basetype, brp_description, brp_createat, brp_createby, brp_status) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref, :brp_baseentry, :brp_basetype, :brp_description, :brp_createat, :brp_createby, :brp_status)";
 
         $this->pedeo->trans_begin();
 
@@ -113,11 +113,14 @@ class ProductionReceipt extends REST_Controller
             ":brp_ref" => $Data['brp_ref'],
             ":brp_baseentry" => isset($Data['brp_baseentry']) ? $Data['brp_baseentry'] : 0,
             ":brp_basetype" => isset($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
-            ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null
+            ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null,
+            ":brp_createat" => isset($Data['brp_createat']) ? $Data['brp_createat'] : null,
+            ":brp_createby" => isset($Data['brp_createby']) ? $Data['brp_createby'] : null,
+            ":brp_status" => isset($Data['brp_status']) ? $Data['brp_status'] : null
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
-            $sqlInsert2 = "INSERT INTO brp1 (rp1_item_description, rp1_quantity, rp1_itemcost, rp1_im, rp1_ccost, rp1_ubusiness, rp1_item_code, rp1_listmat, rp1_baseentry, rp1_plan) values (:rp1_item_description, :rp1_quantity, :rp1_itemcost, :rp1_im, :rp1_ccost, :rp1_ubusiness, :rp1_item_code, :rp1_listmat, :rp1_baseentry, :rp1_plan)";
+            $sqlInsert2 = "INSERT INTO brp1 (rp1_item_description, rp1_quantity, rp1_itemcost, rp1_im, rp1_ccost, rp1_ubusiness, rp1_item_code, rp1_listmat, rp1_baseentry, rp1_plan, rp1_basenum) values (:rp1_item_description, :rp1_quantity, :rp1_itemcost, :rp1_im, :rp1_ccost, :rp1_ubusiness, :rp1_item_code, :rp1_listmat, :rp1_baseentry, :rp1_plan, :rp1_basenum)";
 
             foreach ($ContenidoDetalle as $key => $detail) {
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
@@ -130,6 +133,7 @@ class ProductionReceipt extends REST_Controller
                     ":rp1_item_code" => $detail['rp1_item_code'],
                     ":rp1_listmat" => $detail['rp1_listmat'],
                     ":rp1_plan" => $detail['rp1_plan'],
+                    ":rp1_basenum" => $detail['rp1_basenum'],
                     ":rp1_baseentry" => $resInsert
                 ));
 
@@ -231,7 +235,10 @@ class ProductionReceipt extends REST_Controller
          brp_ref = :brp_ref,
          brp_baseentry = :brp_baseentry,
          brp_basetype = :brp_basetype,
-         brp_description = :brp_description
+         brp_description = :brp_description,
+         brp_createat = :brp_createat,
+         brp_createby  = :brp_createby,
+         brp_status  = :brp_status
          WHERE brp_docentry = :brp_docentry ";
 
          $this->pedeo->trans_begin();
@@ -247,6 +254,9 @@ class ProductionReceipt extends REST_Controller
          ":brp_baseentry" => isset($Data['brp_baseentry']) ? $Data['brp_baseentry'] : 0,
          ":brp_basetype" => isset($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
          ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null,
+         ":brp_createat" => isset($Data['brp_createat']) ? $Data['brp_createat'] : null,
+         ":brp_createby" => isset($Data['brp_createby']) ? $Data['brp_createby'] : null,
+         ":brp_status" => isset($Data['brp_status']) ? $Data['brp_status'] : null,
          ":brp_docentry" => $Data['brp_docentry']));
 
          if(is_numeric($resUpdate) and $resUpdate > 0){
@@ -254,7 +264,7 @@ class ProductionReceipt extends REST_Controller
             $this->pedeo->queryTable("DELETE FROM brp1 WHERE rp1_baseentry = :brp_docentry", array(':brp_docentry' => $Data['brp_docentry']));
 
 
-            $sqlInsert2 = "INSERT INTO brp1 (rp1_item_description, rp1_quantity, rp1_itemcost, rp1_im, rp1_ccost, rp1_ubusiness, rp1_item_code, rp1_listmat, rp1_baseentry, rp1_plan) values (:rp1_item_description, :rp1_quantity, :rp1_itemcost, :rp1_im, :rp1_ccost, :rp1_ubusiness, :rp1_item_code, :rp1_listmat, :rp1_baseentry, :rp1_plan)";
+            $sqlInsert2 = "INSERT INTO brp1 (rp1_item_description, rp1_quantity, rp1_itemcost, rp1_im, rp1_ccost, rp1_ubusiness, rp1_item_code, rp1_listmat, rp1_baseentry, rp1_plan, rp1_basenum) values (:rp1_item_description, :rp1_quantity, :rp1_itemcost, :rp1_im, :rp1_ccost, :rp1_ubusiness, :rp1_item_code, :rp1_listmat, :rp1_baseentry, :rp1_plan, :rp1_basenum)";
 
             foreach ($ContenidoDetalle as $key => $detail) {
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
@@ -267,7 +277,8 @@ class ProductionReceipt extends REST_Controller
                     ":rp1_item_code" => $detail['rp1_item_code'],
                     ":rp1_listmat" => $detail['rp1_listmat'],
                     ":rp1_plan" => $detail['rp1_plan'],
-                    ":rp1_baseentry" => $Data['brp_docentry']
+                    ":rp1_baseentry" => $Data['brp_docentry'],
+                    ":rp1_basenum" => $detail['rp1_basenum']
                 ));
 
                 if (is_numeric($resInsert2) and $resInsert2 > 0) {
