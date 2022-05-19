@@ -394,7 +394,7 @@ class ManufacturingOrder extends REST_Controller {
 
         $Data = $this->get();
 
-				if (!isset($Data['bof_docentry'])) {
+				if (!isset($Data['of1_docentry'])) {
 				    $respuesta = array(
 						'error' => true,
 						'data'  => array(),
@@ -406,8 +406,8 @@ class ManufacturingOrder extends REST_Controller {
 						return;
 				}
 
-        $sqlSelect = "SELECT * FROM bof1 WHERE of1_docentry = :bof_docentry";
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array(":bof_docentry" => $Data['bof_docentry']));
+        $sqlSelect = "SELECT * FROM bof1 WHERE of1_docentry = :of1_docentry";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(":of1_docentry" => $Data['of1_docentry']));
 
         if (isset($resSelect[0])) {
 
