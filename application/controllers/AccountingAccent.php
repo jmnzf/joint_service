@@ -3,6 +3,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
+require_once(APPPATH.'/libraries/Generic.php');
 use Restserver\libraries\REST_Controller;
 
 class AccountingAccent extends REST_Controller {
@@ -277,7 +278,7 @@ class AccountingAccent extends REST_Controller {
 			when coalesce(t0.mac_base_type,0) = 15 then 'Factura Proveedores'
 			when coalesce(t0.mac_base_type,0) = 16 then 'Nota Credito Compras'
 			when coalesce(t0.mac_base_type,0) = 17 then 'Nota Debito Compras'
-			when coalesce(t0.mac_base_type,0) = 18 or coalesce(t0.mac_doctype,0) = 18 then 'Asiento Manual'
+			when coalesce(t0.mac_base_type,0) = 18 then 'Asiento Manual'
 			when coalesce(t0.mac_base_type,0) = 19 then 'Pagos Efectuado'
 			when coalesce(t0.mac_base_type,0) = 20 then 'Pagos Recibidos'
 			when coalesce(t0.mac_base_type,0) = 22 then 'Reconciliación'
@@ -296,7 +297,7 @@ class AccountingAccent extends REST_Controller {
 			when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_docnum
 			when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_docnum
 			when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_docnum
-			when coalesce(t0.mac_base_type,0) = 18 or coalesce(t0.mac_doctype,0) = 18 then t0.mac_trans_id
+			when coalesce(t0.mac_base_type,0) = 18 then t0.mac_trans_id
 			when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_docnum
 			when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_docnum
 			when coalesce(t0.mac_base_type,0) = 22 then t18.crc_docnum
@@ -315,13 +316,31 @@ class AccountingAccent extends REST_Controller {
 			when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_currency
 			when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_currency
 			when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_currency
-			when coalesce(t0.mac_base_type,0) = 18 or coalesce(t0.mac_doctype,0) = 18 then t0.mac_currency
+			when coalesce(t0.mac_base_type,0) = 18 then t0.mac_currency
 			when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_currency
 			when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
 			when coalesce(t0.mac_base_type,0) = 22 then t18.crc_currency
 			when coalesce(t0.mac_base_type,0) = 24 then t17.its_currency
 		end currency,
-		t16.tsa_value,
+		case
+			when coalesce(t0.mac_base_type,0) = 3 then get_tax_currency(t1.vem_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 4 then get_tax_currency(t2.vdv_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 5 then get_tax_currency(t3.dvf_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 6 then get_tax_currency(t10.vnc_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 6 then get_tax_currency(t11.vnd_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 8 then get_tax_currency(t5.isi_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 9 then get_tax_currency(t6.iei_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 13 then get_tax_currency(t12.cec_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 14 then get_tax_currency(t13.cdc_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 15 then get_tax_currency(t7.cfc_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 16 then get_tax_currency(t14.cnc_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 17 then get_tax_currency(t15.cnd_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 18 or coalesce(t0.mac_doctype,0) = 18 then get_tax_currency(t0.mac_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 19 then get_tax_currency(t8.bpe_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 20 then get_tax_currency(t9.bpr_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 22 then get_tax_currency(t18.crc_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 24 then get_tax_currency(t17.its_currency,mac_doc_date)
+		end tsa_value,
 		t0.*
 		from tmac t0
 		left join dvem t1 on t0.mac_base_entry = t1.vem_docentry and t0.mac_base_type= t1.vem_doctype
@@ -338,7 +357,6 @@ class AccountingAccent extends REST_Controller {
 		left join dcdc t13 on t0.mac_base_entry = t13.cdc_docentry and t0.mac_base_type= t13.cdc_doctype
 		left join dcnc t14 on t0.mac_base_entry = t14.cnc_docentry and t0.mac_base_type= t14.cnc_doctype
 		left join dcnd t15 on t0.mac_base_entry = t15.cnd_docentry and t0.mac_base_type= t15.cnd_doctype
-		left join tasa t16 on mac_doc_date = tsa_date
 		left join dits t17 on t0.mac_base_entry = t17.its_docentry  and t0.mac_base_type = t17.its_doctype
 		left join dcrc t18 on t0.mac_base_entry = t18.crc_docentry  and t0.mac_base_type = t18.crc_doctype";
 
@@ -853,7 +871,23 @@ class AccountingAccent extends REST_Controller {
 											and dcrc.crc_docentry = mac1.ac1_font_key
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
-											where mac1.ac1_trans_id = :ac1_trans_id";
+											where mac1.ac1_trans_id = :ac1_trans_id
+											-- Asiento manual
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											mac1.ac1_trans_id as numero_origen,
+											get_localcur() as currency,
+											coalesce(acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(get_localcur(),mac1.ac1_doc_date) as tsa_value,
+											mac1.*
+											from mac1
+											join dmdt on ac1_font_type = mdt_doctype
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where ac1_trans_id = :ac1_trans_id";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
 
@@ -971,8 +1005,12 @@ class AccountingAccent extends REST_Controller {
 		$Data = $this->post();
 		$respuesta = array();
 
-		if(!isset($Data['mac_base_entry']) OR
-		   !isset($Data['mac_base_type']) OR
+		// SE INSTANCIA LA CLASE GENERIC PARA VALIDAR EL PERIODO CONTABLE
+		$generic = new Generic();
+
+		if(!isset($Data['mac_trans_id']) OR
+		   !isset($Data['mac_doc_date']) OR
+		   !isset($Data['mac_doc_duedate']) OR
 		   !isset($Data['mac_comments'])){
 			$respuesta = array(
 				'error' => true,
@@ -986,17 +1024,25 @@ class AccountingAccent extends REST_Controller {
 
 		}
 
-		$sqlSelect = " SELECT * from tmac where mac_base_entry  = :mac_base_entry  and mac_base_type  = :mac_base_type and mac_status = 1";
+		// SE VERIFICA QUE EL PERIODO CONTABLE ESTE ACTIVO
+		$periodo = $generic->ValidatePeriod($Data['mac_doc_date'],$Data['mac_doc_date'],$Data['mac_doc_duedate'],1);
+
+		if ($periodo['error']) {
+			$this->response($periodo,REST_Controller::HTTP_BAD_REQUEST);
+			return;
+		}
+
+		// SE VERIFICA QUE EL DOCUMENTO ESTE ABIERTO
+		$sqlSelect = " SELECT * from tmac where mac_trans_id  = :mac_trans_id AND mac_status = 1";
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-			":mac_base_entry" => $Data['mac_base_entry'],
-			":mac_base_type" => $Data['mac_base_type']
+			":mac_trans_id" => $Data['mac_trans_id']
 		));
 
 		if (isset($resSelect[0])) {
-			$sqlUpdate = "UPDATE tmac SET mac_comments = :mac_comments WHERE mac_base_entry  = :mac_base_entry  and mac_base_type  = :mac_base_type";
+			// SE ACTUALIZA EN CASO DE QUE ESTE ABIERTO
+			$sqlUpdate = "UPDATE tmac SET mac_comments = :mac_comments WHERE mac_trans_id = :mac_trans_id";
 			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-				":mac_base_entry" => $Data['mac_base_entry'],
-				":mac_base_type" => $Data['mac_base_type'],
+				":mac_trans_id" => $Data['mac_trans_id'],
 				":mac_comments" => $Data['mac_comments']
 			));
 

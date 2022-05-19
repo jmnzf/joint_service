@@ -425,9 +425,9 @@ class ManufacturingOrder extends REST_Controller {
 		//OBTENER ORDENES DE FABRICACION CON ESTADO LIBERADAS
 		public function getManufacturingOrderReleased_get(){
 
-			$sqlSelect = "SELECT * from tmos WHERE mos_id = :mos_id";
+			$sqlSelect = "SELECT * from tbof WHERE bof_status = :bof_status";
 
-			$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mos_id' => 1));
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array(':bof_status' => 1));
 
 			if (isset($resSelect[0])) {
 					$respuesta = array(
