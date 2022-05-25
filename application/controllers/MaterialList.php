@@ -87,9 +87,9 @@ class MaterialList extends REST_Controller {
 		//
 
 		$sqlInsert = "INSERT INTO prlm(rlm_item_code, rlm_quantity, rlm_bom_type, rlm_whscode, rlm_pricelist, rlm_nom_dist,
-			 												rlm_project, rlm_comment, rlm_costoprod, rlm_total, rlm_createat, rlm_createby)
+			 												rlm_project, rlm_comment, rlm_costoprod, rlm_total, rlm_createat, rlm_createby, rlm_item_name)
 															VALUES(:rlm_item_code, :rlm_quantity, :rlm_bom_type, :rlm_whscode, :rlm_pricelist, :rlm_nom_dist,
-															:rlm_project, :rlm_comment, :rlm_costoprod, :rlm_total, :rlm_createat, :rlm_createby)";
+															:rlm_project, :rlm_comment, :rlm_costoprod, :rlm_total, :rlm_createat, :rlm_createby, :rlm_item_name)";
 
 		$resInsert = $this->pedeo->insertRow(	$sqlInsert, array(
 			':rlm_item_code' => isset($Data['rlm_item_code'])?$Data['rlm_item_code']:NULL,
@@ -103,7 +103,8 @@ class MaterialList extends REST_Controller {
 			':rlm_costoprod' => is_numeric($Data['rlm_costoprod'])?$Data['rlm_costoprod']:0,
 			':rlm_total' => is_numeric($Data['rlm_total'])?$Data['rlm_total']:0,
 			':rlm_createat' => $this->generic->validateDate($Data['rlm_createat'])?$Data['rlm_createat']:NULL,
-			':rlm_createby' => isset($Data['rlm_createby'])?$Data['rlm_createby']:NULL
+			':rlm_createby' => isset($Data['rlm_createby'])?$Data['rlm_createby']:NULL,
+			':rlm_item_name' => isset($Data['rlm_item_name'])?$Data['rlm_item_name']:NULL
 		));
 
 		if( is_numeric($resInsert) && $resInsert > 0 ){
