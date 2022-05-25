@@ -187,8 +187,8 @@ class PagoEfectuado extends REST_Controller {
 	  select distinct
 	  mac1.ac1_font_key,
 	  case
-		  when ac1_card_type = '1' then concat('C',mac1.ac1_legal_num)
-		  when ac1_card_type = '2' then concat('P',mac1.ac1_legal_num)
+		  when ac1_card_type = '1' then mac1.ac1_legal_num
+		  when ac1_card_type = '2' then mac1.ac1_legal_num
 	  end as codigoproveedor,
 	  mac1.ac1_account as cuenta,
 	  CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,

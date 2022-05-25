@@ -146,7 +146,7 @@ class Gestion extends REST_Controller
 		);
 		$table = $tables[$type]['table'];
 		$prefix = $tables[$type]['prefix'];
-		$sqlSelect = "SELECT {{prefix}}_docnum id ,{{prefix}}_docentry,{{prefix}}_cardname text 
+		$sqlSelect = "SELECT {{prefix}}_docnum id ,{{prefix}}_docentry,{{prefix}}_cardname AS text
 						FROM {{table}} WHERE {{prefix}}_cardcode = :sn";
 
 		$sqlSelect = str_replace('{{table}}', $table, $sqlSelect);

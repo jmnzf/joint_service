@@ -1947,6 +1947,8 @@ class PurchaseNc extends REST_Controller {
 
 								if($Data['cnc_basetype'] == 15){
 									$TotalDoc2 = $TotalDoc;
+								}else{
+									$TotalDoc2 = 0;
 								}
 
 

@@ -27,7 +27,6 @@ class AccountingAccent extends REST_Controller {
   //CREAR NUEVO ACIENTO CONTABLE
 	public function createAccountingAccent_post(){
       $Data = $this->post();
-
 			$DocNumVerificado = 0;
 
       if(!isset($Data['detail'])){
@@ -853,6 +852,26 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											--RECONCILIACION DE CUENTAS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dcrc.crc_docnum as numero_origen,
+											dcrc.crc_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dcrc.crc_currency,dcrc.crc_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dcrc
+											on dcrc.crc_doctype = mac1.ac1_font_type
+											and dcrc.crc_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
 											-- Asiento manual
 											union all
 											select distinct
@@ -923,9 +942,10 @@ class AccountingAccent extends REST_Controller {
 		when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_currency
 		when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_currency
 		when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_currency
-		when coalesce(t0.mac_base_type,0) = 18 then 'BS'
+		when coalesce(t0.mac_base_type,0) = 18 then get_localcur()
 		when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_currency
 		when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
+		when coalesce(t0.mac_base_type,0) = 22 then t17.crc_currency
 		end  as currency
 		from tmac t0
 		LEFT JOIN dvem t1 ON t0.mac_base_entry = t1.vem_docentry AND t0.mac_base_type= t1.vem_doctype
@@ -944,6 +964,7 @@ class AccountingAccent extends REST_Controller {
 		LEFT JOIN dcnd t15 ON t0.mac_base_entry = t15.cnd_docentry AND t0.mac_base_type= t15.cnd_doctype
 		LEFT JOIN dmdt ON dmdt.mdt_doctype = t0.mac_base_type
 		LEFT JOIN tasa t16 ON mac_doc_date = tsa_date
+		LEFT JOIN dcrc t17 ON t0.mac_base_entry = t17.crc_docentry AND t0.mac_base_type= t17.crc_doctype
 		WHERE t0.mac_base_type = :mac_base_type
 		AND t0.mac_base_entry = :mac_base_entry";
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_base_type' => $Data['mac_base_type'], ':mac_base_entry' => $Data['mac_base_entry']));
@@ -978,7 +999,7 @@ class AccountingAccent extends REST_Controller {
 			}
 	}
 
-	//FUNCION PARA ACTUALIZAR COMENTARIO 
+	//FUNCION PARA ACTUALIZAR COMENTARIO
 	public function updateComments_post()
 	{
 		$Data = $this->post();
@@ -986,7 +1007,7 @@ class AccountingAccent extends REST_Controller {
 
 		// SE INSTANCIA LA CLASE GENERIC PARA VALIDAR EL PERIODO CONTABLE
 		$generic = new Generic();
-	
+
 		if(!isset($Data['mac_trans_id']) OR
 		   !isset($Data['mac_doc_date']) OR
 		   !isset($Data['mac_doc_duedate']) OR
@@ -1003,10 +1024,10 @@ class AccountingAccent extends REST_Controller {
 
 		}
 
-		// SE VERIFICA QUE EL PERIODO CONTABLE ESTE ACTIVO		
+		// SE VERIFICA QUE EL PERIODO CONTABLE ESTE ACTIVO
 		$periodo = $generic->ValidatePeriod($Data['mac_doc_date'],$Data['mac_doc_date'],$Data['mac_doc_duedate'],1);
 
-		if ($periodo['error']) {	
+		if ($periodo['error']) {
 			$this->response($periodo,REST_Controller::HTTP_BAD_REQUEST);
 			return;
 		}
@@ -1044,7 +1065,7 @@ class AccountingAccent extends REST_Controller {
 				'data' => [],
 				'mensaje' => 'No se pudo realizar la operacion'
 			);
-		}		
+		}
 
 		$this->response($respuesta);
 

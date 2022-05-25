@@ -64,6 +64,14 @@ class PaymentsMade extends REST_Controller {
 			$inArrayAsientoCuentaTercero = array();
 			$VlrDiffP = 0;
 			$VlrDiffN = 0;
+			$VlrTotalOpc = 0; // valor total acumulado de la operacion
+			$VlrDiff = 0; // valor diferencia total
+			$VlrPagoEfectuado = 0;
+			$DFPC = 0;// diferencia en peso credito
+			$DFPD = 0;// diferencia en peso debito
+			$DFPCS = 0;// del sistema
+			$DFPDS = 0;// del sistema
+			$TasaOrg = 0;
 
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -418,27 +426,53 @@ class PaymentsMade extends REST_Controller {
 					// INICIA INSERCION DEL DETALLE
 
           foreach ($ContenidoDetalle as $key => $detail) {
-								$VrlPagoDetalleSinDiff = 0;
 								$VrlPagoDetalleNormal  = 0;
+								$Equiv = 0;
 								//SE VALIDA SI ES UN ANTICIPO AL proveedor
-								//SE OMITE LA VALIDACION DE LA FACTURA EN CASO DE 1
+								//SE OMITE LA VALIDACION DE LA FACTURA EN CASO DE ANTICIPO
 
 
 								if($Data['bpe_billpayment'] == '0' || $Data['bpe_billpayment'] == 0){
 									//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
-									if( $detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17 ){
+									if( $detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17 || $detail['pe1_doctype'] == 19 || $detail['pe1_doctype'] == 18){
 
-										$resVlrPay = $this->generic->validateBalance($detail['pe1_docentry'],$detail['pe1_doctype'],'dcfc','cfc',$detail['pe1_vlrpaid'],$Data['bpe_currency'],$Data['bpe_docdate']);
+
+										$pf = "";
+										$tb  = "";
+
+										if( $detail['pe1_doctype'] == 15 ){
+											$pf = "cfc";
+											$tb  = "dcfc";
+										}else if($detail['pe1_doctype'] == 16){
+											$pf = "cnc";
+											$tb  = "dcnc";
+										}else if($detail['pe1_doctype'] == 17){
+
+										}else if( $detail['pe1_doctype'] == 19 ){
+											$pf = "bpe";
+											$tb  = "gbpe";
+										}
+
+										$resVlrPay = $this->generic->validateBalance($detail['pe1_docentry'],$detail['pe1_doctype'],$tb,$pf,$detail['pe1_vlrpaid'],$Data['bpe_currency'],$Data['bpe_docdate'],2,isset($detail['ac1_line_num'])?$detail['ac1_line_num']:0);
 
 										if( isset( $resVlrPay['error'] ) ){
 
-													if( $resVlrPay['error'] === false ){
+													if( $resVlrPay['error'] == false ){
 
-														$VrlPagoDetalleSinDiff = $resVlrPay['vlrtotal'];
-														$VlrDiffP = $VlrDiffP + $resVlrPay['diffp'];
-														$VlrDiffN = $VlrDiffN + $resVlrPay['diffn'];
+
+														$VlrTotalOpc = $resVlrPay['vlrop'];
+														$VlrDiff     = ($VlrDiff + $resVlrPay['vlrdiff']);
+														$TasaOrg     = $resVlrPay['tasadoc'];
+														$Equiv       = $resVlrPay['equiv'];
+
+														$VlrTotalOpc = ($VlrTotalOpc + $Equiv);
+
+
+
+														// echo "\n ".$detail['pe1_docentry']." ".$VlrDiff;
 
 													}else{
+
 														$this->pedeo->trans_rollback();
 
 														$respuesta = array(
@@ -446,9 +480,7 @@ class PaymentsMade extends REST_Controller {
 																'data'    => [],
 																'mensaje'	=> $resVlrPay['mensaje']);
 
-														$this->response($respuesta);
-
-														return;
+														return $this->response($respuesta);
 
 													}
 
@@ -535,7 +567,7 @@ class PaymentsMade extends REST_Controller {
 															':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
 															':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
 															':bmd_docnum' => $DocNumVerificado,
-															':bmd_doctotal' => $VrlPagoDetalleSinDiff,
+															':bmd_doctotal' => $VlrTotalOpc,
 															':bmd_cardcode' => isset($detail['pe1_tercero'])?$detail['pe1_tercero']:NULL,
 															':bmd_cardtype' => 2
 														));
@@ -577,7 +609,7 @@ class PaymentsMade extends REST_Controller {
 
 											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-												':cfc_paytoday' => $VrlPagoDetalleSinDiff,
+												':cfc_paytoday' => $VlrTotalOpc,
 												':cfc_docentry' => $detail['pe1_docentry'],
 												':cfc_doctype' =>  $detail['pe1_doctype']
 
@@ -608,7 +640,7 @@ class PaymentsMade extends REST_Controller {
 
 											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-												':cnc_paytoday' => $VrlPagoDetalleSinDiff,
+												':cnc_paytoday' => $VlrTotalOpc,
 												':cnc_docentry' => $detail['pe1_docentry'],
 												':cnc_doctype'  => $detail['pe1_doctype']
 
@@ -644,7 +676,7 @@ class PaymentsMade extends REST_Controller {
 
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_debit'  => $VrlPagoDetalleSinDiff,
+												':ac1_ven_debit'  => $VlrTotalOpc,
 												':ac1_legal_num'  => $detail['pe1_tercero'],
 												':ac1_font_key'   => $detail['pe1_docentry'],
 												':ac1_font_type'  => $detail['pe1_doctype'],
@@ -659,7 +691,7 @@ class PaymentsMade extends REST_Controller {
 
 												$respuesta = array(
 													'error'   => true,
-													'data' => $resUpdateFactPay,
+													'data' => $resUpdateVenDebit,
 													'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pe1_docentry']
 												);
 
@@ -672,15 +704,7 @@ class PaymentsMade extends REST_Controller {
 
 										// SE ACTUALIZA EL VALOR DEL ANTICIPO PARA IR DESCONTANDO LO USADO
 										// O EN SU DEFECTO TAMBIEN LA NOTA CREDITO
-										if($detail['pe1_doctype'] == 19 || $detail['pe1_doctype'] == 16) {
-
-											$VlrPay = $detail['pe1_vlrpaid'];
-
-											if(trim($Data['bpe_currency']) != $MONEDALOCAL ){
-												$VlrPay = ($detail['pe1_vlrpaid'] * $TasaDocLoc);
-											}
-
-											$VrlPagoDetalleNormal = $VlrPay;
+										if($detail['pe1_doctype'] == 19) {
 
 											$slqUpdateVenDebit = "UPDATE mac1
 																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
@@ -690,7 +714,7 @@ class PaymentsMade extends REST_Controller {
 																						AND ac1_account = :ac1_account";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $VlrPay,
+												':ac1_ven_credit' => $VlrTotalOpc,
 												':ac1_legal_num'  => $detail['pe1_tercero'],
 												':ac1_font_key'   => $detail['pe1_docentry'],
 												':ac1_font_type'  => $detail['pe1_doctype'],
@@ -705,7 +729,7 @@ class PaymentsMade extends REST_Controller {
 
 												$respuesta = array(
 													'error'   => true,
-													'data' => $resUpdateFactPay,
+													'data' => $resUpdateVenDebit,
 													'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura '.$detail['pe1_docentry']
 												);
 
@@ -717,9 +741,6 @@ class PaymentsMade extends REST_Controller {
 
 										if($detail['pe1_doctype'] == 16) {
 
-
-
-
 											$slqUpdateVenDebit = "UPDATE mac1
 																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
 																						WHERE ac1_legal_num = :ac1_legal_num
@@ -728,7 +749,7 @@ class PaymentsMade extends REST_Controller {
 																						AND ac1_account = :ac1_account";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $VrlPagoDetalleSinDiff,
+												':ac1_ven_credit' => $VlrTotalOpc,
 												':ac1_legal_num'  => $detail['pe1_tercero'],
 												':ac1_font_key'   => $detail['pe1_docentry'],
 												':ac1_font_type'  => $detail['pe1_doctype'],
@@ -760,7 +781,7 @@ class PaymentsMade extends REST_Controller {
 											$resEstado = $this->generic->validateBalanceAndClose($detail['pe1_docentry'],$detail['pe1_doctype'],'dcfc','cfc');
 
 
-											if(isset($resEstado['error']) && $resEstado['error'] === true){
+											if(isset($resEstado['error']) && $resEstado['error'] == true){
 
 														$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -804,9 +825,11 @@ class PaymentsMade extends REST_Controller {
 										// se valida cerrar la nota credito
 										if($detail['pe1_doctype'] == 16) {
 
+
 												$resEstado = $this->generic->validateBalanceAndClose($detail['pe1_docentry'],$detail['pe1_doctype'],'dcnc','cnc');
 
-												if(isset($resEstado['error']) && $resEstado['error'] === true){
+
+												if(isset($resEstado['error']) && $resEstado['error'] == true){
 															$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																									VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
@@ -847,14 +870,6 @@ class PaymentsMade extends REST_Controller {
 										//ASIENTO MANUALES
 										if($detail['pe1_doctype'] == 18){
 
-											$VlrPay = $detail['pe1_vlrpaid'];
-
-											if(trim($Data['bpe_currency']) != $MONEDALOCAL ){
-												$VlrPay = ($detail['pe1_vlrpaid'] * $TasaDocLoc);
-											}
-
-											$VrlPagoDetalleNormal = $VlrPay;
-
 											if( $detail['ac1_cord'] == 1){
 
 												$slqUpdateVenDebit = "UPDATE mac1
@@ -863,7 +878,7 @@ class PaymentsMade extends REST_Controller {
 
 												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-													':ac1_ven_debit' => $VlrPay,
+													':ac1_ven_debit' => $VlrTotalOpc,
 													':ac1_line_num'  => $detail['ac1_line_num']
 												));
 
@@ -889,7 +904,7 @@ class PaymentsMade extends REST_Controller {
 
 												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-													':ac1_ven_credit' => $VlrPay,
+													':ac1_ven_credit' => $VlrTotalOpc,
 													':ac1_line_num'   => $detail['ac1_line_num']
 												));
 
@@ -940,19 +955,20 @@ class PaymentsMade extends REST_Controller {
 
 								$DetalleAsientoCuentaTercero = new stdClass();
 
-								$DetalleAsientoCuentaTercero->bpe_cardcode  = isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL;
-								$DetalleAsientoCuentaTercero->pe1_doctype   = is_numeric($detail['pe1_doctype'])?$detail['pe1_doctype']:0;
-								$DetalleAsientoCuentaTercero->pe1_docentry  = is_numeric($detail['pe1_docentry'])?$detail['pe1_docentry']:0;
-								$DetalleAsientoCuentaTercero->cuentalinea = is_numeric($detail['pe1_cuenta'])?$detail['pe1_cuenta']:0;
-								$DetalleAsientoCuentaTercero->cuentalinea = ($DetalleAsientoCuentaTercero->cuentalinea == 0)? $detail['pe1_accountid']:$DetalleAsientoCuentaTercero->cuentalinea;
+								$DetalleAsientoCuentaTercero->bpe_cardcode     = isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL;
+								$DetalleAsientoCuentaTercero->pe1_doctype      = is_numeric($detail['pe1_doctype'])?$detail['pe1_doctype']:0;
+								$DetalleAsientoCuentaTercero->pe1_docentry     = is_numeric($detail['pe1_docentry'])?$detail['pe1_docentry']:0;
+								$DetalleAsientoCuentaTercero->cuentalinea      = is_numeric($detail['pe1_cuenta'])?$detail['pe1_cuenta']:0;
+								$DetalleAsientoCuentaTercero->cuentalinea      = ($DetalleAsientoCuentaTercero->cuentalinea == 0)? $detail['pe1_accountid']:$DetalleAsientoCuentaTercero->cuentalinea;
 								$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($DetalleAsientoCuentaTercero->cuentalinea, 0, 1);
-								$DetalleAsientoCuentaTercero->pe1_vlrpaid = is_numeric($detail['pe1_vlrpaid'])?$detail['pe1_vlrpaid']:0;
-								$DetalleAsientoCuentaTercero->pe1_docdate	= $this->validateDate($detail['pe1_docdate'])?$detail['pe1_docdate']:NULL;
-								$DetalleAsientoCuentaTercero->cord	= isset($detail['ac1_cord'])?$detail['ac1_cord']:NULL;
-								$DetalleAsientoCuentaTercero->vlrpaiddesc	= ($VrlPagoDetalleNormal > 0) ? $VrlPagoDetalleNormal : $VrlPagoDetalleSinDiff;
+								$DetalleAsientoCuentaTercero->pe1_vlrpaid      = is_numeric($detail['pe1_vlrpaid'])?$detail['pe1_vlrpaid']:0;
+								$DetalleAsientoCuentaTercero->pe1_docdate	     = $this->validateDate($detail['pe1_docdate'])?$detail['pe1_docdate']:NULL;
+								$DetalleAsientoCuentaTercero->cord	           = isset($detail['ac1_cord'])?$detail['ac1_cord']:NULL;
+								$DetalleAsientoCuentaTercero->vlrpaiddesc	     = $VlrTotalOpc;
+								$DetalleAsientoCuentaTercero->tasaoriginaldoc  = $TasaOrg ;
 
 
-								$llaveAsientoCuentaTercero = $DetalleAsientoCuentaTercero->bpe_cardcode.$DetalleAsientoCuentaTercero->pe1_docentry.$DetalleAsientoCuentaTercero->pe1_doctype;
+								$llaveAsientoCuentaTercero = $DetalleAsientoCuentaTercero->bpe_cardcode.$DetalleAsientoCuentaTercero->pe1_doctype.$DetalleAsientoCuentaTercero->tasaoriginaldoc;
 
 
 								//********************
@@ -990,6 +1006,7 @@ class PaymentsMade extends REST_Controller {
 
 					// SE INSERTA ASIENTO INGRESO
 
+
 							$debito = 0;
 							$credito = 0;
 							$MontoSysDB = 0;
@@ -1002,6 +1019,7 @@ class PaymentsMade extends REST_Controller {
 							if(trim($Data['bpe_currency']) != $MONEDALOCAL ){
 									$granTotalIngreso = ($granTotalIngreso * $TasaDocLoc);
 							}
+
 							switch ($codigoCuentaIngreso) {
 								case 1: // ESTABLECIDO COMO CREDITO
 									$credito = $granTotalIngreso;
@@ -1088,6 +1106,14 @@ class PaymentsMade extends REST_Controller {
 									break;
 							}
 
+							$VlrPagoEfectuado = $credito;
+
+							$DFPC  = $DFPC + round($credito, 2);
+							$DFPD  = $DFPD + round($debito, 2);
+							$DFPCS = $DFPCS + round($MontoSysCR, 2);
+							$DFPDS = $DFPDS + round($MontoSysDB, 2);
+
+
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
@@ -1152,7 +1178,6 @@ class PaymentsMade extends REST_Controller {
 						}
 
 					// FIN PROCESO ASIENTO INGRESO
-
 					//SE VALIDA SI ES UN ANTICIPO AL proveedor
 					if($Data['bpe_billpayment'] == '0' || $Data['bpe_billpayment'] == 0){
 						//Procedimiento para llenar ASIENTO CON CUENTA TERCERO SEGUN GRUPO DE CUENTAS
@@ -1170,6 +1195,7 @@ class PaymentsMade extends REST_Controller {
 										$DireferenciaCambio = 0; // SOLO SE USA PARA SABER SI EXISTE UNA DIFERENCIA DE CAMBIO
 										$CuentaDiferenciaCambio = 0;
 										$ac1cord = null;
+										$tasadoc = 0;
 
 										foreach ($posicion as $key => $value) {
 
@@ -1182,6 +1208,7 @@ class PaymentsMade extends REST_Controller {
 													$cuentaLinea = $value->cuentalinea;
 													$fechaDocumento = $value->pe1_docdate;
 													$ac1cord = $value->cord;
+													$tasadoc = $value->tasaoriginaldoc;
 
 										}
 
@@ -1191,119 +1218,122 @@ class PaymentsMade extends REST_Controller {
 										$MontoSysCR = 0;
 										$TotalPagoRecibidoOriginal = $TotalPagoRecibido;
 
-										//QUITAR EL VALOR DE LA DIFERECNIA SI EXISTE
+
 
 
 										if($doctype == 19 || $doctype == 16) {
 											switch ($cuenta) {
 												case 1:
-													$debito = $TotalPagoRecibido;
+													$credito = $TotalPagoRecibido;
 
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+														  $MontoSysCR = ($credito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysCR = ($credito / $tasadoc);
 													}
 
 													break;
 
 												case 2:
-													$debito = $TotalPagoRecibido;
+													$credito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysCR = ($credito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysCR = ($credito / $tasadoc);
 													}
 													break;
 
 												case 3:
-													$debito = $TotalPagoRecibido;
+													$credito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysCR = ($credito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysCR = ($credito / $tasadoc);
 													}
 													break;
 
 												case 4:
-													$debito = $TotalPagoRecibido;
+													$credito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysCR = ($credito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysCR = ($credito / $tasadoc);
 													}
 													break;
 
 												case 5:
-													$debito = $TotalPagoRecibido;
+													$credito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysCR = ($credito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysCR = ($credito / $tasadoc);
 													}
 													break;
 
 												case 6:
-													$debito = $TotalPagoRecibido;
+													$credito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysCR = ($credito / $TasaLocSys);
 
 													}else{
 
-														 $MontoSysDB = ($debito / $TasaLocSys);
+														 $MontoSysCR = ($credito / $tasadoc);
 													}
 													break;
 
 												case 7:
-													$debito = $TotalPagoRecibido;
+													$credito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysCR = ($credito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysCR = ($credito / $tasadoc);
 													}
 													break;
 											}
 										}else if( $doctype == 18 ){
+
 											if( $ac1cord == 0 ){
 												$credito = $TotalPagoRecibido;
 
 												if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-														$MontoSysCR = $credito;
+														$MontoSysCR = ($credito / $TasaLocSys);
 
 												}else{
 
-														$MontoSysCR = ($credito / $TasaLocSys);
+														$MontoSysCR = ($credito / $tasadoc);
 												}
+
 											}else if( $ac1cord == 1 ){
+
 												$debito = $TotalPagoRecibido;
 
 												if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-														$MontoSysDB = $debito;
+														$MontoSysDB = ($debito / $TasaLocSys);
 
 												}else{
 
-														$MontoSysDB = ($debito / $TasaLocSys);
+														$MontoSysDB = ($debito / $tasadoc);
 												}
 											}
 
@@ -1314,11 +1344,11 @@ class PaymentsMade extends REST_Controller {
 
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysDB = ($debito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysDB = ($debito / $tasadoc);
 													}
 
 													break;
@@ -1327,11 +1357,11 @@ class PaymentsMade extends REST_Controller {
 													$debito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysDB = ($debito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysDB = ($debito / $tasadoc);
 													}
 													break;
 
@@ -1339,11 +1369,11 @@ class PaymentsMade extends REST_Controller {
 													$debito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysDB = ($debito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysDB = ($debito / $tasadoc);
 													}
 													break;
 
@@ -1351,11 +1381,11 @@ class PaymentsMade extends REST_Controller {
 													$debito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysDB = ($debito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysDB = ($debito / $tasadoc);
 													}
 													break;
 
@@ -1363,11 +1393,11 @@ class PaymentsMade extends REST_Controller {
 													$debito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysDB = ($debito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysDB = ($debito / $tasadoc);
 													}
 													break;
 
@@ -1375,11 +1405,11 @@ class PaymentsMade extends REST_Controller {
 													$debito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysDB = ($debito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysDB = ($debito / $tasadoc);
 													}
 													break;
 
@@ -1387,17 +1417,21 @@ class PaymentsMade extends REST_Controller {
 													$debito = $TotalPagoRecibido;
 													if(trim($Data['bpe_currency']) != $MONEDASYS ){
 
-															$MontoSysDB = $debito;
+															$MontoSysDB = ($debito / $TasaLocSys);
 
 													}else{
 
-															$MontoSysDB = ($debito / $TasaLocSys);
+															$MontoSysDB = ($debito / $tasadoc);
 													}
 													break;
 											}
 
 										}
 
+										$DFPC  = $DFPC + round($credito, 2);
+										$DFPD  = $DFPD + round($debito, 2);
+										$DFPCS = $DFPCS + round($MontoSysCR, 2);
+										$DFPDS = $DFPDS + round($MontoSysDB, 2);
 
 
 										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1499,7 +1533,12 @@ class PaymentsMade extends REST_Controller {
 											$credito = 0;
 											$MontoSysDB = 0;
 											$MontoSysCR = 0;
+
 											$TotalPagoRecibidoOriginal = $TotalPagoRecibido;
+
+											if(trim($Data['bpe_currency']) != $MONEDALOCAL ){
+													$TotalPagoRecibido = ($TotalPagoRecibido * $TasaDocLoc);
+											}
 
 											switch ($cuenta) {
 												case 1:
@@ -1589,6 +1628,12 @@ class PaymentsMade extends REST_Controller {
 													break;
 											}
 
+											$DFPC  = $DFPC + round($credito, 2);
+											$DFPD  = $DFPD + round($debito, 2);
+											$DFPCS = $DFPCS + round($MontoSysCR, 2);
+											$DFPDS = $DFPDS + round($MontoSysDB, 2);
+
+
 											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 													':ac1_trans_id' => $resInsertAsiento,
@@ -1656,185 +1701,633 @@ class PaymentsMade extends REST_Controller {
 					}
 
 
-					//se verifica si existe diferencia en cambio
-					$sqlCuentaDiferenciaCambio = "SELECT pge_acc_dcp, pge_acc_dcn FROM pgem";
-					$resCuentaDiferenciaCambio = $this->pedeo->queryTable($sqlCuentaDiferenciaCambio, array());
+				  if(trim($Data['bpe_currency']) != $MONEDALOCAL ){
 
-					$CuentaDiferenciaCambio = [];
+						if($Data['bpe_billpayment'] == '0' || $Data['bpe_billpayment'] == 0){
+							//se verifica si existe diferencia en cambio
+							$sqlCuentaDiferenciaCambio = "SELECT pge_acc_dcp, pge_acc_dcn FROM pgem";
+							$resCuentaDiferenciaCambio = $this->pedeo->queryTable($sqlCuentaDiferenciaCambio, array());
 
-					if(isset($resCuentaDiferenciaCambio[0])){
+							$CuentaDiferenciaCambio = [];
 
-									$CuentaDiferenciaCambio = $resCuentaDiferenciaCambio[0];
+							if(isset($resCuentaDiferenciaCambio[0])){
 
-					}else{
+											$CuentaDiferenciaCambio = $resCuentaDiferenciaCambio[0];
+
+							}else{
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error' => true,
+										'data'  => array(),
+										'mensaje' =>'No se encontro la cuenta para aplicar la diferencia en cambio'
+									);
+
+									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+									return;
+							}
+
+
+
+							$VlrDiff = ($VlrDiff + $VlrPagoEfectuado);
+
+
+							if ( $VlrDiff  <  0 ){
+
+								$VlrDiffP = abs($VlrDiff);
+
+							}else if ( $VlrDiff > 0 ){
+
+								$VlrDiffN = abs($VlrDiff);
+
+							}else if ( $VlrDiff  == 0 ){
+
+								$VlrDiffN = 0;
+								$VlrDiffP = 0;
+
+							}
+
+
+							if( $VlrDiffP > 0 ){
+
+
+											$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
+											$credito    = $VlrDiffP;
+											$MontoSysCR = ($credito / $TasaLocSys);
+
+											$DFPC  = $DFPC + round( $VlrDiffP, 2 );
+											$DFPD  = $DFPD + 0;
+											$DFPCS = $DFPCS + round( $MontoSysCR, 2 );
+											$DFPDS = $DFPDS + 0;
+
+
+											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+													':ac1_trans_id' => $resInsertAsiento,
+													':ac1_account' => $cuentaD,
+													':ac1_debit' => 0,
+													':ac1_credit' => round( $VlrDiffP, 2 ),
+													':ac1_debit_sys' => 0,
+													':ac1_credit_sys' => 0,
+													':ac1_currex' => 0,
+													':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+													':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+													':ac1_debit_import' => 0,
+													':ac1_credit_import' => 0,
+													':ac1_debit_importsys' => 0,
+													':ac1_credit_importsys' => 0,
+													':ac1_font_key' => $resInsert,
+													':ac1_font_line' => 1,
+													':ac1_font_type' => 19,
+													':ac1_accountvs' => 1,
+													':ac1_doctype' => 18,
+													':ac1_ref1' => "",
+													':ac1_ref2' => "",
+													':ac1_ref3' => "",
+													':ac1_prc_code' => 0,
+													':ac1_uncode' => 0,
+													':ac1_prj_code' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
+													':ac1_rescon_date' => NULL,
+													':ac1_recon_total' => 0,
+													':ac1_made_user' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
+													':ac1_accperiod' => 1,
+													':ac1_close' => 0,
+													':ac1_cord' => 0,
+													':ac1_ven_debit' => 0,
+													':ac1_ven_credit' => 0,
+													':ac1_fiscal_acct' => 0,
+													':ac1_taxid' => 1,
+													':ac1_isrti' => 0,
+													':ac1_basert' => 0,
+													':ac1_mmcode' => 0,
+													':ac1_legal_num' => isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL,
+													':ac1_codref' => 1
+										));
+
+
+
+										if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+												// Se verifica que el detalle no de error insertando //
+										}else{
+												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+												// se retorna el error y se detiene la ejecucion del codigo restante.
+													$this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data'	  => $resDetalleAsiento,
+														'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al insertar el detalle del asiento diferencia en cambio'
+													);
+
+													 $this->response($respuesta);
+
+													 return;
+										}
+
+
+							}
+
+							if( $VlrDiffN > 0 ){
+
+
+											$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcn'];
+											$debito     =  $VlrDiffN;
+											$MontoSysDB = ($debito / $TasaLocSys);
+
+
+											$DFPC  = $DFPC + 0;
+											$DFPD  = $DFPD + round( $VlrDiffN, 2 );
+											$DFPCS = $DFPCS + 0;
+											$DFPDS = $DFPDS + round( $MontoSysDB, 2 );
+
+
+											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+													':ac1_trans_id' => $resInsertAsiento,
+													':ac1_account' => $cuentaD,
+													':ac1_debit' =>  round( $VlrDiffN, 2 ),
+													':ac1_credit' => 0,
+													':ac1_debit_sys' => 0,
+													':ac1_credit_sys' => 0,
+													':ac1_currex' => 0,
+													':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+													':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+													':ac1_debit_import' => 0,
+													':ac1_credit_import' => 0,
+													':ac1_debit_importsys' => 0,
+													':ac1_credit_importsys' => 0,
+													':ac1_font_key' => $resInsert,
+													':ac1_font_line' => 1,
+													':ac1_font_type' => 19,
+													':ac1_accountvs' => 1,
+													':ac1_doctype' => 18,
+													':ac1_ref1' => "",
+													':ac1_ref2' => "",
+													':ac1_ref3' => "",
+													':ac1_prc_code' => 0,
+													':ac1_uncode' => 0,
+													':ac1_prj_code' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
+													':ac1_rescon_date' => NULL,
+													':ac1_recon_total' => 0,
+													':ac1_made_user' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
+													':ac1_accperiod' => 1,
+													':ac1_close' => 0,
+													':ac1_cord' => 0,
+													':ac1_ven_debit' => 0,
+													':ac1_ven_credit' => 0,
+													':ac1_fiscal_acct' => 0,
+													':ac1_taxid' => 1,
+													':ac1_isrti' => 0,
+													':ac1_basert' => 0,
+													':ac1_mmcode' => 0,
+													':ac1_legal_num' => isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL,
+													':ac1_codref' => 1
+										));
+
+
+
+										if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+												// Se verifica que el detalle no de error insertando //
+										}else{
+												// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+												// se retorna el error y se detiene la ejecucion del codigo restante.
+													$this->pedeo->trans_rollback();
+
+													$respuesta = array(
+														'error'   => true,
+														'data'	  => $resDetalleAsiento,
+														'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al insertar el detalle del asiento diferencia en cambio'
+													);
+
+													 $this->response($respuesta);
+
+													 return;
+										}
+							}
+						}
+						//
+					}
+
+
+
+					//VALIDANDDO DIFERENCIA EN PESO DE MONEDA DE SISTEMA
+
+					$sqlDiffPeso = "SELECT sum(coalesce(ac1_debit_sys,0)) as debito, sum(coalesce(ac1_credit_sys,0)) as credito,
+													sum(coalesce(ac1_debit,0)) as ldebito, sum(coalesce(ac1_credit,0)) as lcredito
+													from mac1
+													where ac1_trans_id = :ac1_trans_id";
+
+					$resDiffPeso = $this->pedeo->queryTable($sqlDiffPeso, array(
+						':ac1_trans_id' => $resInsertAsiento
+					));
+
+					if( isset($resDiffPeso[0]['debito']) && abs(($resDiffPeso[0]['debito'] - $resDiffPeso[0]['credito'])) > 0 ){
+
+						$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+						$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+
+						if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+
+						}else{
 
 							$this->pedeo->trans_rollback();
 
 							$respuesta = array(
-								'error' => true,
-								'data'  => array(),
-								'mensaje' =>'No se encontro la cuenta para aplicar la diferencia en cambio'
+								'error'   => true,
+								'data'	  => $resCuentaDiferenciaDecimal,
+								'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
 							);
 
-							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+							 $this->response($respuesta);
 
-							return;
+							 return;
+						}
+
+						$debito  = $resDiffPeso[0]['debito'];
+						$credito = $resDiffPeso[0]['credito'];
+
+						if( $debito > $credito ){
+							$credito = abs(($debito - $credito));
+							$debito = 0;
+						}else{
+							$debito = abs(($credito - $debito));
+							$credito = 0;
+						}
+
+						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+									':ac1_trans_id' => $resInsertAsiento,
+									':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+									':ac1_debit' => 0,
+									':ac1_credit' => 0,
+									':ac1_debit_sys' => round($debito, 2),
+									':ac1_credit_sys' => round($credito, 2),
+									':ac1_currex' => 0,
+									':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+									':ac1_debit_import' => 0,
+									':ac1_credit_import' => 0,
+									':ac1_debit_importsys' => 0,
+									':ac1_credit_importsys' => 0,
+									':ac1_font_key' => $resInsert,
+									':ac1_font_line' => 1,
+									':ac1_font_type' => 19,
+									':ac1_accountvs' => 1,
+									':ac1_doctype' => 18,
+									':ac1_ref1' => "",
+									':ac1_ref2' => "",
+									':ac1_ref3' => "",
+									':ac1_prc_code' => 0,
+									':ac1_uncode' => 0,
+									':ac1_prj_code' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
+									':ac1_rescon_date' => NULL,
+									':ac1_recon_total' => 0,
+									':ac1_made_user' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
+									':ac1_accperiod' => 1,
+									':ac1_close' => 0,
+									':ac1_cord' => 0,
+									':ac1_ven_debit' => 0,
+									':ac1_ven_credit' => 0,
+									':ac1_fiscal_acct' => 0,
+									':ac1_taxid' => 1,
+									':ac1_isrti' => 0,
+									':ac1_basert' => 0,
+									':ac1_mmcode' => 0,
+									':ac1_legal_num' => isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL,
+									':ac1_codref' => 1
+						));
+
+
+
+						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+								// Se verifica que el detalle no de error insertando //
+						}else{
+								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resDetalleAsiento,
+										'mensaje'	=> 'No se pudo registrar el pago recibido, occurio un error al insertar el detalle del asiento diferencia en cambio'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+						}
+
+
+
+					}else if( isset($resDiffPeso[0]['ldebito']) && abs(($resDiffPeso[0]['ldebito'] - $resDiffPeso[0]['lcredito'])) > 0 ){
+
+						$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+						$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+
+						if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resCuentaDiferenciaDecimal,
+								'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+							);
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+
+						$ldebito  = $resDiffPeso[0]['ldebito'];
+						$lcredito = $resDiffPeso[0]['lcredito'];
+
+						if( $ldebito > $lcredito ){
+							$lcredito = abs(($ldebito - $lcredito));
+							$ldebito = 0;
+						}else{
+							$ldebito = abs(($lcredito - $ldebito));
+							$lcredito = 0;
+						}
+
+						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+									':ac1_trans_id' => $resInsertAsiento,
+									':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+									':ac1_debit' => round($ldebito, 2),
+									':ac1_credit' => round($lcredito, 2),
+									':ac1_debit_sys' => 0,
+									':ac1_credit_sys' => 0,
+									':ac1_currex' => 0,
+									':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+									':ac1_debit_import' => 0,
+									':ac1_credit_import' => 0,
+									':ac1_debit_importsys' => 0,
+									':ac1_credit_importsys' => 0,
+									':ac1_font_key' => $resInsert,
+									':ac1_font_line' => 1,
+									':ac1_font_type' => 19,
+									':ac1_accountvs' => 1,
+									':ac1_doctype' => 18,
+									':ac1_ref1' => "",
+									':ac1_ref2' => "",
+									':ac1_ref3' => "",
+									':ac1_prc_code' => 0,
+									':ac1_uncode' => 0,
+									':ac1_prj_code' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
+									':ac1_rescon_date' => NULL,
+									':ac1_recon_total' => 0,
+									':ac1_made_user' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
+									':ac1_accperiod' => 1,
+									':ac1_close' => 0,
+									':ac1_cord' => 0,
+									':ac1_ven_debit' => 0,
+									':ac1_ven_credit' => 0,
+									':ac1_fiscal_acct' => 0,
+									':ac1_taxid' => 1,
+									':ac1_isrti' => 0,
+									':ac1_basert' => 0,
+									':ac1_mmcode' => 0,
+									':ac1_legal_num' => isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL,
+									':ac1_codref' => 1
+						));
+
+
+
+						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+								// Se verifica que el detalle no de error insertando //
+						}else{
+								// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resDetalleAsiento,
+										'mensaje'	=> 'No se pudo registrar el pago recibido, occurio un error al insertar el detalle del asiento diferencia en cambio'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+						}
 					}
+					// $debito = 0;
+					// $credito = 0;
+					//
+					//
+					// if ( $DFPC > $DFPD || $DFPD > $DFPC ){
+					//
+					// 		$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+					// 		$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+					//
+					// 		if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+					//
+					// 		}else{
+					//
+					// 			$this->pedeo->trans_rollback();
+					//
+					// 			$respuesta = array(
+					// 				'error'   => true,
+					// 				'data'	  => $resCuentaDiferenciaDecimal,
+					// 				'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+					// 			);
+					//
+					// 			 $this->response($respuesta);
+					//
+					// 			 return;
+					// 		}
+					//
+					//
+					// 		if( $DFPC > $DFPD ){ // DIFERENCIA EN CREDITO EL VALOR SE COLOCA EN DEBITO
+					//
+					// 					$debito = ( $DFPC - $DFPD );
+					//
+					// 		}else{ // DIFERENCIA EN DEBITO EL VALOR SE COLOCA EN CREDITO
+					//
+					// 					$credito = ( $DFPD - $DFPC );
+					// 		}
+					//
+					//
+					//
+					// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					//
+					// 				':ac1_trans_id' => $resInsertAsiento,
+					// 				':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+					// 				':ac1_debit' => round($debito, 2),
+					// 				':ac1_credit' => round($credito, 2),
+					// 				':ac1_debit_sys' => 0,
+					// 				':ac1_credit_sys' => 0,
+					// 				':ac1_currex' => 0,
+					// 				':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+					// 				':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+					// 				':ac1_debit_import' => 0,
+					// 				':ac1_credit_import' => 0,
+					// 				':ac1_debit_importsys' => 0,
+					// 				':ac1_credit_importsys' => 0,
+					// 				':ac1_font_key' => $resInsert,
+					// 				':ac1_font_line' => 1,
+					// 				':ac1_font_type' => 19,
+					// 				':ac1_accountvs' => 1,
+					// 				':ac1_doctype' => 18,
+					// 				':ac1_ref1' => "",
+					// 				':ac1_ref2' => "",
+					// 				':ac1_ref3' => "",
+					// 				':ac1_prc_code' => 0,
+					// 				':ac1_uncode' => 0,
+					// 				':ac1_prj_code' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
+					// 				':ac1_rescon_date' => NULL,
+					// 				':ac1_recon_total' => 0,
+					// 				':ac1_made_user' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
+					// 				':ac1_accperiod' => 1,
+					// 				':ac1_close' => 0,
+					// 				':ac1_cord' => 0,
+					// 				':ac1_ven_debit' => 0,
+					// 				':ac1_ven_credit' => 0,
+					// 				':ac1_fiscal_acct' => 0,
+					// 				':ac1_taxid' => 1,
+					// 				':ac1_isrti' => 0,
+					// 				':ac1_basert' => 0,
+					// 				':ac1_mmcode' => 0,
+					// 				':ac1_legal_num' => isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL,
+					// 				':ac1_codref' => 1
+					// 	));
+					//
+					//
+					//
+					// 	if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+					// 			// Se verifica que el detalle no de error insertando //
+					// 	}else{
+					// 			// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+					// 			// se retorna el error y se detiene la ejecucion del codigo restante.
+					// 				$this->pedeo->trans_rollback();
+					//
+					// 				$respuesta = array(
+					// 					'error'   => true,
+					// 					'data'	  => $resDetalleAsiento,
+					// 					'mensaje'	=> 'No se pudo registrar el pago recibido, occurio un error al insertar el detalle del asiento diferencia en cambio'
+					// 				);
+					//
+					// 				 $this->response($respuesta);
+					//
+					// 				 return;
+					// 	}
+					//
+					// }
+					//
+					// $debito = 0;
+					// $credito = 0;
+					//
+					// if ( $DFPCS > $DFPDS || $DFPDS > $DFPCS ){
+					//
+					//
+					// 		$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+					// 		$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+					//
+					// 		if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+					//
+					// 		}else{
+					//
+					// 			$this->pedeo->trans_rollback();
+					//
+					// 			$respuesta = array(
+					// 				'error'   => true,
+					// 				'data'	  => $resCuentaDiferenciaDecimal,
+					// 				'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+					// 			);
+					//
+					// 			 $this->response($respuesta);
+					//
+					// 			 return;
+					// 		}
+					//
+					//
+					// 		if( $DFPCS > $DFPDS ){ // DIFERENCIA EN CREDITO EL VALOR SE COLOCA EN DEBITO
+					//
+					// 					$debito = ( $DFPCS - $DFPDS );
+					//
+					// 		}else{ // DIFERENCIA EN DEBITO EL VALOR SE COLOCA EN CREDITO
+					//
+					// 					$credito = ( $DFPDS - $DFPCS );
+					// 		}
+					//
+					// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					//
+					// 				':ac1_trans_id' => $resInsertAsiento,
+					// 				':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+					// 				':ac1_debit' => 0,
+					// 				':ac1_credit' => 0,
+					// 				':ac1_debit_sys' => round($debito, 2),
+					// 				':ac1_credit_sys' => round($credito, 2),
+					// 				':ac1_currex' => 0,
+					// 				':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+					// 				':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
+					// 				':ac1_debit_import' => 0,
+					// 				':ac1_credit_import' => 0,
+					// 				':ac1_debit_importsys' => 0,
+					// 				':ac1_credit_importsys' => 0,
+					// 				':ac1_font_key' => $resInsert,
+					// 				':ac1_font_line' => 1,
+					// 				':ac1_font_type' => 19,
+					// 				':ac1_accountvs' => 1,
+					// 				':ac1_doctype' => 18,
+					// 				':ac1_ref1' => "",
+					// 				':ac1_ref2' => "",
+					// 				':ac1_ref3' => "",
+					// 				':ac1_prc_code' => 0,
+					// 				':ac1_uncode' => 0,
+					// 				':ac1_prj_code' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
+					// 				':ac1_rescon_date' => NULL,
+					// 				':ac1_recon_total' => 0,
+					// 				':ac1_made_user' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
+					// 				':ac1_accperiod' => 1,
+					// 				':ac1_close' => 0,
+					// 				':ac1_cord' => 0,
+					// 				':ac1_ven_debit' => 0,
+					// 				':ac1_ven_credit' => 0,
+					// 				':ac1_fiscal_acct' => 0,
+					// 				':ac1_taxid' => 1,
+					// 				':ac1_isrti' => 0,
+					// 				':ac1_basert' => 0,
+					// 				':ac1_mmcode' => 0,
+					// 				':ac1_legal_num' => isset($Data['bpr_cardcode'])?$Data['bpr_cardcode']:NULL,
+					// 				':ac1_codref' => 1
+					// 	));
+					//
+					//
+					//
+					// 	if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+					// 			// Se verifica que el detalle no de error insertando //
+					// 	}else{
+					// 			// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+					// 			// se retorna el error y se detiene la ejecucion del codigo restante.
+					// 				$this->pedeo->trans_rollback();
+					//
+					// 				$respuesta = array(
+					// 					'error'   => true,
+					// 					'data'	  => $resDetalleAsiento,
+					// 					'mensaje'	=> 'No se pudo registrar el pago recibido, occurio un error al insertar el detalle del asiento diferencia en cambio'
+					// 				);
+					//
+					// 				 $this->response($respuesta);
+					//
+					// 				 return;
+					// 	}
+					//
+					// }
 
-					if( $VlrDiffP > 0 ){
-
-
-									$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
-									$credito    = $VlrDiffP;
-									$MontoSysCR = ($credito / $TasaLocSys);
-
-
-
-									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-											':ac1_trans_id' => $resInsertAsiento,
-											':ac1_account' => $cuentaD,
-											':ac1_debit' => 0,
-											':ac1_credit' => round( $VlrDiffP, 2 ),
-											':ac1_debit_sys' => 0,
-											':ac1_credit_sys' => round( $MontoSysCR, 2 ),
-											':ac1_currex' => 0,
-											':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
-											':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
-											':ac1_debit_import' => 0,
-											':ac1_credit_import' => 0,
-											':ac1_debit_importsys' => 0,
-											':ac1_credit_importsys' => 0,
-											':ac1_font_key' => $resInsert,
-											':ac1_font_line' => 1,
-											':ac1_font_type' => 19,
-											':ac1_accountvs' => 1,
-											':ac1_doctype' => 18,
-											':ac1_ref1' => "",
-											':ac1_ref2' => "",
-											':ac1_ref3' => "",
-											':ac1_prc_code' => 0,
-											':ac1_uncode' => 0,
-											':ac1_prj_code' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
-											':ac1_rescon_date' => NULL,
-											':ac1_recon_total' => 0,
-											':ac1_made_user' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
-											':ac1_accperiod' => 1,
-											':ac1_close' => 0,
-											':ac1_cord' => 0,
-											':ac1_ven_debit' => 0,
-											':ac1_ven_credit' => 0,
-											':ac1_fiscal_acct' => 0,
-											':ac1_taxid' => 1,
-											':ac1_isrti' => 0,
-											':ac1_basert' => 0,
-											':ac1_mmcode' => 0,
-											':ac1_legal_num' => isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL,
-											':ac1_codref' => 1
-								));
-
-
-
-								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-										// Se verifica que el detalle no de error insertando //
-								}else{
-										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-										// se retorna el error y se detiene la ejecucion del codigo restante.
-											$this->pedeo->trans_rollback();
-
-											$respuesta = array(
-												'error'   => true,
-												'data'	  => $resDetalleAsiento,
-												'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al insertar el detalle del asiento diferencia en cambio'
-											);
-
-											 $this->response($respuesta);
-
-											 return;
-								}
-
-
-					}
-
-					if( $VlrDiffN > 0 ){
-
-
-									$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcn'];
-									$debito     =  $VlrDiffN;
-									$MontoSysDB = ($debito / $TasaLocSys);
-
-
-									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-											':ac1_trans_id' => $resInsertAsiento,
-											':ac1_account' => $cuentaD,
-											':ac1_debit' =>  round( $VlrDiffN, 2 ),
-											':ac1_credit' => 0,
-											':ac1_debit_sys' => round( $MontoSysDB, 2 ),
-											':ac1_credit_sys' => 0,
-											':ac1_currex' => 0,
-											':ac1_doc_date' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
-											':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate'])?$Data['bpe_docdate']:NULL,
-											':ac1_debit_import' => 0,
-											':ac1_credit_import' => 0,
-											':ac1_debit_importsys' => 0,
-											':ac1_credit_importsys' => 0,
-											':ac1_font_key' => $resInsert,
-											':ac1_font_line' => 1,
-											':ac1_font_type' => 19,
-											':ac1_accountvs' => 1,
-											':ac1_doctype' => 18,
-											':ac1_ref1' => "",
-											':ac1_ref2' => "",
-											':ac1_ref3' => "",
-											':ac1_prc_code' => 0,
-											':ac1_uncode' => 0,
-											':ac1_prj_code' => isset($Data['bpe_project'])?$Data['bpe_project']:NULL,
-											':ac1_rescon_date' => NULL,
-											':ac1_recon_total' => 0,
-											':ac1_made_user' => isset($Data['bpe_createby'])?$Data['bpe_createby']:NULL,
-											':ac1_accperiod' => 1,
-											':ac1_close' => 0,
-											':ac1_cord' => 0,
-											':ac1_ven_debit' => 0,
-											':ac1_ven_credit' => 0,
-											':ac1_fiscal_acct' => 0,
-											':ac1_taxid' => 1,
-											':ac1_isrti' => 0,
-											':ac1_basert' => 0,
-											':ac1_mmcode' => 0,
-											':ac1_legal_num' => isset($Data['bpe_cardcode'])?$Data['bpe_cardcode']:NULL,
-											':ac1_codref' => 1
-								));
-
-
-
-								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-										// Se verifica que el detalle no de error insertando //
-								}else{
-										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-										// se retorna el error y se detiene la ejecucion del codigo restante.
-											$this->pedeo->trans_rollback();
-
-											$respuesta = array(
-												'error'   => true,
-												'data'	  => $resDetalleAsiento,
-												'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al insertar el detalle del asiento diferencia en cambio'
-											);
-
-											 $this->response($respuesta);
-
-											 return;
-								}
-
-
-					}
 					//
 
-					//FIN Procedimiento PARA LLENAR ASIENTO CON CUENTA TERCERO SEGUN GRUPO DE CUENTAS
-
-
-
+					//Esto es para validar el resultado de la contabilidad
+					// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
+					// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
+					// print_r(json_encode($ressqlmac1));
+					// exit;
 
 					$this->pedeo->trans_commit();
 
