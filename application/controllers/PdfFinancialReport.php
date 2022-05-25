@@ -230,7 +230,7 @@ class PdfFinancialReport extENDs REST_Controller {
 
 
         $mpdf->Output('Doc.pdf', 'D');
-$filename = 'Doc.pdf';
+		$filename = 'Doc.pdf';
 		header('Content-type: application/force-download');
 		header('Content-Disposition: attachment; filename='.$filename);
 	}
