@@ -116,7 +116,7 @@ class ProductionEmission extends REST_Controller
             ":bep_description" => isset($Data['bep_description']) ? $Data['bep_description'] :null,
             ":bep_createat" => isset($Data['bep_createat']) ? $Data['bep_createat'] :null,
             ":bep_createby" => isset($Data['bep_createby']) ? $Data['bep_createby'] :null,
-            ":bep_status" => isset($Data['bep_status']) ? $Data['bep_status'] :null
+            ":bep_status" => isset($Data['bep_status']) ? $Data['bep_status'] :0
 
         ));
 
@@ -127,14 +127,14 @@ class ProductionEmission extends REST_Controller
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
                     ":ep1_item_description" => $detail['ep1_item_description'],
                     ":ep1_quantity" => $detail['ep1_quantity'],
-                    ":ep1_itemcost" => $detail['ep1_itemcost'],
-                    ":ep1_im" => $detail['ep1_im'],
+                    ":ep1_itemcost" => is_numeric($detail['ep1_itemcost'])?$detail['ep1_itemcost']:0,
+                    ":ep1_im" => is_numeric($detail['ep1_im'])?$detail['ep1_im']:0,
                     ":ep1_ccost" => $detail['ep1_ccost'],
                     ":ep1_ubusiness" => $detail['ep1_ubusiness'],
                     ":ep1_item_code" => $detail['ep1_item_code'],
                     ":ep1_listmat" => $detail['ep1_listmat'],
                     ":ep1_baseentry" => $resInsert,
-                    ":ep1_plan" => $detail['ep1_plan'],
+                    ":ep1_plan" => is_numeric($detail['ep1_plan'])?$detail['ep1_plan']:0,
                     ":ep1_basenum" => $detail['ep1_basenum']
 
                 ));
