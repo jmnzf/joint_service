@@ -23,6 +23,7 @@ class PdfAccountingSeat extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('DateFormat');
 
 	}
 
@@ -232,7 +233,7 @@ class PdfAccountingSeat extends REST_Controller {
 				<tr>
 					<td><b># asiento:</b> <span>'.$contenidoOC[0]['mac_trans_id'].'</span></p></td>
 					<td></td>
-					<td><b>fecha contabilizacion:</b> <span>'.$contenidoOC[0]['mac_doc_date'].'</span></p></td>
+					<td><b>fecha contabilizacion:</b> <span>'.$this->dateformat->Date($contenidoOC[0]['mac_doc_date']).'</span></p></td>
 				</tr>
 				<tr>
 					<td><b>EJERCICIO:</b> <span>'.$contenidoOC[0]['ejercicio'].'</span></p></td>
@@ -240,7 +241,7 @@ class PdfAccountingSeat extends REST_Controller {
 					<td><b>PERIODO:</b> <span>'.$contenidoOC[0]['periodo'].'</span></p></td>
 				</tr>
 				<tr>
-					<td><b>fecha documento:</b> <span>'.$contenidoOC[0]['mac_legal_date'].'</span></p></td>
+					<td><b>fecha documento:</b> <span>'.$this->dateformat->Date($contenidoOC[0]['mac_legal_date']).'</span></p></td>
 					<td></td>
 					<td><b>ref1:</b> <span>'.$contenidoOC[0]['mac_ref1'].'</span></p></td>
 				</tr>
