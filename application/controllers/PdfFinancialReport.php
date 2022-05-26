@@ -299,6 +299,7 @@ class PdfFinancialReport extENDs REST_Controller {
       $sqlsubgrupo = "SELECT * FROM mif2 WHERE mif2.if2_fi1_id = :if2_fi1_id";
       $ressubgrupo = $this->pedeo->queryTable($sqlsubgrupo,array(':if2_fi1_id' => $value['if1_docentry']));
 
+      
 
       if(isset($ressubgrupo[0])){
 
@@ -315,20 +316,24 @@ class PdfFinancialReport extENDs REST_Controller {
 
 
           $rescuentas = $this->pedeo->queryTable($sqlcuentas, array(':if3_if2_id' => $value['if2_docentry'],":fi" =>$Data['fi'],":ff" =>$Data['ff']));
-
-
-          // print_r($value['if2_docentry']);exit;
-
+          
           if( isset($rescuentas[0]) ){
             $ressubgrupo[$key]['cuentas'] = $rescuentas;
 
-          }
+            $totalcuentas = array_map(function($cuenta){
+              return $cuenta['totalcuenta'];
+            },$rescuentas);
 
+            $acumuladoTotal += array_sum($totalcuentas);
+            
+          }
+          $acumuladoTotal = $acumuladoTotal;
         }
-        $arrayobj->append(["grupo" => $grupo, "subgrupos"=> $ressubgrupo]);
+        // print_r($acumuladoTotal);exit;
+        $arrayobj->append(["grupo" => $grupo,"saldo"=>$acumuladoTotal, "subgrupos"=> $ressubgrupo]);
         // $acumuladoTotal += $acumuladoGrupo;
       }
-
+      $acumuladoTotal = 0;
       $respuesta = array(
         'error' => false,
         'data'  => $arrayobj,
