@@ -887,7 +887,9 @@ class AccountingAccent extends REST_Controller {
 											join dmdt on ac1_font_type = mdt_doctype
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
-											where ac1_trans_id = :ac1_trans_id";
+											where ac1_trans_id = :ac1_trans_id
+											and ac1_font_type = 18
+											and ac1_font_key = 18";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
 
