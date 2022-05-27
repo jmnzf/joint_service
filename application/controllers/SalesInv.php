@@ -1728,7 +1728,7 @@ class SalesInv extends REST_Controller {
 
 																		$respuesta = array(
 																			'error'   => true,
-																			'data'	  => 'hola1',
+																			'data'	  => '',
 																			'mensaje'	=> 'No se encontro el costo para el item: '.$value->fv1_itemcode
 																		);
 

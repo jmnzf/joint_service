@@ -497,82 +497,6 @@ class AccountingAccent extends REST_Controller {
 
 					return;
 				}
-
-				// $sqlSelect = " SELECT DISTINCT
-				// 												t0.ac1_trans_id docnum,
-				// 												t0.ac1_trans_id numero_transaccion,
-				// 												case
-				// 												    when coalesce(t0.ac1_font_type,0) = 3 then 'Entrega'
-				// 												    when coalesce(t0.ac1_font_type,0) = 4 then 'Devolucion'
-				// 												    when coalesce(t0.ac1_font_type,0) = 5 then 'Factura Cliente'
-				// 												    when coalesce(t0.ac1_font_type,0) = 6 then 'Nota Credito Cliente'
-				// 												    when coalesce(t0.ac1_font_type,0) = 7 then 'Nota Debito Cliente'
-				// 												    when coalesce(t0.ac1_font_type,0) = 8 then 'Salida Mercancia'
-				// 												    when coalesce(t0.ac1_font_type,0) = 9 then 'Entrada Mercancia'
-				// 												    when coalesce(t0.ac1_font_type,0) = 13 then 'Entrada Compras'
-				// 												    when coalesce(t0.ac1_font_type,0) = 14 then 'Devolucion Compra'
-				// 												    when coalesce(t0.ac1_font_type,0) = 15 then 'Factura Proveedores'
-				// 												    when coalesce(t0.ac1_font_type,0) = 16 then 'Nota Credito Compras'
-				// 												    when coalesce(t0.ac1_font_type,0) = 17 then 'Nota Debito Compras'
-				// 												    when coalesce(t0.ac1_font_type,0) = 18 then 'Asiento Manual'
-				// 												    when coalesce(t0.ac1_font_type,0) = 19 then 'Pagos Efectuado'
-				// 												    when coalesce(t0.ac1_font_type,0) = 20 then 'Pagos Recibidos'
-				// 												end origen,
-				// 												case
-				// 												    when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 15 then t14.cnc_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 16 then t15.cnd_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 17 then t12.cec_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
-				// 												    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
-				// 												    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
-				// 												end numero_origen,
-				// 												case
-				// 												    when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 15 then t7.cfc_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 16 then t14.cnc_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 17 then t15.cnd_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 18 then 'BS'
-				// 												    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_currency
-				// 												    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_currency
-				// 												end currency,
-				// 												coalesce(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*,
-				// 												tsa_value
-				// 												from mac1 t0
-				// 												left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
-				// 												left join dvdv t2 on t0.ac1_font_key = t2.vdv_docentry and t0.ac1_font_type = t2.vdv_doctype
-				// 												left join dvfv t3 on t0.ac1_font_key = t3.dvf_docentry and t0.ac1_font_type = t3.dvf_doctype
-				// 												left join dacc t4 on t0.ac1_account = t4.acc_code
-				// 												left join misi t5 on t0.ac1_font_key = t5.isi_docentry and t0.ac1_font_type = t5.isi_doctype
-				// 												left join miei t6 on t0.ac1_font_key = t6.iei_docentry and t0.ac1_font_type = t6.iei_doctype
-				// 												left join dcfc t7 on t0.ac1_font_key = t7.cfc_docentry and t0.ac1_font_type = t7.cfc_doctype
-				// 												left join gbpe t8 on t0.ac1_font_key = t8.bpe_docentry and t0.ac1_font_type = t8.bpe_doctype
-				// 												left join gbpr t9 on t0.ac1_font_key = t9.bpr_docentry and t0.ac1_font_type = t9.bpr_doctype
-				// 												left join dvnc t10 on t0.ac1_font_key = t10.vnc_docentry and t0.ac1_font_type = t10.vnc_doctype
-				// 												left join dvnd t11 on t0.ac1_font_key = t11.vnd_docentry and t0.ac1_font_type = t11.vnd_doctype
-				// 												left join dcec t12 on t0.ac1_font_key = t12.cec_docentry and t0.ac1_font_type = t12.cec_doctype
-				// 												left join dcdc t13 on t0.ac1_font_key = t13.cdc_docentry and t0.ac1_font_type = t13.cdc_doctype
-				// 												left join dcnc t14 on t0.ac1_font_key = t14.cnc_docentry and t0.ac1_font_type = t14.cnc_doctype
-				// 												left join dcnd t15 on t0.ac1_font_key = t15.cnd_docentry and t0.ac1_font_type = t15.cnd_doctype
-				// 												left join tasa on t0.ac1_doc_date = tsa_date
-				// 												WHERE ac1_trans_id =:ac1_trans_id";
-
 				$sqlSelect = "--ENTREGA DE VENTAS
 											select distinct
 											mac1.ac1_trans_id as docnum,
@@ -888,8 +812,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where ac1_trans_id = :ac1_trans_id
-											and ac1_font_type = 18
-											and ac1_font_key = 18";
+											and  mac1.ac1_font_type = 18";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
 

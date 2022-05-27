@@ -23,6 +23,7 @@ class EstadoCartera extENDs REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('DateFormat');
 
 	}
 
@@ -117,6 +118,7 @@ class EstadoCartera extENDs REST_Controller {
 		inner join dvfv on dvfv.dvf_doctype = mac1.ac1_font_type and dvfv.dvf_docentry = mac1.ac1_font_key
 		inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '1'
+
 		union all
 		select distinct
 		dmdt.mdt_docname,
@@ -183,10 +185,10 @@ class EstadoCartera extENDs REST_Controller {
 		mac1.ac1_font_type as numtype,
 		mdt_docname as tipo,
 		case
-		when mac1.ac1_font_type = 5 then
+		when mac1.ac1_font_type = dvnc.vnc_doctype then
 		get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,mac1.ac1_debit,get_localcur())
 		else get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,mac1.ac1_credit,get_localcur())
-		end as totalfactura,
+		end * -1 as totalfactura,
 		(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
 		'' retencion,
 		get_tax_currency(dvnc.vnc_currency,dvnc.vnc_docdate) as tasa_dia,
@@ -230,7 +232,7 @@ class EstadoCartera extENDs REST_Controller {
 		mac1.ac1_font_type as numtype,
 		mdt_docname as tipo,
 		case
-		when mac1.ac1_font_type = 5 then
+		when mac1.ac1_font_type = dvnd.vnd_doctype then
 		get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,mac1.ac1_debit,get_localcur())
 		else
 		get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,mac1.ac1_credit,get_localcur())
@@ -334,7 +336,7 @@ class EstadoCartera extENDs REST_Controller {
 		array(
 			":currency" =>$Data['currency']));
 
-		// print_r($sqlestadocuenta);exit();die();
+		// print_r($contenidoestadocuenta);exit();die();
 		if(!isset($contenidoestadocuenta[0])){
 			$respuesta = array(
 				 'error' => true,
@@ -382,7 +384,7 @@ class EstadoCartera extENDs REST_Controller {
 
 				$gCliente = '<th class=""><b>RIF:</b> '.$value['codigocliente'].'</th>
 										 <th class=""><b>CLIENTE:</b> '.$value['nombrecliente'].'</th>
-										 <th class=""><b>FECHA CORTE:</b> '.$value['fechacorte'].'</th>
+										 <th class=""><b>FECHA CORTE:</b> '.$this->dateformat->Date($value['fechacorte']).'</th>
 
 										 ';
 				$hacer = true;
@@ -428,10 +430,10 @@ class EstadoCartera extENDs REST_Controller {
 						$detalle = '
 									<td class="centro">'.$value1['mdt_docname'].'</td>
 									<td style="width: 15%;" class="centro">'.$value1['numerodocumento'].'</td>
-									<td class="centro">'.$value1['fechadocumento'].'</td>
+									<td class="centro">'.$this->dateformat->Date($value1['fechadocumento']).'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['totalfactura'], 2, ',', '.').'</td>
-									<td class="centro">'.$value1['fechavencimiento'].'</td>
-									<td class="centro">'.$value1['fechacorte'].'</td>
+									<td class="centro">'.$this->dateformat->Date($value1['fechavencimiento']).'</td>
+									<td class="centro">'.$this->dateformat->Date($value['fechacorte']).'</td>
 									<td class="centro">'.$value1['dias'].'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['uno_treinta'], 2, ',', '.').'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], 2, ',', '.').'</td>
@@ -458,15 +460,15 @@ class EstadoCartera extENDs REST_Controller {
 							<tr>
 							<th>&nbsp;</th>
 							<th>&nbsp;</th>
-							<th>&nbsp;</th>
-							<th>&nbsp;</th>
-							<th>&nbsp;</th>
 							<th><b>Total</b></th>
-							<th style="width: 10%;" class=" centro"><b>'.$monedadocumento.' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), 2, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($detail_60_90, 2, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($detail_mayor_90, 2, ',', '.').'</b></th>
+							<th style="width: 10%;" class=""><b>'.$monedadocumento.' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), 2, ',', '.').'</b></th>
+							<th>&nbsp;</th>
+							<th>&nbsp;</th>
+							<th>&nbsp;</th>
+							<th class=""><b>'.$monedadocumento.' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
+							<th class=""><b>'.$monedadocumento.' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
+							<th class=""><b>'.$monedadocumento.' '.number_format($detail_60_90, 2, ',', '.').'</b></th>
+							<th class=""><b>'.$monedadocumento.' '.number_format($detail_mayor_90, 2, ',', '.').'</b></th>
 							</tr>';
 
 				$cuerpo .= $encabezado."<table width='100%'><tr>".$cabecera."</tr>".$totaldetalle.$detail_total."</table><br><br>";

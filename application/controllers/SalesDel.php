@@ -1249,7 +1249,7 @@ class SalesDel extends REST_Controller {
 								 $grantotalCostoInventario = ($grantotalCostoInventario * $TasaDocLoc);
 							}
 
-							if( $codigo3 == 1 || $codigo3 == "1" ){
+							if( $codigo3 == 1 || $codigo3 == "1" ){  // ESTA CUENTA TIENE VOLTEADA LA NATURALEZA
 									$cdito = $grantotalCostoInventario;
 									$MontoSysCR = ($cdito / $TasaLocSys);
 							}else if( $codigo3 == 2 || $codigo3 == "2" ){

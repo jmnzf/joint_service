@@ -230,9 +230,11 @@ class PdfFinancialReport extENDs REST_Controller {
 
 
         $mpdf->Output('Doc.pdf', 'D');
-  $filename = 'Doc.pdf';
-		header('Content-type: application/force-download');
-		header('Content-Disposition: attachment; filename='.$filename);
+
+  			$filename = 'Doc.pdf';
+
+				header('Content-type: application/force-download');
+				header('Content-Disposition: attachment; filename='.$filename);
 	}
 
   public function getFinancialReportData_post(){
@@ -253,7 +255,7 @@ class PdfFinancialReport extENDs REST_Controller {
       return;
     }
     $arrayobj = new ArrayObject();
-    
+
     $sqlSelect = " SELECT * from tmif where mif_docentry = :mif_docentry";
     $resSelect = $this->pedeo->queryTable($sqlSelect,array(":mif_docentry"=>$Data['informe']));
 
@@ -289,7 +291,7 @@ class PdfFinancialReport extENDs REST_Controller {
 
     $acumuladoTotal = 0;
     foreach ($resinforme as $key => $value) {
-      
+
       $id_group = $value['if1_docentry'];
 
       $grupo  = $value['if1_group_name'];
@@ -300,8 +302,8 @@ class PdfFinancialReport extENDs REST_Controller {
       
 
       if(isset($ressubgrupo[0])){
-        
-        
+
+
         foreach ($ressubgrupo as $key => $value) {
           $sqlcuentas = 'SELECT mif3.* , dacc.acc_name,
                         (select coalesce(ABS(SUM(ac1_debit - ac1_credit)),0)
@@ -312,10 +314,8 @@ class PdfFinancialReport extENDs REST_Controller {
                         left JOIN dacc ON mif3.if3_account = cast(dacc.acc_code as varchar)
                         where if3_if2_id = :if3_if2_id';
 
-                          
-          $rescuentas = $this->pedeo->queryTable($sqlcuentas, array(':if3_if2_id' => $value['if2_docentry'],":fi" =>$Data['fi'],":ff" =>$Data['ff']));
 
-          
+          $rescuentas = $this->pedeo->queryTable($sqlcuentas, array(':if3_if2_id' => $value['if2_docentry'],":fi" =>$Data['fi'],":ff" =>$Data['ff']));
           
           if( isset($rescuentas[0]) ){
             $ressubgrupo[$key]['cuentas'] = $rescuentas;

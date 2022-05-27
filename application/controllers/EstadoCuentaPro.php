@@ -23,6 +23,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('DateFormat');
 
 	}
 
@@ -300,7 +301,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 										                mac1.ac1_font_type                                    as numtype,
 										                mdt_docname                                           as tipo,
 										                case
-										                    when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, sum(mac1.ac1_debit) ,get_localcur())
+										                    when mac1.ac1_font_type = dcnd.cnd_doctype then get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, sum(mac1.ac1_debit) ,get_localcur())
 										                    else get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, sum(mac1.ac1_credit) ,get_localcur())
 										                    end                                               as totalfactura,
 										                get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, sum((mac1.ac1_ven_credit) - (mac1.ac1_credit)) ,get_localcur())     as saldo,
@@ -353,7 +354,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 										         dcnd.cnd_duedate,
 										         dcnd.cnd_docnum,
 										         mac1.ac1_font_type,
-										         mdt_docname
+										         mdt_docname,dcnd.cnd_doctype
 										HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0
 
 										union all
@@ -463,10 +464,10 @@ class EstadoCuentaPro extENDs REST_Controller {
 					$detalle = '
 											<td class="centro">'.$value['tipo'].'</td>
 											<td class="centro">'.$value['numerodocumento'].'</td>
-											<td class="centro">'.$value['fechadocumento'].'</td>
+											<td class="centro">'.$this->dateformat->Date($value['fechadocumento']).'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['totalfactura'], 2, ',', '.').'</td>
-											<td class="centro">'.$value['fechavencimiento'].'</td>
-											<td class="centro">'.$value['fechacorte'].'</td>
+											<td class="centro">'.$this->dateformat->Date($value['fechavencimiento']).'</td>
+											<td class="centro">'.$this->dateformat->Date($value['fechacorte']).'</td>
 											<td class="centro">'.$value['dias'].'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['uno_treinta'], 2, ',', '.').'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['treinta_uno_secenta'], 2, ',', '.').'</td>

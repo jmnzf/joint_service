@@ -23,6 +23,7 @@ class EstadoCarteraPro extENDs REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('DateFormat');
 
 	}
 
@@ -152,7 +153,7 @@ select distinct dmdt.mdt_docname,
                 mac1.ac1_font_type                                    as numtype,
                 'ANTICIPO'                                            as tipo,
                 case
-                    when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,sum(mac1.ac1_debit)  ,get_localcur())
+                    when mac1.ac1_font_type = gbpe.bpe_doctype then get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,sum(mac1.ac1_debit)  ,get_localcur())
                     else get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,sum(mac1.ac1_debit),get_localcur())
                     end                                               as totalfactura,
                  get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())     as saldo,
@@ -196,7 +197,8 @@ GROUP BY dmdt.mdt_docname,
          gbpe.bpe_docdate,
          gbpe.bpe_docdate,
          gbpe.bpe_docnum,
-         mac1.ac1_font_type
+         mac1.ac1_font_type,
+				 gbpe.bpe_doctype
 HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0
 union all
 select distinct dmdt.mdt_docname,
@@ -217,7 +219,7 @@ select distinct dmdt.mdt_docname,
                 mac1.ac1_font_type                                    as numtype,
                 mdt_docname                                           as tipo,
                 case
-                    when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,sum(mac1.ac1_debit),get_localcur())
+                    when mac1.ac1_font_type = dcnc.cnc_doctype then get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,sum(mac1.ac1_debit),get_localcur())
                     else get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,sum(mac1.ac1_debit),get_localcur())
                     end                                               as totalfactura,
                 get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())    as saldo,
@@ -264,7 +266,8 @@ GROUP BY dmdt.mdt_docname,
          dcnc.cnc_duedate,
          dcnc.cnc_docnum,
          mac1.ac1_font_type,
-         mdt_docname
+         mdt_docname,
+				 dcnc.cnc_doctype
 HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0
 
 union all
@@ -287,7 +290,7 @@ select distinct dmdt.mdt_docname,
                 mac1.ac1_font_type                                    as numtype,
                 mdt_docname                                           as tipo,
                 case
-                    when mac1.ac1_font_type = 5 then  get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate,sum(mac1.ac1_debit),get_localcur())
+                    when mac1.ac1_font_type = dcnd.cnd_doctype then  get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate,sum(mac1.ac1_debit),get_localcur())
                     else get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate,sum(mac1.ac1_credit),get_localcur())
                     end                                               as totalfactura,
                 get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate,sum((mac1.ac1_ven_credit) - (mac1.ac1_credit)),get_localcur())     as saldo,
@@ -337,7 +340,8 @@ group by dmdt.mdt_docname,
          dcnd.cnd_duedate,
          dcnd.cnd_docnum,
          mac1.ac1_font_type,
-         mdt_docname
+         mdt_docname,
+				 dcnd.cnd_doctype
 HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0
 
 union all
@@ -375,23 +379,23 @@ select distinct dmdt.mdt_docname,
                 CASE
                     WHEN ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 0 and ('".$Data['fecha']."'-
                                                                          tmac.mac_doc_duedate) <= 30
-                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_duedate ,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur()) 
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_duedate ,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0 END                                            uno_treinta,
                 CASE
                     WHEN
                                 ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 31 and ('".$Data['fecha']."'-
                                                                                  tmac.mac_doc_duedate) <= 60
-                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_duedate ,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur()) 
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_duedate ,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0 END                                            treinta_uno_secenta,
                 CASE
                     WHEN
                                 ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 61 and ('".$Data['fecha']."'-
                                                                                  tmac.mac_doc_duedate) <= 90
-                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_duedate ,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur()) 
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_duedate ,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0 END                                            secenta_uno_noventa,
                 CASE
                     WHEN ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 91
-                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_duedate ,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur()) 
+                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_duedate ,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0
                     END                                                   mayor_noventa
 from mac1
@@ -450,17 +454,17 @@ group by dmdt.mdt_docname,
 		$total_mayor_90 = 0;
 		$monedadocumento = '';
 
-        $contenidoestadocuenta1 = array_map(function($card){ 
+        $contenidoestadocuenta1 = array_map(function($card){
             $temp = array(
                 'codigocliente' => $card['codigocliente'],
                 'nombrecliente' => $card['nombrecliente'],
                 'fechacorte' => $card['fechacorte']
             );
-            return $temp;},$contenidoestadocuenta);    
+            return $temp;},$contenidoestadocuenta);
 
         $contenidoestadocuenta1 = array_unique($contenidoestadocuenta1,SORT_REGULAR); // se filtran los cardcode para que no esten repetidos
 
-    
+
         foreach ($contenidoestadocuenta1 as $key => $value) {
 			if( trim($cliente) == trim($value['codigocliente']) ){
 					$hacer = false;
@@ -469,7 +473,7 @@ group by dmdt.mdt_docname,
 
 				$gCliente = '<th class=""><b>RIF:</b> '.$value['codigocliente'].'</th>
 										 <th class=""><b>PROVEEDOR:</b> '.$value['nombrecliente'].'</th>
-										 <th class=""><b>FECHA CORTE:</b> '.$value['fechacorte'].'</th>
+										 <th class=""><b>FECHA CORTE:</b> '.$this->dateformat->Date($value['fechacorte']).'</th>
 
 										 ';
 				$hacer = true;
@@ -516,10 +520,10 @@ group by dmdt.mdt_docname,
 						$detalle = '
 									<td class="centro">'.$value1['mdt_docname'].'</td>
 									<td style="width: 15%;" class="centro">'.$value1['numerodocumento'].'</td>
-									<td class="centro">'.$value1['fechadocumento'].'</td>
+									<td class="centro">'.$this->dateformat->Date($value1['fechadocumento']).'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['totalfactura'], 2, ',', '.').'</td>
-									<td class="centro">'.$value1['fechavencimiento'].'</td>
-									<td class="centro">'.$value1['fechacorte'].'</td>
+									<td class="centro">'.$this->dateformat->Date($value1['fechavencimiento']).'</td>
+									<td class="centro">'.$this->dateformat->Date($value1['fechacorte']).'</td>
 									<td class="centro">'.$value1['dias'].'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['uno_treinta'], 2, ',', '.').'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], 2, ',', '.').'</td>
@@ -546,11 +550,11 @@ group by dmdt.mdt_docname,
 							<tr>
 							<th>&nbsp;</th>
 							<th>&nbsp;</th>
-							<th>&nbsp;</th>
-							<th>&nbsp;</th>
-							<th>&nbsp;</th>
 							<th><b>Total</b></th>
 							<th style="width: 10%;" class=" centro"><b>'.$monedadocumento.' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), 2, ',', '.').'</b></th>
+							<th>&nbsp;</th>
+							<th>&nbsp;</th>
+							<th>&nbsp;</th>
 							<th class=" centro"><b>'.$monedadocumento.' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
 							<th class=" centro"><b>'.$monedadocumento.' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
 							<th class=" centro"><b>'.$monedadocumento.' '.number_format($detail_60_90, 2, ',', '.').'</b></th>

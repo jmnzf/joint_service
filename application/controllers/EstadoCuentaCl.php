@@ -23,6 +23,7 @@ class EstadoCuentaCl extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('DateFormat');
 
 	}
 
@@ -204,7 +205,7 @@ class EstadoCuentaCl extends REST_Controller {
 														mac1.ac1_font_type as numtype,
 														mdt_docname as tipo,
 														case
-														when mac1.ac1_font_type = 5 then mac1.ac1_debit
+														when mac1.ac1_font_type = dvnc.vnc_doctype then mac1.ac1_debit
 														else mac1.ac1_credit
 														end as totalfactura,
 														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
@@ -260,7 +261,7 @@ class EstadoCuentaCl extends REST_Controller {
 														mac1.ac1_font_type as numtype,
 														mdt_docname as tipo,
 														case
-														when mac1.ac1_font_type = dvnc.vnc_doctype then mac1.ac1_debit
+														when mac1.ac1_font_type = dvnd.vnd_doctype then mac1.ac1_debit
 														else mac1.ac1_credit
 														end as totalfactura,
 														(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo,
@@ -383,10 +384,10 @@ class EstadoCuentaCl extends REST_Controller {
 					$detalle = '
 											<td class="centro">'.$value['mdt_docname'].'</td>
 											<td style="width: 12%;" class="centro">'.$value['numerodocumento'].'</td>
-											<td class="centro">'.$value['fechadocumento'].'</td>
+											<td class="centro">'.$this->dateformat->Date($value['fechadocumento']).'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['totalfactura'], 2, ',', '.').'</td>
-											<td class="centro">'.$value['fechavencimiento'].'</td>
-											<td class="centro">'.$value['fechacorte'].'</td>
+											<td class="centro">'.$this->dateformat->Date($value['fechavencimiento']).'</td>
+											<td class="centro">'.$this->dateformat->Date($value['fechacorte']).'</td>
 											<td class="centro">'.$value['dias'].'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['uno_treinta'], 2, ',', '.').'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['treinta_uno_secenta'], 2, ',', '.').'</td>
@@ -407,15 +408,15 @@ class EstadoCuentaCl extends REST_Controller {
 								<tr>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
-								<th>Total</th>
+								<th><b>Total</b></th>
+								<th style="width: 10%;" class=""><b>'.$Data['currency'].' '.number_format(($total_saldo), 2, ',', '.').'</b></th>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
-								<th style="width: 10%;" class="fondo centro">'.$Data['currency'].' '.number_format(($total_saldo), 2, ',', '.').'</th>
-								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_0_30, 2, ',', '.').'</th>
-								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_30_60, 2, ',', '.').'</th>
-								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_60_90, 2, ',', '.').'</th>
-								<th class="fondo centro">'.$Data['currency'].' '.number_format($detail_mayor_90, 2, ',', '.').'</th>
+								<th class=""><b>'.$Data['currency'].' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
+								<th class=""><b>'.$Data['currency'].' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
+								<th class=""><b>'.$Data['currency'].' '.number_format($detail_60_90, 2, ',', '.').'</b></th>
+								<th class=""><b>'.$Data['currency'].' '.number_format($detail_mayor_90, 2, ',', '.').'</b></th>
 								</tr>';
 
 				  $totalfactura = ($total_saldo);
