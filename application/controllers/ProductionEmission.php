@@ -121,7 +121,7 @@ class ProductionEmission extends REST_Controller
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
-            $sqlInsert2 = "INSERT INTO bep1 (ep1_item_description, ep1_quantity, ep1_itemcost, ep1_im, ep1_ccost, ep1_ubusiness, ep1_item_code, ep1_listmat, ep1_baseentry, ep1_plan, ep1_basenum) values (:ep1_item_description, :ep1_quantity, :ep1_itemcost, :ep1_im, :ep1_ccost, :ep1_ubusiness, :ep1_item_code, :ep1_listmat, :ep1_baseentry, :ep1_plan, :ep1_basenum)";
+            $sqlInsert2 = "INSERT INTO bep1 (ep1_item_description, ep1_quantity, ep1_itemcost, ep1_im, ep1_ccost, ep1_ubusiness, ep1_item_code, ep1_listmat, ep1_baseentry, ep1_plan, ep1_basenum, ep1_item_cost) values (:ep1_item_description, :ep1_quantity, :ep1_itemcost, :ep1_im, :ep1_ccost, :ep1_ubusiness, :ep1_item_code, :ep1_listmat, :ep1_baseentry, :ep1_plan, :ep1_basenum, :ep1_item_cost)";
 
             foreach ($ContenidoDetalle as $key => $detail) {
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
@@ -135,6 +135,7 @@ class ProductionEmission extends REST_Controller
                     ":ep1_listmat" => $detail['ep1_listmat'],
                     ":ep1_baseentry" => $resInsert,
                     ":ep1_plan" => $detail['ep1_plan'],
+                    ":ep1_item_cost" => (isset($detail['ep1_item_cost']))?  $detail['ep1_item_cost'] : NULL,
                     ":ep1_basenum" => $detail['ep1_basenum']
 
                 ));
@@ -273,7 +274,7 @@ class ProductionEmission extends REST_Controller
             $this->pedeo->queryTable("DELETE FROM bep1 WHERE ep1_baseentry = :bep_docentry", array(':bep_docentry' => $Data['bep_docentry']));
 
 
-            $sqlInsert2 = "INSERT INTO bep1 (ep1_item_description, ep1_quantity, ep1_itemcost, ep1_im, ep1_ccost, ep1_ubusiness, ep1_item_code, ep1_listmat, ep1_baseentry, ep1_plan, ep1_basenum) values (:ep1_item_description, :ep1_quantity, :ep1_itemcost, :ep1_im, :ep1_ccost, :ep1_ubusiness, :ep1_item_code, :ep1_listmat, :ep1_baseentry, :ep1_plan, :ep1_basenum)";
+            $sqlInsert2 = "INSERT INTO bep1 (ep1_item_description, ep1_quantity, ep1_itemcost, ep1_im, ep1_ccost, ep1_ubusiness, ep1_item_code, ep1_listmat, ep1_baseentry, ep1_plan, ep1_basenum, ep1_item_cost) values (:ep1_item_description, :ep1_quantity, :ep1_itemcost, :ep1_im, :ep1_ccost, :ep1_ubusiness, :ep1_item_code, :ep1_listmat, :ep1_baseentry, :ep1_plan, :ep1_basenum, :ep1_item_cost)";
 
             foreach ($ContenidoDetalle as $key => $detail) {
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
@@ -287,6 +288,7 @@ class ProductionEmission extends REST_Controller
                     ":ep1_listmat" => $detail['ep1_listmat'],
                     ":ep1_baseentry" => $Data['bep_docentry'],
                     ":ep1_plan" => $detail['ep1_plan'],
+                    ":ep1_item_cost" => (isset($detail['ep1_item_cost']))?  $detail['ep1_item_cost'] : NULL,
                     ":ep1_basenum" => isset($detail['ep1_basenum']) ? $detail['ep1_basenum'] :null                    
                 ));
 

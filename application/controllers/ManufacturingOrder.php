@@ -108,7 +108,7 @@ class ManufacturingOrder extends REST_Controller {
         ));
 
         if( is_numeric($resInsert) AND $resInsert > 0){
-            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum, of1_item_code) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum, :of1_item_code)";
+            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum, of1_item_code, of1_item_cost) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum, :of1_item_code, :of1_item_cost)";
             foreach ($ContenidoDetalle as $key => $detail){
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2,
                 array(":of1_type" =>$detail['of1_type'],
@@ -126,6 +126,7 @@ class ManufacturingOrder extends REST_Controller {
                 ":of1_listmat" =>isset($detail['of1_listmat']) ? $detail['of1_listmat'] : null,
                 ":of1_basenum" =>  isset($Data['of1_basenum']) ? $detail['of1_basenum'] : null,
                 ":of1_item_code" =>  isset($Data['of1_item_code']) ? $detail['of1_item_code'] : null,
+                ":of1_item_cost" =>  isset($Data['of1_item_cost']) ? $detail['of1_item_cost'] : null,
                 ":of1_docentry" => $resInsert));
 
                 if(is_numeric($resInsert2) AND $resInsert2 > 0){
@@ -296,7 +297,7 @@ class ManufacturingOrder extends REST_Controller {
             $this->pedeo->queryTable("DELETE FROM bof1 WHERE of1_docentry = :of1_docentry", array(':of1_docentry' => $Data['bof_docentry']));
 
 
-            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum)";
+            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum, of1_item_code, of1_item_cost) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum, :of1_item_code, :of1_item_cost)";
             foreach ($ContenidoDetalle as $key => $detail){
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2,
                 array(":of1_type" =>$detail['of1_type'],
@@ -313,6 +314,8 @@ class ManufacturingOrder extends REST_Controller {
                 ":of1_uom_code" =>$detail['of1_uom_code'],
                 ":of1_listmat" =>isset($detail['of1_listmat']) ? $detail['of1_listmat'] :null,
                 ":of1_basenum" =>isset($detail['of1_basenum']) ? $detail['of1_basenum'] :null,
+                ":of1_item_code" =>  isset($Data['of1_item_code']) ? $detail['of1_item_code'] : null,
+                ":of1_item_cost" =>  isset($Data['of1_item_cost']) ? $detail['of1_item_cost'] : null,
                 ":of1_docentry" => $Data['bof_docentry']));
 
                 if(is_numeric($resInsert2) AND $resInsert2 > 0){
