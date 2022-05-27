@@ -78,7 +78,7 @@ class ProductionEmission extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data'  => array(),
-                'mensaje' => 'No se encontro el detalle de la entrada de oportunidad'
+                'mensaje' => 'No se encontro el detalle de la entrada de la emisión'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -147,7 +147,7 @@ class ProductionEmission extends REST_Controller
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert,
-                        'mensaje' => 'No se puso realizar operacion segundo'
+                        'mensaje' => 'No se pudo realizar operacion'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -168,7 +168,7 @@ class ProductionEmission extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data' => $resInsert,
-                'mensaje' => 'No se puso realizar operacion primero'
+                'mensaje' => 'No se pudo realizar operación'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -212,7 +212,7 @@ class ProductionEmission extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data'  => array(),
-                'mensaje' => 'No se encontro el detalle de la entrada de oportunidad'
+                'mensaje' => 'No se encontro el detalle'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -299,7 +299,7 @@ class ProductionEmission extends REST_Controller
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se pudo realizar operacion'
+                        'mensaje' => 'No se pudo realizar operación'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);

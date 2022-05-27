@@ -77,7 +77,7 @@ class ProductionReceipt extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data'  => array(),
-                'mensaje' => 'No se encontro el detalle de la entrada de oportunidad'
+                'mensaje' => 'No se encontro el detalle'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -140,7 +140,7 @@ class ProductionReceipt extends REST_Controller
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se pudo realizar operacion 2'
+                        'mensaje' => 'No se pudo realizar operación'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -153,7 +153,7 @@ class ProductionReceipt extends REST_Controller
             $respuesta = array(
                 'error' => false,
                 'data' => $resInsert,
-                'mensaje' => 'Emision de producción registrada con exito'
+                'mensaje' => 'Recepción de producción registrada con exito'
             );
         } else {
             $this->pedeo->trans_rollback();
@@ -161,7 +161,7 @@ class ProductionReceipt extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data' => $resInsert,
-                'mensaje' => 'No se pudo realizar operacion 1'
+                'mensaje' => 'No se pudo realizar operación'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -201,7 +201,7 @@ class ProductionReceipt extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data'  => array(),
-                'mensaje' => 'No se encontro el detalle de la entrada de oportunidad'
+                'mensaje' => 'No se encontro el detalle de la recepción'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -277,7 +277,7 @@ class ProductionReceipt extends REST_Controller
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se pudo realizar operacion 2'
+                        'mensaje' => 'No se pudo realizar operación'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -290,7 +290,7 @@ class ProductionReceipt extends REST_Controller
             $respuesta = array(
                 'error' => false,
                 'data' => $resUpdate,
-                'mensaje' => 'Emision de producción actualizada con exito'
+                'mensaje' => 'Recepción de producción actualizada con exito'
             );
          }else{
             $respuesta = array(
