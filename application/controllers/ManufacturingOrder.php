@@ -137,7 +137,7 @@ class ManufacturingOrder extends REST_Controller {
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se puso realizar operación'
+                        'mensaje' => 'No se pudo realizar operación'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -160,7 +160,7 @@ class ManufacturingOrder extends REST_Controller {
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert,
-                        'mensaje' => 'No se puso realizar operacion'
+                        'mensaje' => 'No se pudo realizar operacion'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -326,7 +326,7 @@ class ManufacturingOrder extends REST_Controller {
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se puso realizar operacion'
+                        'mensaje' => 'No se pudo realizar operación'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -349,7 +349,7 @@ class ManufacturingOrder extends REST_Controller {
             $respuesta = array(
                 'error' => true,
                 'data' => $resUpdate,
-                'mensaje' => 'No se puso realizar operacion'
+                'mensaje' => 'No se pudo realizar operación'
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
