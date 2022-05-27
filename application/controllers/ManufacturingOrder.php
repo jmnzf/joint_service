@@ -124,9 +124,9 @@ class ManufacturingOrder extends REST_Controller {
                 ":of1_ing" =>$detail['of1_ing'],
                 ":of1_uom_code" =>$detail['of1_uom_code'],
                 ":of1_listmat" =>isset($detail['of1_listmat']) ? $detail['of1_listmat'] : null,
-                ":of1_basenum" =>  isset($Data['of1_basenum']) ? $detail['of1_basenum'] : null,
-                ":of1_item_code" =>  isset($Data['of1_item_code']) ? $detail['of1_item_code'] : null,
-                ":of1_item_cost" =>  isset($Data['of1_item_cost']) ? $detail['of1_item_cost'] : null,
+                ":of1_basenum" =>  isset($detail['of1_basenum']) ? $detail['of1_basenum'] : null,
+                ":of1_item_code" =>  isset($detail['of1_item_code']) ? $detail['of1_item_code'] : null,
+                ":of1_item_cost" =>  isset($detail['of1_item_cost']) ? $detail['of1_item_cost'] : null,
                 ":of1_docentry" => $resInsert));
 
                 if(is_numeric($resInsert2) AND $resInsert2 > 0){

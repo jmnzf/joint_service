@@ -2842,6 +2842,29 @@ class SalesInv extends REST_Controller {
 
 						// FIN VALIDACION DE ESTADOS
 
+
+						//SE VALIDA LA CONTABILIDA CREADA
+						 $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+
+					
+						 if( isset($validateCont['error']) && $validateCont['error'] == false ){
+
+						 }else{
+
+								 $this->pedeo->trans_rollback();
+
+								 $respuesta = array(
+									 'error'   => true,
+									 'data' 	 => '',
+									 'mensaje' => $validateCont['mensaje']
+								 );
+
+								 $this->response($respuesta);
+
+								 return;
+						 }
+						//
+
 						// Si todo sale bien despues de insertar el detalle de la factura de Ventas
 						// se confirma la trasaccion  para que los cambios apliquen permanentemente
 						// en la base de datos y se confirma la operacion exitosa.
