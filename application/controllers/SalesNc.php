@@ -1799,11 +1799,12 @@ class SalesNc extends REST_Controller {
 
 									$AC1LINE = $AC1LINE+1;
 
+									$ValorVenDebito = 0;
+
 									//PARA COMPESAR LA NOTA DE CREDITO CON LA FACTURA
 									//SI VIENE DE UN COPIAR FACTURA
 									if ( $Data['vnc_basetype'] == 5 ){
-										$debitoo = $creditoo;
-										$creditoo = 0;
+										$ValorVenDebito = $creditoo;
 									}
 
 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1838,7 +1839,7 @@ class SalesNc extends REST_Controller {
 											':ac1_accperiod' => 1,
 											':ac1_close' => 0,
 											':ac1_cord' => 0,
-											':ac1_ven_debit' => round($debitoo, 2),
+											':ac1_ven_debit' => round($ValorVenDebito, 2),
 											':ac1_ven_credit' => round($creditoo, 2),
 											':ac1_fiscal_acct' => 0,
 											':ac1_taxid' => 1,
@@ -2179,7 +2180,35 @@ class SalesNc extends REST_Controller {
 										}
 
 						 }
+
 						// FIN DE OPERACIONES VITALES
+
+						// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
+						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
+						// print_r(json_encode($ressqlmac1));
+						// exit;
+
+						//SE VALIDA LA CONTABILIDAD CREADA
+						 $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+
+
+						 if( isset($validateCont['error']) && $validateCont['error'] == false ){
+
+						 }else{
+
+								 $this->pedeo->trans_rollback();
+
+								 $respuesta = array(
+									 'error'   => true,
+									 'data' 	 => '',
+									 'mensaje' => $validateCont['mensaje']
+								 );
+
+								 $this->response($respuesta);
+
+								 return;
+						 }
+						//
 
 						// Si todo sale bien despues de insertar el detalle de la Nota crédito de clientes
 						// se confirma la trasaccion  para que los cambios apliquen permanentemente

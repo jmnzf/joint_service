@@ -112,12 +112,11 @@ class ProductionEmission extends REST_Controller
             ":bep_ref" => $Data['bep_ref'],
             ":bep_serie" => $Data['bep_serie'],
             ":bep_baseentry" => isset($Data['bep_baseentry']) ? $Data['bep_baseentry'] :0,
-            ":bep_basetype" => isset($Data['bep_basetype']) ? $Data['bep_basetype'] :0,
+            ":bep_basetype" => is_numeric($Data['bep_basetype']) ? $Data['bep_basetype'] :0,
             ":bep_description" => isset($Data['bep_description']) ? $Data['bep_description'] :null,
             ":bep_createat" => isset($Data['bep_createat']) ? $Data['bep_createat'] :null,
             ":bep_createby" => isset($Data['bep_createby']) ? $Data['bep_createby'] :null,
             ":bep_status" => isset($Data['bep_status']) ? $Data['bep_status'] :0
-
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
@@ -134,10 +133,9 @@ class ProductionEmission extends REST_Controller
                     ":ep1_item_code" => $detail['ep1_item_code'],
                     ":ep1_listmat" => $detail['ep1_listmat'],
                     ":ep1_baseentry" => $resInsert,
-                    ":ep1_plan" => $detail['ep1_plan'],
+                    ":ep1_plan" => is_numeric($detail['ep1_plan'])?$detail['ep1_plan']:0,
                     ":ep1_item_cost" => (isset($detail['ep1_item_cost']))?  $detail['ep1_item_cost'] : NULL,
                     ":ep1_basenum" => $detail['ep1_basenum']
-
                 ));
 
                 if (is_numeric($resInsert2) and $resInsert2 > 0) {

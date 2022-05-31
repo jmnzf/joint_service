@@ -2323,6 +2323,29 @@ class PaymentsMade extends REST_Controller {
 
 					//
 
+
+					//SE VALIDA LA CONTABILIDAD CREADA
+ 					$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+
+
+ 					if( isset($validateCont['error']) && $validateCont['error'] == false ){
+
+ 					}else{
+
+ 							$this->pedeo->trans_rollback();
+
+ 							$respuesta = array(
+ 								'error'   => true,
+ 								'data' 	 => '',
+ 								'mensaje' => $validateCont['mensaje']
+ 							);
+
+ 							$this->response($respuesta);
+
+ 							return;
+ 					}
+ 				 //
+
 					//Esto es para validar el resultado de la contabilidad
 					// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
 					// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());

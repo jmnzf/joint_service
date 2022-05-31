@@ -2843,10 +2843,10 @@ class SalesInv extends REST_Controller {
 						// FIN VALIDACION DE ESTADOS
 
 
-						//SE VALIDA LA CONTABILIDA CREADA
+						//SE VALIDA LA CONTABILIDAD CREADA
 						 $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
 
-					
+
 						 if( isset($validateCont['error']) && $validateCont['error'] == false ){
 
 						 }else{

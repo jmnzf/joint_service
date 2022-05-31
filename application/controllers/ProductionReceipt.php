@@ -32,7 +32,7 @@ class ProductionReceipt extends REST_Controller
             'mensaje' => 'busqueda sin resultados'
         );
 
-        $sqlSelect = "SELECT * from tbep";
+        $sqlSelect = "SELECT * from tbrp";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -99,7 +99,7 @@ class ProductionReceipt extends REST_Controller
 
         // print_r($ContenidoDetalle);exit;
 
-        $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref, brp_baseentry, brp_basetype, brp_description) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref, :brp_baseentry, :brp_basetype, :brp_description)";
+        $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref, brp_baseentry, brp_basetype, brp_description, brp_createby) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref, :brp_baseentry, :brp_basetype, :brp_description, :brp_createby)";
 
         $this->pedeo->trans_begin();
 
@@ -113,7 +113,8 @@ class ProductionReceipt extends REST_Controller
             ":brp_ref" => $Data['brp_ref'],
             ":brp_baseentry" => isset($Data['brp_baseentry']) ? $Data['brp_baseentry'] : 0,
             ":brp_basetype" => isset($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
-            ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null
+            ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null,
+            ":brp_createby" => $Data['brp_createby'],
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {

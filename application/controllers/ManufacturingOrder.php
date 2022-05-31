@@ -81,12 +81,13 @@ class ManufacturingOrder extends REST_Controller {
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbof(bof_docnum ,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype, bof_status, bof_createat, bof_createby) VALUES (:bof_docnum, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype, :bof_status, :bof_createat, :bof_createby)";
+        $sqlInsert = "INSERT INTO tbof(bof_docnum, bof_doctype,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype, bof_status, bof_createat, bof_createby) VALUES (:bof_docnum, :bof_doctype, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype, :bof_status, :bof_createat, :bof_createby)";
         
         $this->pedeo->trans_begin();
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
             ":bof_docnum" => $Data['bof_docnum'],
+            ":bof_doctype" => $Data['bof_doctype'],
             ":bof_item_code" => $Data['bof_item_code'],
             ":bof_item_description" => $Data['bof_item_description'],
             ":bof_quantity" => $Data['bof_quantity'],
@@ -99,7 +100,7 @@ class ManufacturingOrder extends REST_Controller {
             ":bof_ccost" => $Data['bof_ccost'],
             ":bof_project" => $Data['bof_project'],
             ":bof_type" => $Data['bof_type'],
-						":bof_status" => $Data['bof_status'],
+			":bof_status" => $Data['bof_status'],
             ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] :0,
             ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0,
             ":bof_status" => $Data['bof_status'],

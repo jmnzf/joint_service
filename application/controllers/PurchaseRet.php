@@ -1386,6 +1386,28 @@ class PurchaseRet extends REST_Controller {
 
 				 //FIN PROCEDIMIENTO PARA LLENAR CUENTA INVENTARIO
 
+				 //SE VALIDA LA CONTABILIDAD CREADA
+					$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+
+
+					if( isset($validateCont['error']) && $validateCont['error'] == false ){
+
+					}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' 	 => '',
+								'mensaje' => $validateCont['mensaje']
+							);
+
+							$this->response($respuesta);
+
+							return;
+					}
+				 //
+
 
 					//FIN DE OPERACIONES VITALES
 

@@ -1889,21 +1889,24 @@ class PurchaseInv extends REST_Controller {
 
 							//CUENTA PUENTE DE INVENTARIO
 
-							$sqlcuentainventario = "SELECT pge_bridge_inv FROM pgem";
+							$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch FROM pgem";
 							$rescuentainventario = $this->pedeo->queryTable($sqlcuentainventario, array());
 
-							if ( !isset($rescuentainventario[0]) ){
-									$this->pedeo->trans_rollback();
+							if ( isset($rescuentainventario[0]) && $rescuentainventario[0]['pge_bridge_inv_purch'] != 0 ){
 
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la factura de compras'
-									);
+							}else{
+								
+								$this->pedeo->trans_rollback();
 
-									 $this->response($respuesta);
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $rescuentainventario,
+									'mensaje'	=> 'No se pudo registrar la factura de compras, no se ha configurado la cuenta puente de inventario para compras'
+								);
 
-									 return;
+								 $this->response($respuesta);
+
+								 return;
 							}
 
 							//FIN CUENTA PUENTE DE INVENTARIO
@@ -1923,7 +1926,7 @@ class PurchaseInv extends REST_Controller {
 												if( $value->fc1_inventory == 1 || $value->fc1_inventory  == '1' ){
 
 													$sinDatos++;
-													$cuentaInventario = $rescuentainventario[0]['pge_bridge_inv'];
+													$cuentaInventario = $rescuentainventario[0]['pge_bridge_inv_purch'];
 													$grantotalCostoInventario = ($grantotalCostoInventario + $value->fc1_linetotal);
 
 												}
@@ -2814,6 +2817,28 @@ class PurchaseInv extends REST_Controller {
 								}
 					}
 
+					//SE VALIDA LA CONTABILIDAD CREADA
+					 $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+
+
+					 if( isset($validateCont['error']) && $validateCont['error'] == false ){
+
+					 }else{
+
+							 $this->pedeo->trans_rollback();
+
+							 $respuesta = array(
+								 'error'   => true,
+								 'data' 	 => '',
+								 'mensaje' => $validateCont['mensaje']
+							 );
+
+							 $this->response($respuesta);
+
+							 return;
+					 }
+					//
+
 					// Si todo sale bien despues de insertar el detalle de la factura de compras
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.
@@ -3013,9 +3038,9 @@ class PurchaseInv extends REST_Controller {
 	// CAMPOS DE RETENCIONES
 		$campos = ",CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalret,'999,999,999,999.00'))) {prefix}_totalret,
 		CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalretiva,'999,999,999,999.00'))) {prefix}_totalretiva";
-        
+
 		$sqlSelect = self::getColumn('dcfc','cfc',$campos);
-        
+
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
         if(isset($resSelect[0])){

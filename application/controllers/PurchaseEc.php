@@ -1717,11 +1717,12 @@ class PurchaseEc extends REST_Controller {
 					// Procedimiento para llenar costo costo
 
 					//se busca la cuenta puente de inventario
-					$sqlArticulo = "SELECT pge_bridge_inv FROM pgem";
+					$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch FROM pgem";
 					$resArticulo = $this->pedeo->queryTable($sqlArticulo, array());
 					$cuentaCosto = "";
-					if(isset($resArticulo[0])){
-						$cuentaCosto = $resArticulo[0]['pge_bridge_inv'];
+
+					if( isset($resArticulo[0]) && $resArticulo[0]['pge_bridge_inv_purch'] != 0 ){
+						$cuentaCosto = $resArticulo[0]['pge_bridge_inv_purch'];
 					}else{
 						$this->pedeo->trans_rollback();
 
@@ -1975,6 +1976,28 @@ class PurchaseEc extends REST_Controller {
 					 }
 
 				 }
+
+				 //SE VALIDA LA CONTABILIDAD CREADA
+					$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+
+
+					if( isset($validateCont['error']) && $validateCont['error'] == false ){
+
+					}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' 	 => '',
+								'mensaje' => $validateCont['mensaje']
+							);
+
+							$this->response($respuesta);
+
+							return;
+					}
+				 //
 
 					// Si todo sale bien despues de insertar el detalle de la cotizacion
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente

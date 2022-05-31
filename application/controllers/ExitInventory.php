@@ -1090,6 +1090,29 @@ class ExitInventory extends REST_Controller {
 					}
 					//FIN PROCEDIMIENTO PARA LLENAR CUENTA GRUPO
 
+
+					//SE VALIDA LA CONTABILIDAD CREADA
+ 					$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+
+
+ 					if( isset($validateCont['error']) && $validateCont['error'] == false ){
+
+ 					}else{
+
+ 							$this->pedeo->trans_rollback();
+
+ 							$respuesta = array(
+ 								'error'   => true,
+ 								'data' 	 => '',
+ 								'mensaje' => $validateCont['mensaje']
+ 							);
+
+ 							$this->response($respuesta);
+
+ 							return;
+ 					}
+ 				 //
+
 					// Si todo sale bien despues de insertar el detalle de la salida de inventaro
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.
