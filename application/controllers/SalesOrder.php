@@ -1093,7 +1093,7 @@ class SalesOrder extends REST_Controller {
 				 $this->response($respuesta);
 	}
 
-
+	
 
 
 
@@ -1335,6 +1335,35 @@ class SalesOrder extends REST_Controller {
 				}
 
 	}
+
+
+	public function getOpenSalesOrder_get(){
+
+		$sqlSelect = "SELECT distinct vov_docnum , vov_cardcode , vov_cardname 
+						from dvov
+						join tbed on bed_docentry = vov_docentry and vov_doctype = bed_doctype and bed_status = 1";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+}
 
 
 
