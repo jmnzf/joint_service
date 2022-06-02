@@ -1339,9 +1339,10 @@ class SalesOrder extends REST_Controller {
 
 	public function getOpenSalesOrder_get(){
 
-		$sqlSelect = "SELECT distinct vov_docnum , vov_cardcode , vov_cardname 
-						from dvov
-						join tbed on bed_docentry = vov_docentry and vov_doctype = bed_doctype and bed_status = 1";
+		$sqlSelect = "SELECT vov_docnum, vov_cardcode,vov_cardname
+						from responsestatus
+						join dvov on vov_doctype = tipo and vov_docentry = id
+						where tipo  = 2 and estado = 'Abierto'";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
