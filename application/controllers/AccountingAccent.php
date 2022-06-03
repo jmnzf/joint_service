@@ -1,5 +1,5 @@
 <?php
-// DATOS MAESTROS ACIENTOS CONTABLES
+// DATOS MAESTROS ASIENTOS CONTABLES
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
@@ -24,7 +24,7 @@ class AccountingAccent extends REST_Controller {
 
 	}
 
-  //CREAR NUEVO ACIENTO CONTABLE
+  //CREAR NUEVO ASIENTO CONTABLE
 	public function createAccountingAccent_post(){
       $Data = $this->post();
 			$DocNumVerificado = 0;
@@ -229,13 +229,13 @@ class AccountingAccent extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data'    => $resInsertDetail,
-									'mensaje'	=> 'No se pudo registrar el aciento contable'
+									'mensaje'	=> 'No se pudo registrar el asiento contable'
 								);
 							}
             }
 
 						//SE VALIDA LA CONTABILIDAD CREADA
-						 $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+						 $validateCont = $this->generic->validateAccountingAccent($resInsert);
 
 
 						 if( isset($validateCont['error']) && $validateCont['error'] == false ){
@@ -261,17 +261,16 @@ class AccountingAccent extends REST_Controller {
             $respuesta = array(
             'error' => false,
             'data' => $resInsert,
-            'mensaje' =>'Aciento contable registrado con exito'
+            'mensaje' =>'Asiento contable registrado con exito'
             );
 
         }else{
-							$this->pedeo->trans_rollback();
+			$this->pedeo->trans_rollback();
 
-							var_dump($resInsert);exit();die();
               $respuesta = array(
                 'error'   => true,
                 'data'    => $resInsert,
-                'mensaje'	=> 'No se pudo registrar el aciento contable'
+                'mensaje'	=> 'No se pudo registrar el asiento contable'
               );
 
         }
@@ -280,7 +279,7 @@ class AccountingAccent extends REST_Controller {
 	}
 
 
-	// OBTENER ACIENTOS CONTABLES
+	// OBTENER ASIENTOS CONTABLES
   public function getAccountingAccent_get(){
 
         $sqlSelect = "SELECT	distinct
@@ -404,7 +403,7 @@ class AccountingAccent extends REST_Controller {
   }
 
 
-	// OBTENER ACIENTO CONTABLE POR ID
+	// OBTENER ASIENTO CONTABLE POR ID
 	public function getAccountingAccentById_get(){
 
 				$Data = $this->get();
@@ -996,7 +995,7 @@ class AccountingAccent extends REST_Controller {
 				$respuesta = array(
 					'error' => false,
 					'data' => $resUpdate,
-					'mensaje' => 'Aciento contable modificado con exito'
+					'mensaje' => 'Asiento contable modificado con exito'
 				);
 			} else {
 				$respuesta = array(
