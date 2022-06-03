@@ -24,6 +24,7 @@ class ManufacturingOrder extends REST_Controller {
 
     public function setManufacturingOrder_post(){
         $Data = $this->post();
+        $DocNumVerificado = 0;
 
         if(
         !isset($Data['bof_docnum']) OR
@@ -81,12 +82,54 @@ class ManufacturingOrder extends REST_Controller {
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbof(bof_docnum, bof_doctype,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype, bof_status, bof_createat, bof_createby) VALUES (:bof_docnum, :bof_doctype, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype, :bof_status, :bof_createat, :bof_createby)";
+        //BUSCANDO LA NUMERACION DEL DOCUMENTO
+			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+
+              $resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['bof_docnum']));
+
+              if(isset($resNumeracion[0])){
+
+                      $numeroActual = $resNumeracion[0]['pgs_nextnum'];
+                      $numeroFinal  = $resNumeracion[0]['pgs_last_num'];
+                      $numeroSiguiente = ($numeroActual + 1);
+
+                      if( $numeroSiguiente <= $numeroFinal ){
+
+                              $DocNumVerificado = $numeroSiguiente;
+
+                      }	else {
+
+                              $respuesta = array(
+                                  'error' => true,
+                                  'data'  => array(),
+                                  'mensaje' =>'La serie de la numeración esta llena'
+                              );
+
+                              $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+                              return;
+                      }
+
+              }else{
+
+                      $respuesta = array(
+                          'error' => true,
+                          'data'  => array(),
+                          'mensaje' =>'No se encontro la serie de numeración para el documento'
+                      );
+
+                      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+                      return;
+              }
+            //   FIN DE NUMERACION DEL DOCUMENTO
+
+        $sqlInsert = "INSERT INTO tbof(bof_docnum, bof_doctype,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype, bof_status, bof_createat, bof_createby, bof_docnum_order, bof_docentry_order) VALUES (:bof_docnum, :bof_doctype, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype, :bof_status, :bof_createat, :bof_createby, :bof_docnum_order, :bof_docentry_order)";
         
         $this->pedeo->trans_begin();
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-            ":bof_docnum" => $Data['bof_docnum'],
+            ":bof_docnum" => $DocNumVerificado,
             ":bof_doctype" => $Data['bof_doctype'],
             ":bof_item_code" => $Data['bof_item_code'],
             ":bof_item_description" => $Data['bof_item_description'],
@@ -103,12 +146,80 @@ class ManufacturingOrder extends REST_Controller {
 			":bof_status" => $Data['bof_status'],
             ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] :0,
             ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0,
-            ":bof_status" => $Data['bof_status'],
             ":bof_createat" => isset($Data['bof_createat']) ? $Data['bof_createat'] :null,
-            ":bof_createby" =>  isset($Data['bof_createby']) ? $Data['bof_createby'] :null
+            ":bof_createby" =>  isset($Data['bof_createby']) ? $Data['bof_createby'] :null,
+            ":bof_docnum_order" =>  isset($Data['bof_docnum_order']) ? $Data['bof_docnum_order'] :0,
+            ":bof_docentry_order" =>  isset($Data['bof_docentry_order']) ? $Data['bof_docentry_order'] :0
         ));
 
         if( is_numeric($resInsert) AND $resInsert > 0){
+
+
+            // Se actualiza la serie de la numeracion del documento
+
+					$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+																			 WHERE pgs_id = :pgs_id";
+					$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+							':pgs_nextnum' => $DocNumVerificado,
+							':pgs_id'      => $Data['bof_docnum']
+					));
+
+
+					if(is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1){
+
+					}else{
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resActualizarNumeracion,
+									'mensaje'	=> 'No se pudo crear la factura de compras'
+								);
+
+								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+								return;
+					}
+					// Fin de la actualizacion de la numeracion del documento
+
+
+
+					//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+										':bed_docentry' => $resInsert,
+										':bed_doctype' => $Data['bof_doctype'],
+										':bed_status' => $Data['bof_status'], // Estado planificado
+										':bed_createby' => $Data['bof_createby'],
+										':bed_date' => date('Y-m-d'),
+										':bed_baseentry' => NULL,
+										':bed_basetype' => NULL
+					));
+
+
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+					}else{
+
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la orden de fabricación'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+					}
+
             $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum, of1_item_code, of1_item_cost) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum, :of1_item_code, :of1_item_cost)";
             foreach ($ContenidoDetalle as $key => $detail){
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2,
@@ -267,7 +378,11 @@ class ManufacturingOrder extends REST_Controller {
                         bof_project = :bof_project,
                         bof_baseentry = :bof_baseentry,
                         bof_basetype = :bof_basetype,
-                        bof_status = :bof_status
+                        bof_status = :bof_status,
+                        bof_status = :bof_status,
+                        bof_status = :bof_status,
+                        bof_docnum_order = :bof_docnum_order,
+                        bof_docentry_order =:bof_docentry_order
                         where bof_docentry = :bof_docentry";
 
 
@@ -291,6 +406,8 @@ class ManufacturingOrder extends REST_Controller {
         ":bof_docentry" => $Data['bof_docentry'],
         ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] :0,
         ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] :0,
+        ":bof_docnum_order" =>  isset($Data['bof_docnum_order']) ? $Data['bof_docnum_order'] :0,
+        ":bof_docentry_order" =>  isset($Data['bof_docentry_order']) ? $Data['bof_docentry_order'] :0,
         ":bof_status" => $Data['bof_status']));
 
         if( is_numeric($resUpdate) AND $resUpdate > 0){
