@@ -100,7 +100,20 @@ class PdfAccountingSeatUsd extends REST_Controller {
                           t1.ac1_credit,
                           t1.ac1_debit_sys,
                           t1.ac1_credit_sys,
-                          '' moneda,
+                          case
+                              when t3.cfc_doctype = t0.mac_base_type then t3.cfc_currency
+                              when t4.cnd_doctype = t0.mac_base_type then t4.cnd_currency
+                              when t5.cnc_doctype = t0.mac_base_type then t5.cnc_currency
+                              when t6.dvf_doctype = t0.mac_base_type then t6.dvf_currency
+                              when t7.vnd_doctype = t0.mac_base_type then t7.vnd_currency
+                              when t8.vnc_doctype = t0.mac_base_type then t8.vnc_currency
+                              when t9.vem_doctype = t0.mac_base_type then t9.vem_currency
+                              when t10.cec_doctype = t0.mac_base_type then t10.cec_currency
+                              when t11.vdv_doctype = t0.mac_base_type then t11.vdv_currency
+                              when t12.cdc_doctype = t0.mac_base_type then t12.cdc_currency
+                              when t14.crc_doctype = t0.mac_base_type then t14.crc_currency
+                              else t0.mac_currency
+                          end moneda,
                           t13.mdt_docname,
                           case
                               when t3.cfc_doctype = t0.mac_base_type then t3.cfc_docnum
@@ -115,9 +128,8 @@ class PdfAccountingSeatUsd extends REST_Controller {
                               when t12.cdc_doctype = t0.mac_base_type then t12.cdc_docnum
                               when t14.crc_doctype = t0.mac_base_type then t14.crc_docnum
                               else t0.mac_doc_num
-                          end numero,
-													t0.mac_currency moneda
-                      from tmac t0
+                          end numero
+					  					from tmac t0
                       inner join mac1 t1 on t0.mac_trans_id = t1.ac1_trans_id
                       left join dacc t2 on t1.ac1_account = t2.acc_code
                       left join dcfc t3 on t0.mac_base_entry = t3.cfc_docentry and t0.mac_base_type = t3.cfc_doctype

@@ -53,6 +53,8 @@ class SalesDel extends REST_Controller {
 			$ManejaInvetario = 0;
 			$AC1LINE = 1;
 			$AgregarAsiento = true;
+			$resInsertAsiento = "";
+			$ResultadoInv = 0; // INDICA SI EXISTE AL MENOS UN ITEM QUE MANEJA INVENTARIO
 
 
 
@@ -722,6 +724,7 @@ class SalesDel extends REST_Controller {
 								if(isset($resItemINV[0])){
 
 										$ManejaInvetario = 1;
+										$ResultadoInv  = 1;
 
 								}else{
 									$ManejaInvetario = 0;
@@ -1270,6 +1273,9 @@ class SalesDel extends REST_Controller {
 							}else if( $codigo3 == 7 || $codigo3 == "7" ){
 									$dbito = $grantotalCostoInventario;
 									$MontoSysDB = ($dbito / $TasaLocSys);
+							}else if( $codigo3 == 9 || $codigo3 == "9" ){
+									$dbito = $grantotalCostoInventario;
+									$MontoSysDB = ($dbito / $TasaLocSys);
 							}
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1429,6 +1435,9 @@ class SalesDel extends REST_Controller {
 									$dbito = 	$grantotalCostoCosto;
 									$MontoSysDB = ($dbito / $TasaLocSys);
 								}else if( $codigo3 == 7 || $codigo3 == "7" ){
+									$dbito = 	$grantotalCostoCosto;
+									$MontoSysDB = ($dbito / $TasaLocSys);
+								}else if( $codigo3 == 9 || $codigo3 == "9" ){
 									$dbito = 	$grantotalCostoCosto;
 									$MontoSysDB = ($dbito / $TasaLocSys);
 								}
@@ -1669,27 +1678,34 @@ class SalesDel extends REST_Controller {
 
 					}
 
+					// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
+					// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
+					// print_r(json_encode($ressqlmac1));
+					// exit;
+
 
 					//SE VALIDA LA CONTABILIDAD CREADA
-					 $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+					if ($ResultadoInv == 1){
+						$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
 
 
-					 if( isset($validateCont['error']) && $validateCont['error'] == false ){
+						if( isset($validateCont['error']) && $validateCont['error'] == false ){
 
-					 }else{
+						}else{
 
-							 $this->pedeo->trans_rollback();
+								$this->pedeo->trans_rollback();
 
-							 $respuesta = array(
-								 'error'   => true,
-								 'data' 	 => '',
-								 'mensaje' => $validateCont['mensaje']
-							 );
+								$respuesta = array(
+									'error'   => true,
+									'data' 	 => '',
+									'mensaje' => $validateCont['mensaje']
+								);
 
-							 $this->response($respuesta);
+								$this->response($respuesta);
 
-							 return;
-					 }
+								return;
+						}
+					}
 					//
 
 
@@ -2320,6 +2336,7 @@ class SalesDel extends REST_Controller {
 
 
 						}
+
 
 
 						// Si todo sale bien despues de insertar el detalle de la cotizacion

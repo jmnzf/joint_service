@@ -265,7 +265,7 @@ class AccountingAccent extends REST_Controller {
             );
 
         }else{
-			$this->pedeo->trans_rollback();
+							$this->pedeo->trans_rollback();
 
               $respuesta = array(
                 'error'   => true,

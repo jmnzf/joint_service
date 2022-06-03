@@ -1339,7 +1339,7 @@ class SalesOrder extends REST_Controller {
 
 	public function getOpenSalesOrder_get(){
 
-		$sqlSelect = "SELECT vov_docnum, vov_cardcode,vov_cardname
+		$sqlSelect = "SELECT vov_docnum, vov_docentry, vov_cardcode,vov_cardname
 						from responsestatus
 						join dvov on vov_doctype = tipo and vov_docentry = id
 						where tipo  = 2 and estado = 'Abierto'";

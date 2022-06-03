@@ -1149,6 +1149,19 @@ class SalesNc extends REST_Controller {
 
 										}
 										break;
+
+									case 9:
+										$debito = $granTotalIngreso;
+
+										if(trim($Data['vnc_currency']) != $MONEDASYS ){
+												$ti = ($ti + $granTotalTasaFija);
+												$MontoSysDB = ($ti / $TasaLocSys);
+
+										}else{
+												$MontoSysDB = $granTotalIngresoOriginal;
+
+										}
+										break;
 								}
 
 								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
@@ -1461,6 +1474,13 @@ class SalesNc extends REST_Controller {
 										}else{
 												$MontoSysCR = ($grantotalCostoInventarioOriginal);
 										}
+								}else if( $codigo3 == 9 || $codigo3 == "9" ){
+										$dbito = $grantotalCostoInventario;
+										if(trim($Data['vnc_currency']) != $MONEDASYS ){
+												$MontoSysDB = ($dbito / $TasaLocSys);
+										}else{
+												$MontoSysDB = ($grantotalCostoInventarioOriginal);
+										}
 								}
 
 								$AC1LINE = $AC1LINE+1;
@@ -1660,6 +1680,13 @@ class SalesNc extends REST_Controller {
 										}else{
 												$MontoSysCR = ($grantotalCostoCostoOriginal);
 										}
+									}else if( $codigo3 == 9 || $codigo3 == "9" ){
+										$dbito = 	$grantotalCostoCosto;
+										if(trim($Data['vnc_currency']) != $MONEDASYS ){
+												$MontoSysDB = ($dbito / $TasaLocSys); //Se voltearon las cuenta
+										}else{
+												$MontoSysDB = ($grantotalCostoCostoOriginal);
+										}
 									}
 
 									$AC1LINE = $AC1LINE+1;
@@ -1788,6 +1815,11 @@ class SalesNc extends REST_Controller {
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
 									}else if( $codigo2 == 7 || $codigo2 == "7" ){
+
+											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+									}else if( $codigo2 == 9 || $codigo2 == "9" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);

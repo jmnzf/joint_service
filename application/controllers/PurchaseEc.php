@@ -57,6 +57,8 @@ class PurchaseEc extends REST_Controller {
 			$TasaDocLoc = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL DOCUMENTO
 			$TasaLocSys = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL SISTEMA
 			$MONEDALOCAL = 0;
+			$resInsertAsiento = "";
+			$ResultadoInv = 0; // INDICA SI EXISTE AL MENOS UN ITEM QUE MANEJA INVENTARIO
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -650,6 +652,7 @@ class PurchaseEc extends REST_Controller {
 								if(isset($resItemINV[0])){
 
 									$ManejaInvetario = 1;
+									$ResultadoInv  = 1;
 
 								}else{
 									$ManejaInvetario = 0;
@@ -1978,26 +1981,28 @@ class PurchaseEc extends REST_Controller {
 				 }
 
 				 //SE VALIDA LA CONTABILIDAD CREADA
-					$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+	       if ($ResultadoInv == 1){
+	         $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
 
 
-					if( isset($validateCont['error']) && $validateCont['error'] == false ){
+	         if( isset($validateCont['error']) && $validateCont['error'] == false ){
 
-					}else{
+	         }else{
 
-							$this->pedeo->trans_rollback();
+	             $this->pedeo->trans_rollback();
 
-							$respuesta = array(
-								'error'   => true,
-								'data' 	 => '',
-								'mensaje' => $validateCont['mensaje']
-							);
+	             $respuesta = array(
+	               'error'   => true,
+	               'data' 	 => '',
+	               'mensaje' => $validateCont['mensaje']
+	             );
 
-							$this->response($respuesta);
+	             $this->response($respuesta);
 
-							return;
-					}
-				 //
+	             return;
+	         }
+	       }
+	       //
 
 					// Si todo sale bien despues de insertar el detalle de la cotizacion
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente

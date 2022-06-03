@@ -42,6 +42,8 @@ class SalesDv extends REST_Controller {
       $ManejaInvetario = 0;
       $AC1LINE = 1;
       $AgregarAsiento = true;
+      $resInsertAsiento = "";
+      $ResultadoInv = 0; // INDICA SI EXISTE AL MENOS UN ITEM QUE MANEJA INVENTARIO
 
 
 
@@ -613,6 +615,7 @@ class SalesDv extends REST_Controller {
           if(isset($resItemINV[0])){
 
             $ManejaInvetario = 1;
+            $ResultadoInv  = 1;
 
           }else{
 
@@ -1415,25 +1418,27 @@ class SalesDv extends REST_Controller {
 
 
       //SE VALIDA LA CONTABILIDAD CREADA
-       $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+      if ($ResultadoInv == 1){
+        $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
 
 
-       if( isset($validateCont['error']) && $validateCont['error'] == false ){
+        if( isset($validateCont['error']) && $validateCont['error'] == false ){
 
-       }else{
+        }else{
 
-           $this->pedeo->trans_rollback();
+            $this->pedeo->trans_rollback();
 
-           $respuesta = array(
-             'error'   => true,
-             'data' 	 => '',
-             'mensaje' => $validateCont['mensaje']
-           );
+            $respuesta = array(
+              'error'   => true,
+              'data' 	 => '',
+              'mensaje' => $validateCont['mensaje']
+            );
 
-           $this->response($respuesta);
+            $this->response($respuesta);
 
-           return;
-       }
+            return;
+        }
+      }
       //
 
 

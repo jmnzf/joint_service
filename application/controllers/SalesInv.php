@@ -1301,6 +1301,19 @@ class SalesInv extends REST_Controller {
 
 										}
 										break;
+
+									case 9:
+										$credito = $granTotalIngreso;
+
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$ti = ($ti + $granTotalTasaFija);
+												$MontoSysCR = ($ti / $TasaLocSys);
+
+										}else{
+												$MontoSysCR = $granTotalIngresoOriginal;
+
+										}
+										break;
 								}
 
 
@@ -1613,6 +1626,13 @@ class SalesInv extends REST_Controller {
 														$MontoSysDB = ($dbito / $TasaLocSys);
 												}else{
 														$MontoSysDB = $grantotalCostoInventarioOriginal;
+												}
+										}else if( $codigo3 == 9 || $codigo3 == "9" ){
+												$cdito = $grantotalCostoInventario;
+												if(trim($Data['dvf_currency']) != $MONEDASYS ){
+														$MontoSysCR = ($cdito / $TasaLocSys);
+												}else{
+														$MontoSysCR = $grantotalCostoInventarioOriginal;
 												}
 										}
 
@@ -1953,7 +1973,15 @@ class SalesInv extends REST_Controller {
 										}else{
 												$MontoSysDB = $grantotalCostoCostoOriginal;
 										}
+									}else if( $codigo3 == 9 || $codigo3 == "9" ){
+										$cdito = 	$grantotalCostoCosto;
+										if(trim($Data['dvf_currency']) != $MONEDASYS ){
+												$MontoSysCR = ($cdito / $TasaLocSys); //Se voltearon las cuenta
+										}else{
+												$MontoSysCR = $grantotalCostoCostoOriginal;
+										}
 									}
+
 									$AC1LINE = $AC1LINE+1;
 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2156,7 +2184,15 @@ class SalesInv extends REST_Controller {
 													}else{
 															$MontoSysDB = $grantotalCostoCostoOriginal;
 													}
+												}else if( $codigo3 == 9 || $codigo3 == "9" ){
+													$cdito = 	$grantotalCostoCosto;
+													if(trim($Data['dvf_currency']) != $MONEDASYS ){
+															$MontoSysCR = ($cdito / $TasaLocSys);
+													}else{
+															$MontoSysCR = $grantotalCostoCostoOriginal;
+													}
 												}
+
 												$AC1LINE = $AC1LINE+1;
 												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2296,6 +2332,12 @@ class SalesInv extends REST_Controller {
 
 											$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+									}else if( $codigo2 == 9 || $codigo2 == "9" ){
+
+											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
 									}
 
 
