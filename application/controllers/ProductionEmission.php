@@ -51,6 +51,8 @@ class ProductionEmission extends REST_Controller
     {
         $Data = $this->post();
 
+        $DocNumVerificado = 0;
+
         if (
             !isset($Data['bep_doctype']) or
             !isset($Data['bep_docnum']) or
@@ -98,20 +100,62 @@ class ProductionEmission extends REST_Controller
             return;
         }
 
+        //BUSCANDO LA NUMERACION DEL DOCUMENTO
+			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+
+              $resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['bep_serie']));
+
+              if(isset($resNumeracion[0])){
+
+                      $numeroActual = $resNumeracion[0]['pgs_nextnum'];
+                      $numeroFinal  = $resNumeracion[0]['pgs_last_num'];
+                      $numeroSiguiente = ($numeroActual + 1);
+
+                      if( $numeroSiguiente <= $numeroFinal ){
+
+                              $DocNumVerificado = $numeroSiguiente;
+
+                      }	else {
+
+                              $respuesta = array(
+                                  'error' => true,
+                                  'data'  => array(),
+                                  'mensaje' =>'La serie de la numeración esta llena'
+                              );
+
+                              $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+                              return;
+                      }
+
+              }else{
+
+                      $respuesta = array(
+                          'error' => true,
+                          'data'  => array(),
+                          'mensaje' =>'No se encontro la serie de numeración para el documento'
+                      );
+
+                      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+                      return;
+              }
+            //   FIN DE NUMERACION DEL DOCUMENTO
+
         $sqlInsert = "INSERT INTO tbep ( bep_doctype, bep_docnum, bep_cardcode, bep_cardname, bep_duedev, bep_docdate, bep_ref, bep_serie, bep_baseentry, bep_basetype, bep_description, bep_createat, bep_createby, bep_status) VALUES(:bep_doctype, :bep_docnum, :bep_cardcode, :bep_cardname, :bep_duedev, :bep_docdate, :bep_ref, :bep_serie, :bep_baseentry, :bep_basetype, :bep_description, :bep_createat, :bep_createby, :bep_status)";
 
         $this->pedeo->trans_begin();
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
             ":bep_doctype" => $Data['bep_doctype'],
-            ":bep_docnum" => $Data['bep_docnum'],
+            ":bep_docnum" => $DocNumVerificado,
             ":bep_cardcode" => $Data['bep_cardcode'],
             ":bep_cardname" => $Data['bep_cardname'],
             ":bep_duedev" => $Data['bep_duedev'],
             ":bep_docdate" => $Data['bep_docdate'],
             ":bep_ref" => $Data['bep_ref'],
             ":bep_serie" => $Data['bep_serie'],
-            ":bep_baseentry" => isset($Data['bep_baseentry']) ? $Data['bep_baseentry'] :0,
+            ":bep_baseentry" => is_numeric($Data['bep_baseentry']) ? $Data['bep_baseentry'] :0,
             ":bep_basetype" => is_numeric($Data['bep_basetype']) ? $Data['bep_basetype'] :0,
             ":bep_description" => isset($Data['bep_description']) ? $Data['bep_description'] :null,
             ":bep_createat" => isset($Data['bep_createat']) ? $Data['bep_createat'] :null,
@@ -120,6 +164,74 @@ class ProductionEmission extends REST_Controller
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
+
+            
+
+            // Se actualiza la serie de la numeracion del documento
+
+					$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+																			 WHERE pgs_id = :pgs_id";
+					$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+							':pgs_nextnum' => $DocNumVerificado,
+							':pgs_id'      => $Data['bep_serie']
+					));
+
+
+					if(is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1){
+
+					}else{
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resActualizarNumeracion,
+									'mensaje'	=> 'No se pudo crear la factura de compras'
+								);
+
+								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+								return;
+					}
+					// Fin de la actualizacion de la numeracion del documento
+
+
+
+					//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+										':bed_docentry' => $resInsert,
+										':bed_doctype' => $Data['bep_doctype'],
+										':bed_status' => $Data['bep_status'], // Estado planificado
+										':bed_createby' => $Data['bep_createby'],
+										':bed_date' => date('Y-m-d'),
+										':bed_baseentry' => NULL,
+										':bed_basetype' => NULL
+					));
+
+
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+					}else{
+
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la emisión de fabricación'
+								);
+
+
+								$this->response($respuesta);
+
+                }
+
+
             $sqlInsert2 = "INSERT INTO bep1 (ep1_item_description, ep1_quantity, ep1_itemcost, ep1_im, ep1_ccost, ep1_ubusiness, ep1_item_code, ep1_listmat, ep1_baseentry, ep1_plan, ep1_basenum, ep1_item_cost) values (:ep1_item_description, :ep1_quantity, :ep1_itemcost, :ep1_im, :ep1_ccost, :ep1_ubusiness, :ep1_item_code, :ep1_listmat, :ep1_baseentry, :ep1_plan, :ep1_basenum, :ep1_item_cost)";
 
             foreach ($ContenidoDetalle as $key => $detail) {
@@ -144,7 +256,7 @@ class ProductionEmission extends REST_Controller
 
                     $respuesta = array(
                         'error' => true,
-                        'data' => $resInsert,
+                        'data' => $resInsert2,
                         'mensaje' => 'No se pudo realizar operacion'
                     );
 

@@ -26,6 +26,7 @@ class ProductionReceipt extends REST_Controller
     public function getProductionReceipt_get()
     {
 
+        
         $respuesta = array(
             'error'  => true,
             'data'   => [],
@@ -49,6 +50,7 @@ class ProductionReceipt extends REST_Controller
 
     public function setProductionReceipt_post()
     {
+        $DocNumVerificado = 0;
         $Data = $this->post();
 
         if (
@@ -97,7 +99,47 @@ class ProductionReceipt extends REST_Controller
             return;
         }
 
-        // print_r($ContenidoDetalle);exit;
+        	//BUSCANDO LA NUMERACION DEL DOCUMENTO
+			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+
+              $resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['brp_serie']));
+
+              if(isset($resNumeracion[0])){
+
+                      $numeroActual = $resNumeracion[0]['pgs_nextnum'];
+                      $numeroFinal  = $resNumeracion[0]['pgs_last_num'];
+                      $numeroSiguiente = ($numeroActual + 1);
+
+                      if( $numeroSiguiente <= $numeroFinal ){
+
+                              $DocNumVerificado = $numeroSiguiente;
+
+                      }	else {
+
+                              $respuesta = array(
+                                  'error' => true,
+                                  'data'  => array(),
+                                  'mensaje' =>'La serie de la numeración esta llena'
+                              );
+
+                              $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+                              return;
+                      }
+
+              }else{
+
+                      $respuesta = array(
+                          'error' => true,
+                          'data'  => array(),
+                          'mensaje' =>'No se encontro la serie de numeración para el documento'
+                      );
+
+                      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+                      return;
+              }
+            //   FIN DE NUMERACION DEL DOCUMENTO
 
         $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref, brp_baseentry, brp_basetype, brp_description, brp_createby) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref, :brp_baseentry, :brp_basetype, :brp_description, :brp_createby)";
 
@@ -105,19 +147,84 @@ class ProductionReceipt extends REST_Controller
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
             ":brp_doctype" => $Data['brp_doctype'],
-            ":brp_docnum" => $Data['brp_docnum'],
+            ":brp_docnum" => $DocNumVerificado,
             ":brp_cardcode" => $Data['brp_cardcode'],
             ":brp_cardname" => $Data['brp_cardname'],
             ":brp_duedev" => $Data['brp_duedev'],
             ":brp_docdate" => $Data['brp_docdate'],
             ":brp_ref" => $Data['brp_ref'],
             ":brp_baseentry" => isset($Data['brp_baseentry']) ? $Data['brp_baseentry'] : 0,
-            ":brp_basetype" => isset($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
+            ":brp_basetype" => is_numeric($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
             ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null,
             ":brp_createby" => $Data['brp_createby'],
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
+
+            // Se actualiza la serie de la numeracion del documento
+
+					$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+																			 WHERE pgs_id = :pgs_id";
+					$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+							':pgs_nextnum' => $DocNumVerificado,
+							':pgs_id'      => $Data['brp_serie']
+					));
+
+
+					if(is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1){
+
+					}else{
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resActualizarNumeracion,
+									'mensaje'	=> 'No se pudo crear la recepción de fabricación'
+								);
+
+								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+								return;
+					}
+					// Fin de la actualizacion de la numeracion del documento
+
+
+
+					//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+										':bed_docentry' => $resInsert,
+										':bed_doctype' => $Data['brp_doctype'],
+										':bed_status' => $Data['brp_status'], // Estado planificado
+										':bed_createby' => $Data['brp_createby'],
+										':bed_date' => date('Y-m-d'),
+										':bed_baseentry' => NULL,
+										':bed_basetype' => NULL
+					));
+
+
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+					}else{
+
+							 $this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsertEstado,
+									'mensaje'	=> 'No se pudo registrar la recepción de fabricación'
+								);
+
+
+								$this->response($respuesta);
+
+                }
+
             $sqlInsert2 = "INSERT INTO brp1 (rp1_item_description, rp1_quantity, rp1_itemcost, rp1_im, rp1_ccost, rp1_ubusiness, rp1_item_code, rp1_listmat, rp1_baseentry, rp1_plan) values (:rp1_item_description, :rp1_quantity, :rp1_itemcost, :rp1_im, :rp1_ccost, :rp1_ubusiness, :rp1_item_code, :rp1_listmat, :rp1_baseentry, :rp1_plan)";
 
             foreach ($ContenidoDetalle as $key => $detail) {
