@@ -77,11 +77,11 @@ class PurchaseInv extends REST_Controller {
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref,ac1_line)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref,ac1_line,ac1_base_tax)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line, :ac1_base_tax)";
 
 
       if(!isset($Data['detail'])){
@@ -608,9 +608,9 @@ class PurchaseInv extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO cfc1(fc1_docentry, fc1_itemcode, fc1_itemname, fc1_quantity, fc1_uom, fc1_whscode,
                                     fc1_price, fc1_vat, fc1_vatsum, fc1_discount, fc1_linetotal, fc1_costcode, fc1_ubusiness, fc1_project,
-                                    fc1_acctcode, fc1_basetype, fc1_doctype, fc1_avprice, fc1_inventory, fc1_acciva, fc1_linenum)VALUES(:fc1_docentry, :fc1_itemcode, :fc1_itemname, :fc1_quantity,
+                                    fc1_acctcode, fc1_basetype, fc1_doctype, fc1_avprice, fc1_inventory, fc1_acciva, fc1_linenum, fc1_codimp)VALUES(:fc1_docentry, :fc1_itemcode, :fc1_itemname, :fc1_quantity,
                                     :fc1_uom, :fc1_whscode,:fc1_price, :fc1_vat, :fc1_vatsum, :fc1_discount, :fc1_linetotal, :fc1_costcode, :fc1_ubusiness, :fc1_project,
-                                    :fc1_acctcode, :fc1_basetype, :fc1_doctype, :fc1_avprice, :fc1_inventory, :fc1_acciva, :fc1_linenum)";
+                                    :fc1_acctcode, :fc1_basetype, :fc1_doctype, :fc1_avprice, :fc1_inventory, :fc1_acciva, :fc1_linenum,:fc1_codimp)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':fc1_docentry' => $resInsert,
@@ -634,6 +634,7 @@ class PurchaseInv extends REST_Controller {
                         ':fc1_inventory' => is_numeric($detail['fc1_inventory'])?$detail['fc1_inventory']:NULL,
 												':fc1_acciva'  => is_numeric($detail['fc1_cuentaIva'])?$detail['fc1_cuentaIva']:0,
 												':fc1_linenum'  => is_numeric($detail['fc1_linenum'])?$detail['fc1_linenum']:0,
+												':fc1_codimp'  => isset($detail['fc1_codimp'])?$detail['fc1_codimp']:NULL,
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1393,6 +1394,7 @@ class PurchaseInv extends REST_Controller {
 								$DetalleAsientoIva->fc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
 								$DetalleAsientoIva->fc1_cuentaIva = is_numeric($detail['fc1_cuentaIva'])?$detail['fc1_cuentaIva']:NULL;
 								$DetalleAsientoIva->em1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
+								$DetalleAsientoIva->codimp = isset($detail['fc1_codimp'])?$detail['fc1_codimp']:NULL;
 
 
 
@@ -1625,16 +1627,24 @@ class PurchaseInv extends REST_Controller {
 					foreach ($DetalleConsolidadoIva as $key => $posicion) {
 							$granTotalIva = 0;
 							$granTotalIvaOriginal = 0;
+							$CodigoImp = 0;
+							$LineTotal = 0;
+							$Vat = 0;
 
 							foreach ($posicion as $key => $value) {
-										$granTotalIva = $granTotalIva + $value->fc1_vatsum;
+								$granTotalIva = $granTotalIva + $value->fc1_vatsum;
+								$Vat = $value->fc1_vat;
+								if( $Vat > 0 ){
+									$LineTotal = ($LineTotal + $value->fc1_linetotal);
+								}
+								$CodigoImp = $value->codimp;
 							}
 
 							$granTotalIvaOriginal = $granTotalIva;
 
 							if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
-
 									$granTotalIva = ($granTotalIva * $TasaDocLoc);
+									$LineTotal = ($LineTotal * $TasaDocLoc);
 							}
 
 
@@ -1684,13 +1694,14 @@ class PurchaseInv extends REST_Controller {
 									':ac1_ven_debit' => round($granTotalIva, 2),
 									':ac1_ven_credit' => 0,
 									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
-									':ac1_isrti' => 0,
+									':ac1_taxid' => $CodigoImp,
+									':ac1_isrti' => $Vat,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
 									':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 									':ac1_codref' => 1,
-									':ac1_line' =>$AC1LINE
+									':ac1_line' => $AC1LINE,
+									':ac1_base_tax' => $LineTotal
 						));
 
 
@@ -1850,13 +1861,14 @@ class PurchaseInv extends REST_Controller {
 														':ac1_ven_debit' => round($dbito, 2),
 														':ac1_ven_credit' => round($cdito, 2),
 														':ac1_fiscal_acct' => 0,
-														':ac1_taxid' => 1,
+														':ac1_taxid' => 0,
 														':ac1_isrti' => 0,
 														':ac1_basert' => 0,
 														':ac1_mmcode' => 0,
 														':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 														':ac1_codref' => 1,
-														":ac1_line"=> $AC1LINE
+														':ac1_line'=> $AC1LINE,
+														':ac1_base_tax' => 0
 											));
 
 											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -1895,7 +1907,7 @@ class PurchaseInv extends REST_Controller {
 							if ( isset($rescuentainventario[0]) && $rescuentainventario[0]['pge_bridge_inv_purch'] != 0 ){
 
 							}else{
-								
+
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
@@ -2039,13 +2051,14 @@ class PurchaseInv extends REST_Controller {
 														':ac1_ven_debit' => round($dbito, 2),
 														':ac1_ven_credit' => round($cdito, 2),
 														':ac1_fiscal_acct' => 0,
-														':ac1_taxid' => 1,
+														':ac1_taxid' => 0,
 														':ac1_isrti' => 0,
 														':ac1_basert' => 0,
 														':ac1_mmcode' => 0,
 														':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 														':ac1_codref' => 1,
-														":ac1_line"=> $AC1LINE
+														":ac1_line"=> $AC1LINE,
+														':ac1_base_tax' => 0
 											));
 
 											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -2152,13 +2165,14 @@ class PurchaseInv extends REST_Controller {
 									':ac1_ven_debit' => round($dbito, 2),
 									':ac1_ven_credit' => 0,
 									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
+									':ac1_taxid' => 0,
 									':ac1_isrti' => 0,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
 									':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 									':ac1_codref' => 1,
-									':ac1_line'   => 	$AC1LINE
+									':ac1_line'   => 	$AC1LINE,
+									':ac1_base_tax' => 0
 						));
 
 						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -2261,13 +2275,14 @@ class PurchaseInv extends REST_Controller {
 										':ac1_ven_debit' => 0,
 										':ac1_ven_credit' => round($TotalDoc, 2),
 										':ac1_fiscal_acct' => 0,
-										':ac1_taxid' => 1,
+										':ac1_taxid' => 0,
 										':ac1_isrti' => 0,
 										':ac1_basert' => 0,
 										':ac1_mmcode' => 0,
 										':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 										':ac1_codref' => 1,
-										":ac1_line"=> $AC1LINE
+										":ac1_line"=> $AC1LINE,
+										':ac1_base_tax' => 0
 							));
 
 							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -2317,6 +2332,8 @@ class PurchaseInv extends REST_Controller {
 							$MontoSysDB = 0;
 							$MontoSysCR = 0;
 							$cuenta = '';
+							$Basert = 0;
+							$Profitrt = 0;
 							foreach ($posicion as $key => $value) {
 
 								$sqlcuentaretencion = "SELECT mrt_acctcode FROM dmrt WHERE mrt_id = :mrt_id";
@@ -2328,6 +2345,7 @@ class PurchaseInv extends REST_Controller {
 
 									$cuenta = $rescuentaretencion[0]['mrt_acctcode'];
 									$totalRetencion = $totalRetencion + $value->crt_basert;
+									$Profitrt =  $value->crt_profitrt;
 
 								}else{
 
@@ -2346,10 +2364,12 @@ class PurchaseInv extends REST_Controller {
 
 							}
 
+							$Basert = $totalRetencion;
 							$totalRetencionOriginal = $totalRetencion;
 
 							if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
 								$totalRetencion = ($totalRetencion * $TasaDocLoc);
+								$Basert = $totalRetencion;
 							}
 
 
@@ -2398,13 +2418,14 @@ class PurchaseInv extends REST_Controller {
 									':ac1_ven_debit' => 0,
 									':ac1_ven_credit' => round($totalRetencion, 2),
 									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
+									':ac1_taxid' => 0,
+									':ac1_isrti' => $Profitrt,
+									':ac1_basert' => $Basert,
 									':ac1_mmcode' => 0,
 									':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 									':ac1_codref' => 1,
-									":ac1_line"=> $AC1LINE
+									":ac1_line"=> $AC1LINE,
+									':ac1_base_tax' => 0
 						));
 
 
@@ -2777,7 +2798,8 @@ class PurchaseInv extends REST_Controller {
 																':ac1_mmcode' => 0,
 																':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 																':ac1_codref' => 1,
-																':ac1_line'   => 	$AC1LINE
+																':ac1_line'   => 	$AC1LINE,
+																':ac1_base_tax' => 0
 													));
 
 													if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){

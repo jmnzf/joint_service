@@ -799,7 +799,7 @@ class Reports extends REST_Controller {
 						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 
 					}else if ( $Data['cardtype'] == 2 ){
-						
+
 						$sql = "SELECT distinct
 						mac1.ac1_font_key,
 						mac1.ac1_legal_num,
@@ -1694,6 +1694,8 @@ class Reports extends REST_Controller {
 			$ac = implode($ac,",");
 			$sql .= ' AND dacc.acc_code IN('.$ac.')';
 		}
+
+		$sql .= ' AND dacc.acc_level = 6';
 
 
 		$sqlSelect="SELECT acc_code as codigocuenta,
