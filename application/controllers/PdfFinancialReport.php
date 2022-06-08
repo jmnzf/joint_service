@@ -8,6 +8,7 @@ require_once(APPPATH.'/asset/vendor/autoload.php');
 require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 use Luecano\NumeroALetras\NumeroALetras;
+use \PhpOffice\PhpSpreadsheet\Reader\Html;
 
 class PdfFinancialReport extENDs REST_Controller {
 
@@ -237,27 +238,14 @@ class PdfFinancialReport extENDs REST_Controller {
 				header('Content-Disposition: attachment; filename='.$filename);
 	}
 
-  public function getFinancialReportData_post(){
+  private function getFinancialReportData($informe,$fi,$ff){
 
-    $Data = $this->post();
     $respuesta = array();
 
-    if(!isset($Data['informe']) OR !isset($Data['fi']) OR  !isset($Data['ff']) ){
-
-      $respuesta = array(
-         'error' => true,
-         'data'  => [],
-         'mensaje' =>'faltan parametros'
-      );
-
-      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-      return;
-    }
     $arrayobj = new ArrayObject();
 
     $sqlSelect = " SELECT * from tmif where mif_docentry = :mif_docentry";
-    $resSelect = $this->pedeo->queryTable($sqlSelect,array(":mif_docentry"=>$Data['informe']));
+    $resSelect = $this->pedeo->queryTable($sqlSelect,array(":mif_docentry"=>$informe));
 
     if(!isset($resSelect[0])){
       $respuesta = array(
@@ -275,7 +263,7 @@ class PdfFinancialReport extENDs REST_Controller {
 
 		$sqlinforme = "SELECT * FROM mif1 WHERE if1_mif_id = :if1_mif_id";
 
-		$resinforme = $this->pedeo->queryTable($sqlinforme,array(':if1_mif_id' => $Data['informe']));
+		$resinforme = $this->pedeo->queryTable($sqlinforme,array(':if1_mif_id' => $informe));
     $res2 = [];
 		if(!isset($resinforme[0])){
 			$respuesta = array(
@@ -306,16 +294,16 @@ class PdfFinancialReport extENDs REST_Controller {
 
         foreach ($ressubgrupo as $key => $value) {
           $sqlcuentas = 'SELECT mif3.* , dacc.acc_name,
-                        (select coalesce(ABS(SUM(ac1_debit - ac1_credit)),0)
+                        coalesce((select coalesce(ABS(SUM(ac1_debit - ac1_credit)),0)
                         from mac1
                         WHERE ac1_doc_date BETWEEN :fi AND :ff AND ac1_account  = if3_account::bigint
-                        HAVING (SUM(ac1_debit) -  SUM(ac1_credit))  IS NOT NULL)::integer  as totalcuenta
+                        HAVING (SUM(ac1_debit) -  SUM(ac1_credit))  IS NOT NULL)::integer ,0)  as totalcuenta
                         from mif3
                         left JOIN dacc ON mif3.if3_account = cast(dacc.acc_code as varchar)
                         where if3_if2_id = :if3_if2_id';
 
 
-          $rescuentas = $this->pedeo->queryTable($sqlcuentas, array(':if3_if2_id' => $value['if2_docentry'],":fi" =>$Data['fi'],":ff" =>$Data['ff']));
+          $rescuentas = $this->pedeo->queryTable($sqlcuentas, array(':if3_if2_id' => $value['if2_docentry'],":fi" =>$fi,":ff" =>$ff));
           
           if( isset($rescuentas[0]) ){
             $ressubgrupo[$key]['cuentas'] = $rescuentas;
@@ -341,7 +329,103 @@ class PdfFinancialReport extENDs REST_Controller {
      );
     }
 
+    return $arrayobj;
+  }
+
+  public function finantialReport_post(){
+
+    $Data = $this->post();
+
+    if(!isset($Data['informe']) OR !isset($Data['fi']) OR  !isset($Data['ff']) ){
+
+      $respuesta = array(
+         'error' => true,
+         'data'  => [],
+         'mensaje' =>'faltan parametros'
+      );
+
+      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+      return;
+    }
+
+    $sqlSelect = "SELECT mif_name,if1_group_name, if2_subgroup_name,concat(acc_code,' - ',acc_name) account,
+                    coalesce(ABS(SUM(ac1_debit - ac1_credit)),0) total_account
+                from tmif
+                join mif1 on if1_mif_id = mif_docentry
+                join mif2 on if2_fi1_id = if1_docentry
+                join mif3 on if3_if2_id = if2_docentry
+                left join mac1 on if3_account = ac1_account::text and ac1_doc_date between :fi and :ff
+                join dacc on acc_code  = if3_account::bigint
+                where mif_docentry = :informe
+                group by mif_name,if1_group_name,if2_subgroup_name,acc_code,acc_name
+                order by if1_group_name";
+
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(":informe"=>$Data['informe'], ":fi" =>$Data['fi'], ":ff" =>$Data['ff']));
+
+    if(isset($resSelect[0])){
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' =>''
+     );
+    }else{
+      $respuesta = array(
+        'error' => true,
+        'data'  => [],
+        'mensaje' =>'Datos no encontrados'
+     );
+    }
+
     $this->response($respuesta);
+  }
+
+  public function exportExcel_post(){
+    $Data = $this->post();
+    $data = $this->getFinancialReportData($Data['informe'],$Data['fi'],$Data['ff']);
+    // $data = json_encode($data);
+    $htmlString = '
+    <table>
+      <tr ><th style="background: #9bc2e6;"><b>Grupo</b></th><th align="right" style="background: #9bc2e6;"><b>Saldo</b></th></tr>';
+      $count = 0;
+    foreach ($data as $key => $grupo) {
+      $count++;
+      $htmlString .= "<tr ><td style=\"background: #bdd7ee;\"><b>{$grupo['grupo']}</b></td><td align=\"right\"  style=\"background: #bdd7ee;\">".number_format($grupo['saldo'], 2, ',', '.')."</td></tr>";
+      
+      foreach ($grupo['subgrupos'] as $key => $subgrupo){
+        $htmlString .= "<tr><td colspan=\"2\" style=\"background: #ddebf7;\"><b>{$subgrupo['if2_subgroup_name']}</b></td></tr>";
+        $count++;
+        foreach ($subgrupo['cuentas'] as $key => $cuenta){
+
+          $total = number_format($cuenta['totalcuenta'], 2, ',', '.');
+
+          // var_dump($cuenta['totalcuenta']);
+          $htmlString .= "<tr><td width=\"54\" align=\"left\">{$cuenta['if3_account']} - {$cuenta['acc_name']}</td><td width=\"20\" align=\"right\">{$total}</td></tr>";
+          $count++;
+        }
+      }
+    }
+    $htmlString .= '</table>';
+    $reader = new Html();
+    
+    $spreadsheet = $reader->loadFromString($htmlString);
+    $spreadsheet->getActiveSheet()->getStyle('A1:B'.($count+1))->applyFromArray(
+      array('borders' => [
+        'allBorders' => [
+            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+            'color' => ['argb' => 'FF000000'],
+        ],
+    ],
+    ));
+
+    $spreadsheet->getActiveSheet()->getStyle('B2:B'.($count+1))->getNumberFormat()->setFormatCode('#,##0.00');
+
+    $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xls');
+    
+    $writer->save('php://output'); 
+    $filename ="doc.xls";
+    header('Content-type: application/force-download');
+     header('Content-Disposition: attachment; filename='.$filename);
   }
 
 }
