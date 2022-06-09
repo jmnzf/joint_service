@@ -94,7 +94,8 @@ class PdfAccountingSeatUsd extends REST_Controller {
                           end ct,
                           t1.ac1_account,
                           t2.acc_name,
-                          concat(t16.dmi_code,' - ',t16.dmi_name_tax) impuesto,
+													coalesce(concat(t16.dmi_code,' - ',t16.dmi_name_tax), '-') impuesto,
+													coalesce(concat(t17.mrt_code,' - ',t17.mrt_name), '-') retencion,
                           coalesce(trim(t1.ac1_uncode),'') ac1_uncode,
                           t1.ac1_debit,
                           t1.ac1_credit,
@@ -144,7 +145,8 @@ class PdfAccountingSeatUsd extends REST_Controller {
                       left join dcdc t12 on t0.mac_base_entry = t12.cdc_docentry and t0.mac_base_type = t12.cdc_doctype
                       left join dmdt t13 on t0.mac_base_type = t13.mdt_doctype
                       left join dcrc t14 on t0.mac_base_type = t14.crc_doctype and t0.mac_base_entry = t14.crc_docentry
-                      left join dmtx t16 on t1.ac1_taxid = t16.dmi_id
+                      left join dmtx t16 on t1.ac1_taxid = t16.dmi_code
+											left join dmrt t17 on t1.ac1_codret = t17.mrt_id
                       where t0.mac_trans_id = :mac_trans_id
                       order by conteo ASC";
 
@@ -185,6 +187,7 @@ class PdfAccountingSeatUsd extends REST_Controller {
 											<td>'.$value['ac1_account'].'</td>
 											<td>'.$value['acc_name'].'</td>
 											<td>'.$value['impuesto'].'</td>
+											<td>'.$value['retencion'].'</td>
 											<td>'.$value['ac1_uncode'].'</td>
                       <td>'.number_format($value['ac1_debit_sys'], 2, ',', '.').'</td>
                       <td>'.number_format($value['ac1_credit_sys'], 2, ',', '.').'</td>';
@@ -199,6 +202,7 @@ class PdfAccountingSeatUsd extends REST_Controller {
 				 						<tr>
 										<th>&nbsp;</th>
 				 						<th>&nbsp;</th>
+										<th>&nbsp;</th>
 										<th>&nbsp;</th>
 										<th>&nbsp;</th>
 										<th>&nbsp;</th>
@@ -294,6 +298,7 @@ class PdfAccountingSeatUsd extends REST_Controller {
           <th><b>Cuenta</b></th>
           <th><b>Nombre Cuenta</b></th>
           <th><b>Impuesto</b></th>
+					<th><b>Retención</b></th>
 					<th><b>CC</b></th>
           <th><b>deb</b></th>
           <th><b>cre</b></th>

@@ -77,11 +77,11 @@ class PurchaseInv extends REST_Controller {
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref,ac1_line,ac1_base_tax)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax, ac1_codret)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line, :ac1_base_tax)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line, :ac1_base_tax, :ac1_codret)";
 
 
       if(!isset($Data['detail'])){
@@ -634,7 +634,7 @@ class PurchaseInv extends REST_Controller {
                         ':fc1_inventory' => is_numeric($detail['fc1_inventory'])?$detail['fc1_inventory']:NULL,
 												':fc1_acciva'  => is_numeric($detail['fc1_cuentaIva'])?$detail['fc1_cuentaIva']:0,
 												':fc1_linenum'  => is_numeric($detail['fc1_linenum'])?$detail['fc1_linenum']:0,
-												':fc1_codimp'  => isset($detail['fc1_codimp'])?$detail['fc1_codimp']:NULL,
+												':fc1_codimp'  => isset($detail['fc1_codimp'])?$detail['fc1_codimp']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -671,8 +671,8 @@ class PurchaseInv extends REST_Controller {
 
 													$DetalleRetencion = new stdClass();
 
-													$sqlInsertRetenciones = "INSERT INTO fcrt(crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum)
-																									 VALUES (:crt_baseentry, :crt_basetype, :crt_typert, :crt_basert, :crt_profitrt, :crt_totalrt, :crt_base, :crt_type, :crt_linenum)";
+													$sqlInsertRetenciones = "INSERT INTO fcrt(crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret)
+																									 VALUES (:crt_baseentry, :crt_basetype, :crt_typert, :crt_basert, :crt_profitrt, :crt_totalrt, :crt_base, :crt_type, :crt_linenum, :crt_codret)";
 
 													$resInsertRetenciones = $this->pedeo->insertRow($sqlInsertRetenciones, array(
 
@@ -684,7 +684,8 @@ class PurchaseInv extends REST_Controller {
 																':crt_totalrt'   => $value['crt_totalrt'],
 																':crt_base'			 => $value['crt_base'],
 																':crt_type'			 => $value['crt_type'],
-																':crt_linenum'   => $detail['fc1_linenum']
+																':crt_linenum'   => $detail['fc1_linenum'],
+																':crt_codret'	   => $value['crt_typert']
 													));
 
 
@@ -696,6 +697,7 @@ class PurchaseInv extends REST_Controller {
 																$DetalleRetencion->crt_basert   = $value['crt_totalrt'];
 																$DetalleRetencion->crt_profitrt = $value['crt_profitrt'];
 																$DetalleRetencion->crt_totalrt  = $value['crt_totalrt'];
+																$DetalleRetencion->crt_codret   = $value['crt_typert'];
 
 
 																$llaveRetencion = $DetalleRetencion->crt_typert.$DetalleRetencion->crt_profitrt;
@@ -1701,7 +1703,8 @@ class PurchaseInv extends REST_Controller {
 									':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 									':ac1_codref' => 1,
 									':ac1_line' => $AC1LINE,
-									':ac1_base_tax' => $LineTotal
+									':ac1_base_tax' => round($LineTotal, 2),
+									':ac1_codret' => 0
 						));
 
 
@@ -1868,7 +1871,8 @@ class PurchaseInv extends REST_Controller {
 														':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 														':ac1_codref' => 1,
 														':ac1_line'=> $AC1LINE,
-														':ac1_base_tax' => 0
+														':ac1_base_tax' => 0,
+														':ac1_codret' => 0
 											));
 
 											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -2058,7 +2062,8 @@ class PurchaseInv extends REST_Controller {
 														':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 														':ac1_codref' => 1,
 														":ac1_line"=> $AC1LINE,
-														':ac1_base_tax' => 0
+														':ac1_base_tax' => 0,
+														':ac1_codret' => 0
 											));
 
 											if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -2172,7 +2177,8 @@ class PurchaseInv extends REST_Controller {
 									':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 									':ac1_codref' => 1,
 									':ac1_line'   => 	$AC1LINE,
-									':ac1_base_tax' => 0
+									':ac1_base_tax' => 0,
+									':ac1_codret' => 0
 						));
 
 						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -2282,7 +2288,8 @@ class PurchaseInv extends REST_Controller {
 										':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 										':ac1_codref' => 1,
 										":ac1_line"=> $AC1LINE,
-										':ac1_base_tax' => 0
+										':ac1_base_tax' => 0,
+										':ac1_codret' => 0
 							));
 
 							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -2334,6 +2341,7 @@ class PurchaseInv extends REST_Controller {
 							$cuenta = '';
 							$Basert = 0;
 							$Profitrt = 0;
+							$CodRet = 0;
 							foreach ($posicion as $key => $value) {
 
 								$sqlcuentaretencion = "SELECT mrt_acctcode FROM dmrt WHERE mrt_id = :mrt_id";
@@ -2346,6 +2354,7 @@ class PurchaseInv extends REST_Controller {
 									$cuenta = $rescuentaretencion[0]['mrt_acctcode'];
 									$totalRetencion = $totalRetencion + $value->crt_basert;
 									$Profitrt =  $value->crt_profitrt;
+									$CodRet = $value->crt_codret;
 
 								}else{
 
@@ -2420,12 +2429,13 @@ class PurchaseInv extends REST_Controller {
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => 0,
 									':ac1_isrti' => $Profitrt,
-									':ac1_basert' => $Basert,
+									':ac1_basert' => round($Basert, 2),
 									':ac1_mmcode' => 0,
 									':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 									':ac1_codref' => 1,
 									":ac1_line"=> $AC1LINE,
-									':ac1_base_tax' => 0
+									':ac1_base_tax' => 0,
+									':ac1_codret' => $CodRet
 						));
 
 
@@ -2799,7 +2809,8 @@ class PurchaseInv extends REST_Controller {
 																':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 																':ac1_codref' => 1,
 																':ac1_line'   => 	$AC1LINE,
-																':ac1_base_tax' => 0
+																':ac1_base_tax' => 0,
+																':ac1_codret' => 0
 													));
 
 													if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -2860,7 +2871,6 @@ class PurchaseInv extends REST_Controller {
 							 return;
 					 }
 					//
-
 					// Si todo sale bien despues de insertar el detalle de la factura de compras
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.
