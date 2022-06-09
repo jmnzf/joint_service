@@ -294,7 +294,7 @@ class PdfFinancialReport extENDs REST_Controller {
 
         foreach ($ressubgrupo as $key => $value) {
           $sqlcuentas = 'SELECT mif3.* , dacc.acc_name,
-                        coalesce((select coalesce(ABS(SUM(ac1_debit - ac1_credit)),0)
+                        coalesce((select coalesce(SUM(ac1_debit - ac1_credit),0)
                         from mac1
                         WHERE ac1_doc_date BETWEEN :fi AND :ff AND ac1_account  = if3_account::bigint
                         HAVING (SUM(ac1_debit) -  SUM(ac1_credit))  IS NOT NULL)::integer ,0)  as totalcuenta
@@ -350,7 +350,7 @@ class PdfFinancialReport extENDs REST_Controller {
     }
 
     $sqlSelect = "SELECT mif_name,if1_group_name, if2_subgroup_name,concat(acc_code,' - ',acc_name) account,
-                    coalesce(ABS(SUM(ac1_debit - ac1_credit)),0) total_account
+                    coalesce(SUM(ac1_debit - ac1_credit),0) total_account
                 from tmif
                 join mif1 on if1_mif_id = mif_docentry
                 join mif2 on if2_fi1_id = if1_docentry
