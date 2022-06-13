@@ -9,6 +9,7 @@ require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 use Luecano\NumeroALetras\NumeroALetras;
 use \PhpOffice\PhpSpreadsheet\Reader\Html;
+use \PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class PdfFinancialReport extENDs REST_Controller {
 
@@ -420,12 +421,12 @@ class PdfFinancialReport extENDs REST_Controller {
 
     $spreadsheet->getActiveSheet()->getStyle('B2:B'.($count))->getNumberFormat()->setFormatCode(PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00);
 
-    $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xls');
-    
-    $writer->save('php://output'); 
-    $filename ="doc.xls";
-    header('Content-type: application/force-download');
-     header('Content-Disposition: attachment; filename='.$filename);
+    $filename ="doc.xlsx";
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="'.$filename.'"');
+
+    $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+    $writer->save('php://output');
   }
 
 }
