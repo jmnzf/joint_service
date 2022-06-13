@@ -390,14 +390,14 @@ class PdfFinancialReport extENDs REST_Controller {
       $count = 0;
     foreach ($data as $key => $grupo) {
       $count++;
-      $htmlString .= "<tr ><td style=\"background: #bdd7ee;\"><b>{$grupo['grupo']}</b></td><td align=\"right\"  style=\"background: #bdd7ee;\">".number_format($grupo['saldo'], 2, ',', '.')."</td></tr>";
+      $htmlString .= "<tr ><td style=\"background: #bdd7ee;\"><b>{$grupo['grupo']}</b></td><td align=\"right\"  style=\"background: #bdd7ee;\">".number_format($grupo['saldo'], 2, '.', ',')."</td></tr>";
       
       foreach ($grupo['subgrupos'] as $key => $subgrupo){
         $htmlString .= "<tr><td colspan=\"2\" style=\"background: #ddebf7;\"><b>{$subgrupo['if2_subgroup_name']}</b></td></tr>";
         $count++;
         foreach ($subgrupo['cuentas'] as $key => $cuenta){
 
-          $total = number_format($cuenta['totalcuenta'], 2, ',', '.');
+          $total = ($cuenta['totalcuenta'] != 0 ) ? $cuenta['totalcuenta'] : number_format(0, 2, '.', ',');
 
           // var_dump($cuenta['totalcuenta']);
           $htmlString .= "<tr><td width=\"54\" align=\"left\">{$cuenta['if3_account']} - {$cuenta['acc_name']}</td><td width=\"20\" align=\"right\">{$total}</td></tr>";
@@ -418,7 +418,7 @@ class PdfFinancialReport extENDs REST_Controller {
     ],
     ));
 
-    $spreadsheet->getActiveSheet()->getStyle('B2:B'.($count+1))->getNumberFormat()->setFormatCode('#,##0.00');
+    $spreadsheet->getActiveSheet()->getStyle('B2:B'.($count))->getNumberFormat()->setFormatCode(PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00);
 
     $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xls');
     
