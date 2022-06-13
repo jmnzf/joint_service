@@ -913,9 +913,9 @@ public function getOffertDetailBySN_get(){
 
 								$sqlInsertDetail = "INSERT INTO coc1(oc1_docentry, oc1_itemcode, oc1_itemname, oc1_quantity, oc1_uom, oc1_whscode,
 																		oc1_price, oc1_vat, oc1_vatsum, oc1_discount, oc1_linetotal, oc1_costcode, oc1_ubusiness, oc1_project,
-																		oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva)VALUES(:oc1_docentry, :oc1_itemcode, :oc1_itemname, :oc1_quantity,
+																		oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva, oc1_codimp)VALUES(:oc1_docentry, :oc1_itemcode, :oc1_itemname, :oc1_quantity,
 																		:oc1_uom, :oc1_whscode,:oc1_price, :oc1_vat, :oc1_vatsum, :oc1_discount, :oc1_linetotal, :oc1_costcode, :oc1_ubusiness, :oc1_project,
-																		:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva)";
+																		:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva, :oc1_codimp)";
 
 								$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 												':oc1_docentry' => $resInsert,
@@ -938,6 +938,7 @@ public function getOffertDetailBySN_get(){
 												':oc1_avprice' => is_numeric($detail['oc1_avprice'])?$detail['oc1_avprice']:0,
 												':oc1_inventory' => is_numeric($detail['oc1_inventory'])?$detail['oc1_inventory']:NULL,
 												':oc1_acciva'  => is_numeric($detail['oc1_cuentaIva'])?$detail['oc1_cuentaIva']:0,
+												':oc1_codimp'  => isset($detail['oc1_codimp'])?$detail['oc1_codimp']:NULL
 								));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1218,9 +1219,9 @@ public function getOffertDetailBySN_get(){
 
 									$sqlInsertDetail = "INSERT INTO pap1(ap1_docentry, ap1_itemcode, ap1_itemname, ap1_quantity, ap1_uom, ap1_whscode,
 																			ap1_price, ap1_vat, ap1_vatsum, ap1_discount, ap1_linetotal, ap1_costcode, ap1_ubusiness, ap1_project,
-																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
+																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva, ap1_codimp)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
 																			:ap1_uom, :ap1_whscode,:ap1_price, :ap1_vat, :ap1_vatsum, :ap1_discount, :ap1_linetotal, :ap1_costcode, :ap1_ubusiness, :ap1_project,
-																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva)";
+																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva, :ap1_codimp)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 													':ap1_docentry' => $resInsert,
@@ -1243,7 +1244,8 @@ public function getOffertDetailBySN_get(){
 													':ap1_avprice' => is_numeric($detail[$prefijod.'_avprice'])?$detail[$prefijod.'_avprice']:0,
 													':ap1_inventory' => is_numeric($detail[$prefijod.'_inventory'])?$detail[$prefijod.'_inventory']:NULL,
 													':ap1_linenum' => is_numeric($detail[$prefijod.'_linenum'])?$detail[$prefijod.'_linenum']:NULL,
-													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL
+													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL,
+													':ap1_codimp' => isset($detail[$prefijod.'_codimp'])?$detail[$prefijod.'_codimp']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){

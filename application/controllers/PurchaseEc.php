@@ -591,9 +591,9 @@ class PurchaseEc extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO cec1(ec1_docentry, ec1_itemcode, ec1_itemname, ec1_quantity, ec1_uom, ec1_whscode,
                                     ec1_price, ec1_vat, ec1_vatsum, ec1_discount, ec1_linetotal, ec1_costcode, ec1_ubusiness, ec1_project,
-                                    ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_linenum, ec1_acciva)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
+                                    ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_linenum, ec1_acciva, ec1_codimp)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
                                     :ec1_uom, :ec1_whscode,:ec1_price, :ec1_vat, :ec1_vatsum, :ec1_discount, :ec1_linetotal, :ec1_costcode, :ec1_ubusiness, :ec1_project,
-                                    :ec1_acctcode, :ec1_basetype, :ec1_doctype, :ec1_avprice, :ec1_inventory,:ec1_linenum,:ec1_acciva)";
+                                    :ec1_acctcode, :ec1_basetype, :ec1_doctype, :ec1_avprice, :ec1_inventory,:ec1_linenum,:ec1_acciva,:ec1_codimp)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':ec1_docentry' => $resInsert,
@@ -616,7 +616,8 @@ class PurchaseEc extends REST_Controller {
                         ':ec1_avprice' => is_numeric($detail['ec1_avprice'])?$detail['ec1_avprice']:0,
                         ':ec1_inventory' => is_numeric($detail['ec1_inventory'])?$detail['ec1_inventory']:NULL,
 												':ec1_linenum' => is_numeric($detail['ec1_linenum'])?$detail['ec1_linenum']:NULL,
-												':ec1_acciva' => is_numeric($detail['ec1_acciva'])?$detail['ec1_acciva']:NULL
+												':ec1_acciva' => is_numeric($detail['ec1_acciva'])?$detail['ec1_acciva']:NULL,
+												':ec1_codimp' => isset($detail['ec1_codimp'])?$detail['ec1_codimp']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){

@@ -72,11 +72,11 @@ class SalesNc extends REST_Controller {
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line, :ac1_base_tax)";
 
 
 
@@ -845,6 +845,7 @@ class SalesNc extends REST_Controller {
 									$DetalleAsientoIva->nc1_cuentaIva = is_numeric($detail['nc1_cuentaIva'])?$detail['nc1_cuentaIva']:NULL;
 									$DetalleAsientoIva->nc1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 									$DetalleAsientoIva->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
+									$DetalleAsientoIva->codimp = isset($detail['nc1_codimp'])?$detail['nc1_codimp']:NULL;
 
 
 
@@ -1207,13 +1208,14 @@ class SalesNc extends REST_Controller {
 										':ac1_ven_debit' => round($debito, 2),
 										':ac1_ven_credit' => round($credito, 2),
 										':ac1_fiscal_acct' => 0,
-										':ac1_taxid' => 1,
+										':ac1_taxid' => 0,
 										':ac1_isrti' => 0,
 										':ac1_basert' => 0,
 										':ac1_mmcode' => 0,
 										':ac1_legal_num' => isset($Data['vnc_cardcode'])?$Data['vnc_cardcode']:NULL,
 										':ac1_codref' => 1,
-										':ac1_line'   => $AC1LINE
+										':ac1_line'   => $AC1LINE,
+										':ac1_base_tax' => 0
 							));
 
 
@@ -1248,12 +1250,19 @@ class SalesNc extends REST_Controller {
 								$granTotalIva2 = 0;
 								$granTotalIvaOriginal = 0;
 								$MontoSysCR = 0;
+								$CodigoImp = 0;
+								$LineTotal = 0;
+								$Vat = 0;
 
 								foreach ($posicion as $key => $value) {
 											$granTotalIva = round($granTotalIva + $value->nc1_vatsum,2);
 
 											$v1 = ($value->nc1_linetotal + ($value->nc1_quantity * $value->nc1_fixrate));
 											$granTotalIva2 = round($granTotalIva2 + ($v1 * ($value->nc1_vat / 100)), 2);
+
+											$LineTotal = ( $LineTotal +$value->nc1_linetotal );
+											$CodigoImp = $value->codimp;
+											$Vat = $value->nc1_vat;
 								}
 
 								$granTotalIvaOriginal = $granTotalIva;
@@ -1262,6 +1271,7 @@ class SalesNc extends REST_Controller {
 
 								if(trim($Data['vnc_currency']) != $MONEDALOCAL ){
 										$granTotalIva = ($granTotalIva * $TasaDocLoc);
+										$LineTotal = ( $LineTotal * $TasaDocLoc );
 								}
 
 
@@ -1319,13 +1329,14 @@ class SalesNc extends REST_Controller {
 										':ac1_ven_debit' => round($granTotalIva, 2),
 										':ac1_ven_credit' => 0,
 										':ac1_fiscal_acct' => 0,
-										':ac1_taxid' => 1,
-										':ac1_isrti' => 0,
+										':ac1_taxid' => $CodigoImp,
+										':ac1_isrti' => $Vat,
 										':ac1_basert' => 0,
 										':ac1_mmcode' => 0,
 										':ac1_legal_num' => isset($Data['vnc_cardcode'])?$Data['vnc_cardcode']:NULL,
 										':ac1_codref' => 1,
-										':ac1_line'   => $AC1LINE
+										':ac1_line'   => $AC1LINE,
+										':ac1_base_tax' => round($LineTotal, 2)
 							));
 
 
@@ -1515,7 +1526,7 @@ class SalesNc extends REST_Controller {
 										':ac1_rescon_date' => NULL,
 										':ac1_recon_total' => 0,
 										':ac1_made_user' => isset($Data['vnc_createby'])?$Data['vnc_createby']:NULL,
-										':ac1_accperiod' => 1,
+										':ac1_accperiod' => 0,
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
 										':ac1_ven_debit' => round($dbito, 2),
@@ -1527,7 +1538,8 @@ class SalesNc extends REST_Controller {
 										':ac1_mmcode' => 0,
 										':ac1_legal_num' => isset($Data['vnc_cardcode'])?$Data['vnc_cardcode']:NULL,
 										':ac1_codref' => 1,
-										':ac1_line'   => $AC1LINE
+										':ac1_line'   => $AC1LINE,
+										':ac1_base_tax' => 0
 							));
 
 							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -1726,13 +1738,14 @@ class SalesNc extends REST_Controller {
 									':ac1_ven_debit' => round($dbito, 2),
 									':ac1_ven_credit' => round($cdito, 2),
 									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
+									':ac1_taxid' => 0,
 									':ac1_isrti' => 0,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
 									':ac1_legal_num' => isset($Data['vnc_cardcode'])?$Data['vnc_cardcode']:NULL,
 									':ac1_codref' => 1,
-									':ac1_line'   => $AC1LINE
+									':ac1_line'   => $AC1LINE,
+									':ac1_base_tax' => 0
 									));
 
 									if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -1874,13 +1887,14 @@ class SalesNc extends REST_Controller {
 											':ac1_ven_debit' => round($ValorVenDebito, 2),
 											':ac1_ven_credit' => round($creditoo, 2),
 											':ac1_fiscal_acct' => 0,
-											':ac1_taxid' => 1,
+											':ac1_taxid' => 0,
 											':ac1_isrti' => 0,
 											':ac1_basert' => 0,
 											':ac1_mmcode' => 0,
 											':ac1_legal_num' => isset($Data['vnc_cardcode'])?$Data['vnc_cardcode']:NULL,
 											':ac1_codref' => 1,
-											':ac1_line'   => $AC1LINE
+											':ac1_line'   => $AC1LINE,
+											':ac1_base_tax' => 0
 								));
 
 								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -1978,13 +1992,14 @@ class SalesNc extends REST_Controller {
 																	':ac1_ven_debit' => round($debito,2),
 																	':ac1_ven_credit' => round($credito,2),
 																	':ac1_fiscal_acct' => 0,
-																	':ac1_taxid' => 1,
+																	':ac1_taxid' => 0,
 																	':ac1_isrti' => 0,
 																	':ac1_basert' => 0,
 																	':ac1_mmcode' => 0,
 																	':ac1_legal_num' => isset($Data['vnc_cardcode'])?$Data['vnc_cardcode']:NULL,
 																	':ac1_codref' => 1,
-																	':ac1_line'   => 	$AC1LINE
+																	':ac1_line'   => 	$AC1LINE,
+																	':ac1_base_tax' => 0
 														));
 
 														if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){

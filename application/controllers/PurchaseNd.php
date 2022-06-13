@@ -961,9 +961,9 @@ class PurchaseNd extends REST_Controller {
 									foreach ($posicion as $key => $value) {
 										$granTotalIva = $granTotalIva + $value->nd1_vatsum;
 										$Vat = $value->fc1_vat;
-										if( $Vat > 0 ){
-											$LineTotal = ($LineTotal + $value->fc1_linetotal);
-										}
+										// if( $Vat > 0 ){
+										$LineTotal = ($LineTotal + $value->fc1_linetotal);
+										// }
 										$CodigoImp = $value->codimp;
 									}
 

@@ -691,7 +691,8 @@ class SalesDel extends REST_Controller {
                         ':em1_avprice' => is_numeric($detail['em1_avprice'])?$detail['em1_avprice']:0,
                         ':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL,
 												':em1_acciva' => is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:0,
-												':em1_linenum'=> is_numeric($detail['em1_linenum'])?$detail['em1_linenum']:0
+												':em1_linenum'=> is_numeric($detail['em1_linenum'])?$detail['em1_linenum']:0,
+												':em1_codimp' => isset($detail['em1_codimp'])?$detail['em1_codimp']:NULL,
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1313,7 +1314,7 @@ class SalesDel extends REST_Controller {
 									':ac1_ven_debit' => 1,
 									':ac1_ven_credit' => 1,
 									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 1,
+									':ac1_taxid' => 0,
 									':ac1_isrti' => 0,
 									':ac1_basert' => 0,
 									':ac1_mmcode' => 0,
@@ -1478,7 +1479,7 @@ class SalesDel extends REST_Controller {
 								':ac1_ven_debit' => 1,
 								':ac1_ven_credit' => 1,
 								':ac1_fiscal_acct' => 0,
-								':ac1_taxid' => 1,
+								':ac1_taxid' => 0,
 								':ac1_isrti' => 0,
 								':ac1_basert' => 0,
 								':ac1_mmcode' => 0,
@@ -2287,9 +2288,9 @@ class SalesDel extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO pap1(ap1_docentry, ap1_itemcode, ap1_itemname, ap1_quantity, ap1_uom, ap1_whscode,
 																			ap1_price, ap1_vat, ap1_vatsum, ap1_discount, ap1_linetotal, ap1_costcode, ap1_ubusiness, ap1_project,
-																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
+																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva, ap1_codimp)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
 																			:ap1_uom, :ap1_whscode,:ap1_price, :ap1_vat, :ap1_vatsum, :ap1_discount, :ap1_linetotal, :ap1_costcode, :ap1_ubusiness, :ap1_project,
-																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva)";
+																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva, :ap1_codimp)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 													':ap1_docentry' => $resInsert,
@@ -2312,7 +2313,8 @@ class SalesDel extends REST_Controller {
 													':ap1_avprice' => is_numeric($detail[$prefijod.'_avprice'])?$detail[$prefijod.'_avprice']:0,
 													':ap1_inventory' => is_numeric($detail[$prefijod.'_inventory'])?$detail[$prefijod.'_inventory']:NULL,
 													':ap1_linenum' => is_numeric($detail[$prefijod.'_linenum'])?$detail[$prefijod.'_linenum']:NULL,
-													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL
+													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL,
+													':ap1_codimp' => isset($detail[$prefijod.'_codimp'])?$detail[$prefijod.'_codimp']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){

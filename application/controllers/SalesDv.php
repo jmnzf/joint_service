@@ -523,9 +523,9 @@ class SalesDv extends REST_Controller {
 
           $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                               dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
+                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
                               :dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,
-                              :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum, :dv1_acciva)";
+                              :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp)";
 
           $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
           ':dv1_docentry' => $resInsert,
@@ -548,7 +548,8 @@ class SalesDv extends REST_Controller {
           ':dv1_avprice' => is_numeric($detail['dv1_avprice'])?$detail['dv1_avprice']:0,
           ':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL,
           ':dv1_linenum' => is_numeric($detail['dv1_linenum'])?$detail['dv1_linenum']:0,
-          ':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0
+          ':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0,
+          ':dv1_codimp' => isset($detail['dv1_codimp'])?$detail['dv1_codimp']:NULL
 
           ));
 
@@ -1099,7 +1100,7 @@ class SalesDv extends REST_Controller {
                 ':ac1_ven_debit' => 1,
                 ':ac1_ven_credit' => 1,
                 ':ac1_fiscal_acct' => 0,
-                ':ac1_taxid' => 1,
+                ':ac1_taxid' => 0,
                 ':ac1_isrti' => 0,
                 ':ac1_basert' => 0,
                 ':ac1_mmcode' => 0,
@@ -1313,7 +1314,7 @@ class SalesDv extends REST_Controller {
                         ':ac1_ven_debit' => 1,
                         ':ac1_ven_credit' => 1,
                         ':ac1_fiscal_acct' => 0,
-                        ':ac1_taxid' => 1,
+                        ':ac1_taxid' => 0,
                         ':ac1_isrti' => 0,
                         ':ac1_basert' => 0,
                         ':ac1_mmcode' => 0,

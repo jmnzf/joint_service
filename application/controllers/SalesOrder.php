@@ -583,9 +583,9 @@ class SalesOrder extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vov1(ov1_docentry, ov1_itemcode, ov1_itemname, ov1_quantity, ov1_uom, ov1_whscode,
                                     ov1_price, ov1_vat, ov1_vatsum, ov1_discount, ov1_linetotal, ov1_costcode, ov1_ubusiness, ov1_project,
-                                    ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
+                                    ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva, ov1_codimp)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
                                     :ov1_uom, :ov1_whscode,:ov1_price, :ov1_vat, :ov1_vatsum, :ov1_discount, :ov1_linetotal, :ov1_costcode, :ov1_ubusiness, :ov1_project,
-                                    :ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory, :ov1_acciva)";
+                                    :ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory, :ov1_acciva, :ov1_codimp)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':ov1_docentry' => $resInsert,
@@ -607,7 +607,8 @@ class SalesOrder extends REST_Controller {
                         ':ov1_doctype' => is_numeric($detail['ov1_doctype'])?$detail['ov1_doctype']:0,
                         ':ov1_avprice' => is_numeric($detail['ov1_avprice'])?$detail['ov1_avprice']:0,
                         ':ov1_inventory' => is_numeric($detail['ov1_inventory'])?$detail['ov1_inventory']:NULL,
-												':ov1_acciva' => is_numeric($detail['ov1_acciva'])?$detail['ov1_acciva']:NULL
+												':ov1_acciva' => is_numeric($detail['ov1_acciva'])?$detail['ov1_acciva']:NULL,
+												':ov1_codimp' => isset($detail['ov1_codimp'])?$detail['ov1_codimp']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1093,7 +1094,7 @@ class SalesOrder extends REST_Controller {
 				 $this->response($respuesta);
 	}
 
-	
+
 
 
 
@@ -1252,9 +1253,9 @@ class SalesOrder extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO pap1(ap1_docentry, ap1_itemcode, ap1_itemname, ap1_quantity, ap1_uom, ap1_whscode,
 																			ap1_price, ap1_vat, ap1_vatsum, ap1_discount, ap1_linetotal, ap1_costcode, ap1_ubusiness, ap1_project,
-																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
+																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva, ap1_codimp)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
 																			:ap1_uom, :ap1_whscode,:ap1_price, :ap1_vat, :ap1_vatsum, :ap1_discount, :ap1_linetotal, :ap1_costcode, :ap1_ubusiness, :ap1_project,
-																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva)";
+																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva,:ap1_codimp)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 													':ap1_docentry' => $resInsert,
@@ -1277,7 +1278,8 @@ class SalesOrder extends REST_Controller {
 													':ap1_avprice' => is_numeric($detail[$prefijod.'_avprice'])?$detail[$prefijod.'_avprice']:0,
 													':ap1_inventory' => is_numeric($detail[$prefijod.'_inventory'])?$detail[$prefijod.'_inventory']:NULL,
 													':ap1_linenum' => is_numeric($detail[$prefijod.'_linenum'])?$detail[$prefijod.'_linenum']:NULL,
-													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL
+													':ap1_acciva' => is_numeric($detail[$prefijod.'_acciva'])?$detail[$prefijod.'_acciva']:NULL,
+													':ap1_codimp' => isset($detail[$prefijod.'_codimp'])?$detail[$prefijod.'_codimp']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
