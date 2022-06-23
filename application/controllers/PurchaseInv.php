@@ -2802,7 +2802,7 @@ class PurchaseInv extends REST_Controller {
 																':ac1_ven_debit' => round($debito,2),
 																':ac1_ven_credit' => round($credito,2),
 																':ac1_fiscal_acct' => 0,
-																':ac1_taxid' => 1,
+																':ac1_taxid' => 0,
 																':ac1_isrti' => 0,
 																':ac1_basert' => 0,
 																':ac1_mmcode' => 0,

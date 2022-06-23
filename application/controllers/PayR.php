@@ -9,7 +9,7 @@ require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 use Luecano\NumeroALetras\NumeroALetras;
 
-class PayE extends REST_Controller {
+class PayR extends REST_Controller {
 
 	private $pdo;
 
@@ -27,7 +27,7 @@ class PayE extends REST_Controller {
 	}
 
 
-	public function PayE_post(){
+	public function PayR_post(){
 
         $Data = $this->post();
 				$Data = $Data['BPR_DOCENTRY'];
@@ -107,7 +107,7 @@ class PayE extends REST_Controller {
 
                             from gbpr t0
                             left join bpe1 t1 on t0.bpr_docentry = t1.pe1_docnum
-                            where t0.bpr_docentry = :bpr_DOCENTRY";
+                            where t0.bpr_docentry = :BPR_DOCENTRY";
 
 				$contenidoPAYE = $this->pedeo->queryTable($sqlpagoE,array(':BPR_DOCENTRY'=>$Data));
 

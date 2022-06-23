@@ -29,6 +29,10 @@ class AccountingAccent extends REST_Controller {
       $Data = $this->post();
 			$DocNumVerificado = 0;
 
+			$sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, 				ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type)
+													VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type)";
+
+
       if(!isset($Data['detail'])){
 
         $respuesta = array(
@@ -137,8 +141,8 @@ class AccountingAccent extends REST_Controller {
 
             ':mac_doc_num' => $DocNumVerificado,
             ':mac_status' => is_numeric($Data['mac_status'])?$Data['mac_status']:0,
-            ':mac_base_type' => is_numeric($Data['mac_base_type'])?$Data['mac_base_type']:0,
-            ':mac_base_entry' => is_numeric($Data['mac_base_entry'])?$Data['mac_base_entry']:0,
+            ':mac_base_type' => 18,
+            ':mac_base_entry' => 0,
             ':mac_doc_date' => $this->validateDate($Data['mac_doc_date'])?$Data['mac_doc_date']:NULL,
             ':mac_doc_duedate' => $this->validateDate($Data['mac_doc_duedate'])?$Data['mac_doc_duedate']:NULL,
             ':mac_legal_date' => $this->validateDate($Data['mac_legal_date'])?$Data['mac_legal_date']:NULL,
@@ -168,11 +172,8 @@ class AccountingAccent extends REST_Controller {
 
         if(is_numeric($resInsert) && $resInsert > 0 ){
 
+
             foreach ($ContenidoDetalle as $key => $detail) {
-
-                $sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type)
-                                    VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type)";
-
 
 
 
@@ -234,6 +235,227 @@ class AccountingAccent extends REST_Controller {
 							}
             }
 
+
+						//VALIDANDDO DIFERENCIA EN PESO DE MONEDA DE SISTEMA
+
+						$sqlDiffPeso = "SELECT sum(coalesce(ac1_debit_sys,0)) as debito, sum(coalesce(ac1_credit_sys,0)) as credito,
+														sum(coalesce(ac1_debit,0)) as ldebito, sum(coalesce(ac1_credit,0)) as lcredito
+														from mac1
+														where ac1_trans_id = :ac1_trans_id";
+
+						$resDiffPeso = $this->pedeo->queryTable($sqlDiffPeso, array(
+							':ac1_trans_id' => $resInsert
+						));
+
+
+
+
+						if( isset($resDiffPeso[0]['debito']) && abs(($resDiffPeso[0]['debito'] - $resDiffPeso[0]['credito'])) > 0 ){
+
+							$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+							$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+
+							if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resCuentaDiferenciaDecimal,
+									'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+								);
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+
+							$debito  = $resDiffPeso[0]['debito'];
+							$credito = $resDiffPeso[0]['credito'];
+
+							if( $debito > $credito ){
+								$credito = abs(($debito - $credito));
+								$debito = 0;
+							}else{
+								$debito = abs(($credito - $debito));
+								$credito = 0;
+							}
+
+							$resDetalleAsiento = $this->pedeo->insertRow($sqlInsertDetail, array(
+
+								':ac1_trans_id' => $resInsert,
+								':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+								':ac1_debit' => 0,
+								':ac1_credit' => 0,
+								':ac1_debit_sys' => round($debito, 2),
+								':ac1_credit_sys' => round($credito, 2),
+								':ac1_currex' => 0,
+								':ac1_doc_date' => $this->validateDate($Data['mac_doc_date'])?$Data['mac_doc_date']:NULL,
+								':ac1_doc_duedate' => $this->validateDate($Data['mac_doc_duedate'])?$Data['mac_doc_duedate']:NULL,
+								':ac1_debit_import' => 0,
+								':ac1_credit_import' => 0,
+								':ac1_debit_importsys' => 0,
+								':ac1_credit_importsys' => 0,
+								':ac1_font_key' => $resInsert,
+								':ac1_font_line' => 1,
+								':ac1_font_type' => 18,
+								':ac1_accountvs' => 1,
+								':ac1_doctype' => 18,
+								':ac1_ref1' => "",
+								':ac1_ref2' => "",
+								':ac1_ref3' => "",
+								':ac1_prc_code' => 0,
+								':ac1_uncode' => 0,
+								':ac1_prj_code' => NULL,
+								':ac1_rescon_date' => NULL,
+								':ac1_recon_total' => 0,
+								':ac1_made_user' => isset($Data['mac_made_usuer'])?$Data['mac_made_usuer']:NULL,
+								':ac1_accperiod' => 1,
+								':ac1_close' => 0,
+								':ac1_cord' => 0,
+								':ac1_ven_debit' => 0,
+								':ac1_ven_credit' => 0,
+								':ac1_fiscal_acct' => 0,
+								':ac1_taxid' => 0,
+								':ac1_isrti' => 0,
+								':ac1_basert' => 0,
+								':ac1_mmcode' => 0,
+								':ac1_legal_num' => NULL,
+								':ac1_codref' => 1,
+								':ac1_card_type' => 0
+							));
+
+
+
+							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+									// Se verifica que el detalle no de error insertando //
+							}else{
+									// si falla algun insert del detalle  se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'	  => $resDetalleAsiento,
+											'mensaje'	=> 'No se pudo registrar la conciliación de bancos, occurio un error al insertar el detalle del asiento diferencia en cambio'
+										);
+
+										 $this->response($respuesta);
+
+										 return;
+							}
+
+
+
+						}else if( isset($resDiffPeso[0]['ldebito']) && abs(($resDiffPeso[0]['ldebito'] - $resDiffPeso[0]['lcredito'])) > 0 ){
+
+							$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+							$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+
+							if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resCuentaDiferenciaDecimal,
+									'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+								);
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+
+							$ldebito  = $resDiffPeso[0]['ldebito'];
+							$lcredito = $resDiffPeso[0]['lcredito'];
+
+							if( $ldebito > $lcredito ){
+								$lcredito = abs(($ldebito - $lcredito));
+								$ldebito = 0;
+							}else{
+								$ldebito = abs(($lcredito - $ldebito));
+								$lcredito = 0;
+							}
+
+							$resDetalleAsiento = $this->pedeo->insertRow($sqlInsertDetail, array(
+
+								':ac1_trans_id' => $resInsertAsiento,
+								':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+								':ac1_debit' => round($ldebito, 2),
+								':ac1_credit' => round($lcredito, 2),
+								':ac1_debit_sys' => 0,
+								':ac1_credit_sys' => 0,
+								':ac1_currex' => 0,
+								':ac1_doc_date' => $this->validateDate($Data['mac_doc_date'])?$Data['mac_doc_date']:NULL,
+								':ac1_doc_duedate' => $this->validateDate($Data['mac_doc_duedate'])?$Data['mac_doc_duedate']:NULL,
+								':ac1_debit_import' => 0,
+								':ac1_credit_import' => 0,
+								':ac1_debit_importsys' => 0,
+								':ac1_credit_importsys' => 0,
+								':ac1_font_key' => $resInsert,
+								':ac1_font_line' => 1,
+								':ac1_font_type' => 18,
+								':ac1_accountvs' => 1,
+								':ac1_doctype' => 18,
+								':ac1_ref1' => "",
+								':ac1_ref2' => "",
+								':ac1_ref3' => "",
+								':ac1_prc_code' => 0,
+								':ac1_uncode' => 0,
+								':ac1_prj_code' => NULL,
+								':ac1_rescon_date' => NULL,
+								':ac1_recon_total' => 0,
+								':ac1_made_user' => isset($Data['mac_made_usuer'])?$Data['mac_made_usuer']:NULL,
+								':ac1_accperiod' => 1,
+								':ac1_close' => 0,
+								':ac1_cord' => 0,
+								':ac1_ven_debit' => 0,
+								':ac1_ven_credit' => 0,
+								':ac1_fiscal_acct' => 0,
+								':ac1_taxid' => 0,
+								':ac1_isrti' => 0,
+								':ac1_basert' => 0,
+								':ac1_mmcode' => 0,
+								':ac1_legal_num' => NULL,
+								':ac1_codref' => 1,
+								':ac1_card_type' => 0
+
+							));
+
+
+
+							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+									// Se verifica que el detalle no de error insertando //
+							}else{
+									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'	  => $resDetalleAsiento,
+											'mensaje'	=> 'No se pudo registrar la conciliación de bancos, occurio un error al insertar el detalle del asiento diferencia en cambio'
+										);
+
+										 $this->response($respuesta);
+
+										 return;
+							}
+						}
+
+
+						// $sqlmac1 = "SELECT * FROM  mac1 where ac1_trans_id =:ac1_trans_id";
+						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsert));
+						// print_r(json_encode($ressqlmac1));
+						// exit;
+
+
+
 						//SE VALIDA LA CONTABILIDAD CREADA
 						 $validateCont = $this->generic->validateAccountingAccent($resInsert);
 
@@ -246,7 +468,7 @@ class AccountingAccent extends REST_Controller {
 
 								 $respuesta = array(
 									 'error'   => true,
-									 'data' 	 => '',
+									 'data' 	 => $validateCont['data'],
 									 'mensaje' => $validateCont['mensaje']
 								 );
 
@@ -282,9 +504,9 @@ class AccountingAccent extends REST_Controller {
 	// OBTENER ASIENTOS CONTABLES
   public function getAccountingAccent_get(){
 
-        $sqlSelect = "SELECT	distinct
-		t0.mac_trans_id docnum,
-		t0.mac_trans_id numero_transaccion,
+    	$sqlSelect = "SELECT	distinct
+			t0.mac_trans_id docnum,
+			t0.mac_trans_id numero_transaccion,
 		case
 			when coalesce(t0.mac_base_type,0) = 3 then 'Entrega'
 			when coalesce(t0.mac_base_type,0) = 4 then 'Devolucion'
@@ -299,10 +521,12 @@ class AccountingAccent extends REST_Controller {
 			when coalesce(t0.mac_base_type,0) = 16 then 'Nota Credito Compras'
 			when coalesce(t0.mac_base_type,0) = 17 then 'Nota Debito Compras'
 			when coalesce(t0.mac_base_type,0) = 18 then 'Asiento Manual'
+			when coalesce(t0.mac_base_type,0) = 0 then 'Asiento Manual'
 			when coalesce(t0.mac_base_type,0) = 19 then 'Pagos Efectuado'
 			when coalesce(t0.mac_base_type,0) = 20 then 'Pagos Recibidos'
 			when coalesce(t0.mac_base_type,0) = 22 then 'Reconciliación'
 			when coalesce(t0.mac_base_type,0) = 24 then 'Transferencia de Stock'
+			when coalesce(t0.mac_base_type,0) = 31 then 'Conciliación Bancaria'
 		end origen,
 		case
 			when coalesce(t0.mac_base_type,0) = 3 then t1.vem_docnum
@@ -318,10 +542,12 @@ class AccountingAccent extends REST_Controller {
 			when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_docnum
 			when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_docnum
 			when coalesce(t0.mac_base_type,0) = 18 then t0.mac_trans_id
+			when coalesce(t0.mac_base_type,0) = 0 then t0.mac_trans_id
 			when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_docnum
 			when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_docnum
 			when coalesce(t0.mac_base_type,0) = 22 then t18.crc_docnum
 			when coalesce(t0.mac_base_type,0) = 24 then t17.its_docnum
+			when coalesce(t0.mac_base_type,0) = 31 then t19.crb_docnum
 		end numero_origen,
 		case
 			when coalesce(t0.mac_base_type,0) = 3 then t1.vem_currency
@@ -337,10 +563,12 @@ class AccountingAccent extends REST_Controller {
 			when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_currency
 			when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_currency
 			when coalesce(t0.mac_base_type,0) = 18 then t0.mac_currency
+			when coalesce(t0.mac_base_type,0) = 0 then t0.mac_currency
 			when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_currency
 			when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
 			when coalesce(t0.mac_base_type,0) = 22 then t18.crc_currency
 			when coalesce(t0.mac_base_type,0) = 24 then t17.its_currency
+			when coalesce(t0.mac_base_type,0) = 31 then t19.crb_currency
 		end currency,
 		case
 			when coalesce(t0.mac_base_type,0) = 3 then get_tax_currency(t1.vem_currency,mac_doc_date)
@@ -355,11 +583,12 @@ class AccountingAccent extends REST_Controller {
 			when coalesce(t0.mac_base_type,0) = 15 then get_tax_currency(t7.cfc_currency,mac_doc_date)
 			when coalesce(t0.mac_base_type,0) = 16 then get_tax_currency(t14.cnc_currency,mac_doc_date)
 			when coalesce(t0.mac_base_type,0) = 17 then get_tax_currency(t15.cnd_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 18 or coalesce(t0.mac_doctype,0) = 18 then get_tax_currency(t0.mac_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 18 or coalesce(t0.mac_base_type,0) = 0 then get_tax_currency(t0.mac_currency,mac_doc_date)
 			when coalesce(t0.mac_base_type,0) = 19 then get_tax_currency(t8.bpe_currency,mac_doc_date)
 			when coalesce(t0.mac_base_type,0) = 20 then get_tax_currency(t9.bpr_currency,mac_doc_date)
 			when coalesce(t0.mac_base_type,0) = 22 then get_tax_currency(t18.crc_currency,mac_doc_date)
 			when coalesce(t0.mac_base_type,0) = 24 then get_tax_currency(t17.its_currency,mac_doc_date)
+			when coalesce(t0.mac_base_type,0) = 31 then get_tax_currency(t19.crb_currency,t19.crb_startdate)
 		end tsa_value,
 		t0.*
 		from tmac t0
@@ -378,7 +607,8 @@ class AccountingAccent extends REST_Controller {
 		left join dcnc t14 on t0.mac_base_entry = t14.cnc_docentry and t0.mac_base_type= t14.cnc_doctype
 		left join dcnd t15 on t0.mac_base_entry = t15.cnd_docentry and t0.mac_base_type= t15.cnd_doctype
 		left join dits t17 on t0.mac_base_entry = t17.its_docentry  and t0.mac_base_type = t17.its_doctype
-		left join dcrc t18 on t0.mac_base_entry = t18.crc_docentry  and t0.mac_base_type = t18.crc_doctype";
+		left join dcrc t18 on t0.mac_base_entry = t18.crc_docentry  and t0.mac_base_type = t18.crc_doctype
+		left join dcrb t19 on t0.mac_base_entry = t19.crb_id and t0.mac_base_type = t19.crb_doctype";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -518,7 +748,7 @@ class AccountingAccent extends REST_Controller {
 					return;
 				}
 				$sqlSelect = "--ENTREGA DE VENTAS
-											select distinct
+											SELECT distinct
 											mac1.ac1_trans_id as docnum,
 											mac1.ac1_trans_id as numero_transaccion,
 											dmdt.mdt_docname as origen,
@@ -832,7 +1062,27 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where ac1_trans_id = :ac1_trans_id
-											and  mac1.ac1_font_type = 18";
+											and  mac1.ac1_font_type = 18
+											-- Conciliación de Bancos
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dcrb.crb_docnum as numero_origen,
+											dcrb.crb_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dcrb.crb_currency,dcrb.crb_startdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dcrb
+											on dcrb.crb_doctype = mac1.ac1_font_type
+											and dcrb.crb_id = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
 

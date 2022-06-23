@@ -73,83 +73,84 @@ class PdfAccountingSeat extends REST_Controller {
 	          return;
 				}
 
-				$sqlcotizacion = "SELECT
-													row_number() over (order by t1.ac1_trans_id)   CONTEO,
-                          t0.mac_trans_id,
-                          t0.mac_doc_num,
-                          t0.mac_doc_date,
-                          t0.mac_legal_date,
-                          '' cal_imp,
-                          t0.mac_ref1,
-                          t0.mac_ref2,
-                          t0.mac_ref3,
-                          'BS o USD' moneda_cab,
-                          extract(year from t0.mac_doc_date) ejercicio,
-                          extract(month from t0.mac_doc_date) periodo,
-                          t1.ac1_line_num,
-                          case
-                              when (t1.ac1_debit > 0 or t1.ac1_debit_sys > 0)
-                                  then 'DB'
-                              when (t1.ac1_credit > 0 or t1.ac1_credit_sys > 0)
-                                  then 'CR'
-                          end ct,
-                          t1.ac1_account,
-                          t2.acc_name,
-                          coalesce(concat(t16.dmi_code,' - ',t16.dmi_name_tax), '-') impuesto,
-													coalesce(concat(t17.mrt_code,' - ',t17.mrt_name), '-') retencion,
-                          coalesce(trim(t1.ac1_uncode),'') ac1_uncode,
-                          t1.ac1_debit,
-                          t1.ac1_credit,
-                          t1.ac1_debit_sys,
-                          t1.ac1_credit_sys,
-                          case
-                              when t3.cfc_doctype = t0.mac_base_type then t3.cfc_currency
-                              when t4.cnd_doctype = t0.mac_base_type then t4.cnd_currency
-                              when t5.cnc_doctype = t0.mac_base_type then t5.cnc_currency
-                              when t6.dvf_doctype = t0.mac_base_type then t6.dvf_currency
-                              when t7.vnd_doctype = t0.mac_base_type then t7.vnd_currency
-                              when t8.vnc_doctype = t0.mac_base_type then t8.vnc_currency
-                              when t9.vem_doctype = t0.mac_base_type then t9.vem_currency
-                              when t10.cec_doctype = t0.mac_base_type then t10.cec_currency
-                              when t11.vdv_doctype = t0.mac_base_type then t11.vdv_currency
-                              when t12.cdc_doctype = t0.mac_base_type then t12.cdc_currency
-                              when t14.crc_doctype = t0.mac_base_type then t14.crc_currency
-                              else t0.mac_currency
-                          end moneda,
-                          t13.mdt_docname,
-                          case
-                              when t3.cfc_doctype = t0.mac_base_type then t3.cfc_docnum
-                              when t4.cnd_doctype = t0.mac_base_type then t4.cnd_docnum
-                              when t5.cnc_doctype = t0.mac_base_type then t5.cnc_docnum
-                              when t6.dvf_doctype = t0.mac_base_type then t6.dvf_docnum
-                              when t7.vnd_doctype = t0.mac_base_type then t7.vnd_docnum
-                              when t8.vnc_doctype = t0.mac_base_type then t8.vnc_docnum
-                              when t9.vem_doctype = t0.mac_base_type then t9.vem_docnum
-                              when t10.cec_doctype = t0.mac_base_type then t10.cec_docnum
-                              when t11.vdv_doctype = t0.mac_base_type then t11.vdv_docnum
-                              when t12.cdc_doctype = t0.mac_base_type then t12.cdc_docnum
-                              when t14.crc_doctype = t0.mac_base_type then t14.crc_docnum
-                              else t0.mac_doc_num
-                          end numero
-					  					from tmac t0
-                      inner join mac1 t1 on t0.mac_trans_id = t1.ac1_trans_id
-                      left join dacc t2 on t1.ac1_account = t2.acc_code
-                      left join dcfc t3 on t0.mac_base_entry = t3.cfc_docentry and t0.mac_base_type = t3.cfc_doctype
-                      left join dcnd t4 on t0.mac_base_entry = t4.cnd_docentry and t0.mac_base_type = t4.cnd_doctype
-                      left join dcnc t5 on t0.mac_base_entry = t5.cnc_docentry and t0.mac_base_type = t5.cnc_doctype
-                      left join dvfv t6 on t0.mac_base_entry = t6.dvf_docentry and t0.mac_base_type = t6.dvf_doctype
-                      left join dvnd t7 on t0.mac_base_entry = t7.vnd_docentry and t0.mac_base_type = t7.vnd_doctype
-                      left join dvnc t8 on t0.mac_base_entry = t8.vnc_docentry and t0.mac_base_type = t8.vnc_doctype
-                      left join dvem t9 on t0.mac_base_entry = t9.vem_docentry and t0.mac_base_type = t9.vem_doctype
-                      left join dcec t10 on t0.mac_base_entry = t10.cec_docentry and t0.mac_base_type = t10.cec_doctype
-                      left join dvdv t11 on t0.mac_base_entry = t11.vdv_docentry and t0.mac_base_type = t11.vdv_doctype
-                      left join dcdc t12 on t0.mac_base_entry = t12.cdc_docentry and t0.mac_base_type = t12.cdc_doctype
-                      left join dmdt t13 on t0.mac_base_type = t13.mdt_doctype
-                      left join dcrc t14 on t0.mac_base_type = t14.crc_doctype and t0.mac_base_entry = t14.crc_docentry
-                      left join dmtx t16 on t1.ac1_taxid = t16.dmi_code
-											left join dmrt t17 on t1.ac1_codret = t17.mrt_id
-                      where t0.mac_trans_id = :mac_trans_id
-                      order by conteo ASC";
+				$sqlcotizacion = "SELECT  DISTINCT
+    --row_number() over (order by t1.ac1_trans_id )   CONTEO,
+											    t0.mac_trans_id,
+											    t0.mac_doc_num,
+											    t0.mac_doc_date,
+											    t0.mac_legal_date,
+											    '' cal_imp,
+											    t0.mac_ref1,
+											    t0.mac_ref2,
+											    t0.mac_ref3,
+											    'BS o USD' moneda_cab,
+											    extract(year from t0.mac_doc_date) ejercicio,
+											    extract(month from t0.mac_doc_date) periodo,
+											    t1.ac1_line_num,
+											    case
+											        when (t1.ac1_debit > 0 or t1.ac1_debit_sys > 0)
+											            then 'DB'
+											        when (t1.ac1_credit > 0 or t1.ac1_credit_sys > 0)
+											            then 'CR'
+											    end ct,
+											    t1.ac1_account,
+											    t2.acc_name,
+											    coalesce(concat(t16.dmi_code,' - ',t16.dmi_name_tax), '-') impuesto,
+												coalesce(concat(t17.mrt_code,' - ',t17.mrt_name), '-') retencion,
+											    coalesce(trim(t1.ac1_uncode),'') ac1_uncode,
+											    t1.ac1_debit,
+											    t1.ac1_credit,
+											    t1.ac1_debit_sys,
+											    t1.ac1_credit_sys,
+											    case
+											        when t3.cfc_doctype = t0.mac_base_type then t3.cfc_currency
+											        when t4.cnd_doctype = t0.mac_base_type then t4.cnd_currency
+											        when t5.cnc_doctype = t0.mac_base_type then t5.cnc_currency
+											        when t6.dvf_doctype = t0.mac_base_type then t6.dvf_currency
+											        when t7.vnd_doctype = t0.mac_base_type then t7.vnd_currency
+											        when t8.vnc_doctype = t0.mac_base_type then t8.vnc_currency
+											        when t9.vem_doctype = t0.mac_base_type then t9.vem_currency
+											        when t10.cec_doctype = t0.mac_base_type then t10.cec_currency
+											        when t11.vdv_doctype = t0.mac_base_type then t11.vdv_currency
+											        when t12.cdc_doctype = t0.mac_base_type then t12.cdc_currency
+											        when t14.crc_doctype = t0.mac_base_type then t14.crc_currency
+											        else t0.mac_currency
+											    end moneda,
+											    t13.mdt_docname,
+											    case
+											        when t3.cfc_doctype = t0.mac_base_type then t3.cfc_docnum
+											        when t4.cnd_doctype = t0.mac_base_type then t4.cnd_docnum
+											        when t5.cnc_doctype = t0.mac_base_type then t5.cnc_docnum
+											        when t6.dvf_doctype = t0.mac_base_type then t6.dvf_docnum
+											        when t7.vnd_doctype = t0.mac_base_type then t7.vnd_docnum
+											        when t8.vnc_doctype = t0.mac_base_type then t8.vnc_docnum
+											        when t9.vem_doctype = t0.mac_base_type then t9.vem_docnum
+											        when t10.cec_doctype = t0.mac_base_type then t10.cec_docnum
+											        when t11.vdv_doctype = t0.mac_base_type then t11.vdv_docnum
+											        when t12.cdc_doctype = t0.mac_base_type then t12.cdc_docnum
+											        when t14.crc_doctype = t0.mac_base_type then t14.crc_docnum
+											        else t0.mac_doc_num
+											    end numero
+											from tmac t0
+											LEFT join mac1 t1 on t0.mac_trans_id = t1.ac1_trans_id
+											left join dacc t2 on t1.ac1_account = t2.acc_code
+											left join dcfc t3 on t0.mac_base_entry = t3.cfc_docentry and t0.mac_base_type = t3.cfc_doctype
+											left join dcnd t4 on t0.mac_base_entry = t4.cnd_docentry and t0.mac_base_type = t4.cnd_doctype
+											left join dcnc t5 on t0.mac_base_entry = t5.cnc_docentry and t0.mac_base_type = t5.cnc_doctype
+											left join dvfv t6 on t0.mac_base_entry = t6.dvf_docentry and t0.mac_base_type = t6.dvf_doctype
+											left join dvnd t7 on t0.mac_base_entry = t7.vnd_docentry and t0.mac_base_type = t7.vnd_doctype
+											left join dvnc t8 on t0.mac_base_entry = t8.vnc_docentry and t0.mac_base_type = t8.vnc_doctype
+											left join dvem t9 on t0.mac_base_entry = t9.vem_docentry and t0.mac_base_type = t9.vem_doctype
+											left join dcec t10 on t0.mac_base_entry = t10.cec_docentry and t0.mac_base_type = t10.cec_doctype
+											left join dvdv t11 on t0.mac_base_entry = t11.vdv_docentry and t0.mac_base_type = t11.vdv_doctype
+											left join dcdc t12 on t0.mac_base_entry = t12.cdc_docentry and t0.mac_base_type = t12.cdc_doctype
+											left join dmdt t13 on t0.mac_base_type = t13.mdt_doctype
+											left join dcrc t14 on t0.mac_base_type = t14.crc_doctype and t0.mac_base_entry = t14.crc_docentry
+											left join dmtx t16 on t1.ac1_taxid = t16.dmi_code
+											Left join dmrt t17 on t1.ac1_codret = t17.mrt_id
+											where t0.mac_trans_id = :mac_trans_id
+
+                      ";
 
 				$contenidoOC = $this->pedeo->queryTable($sqlcotizacion,array(':mac_trans_id'=>$Data));
 // print_r($sqlcotizacion);exit();die();
@@ -182,9 +183,11 @@ class PdfAccountingSeat extends REST_Controller {
 				$totalcresys = 0;
 				$totales = '';
 				$RetImp = '';
+				$conteo = 0;
 				foreach ($contenidoOC as $key => $value) {
+					$conteo = $conteo + 1;
 					// code...
-					$detalle = '<td>'.$value['conteo'].'</td>
+					$detalle = '<td>'.$conteo.'</td>
 											<td>'.$value['ct'].'</td>
 											<td>'.$value['ac1_account'].'</td>
 											<td>'.$value['acc_name'].'</td>

@@ -452,12 +452,14 @@ class AccountReconciliations extends REST_Controller {
 											$OP = 1;
 										}else if($detail['rc1_doctype'] == 18){
 
-											$respuesta = array(
-														'error'   => true,
-														'data'    => [],
-														'mensaje'	=> "Asientos manuales no contemplados");
+											$OP = $Data['crc_cardtype'];
 
-											return $this->response($respuesta);
+											// $respuesta = array(
+											// 			'error'   => true,
+											// 			'data'    => [],
+											// 			'mensaje'	=> "Asientos manuales no contemplados");
+											//
+											// return $this->response($respuesta);
 
 										}
 
