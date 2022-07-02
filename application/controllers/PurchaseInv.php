@@ -698,6 +698,7 @@ class PurchaseInv extends REST_Controller {
 																$DetalleRetencion->crt_profitrt = $value['crt_profitrt'];
 																$DetalleRetencion->crt_totalrt  = $value['crt_totalrt'];
 																$DetalleRetencion->crt_codret   = $value['crt_typert'];
+																$DetalleRetencion->crt_baseln 	= $value['crt_basert'];
 
 
 																$llaveRetencion = $DetalleRetencion->crt_typert.$DetalleRetencion->crt_profitrt;
@@ -2333,6 +2334,7 @@ class PurchaseInv extends REST_Controller {
 
 					foreach ($DetalleConsolidadoRetencion as $key => $posicion) {
 							$totalRetencion = 0;
+							$BaseLineaRet = 0;
 							$totalRetencionOriginal = 0;
 							$dbito = 0;
 							$cdito = 0;
@@ -2355,6 +2357,7 @@ class PurchaseInv extends REST_Controller {
 									$totalRetencion = $totalRetencion + $value->crt_basert;
 									$Profitrt =  $value->crt_profitrt;
 									$CodRet = $value->crt_codret;
+									$BaseLineaRet = $BaseLineaRet + $value->crt_baseln;
 
 								}else{
 
@@ -2373,12 +2376,13 @@ class PurchaseInv extends REST_Controller {
 
 							}
 
-							$Basert = $totalRetencion;
+							$Basert = $BaseLineaRet;
 							$totalRetencionOriginal = $totalRetencion;
 
 							if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
 								$totalRetencion = ($totalRetencion * $TasaDocLoc);
-								$Basert = $totalRetencion;
+								$BaseLineaRet = ($BaseLineaRet * $TasaDocLoc);
+								$Basert = $BaseLineaRet;
 							}
 
 

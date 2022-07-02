@@ -69,173 +69,173 @@ class PdfOrdenCompraEs extends REST_Controller {
 	          return;
 				}
 
-				$observaciones = '<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">1) El Proveedor deber&aacute; cumplir, sin retardo, con la entrega de los productos o materiales y/o ejecuci&oacute;n de servicios que forman parte de la presente orden de compra.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">2) Cualquier modificaci&oacute;n en lo que respecta a los t&eacute;rminos y condiciones de la presente orden de compra, deber&aacute; contar con la aprobaci&oacute;n previa y por escrito por parte de Andino Pneus de Venezuela, C.A.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">3) El Proveedor deber&aacute; garantizar la calidad y el buen funcionamiento de los productos/materiales/servicios, objeto de la presente orden de compra, a partir:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">FACTURAR EXACTAMENTE COMO SE INDICA A CONTINUACION:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">ANDINO PNEUS DE VENEZUELA, C.A.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">FABRICA DE CAUCHOS, GUACARA ESTADO CARABOBO,</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">VENEZUELA.GUACARA VE</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Informaciones Generales:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">- Los gastos en los cuales incurra Andino Pneus de Venezuela, C.A. como consecuencia del incumplimiento de los t&eacute;rminos de la garant&iacute;a por parte del Proveedor, correr&aacute;n por cuenta de este &uacute;ltimo.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">- Todos los productos adquiridos por Andino Pneus de Venezuela, C.A. en virtud de la presente orden de compra, ser&aacute;n utilizados o consumidos exclusivamente por esta &uacute;ltima, dentro o fuera de sus instalaciones.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Condiciones generales:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Las condiciones generales de esta orden de compra prevalecer&aacute;n sobre cualquier otra oferta efectuada con anterioridad por el Proveedor.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Los t&eacute;rminos y condiciones generales establecidos en esta orden de compra, se tendr&aacute;n como aceptados, salvo que dentro de los primeros 5 d&iacute;as continuos siguientes de haberse emitido la orden de compra, el proveedor manifieste expresamente alguna observaci&oacute;n que sea aceptada por Andino Pneus de Venezuela, C.A.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">1) PRECIOS</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Los precios indicados en la presente orden de compra se mantendr&aacute;n fijos, al menos que las partes acuerden, por escrito, alg&uacute;n ajuste.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">2) IMPUESTOS</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Los precios indicados en la presente orden de compra no incluyen el impuesto al valor agregado (IVA), solo aplica para compras Nacionales.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">3) ENTREGA:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Los plazos de entrega han sido establecidos de com&uacute;n acuerdo entre las partes y se entiende que cada plazo es el m&aacute;ximo para que el material, equipo y/o servicio sea entregado y/o culminado en f&aacute;brica.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">En caso de cualquier incumplimiento de este plazo de entrega, el proveedor deber&aacute; anunciar las causas del retraso y asumir las p&eacute;rdidas ocasionadas, dar&aacute; derecho a</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Andino Pneus de Venezuela, C.A.de cancelar (dejar sin efecto), la presente orden de compra, sin responsabilidad para esta &uacute;ltima sobre eventuales da&ntilde;os y perjuicios que pudieran afectar al proveedor, igualmente ser&aacute; bloqueado en nuestro sistemade registro de Proveedores.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">4) FECHAS Y HORARIO DE ENTREGA,</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Las entregas de materiales y/ o equipos se realizara dentro del siguiente horario:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">De lunes a viernes de 07:00 a.m. a 2:30 p.m. D&iacute;as y horas distintas a las se&ntilde;aladas anteriormente, deber&aacute;n ser especificadas en las correspondientes &oacute;rdenes de compra.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Para el caso de servicios, &eacute;stos de acuerdo a su naturaleza; ser&aacute;n ejecutados en horario convenido en mutuo acuerdo con el Solicitante y el Departamento de Compras.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">5) TRANSPORTE Y EMBALAJE</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Ser&aacute; responsabilidad &uacute;nica del proveedor las condiciones de flete y embalaje, de modo que garanticen la integridad de los equipos y Materia Prima suministrados.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&Uacute;nicamente Andino Pneus ser&aacute; responsable de estas condiciones, siempre y cuando as&iacute; quede expresado en el texto de la solicitud.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">6) DISE&Ntilde;OS MUESTRAS Y MODELOS</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Los dise&ntilde;os, muestras y modelos que sean suministrados por Andino Pneus al proveedor para la realizaci&oacute;n de una determinada actividad, deber&aacute;n ser devueltas a esta &uacute;ltima conjuntamente con los equipos y/o materiales suministrados, lo cual ser&aacute; condici&oacute;n indispensable para aprobar y realizar el respectivo pago.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">7) PARA TODOS LOS PEDIDOS:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">El proveedor deber&aacute; entregar a Andino Pneus, conjuntamente con los equipos y / o componentes requeridos por &eacute;sta, toda la documentaci&oacute;n t&eacute;cnica, cat&aacute;logos, dise&ntilde;os y certificaciones de inspecci&oacute;n de control de calidad y de garant&iacute;a. Andino Pneus de Venezuela, C.A. se reserva el derecho de devolver la mercanc&iacute;a cuando este procedimiento no se cumpla.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">8) SUMINISTRO Y USO (SERVICIOS) DE MATERIALES Y SUSTANCIAS PELIGROSAS:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">En caso que la orden de compra contemple la entrega, suministro y/o utilizaci&oacute;n de Materiales o sustancias peligrosas, el proveedor deber&aacute; proporcionar las Fichas t&eacute;cnicas (MSDS) previo al ingreso y/o ejecuci&oacute;n de los servicios, as&iacute; como toda la documentaci&oacute;n (TDS) y permisos exigidos por las Leyes para su respectivo traslado y manejo, en caso que aplique.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">9- DISPOSICI&Oacute;N DE RESIDUOS:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">En referencia a los servicios que incluyan la disposici&oacute;n de escombros, material de suelo y material vegetal, es obligaci&oacute;n del proveedor consignar la documentaci&oacute;n correspondiente al lugar de disposici&oacute;n, ante el Departamento de Seguridad Industrial,</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Salud Ocupacional y Ambiente.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">10) FACTURACI&Oacute;N</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">El procedimiento de facturaci&oacute;n es conforme a la Providencia Administrativa N&deg;/SNAT/2011 071 de fecha 08/11/2011 seg&uacute;n Gaceta Oficial N&deg; 39.795, la cual establece las normas generales de emisi&oacute;n de facturas y otros documentos.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Las facturas que emita el proveedor deber&aacute;n contener exactamente los mismos datos de cada orden de compra en lo que respecta a : cantidad, unidad de medida, precio, material, marca, entre otros.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Andino Pneus de Venezuela, C.A.se reserva el derecho de no aceptar la factura que contenga una divergencia que no haya sido previamente comunicada y autorizada por escrito.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">11) ENTREGA DE FACTURA:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">El proveedor deber&aacute; entregar la factura &nbsp;firmada y sellada dentro de los 7 d&iacute;as despu&eacute;s de su emisi&oacute;n, la cual deber&aacute; contener:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">-Para el caso de Suministros: Comprobante o sello de ingreso del almac&eacute;n de repuestos.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">-Para el caso de Servicios: Copia de la Hoja de Servicio emitida por el usuario solicitante con fecha anterior a la factura y copia de la orden de compra.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">- Para el caso de Pedidos Mixtos (Suministro y servicios). Debe consignar toda la documentaci&oacute;n anterior.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Dicha factura deber&aacute; ser consignada dentro del plazo se&ntilde;alado anteriormente, en el &aacute;rea de Finanzas de Andino Pneus de Venezuela, C.A.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Requisitos de la Facturaci&oacute;n:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">-El proveedor deber&aacute; incluir en la factura el n&uacute;mero de la orden de compra o Pedido.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">-Cualquier cambio en los precios, deber&aacute; ser debidamente justificado, procesado y notificado a Andino Pneus de Venezuela, C.A. previo a la presentaci&oacute;n de la factura.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">- Andino Pneus de Venezuela, C.A. se reserva el derecho de devolver toda documentaci&oacute;n que no est&eacute; conforme a lo se&ntilde;alado, y todos los gastos en que se incurra por &eacute;sta devoluci&oacute;n ser&aacute;n por cuenta del Proveedor.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">12) INFORMACI&Oacute;N PARA AUDITOR&Iacute;A</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">El proveedor deber&aacute; consignar sin demora, toda la informaci&oacute;n y documentaci&oacute;n que requiera Auditoria Interna de Andino Pneus de Venezuela, C.A.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">13) SANCI&Oacute;N:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Queda expresamente prohibida la venta y/o utilizaci&oacute;n de los productos de marca Andino Pneus por parte de los proveedores.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Los infractores estar&aacute;n sujetos a sanciones legales.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Se eximir&aacute; de responsabilidad a Andino Pneus de Venezuela, C.A., de las sanciones y/o el cobro de gastos o intereses, que genere el Proveedor por el incumplimiento de la presente orden de compra.</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">Nota Final:</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">&nbsp;</p>
-<p style="vertical-align: bottom; font-family: serif;
-   font-size: 8pt; color: #000000; ">El proveedor que incumpla alguna de la cl&aacute;usula y/o condiciones se&ntilde;aladas en la presente orden de compra, podr&aacute; ser excluido del registro de Proveedores de Andino Pneus de Venezuela, C.A.</p>
-';
+				$observaciones = '	<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">1) El Proveedor deber&aacute; cumplir, sin retardo, con la entrega de los productos o materiales y/o ejecuci&oacute;n de servicios que forman parte de la presente orden de compra.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">2) Cualquier modificaci&oacute;n en lo que respecta a los t&eacute;rminos y condiciones de la presente orden de compra, deber&aacute; contar con la aprobaci&oacute;n previa y por escrito por parte de Andino Pneus de Venezuela, C.A.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">3) El Proveedor deber&aacute; garantizar la calidad y el buen funcionamiento de los productos/materiales/servicios, objeto de la presente orden de compra, a partir:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">FACTURAR EXACTAMENTE COMO SE INDICA A CONTINUACION:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">ANDINO PNEUS DE VENEZUELA, C.A.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">FABRICA DE CAUCHOS, GUACARA ESTADO CARABOBO,</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">VENEZUELA.GUACARA VE</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Informaciones Generales:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">- Los gastos en los cuales incurra Andino Pneus de Venezuela, C.A. como consecuencia del incumplimiento de los t&eacute;rminos de la garant&iacute;a por parte del Proveedor, correr&aacute;n por cuenta de este &uacute;ltimo.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">- Todos los productos adquiridos por Andino Pneus de Venezuela, C.A. en virtud de la presente orden de compra, ser&aacute;n utilizados o consumidos exclusivamente por esta &uacute;ltima, dentro o fuera de sus instalaciones.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Condiciones generales:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Las condiciones generales de esta orden de compra prevalecer&aacute;n sobre cualquier otra oferta efectuada con anterioridad por el Proveedor.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Los t&eacute;rminos y condiciones generales establecidos en esta orden de compra, se tendr&aacute;n como aceptados, salvo que dentro de los primeros 5 d&iacute;as continuos siguientes de haberse emitido la orden de compra, el proveedor manifieste expresamente alguna observaci&oacute;n que sea aceptada por Andino Pneus de Venezuela, C.A.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">1) PRECIOS</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Los precios indicados en la presente orden de compra se mantendr&aacute;n fijos, al menos que las partes acuerden, por escrito, alg&uacute;n ajuste.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">2) IMPUESTOS</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Los precios indicados en la presente orden de compra no incluyen el impuesto al valor agregado (IVA), solo aplica para compras Nacionales.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">3) ENTREGA:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Los plazos de entrega han sido establecidos de com&uacute;n acuerdo entre las partes y se entiende que cada plazo es el m&aacute;ximo para que el material, equipo y/o servicio sea entregado y/o culminado en f&aacute;brica.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">En caso de cualquier incumplimiento de este plazo de entrega, el proveedor deber&aacute; anunciar las causas del retraso y asumir las p&eacute;rdidas ocasionadas, dar&aacute; derecho a</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Andino Pneus de Venezuela, C.A.de cancelar (dejar sin efecto), la presente orden de compra, sin responsabilidad para esta &uacute;ltima sobre eventuales da&ntilde;os y perjuicios que pudieran afectar al proveedor, igualmente ser&aacute; bloqueado en nuestro sistemade registro de Proveedores.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">4) FECHAS Y HORARIO DE ENTREGA,</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Las entregas de materiales y/ o equipos se realizara dentro del siguiente horario:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">De lunes a viernes de 07:00 a.m. a 2:30 p.m. D&iacute;as y horas distintas a las se&ntilde;aladas anteriormente, deber&aacute;n ser especificadas en las correspondientes &oacute;rdenes de compra.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Para el caso de servicios, &eacute;stos de acuerdo a su naturaleza; ser&aacute;n ejecutados en horario convenido en mutuo acuerdo con el Solicitante y el Departamento de Compras.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">5) TRANSPORTE Y EMBALAJE</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Ser&aacute; responsabilidad &uacute;nica del proveedor las condiciones de flete y embalaje, de modo que garanticen la integridad de los equipos y Materia Prima suministrados.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&Uacute;nicamente Andino Pneus ser&aacute; responsable de estas condiciones, siempre y cuando as&iacute; quede expresado en el texto de la solicitud.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">6) DISE&Ntilde;OS MUESTRAS Y MODELOS</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Los dise&ntilde;os, muestras y modelos que sean suministrados por Andino Pneus al proveedor para la realizaci&oacute;n de una determinada actividad, deber&aacute;n ser devueltas a esta &uacute;ltima conjuntamente con los equipos y/o materiales suministrados, lo cual ser&aacute; condici&oacute;n indispensable para aprobar y realizar el respectivo pago.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">7) PARA TODOS LOS PEDIDOS:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">El proveedor deber&aacute; entregar a Andino Pneus, conjuntamente con los equipos y / o componentes requeridos por &eacute;sta, toda la documentaci&oacute;n t&eacute;cnica, cat&aacute;logos, dise&ntilde;os y certificaciones de inspecci&oacute;n de control de calidad y de garant&iacute;a. Andino Pneus de Venezuela, C.A. se reserva el derecho de devolver la mercanc&iacute;a cuando este procedimiento no se cumpla.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">8) SUMINISTRO Y USO (SERVICIOS) DE MATERIALES Y SUSTANCIAS PELIGROSAS:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">En caso que la orden de compra contemple la entrega, suministro y/o utilizaci&oacute;n de Materiales o sustancias peligrosas, el proveedor deber&aacute; proporcionar las Fichas t&eacute;cnicas (MSDS) previo al ingreso y/o ejecuci&oacute;n de los servicios, as&iacute; como toda la documentaci&oacute;n (TDS) y permisos exigidos por las Leyes para su respectivo traslado y manejo, en caso que aplique.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">9- DISPOSICI&Oacute;N DE RESIDUOS:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">En referencia a los servicios que incluyan la disposici&oacute;n de escombros, material de suelo y material vegetal, es obligaci&oacute;n del proveedor consignar la documentaci&oacute;n correspondiente al lugar de disposici&oacute;n, ante el Departamento de Seguridad Industrial,</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Salud Ocupacional y Ambiente.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">10) FACTURACI&Oacute;N</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">El procedimiento de facturaci&oacute;n es conforme a la Providencia Administrativa N&deg;/SNAT/2011 071 de fecha 08/11/2011 seg&uacute;n Gaceta Oficial N&deg; 39.795, la cual establece las normas generales de emisi&oacute;n de facturas y otros documentos.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Las facturas que emita el proveedor deber&aacute;n contener exactamente los mismos datos de cada orden de compra en lo que respecta a : cantidad, unidad de medida, precio, material, marca, entre otros.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Andino Pneus de Venezuela, C.A.se reserva el derecho de no aceptar la factura que contenga una divergencia que no haya sido previamente comunicada y autorizada por escrito.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">11) ENTREGA DE FACTURA:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">El proveedor deber&aacute; entregar la factura &nbsp;firmada y sellada dentro de los 7 d&iacute;as despu&eacute;s de su emisi&oacute;n, la cual deber&aacute; contener:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">-Para el caso de Suministros: Comprobante o sello de ingreso del almac&eacute;n de repuestos.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">-Para el caso de Servicios: Copia de la Hoja de Servicio emitida por el usuario solicitante con fecha anterior a la factura y copia de la orden de compra.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">- Para el caso de Pedidos Mixtos (Suministro y servicios). Debe consignar toda la documentaci&oacute;n anterior.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Dicha factura deber&aacute; ser consignada dentro del plazo se&ntilde;alado anteriormente, en el &aacute;rea de Finanzas de Andino Pneus de Venezuela, C.A.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Requisitos de la Facturaci&oacute;n:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">-El proveedor deber&aacute; incluir en la factura el n&uacute;mero de la orden de compra o Pedido.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">-Cualquier cambio en los precios, deber&aacute; ser debidamente justificado, procesado y notificado a Andino Pneus de Venezuela, C.A. previo a la presentaci&oacute;n de la factura.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">- Andino Pneus de Venezuela, C.A. se reserva el derecho de devolver toda documentaci&oacute;n que no est&eacute; conforme a lo se&ntilde;alado, y todos los gastos en que se incurra por &eacute;sta devoluci&oacute;n ser&aacute;n por cuenta del Proveedor.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">12) INFORMACI&Oacute;N PARA AUDITOR&Iacute;A</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">El proveedor deber&aacute; consignar sin demora, toda la informaci&oacute;n y documentaci&oacute;n que requiera Auditoria Interna de Andino Pneus de Venezuela, C.A.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">13) SANCI&Oacute;N:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Queda expresamente prohibida la venta y/o utilizaci&oacute;n de los productos de marca Andino Pneus por parte de los proveedores.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Los infractores estar&aacute;n sujetos a sanciones legales.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Se eximir&aacute; de responsabilidad a Andino Pneus de Venezuela, C.A., de las sanciones y/o el cobro de gastos o intereses, que genere el Proveedor por el incumplimiento de la presente orden de compra.</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">Nota Final:</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">&nbsp;</p>
+									<p style="vertical-align: bottom; font-family: serif;
+									font-size: 8pt; color: #000000; ">El proveedor que incumpla alguna de la cl&aacute;usula y/o condiciones se&ntilde;aladas en la presente orden de compra, podr&aacute; ser excluido del registro de Proveedores de Andino Pneus de Venezuela, C.A.</p>
+									';
 				$sqlcotizacion = "SELECT
 													CONCAT(T0.CPO_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
 													T0.CPO_CARDCODE Nit,
@@ -351,22 +351,21 @@ class PdfOrdenCompraEs extends REST_Controller {
 
         $header = '
 				<table width="100%" style="text-align: left;">
-        <tr>
-            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
-            <th>
-                <p><b>Andino Pneus de Venezuela, C.A.</b></p>
-                <p><b>Rif: J-003281174</b></p>
-                <p><b>Carretera Nacional Guacara-Los Guayos, Fabrica de Cauchos.</b></p>
-                <p><b>GUACARA, Estado Carabobo, Venezuela</b></p>
-
-            </th>
-            <th>
-                <p><b>ORDEN DE COMPRA</b></p>
-            </th>
-        </tr>
-
-</table>
-        ';
+        			<tr>
+            			<th style="text-align: left;">
+							<img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" 
+							width ="100" height ="40"></img>
+						</th>
+            			<th>
+							<p><b>'.$empresa[0]['pge_name_soc'].'</b></p>
+							<p><b>'.$empresa[0]['pge_id_type'].'</b></p>
+							<p><b>'.$empresa[0]['pge_add_soc'].'</b></p>
+						</th>
+						<th>
+						    <p><b>Orden de Compra</b></p>
+						</th>
+					/tr>
+				</table>';
 
 				$footer = '
         <table width="100%" style="vertical-align: bottom; font-family: serif;
@@ -388,7 +387,7 @@ class PdfOrdenCompraEs extends REST_Controller {
 						<p>'.$empresa[0]['pge_state_soc'].'</p>
 						<p>TELEFONO:'.$empresa[0]['pge_phone1'].' / '.$empresa[0]['pge_phone2'].'</p>
 						<p>website: '.$empresa[0]['pge_web_site'].'</p>
-						<p>Instagram: @Pneusdevenezuela</p>
+						<p>Instagram: '.$empresa[0]['pge_page_social'].'</p>
             </th>
             <th style="text-align: right;">
 								<p><b>OC: </b></p>

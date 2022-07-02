@@ -63,9 +63,9 @@ class PdfOrdenCompraEn extends REST_Controller {
 
 				if(!isset($empresa[0])){
 						$respuesta = array(
-		           'error' => true,
-		           'data'  => $empresa,
-		           'mensaje' =>'no esta registrada la información de la empresa'
+									'error' => true,
+									'data'  => $empresa,
+									'mensaje' =>'no esta registrada la información de la empresa'
 		        );
 
 	          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -244,62 +244,62 @@ class PdfOrdenCompraEn extends REST_Controller {
 <p style="vertical-align: bottom; font-family: serif;
    font-size: 8pt; color: #000000; "><em>The supplier that breaches any of the clause and / or conditions indicated in this purchase order may be excluded from the registry of Suppliers of Andino Pneus de Venezuela, C.A.</em></p>';
 				$sqlcotizacion = "SELECT
-													CONCAT(T0.CPO_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
-													T0.CPO_CARDCODE Nit,
-													CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) AS Direccion,
-													T3.dmd_state_mm ciudad,
-													t3.dmd_state estado,
-													T4.DMC_PHONE1 Telefono,
-													T4.DMC_EMAIL Email,
-													T0.CPO_DOCNUM,
-													T0.CPO_DOCNUM NumeroDocumento,
-													T0.CPO_DOCDATE FechaDocumento,
-													T0.CPO_DUEDATE FechaVenDocumento,
-													T0.cpo_duedev fechaentrga,
-													trim('COP' FROM t0.CPO_CURRENCY) MonedaDocumento,
-													T7.PGM_NAME_MONEDA NOMBREMONEDA,
-													T5.MEV_NAMES Vendedor,
-													'' MedioPago,
-													'' CondPago,
-													T1.PO1_ITEMCODE Referencia,
-													T1.PO1_ITEMNAME descripcion,
-													T1.PO1_WHSCODE Almacen,
-													T1.PO1_UOM UM,
-													T1.PO1_QUANTITY Cantidad,
-													T1.PO1_PRICE VrUnit,
-													T1.PO1_DISCOUNT PrcDes,
-													T1.PO1_VATSUM IVAP,
-													T1.PO1_LINETOTAL ValorTotalL,
-													T0.CPO_BASEAMNT base,
-													T0.CPO_DISCOUNT Descuento,
-													(T0.CPO_BASEAMNT - T0.CPO_DISCOUNT) subtotal,
-													T0.CPO_TAXTOTAL Iva,
-													T0.CPO_DOCTOTAL TotalDoc,
-													T0.CPO_COMMENT Comentarios,
-													t6.pgs_mde,
-													t6.pgs_mpfn,
-													T8.MPF_NAME cond_pago,
-													t3.dmd_tonw lugar_entrega,
-													t5.mev_names nombre_contacto,
-													t5.mev_mail correo_contacto,
-													t5.mev_phone telefono_contacto,
-													t0.cpo_date_inv fecha_fact_pro,
-													t0.cpo_date_del fecha_entre,
-													t0.cpo_place_del lugar_entre,
-													concat(t9.dmc_name,' ',t9.dmc_last_name) nombre_contacto_p,
-													t9.dmc_email correo_contacto_p,
-													t9.dmc_cel telefono_contacto_p
-												FROM dcpo  t0
-												INNER JOIN CPO1 T1 ON t0.CPO_docentry = t1.PO1_docentry
-												LEFT JOIN DMSN T2 ON t0.CPO_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON t2.dms_card_code = t3.dmd_card_code AND t3.dmd_ppal = 1
-												LEFT JOIN DMSC T4 ON T0.CPO_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
-												LEFT JOIN DMEV T5 ON T0.CPO_SLPCODE = T5.MEV_ID
-												LEFT JOIN PGDN T6 ON T0.CPO_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.CPO_SERIES = T6.PGS_ID
-												LEFT JOIN PGEC T7 ON T0.CPO_CURRENCY = T7.PGM_SYMBOL
-												LEFT JOIN DMPF T8 ON T2.DMS_PAY_TYPE = cast(T8.MPF_ID as  varchar)
-												left join dmsc t9 on t0.cpo_cardcode = t9.dmc_card_code
-												WHERE T0.CPO_DOCENTRY = :CPO_DOCENTRY and t2.dms_card_type = '2'";
+									CONCAT(T0.CPO_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
+									T0.CPO_CARDCODE Nit,
+									CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) AS Direccion,
+									T3.dmd_state_mm ciudad,
+									t3.dmd_state estado,
+									T4.DMC_PHONE1 Telefono,
+									T4.DMC_EMAIL Email,
+									T0.CPO_DOCNUM,
+									T0.CPO_DOCNUM NumeroDocumento,
+									T0.CPO_DOCDATE FechaDocumento,
+									T0.CPO_DUEDATE FechaVenDocumento,
+									T0.cpo_duedev fechaentrga,
+									trim('COP' FROM t0.CPO_CURRENCY) MonedaDocumento,
+									T7.PGM_NAME_MONEDA NOMBREMONEDA,
+									T5.MEV_NAMES Vendedor,
+									'' MedioPago,
+									'' CondPago,
+									T1.PO1_ITEMCODE Referencia,
+									T1.PO1_ITEMNAME descripcion,
+									T1.PO1_WHSCODE Almacen,
+									T1.PO1_UOM UM,
+									T1.PO1_QUANTITY Cantidad,
+									T1.PO1_PRICE VrUnit,
+									T1.PO1_DISCOUNT PrcDes,
+									T1.PO1_VATSUM IVAP,
+									T1.PO1_LINETOTAL ValorTotalL,
+									T0.CPO_BASEAMNT base,
+									T0.CPO_DISCOUNT Descuento,
+									(T0.CPO_BASEAMNT - T0.CPO_DISCOUNT) subtotal,
+									T0.CPO_TAXTOTAL Iva,
+									T0.CPO_DOCTOTAL TotalDoc,
+									T0.CPO_COMMENT Comentarios,
+									t6.pgs_mde,
+									t6.pgs_mpfn,
+									T8.MPF_NAME cond_pago,
+									t3.dmd_tonw lugar_entrega,
+									t5.mev_names nombre_contacto,
+									t5.mev_mail correo_contacto,
+									t5.mev_phone telefono_contacto,
+									t0.cpo_date_inv fecha_fact_pro,
+									t0.cpo_date_del fecha_entre,
+									t0.cpo_place_del lugar_entre,
+									concat(t9.dmc_name,' ',t9.dmc_last_name) nombre_contacto_p,
+									t9.dmc_email correo_contacto_p,
+									t9.dmc_cel telefono_contacto_p
+								FROM dcpo  t0
+								INNER JOIN CPO1 T1 ON t0.CPO_docentry = t1.PO1_docentry
+								LEFT JOIN DMSN T2 ON t0.CPO_cardcode = t2.dms_card_code
+								LEFT JOIN DMSD T3 ON t2.dms_card_code = t3.dmd_card_code AND t3.dmd_ppal = 1
+								LEFT JOIN DMSC T4 ON T0.CPO_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
+								LEFT JOIN DMEV T5 ON T0.CPO_SLPCODE = T5.MEV_ID
+								LEFT JOIN PGDN T6 ON T0.CPO_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.CPO_SERIES = T6.PGS_ID
+								LEFT JOIN PGEC T7 ON T0.CPO_CURRENCY = T7.PGM_SYMBOL
+								LEFT JOIN DMPF T8 ON T2.DMS_PAY_TYPE = cast(T8.MPF_ID as  varchar)
+								left join dmsc t9 on t0.cpo_cardcode = t9.dmc_card_code
+								WHERE T0.CPO_DOCENTRY = :CPO_DOCENTRY and t2.dms_card_type = '2'";
 
 				$contenidoOC = $this->pedeo->queryTable($sqlcotizacion,array(':CPO_DOCENTRY'=>$Data));
 				// print_r($sqlcotizacion);exit();die();
@@ -355,24 +355,31 @@ class PdfOrdenCompraEn extends REST_Controller {
 				}
 
 
-        $header = '
-				<table width="100%" style="text-align: left;">
-        <tr>
-            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
-            <th>
-                <p><b>Andino Pneus de Venezuela, C.A.</b></p>
-                <p><b>Rif: J-003281174</b></p>
-                <p><b>Carretera Nacional Guacara-Los Guayos, Fabrica de Cauchos.</b></p>
-                <p><b>GUACARA, Estado Carabobo, Venezuela</b></p>
+				$header = '
+						<table width="100%" style="text-align: left;">
+							<tr>
+								<th style="text-align: left;">
+									<img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" 
+									width ="100" height ="40"></img>
+								</th>
+								<th>
+									<p><b>'.$empresa[0]['pge_name_soc'].'</b></p>
+									<p><b>'.$empresa[0]['pge_id_type'].'</b></p>
+									<p><b>'.$empresa[0]['pge_add_soc'].'</b></p>
+								</th>
+								<th>
+									<p><b>Purchase Order</b></p>
+								</th>
+							/tr>
+						</table>';
 
-            </th>
-            <th>
-                <p><b>PURCHASE ORDER</b></p>
-            </th>
-        </tr>
-
-</table>
-        ';
+				$footer = '
+					<table width="100%" style="vertical-align: bottom; font-family: serif;
+						font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+						<tr>
+							<th  width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+						</tr>
+					</table>';
 
 				$footer = '
         <table width="100%" style="vertical-align: bottom; font-family: serif;
@@ -394,7 +401,7 @@ class PdfOrdenCompraEn extends REST_Controller {
 						<p>'.$empresa[0]['pge_state_soc'].'</p>
 						<p>TELEFONO:'.$empresa[0]['pge_phone1'].' / '.$empresa[0]['pge_phone2'].'</p>
 						<p>website: '.$empresa[0]['pge_web_site'].'</p>
-						<p>Instagram: @Pneusdevenezuela</p>
+						<p>Instagram: '.$empresa[0]['pge_page_social'].'</p>
             </th>
             <th style="text-align: right;">
 								<p><b>po: </b></p>

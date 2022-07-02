@@ -30,7 +30,7 @@ class PayR extends REST_Controller {
 	public function PayR_post(){
 
         $Data = $this->post();
-				$Data = $Data['BPR_DOCENTRY'];
+				$Data = $Data['bpr_docentry'];
 
 				$formatter = new NumeroALetras();
 
@@ -73,43 +73,41 @@ class PayR extends REST_Controller {
 				}
 
 				$sqlpagoE = "SELECT
-                            	t0.bpr_docentry id,
-                            	t0.bpr_cardcode nit,
-                            	trim(t0.bpr_cardname) proveedor,
-                            	t0.bpr_address direccion,
-                              0 telefono,
-                            	t0.bpr_perscontact contacto,
-                            	t0.bpr_series serie,
-                            	t0.bpr_docnum numero_doc,
-                            	t0.bpr_docdate fecha_doc,
-                            	cast(t0.bpr_createat as date) fecha_cre,
-                            	t0.bpr_comments referencia,
-                            	t0.bpr_memo comentarios,
-                            	t0.bpr_datetransfer fecha_transf,
-                            	t0.bpr_doctotal total_doc,
-                            	t0.bpr_currency moneda,
-                            	t1.pe1_doctype origen,
-                              case
-                            		when t1.pe1_doctype = 15 then 'FC'
-                            		else ''
-                            	end tipo,
-                            	case
-                            		when t1.pe1_doctype = 15 then (select aa.cfc_docnum from dcfc aa where aa.cfc_docentry = t1.pe1_docentry)
-                            		else 0
-                            	end docnum,
-                            	t1.pe1_docdate fecha_origen,
-                            	t1.pe1_docduedate fecha_ven,
-                            	t1.pe1_daysbackw dias_ven,
-                            	t1.pe1_vlrtotal total_doc_origen,
-                            	t1.pe1_vlrpaid total_apli,
-                              (t1.pe1_vlrtotal - t1.pe1_vlrpaid) saldo,
-                            	t1.pe1_comments coments_origen
+        t0.bpr_docentry id,
+        t0.bpr_cardcode nit,
+        trim(t0.bpr_cardname) proveedor,
+        t0.bpr_address direccion,
+        '' telefono,
+        t0.bpr_perscontact contacto,
+        t0.bpr_series serie,
+        t0.bpr_docnum numero_doc,
+        t0.bpr_docdate fecha_doc,
+        cast(t0.bpr_createat as date) fecha_cre,
+        t0.bpr_comments referencia,
+        t0.bpr_memo comentarios,
+        t0.bpr_datetransfer fecha_transf,
+        t0.bpr_doctotal total_doc,
+        t0.bpr_currency moneda,
+        t1.pr1_doctype origen,
+        substr(t2.mdt_docname,1,1)||substr(t2.mdt_docname,7,1) tipo,
+        case
+          when t1.pr1_doctype = 15 then (select aa.dvf_docnum from dvfv aa where aa.dvf_docentry = t1.pr1_docentry)
+          else 0
+        end docnum,
+        t1.pr1_docdate fecha_origen,
+        t1.pr1_docduedate fecha_ven,
+        t1.pr1_daysbackw dias_ven,
+        t1.pr1_vlrtotal total_doc_origen,
+        t1.pr1_vlrpaid total_apli,
+        (t1.pr1_vlrtotal - t1.pr1_vlrpaid) saldo,
+        t1.pr1_comments coments_origen
+      
+      from gbpr t0
+      left join bpr1 t1 on t0.bpr_docentry = t1.pr1_docnum
+      join dmdt t2 on t1.pr1_doctype = t2.mdt_doctype
+      where t0.bpr_docentry = :bpr_docentry";
 
-                            from gbpr t0
-                            left join bpe1 t1 on t0.bpr_docentry = t1.pe1_docnum
-                            where t0.bpr_docentry = :BPR_DOCENTRY";
-
-				$contenidoPAYE = $this->pedeo->queryTable($sqlpagoE,array(':BPR_DOCENTRY'=>$Data));
+				$contenidoPAYE = $this->pedeo->queryTable($sqlpagoE,array(':bpr_docentry'=>$Data));
 
 				if(!isset($contenidoPAYE[0])){
 						$respuesta = array(
@@ -152,8 +150,8 @@ class PayR extends REST_Controller {
                 <p>'.$empresa[0]['pge_mail'].'</p>
             </th>
             <th>
-                <p>PAGO RECIBIDO</p>
-                <p class="fondo">'.$contenidoPAYE[0]['numero_doc'].'</p>
+                <p><b>PAGO RECIBIDO<b></p>
+                <p>'.$contenidoPAYE[0]['numero_doc'].'</p>
 
             </th>
         </tr>
@@ -164,16 +162,6 @@ class PayR extends REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th style="text-align: center;">
-                    <p>Autorización de numeración de facturación N°18764009111647 de 2020-12-22 Modalidad Factura Electrónica Desde N° WT5000 hasta WT10000 con
-                    vigencia hasta 2021-12-22.
-                    </p>
-                </th>
-            </tr>
-        </table>
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
                 <th class="fondo" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
             </tr>
         </table>';
@@ -181,22 +169,22 @@ class PayR extends REST_Controller {
 
         $html = '
 
-        <table class="bordew" style="width:100%">
+        <table style="width:100%">
         <tr>
           <th>
-          	<p class="fondo">SEÑOR(ES):</p>
+          	<p><b>SEÑOR(ES):<b></p>
           </th>
           <th style="text-align: left;">
           	<p>'.$contenidoPAYE[0]['proveedor'].'</p>
           </th>
           <th>
-            <p class="fondo">FECHA DE DOCUMENTO </p>
+            <p><b>FECHA DE DOCUMENTO<b></p>
             <p>'.$contenidoPAYE[0]['fecha_doc'].'</p>
           </th>
         </tr>
         <tr>
           <th>
-            <p class="fondo">DIRECCIÓN:</p>
+            <p><b>DIRECCIÓN:<b></p>
           </th>
           <th style="text-align: left;">
             <p>'.$contenidoPAYE[0]['direccion'].'</p>
@@ -205,34 +193,43 @@ class PayR extends REST_Controller {
         </tr>
         <tr>
           <th>
-            <p class="fondo">TELÉFONO:</p>
+            <p><b>TELÉFONO:<b></p>
           </th>
           <th style="text-align: left;">
             <p>
             	<span>'.$contenidoPAYE[0]['telefono'].'</span>
-                <span class ="fondo">RIF:</span>
+                <span><b>RIF:<b></span>
                 <span>'.$contenidoPAYE[0]['nit'].'</span>
             </p>
           </th>
           <th>
-            <p class="fondo">FECHA DE CREACION </p>
+            <p><b>FECHA DE CREACION <b></p>
             <p>'.$contenidoPAYE[0]['fecha_cre'].'</p>
           </th>
         </tr>
         </table>
-
+        
+        <table width="100%" style="vertical-align: bottom; font-family: serif;
+            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+            <tr>
+                <th class="fondo">
+                    <p></p>
+                </th>
+            </tr>
+        </table>
         <br>
+
 
         <table class="borde" style="width:100%">
         <tr>
-          <th class="fondo">TIPO</th>
-          <th class="fondo">DOCUMENTO</th>
-          <th class="fondo">FECHA DOCUMENTO</th>
-          <th class="fondo">FECHA VENCIMIENTO</th>
-          <th class="fondo">DIAS VENCIDOS</th>
-          <th class="fondo">VALOR TOTAL</th>
-          <th class="fondo">VALOR APLICADO</th>
-          <th class="fondo">SALDO</th>
+          <th><b>TIPO</b></th>
+          <th><b>DOCUMENTO</b></th>
+          <th><b>FECHA DOCUMENTO</b></th>
+          <th><b>FECHA VENCIMIENTO</b></th>
+          <th><b>DIAS VENCIDOS</b></th>
+          <th><b>VALOR TOTAL</b></th>
+          <th><b>VALOR APLICADO</b></th>
+          <th><b>SALDO</b></th>
         </tr>
       	'.$totaldetalle.'
         </table>
@@ -249,16 +246,16 @@ class PayR extends REST_Controller {
         <br>
         <table width="100%">
         <tr>
-            <td style="text-align: left;">TOTAL PAGADO: <span>$'.number_format($contenidoPAYE[0]['total_doc'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: left;"><b>TOTAL PAGADO: </b><span>$'.number_format($contenidoPAYE[0]['total_doc'], 2, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: left;">REFERENCIA: <span>'.$contenidoPAYE[0]['referencia'].'</span></p></td>
+            <td style="text-align: left;"><b>REFERENCIA: </b><span>'.$contenidoPAYE[0]['referencia'].'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: left;">COMENTARIO APLICADO: <span>'.$contenidoPAYE[0]['comentarios'].'</span></span></p></td>
+            <td style="text-align: left;"><b>COMENTARIO APLICADO: </b><span>'.$contenidoPAYE[0]['comentarios'].'</span></span></p></td>
         </tr>
         <tr>
-            <td style="text-align: left;">FECHA DE TRANSFERENCIA: <span>'.$contenidoPAYE[0]['fecha_transf'].'</span></p></td>
+            <td style="text-align: left;"><b>FECHA DE TRANSFERENCIA: </b><span>'.$contenidoPAYE[0]['fecha_transf'].'</span></p></td>
         </tr>
 
         </table>
@@ -267,24 +264,15 @@ class PayR extends REST_Controller {
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
-                <th style="text-align: left;" class="fondo">
+                <th style="text-align: left;">
+                    <p><b>Valor en letras:</b></p>
                     <p>'.$formatter->toWords($contenidoPAYE[0]['total_doc'],2)." ".$contenidoPAYE[0]['moneda'].'</p>
                 </th>
             </tr>
         </table>
 
         <br><br>
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th style="text-align: left;">
-                    <p>Esta factura se asimila en todos sus efectos a una letra de cambio de conformidad con el Art. 774 del código de
-                    comercio. Autorizo que en caso de incumplimiento de esta obligación sea reportado a las centrales de riesgo, se
-                    cobraran intereses por mora.
-                    </p>
-                </th>
-            </tr>
-        </table>';
+        ';
 // print_r($html);exit();die();
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 

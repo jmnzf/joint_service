@@ -204,24 +204,24 @@ class PdfPaymentMade extends REST_Controller {
 
 
         $header = '
-				<table width="100%" style="text-align: left;">
-        <tr>
-            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40">
-						</img></th>
-            <th>
-                <p><b>Andino Pneus de Venezuela, C.A.</b></p>
-                <p><b>Rif: J-003281174</b></p>
-                <p><b>Carretera Nacional Guacara-Los Guayos, Fabrica de Cauchos.</b></p>
-                <p><b>GUACARA, Estado Carabobo, Venezuela</b></p>
+			<table width="100%" style="text-align: left;">
+			<tr>
+				<th style="text-align: left;">
+					<img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" 
+					width ="100" height ="40"></img>
+				</th>
+				<th>
+					<p><b>'.$empresa[0]['pge_name_soc'].'</b></p>
+					<p><b>'.$empresa[0]['pge_id_type'].'</b></p>
+					<p><b>'.$empresa[0]['pge_add_soc'].'</b></p>
 
-						            </th>
-						            <th>
-						                <p><b>PAGO EFECTUADO</b></p>
-						            </th>
-						        </tr>
+				</th>
+				<th>
+					<p><b>PAGO EFECTUADO</b></p>
+				</th>
+			/tr>
 
-						</table>';
-					// print_r($header);exit();die();
+		</table>';
 				$footer = '
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
@@ -232,40 +232,38 @@ class PdfPaymentMade extends REST_Controller {
 
 
         $html = '
-				<table  width="100%">
-        <tr>
+			<table  width="100%">
+				<tr>
+					<th style="text-align: left;">
+						<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
+						<p>'.$empresa[0]['pge_add_soc'].'</p>
+						<p>'.$empresa[0]['pge_id_type'].'</p>
+						<p>'.$empresa[0]['pge_state_soc'].'</p>
+						<p>TELEFONO:'.$empresa[0]['pge_phone1'].' / '.$empresa[0]['pge_phone2'].'</p>
+						<p>website: '.$empresa[0]['pge_web_site'].'</p>
+						<p>Instagram: '.$empresa[0]['pge_page_social'].'</p>
+					</th>
+					<th style="text-align: right;">
+						<p><b>PAGO: </b></p>
+						<p><b>FECHA DE EMISIÓN: </b></p>
+						<p><b>FECHA DE PAGO: </b></p>
+					</th>
+					<th style="text-align: left;">
+						<p >'.$contenidoOC[0]['bpe_docnum'].'</p>
+						<p>'.$this->dateformat->Date($contenidoOC[0]['bpe_docdate']).'</p>
+						<p>'.$this->dateformat->Date($contenidoOC[0]['bpe_datetransfer']).'</p>
+           	 		</th>
+        		</tr>
+        	</table>
 
-            <th style="text-align: left;">
-								<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
-								<p>'.$empresa[0]['pge_add_soc'].'</p>
-                <p>'.$empresa[0]['pge_id_type'].'</p>
-								<p>'.$empresa[0]['pge_state_soc'].'</p>
-                <p>TELEFONO:'.$empresa[0]['pge_phone1'].' / '.$empresa[0]['pge_phone2'].'</p>
-                <p>website: '.$empresa[0]['pge_web_site'].'</p>
-                <p>Instagram: @Pneusdevenezuela</p>
-            </th>
-						<th style="text-align: right;">
-									<p><b>PAGO: </b></p>
-									<p><b>FECHA DE EMISIÓN: </b></p>
-									<p><b>FECHA DE PAGO: </b></p>
-						</th>
-									<th style="text-align: left;">
-									<p >'.$contenidoOC[0]['bpe_docnum'].'</p>
-									<p>'.$this->dateformat->Date($contenidoOC[0]['bpe_docdate']).'</p>
-									<p>'.$this->dateformat->Date($contenidoOC[0]['bpe_datetransfer']).'</p>
-
-            </th>
-        </tr>
-
-        </table>
-				<table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th class="fondo">
-                    <p></p>
-                </th>
-            </tr>
-        </table>
+			<table width="100%" style="vertical-align: bottom; font-family: serif;
+            	font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+            	<tr>
+                	<th class="fondo">
+                    	<p></p>
+                	</th>
+            	</tr>
+        	</table>
 
 				<table  width="100%">
 				<tr>
