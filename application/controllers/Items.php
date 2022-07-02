@@ -349,18 +349,18 @@ class Items extends REST_Controller {
 
 		$variableSql = 'WHERE 1=1';
 
-		if(isset($Data['sub_artic']) && !empty($Data['sub_artic'])){
+		if(isset($request['sub_artic']) && !empty($request['sub_artic'])){
 
-			$variableSql .= " AND cast(t0.dma_group_code as varchar) LIKE '%".$Data['sub_artic']."%'";
+			$variableSql .= " AND cast(t0.dma_group_code as varchar) LIKE '%".$request['sub_artic']."%'";
 		}
-		if(isset($Data['cod_artic']) &&  !empty($Data['cod_artic'])){
+		if(isset($request['cod_artic']) &&  !empty($request['cod_artic'])){
 
-			$variableSql .= " AND t0.dma_item_code LIKE '%".$Data['cod_artic']."%'";
+			$variableSql .= " AND t0.dma_item_code LIKE '%".$request['cod_artic']."%'";
 		}
 
-		if(isset($Data['nom_artic']) &&  !empty($Data['nom_artic'])){
+		if(isset($request['nom_artic']) &&  !empty($request['nom_artic'])){
 
-			$variableSql .= " AND t0.dma_item_name LIKE '%".$Data['nom_artic']."%'";
+			$variableSql .= " AND t0.dma_item_name LIKE '%".$request['nom_artic']."%'";
 		}
 		// OBTENER NÚMERO DE REGISTROS DE LA TABLA.
 		$numRows = $this->pedeo->queryTable("select get_numrows('dmar') as numrows", []);
