@@ -1109,6 +1109,7 @@ class SalesDv extends REST_Controller {
                 ':ac1_line'   => $AC1LINE
                 ));
 
+                
                 if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
                 // Se verifica que el detalle no de error insertando //
 
@@ -1128,8 +1129,9 @@ class SalesDv extends REST_Controller {
 
                   return;
                 }
-
+                // print_r($dbito."\n");print_r($cdito);
       }
+     
       // FIN DEL PROCEDIEMIENTO PARA LLENAR LA CUENTA PUENTE
 
 
@@ -1341,7 +1343,11 @@ class SalesDv extends REST_Controller {
 
                           return;
                         }
+
+                        // print_r($dbito."\n");print_r($cdito);
       }
+
+      // exit;
 
       // //FIN PROCEDIMIENTO PARA ACTUALIZAR ESTADO DOCUMENTO
 
@@ -1375,12 +1381,15 @@ class SalesDv extends REST_Controller {
                           ':vem_doctype' => $Data['vdv_basetype']
           ));
 
+          $resta_item = $resEstado1[0]['item'] - $resEstado2[0]['item'];
+          $resta_cantidad = $resEstado1[0]['cantidad'] - $resEstado2[0]['cantidad'];
+
           $item_del = $resEstado1[0]['item'];
           $item_dev = $resEstado2[0]['item'];
           $cantidad_del = $resEstado1[0]['cantidad'];
           $cantidad_dev = $resEstado2[0]['cantidad'];
 
-
+// print_r($resta_item);print_r($resta_cantidad);exit();die();
           if($item_del == $item_dev  &&  $cantidad_del == $cantidad_dev){
 
 
@@ -1398,6 +1407,23 @@ class SalesDv extends REST_Controller {
               ));
 
               if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+                if(is_numeric($resta_item) && $resta_item == 0
+                  && is_numeric($resta_cantidad) && $resta_cantidad == 0){
+
+                  $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+                  VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+                      $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+                      ':bed_docentry' => $Data['vdv_docentry'],
+                      ':bed_doctype' => $Data['vdv_doctype'],
+                      ':bed_status' => 3, //ESTADO CERRADO
+                      ':bed_createby' => $Data['vdv_createby'],
+                      ':bed_date' => date('Y-m-d'),
+                      ':bed_baseentry' => $resInsert,
+                      ':bed_basetype' => $Data['vdv_doctype']
+                      ));
+                  }
 
               }else{
 

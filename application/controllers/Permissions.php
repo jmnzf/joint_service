@@ -85,6 +85,7 @@
 			$menus = json_decode($request['Mno_Idmenu'], true);
 			// VALIDAR.
 			if (isset($menus[0])) {
+
 				// OBTENER PERMISOS DEL MENU.
 				$result = $this->pedeo->queryTable("SELECT mno_id_menu FROM menu_rol WHERE mno_id_rol = :mno_id_rol", array(':mno_id_rol' => $request['Mno_Idrol']));
 				// INSERT POR DEFECTO.
@@ -129,6 +130,8 @@
 					);
 				}
 			}
+
+			
 			//
 			if ($insertId) {
 				//

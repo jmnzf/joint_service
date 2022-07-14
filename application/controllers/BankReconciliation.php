@@ -102,7 +102,7 @@ class BankReconciliation extends REST_Controller {
 			//
 
 			//VALIDANDO PERIODO CONTABLE
-			$periodo = $this->generic->ValidatePeriod($Data['crb_docdate'], $Data['crb_startdate'],$Data['crb_enddate'],0);
+			$periodo = $this->generic->ValidatePeriod($Data['crb_docdate'], $Data['crb_posting_stardate'],$Data['crb_posting_enddate'],0);
 
 			if( isset($periodo['error']) && $periodo['error'] == false){
 
@@ -225,7 +225,7 @@ class BankReconciliation extends REST_Controller {
 			//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
 			// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
 			$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-			$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['crb_currency'], ':tsa_date' => $Data['crb_startdate']));
+			$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['crb_currency'], ':tsa_date' => $Data['crb_posting_stardate']));
 
 			if(isset($resBusTasa[0])){
 
@@ -236,7 +236,7 @@ class BankReconciliation extends REST_Controller {
 						$respuesta = array(
 							'error' => true,
 							'data'  => array(),
-							'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['crb_currency'].' en la actual fecha del documento: '.$Data['crb_startdate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
+							'mensaje' =>'No se encrontro la tasa de cambio para la moneda: '.$Data['crb_currency'].' en la actual fecha del documento: '.$Data['crb_posting_stardate'].' y la moneda local: '.$resMonedaLoc[0]['pgm_symbol']
 						);
 
 						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -247,7 +247,7 @@ class BankReconciliation extends REST_Controller {
 
 
 			$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-			$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['crb_startdate']));
+			$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['crb_posting_stardate']));
 
 			if(isset($resBusTasa2[0])){
 
@@ -255,7 +255,7 @@ class BankReconciliation extends REST_Controller {
 					$respuesta = array(
 						'error' => true,
 						'data'  => array(),
-						'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['crb_startdate']
+						'mensaje' =>'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :'.$Data['crb_posting_stardate']
 					);
 
 					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -417,9 +417,9 @@ class BankReconciliation extends REST_Controller {
 							':mac_status' => 1,
 							':mac_base_type' => is_numeric($Data['crb_doctype'])?$Data['crb_doctype']:0,
 							':mac_base_entry' => $resInsert,
-							':mac_doc_date' => $this->validateDate($Data['crb_docdate'])?$Data['crb_docdate']:NULL,
-							':mac_doc_duedate' => $this->validateDate($Data['crb_enddate'])?$Data['crb_enddate']:NULL,
-							':mac_legal_date' => $this->validateDate($Data['crb_startdate'])?$Data['crb_startdate']:NULL,
+							':mac_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+							':mac_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
+							':mac_legal_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
 							':mac_ref1' => is_numeric($Data['crb_doctype'])?$Data['crb_doctype']:0,
 							':mac_ref2' => "",
 							':mac_ref3' => "",
@@ -428,7 +428,7 @@ class BankReconciliation extends REST_Controller {
 							':mac_sys_total' => 0,
 							':mac_trans_dode' => 1,
 							':mac_beline_nume' => 1,
-							':mac_vat_date' => $this->validateDate($Data['crb_startdate'])?$Data['crb_startdate']:NULL,
+							':mac_vat_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
 							':mac_serie' => 1,
 							':mac_number' => 1,
 							':mac_bammntsys' => 0,
@@ -502,8 +502,8 @@ class BankReconciliation extends REST_Controller {
 									':ac1_debit_sys' => round($MontoSysDB, 2),
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_startdate'])?$Data['crb_startdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_enddate'])?$Data['crb_enddate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
@@ -598,8 +598,8 @@ class BankReconciliation extends REST_Controller {
 									':ac1_debit_sys' => round($MontoSysDB, 2),
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_startdate'])?$Data['crb_startdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_enddate'])?$Data['crb_enddate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
@@ -695,8 +695,8 @@ class BankReconciliation extends REST_Controller {
 									':ac1_debit_sys' => 0,
 									':ac1_credit_sys' =>  round($MontoSysCR, 2),
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_startdate'])?$Data['crb_startdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_enddate'])?$Data['crb_enddate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
@@ -790,8 +790,8 @@ class BankReconciliation extends REST_Controller {
 									':ac1_debit_sys' => 0,
 									':ac1_credit_sys' => round($MontoSysCR, 2),
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_startdate'])?$Data['crb_startdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_enddate'])?$Data['crb_enddate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
@@ -885,8 +885,8 @@ class BankReconciliation extends REST_Controller {
 									':ac1_debit_sys' => round($MontoSysDB, 2),
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_startdate'])?$Data['crb_startdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_enddate'])?$Data['crb_enddate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
@@ -1004,8 +1004,8 @@ class BankReconciliation extends REST_Controller {
 									':ac1_debit_sys' => round($debito, 2),
 									':ac1_credit_sys' => round($credito, 2),
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_startdate'])?$Data['crb_startdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_enddate'])?$Data['crb_enddate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,
@@ -1105,8 +1105,8 @@ class BankReconciliation extends REST_Controller {
 									':ac1_debit_sys' => 0,
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_startdate'])?$Data['crb_startdate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_enddate'])?$Data['crb_enddate']:NULL,
+									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
 									':ac1_debit_import' => 0,
 									':ac1_credit_import' => 0,
 									':ac1_debit_importsys' => 0,

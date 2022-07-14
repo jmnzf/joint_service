@@ -766,6 +766,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											-- DEVOLUCION DE VENTAS
 											union all
 											select distinct
@@ -786,6 +787,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--FACTURA DE VENTAS
 											union all
 											select distinct
@@ -806,6 +808,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--NOTA CREDITO DE VENTAS
 											union all
 											select distinct
@@ -826,6 +829,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--NOTA DEBITO DE VENTAS
 											union all
 											select distinct
@@ -846,6 +850,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--ENTRADA DE COMPRAS
 											union all
 											select distinct
@@ -866,6 +871,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--DEVOLUCION DE COMPRAS
 											union all
 											select distinct
@@ -886,6 +892,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--FACTURA DE COMPRAS
 											union all
 											select distinct
@@ -906,6 +913,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--NOTA CREDITO DE COMPRAS
 											union all
 											select distinct
@@ -926,6 +934,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--NOTA DEBITO DE COMPRAS
 											union all
 											select distinct
@@ -946,6 +955,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--SALIDA DE INVENTARIO
 											union all
 											select distinct
@@ -966,6 +976,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--ENTRADA DE INVENTARIO
 											union all
 											select distinct
@@ -986,6 +997,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--GESTION DE BANCO PAGOS EFECTUADOS
 											union all
 											select distinct
@@ -1006,6 +1018,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--GESTION DE BANCO PAGOS RECIBIDOS
 											union all
 											select distinct
@@ -1026,6 +1039,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											--RECONCILIACION DE CUENTAS
 											union all
 											select distinct
@@ -1046,6 +1060,7 @@ class AccountingAccent extends REST_Controller {
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
 											-- Asiento manual
 											union all
 											select distinct
@@ -1082,7 +1097,8 @@ class AccountingAccent extends REST_Controller {
 											and dcrb.crb_id = mac1.ac1_font_key
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
-											where mac1.ac1_trans_id = :ac1_trans_id";
+											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
 

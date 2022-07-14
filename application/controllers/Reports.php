@@ -1162,8 +1162,8 @@ class Reports extends REST_Controller {
 									// VALIDAR SI EL CAMPO ES DE COMENTARIO.
 									if ($prefijo[1] === 'comments') {
 										// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
-										$newObj['mac_comment'] = $obj;
-									} else {
+										$newObj['mac_comment'] = $obj;;
+									}else {
 										//
 										$newObj['mac_'.$prefijo[1]] = $obj;
 									}

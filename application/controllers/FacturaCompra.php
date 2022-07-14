@@ -57,10 +57,10 @@ class FacturaCompra extends REST_Controller {
 			 //INFORMACION DE LA EMPRESA
 
 				$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
-																					   pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
-																					   CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
-																					   pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
-																						 FROM pgem", array());
+													    pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
+														CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
+														pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
+													FROM pgem", array());
 
 				if(!isset($empresa[0])){
 						$respuesta = array(
@@ -75,47 +75,46 @@ class FacturaCompra extends REST_Controller {
 				}
 
 				$sqlcotizacion = "SELECT
-													CONCAT(T0.CFC_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
-													T0.CFC_CARDCODE Nit,
-													CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
-													T4.DMC_PHONE1 Telefono,
-													T4.DMC_EMAIL Email,
-													CONCAT(T6.PGS_PREF_NUM,' ',T0.CFC_DOCNUM) NumeroDocumento,
-													to_char(T0.CFC_DOCDATE,'DD-MM-YYYY') FechaDocumento,
-													to_char(T0.CFC_DUEDATE,'DD-MM-YYYY') FechaVenDocumento,
-													trim('COP' FROM t0.CFC_CURRENCY) MonedaDocumento,
-													T7.PGM_NAME_MONEDA NOMBREMONEDA,
-													T5.MEV_NAMES Vendedor,
-													'' MedioPago,
-													'' CondPago,
-													T1.FC1_ITEMCODE Referencia,
-													T1.FC1_ITEMNAME descripcion,
-													T1.FC1_WHSCODE Almacen,
-													T1.FC1_UOM UM,
-													T1.FC1_QUANTITY Cantidad,
-													T1.FC1_PRICE VrUnit,
-													T1.FC1_DISCOUNT PrcDes,
-													T1.FC1_VATSUM IVAP,
-													T1.FC1_LINETOTAL ValorTotalL,
-													T0.CFC_BASEAMNT base,
-													T0.CFC_DISCOUNT Descuento,
-													(T0.CFC_BASEAMNT - T0.CFC_DISCOUNT) subtotal,
-													T0.CFC_TAXTOTAL Iva,
-													T0.CFC_DOCTOTAL TotalDoc,
-													T0.CFC_COMMENT Comentarios,
-													t0.CFC_TOTALRET totalret,
-													t0.cfc_tax_control_num,
-													T0.cfc_correl
-												FROM DCFC t0
-												INNER JOIN CFC1 T1 ON t0.CFC_docentry = t1.FC1_docentry
-												LEFT JOIN DMSN T2 ON t0.CFC_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON T0.CFC_ADRESS = CAST(T3.DMD_ID AS VARCHAR) AND t3.dmd_ppal = 1
-												LEFT JOIN DMSC T4 ON T0.CFC_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
-												LEFT JOIN DMEV T5 ON T0.CFC_SLPCODE = T5.MEV_ID
-												LEFT JOIN PGDN T6 ON T0.CFC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.CFC_SERIES = T6.PGS_ID
-												LEFT JOIN PGEC T7 ON T0.CFC_CURRENCY = T7.PGM_SYMBOL
-												WHERE T0.CFC_DOCENTRY = :CFC_DOCENTRY";
-
+										CONCAT(T0.CFC_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
+										T0.CFC_CARDCODE Nit,
+										CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
+										T4.DMC_PHONE1 Telefono,
+										T4.DMC_EMAIL Email,
+										CONCAT(T6.PGS_PREF_NUM,' ',T0.CFC_DOCNUM) NumeroDocumento,
+										to_char(T0.CFC_DOCDATE,'DD-MM-YYYY') FechaDocumento,
+										to_char(T0.CFC_DUEDATE,'DD-MM-YYYY') FechaVenDocumento,
+										trim('COP' FROM t0.CFC_CURRENCY) MonedaDocumento,
+										T7.PGM_NAME_MONEDA NOMBREMONEDA,
+										T5.MEV_NAMES Vendedor,
+										'' MedioPago,
+										'' CondPago,
+										T1.FC1_ITEMCODE Referencia,
+										T1.FC1_ITEMNAME descripcion,
+										T1.FC1_WHSCODE Almacen,
+										T1.FC1_UOM UM,
+										T1.FC1_QUANTITY Cantidad,
+										T1.FC1_PRICE VrUnit,
+										T1.FC1_DISCOUNT PrcDes,
+										T1.FC1_VATSUM IVAP,
+										T1.FC1_LINETOTAL ValorTotalL,
+										T0.CFC_BASEAMNT base,
+										T0.CFC_DISCOUNT Descuento,
+										(T0.CFC_BASEAMNT - T0.CFC_DISCOUNT) subtotal,
+										T0.CFC_TAXTOTAL Iva,
+										T0.CFC_DOCTOTAL TotalDoc,
+										T0.CFC_COMMENT Comentarios,
+										t0.CFC_TOTALRET totalret,
+										t0.cfc_tax_control_num,
+										T0.cfc_correl
+									FROM DCFC t0
+									INNER JOIN CFC1 T1 ON t0.CFC_docentry = t1.FC1_docentry
+									LEFT JOIN DMSN T2 ON t0.CFC_cardcode = t2.dms_card_code
+									LEFT JOIN DMSD T3 ON T0.CFC_ADRESS = CAST(T3.DMD_ID AS VARCHAR) AND t3.dmd_ppal = 1
+									LEFT JOIN DMSC T4 ON T0.CFC_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
+									LEFT JOIN DMEV T5 ON T0.CFC_SLPCODE = T5.MEV_ID
+									LEFT JOIN PGDN T6 ON T0.CFC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.CFC_SERIES = T6.PGS_ID
+									LEFT JOIN PGEC T7 ON T0.CFC_CURRENCY = T7.PGM_SYMBOL
+									WHERE T0.CFC_DOCENTRY = :CFC_DOCENTRY";
 				$contenidoFC = $this->pedeo->queryTable($sqlcotizacion,array(':CFC_DOCENTRY'=>$Data));
 
 				if(!isset($contenidoFC[0])){

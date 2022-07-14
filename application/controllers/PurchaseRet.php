@@ -838,13 +838,28 @@ class PurchaseRet extends REST_Controller {
 
 													if($resCostoCantidad[0]['bdi_quantity'] > 0){
 
-															 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-															 $CantidadDevolucion = $detail['dc1_quantity'];
-															 $CostoDevolucion = $detail['dc1_price'];
-															 $CostoActual= $resCostoCantidad[0]['bdi_avgprice'];
-															 $CantidadTotal = ($CantidadActual - $CantidadDevolucion);
-															 $CostoPonderado = (($CostoActual * $CantidadActual) + ($CostoDevolucion * $CantidadDevolucion)) / $CantidadTotal;
-
+														$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+														$CantidadDevolucion = $detail['dc1_quantity'];
+														$CostoDevolucion = $detail['dc1_price'];
+														$CostoActual= $resCostoCantidad[0]['bdi_avgprice'];
+														$CantidadTotal = ($CantidadActual - $CantidadDevolucion);
+														if($CantidadTotal == 0){
+															$CostoPonderado = 0;
+														}else if ($CantidadTotal != 0){
+															$CostoPonderado = (($CostoActual * $CantidadActual) + ($CostoDevolucion * $CantidadDevolucion)) / $CantidadTotal;
+														}
+														
+														
+														
+															//  print_r($CantidadActual."\n");
+															//  print_r($CantidadDevolucion."\n");
+															//  print_r($CostoDevolucion."\n");
+															//  print_r($CostoActual."\n");
+															//  print_r($CantidadTotal."\n");
+															//  print_r($CostoPonderado);
+															 
+															//  ;exit;die();
+															 
 															 $sqlUpdateCostoCantidad =  "UPDATE tbdi
 																													 SET bdi_quantity = :bdi_quantity,
 																													 bdi_avgprice = :bdi_avgprice

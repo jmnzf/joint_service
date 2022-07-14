@@ -43,10 +43,8 @@ class Traceability extends REST_Controller {
 
       $sqlSelect = "SELECT tbmd.*, mdt_docname
                     FROM tbmd
-										INNER JOIN dmdt
-										ON tbmd.bmd_doctype = dmdt.mdt_doctype
-                    WHERE concat(bmd_tdi, bmd_ndi) IN (SELECT concat(tb1.bmd_tdi, tb1.bmd_ndi)
-                    FROM tbmd as tb1
+                    INNER JOIN dmdt ON tbmd.bmd_doctype = dmdt.mdt_doctype
+                    WHERE concat(bmd_tdi, bmd_ndi) IN (SELECT distinct concat(tb1.bmd_tdi, tb1.bmd_ndi) FROM tbmd as tb1
                     WHERE tb1.bmd_doctype  = :bmd_doctype
                     AND tb1.bmd_docentry = :bmd_docentry) 
                     AND tbmd.bmd_cardtype = (SELECT bmd_cardtype
