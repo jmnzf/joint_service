@@ -1162,13 +1162,32 @@ class Reports extends REST_Controller {
 									// VALIDAR SI EL CAMPO ES DE COMENTARIO.
 									if ($prefijo[1] === 'comments') {
 										// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
-										$newObj['mac_comment'] = $obj;
-									} else {
+										$newObj['mac_comment'] = $obj;;
+									}else {
 										//
 										$newObj['mac_'.$prefijo[1]] = $obj;
 									}
 								}
 							}
+							/**
+							 * VALIDACIONES PARA CUANDO EL REGISTRO VIENE DE UN ASIENTO.
+							 */
+							if (!isset($newObj['mac_cardcode'])) {
+								// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
+								$newObj['mac_cardcode'] = $obj['ac1_legal_num'];
+								$newObj['mac_cardname'] = $obj['ac1_legal_num'];
+							}
+							if (!isset($newObj['mac_comment'])) {
+								// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
+								$newObj['mac_comment'] = $obj['origen'];
+							}
+							if (!isset($newObj['mac_createby'])) {
+								// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
+								$newObj['mac_createby'] = $obj['ac1_doc_date'];
+							}
+							/**
+							 * FIN
+							 */
 							// AGREGAR NUEVO ARRAY.
 							$newData[] = array_merge($data, $newObj);
 						}

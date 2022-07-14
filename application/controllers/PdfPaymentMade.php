@@ -31,7 +31,7 @@ class PdfPaymentMade extends REST_Controller {
 	public function PdfPaymentMade_post(){
 
         $Data = $this->post();
-				$Data = $Data['bpe_docentry'];
+				$Data = $Data['BPE_DOCENTRY'];
 
 				$formatter = new NumeroALetras();
 
@@ -151,7 +151,7 @@ class PdfPaymentMade extends REST_Controller {
 														else t1.pe1_vlrpaid
 													end pe1_vlrpaid,
 												t0.bpe_memo,
-												t7.tsa_value tasa
+												get_tax_currency(t0.bpe_currency,t0.bpe_docdate) tasa
 											from gbpe t0
 											inner join bpe1 t1 on t0.bpe_docentry = t1.pe1_docnum
 											left join dcfc t2 on t1.pe1_docentry = t2.cfc_docentry and t1.pe1_doctype = t2.cfc_doctype
@@ -159,7 +159,6 @@ class PdfPaymentMade extends REST_Controller {
 											left join dcnd t4 on t1.pe1_docentry = t4.cnd_docentry and t1.pe1_doctype = t4.cnd_doctype
 											left join gbpe t6 on t1.pe1_docentry = t6.bpe_docentry and t1.pe1_doctype = t6.bpe_doctype
 											inner join dmdt t5 on t1.pe1_doctype = t5.mdt_doctype
-											left join tasa t7 on t0.bpe_currency = t7.tsa_curro and t0.bpe_docdate = t7.tsa_date
 											where t0.bpe_docentry = :bpe_docentry";
 
 				$contenidoOC = $this->pedeo->queryTable($sqlcotizacion,array(':bpe_docentry'=>$Data));

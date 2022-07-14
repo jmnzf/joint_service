@@ -1171,7 +1171,9 @@ class AccountReconciliations extends REST_Controller {
 									$DetalleAsiento->vlrpaiddesc	= $VlrTotalOpc;
 									$DetalleAsiento->tasaoriginaldoc = $TasaOrg ;
 
-									$llaveDetalleAsiento = $DetalleAsiento->tipodoc.$DetalleAsiento->tasaoriginaldoc;
+									// $llaveDetalleAsiento = $DetalleAsiento->tipodoc.$DetalleAsiento->tasaoriginaldoc;
+
+									$llaveDetalleAsiento = $detail['ac1_line_num'];
 
 									//********************
 									if(in_array( $llaveDetalleAsiento, $inArrayDetalleAsiento)){
@@ -1949,6 +1951,10 @@ class AccountReconciliations extends REST_Controller {
 						//
 
 
+						// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num";
+						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
+						// print_r(json_encode($ressqlmac1));
+						// exit;
 
 						//SE VALIDA LA CONTABILIDAD CREADA
 	 					$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
@@ -1973,10 +1979,6 @@ class AccountReconciliations extends REST_Controller {
 	 				 //
 
 
-						// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
-						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
-						// print_r(json_encode($ressqlmac1));
-						// exit;
 
 
             $this->pedeo->trans_commit();

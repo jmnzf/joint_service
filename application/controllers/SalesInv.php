@@ -2638,11 +2638,11 @@ class SalesInv extends REST_Controller {
 
 
 							$sqlEstado1 = "SELECT
-																		count(t1.ov1_itemcode) item,
-																		sum(t1.ov1_quantity) cantidad
-																		from dvov t0
-																		inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-																		where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
+												count(t1.ov1_itemcode) item,
+												sum(t1.ov1_quantity) cantidad
+											from dvov t0
+											inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+											where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
 
 
 							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
@@ -2652,13 +2652,13 @@ class SalesInv extends REST_Controller {
 
 
 							$sqlEstado2 = "SELECT
-																			coalesce(count(distinct t3.em1_itemcode),0) item,
-																			coalesce(sum(t3.em1_quantity),0) cantidad
-																			from dvov t0
-																			left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-																			left join dvem t2 on t0.vov_docentry = t2.vem_baseentry
-																			left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
-																			where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
+												coalesce(count(distinct t3.em1_itemcode),0) item,
+												coalesce(sum(t3.em1_quantity),0) cantidad
+											from dvov t0
+											left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+											left join dvem t2 on t0.vov_docentry = t2.vem_baseentry
+											left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
+											where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
 						$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
 							':vov_docentry' => $Data['dvf_baseentry'],
 							':vov_doctype' => $Data['dvf_basetype']
@@ -2678,7 +2678,7 @@ class SalesInv extends REST_Controller {
 						if($item_ord == $item_del  &&  $cantidad_ord == $cantidad_del){
 
 										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 										$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
@@ -2742,6 +2742,7 @@ class SalesInv extends REST_Controller {
 								));
 
 								$resta_cantidad = $resEstado1[0]['cantidad'] - $resDev[0]['cantidad'];
+								$resta_item = $resEstado1[0]['item'] - $resDev[0]['item'];
 
 								$sqlEstado2 = "SELECT
 																					coalesce(count(distinct t3.fv1_itemcode),0) item,
@@ -2756,7 +2757,13 @@ class SalesInv extends REST_Controller {
 								':vem_doctype' => $Data['dvf_basetype']
 							));
 
-							$item_del = $resEstado1[0]['item'];
+							if(is_numeric($resta_item) && $resta_item == 0){
+								$item_del = $resEstado1[0]['item'];
+							}else{
+								$item_del = $resta_item;
+							}
+
+							// $item_del = $resEstado1[0]['item'];
 							$item_fact = $resEstado2[0]['item'];
 							$cantidad_del = $resta_cantidad;
 							$cantidad_fact = $resEstado2[0]['cantidad'];
@@ -2773,7 +2780,7 @@ class SalesInv extends REST_Controller {
 									if($item_del == $item_fact && $cantidad_del == $cantidad_fact){
 
 												$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																						VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+																	VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 												$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
@@ -2792,11 +2799,11 @@ class SalesInv extends REST_Controller {
 
 													if ($Data['dvf_basetype'] == 3) {
 														$sqlEstado1 = 'SELECT
-																								 count(t1.em1_itemcode) item,
-																								 coalesce(sum(t1.em1_quantity),0) cantidad
-																								 from dvem t0
-																								 inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-																								 where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype';
+																			count(t1.em1_itemcode) item,
+																			coalesce(sum(t1.em1_quantity),0) cantidad
+																		from dvem t0
+																		inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																		where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype';
 
 														 $resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
 															 ':vem_docentry' => $Data['dvf_baseentry'],
@@ -2804,13 +2811,13 @@ class SalesInv extends REST_Controller {
 														 ));
 
 														 $sqlDev1 = "SELECT
-																							 count(t3.dv1_itemcode) item,
-																							 coalesce(sum(t3.dv1_quantity),0) cantidad
-																							 from dvem t0
-																							 left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-																							 left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
-																							 left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
-																							 where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+																		count(t3.dv1_itemcode) item,
+																		coalesce(sum(t3.dv1_quantity),0) cantidad
+																	from dvem t0
+																	left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																	left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
+																	left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+																	where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
 
 													 $resDev1 = $this->pedeo->queryTable($sqlDev1, array(
 														 ':vem_docentry' => $Data['dvf_baseentry'],
@@ -2818,6 +2825,7 @@ class SalesInv extends REST_Controller {
 													 ));
 
 													 $resta_cantidad1 = $resEstado1[0]['cantidad'] - $resDev1[0]['cantidad'];
+													 $resta_item1 = $resEstado1[0]['item'] - $resDev1[0]['item'];
 
 													 $sqlDev2 = "SELECT DISTINCT
 																						 t2.*
@@ -2833,19 +2841,25 @@ class SalesInv extends REST_Controller {
 												 ));
 
 													 $sqlEstado2 = "SELECT
-																										 coalesce(count(distinct t3.fv1_itemcode),0) item,
-																										 coalesce(sum(t3.fv1_quantity),0) cantidad
-																										 from dvem t0
-																										 left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-																										 left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry and t0.vem_doctype = t2.dvf_basetype
-																										 left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.em1_itemcode = t3.fv1_itemcode
-																										 where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+																		coalesce(count(distinct t3.fv1_itemcode),0) item,
+																		coalesce(sum(t3.fv1_quantity),0) cantidad
+																	from dvem t0
+																	left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+																	left join dvfv t2 on t0.vem_docentry = t2.dvf_baseentry and t0.vem_doctype = t2.dvf_basetype
+																	left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.em1_itemcode = t3.fv1_itemcode
+																	where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
 												 $resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
 													 ':vem_docentry' => $Data['dvf_baseentry'],
 													 ':vem_doctype' => $Data['dvf_basetype']
 												 ));
 
-												 $item_del1 = $resEstado1[0]['item'];
+												 if(is_numeric($resta_item1) && $resta_item1 == 0){
+													$item_del1 = $resEstado1[0]['item'];
+												}else{
+													$item_del1 = $resta_item1;
+												}
+
+												//  $item_del1 = $resEstado1[0]['item'];
 												 $item_fact1 = $resEstado2[0]['item'];
 												 $cantidad_del1 = $resta_cantidad1;
 												 $cantidad_fact1 = $resEstado2[0]['cantidad'];
@@ -2860,7 +2874,7 @@ class SalesInv extends REST_Controller {
 
 
 																			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																													VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 																			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 

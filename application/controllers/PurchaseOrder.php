@@ -1065,7 +1065,7 @@ class PurchaseOrder extends REST_Controller {
 																			 coalesce(count(distinct t3.po1_itemcode),0) item,
 																			 coalesce(count(t3.po1_quantity),0) cantidad
 																			 FROM dcoc t0
-																			 left join csc1 t1 on t0.coc_docentry = t1.oc1_docentry
+																			 left join coc1 t1 on t0.coc_docentry = t1.oc1_docentry
 																			 left join dcpo t2 on t0.coc_docentry = t2.cpo_docentry and t0.coc_doctype = t2.cpo_basetype
 																			 left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
 																			 where t0.coc_docentry = :coc_docentry and t0.coc_doctype = :coc_doctype";
@@ -1081,10 +1081,10 @@ class PurchaseOrder extends REST_Controller {
 							$cantidad_ord = $resEstado2[0]['cantidad'];
 
 
-							print_r($item_sol);
-							print_r($item_ord);
-							print_r($cantidad_sol);
-							print_r($cantidad_ord);exit();die();
+							// print_r($item_sol);
+							// print_r($item_ord);
+							// print_r($cantidad_sol);
+							// print_r($cantidad_ord);
 
 							if($item_sol == $item_ord  &&  $cantidad_sol == $cantidad_ord){
 

@@ -602,7 +602,7 @@ class PurchaseInv extends REST_Controller {
 					}
 					//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 
-
+					
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
@@ -655,6 +655,8 @@ class PurchaseInv extends REST_Controller {
 
 											 return;
 								}
+
+								
 
 								// PROCESO PARA INSERTAR RETENCIONES
 
@@ -1381,7 +1383,7 @@ class PurchaseInv extends REST_Controller {
 								$DetalleAsientoIngreso->fc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 								$DetalleAsientoIngreso->fc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
 								$DetalleAsientoIngreso->fc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
-								$DetalleAsientoIngreso->em1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
+								$DetalleAsientoIngreso->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 
 
 
@@ -1396,7 +1398,7 @@ class PurchaseInv extends REST_Controller {
 								$DetalleAsientoIva->fc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
 								$DetalleAsientoIva->fc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
 								$DetalleAsientoIva->fc1_cuentaIva = is_numeric($detail['fc1_cuentaIva'])?$detail['fc1_cuentaIva']:NULL;
-								$DetalleAsientoIva->em1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
+								$DetalleAsientoIva->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 								$DetalleAsientoIva->codimp = isset($detail['fc1_codimp'])?$detail['fc1_codimp']:NULL;
 
 
@@ -1435,7 +1437,7 @@ class PurchaseInv extends REST_Controller {
 									$DetalleCostoInventario->fc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 									$DetalleCostoInventario->fc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
 									$DetalleCostoInventario->fc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
-									$DetalleCostoInventario->em1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
+									$DetalleCostoInventario->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 									$DetalleCostoInventario->fc1_inventory = $ManejaInvetario;
 
 
@@ -1449,7 +1451,7 @@ class PurchaseInv extends REST_Controller {
 									$DetalleCostoCosto->fc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 									$DetalleCostoCosto->fc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
 									$DetalleCostoCosto->fc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
-									$DetalleCostoCosto->em1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
+									$DetalleCostoCosto->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 									$DetalleCostoCosto->fc1_inventory = $ManejaInvetario;
 								}else{
 									$DetalleItemNoInventariable->ac1_account = is_numeric($detail['fc1_acctcode'])?$detail['fc1_acctcode']: 0;
@@ -1462,7 +1464,7 @@ class PurchaseInv extends REST_Controller {
 									$DetalleItemNoInventariable->nc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 									$DetalleItemNoInventariable->nc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
 									$DetalleItemNoInventariable->nc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
-									$DetalleItemNoInventariable->em1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
+									$DetalleItemNoInventariable->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 								}
 
 
@@ -2468,285 +2470,6 @@ class PurchaseInv extends REST_Controller {
 
 					//FIN DE OPERACIONES VITALES
 
-					// VALIDANDO ESTADOS DE DOCUMENTOS
-
-					if ($Data['cfc_basetype'] == 12) {
-
-
-						$sqlEstado1 = "SELECT
-																	count(t1.po1_itemcode) item,
-																	sum(t1.po1_quantity) cantidad
-																	from dcpo t0
-																	inner join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
-																	where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
-
-
-						$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-							':cpo_docentry' => $Data['cfc_baseentry'],
-							':cpo_doctype' => $Data['cfc_basetype']
-						));
-
-
-						$sqlEstado2 = "SELECT
-																		coalesce(count(distinct t3.fc1_itemcode),0) item,
-																		coalesce(sum(t3.fc1_quantity),0) cantidad
-																		from dcpo t0
-																		left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
-																		left join dcfc t2 on t0.cpo_docentry = t2.cfc_baseentry
-																		left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.po1_itemcode = t3.fc1_itemcode
-																		where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
-					$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
-						':cpo_docentry' => $Data['cfc_baseentry'],
-						':cpo_doctype' => $Data['cfc_basetype']
-					));
-
-					$item_ord = $resEstado1[0]['item'];
-					$item_fact = $resEstado2[0]['item'];
-					$cantidad_ord = $resEstado1[0]['cantidad'];
-					$cantidad_fact = $resEstado2[0]['cantidad'];
-
-					if($item_ord == $item_fact  &&  $item_fact == $cantidad_fact){
-
-									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-									$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-														':bed_docentry' => $Data['cfc_baseentry'],
-														':bed_doctype' => $Data['cfc_basetype'],
-														':bed_status' => 3, //ESTADO CERRADO
-														':bed_createby' => $Data['cfc_createby'],
-														':bed_date' => date('Y-m-d'),
-														':bed_baseentry' => $resInsert,
-														':bed_basetype' => $Data['cfc_doctype']
-									));
-
-
-									if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-									}else{
-
-											 $this->pedeo->trans_rollback();
-
-												$respuesta = array(
-													'error'   => true,
-													'data' => $resInsertEstado,
-													'mensaje'	=> 'No se pudo registrar la factura de compra'
-												);
-
-
-												$this->response($respuesta);
-
-												return;
-									}
-
-						}
-
-			}else if ($Data['cfc_basetype'] == 13) {
-
-							 $sqlEstado1 = 'SELECT
-																		coalesce(count(t1.ec1_itemcode),0) item,
-																		coalesce(sum(t1.ec1_quantity),0) cantidad
-																		from dcec t0
-																		inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-																		where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype';
-
-								$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-									':cec_docentry' => $Data['cfc_baseentry'],
-									':cec_doctype' => $Data['cfc_basetype']
-								));
-
-								$sqlDev = "SELECT
-																	coalesce(count(distinct t3.dc1_itemcode),0) item,
-																	coalesce(sum(t3.dc1_quantity),0) cantidad
-																	from dcec t0
-																	left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-																	left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
-																	left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
-																	where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
-
-							$resDev = $this->pedeo->queryTable($sqlDev, array(
-								':cec_docentry' => $Data['cfc_baseentry'],
-								':cec_doctype' => $Data['cfc_basetype']
-							));
-
-							$resta_cantidad = $resEstado1[0]['cantidad'];
-							$resta_item = $resEstado1[0]['item'];
-							if(($resDev[0]['cantidad']) <> 0 && ($resEstado1[0]['item']) <> 0) {
-
-									$resta_cantidad = $resEstado1[0]['cantidad'] - $resDev[0]['cantidad'];
-									$resta_item = $resEstado1[0]['item'] - $resDev[0]['item'];
-						}
-
-
-	// print_r($resta_cantidad);exit();die();
-							$sqlEstado2 =  "SELECT
-																count(distinct t3.fc1_itemcode) item,
-																coalesce(sum(t3.fc1_quantity),0) cantidad
-																from dcec t0
-																left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-																left join dcfc t2 on t0.cec_docentry = t2.cfc_baseentry and t0.cec_doctype = t2.cfc_basetype
-																left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.ec1_itemcode = t3.fc1_itemcode
-																where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
-						$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
-							':cec_docentry' => $Data['cfc_baseentry'],
-							':cec_doctype' => $Data['cfc_basetype']
-						));
-// print_r($resEstado2);exit();die();
-						$item_ec = $resta_item;
-						// $item_fact = 0;
-						$cantidad_ec = $resta_cantidad;
-						// if(isset($resEstado2[0]) && !empty($resEstado2[0]['cantidad'])){
-						$item_fact = $resEstado2[0]['item'];
-						$cantidad_fact = $resEstado2[0]['cantidad'];
-					// }
-
-
-
-						// print_r($item_ec);
-						// print_r($item_fact);
-						// print_r($cantidad_ec);
-						// print_r($cantidad_fact);exit();die();
-
-
-
-								if($item_ec == $item_fact && $cantidad_ec == $cantidad_fact){
-
-											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-											$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-																':bed_docentry' => $Data['cfc_baseentry'],
-																':bed_doctype' => $Data['cfc_basetype'],
-																':bed_status' => 3, //ESTADO CERRADO
-																':bed_createby' => $Data['cfc_createby'],
-																':bed_date' => date('Y-m-d'),
-																':bed_baseentry' => $resInsert,
-																':bed_basetype' => $Data['cfc_doctype']
-											));
-
-
-											if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-												if ($Data['cfc_basetype'] == 13) {
-													$sqlEstado1 ='SELECT
-					 																		coalesce(count(distinct t1.ec1_itemcode),0) item,
-					 																		coalesce(sum(t1.ec1_quantity),0) cantidad
-					 																		from dcec t0
-					 																		inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-					 																		where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype';
-
-													 $resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-														 ':cec_docentry' => $Data['cfc_baseentry'],
- 														':cec_doctype' => $Data['cfc_basetype']
-													 ));
-
-													 $sqlDev1 =  "SELECT
-					 																	coalesce(count(distinct t3.dc1_itemcode),0) item,
-					 																	coalesce(sum(t3.dc1_quantity),0) cantidad
-					 																	from dcec t0
-					 																	left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-					 																	left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
-					 																	left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
-					 																	where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
-
-												 $resDev1 = $this->pedeo->queryTable($sqlDev1, array(
-													 ':cec_docentry' => $Data['cfc_baseentry'],
-													 ':cec_doctype' => $Data['cfc_basetype']
-												 ));
-
-												 $resta_cantidad1 = $resEstado1[0]['cantidad'];
-												 $resta_item1 = 0;
-												 if(isset($resDev1[0]['cantidad']) && ($resDev1[0]['cantidad']) <> 0){
-												 				$resta_cantidad1 = $resEstado1[0]['cantidad'] - $resDev1[0]['cantidad'];
-																$resta_item1 = $resEstado1[0]['item'] - $resDev1[0]['item'];
-											 	}
-												 $sqlDev2 = "SELECT DISTINCT
-																					 t2.*
-																					 from dcec t0
-																					 left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-																					 left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
-																					 left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
-																					 where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
-
-											 $resDev2 = $this->pedeo->queryTable($sqlDev2, array(
-												 ':cec_docentry' => $Data['cfc_baseentry'],
-												 ':cec_doctype' => $Data['cfc_basetype']
-											 ));
-
-												 $sqlEstado2 = "SELECT
-					 																coalesce(count(distinct  t3.fc1_itemcode),0) item,
-					 																coalesce(sum(t3.fc1_quantity),0) cantidad
-					 																from dcec t0
-					 																left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-					 																left join dcfc t2 on t0.cec_docentry = t2.cfc_baseentry and t0.cec_doctype = t2.cfc_basetype
-					 																left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.ec1_itemcode = t3.fc1_itemcode
-					 																where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
-											 $resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
-												 ':cec_docentry' => $Data['cfc_baseentry'],
-												 ':cec_doctype' => $Data['cfc_basetype']
-											 ));
-
-											 $item_del1 = $resta_item1;
-											 $item_fact1 = $resEstado2[0]['item'];
-											 $cantidad_del1 = $resta_cantidad1;
-											 $cantidad_fact1 = $resEstado2[0]['cantidad'];
-
-												//
-												// print_r($item_del1);
-												// print_r($item_fact1);
-												// print_r($cantidad_del1);
-												// print_r($cantidad_fact1);exit();die();
-
-																	if($item_del1 == $item_fact1  &&  $cantidad_del1 ==  $cantidad_fact1){
-
-																		foreach ($resDev2 as $key => $value) {
-																			// code...
-
-
-																		$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																												VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-																		$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-																							':bed_docentry' => $value['cdc_docentry'],
-																							':bed_doctype' => $value['cdc_doctype'],
-																							':bed_status' => 3, //ESTADO CERRADO
-																							':bed_createby' => $Data['cfc_createby'],
-																							':bed_date' => date('Y-m-d'),
-																							':bed_baseentry' => $resInsert,
-																							':bed_basetype' => $Data['cfc_doctype']
-																		));
-
-																		if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
-
-																		}else{
-
-
-																							 $this->pedeo->trans_rollback();
-
-																								$respuesta = array(
-																									'error'   => true,
-																									'data' => $resInsertEstado,
-																									'mensaje'	=> 'No se pudo registrar la devolucion de venta123'
-																								);
-
-
-																								$this->response($respuesta);
-
-																								return;
-																					}
-																				}
-															 }
-														}
-													}
-											 }
-										}
-
 					// FIN VALIDACION DE ESTADOS
 
 					$debito  = 0;
@@ -2874,7 +2597,273 @@ class PurchaseInv extends REST_Controller {
 
 							 return;
 					 }
-					//
+
+
+
+
+					 
+					// VALIDANDO ESTADOS DE DOCUMENTOS
+
+					if ($Data['cfc_basetype'] == 12) {
+
+
+						$sqlEstado1 = "SELECT
+											count(t1.po1_itemcode) item,
+											sum(t1.po1_quantity) cantidad
+										from dcpo t0
+										inner join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
+										where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
+
+
+						$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+							':cpo_docentry' => $Data['cfc_baseentry'],
+							':cpo_doctype' => $Data['cfc_basetype']
+						));
+
+
+						$sqlEstado2 = "SELECT
+											coalesce(count(distinct t3.fc1_itemcode),0) item,
+											coalesce(sum(t3.fc1_quantity),0) cantidad
+										from dcpo t0
+										left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
+										left join dcfc t2 on t0.cpo_docentry = t2.cfc_baseentry
+										left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.po1_itemcode = t3.fc1_itemcode
+										where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
+					$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+						':cpo_docentry' => $Data['cfc_baseentry'],
+						':cpo_doctype' => $Data['cfc_basetype']
+					));
+
+					$item_ord = $resEstado1[0]['item'];
+					$item_fact = $resEstado2[0]['item'];
+					$cantidad_ord = $resEstado1[0]['cantidad'];
+					$cantidad_fact = $resEstado2[0]['cantidad'];
+
+					if($item_ord == $item_fact  &&  $item_fact == $cantidad_fact){
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+					':bed_docentry' => $Data['cfc_baseentry'],
+					':bed_doctype' => $Data['cfc_basetype'],
+					':bed_status' => 3, //ESTADO CERRADO
+					':bed_createby' => $Data['cfc_createby'],
+					':bed_date' => date('Y-m-d'),
+					':bed_baseentry' => $resInsert,
+					':bed_basetype' => $Data['cfc_doctype']
+				));
+
+
+				if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+				}else{
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+						'error'   => true,
+						'data' => $resInsertEstado,
+						'mensaje'	=> 'No se pudo registrar la factura de compra'
+						);
+
+
+						$this->response($respuesta);
+
+						return;
+					}
+
+				}
+			}else if ($Data['cfc_basetype'] == 13) {
+
+				$sqlEstado1 = "SELECT
+									count(t1.ec1_itemcode) item,
+									coalesce(sum(t1.ec1_quantity),0) cantidad
+								from dcec t0
+								inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+								where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+
+				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+					':cec_docentry' => $Data['cfc_baseentry'],
+					':cec_doctype' => $Data['cfc_basetype']
+				));
+
+				$sqlDev = "SELECT
+								count(t3.dc1_itemcode) item,
+								coalesce(sum(t3.dc1_quantity),0) cantidad
+							from dcec t0
+							left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+							left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
+							left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
+							where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+
+				$resDev = $this->pedeo->queryTable($sqlDev, array(
+					':cec_docentry' => $Data['cfc_baseentry'],
+					':cec_doctype' => $Data['cfc_basetype']
+				));
+
+				$resta_cantidad = $resEstado1[0]['cantidad'] - $resDev[0]['cantidad'];
+				$resta_item = $resEstado1[0]['item'] - $resDev[0]['item'];
+
+				$sqlEstado2 = "SELECT
+									coalesce(count(distinct t3.fc1_itemcode),0) item,
+									coalesce(sum(t3.fc1_quantity),0) cantidad
+								from dcec t0
+								left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+								left join dcfc t2 on t0.cec_docentry = t2.cfc_baseentry and t0.cec_doctype = t2.cfc_basetype
+								left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.ec1_itemcode = t3.fc1_itemcode
+								where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+				$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+					':cec_docentry' => $Data['cfc_baseentry'],
+					':cec_doctype' => $Data['cfc_basetype']
+				));
+
+				if(is_numeric($resta_item) && $resta_item == 0){
+					$item_del = $resEstado1[0]['item'];
+				}else{
+					$item_del = $resta_item;
+				}
+				// $item_del = $resta_item;
+				$item_fact = $resEstado2[0]['item'];
+
+				$cantidad_del = $resta_cantidad;
+				$cantidad_fact = $resEstado2[0]['cantidad'];
+				
+				// print_r($item_del);
+				// print_r($item_fact);
+				// print_r($cantidad_del);
+				// print_r($cantidad_fact);exit();die();
+
+
+				if($item_del == $item_fact && $cantidad_del == $cantidad_fact){
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+						':bed_docentry' => $Data['cfc_baseentry'],
+						':bed_doctype' => $Data['cfc_basetype'],
+						':bed_status' => 3, //ESTADO CERRADO
+						':bed_createby' => $Data['cfc_createby'],
+						':bed_date' => date('Y-m-d'),
+						':bed_baseentry' => $resInsert,
+						':bed_basetype' => $Data['cfc_doctype']
+					));
+
+
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+					if ($Data['cfc_basetype'] == 13) {
+						$sqlEstado1 = 'SELECT
+											count(t1.ec1_itemcode) item,
+											coalesce(sum(t1.ec1_quantity),0) cantidad
+										from dcec t0
+										inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+										where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype';
+
+						$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+							':cec_docentry' => $Data['cfc_baseentry'],
+							':cec_doctype' => $Data['cfc_basetype']
+						));
+
+						$sqlDev1 = "SELECT
+										count(t3.dc1_itemcode) item,
+										coalesce(sum(t3.dc1_quantity),0) cantidad
+									from dcec t0
+									left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+									left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
+									left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
+									where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+
+						$resDev1 = $this->pedeo->queryTable($sqlDev1, array(
+							':cec_docentry' => $Data['cfc_baseentry'],
+							':cec_doctype' => $Data['cfc_basetype']
+						));
+
+						$resta_cantidad1 = $resEstado1[0]['cantidad'] - $resDev1[0]['cantidad'];
+
+						$resta_item1 = $resEstado1[0]['item'] - $resDev1[0]['item'];
+
+						$sqlDev2 = "SELECT DISTINCT
+										t2.*
+									from dcec t0
+									left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+									left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
+									left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
+									where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+
+						$resDev2 = $this->pedeo->queryTable($sqlDev2, array(
+							':cec_docentry' => $Data['cfc_baseentry'],
+							':cec_doctype' => $Data['cfc_basetype']
+						));
+
+						$sqlEstado2 = "SELECT
+											coalesce(count(distinct t3.fc1_itemcode),0) item,
+											coalesce(sum(t3.fc1_quantity),0) cantidad
+										from dcec t0
+										left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+										left join dcfc t2 on t0.cec_docentry = t2.cfc_baseentry and t0.cec_doctype = t2.cfc_basetype
+										left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.ec1_itemcode = t3.fc1_itemcode
+										where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+						$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+							':cec_docentry' => $Data['cfc_baseentry'],
+							':cec_doctype' => $Data['cfc_basetype']
+						));
+
+						if(is_numeric($resta_item1) && $resta_item1 == 0){
+							$item_del1 = $resEstado1[0]['item'];
+						}else{
+							$item_del1 = $resta_item1;
+						}
+						// $item_del1 = $resta_item1;
+						$item_fact1 = $resEstado2[0]['item'];
+						$cantidad_del1 = $resta_cantidad1;
+						$cantidad_fact1 = $resEstado2[0]['cantidad'];
+
+
+
+
+						if($item_del1 == $item_fact1  &&  $cantidad_del1 ==  $cantidad_fact1){
+
+							foreach ($resDev2 as $key => $value) {
+								// code...
+								$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+													VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+								$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+									':bed_docentry' => $value['cdc_docentry'],
+									':bed_doctype' => $value['cdc_doctype'],
+									':bed_status' => 3, //ESTADO CERRADO
+									':bed_createby' => $Data['cfc_createby'],
+									':bed_date' => date('Y-m-d'),
+									':bed_baseentry' => $resInsert,
+									':bed_basetype' => $Data['cfc_doctype']
+								));
+
+						if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+
+						}else{
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+							'error'   => true,
+							'data' => $resInsertEstado,
+							'mensaje'	=> 'No se pudo registrar la devolucion de compra'
+						);
+
+							$this->response($respuesta);
+
+							return;
+						}
+					}
+				}
+			}
+		}
+     }							 
+}
+// print_r("validacion");exit();die();
 					// Si todo sale bien despues de insertar el detalle de la factura de compras
 					// se confirma la trasaccion  para que los cambios apliquen permanentemente
 					// en la base de datos y se confirma la operacion exitosa.

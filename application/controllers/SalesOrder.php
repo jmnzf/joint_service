@@ -658,18 +658,17 @@ class SalesOrder extends REST_Controller {
 																		inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
 																		left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
 																		left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
-																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype and t1.vc1_itemcode = :vc1_itemcode";
+																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
 
 						$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
 							':dvc_docentry' => $Data['vov_baseentry'],
 							':dvc_doctype' => $Data['vov_basetype'],
-							':vc1_itemcode' => $detail['ov1_itemcode']
 
 						));
 
 						$item_cot = $resEstado1[0]['item'];
-					  $cantidad_cot = $resEstado1[0]['cantidad'];
+					  	$cantidad_cot = $resEstado1[0]['cantidad'];
 						$item_ord = $resEstado2[0]['item'];
 						$cantidad_ord = $resEstado2[0]['cantidad'];
 

@@ -383,7 +383,7 @@ class PurchaseRequest extends REST_Controller {
               ':csc_docdate' => $this->validateDate($Data['csc_docdate'])?$Data['csc_docdate']:NULL,
               ':csc_duedate' => $this->validateDate($Data['csc_duedate'])?$Data['csc_duedate']:NULL,
               ':csc_duedev' => $this->validateDate($Data['csc_duedev'])?$Data['csc_duedev']:NULL,
-              ':csc_pricelist' => is_numeric($Data['csc_pricelist'])?$Data['csc_pricelist']:0,
+              ':csc_pricelist' => 12,
               ':csc_cardcode' => isset($Data['csc_cardcode'])?$Data['csc_cardcode']:NULL,
               ':csc_cardname' => isset($Data['csc_cardname'])?$Data['csc_cardname']:NULL,
               ':csc_currency' => isset($Data['csc_currency'])?$Data['csc_currency']:NULL,
@@ -403,7 +403,7 @@ class PurchaseRequest extends REST_Controller {
               ':csc_idadd' => isset($Data['csc_idadd'])?$Data['csc_idadd']:NULL,
               ':csc_adress' => isset($Data['csc_adress'])?$Data['csc_adress']:NULL,
               ':csc_paytype' => is_numeric($Data['csc_paytype'])?$Data['csc_paytype']:0,
-							':csc_createby' => isset($Data['csc_createby'])?$Data['csc_createby']:NULL,
+			  ':csc_createby' => isset($Data['csc_createby'])?$Data['csc_createby']:NULL,
               ':csc_attch' => $this->getUrl(count(trim(($Data['csc_attch']))) > 0 ? $Data['csc_attch']:NULL, $resMainFolder[0]['main_folder'])
 						));
 

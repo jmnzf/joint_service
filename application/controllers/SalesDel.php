@@ -393,10 +393,10 @@ class SalesDel extends REST_Controller {
                       vem_cardname, vem_currency, vem_contacid, vem_slpcode, vem_empid, vem_comment, vem_doctotal, vem_baseamnt, vem_taxtotal,
                       vem_discprofit, vem_discount, vem_createat, vem_baseentry, vem_basetype, vem_doctype, vem_idadd, vem_adress, vem_paytype,
                       vem_attch,vem_createby,vem_transport,vem_sup_transport,vem_ci,vem_t_vehiculo,vem_guia,vem_opl,vem_placa,vem_precinto,vem_placav,vem_modelv,vem_driverv,vem_driverid)
-											VALUES(:vem_series, :vem_docnum, :vem_docdate, :vem_duedate, :vem_duedev, :vem_pricelist, :vem_cardcode, :vem_cardname,
+					  VALUES(:vem_series, :vem_docnum, :vem_docdate, :vem_duedate, :vem_duedev, :vem_pricelist, :vem_cardcode, :vem_cardname,
                       :vem_currency, :vem_contacid, :vem_slpcode, :vem_empid, :vem_comment, :vem_doctotal, :vem_baseamnt, :vem_taxtotal, :vem_discprofit, :vem_discount,
                       :vem_createat, :vem_baseentry, :vem_basetype, :vem_doctype, :vem_idadd, :vem_adress, :vem_paytype, :vem_attch,:vem_createby,
-										  :vem_transport,:vem_sup_transport,:vem_ci,:vem_t_vehiculo,:vem_guia,:vem_opl,:vem_placa,:vem_precinto,:vem_placav,:vem_modelv,:vem_driverv,:vem_driverid)";
+					  :vem_transport,:vem_sup_transport,:vem_ci,:vem_t_vehiculo,:vem_guia,:vem_opl,:vem_placa,:vem_precinto,:vem_placav,:vem_modelv,:vem_driverv,:vem_driverid)";
 
 
 
@@ -666,9 +666,9 @@ class SalesDel extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
                                     em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
+                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
                                     :em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
-                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum)";
+                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':em1_docentry' => $resInsert,
@@ -690,9 +690,9 @@ class SalesDel extends REST_Controller {
                         ':em1_doctype' => is_numeric($detail['em1_doctype'])?$detail['em1_doctype']:0,
                         ':em1_avprice' => is_numeric($detail['em1_avprice'])?$detail['em1_avprice']:0,
                         ':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL,
-												':em1_acciva' => is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:0,
-												':em1_linenum'=> is_numeric($detail['em1_linenum'])?$detail['em1_linenum']:0,
-												':em1_codimp' => isset($detail['em1_codimp'])?$detail['em1_codimp']:NULL,
+						':em1_acciva' => is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:0,
+						':em1_linenum'=> is_numeric($detail['em1_linenum'])?$detail['em1_linenum']:0,
+						':em1_codimp' => isset($detail['em1_codimp'])?$detail['em1_codimp']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1109,8 +1109,8 @@ class SalesDel extends REST_Controller {
 
 									}else{
 
-											array_push( $inArrayCostoInventario, $llaveCostoInventario );
-											$posicionCostoInventario = $this->buscarPosicion( $llaveCostoInventario, $inArrayCostoInventario );
+											array_push($inArrayCostoInventario,$llaveCostoInventario);
+											$posicionCostoInventario = $this->buscarPosicion($llaveCostoInventario,$inArrayCostoInventario);
 
 									}
 
@@ -1121,8 +1121,8 @@ class SalesDel extends REST_Controller {
 
 									}else{
 
-											array_push( $inArrayCostoCosto, $llaveCostoCosto );
-											$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+											array_push($inArrayCostoCosto,$llaveCostoCosto);
+											$posicionCostoCosto = $this->buscarPosicion($llaveCostoCosto,$inArrayCostoCosto);
 
 									}
 								}
@@ -1635,10 +1635,10 @@ class SalesDel extends REST_Controller {
 
 
 
-		// print_r($item_cot);
 		// print_r($item_ord);
-		// print_r($cantidad_cot);
-		// print_r($cantidad_ord);exit();die();
+		// print_r($item_del);
+		// print_r($cantidad_ord);
+		// print_r($cantidad_del);exit();die();
 							if($item_ord == $item_del  &&  $cantidad_ord == $cantidad_del){
 
 											$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
@@ -2013,7 +2013,8 @@ class SalesDel extends REST_Controller {
 											t1.em1_itemcode,
 											t1.em1_itemname,
 											t1.em1_linenum,
-											t1.em1_linetotal,
+											t1.em1_linetotal line_total_real,
+											(t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0))) * t1.em1_price em1_linetotal,
 											t1.em1_price,
 											t1.em1_project,
 											t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0)) em1_quantity,
@@ -2021,6 +2022,10 @@ class SalesDel extends REST_Controller {
 											t1.em1_uom,
 											t1.em1_vat,
 											t1.em1_vatsum,
+											t1.em1_quantity cant_real,
+											coalesce(SUM(t3.dv1_quantity),0) devolucion,
+											coalesce(SUM(t5.fv1_quantity),0) facturado,
+											(((t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0))) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
 											t1.em1_whscode
 											from dvem t0
 											left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
@@ -2051,7 +2056,9 @@ class SalesDel extends REST_Controller {
 											t1.em1_vat,
 											t1.em1_vatsum,
 											t1.em1_whscode,
-											t1.em1_quantity";
+											t1.em1_quantity
+											--having (t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0))) > 0
+											";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
 
