@@ -324,7 +324,7 @@ class EstadoCuentaCl extends REST_Controller {
 					when mac1.ac1_cord = 0
 						then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date,mac1.ac1_debit ,get_localcur())
 					when mac1.ac1_cord = 1
-						then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date,mac1.ac1_credit ,get_localcur())
+						then (get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date,mac1.ac1_credit ,get_localcur()) * -1)
 				end as total_doc,
 				(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo_venc,
 				'' retencion,

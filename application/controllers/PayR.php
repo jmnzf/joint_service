@@ -30,7 +30,7 @@ class PayR extends REST_Controller {
 	public function PayR_post(){
 
         $Data = $this->post();
-				$Data = $Data['bpr_docentry'];
+				$Data = $Data['BPR_DOCENTRY'];
 
 				$formatter = new NumeroALetras();
 

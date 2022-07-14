@@ -297,8 +297,8 @@ class EstadoCartera extENDs REST_Controller {
 		,get_localcur())
 		when mac1.ac1_cord = 1
 		then
-		get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_credit
-		,get_localcur())
+		(get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_credit
+		,get_localcur()) * -1)
 		end as total_doc,
 		get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit)
 		- (mac1.ac1_ven_credit) ,get_localcur()) as saldo_venc,
@@ -331,6 +331,8 @@ class EstadoCartera extENDs REST_Controller {
 		where dmsn.dms_card_type = '1'
 		and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 		order by NombreCliente asc";
+
+		// print_r($sqlestadocuenta);exit();
 
 		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,
 		array(

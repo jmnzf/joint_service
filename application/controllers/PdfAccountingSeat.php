@@ -224,10 +224,10 @@ class PdfAccountingSeat extends REST_Controller {
         <tr>
             <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
             <th>
-                <p><b>Andino Pneus de Venezuela, C.A.</b></p>
-                <p><b>Rif: J-00328174</b></p>
-                <p><b>Carretera Nacional Guacara-Los Guayos, Fabrica de Cauchos.</b></p>
-                <p><b>Guaraca, Estados Carabobo, Venezuela</b></p>
+			<p><b>'.$empresa[0]['pge_small_name'].'</b></p>
+			<p>'.$empresa[0]['pge_add_soc'].'</p>
+			<p>'.$empresa[0]['pge_id_type'].'</p>
+			<p>'.$empresa[0]['pge_state_soc'].'</p>
 
             </th>
             <th>

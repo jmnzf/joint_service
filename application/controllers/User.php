@@ -311,6 +311,23 @@ class User extends REST_Controller {
 						 return;
 				}
 
+				$sqlkey = "SELECT * FROM keys WHERE date_created >= current_date AND id = 1";
+				$reskey = $this->pedeo->queryTable($sqlkey, array());
+
+				if( isset( $reskey[0] ) ){
+
+				}else{
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => ["LICENSEEXPIRED","LICENSEEXPIRED"],
+						'mensaje' => 'Lo sentimos, su número de licencia a expirado. Favor contante a su ejecutivo de ventas.');
+
+						 $this->response($respuesta);
+						 return;
+				}
+
+
 				$sqlSelect = "SELECT pgu_code_user, pgu_id_usuario,pgu_name_user,pgu_lname_user,
 											pgu_name_user || ' ' || pgu_lname_user AS NameC ,
 											pgu_email,pgu_role,pgu_pass,pgu_id_vendor

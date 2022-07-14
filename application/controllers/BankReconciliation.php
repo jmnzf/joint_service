@@ -1316,7 +1316,7 @@ class BankReconciliation extends REST_Controller {
 											UNION ALL
 											SELECT mac1.ac1_trans_id as id,
 											mac1.ac1_doc_date as fecha,
-											mac1.ac1_debit as debit,s
+											mac1.ac1_debit as debit,
 											mac1.ac1_credit as credit,
 											tmac.mac_base_type as basetype,
 											tmac.mac_base_entry as baseentry,
