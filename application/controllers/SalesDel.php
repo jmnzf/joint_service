@@ -1679,8 +1679,8 @@ class SalesDel extends REST_Controller {
 
 					}
 
-					// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
-					// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
+					// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
+					// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(":ac1_trans_id" => $resInsertAsiento));
 					// print_r(json_encode($ressqlmac1));
 					// exit;
 

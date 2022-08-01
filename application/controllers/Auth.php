@@ -40,7 +40,7 @@ class Auth extends REST_Controller {
 
 		$result = $this->pedeo->queryTable("SELECT menu.men_id,menu.men_nombre,menu.men_icon,menu.men_controller,menu.men_action,menu.men_sub_menu,menu.men_id_menu FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_menu = :idmenu AND menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol ORDER BY menu.men_id", array(':idmenu' => 0,':idestado' => 1,':idrol' => $request['Pgu_Role']));
 		//
-		$controller = $this->pedeo->queryTable("SELECT menu.men_nombre, menu.men_controller, menu.men_action FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol", array(':idestado' => 1, ':idrol' => $request['Pgu_Role']));
+		$controller = $this->pedeo->queryTable("SELECT menu.men_id,menu.men_nombre, menu.men_controller, menu.men_action FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol", array(':idestado' => 1, ':idrol' => $request['Pgu_Role']));
 		//
 		$resultSet = array();
 		// RESPUESTA POR DEFECTO.

@@ -419,13 +419,13 @@ class Reports extends REST_Controller {
 		}
 
 		$sql = "SELECT
-						t2.dma_item_code,
-						trim(t2.dma_item_name),
-						t3.dmu_nameum,
-						t1.bdi_whscode,
-						t1.bdi_quantity,
-						t1.bdi_avgprice,
-						(t1.bdi_quantity * t1.bdi_avgprice) as costo
+					t2.dma_item_code,
+					trim(t2.dma_item_name),
+					t3.dmu_nameum,
+					t1.bdi_whscode,
+					cast(t1.bdi_quantity as decimal(15,2)) bdi_quantity,
+					cast(t1.bdi_avgprice as decimal(15,2)) bdi_avgprice,
+					cast((t1.bdi_quantity * t1.bdi_avgprice) as decimal(15,2)) as costo
 				from tbdi t1
 				join dmar t2
 				on t1.bdi_itemcode = t2.dma_item_code
@@ -1225,13 +1225,58 @@ class Reports extends REST_Controller {
       return ;
     }
 
+	$filter =  $Data['dvf_filter'];
+
 		$sqlSelect = "SELECT
-									fv.dvf_docentry, fv.dvf_docdate, dmdt.mdt_docname as dvf_doctype, fv.dvf_docnum, fv.dvf_correl,
-									fv.dvf_cardcode, fv.dvf_cardname, dvf_doctotal, '' excentas, fv.dvf_baseamnt, fv.dvf_taxtotal
-									from dvfv fv
-									inner join dmdt
-									on dvf_doctype = mdt_doctype
-									WHERE fv.dvf_docdate >= :dvf_docdate and fv.dvf_duedate <=:dvf_duedate";
+		fv.dvf_docentry  docentry,
+		fv.dvf_docdate  docdate,
+		dmdt.mdt_docname as doctype,
+		fv.dvf_docnum  docnum,
+		fv.dvf_correl  correl,
+		fv.dvf_cardcode  cardcode,
+		fv.dvf_cardname  cardname,
+		dvf_doctotal doctotal,
+		'' excentas,
+		fv.dvf_baseamnt  baseamnt,
+		fv.dvf_taxtotal  taxtotal
+		from dvfv fv
+		inner join dmdt
+		on dvf_doctype = mdt_doctype
+		WHERE fv.dvf_{$filter} between :dvf_docdate and :dvf_duedate
+		UNION ALL
+		SELECT
+		nd.vnd_docentry  docentry ,
+		nd.vnd_docdate  docdate ,
+		dmdt.mdt_docname as doctype,
+		nd.vnd_docnum  docnum ,
+		0  correl ,
+		nd.vnd_cardcode  cardcode ,
+		nd.vnd_cardname  cardname ,
+		vnd_doctotal doctotal,
+		'' excentas,
+		nd.vnd_baseamnt  baseamnt ,
+		nd.vnd_taxtotal  taxtotal
+		from dvnd nd
+		inner join dmdt
+		on nd.vnd_doctype = mdt_doctype
+		WHERE nd.vnd_{$filter} between :dvf_docdate and :dvf_duedate
+		UNION ALL
+		SELECT
+		nc.vnc_docentry docentry ,
+		nc.vnc_docdate docdate ,
+		dmdt.mdt_docname as doctype,
+		nc.vnc_docnum docnum ,
+		0 correl ,
+		nc.vnc_cardcode cardcode ,
+		nc.vnc_cardname cardname ,
+		vnc_doctotal,
+		'' excentas,
+		nc.vnc_baseamnt baseamnt ,
+		nc.vnc_taxtotal taxtotal
+		from dvnc nc
+		inner join dmdt
+		on nc.vnc_doctype = mdt_doctype
+		WHERE nc.vnc_{$filter} between :dvf_docdate and :dvf_duedate";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":dvf_docdate" =>$Data['dvf_docdate'],":dvf_duedate"=>$Data['dvf_duedate']));
 		if(isset($resSelect[0])){
@@ -1270,13 +1315,18 @@ class Reports extends REST_Controller {
 			return ;
 		}
 
+		$filter = $Data['filter'];
 		$sqlSelect = "SELECT
-									fc.cfc_docentry, fc.cfc_docdate, dmdt.mdt_docname as cfc_doctype, fc.cfc_docnum, 0 as cfc_correl,
-									fc.cfc_cardcode, fc.cfc_cardname, cfc_doctotal, '' excentas, fc.cfc_baseamnt, fc.cfc_taxtotal
-									from dcfc fc
-									inner join dmdt
-									on cfc_doctype = mdt_doctype
-									WHERE fc.cfc_docdate >= :cfc_docdate and fc.cfc_duedate <=:cfc_duedate";
+					fc.cfc_docentry, fc.cfc_docdate, dmdt.mdt_docname as cfc_doctype, fc.cfc_docnum, fc.cfc_correl,cfc_tax_control_num,
+					fc.cfc_cardcode, fc.cfc_cardname, cfc_doctotal, '' excentas, fc.cfc_baseamnt, fc.cfc_taxtotal,REPLACE(LTRIM(REPLACE(cfc_tax_control_num, '0', ' ')),' ', '0') as referencia,
+					ttrt.trt_description,fcrt.crt_totalrt, fcrt.crt_profitrt
+					from dcfc fc	
+					inner join dmdt
+					on cfc_doctype = mdt_doctype
+					inner join fcrt 
+					on  fcrt.crt_basetype = fc.cfc_doctype and fcrt.crt_baseentry = fc.cfc_docentry
+					inner join ttrt on trt_id =  crt_type
+					WHERE fc.cfc_{$filter} between :cfc_docdate and :cfc_duedate";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":cfc_docdate" =>$Data['cfc_docdate'],":cfc_duedate"=>$Data['cfc_duedate']));
 		if(isset($resSelect[0])){
