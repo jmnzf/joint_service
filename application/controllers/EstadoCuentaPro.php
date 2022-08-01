@@ -116,7 +116,8 @@ class EstadoCuentaPro extENDs REST_Controller {
                     WHEN ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 91
                     then get_dynamic_conversion(:currency,get_localcur(),dcfc.cfc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
                     ELSE 0
-                    END                                                  mayor_noventa
+                    END                                                  mayor_noventa,
+					'' comentario_asiento
 										from mac1
 										         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 										         inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
@@ -184,7 +185,8 @@ class EstadoCuentaPro extENDs REST_Controller {
 										                    WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 91
 										                        then get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
 										                    ELSE 0
-										                    END                                                  mayor_noventa
+										                    END                                                  mayor_noventa,
+															'' comentario_asiento
 
 										from mac1
 										         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
@@ -252,7 +254,8 @@ class EstadoCuentaPro extENDs REST_Controller {
 										                    WHEN ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 91
 										                        then get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
 										                    ELSE 0
-										                    END                                                  mayor_noventa
+										                    END                                                  mayor_noventa,
+															'' comentario_asiento
 
 										from mac1
 										         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
@@ -327,7 +330,8 @@ class EstadoCuentaPro extENDs REST_Controller {
 										                        ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 91
 										                        then  get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) ,get_localcur())
 										                    ELSE 0
-										                    END                                                  mayor_noventa
+										                    END                                                  mayor_noventa,
+															'' comentario_asiento
 
 										from mac1
 										         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp =
@@ -410,7 +414,8 @@ class EstadoCuentaPro extENDs REST_Controller {
 										                    WHEN ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 91
 										                        then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date, SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
 										                    ELSE 0
-										                    END                                                   mayor_noventa
+										                    END                                                   mayor_noventa,
+															ac1_comments comentario_asiento
 										from mac1
 										         inner join dacc on mac1.ac1_account = dacc.acc_code and
 										                            acc_businessp = '1'
@@ -438,7 +443,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 										         tmac.mac_doc_date,
 										         tmac.mac_doc_duedate,
 										         mac_trans_id,
-										         mdt_docname, mac1.ac1_cord";
+										         mdt_docname, mac1.ac1_cord,ac1_comments";
 
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array(":currency" => $Data['currency']));
         //   print_r($sqlestadocuenta);exit();die();
@@ -468,6 +473,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 											<td class="centro">'.$Data['currency']." ".number_format($value['totalfactura'], 2, ',', '.').'</td>
 											<td class="centro">'.$this->dateformat->Date($value['fechavencimiento']).'</td>
 											<td class="centro">'.$this->dateformat->Date($value['fechacorte']).'</td>
+											<td class="centro">'.$value['comentario_asiento'].'</td>
 											<td class="centro">'.$value['dias'].'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['uno_treinta'], 2, ',', '.').'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['treinta_uno_secenta'], 2, ',', '.').'</td>
@@ -574,17 +580,18 @@ class EstadoCuentaPro extENDs REST_Controller {
 
         <table class="borde" style="width:100%">
         <tr>
-					<th class=""><b>Tipo Documento</b></th>
-          <th class=""><b>Numero Documento</b></th>
-          <th class=""><b>Fecha Documento</b></th>
-					<th class=""><b>Total Documento</b></th>
-          <th class=""><b>Fecha Ven Documento</b></th>
-          <th class=""><b>Fecha Corte</b></th>
-					<th class=""><b>Dias Vencidos</b></th>
-          <th class=""><b>0-30</b></th>
-          <th class=""><b>31-60</b></th>
-          <th class=""><b>61-90</b></th>
-          <th class=""><b>+90</b></th>
+			<th class=""><b>Tipo Documento</b></th>
+          	<th class=""><b>Numero Documento</b></th>
+          	<th class=""><b>Fecha Documento</b></th>
+			<th class=""><b>Total Documento</b></th>
+          	<th class=""><b>Fecha Ven Documento</b></th>
+          	<th class=""><b>Fecha Corte</b></th>
+		  	<th class=""><b>Referencia</b></th>
+			<th class=""><b>Dias Vencidos</b></th>
+          	<th class=""><b>0-30</b></th>
+          	<th class=""><b>31-60</b></th>
+          	<th class=""><b>61-90</b></th>
+          	<th class=""><b>+90</b></th>
         </tr>
       	'.$totaldetalle.$total_valores.'
         </table>

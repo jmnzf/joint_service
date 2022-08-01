@@ -1120,7 +1120,7 @@ class Reports extends REST_Controller {
 					when coalesce(t0.ac1_font_type,0) = 4 then (SELECT row_to_json(dvdv.*) FROM dvdv WHERE t0.ac1_font_key = dvdv.vdv_docentry and t0.ac1_font_type = dvdv.vdv_doctype)
 					when coalesce(t0.ac1_font_type,0) = 5 then (SELECT row_to_json(dvfv.*) FROM dvfv WHERE t0.ac1_font_key = dvfv.dvf_docentry and t0.ac1_font_type = dvfv.dvf_doctype)
 					when coalesce(t0.ac1_font_type,0) = 6 then (SELECT row_to_json(dvnc.*) FROM dvnc WHERE t0.ac1_font_key = dvnc.vnc_docentry and t0.ac1_font_type = dvnc.vnc_doctype)
-					when coalesce(t0.ac1_font_type,0) = 6 then (SELECT row_to_json(dvnd.*) FROM dvnd WHERE t0.ac1_font_key = dvnd.vnd_docentry and t0.ac1_font_type = dvnd.vnd_doctype)
+					when coalesce(t0.ac1_font_type,0) = 7 then (SELECT row_to_json(dvnd.*) FROM dvnd WHERE t0.ac1_font_key = dvnd.vnd_docentry and t0.ac1_font_type = dvnd.vnd_doctype)
 					when coalesce(t0.ac1_font_type,0) = 8 then (SELECT row_to_json(misi.*) FROM misi WHERE t0.ac1_font_key = misi.isi_docentry and t0.ac1_font_type = misi.isi_doctype)
 					when coalesce(t0.ac1_font_type,0) = 9 then (SELECT row_to_json(miei.*) FROM miei WHERE t0.ac1_font_key = miei.iei_docentry and t0.ac1_font_type = miei.iei_doctype)
 					when coalesce(t0.ac1_font_type,0) = 13 then (SELECT row_to_json(dcec.*) FROM dcec WHERE t0.ac1_font_key = dcec.cec_docentry and t0.ac1_font_type = dcec.cec_doctype)
@@ -1162,7 +1162,7 @@ class Reports extends REST_Controller {
 									// VALIDAR SI EL CAMPO ES DE COMENTARIO.
 									if ($prefijo[1] === 'comments') {
 										// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
-										$newObj['mac_comment'] = $obj;;
+										$newObj['mac_comment'] = $obj;
 									}else {
 										//
 										$newObj['mac_'.$prefijo[1]] = $obj;
@@ -1174,16 +1174,16 @@ class Reports extends REST_Controller {
 							 */
 							if (!isset($newObj['mac_cardcode'])) {
 								// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
-								$newObj['mac_cardcode'] = $obj['ac1_legal_num'];
-								$newObj['mac_cardname'] = $obj['ac1_legal_num'];
+								$newObj['mac_cardcode'] = $data['ac1_legal_num'];
+								$newObj['mac_cardname'] = $data['ac1_legal_num'];
 							}
 							if (!isset($newObj['mac_comment'])) {
 								// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
-								$newObj['mac_comment'] = $obj['origen'];
+								$newObj['mac_comment'] = $data['origen'];
 							}
 							if (!isset($newObj['mac_createby'])) {
 								// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
-								$newObj['mac_createby'] = $obj['ac1_doc_date'];
+								$newObj['mac_createby'] = $data['ac1_doc_date'];
 							}
 							/**
 							 * FIN
