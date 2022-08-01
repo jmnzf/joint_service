@@ -160,6 +160,8 @@ class FacturaCompra extends REST_Controller {
             <th>
                 <p><b>FACTURA DE COMPRA</b></p>
                 <p class="">'.$contenidoFC[0]['numerodocumento'].'</p>
+                <p class=""><b>#FISCAL :</b>'.$contenidoFC[0]['cfc_tax_control_num'].'</p>
+                <p class=""><b>CORRELATIVO :</b>'.$contenidoFC[0]['cfc_correl'].'</p>
 
             </th>
         </tr>
@@ -204,7 +206,6 @@ class FacturaCompra extends REST_Controller {
 					<tr>
           <td><b>TELEFONO :</b><span>'.$contenidoFC[0]['telefono'].'</span></td>
 					<td></td>
-					<td><b>#FISCAL :</b><span> '.$contenidoFC[0]['cfc_tax_control_num'].'</span></td>
          </tr>
 
         </table>
