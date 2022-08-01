@@ -1340,12 +1340,23 @@ class SalesOrder extends REST_Controller {
 
 	public function getOpenSalesOrder_get(){
 
+      	$request = $this->get();
+		// 
+		$where = "";
+		$array = [':tipo' => 2, ':estado' => 'Abierto'];
+		// 
+		if (isset($request['cardcode']) && !empty($request['cardcode'])) {
+			# code...
+			$where = "and vov_cardcode = :cardcode";
+			$array[':cardcode'] = $request['cardcode'];
+		}
+
 		$sqlSelect = "SELECT vov_docnum, vov_docentry, vov_cardcode,vov_cardname
 						from responsestatus
 						join dvov on vov_doctype = tipo and vov_docentry = id
-						where tipo  = 2 and estado = 'Abierto'";
+						where tipo = :tipo and estado = :estado $where";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, $array);
 
 		if(isset($resSelect[0])){
 

@@ -55,8 +55,18 @@ class Business extends REST_Controller {
         return;
       }
 
-      $sqlInsert = "INSERT INTO pgem(pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc, pge_cou_soc, pge_id_type, pge_id_soc, pge_web_site, pge_phone1, pge_phone2, pge_cel, pge_branch, pge_mail, pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def, pge_bank_acct, pge_acc_type, pge_bridge_inv, pge_bridge_inv_purch,pge_acc_dcp, pge_acc_dcn,pge_acc_ajp,pge_page_social)
-                   VALUES(:Pge_NameSoc, :Pge_SmallName, :Pge_AddSoc, :Pge_StateSoc, :Pge_CitySoc, :Pge_CouSoc, :Pge_IdType, :Pge_IdSoc, :Pge_WebSite, :Pge_Phone1, :Pge_Phone2, :Pge_Cel, :Pge_Branch, :Pge_Mail, :Pge_CurrFirst, :Pge_CurrSys, :Pge_CouBank, :Pge_BankDef, :Pge_BankAcct, :Pge_AccType, :pge_bridge_inv, :pge_bridge_inv_purch,:pge_acc_dcp, :pge_acc_dcn,:pge_acc_ajp,:pge_page_social)";
+      $sqlInsert = "INSERT INTO pgem(pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc, 
+                    pge_cou_soc, pge_id_type, pge_id_soc, pge_web_site, pge_phone1, pge_phone2, pge_cel, 
+                    pge_branch, pge_mail, pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def, 
+                    pge_bank_acct, pge_acc_type, pge_bridge_inv, pge_bridge_inv_purch,pge_acc_dcp, 
+                    pge_acc_dcn,pge_acc_ajp,pge_page_social,pge_client_default,pge_supplier_default,
+                    pge_bridge_purch_int)
+                   VALUES(:Pge_NameSoc, :Pge_SmallName, :Pge_AddSoc, :Pge_StateSoc, :Pge_CitySoc, 
+                   :Pge_CouSoc, :Pge_IdType, :Pge_IdSoc, :Pge_WebSite, :Pge_Phone1, :Pge_Phone2, 
+                   :Pge_Cel, :Pge_Branch, :Pge_Mail, :Pge_CurrFirst, :Pge_CurrSys, :Pge_CouBank, 
+                   :Pge_BankDef, :Pge_BankAcct, :Pge_AccType, :pge_bridge_inv, :pge_bridge_inv_purch,
+                   :pge_acc_dcp, :pge_acc_dcn,:pge_acc_ajp,:pge_page_social,:pge_client_default,
+                   :pge_supplier_default,:pge_bridge_purch_int)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -85,7 +95,10 @@ class Business extends REST_Controller {
 				 ':pge_acc_dcp' => $DataCompany['pge_acc_dcp'],
 				 ':pge_acc_dcn' => $DataCompany['pge_acc_dcn'],
 				 ':pge_acc_ajp' => is_numeric($DataCompany['pge_acc_ajp'])?$DataCompany['pge_acc_ajp']:NULL,
-				 ':pge_page_social' => (!empty($DataCompany['pge_page_social']))? $DataCompany['pge_page_social']: null
+				 ':pge_page_social' => (!empty($DataCompany['pge_page_social']))? $DataCompany['pge_page_social']: null,
+         ':pge_client_default' => (!empty($DataCompany['pge_client_default']))? $DataCompany['pge_client_default']: null,
+         ':pge_supplier_default' => (!empty($DataCompany['pge_supplier_default']))? $DataCompany['pge_supplier_default']: null,
+         ':pge_bridge_purch_int' => (!empty($DataCompany['pge_bridge_purch_int']))? $DataCompany['pge_bridge_purch_int']: null
       ));
 
 
@@ -144,11 +157,18 @@ class Business extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE pgem SET pge_name_soc = :Pge_NameSoc, pge_small_name = :Pge_SmallName, pge_add_soc = :Pge_AddSoc,
-                    pge_state_soc = :Pge_StateSoc, pge_city_soc = :Pge_CitySoc, pge_cou_soc = :Pge_CouSoc, pge_id_type = :Pge_IdType,
-                    pge_id_soc = :Pge_IdSoc,  pge_web_site = :Pge_WebSite, pge_phone1 = :Pge_Phone1,
-                    pge_phone2 = :Pge_Phone2, pge_cel = :Pge_Cel, pge_branch = :Pge_Branch, pge_mail = :Pge_Mail,pge_cou_bank = :Pge_CouBank, pge_bank_def = :Pge_BankDef, pge_bank_acct = :Pge_BankAcct,
-                    pge_acc_type = :Pge_AccType, pge_bridge_inv = :pge_bridge_inv, pge_bridge_inv_purch = :pge_bridge_inv_purch, pge_acc_dcp = :pge_acc_dcp, pge_acc_dcn = :pge_acc_dcn, pge_acc_ajp = :pge_acc_ajp, pge_page_social = :pge_page_social WHERE pge_id = :Pge_Id";
+      $sqlUpdate = "UPDATE pgem SET pge_name_soc = :Pge_NameSoc, pge_small_name = :Pge_SmallName, 
+                    pge_add_soc = :Pge_AddSoc,pge_state_soc = :Pge_StateSoc, pge_city_soc = :Pge_CitySoc, 
+                    pge_cou_soc = :Pge_CouSoc, pge_id_type = :Pge_IdType,pge_id_soc = :Pge_IdSoc,  
+                    pge_web_site = :Pge_WebSite, pge_phone1 = :Pge_Phone1,pge_phone2 = :Pge_Phone2, 
+                    pge_cel = :Pge_Cel, pge_branch = :Pge_Branch, pge_mail = :Pge_Mail,
+                    pge_cou_bank = :Pge_CouBank, pge_bank_def = :Pge_BankDef, pge_bank_acct = :Pge_BankAcct,
+                    pge_acc_type = :Pge_AccType, pge_bridge_inv = :pge_bridge_inv, 
+                    pge_bridge_inv_purch = :pge_bridge_inv_purch, pge_acc_dcp = :pge_acc_dcp, 
+                    pge_acc_dcn = :pge_acc_dcn, pge_acc_ajp = :pge_acc_ajp, 
+                    pge_page_social = :pge_page_social ,pge_client_default = :pge_client_default,
+                    pge_supplier_default = :pge_supplier_default,pge_bridge_purch_int = :pge_bridge_purch_int
+                    WHERE pge_id = :Pge_Id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -177,7 +197,10 @@ class Business extends REST_Controller {
 						':pge_acc_dcp' => $DataCompany['pge_acc_dcp'],
 						':pge_acc_dcn' => $DataCompany['pge_acc_dcn'],
 						':pge_acc_ajp' => is_numeric($DataCompany['pge_acc_ajp'])?$DataCompany['pge_acc_ajp']:NULL,
-            ':pge_page_social' => (!empty($DataCompany['pge_page_social']))? $DataCompany['pge_page_social']: null
+            ':pge_page_social' => (!empty($DataCompany['pge_page_social']))? $DataCompany['pge_page_social']: null,
+            ':pge_client_default' => (!empty($DataCompany['pge_client_default']))? $DataCompany['pge_client_default']: null,
+            ':pge_supplier_default' => (!empty($DataCompany['pge_supplier_default']))? $DataCompany['pge_supplier_default']: null,
+            ':pge_bridge_purch_int' => (!empty($DataCompany['pge_bridge_purch_int']))? $DataCompany['pge_bridge_purch_int']: null
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){

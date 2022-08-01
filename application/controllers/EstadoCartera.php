@@ -267,7 +267,7 @@ class EstadoCartera extENDs REST_Controller {
 
 		union all
 
-		select distinct
+		select 
 		dmdt.mdt_docname,
 		mac1.ac1_font_key,
 		case

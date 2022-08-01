@@ -358,7 +358,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 										HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0
 
 										union all
-										select distinct dmdt.mdt_docname,
+										select  dmdt.mdt_docname,
 										                mac1.ac1_font_key,
 										                case
 										                    when ac1_card_type = '1'
