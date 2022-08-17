@@ -73,60 +73,66 @@ class FacturaVenta extends REST_Controller {
 	          return;
 				}
 
-				$sqlcotizacion = "SELECT
-													concat(T0.dvf_cardname,' ',T2.dms_card_last_name) Cliente,
-													T0.dvf_cardcode Nit,
-													concat(T3.dmd_adress,' ',T3.dmd_city) Direccion,
-												    T3.dmd_state_mm ciudad,
-												    t3.dmd_state estado,
-													T2.dms_phone1 Telefono,
-													T2.dms_email Email,
-													t0.dvf_docnum,
-													ConCAT(T6.pgs_pref_num,' ',T0.dvf_docnum) NumeroDocumento,
-													to_char(T0.dvf_docdate,'DD-MM-YYYY') FechaDocumento,
-													to_char(T0.dvf_duedate,'DD-MM-YYYY') FechaVenDocumento,
-													trim('COP' from t0.dvf_currency) MonedaDocumento,
-													T7.pgm_name_moneda NOMBREMonEDA,
-													T5.mev_names Vendedor,
-													t8.mpf_name CondPago,
-													T1.fv1_itemcode Referencia,
-													T1.fv1_itemname descripcion,
-													T1.fv1_whscode Almacen,
-													T1.fv1_uom UM,
-													T1.fv1_quantity Cantidad,
-													T1.fv1_price VrUnit,
-													T1.fv1_discount PrcDes,
-													T1.fv1_vatsum IVAP,
-													T1.fv1_linetotal ValorTotalL,
-													T0.dvf_baseamnt base,
-													T0.dvf_discount Descuento,
-													(T0.dvf_baseamnt - T0.dvf_discount) subtotal,
-													T0.dvf_taxtotal Iva,
-													T0.dvf_doctotal TotalDoc,
-													T0.dvf_comment Comentarios,
-													t0.dvf_ref oc,
-													(select t9.dma_uom_weight from dmar t9 where  t9.dma_item_code = t1.fv1_itemcode) peso,
-													t10.dmu_code um,
-												  T0.dvf_precinto precintos,
-												  t0.dvf_placav placa,
-												  t0.dvf_docdate,
-												  t6.pgs_mpfn,
-												  t6.pgs_mde,
-													t1.fv1_quantity,
-													t2.dms_rtype regimen
-												from dvfv t0
-												inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
-												left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
-												left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code AND t3.dmd_ppal = 1
-												left join dmsc T4 on T0.dvf_cardcode = t4.dmc_card_code
-												left join dmev T5 on T0.dvf_slpcode = T5.mev_id
-												left join pgdn T6 on T0.dvf_doctype = T6.pgs_id_doc_type and T0.dvf_series = T6.pgs_id
-												left join pgec T7 on T0.dvf_currency = T7.pgm_symbol
-												left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
-												left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
-												left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
-												where T0.dvf_docentry = :DVF_DOCENTRY
-												and t2.dms_card_type = '1'";
+				$sqlcotizacion = "SELECT 
+									concat(T0.dvf_cardname,' ',T2.dms_card_last_name) Cliente,
+									T0.dvf_cardcode Nit,
+									concat(T3.dmd_adress,' ',T3.dmd_city) Direccion,
+									T3.dmd_state_mm ciudad,
+									t3.dmd_state estado,
+									T2.dms_phone1 Telefono,
+									T2.dms_email Email,
+									t0.dvf_docnum,
+									ConCAT(T6.pgs_pref_num,' ',T0.dvf_docnum) NumeroDocumento,
+									to_char(T0.dvf_docdate,'DD-MM-YYYY') FechaDocumento,
+									to_char(T0.dvf_duedate,'DD-MM-YYYY') FechaVenDocumento,
+									trim('COP' from t0.dvf_currency) MonedaDocumento,
+									T7.pgm_name_moneda NOMBREMonEDA,
+									T5.mev_names Vendedor,
+									t8.mpf_name CondPago,
+									T1.fv1_itemcode Referencia,
+									T1.fv1_itemname descripcion,
+									T1.fv1_whscode Almacen,
+									T1.fv1_uom UM,
+									T1.fv1_quantity Cantidad,
+									T1.fv1_price VrUnit,
+									T1.fv1_discount PrcDes,
+									T1.fv1_vatsum IVAP,
+									T1.fv1_linetotal ValorTotalL,
+									T0.dvf_baseamnt base,
+									T0.dvf_discount Descuento,
+									(T0.dvf_baseamnt - T0.dvf_discount) subtotal,
+									T0.dvf_taxtotal Iva,
+									T0.dvf_doctotal TotalDoc,
+									T0.dvf_comment Comentarios,
+									t0.dvf_ref oc,
+									(select t9.dma_uom_weight from dmar t9 where  t9.dma_item_code = t1.fv1_itemcode) peso,
+									t10.dmu_code um,
+									T0.dvf_precinto precintos,
+									t0.dvf_placav placa,
+									t0.dvf_docdate,
+									t6.pgs_mpfn,
+									t6.pgs_mde,
+									t1.fv1_quantity,
+									t2.dms_rtype regimen,
+									t0.dvf_igtf,
+									t0.dvf_taxigtf,
+									t0.dvf_igtfcode,
+									t0.dvf_igtfcurrency,
+									t0.dvf_igtfapplyed,
+									get_dynamic_conversion(t0.dvf_igtfcurrency,get_localcur(),t0.dvf_docdate,t0.dvf_igtfapplyed,T0.dvf_igtfcurrency) tasa_igtf
+								from dvfv t0
+								inner join vfv1 T1 on t0.dvf_docentry = t1.fv1_docentry
+								left join dmsn T2 on t0.dvf_cardcode = t2.dms_card_code
+								left join dmsd T3 on T0.dvf_cardcode = t3.dmd_card_code AND t3.dmd_ppal = 1
+								left join dmsc T4 on T0.dvf_cardcode = t4.dmc_card_code
+								left join dmev T5 on T0.dvf_slpcode = T5.mev_id
+								left join pgdn T6 on T0.dvf_doctype = T6.pgs_id_doc_type and T0.dvf_series = T6.pgs_id
+								left join pgec T7 on T0.dvf_currency = T7.pgm_symbol
+								left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
+								left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
+								left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
+								where T0.dvf_docentry = :DVF_DOCENTRY
+								and t2.dms_card_type = '1'";
 
 				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
 
@@ -352,31 +358,18 @@ class FacturaVenta extends REST_Controller {
 
 				$regimen = '';
 
-				if($contenidoFV[0]['regimen'] == '1' OR $contenidoFV[0]['regimen'] == '3'){
+				
 
 					$regimen = '<TABLE width="35%" style="vertical-align: bottom;">
-						<TR><TH style="text-align: left;">75% RET.IVA:</TH>
-							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalIva * 75) / 100, 2, ',', '.').'</TD>
-						<TR><TH  style="text-align: left;">BASE IMPONIBLE  3% DE IGTF:</TH>
-							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalDoc - ($valorTotalIva * 75) / 100), 2, ',', '.').'</TD>
-						<TR><TH  style="text-align: left;">TOTAL  3% DE IGTF:</TH>
-							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format((($valorTotalDoc - ($valorTotalIva * 75) / 100) * 3) / 100, 2, ',', '.').'</TD>
-					    <TR><TH style="text-align: left;">TOTAL:</TH>
-							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalDoc - ($valorTotalIva * 75) / 100) + ((($valorTotalDoc - ($valorTotalIva * 75) / 100) * 3) / 100), 2, ',', '.').'</TD>
+					<TR><TH  style="text-align: left;">BASE DIVISA:</TH>
+					<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['tasa_igtf'], 2, ',', '.').'</TD>
+					<TR><TH  style="text-align: left;">% DE IGTF:</TH>
+					<TD style="text-align: left;">'.$contenidoFV[0]['dvf_taxigtf'].'%</TD>
+					<TR><TH style="text-align: left;">IMPUESTO DIVISA:</TH>
+					<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($contenidoFV[0]['tasa_igtf'] * $contenidoFV[0]['dvf_taxigtf']) / 100, 2, ',', '.').'</TD>
 					</TABLE>';
 
-				}else if ($contenidoFV[0]['regimen'] == '2' OR $contenidoFV[0]['regimen'] == '4'){
-
-					$regimen = '<TABLE width="35%" style="vertical-align: bottom;">
-						<TR><TH  style="text-align: left;">BASE IMPONIBLE  3% DE IGTF:</TH>
-							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalDoc, 2, ',', '.').'</TD>
-						<TR><TH  style="text-align: left;">TOTAL  3% DE IGTF:</TH>
-							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($valorTotalDoc   * 3) / 100, 2, ',', '.').'</TD>
-					    <TR><TH style="text-align: left;">TOTAL:</TH>
-							<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalDoc  + (($valorTotalDoc  * 3) / 100), 2, ',', '.').'</TD>
-					</TABLE>';
-
-				}
+				
 
 
         $header = '
@@ -538,8 +531,8 @@ class FacturaVenta extends REST_Controller {
         <table width="100%">
         <tr class="">
           <th class="border_bottom" >CANT.</th>
-          <th class="border_bottom">MATERIAL</th>
-          <th class="border_bottom">DESCRIPCION</th>
+          <th class="border_bottom">artículo</th>
+          <th class="border_bottom">descrición</th>
           <th class="border_bottom">PRECIO UNITARIO</th>
           <th class="border_bottom">TOTAL</th>
         </tr>
@@ -612,42 +605,19 @@ class FacturaVenta extends REST_Controller {
 															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'], 2, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalIva, 2, ',', '.').'</span></td>
 													</tr>
 													<tr>
+															<td style="text-align: right;">IGTF: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format(($contenidoFV[0]['tasa_igtf'] * $contenidoFV[0]['dvf_taxigtf']) / 100, 2, ',', '.').'</span></td>
+													</tr>
+													<tr>
 															<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalDoc, 2, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>
 						</tr>
         </table>
-				<table width="100%" style="vertical-align: bottom;">
-				<tr>
-					<th style="text-align: justify;">
-					<br>
-
-					<p>NOTA: EL PAGO, RECIBIDO DE ESTE DOCUMENTO, EN MONEDA DISTINTA A LA DE CURSO LEGAL EN EL PAIS Y FUERA DEL SISTEMA
-						BANCARIO, GENERA UN 3% POR CONCEPTO DE IMPUESTOS A LAS GRANDES TRANSACCIONES FINANCIERAS (IGTF) CONSIDERANDO
-						LO ESTABLECIDO EN LOS ART. 4 NUMERAL 6 , ART. 24, AMBOS DE LA GACETA 6.687 Y ART.1 DE LA GACETA 42.339.
-						</p>
-					</th>
-				</tr>
-				</table>
+				
 				<br>
 				'.$regimen.'
 				<br>
-
-				<table border=1 width="50%">
-					<tr>
-							<th  style="width: 100px;">PLACA</th>
-							<th style="width: 100px;">PRECINTOS</th>
-					</tr>
-					<tr>
-							<td style="height: 50px;" >'.$contenidoFV[0]['placa'].'</td>
-							<td style="height: 50px;">'.$contenidoFV[0]['precintos'].'</td>
-					</tr>
-
-				</table>
-
-
-
         <br>
         <table width="100%" style="vertical-align: bottom;">
             <tr>
