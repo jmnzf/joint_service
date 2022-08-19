@@ -26,6 +26,7 @@ class AccountingAccent extends REST_Controller {
 
   //CREAR NUEVO ASIENTO CONTABLE
 	public function createAccountingAccent_post(){
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;
 
@@ -181,10 +182,10 @@ class AccountingAccent extends REST_Controller {
 
                     ':ac1_trans_id' => $resInsert,
                     ':ac1_account' => is_numeric($detail['ac1_account'])?$detail['ac1_account']:0,
-                    ':ac1_debit' => is_numeric($detail['ac1_debit'])?round($detail['ac1_debit'], 2):0,
-                    ':ac1_credit' => is_numeric($detail['ac1_credit'])?round($detail['ac1_credit'], 2):0,
-                    ':ac1_debit_sys' => is_numeric($detail['ac1_debit_sys'])?round($detail['ac1_debit_sys'], 2):0,
-                    ':ac1_credit_sys' => is_numeric($detail['ac1_credit_sys'])?round($detail['ac1_credit_sys'], 2):0,
+                    ':ac1_debit' => is_numeric($detail['ac1_debit'])?round($detail['ac1_debit'], $DECI_MALES ):0,
+                    ':ac1_credit' => is_numeric($detail['ac1_credit'])?round($detail['ac1_credit'], $DECI_MALES ):0,
+                    ':ac1_debit_sys' => is_numeric($detail['ac1_debit_sys'])?round($detail['ac1_debit_sys'], $DECI_MALES ):0,
+                    ':ac1_credit_sys' => is_numeric($detail['ac1_credit_sys'])?round($detail['ac1_credit_sys'], $DECI_MALES ):0,
                     ':ac1_currex' => is_numeric($detail['ac1_currex'])?$detail['ac1_currex']:0,
                     ':ac1_doc_date' => $this->validateDate($detail['ac1_doc_date'])?$detail['ac1_doc_date']:NULL,
                     ':ac1_doc_duedate' => $this->validateDate($detail['ac1_doc_duedate'])?$detail['ac1_doc_duedate']:NULL,
@@ -209,8 +210,8 @@ class AccountingAccent extends REST_Controller {
                     ':ac1_accperiod' => is_numeric($detail['ac1_accperiod'])?$detail['ac1_accperiod']:NULL,
                     ':ac1_close' => is_numeric($detail['ac1_close'])?$detail['ac1_close']:0,
                     ':ac1_cord' => is_numeric($detail['ac1_cord'])?$detail['ac1_cord']:0,
-                    ':ac1_ven_debit' => is_numeric($detail['ac1_debit'])?round($detail['ac1_debit'], 2):0,
-                    ':ac1_ven_credit' => is_numeric($detail['ac1_credit'])?round($detail['ac1_credit'], 2):0,
+                    ':ac1_ven_debit' => is_numeric($detail['ac1_debit'])?round($detail['ac1_debit'], $DECI_MALES):0,
+                    ':ac1_ven_credit' => is_numeric($detail['ac1_credit'])?round($detail['ac1_credit'], $DECI_MALES):0,
                     ':ac1_fiscal_acct' => is_numeric($detail['ac1_fiscal_acct'])?$detail['ac1_fiscal_acct']:0,
                     ':ac1_taxid' => is_numeric($detail['ac1_taxid'])?$detail['ac1_taxid']:0,
                     ':ac1_isrti' => is_numeric($detail['ac1_isrti'])?$detail['ac1_isrti']:0,
@@ -289,8 +290,8 @@ class AccountingAccent extends REST_Controller {
 								':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
 								':ac1_debit' => 0,
 								':ac1_credit' => 0,
-								':ac1_debit_sys' => round($debito, 2),
-								':ac1_credit_sys' => round($credito, 2),
+								':ac1_debit_sys' => round($debito, $DECI_MALES),
+								':ac1_credit_sys' => round($credito, $DECI_MALES),
 								':ac1_currex' => 0,
 								':ac1_doc_date' => $this->validateDate($Data['mac_doc_date'])?$Data['mac_doc_date']:NULL,
 								':ac1_doc_duedate' => $this->validateDate($Data['mac_doc_duedate'])?$Data['mac_doc_duedate']:NULL,
@@ -386,8 +387,8 @@ class AccountingAccent extends REST_Controller {
 
 								':ac1_trans_id' => $resInsertAsiento,
 								':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
-								':ac1_debit' => round($ldebito, 2),
-								':ac1_credit' => round($lcredito, 2),
+								':ac1_debit' => round($ldebito, $DECI_MALES),
+								':ac1_credit' => round($lcredito, $DECI_MALES),
 								':ac1_debit_sys' => 0,
 								':ac1_credit_sys' => 0,
 								':ac1_currex' => 0,

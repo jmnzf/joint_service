@@ -19,11 +19,15 @@ class BuyOffert extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
 	public function getOffert_get(){
-		$sqlSelect = self::getColumn('dcoc','coc');
+
+		$DECI_MALES =  $this->generic->getDecimals();
+
+		$sqlSelect = self::getColumn('dcoc','coc','','',$DECI_MALES);
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -130,6 +134,7 @@ public function getOffertDetailBySN_get(){
 	//CREAR NUEVA SOLICUTUD DE OFERTA DE COMPRA
 	public function createBuyOffert_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
 			$Data = $this->post();
 
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
@@ -426,12 +431,12 @@ public function getOffertDetailBySN_get(){
 
 															if(trim($Data['coc_currency']) != $MONEDALOCAL){
 
-																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), 2);
-																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 
 															}else{
 
-																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 
 															}
 

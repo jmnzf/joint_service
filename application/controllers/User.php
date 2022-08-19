@@ -330,7 +330,7 @@ class User extends REST_Controller {
 
 				$sqlSelect = "SELECT pgu_code_user, pgu_id_usuario,pgu_name_user,pgu_lname_user,
 											pgu_name_user || ' ' || pgu_lname_user AS NameC ,
-											pgu_email,pgu_role,pgu_pass,pgu_id_vendor
+											pgu_email,pgu_role,pgu_pass,pgu_id_vendor, pgu_branch
 											FROM pgus WHERE pgu_code_user = :Pgu_CodeUser AND pgu_enabled = :pgu_enabled";
 
 
@@ -357,11 +357,21 @@ class User extends REST_Controller {
 						);
 
 						unset($resSelect[0]['pgu_pass']);
+						// VALOR POR DEFECTO DEL DATO DE LA EMPRESA.
+						$company = [];
+						// OBTENER DATOS DE LA EMPRESA RELACIONADA AL USUARIO.
+						$resultCompany = $this->pedeo->queryTable("SELECT pge_name_soc, pge_useigtf FROM pgem WHERE pge_id = :pge_id", array(':pge_id' => $resSelect[0]['pgu_branch']));
+						// VALIDAR RETORNO DE DATOS.
+						if (isset($resultCompany[0])) {
+							# code...
+							$company = $resultCompany[0];
+						}
 
 						$respuesta = array(
 							'error'   => false,
 							'data'    => $resSelect,
 							'sessionId' => $sessionId,
+							'company' => $company,
 							'mensaje' => ''
 						);
 					}else{

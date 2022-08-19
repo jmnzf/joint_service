@@ -26,6 +26,7 @@ class BankReconciliation extends REST_Controller {
   //CREAR NUEVA RECONCIALIACION BANCARIA
 	public function createBankReconciliation_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;
 
@@ -497,9 +498,9 @@ class BankReconciliation extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $Cuenta,
-									':ac1_debit' => round($granTotalGasto, 2),
+									':ac1_debit' => round($granTotalGasto, $DECI_MALES),
 									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($MontoSysDB, 2),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
@@ -593,9 +594,9 @@ class BankReconciliation extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $Cuenta,
-									':ac1_debit' => round($granTotalImpuesto, 2),
+									':ac1_debit' => round($granTotalImpuesto, $DECI_MALES),
 									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($MontoSysDB, 2),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
@@ -691,9 +692,9 @@ class BankReconciliation extends REST_Controller {
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $Cuenta,
 									':ac1_debit' => 0,
-									':ac1_credit' => round($granTotalInteres, 2),
+									':ac1_credit' => round($granTotalInteres, $DECI_MALES),
 									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' =>  round($MontoSysCR, 2),
+									':ac1_credit_sys' =>  round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
@@ -786,9 +787,9 @@ class BankReconciliation extends REST_Controller {
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $Cuenta,
 									':ac1_debit' => 0,
-									':ac1_credit' => round($monto, 2),
+									':ac1_credit' => round($monto, $DECI_MALES),
 									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' => round($MontoSysCR, 2),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
@@ -880,9 +881,9 @@ class BankReconciliation extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $Cuenta,
-									':ac1_debit' =>  round($monto, 2),
+									':ac1_debit' =>  round($monto, $DECI_MALES),
 									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($MontoSysDB, 2),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
@@ -1001,8 +1002,8 @@ class BankReconciliation extends REST_Controller {
 									':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
 									':ac1_debit' => 0,
 									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($debito, 2),
-									':ac1_credit_sys' => round($credito, 2),
+									':ac1_debit_sys' => round($debito, $DECI_MALES),
+									':ac1_credit_sys' => round($credito, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
@@ -1100,8 +1101,8 @@ class BankReconciliation extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
-									':ac1_debit' => round($ldebito, 2),
-									':ac1_credit' => round($lcredito, 2),
+									':ac1_debit' => round($ldebito, $DECI_MALES),
+									':ac1_credit' => round($lcredito, $DECI_MALES),
 									':ac1_debit_sys' => 0,
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,

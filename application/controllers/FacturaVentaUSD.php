@@ -23,12 +23,14 @@ class FacturaVentaUSD extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
 
 	public function FacturaVentaUSD_post(){
 
+				$DECI_MALES =  $this->generic->getDecimals();
         $Data = $this->post();
 				$Data = $Data['DVF_DOCENTRY'];
 
@@ -298,18 +300,18 @@ class FacturaVentaUSD extends REST_Controller {
 									// echo "\n";
 									$valorunitario = 0;
 									$vfx = $value['fixrate'];
-									$valorUN = round(($valorUN  + $vfx),2);
+									$valorUN = round(($valorUN  + $vfx), $DECI_MALES);
 									// print_r($valorUN);
 									// echo "\n";
 									$IvaUnitario = (($valorUN) * ($value['fv1_vat'] / 100));
-									$valorUN = round(($valorUN  + $IvaUnitario),2);
+									$valorUN = round(($valorUN  + $IvaUnitario), $DECI_MALES);
 									// $valorUN = $valorUN + ($vfx * $value['fv1_quantity']);
 
 									// $valorUN = (($valorUN * ($value['fv1_vat'] / 100)) + $valorUN);
 									$valorlinea = 0;
 									// $IvaUnitario = round(($valorUN * ($value['fv1_vat'] / 100)), 2);
 
-									$valorlinea = round(($valorUN  * $value['fv1_quantity']),2);
+									$valorlinea = round(($valorUN  * $value['fv1_quantity']), $DECI_MALES);
 
 
 // print_r($IvaUnitario);
@@ -318,12 +320,12 @@ class FacturaVentaUSD extends REST_Controller {
 // echo "\n";
 // print_r($valorlinea);
 // echo "\n";
-									$valorlinea = round(( $valorlinea/ $TasaLocSys), 2);
+									$valorlinea = round(( $valorlinea/ $TasaLocSys), $DECI_MALES);
 
 // print_r($valorlinea);
 // exit();
-									$valorUN = round(($valorUN / $TasaLocSys),2);
-									$valorTotal = round(($valorTotal + $valorlinea),2);
+									$valorUN = round(($valorUN / $TasaLocSys), $DECI_MALES);
+									$valorTotal = round(($valorTotal + $valorlinea), $DECI_MALES);
 
 							}
 
@@ -332,8 +334,8 @@ class FacturaVentaUSD extends REST_Controller {
 						$detalle = '	<td>'.$value['cantidad'].'</td>
 													<td>'.$value['referencia'].'</td>
 													<td>'.$value['descripcion'].'</td>
-													<td>USD '.number_format($valorUN, 2, ',', '.').'</td>
-													<td>USD '.number_format($valorlinea , 2, ',', '.').'</td>';
+													<td>USD '.number_format($valorUN, $DECI_MALES, ',', '.').'</td>
+													<td>USD '.number_format($valorlinea , $DECI_MALES, ',', '.').'</td>';
 
 						 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 						 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
@@ -591,13 +593,13 @@ class FacturaVentaUSD extends REST_Controller {
 								<th>
 											<table width="100%">
 													<tr>
-														<td style="text-align: right;">Valor Total: <span>USD  '.number_format(($valorTotal), 2, ',', '.').'</span></td>
+														<td style="text-align: right;">Valor Total: <span>USD  '.number_format(($valorTotal), $DECI_MALES, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>
 						</tr>
         </table>
-				
+
 				<br><br>
 				<table border=1 width="50%">
 					<tr>

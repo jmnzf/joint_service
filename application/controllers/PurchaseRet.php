@@ -25,6 +25,7 @@ class PurchaseRet extends REST_Controller {
   //CREAR NUEVA DEVOLUCION DE COMPRAS
 	public function createPurchaseRet_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 
 			$DetalleCuentaPuente = new stdClass();
@@ -848,18 +849,18 @@ class PurchaseRet extends REST_Controller {
 														}else if ($CantidadTotal != 0){
 															$CostoPonderado = (($CostoActual * $CantidadActual) + ($CostoDevolucion * $CantidadDevolucion)) / $CantidadTotal;
 														}
-														
-														
-														
+
+
+
 															//  print_r($CantidadActual."\n");
 															//  print_r($CantidadDevolucion."\n");
 															//  print_r($CostoDevolucion."\n");
 															//  print_r($CostoActual."\n");
 															//  print_r($CantidadTotal."\n");
 															//  print_r($CostoPonderado);
-															 
+
 															//  ;exit;die();
-															 
+
 															 $sqlUpdateCostoCantidad =  "UPDATE tbdi
 																													 SET bdi_quantity = :bdi_quantity,
 																													 bdi_avgprice = :bdi_avgprice
@@ -1160,9 +1161,9 @@ class PurchaseRet extends REST_Controller {
 
 								':ac1_trans_id' => $resInsertAsiento,
 								':ac1_account' => $cuentaPuente,
-								':ac1_debit' => round($dbito,2),
+								':ac1_debit' => round($dbito, $DECI_MALES),
 								':ac1_credit' => 0,
-								':ac1_debit_sys' => round($MontoSysDB,2),
+								':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 								':ac1_credit_sys' => 0,
 								':ac1_currex' => 0,
 								':ac1_doc_date' => $this->validateDate($Data['cdc_docdate'])?$Data['cdc_docdate']:NULL,
@@ -1344,9 +1345,9 @@ class PurchaseRet extends REST_Controller {
 							':ac1_trans_id' => $resInsertAsiento,
 							':ac1_account' => $cuentaInventario,
 							':ac1_debit' => 0,
-							':ac1_credit' => round($cdito,2),
+							':ac1_credit' => round($cdito, $DECI_MALES),
 							':ac1_debit_sys' => 0,
-							':ac1_credit_sys' => round($MontoSysCR,2),
+							':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 							':ac1_currex' => 0,
 							':ac1_doc_date' => $this->validateDate($Data['cdc_docdate'])?$Data['cdc_docdate']:NULL,
 							':ac1_doc_duedate' => $this->validateDate($Data['cdc_duedate'])?$Data['cdc_duedate']:NULL,
@@ -1719,7 +1720,9 @@ class PurchaseRet extends REST_Controller {
   //OBTENER devolucion de compras
   public function getPurchaseRet_get(){
 
-        $sqlSelect = self::getColumn('dcdc','cdc');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('dcdc','cdc','','',$DECI_MALES);
 
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());

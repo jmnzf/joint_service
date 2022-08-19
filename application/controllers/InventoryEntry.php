@@ -26,6 +26,7 @@ class InventoryEntry extends REST_Controller {
   //CREAR NUEVA ENTRADA
 	public function createInventoryEntry_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;
 			$DetalleCuentaLineaDocumento = new stdClass();
@@ -527,7 +528,7 @@ class InventoryEntry extends REST_Controller {
 														}
 
 														$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-														$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+														$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal), $DECI_MALES);
 
 											}else{
 
@@ -779,7 +780,7 @@ class InventoryEntry extends REST_Controller {
 														 }
 
 														 $NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-														 $NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+														 $NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal), $DECI_MALES);
 
 														 $sqlUpdateCostoCantidad = "UPDATE tbdi
 		 																									 SET bdi_quantity = :bdi_quantity
@@ -938,7 +939,7 @@ class InventoryEntry extends REST_Controller {
 															}
 
 															$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-															$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+															$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal), $DECI_MALES);
 
 
 															$sqlInsertCostoCantidad = '';
@@ -1330,8 +1331,8 @@ class InventoryEntry extends REST_Controller {
 									':ac1_account' => $cuenta,
 									':ac1_debit' => $debito,
 									':ac1_credit' => $credito,
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['iei_docdate'])?$Data['iei_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['iei_duedate'])?$Data['iei_duedate']:NULL,
@@ -1484,8 +1485,8 @@ class InventoryEntry extends REST_Controller {
 									':ac1_account' => $cuenta,
 									':ac1_debit' => $debito,
 									':ac1_credit' => $credito,
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['iei_docdate'])?$Data['iei_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['iei_duedate'])?$Data['iei_duedate']:NULL,

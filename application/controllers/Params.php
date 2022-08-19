@@ -23,28 +23,54 @@ class Params extends REST_Controller {
 	}
 
   public function getParams_get(){
-  $sqlSelect = "SELECT * FROM params";
+	  $sqlSelect = "SELECT * FROM params";
 
-  $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+	  $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-      if(isset($resSelect[0])){
-        $respuesta = array(
-          'error' => false,
-          'data'  => $resSelect,
-          'mensaje' => '');
+	      if(isset($resSelect[0])){
+	        $respuesta = array(
+	          'error' => false,
+	          'data'  => $resSelect,
+	          'mensaje' => '');
 
-      }else{
+	      }else{
 
-          $respuesta = array(
-            'error'   => true,
-            'data' => array(),
-            'mensaje'	=> 'busqueda sin resultados'
-          );
+	          $respuesta = array(
+	            'error'   => true,
+	            'data' => array(),
+	            'mensaje'	=> 'busqueda sin resultados'
+	          );
 
-      }
+	      }
 
-   $this->response($respuesta);
-}
+	   $this->response($respuesta);
+	}
+
+	public function getDecimals_get(){
+
+		$sqlSelect = "SELECT coalesce(decimals, 0) as decimals FROM params";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+				if(isset($resSelect[0])){
+					$respuesta = array(
+						'error' => false,
+						'data'  => $resSelect,
+						'mensaje' => '');
+
+				}else{
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'	=> 'busqueda sin resultados'
+						);
+
+				}
+
+		 $this->response($respuesta);
+	}
+
 
   public function setParams_post(){
       $Data = $this->post();

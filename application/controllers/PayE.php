@@ -23,11 +23,14 @@ class PayE extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
 
 	public function PayE_post(){
+
+				$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
 				$Data = $Data['BPE_DOCENTRY'];
@@ -132,9 +135,9 @@ class PayE extends REST_Controller {
 											<td>'.$value['fecha_origen'].'</td>
 											<td>'.$value['fecha_ven'].'</td>
 											<td>'.$value['dias_ven'].'</td>
-											<td>$'.number_format($value['total_doc_origen'], 2, ',', '.').'</td>
-											<td>$'.number_format($value['total_apli'], 2, ',', '.').'</td>
-                      <td>$'.number_format($value['saldo'], 2, ',', '.').'</td>';
+											<td>$'.number_format($value['total_doc_origen'], $DECI_MALES, ',', '.').'</td>
+											<td>$'.number_format($value['total_apli'], $DECI_MALES, ',', '.').'</td>
+                      <td>$'.number_format($value['saldo'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				}
 
@@ -249,7 +252,7 @@ class PayE extends REST_Controller {
         <br>
         <table width="100%">
         <tr>
-            <td style="text-align: left;">TOTAL PAGADO: <span>$'.number_format($contenidoPAYE[0]['total_doc'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: left;">TOTAL PAGADO: <span>$'.number_format($contenidoPAYE[0]['total_doc'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
             <td style="text-align: left;">REFERENCIA: <span>'.$contenidoPAYE[0]['referencia'].'</span></p></td>

@@ -23,11 +23,14 @@ class CmpImpRet extENDs REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
 
 	public function CmpImp_post(){
+
+				$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
 				$Data = $Data['CFC_DOCENTRY'];
@@ -128,10 +131,10 @@ class CmpImpRet extENDs REST_Controller {
                       <td class="centro">'.$value['concepto'].'</td>
                       <td class="centro">'.$value['mes_año'].'</td>
                       <td class="centro">'.$value['docnum'].'</td>
-											<td class="centro">'.number_format($value['doctotal'], 2, ',', '.').'</td>
-											<td class="centro">'.number_format($value['base'], 2, ',', '.').'</td>
+											<td class="centro">'.number_format($value['doctotal'], $DECI_MALES, ',', '.').'</td>
+											<td class="centro">'.number_format($value['base'], $DECI_MALES, ',', '.').'</td>
 											<td class="centro">'.$value['porc_ret'].'</td>
-                      <td class="centro">'.number_format($value['vlr_ret'], 2, ',', '.').'</td>';
+                      <td class="centro">'.number_format($value['vlr_ret'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				 // $totalfactura = ($totalfactura + $value['totalfactura']);
 				}

@@ -25,11 +25,14 @@ class PdfFinancialReport extENDs REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
 
 	public function getFinancialReport_post(){
+
+		$DECI_MALES =  $this->generic->getDecimals();
 
     $Data = $this->post();
 
@@ -155,10 +158,10 @@ class PdfFinancialReport extENDs REST_Controller {
                 $cuentas .='<tr><td style="text-align: left;" width="50%">'.$value['acc_name'].'</td>';
                 if(isset($resmontocuenta[0])){
 
-                  $cuentas .='<td style="text-align: right;" width="50%">'.number_format($resmontocuenta[0]['totalcuenta'], 2, ',', '.').'</td></tr>';
+                  $cuentas .='<td style="text-align: right;" width="50%">'.number_format($resmontocuenta[0]['totalcuenta'], $DECI_MALES, ',', '.').'</td></tr>';
                   $acumulado+=(abs($resmontocuenta[0]['totalcuenta'])*$comportamiento);
                 }else{
-                  $cuentas.='<td style="text-align: right;">'.number_format(0, 2, ',', '.').'</td></tr>';
+                  $cuentas.='<td style="text-align: right;">'.number_format(0, $DECI_MALES, ',', '.').'</td></tr>';
                 }
 
             }
@@ -168,7 +171,7 @@ class PdfFinancialReport extENDs REST_Controller {
             $content.= $subgrupo.$tablacuentas.'</table>'.'
             <table width="100%"><tr style="border-top:1px solid #000;">
             <td style="text-align: right;" width="50%">TOTAL </td>
-            <td style="border-top:1px solid #000; text-align: right;" width="50%">'.number_format($acumulado, 2, ',', '.').'</td>
+            <td style="border-top:1px solid #000; text-align: right;" width="50%">'.number_format($acumulado, $DECI_MALES, ',', '.').'</td>
             </tr>
             </table>';
           }
@@ -180,7 +183,7 @@ class PdfFinancialReport extENDs REST_Controller {
       $content.= '<table width="100%">
       <tr >
       <td style="text-align: right;" width="50%">TOTAL '.$groupName.'</td>
-      <td  width="50%" style="text-align: right;">'.number_format($acumuladoGrupo, 2, ',', '.').'</td>
+      <td  width="50%" style="text-align: right;">'.number_format($acumuladoGrupo, $DECI_MALES, ',', '.').'</td>
       </tr>
       </table>';
     }
@@ -188,7 +191,7 @@ class PdfFinancialReport extENDs REST_Controller {
     $content.= '<br><table width="100%">
     <tr >
     <td style="text-align: right;" width="50%">TOTAL </td>
-    <td style="text-align: right; border-top:1px solid #000;" width="50%">'.number_format($acumuladoTotal, 2, ',', '.').'</td>
+    <td style="text-align: right; border-top:1px solid #000;" width="50%">'.number_format($acumuladoTotal, $DECI_MALES, ',', '.').'</td>
     </tr>
     </table>';
 
@@ -288,7 +291,7 @@ class PdfFinancialReport extENDs REST_Controller {
       $sqlsubgrupo = "SELECT * FROM mif2 WHERE mif2.if2_fi1_id = :if2_fi1_id";
       $ressubgrupo = $this->pedeo->queryTable($sqlsubgrupo,array(':if2_fi1_id' => $value['if1_docentry']));
 
-      
+
 
       if(isset($ressubgrupo[0])){
 
@@ -305,7 +308,7 @@ class PdfFinancialReport extENDs REST_Controller {
 
 
           $rescuentas = $this->pedeo->queryTable($sqlcuentas, array(':if3_if2_id' => $value['if2_docentry'],":fi" =>$fi,":ff" =>$ff));
-          
+
           if( isset($rescuentas[0]) ){
             $ressubgrupo[$key]['cuentas'] = $rescuentas;
 
@@ -314,7 +317,7 @@ class PdfFinancialReport extENDs REST_Controller {
             },$rescuentas);
 
             $acumuladoTotal += array_sum($totalcuentas);
-            
+
           }
           $acumuladoTotal = $acumuladoTotal;
         }
@@ -382,6 +385,9 @@ class PdfFinancialReport extENDs REST_Controller {
   }
 
   public function exportExcel_post(){
+
+		$DECI_MALES =  $this->generic->getDecimals();
+
     $Data = $this->post();
     $data = $this->getFinancialReportData($Data['informe'],$Data['fi'],$Data['ff']);
     // $data = json_encode($data);
@@ -391,14 +397,14 @@ class PdfFinancialReport extENDs REST_Controller {
       $count = 0;
     foreach ($data as $key => $grupo) {
       $count++;
-      $htmlString .= "<tr ><td style=\"background: #bdd7ee;\"><b>{$grupo['grupo']}</b></td><td align=\"right\"  style=\"background: #bdd7ee;\">".number_format($grupo['saldo'], 2, '.', ',')."</td></tr>";
-      
+      $htmlString .= "<tr ><td style=\"background: #bdd7ee;\"><b>{$grupo['grupo']}</b></td><td align=\"right\"  style=\"background: #bdd7ee;\">".number_format($grupo['saldo'], $DECI_MALES, '.', ',')."</td></tr>";
+
       foreach ($grupo['subgrupos'] as $key => $subgrupo){
         $htmlString .= "<tr><td colspan=\"2\" style=\"background: #ddebf7;\"><b>{$subgrupo['if2_subgroup_name']}</b></td></tr>";
         $count++;
         foreach ($subgrupo['cuentas'] as $key => $cuenta){
 
-          $total = ($cuenta['totalcuenta'] != 0 ) ? $cuenta['totalcuenta'] : number_format(0, 2, '.', ',');
+          $total = ($cuenta['totalcuenta'] != 0 ) ? $cuenta['totalcuenta'] : number_format(0, $DECI_MALES, '.', ',');
 
           // var_dump($cuenta['totalcuenta']);
           $htmlString .= "<tr><td width=\"54\" align=\"left\">{$cuenta['if3_account']} - {$cuenta['acc_name']}</td><td width=\"20\" align=\"right\">{$total}</td></tr>";
@@ -408,7 +414,7 @@ class PdfFinancialReport extENDs REST_Controller {
     }
     $htmlString .= '</table>';
     $reader = new Html();
-    
+
     $spreadsheet = $reader->loadFromString($htmlString);
     $spreadsheet->getActiveSheet()->getStyle('A1:B'.($count+1))->applyFromArray(
       array('borders' => [

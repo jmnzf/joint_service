@@ -67,7 +67,7 @@ class Approvals extends REST_Controller {
 			if(is_numeric($resInsert) && $resInsert > 0){
 
 
-						$sqlInsertDetail = "INSERT INTO public.mau1(au1_doctotal, au1_sn, au1_c1, au1_is_query, au1_query,au1_docentry,au1_doctotal2)
+						$sqlInsertDetail = "INSERT INTO mau1(au1_doctotal, au1_sn, au1_c1, au1_is_query, au1_query,au1_docentry,au1_doctotal2)
 																VALUES (:au1_doctotal, :au1_sn, :au1_c1, :au1_is_query, :au1_query,:au1_docentry,:au1_doctotal2)";
 
 
@@ -83,8 +83,8 @@ class Approvals extends REST_Controller {
 										':au1_doctotal2' => is_numeric($Data['Monto2'])?$Data['Monto2']:0,
 										':au1_sn' 			=> NULL,
 										':au1_c1' 			=> $cm,
-										':au1_is_query' => 0,
-										':au1_query'    => '',
+										':au1_is_query' => is_numeric($Data['isquery'])?$Data['isquery']:0,
+										':au1_query'    => isset($Data['sqlquery'])?$Data['sqlquery']:'',
 										':au1_docentry' => $resInsert
 						));
 
@@ -824,7 +824,7 @@ class Approvals extends REST_Controller {
 
 				return;
 			}
-			$sqlSelect = "SELECT distinct 
+			$sqlSelect = "SELECT distinct
 			concat(pgu_name_user,' ',pgu_lname_user) nombre,
 			case
 			when statusapprover(pgu_code_user,pap_doctype,pap_docentry) is null then 'Esperando Respuesta'
@@ -832,15 +832,15 @@ class Approvals extends REST_Controller {
 			end estado,
 			pap_docdate,
 			pap_duedate,
-			(select date(bad_createdate) 
-			 from tbad 
-			 where bad_createby  = pgu_code_user  
-			 and bad_doctype = pap_doctype  
+			(select date(bad_createdate)
+			 from tbad
+			 where bad_createby  = pgu_code_user
+			 and bad_doctype = pap_doctype
 			 and bad_docentry= pap_docentry ) fecha_respuesta,
-			to_char(age(((select date(bad_createdate) 
-			 from tbad 
-			 where bad_createby  = pgu_code_user  
-			 and bad_doctype = pap_doctype  
+			to_char(age(((select date(bad_createdate)
+			 from tbad
+			 where bad_createby  = pgu_code_user
+			 and bad_doctype = pap_doctype
 			 and bad_docentry= pap_docentry )),pap_docdate),'dd  HH:mm') diff
 			from pgus
 			join dpap on  pap_docentry = pap_docentry and pap_doctype = pap_doctype

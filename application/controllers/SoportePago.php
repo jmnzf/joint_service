@@ -23,11 +23,14 @@ class SoportePago extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
 
 	public function SoportePago_post(){
+
+				$DECI_MALES =  $this->generic->getDecimals();
 
 				$Data = $this->post();
 				$Data = $Data['id_pago'];
@@ -253,14 +256,14 @@ class SoportePago extends REST_Controller {
 														<td>'.$value['cfc_docdate'].'</td>
 														<td>'.$value['cfc_docdate'].'</td>
 														<td>'.$value['cfc_comment'].'</td>
-														<td>'.number_format($value['cfc_baseamnt'], 2, ',', '.').'</td>
+														<td>'.number_format($value['cfc_baseamnt'], $DECI_MALES, ',', '.').'</td>
 														<td>'.$value['cfc_taxtotal'].'</td>
 														<td>'.$value['porcent'].'</td>
 														<td>'.(is_null($value['totalrtiva'])? 0:$value['totalrtiva'] ).'</td>
 														<td>'.$value['basert'].'</td>
 														<td>'.$value['isrporcent'].'</td>
-														<td>'.number_format($value['totalrtfte'], 2, ',', '.').'</td>
-														<td>'.number_format($value['totalpagar'], 2, ',', '.').'</td>';
+														<td>'.number_format($value['totalrtfte'], $DECI_MALES, ',', '.').'</td>
+														<td>'.number_format($value['totalpagar'], $DECI_MALES, ',', '.').'</td>';
 
 							 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 							 // $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
@@ -521,25 +524,25 @@ class SoportePago extends REST_Controller {
 								<th>
 											<table width="100%">
 												<!--	<tr>
-															<td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalSubtotal, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalSubtotal, $DECI_MALES, ',', '.').'</span></td>
 													</tr>
 												<tr>
 															<td style="text-align: right;">Flete (E): <span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">Base Imponible: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalBase, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Base Imponible: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalBase, $DECI_MALES, ',', '.').'</span></td>
 													</tr>
 													<tr>
 															<td style="text-align: right;">Monto total excento o exonerado:<span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['basert'], 2, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalIva, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['basert'], $DECI_MALES, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalIva, $DECI_MALES, ',', '.').'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">Retencion IVA:<span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valRet, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Retencion IVA:<span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valRet, $DECI_MALES, ',', '.').'</span></td>
 													</tr>-->
 													<tr>
-															<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['totalpagar'], 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['totalpagar'], $DECI_MALES, ',', '.').'</span></td>
 													</tr>
 											</table>
 								</th>

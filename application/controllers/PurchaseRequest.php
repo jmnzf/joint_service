@@ -19,12 +19,14 @@ class PurchaseRequest extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
   //CREAR NUEVA solicitud DE compras
 	public function createPurchaseRequest_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
@@ -294,12 +296,12 @@ class PurchaseRequest extends REST_Controller {
 
 															if(trim($Data['csc_currency']) != $MONEDALOCAL){
 
-																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), 2);
-																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 
 															}else{
 
-																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 
 															}
 
@@ -955,7 +957,9 @@ class PurchaseRequest extends REST_Controller {
   //OBTENER solicitud de compras
   public function getPurchaseRequest_get(){
 
-        $sqlSelect = self::getColumn('dcsc','csc');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('dcsc','csc','','',$DECI_MALES);
 
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());

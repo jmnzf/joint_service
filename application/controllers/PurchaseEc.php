@@ -26,6 +26,7 @@ class PurchaseEc extends REST_Controller {
   //CREAR ENTRADA COMPRAS
 	public function createPurchaseEc_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;
 
@@ -934,7 +935,7 @@ class PurchaseEc extends REST_Controller {
 													}
 
 													$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-													$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+													$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal), $DECI_MALES);
 
 													$sqlUpdateCostoCantidad = "UPDATE tbdi
 																										 SET bdi_quantity = :bdi_quantity
@@ -1095,7 +1096,7 @@ class PurchaseEc extends REST_Controller {
 													}
 
 													$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-													$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+													$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal), $DECI_MALES);
 
 
 													$sqlInsertCostoCantidad = '';
@@ -1653,10 +1654,10 @@ class PurchaseEc extends REST_Controller {
 
 											':ac1_trans_id' => $resInsertAsiento,
 											':ac1_account' => $cuentaInventario,
-											':ac1_debit' => round($dbito, 2),
-											':ac1_credit' => round($cdito, 2),
-											':ac1_debit_sys' => round($MontoSysDB,2),
-											':ac1_credit_sys' => round($MontoSysCR,2),
+											':ac1_debit' => round($dbito, $DECI_MALES),
+											':ac1_credit' => round($cdito, $DECI_MALES),
+											':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+											':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 											':ac1_currex' => 0,
 											':ac1_doc_date' => $this->validateDate($Data['cec_docdate'])?$Data['cec_docdate']:NULL,
 											':ac1_doc_duedate' => $this->validateDate($Data['cec_duedate'])?$Data['cec_duedate']:NULL,
@@ -1836,10 +1837,10 @@ class PurchaseEc extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuentaCosto,
-									':ac1_debit' => round($dbito, 2),
-									':ac1_credit' => round($cdito, 2),
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
+									':ac1_debit' => round($dbito, $DECI_MALES),
+									':ac1_credit' => round($cdito, $DECI_MALES),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['cec_docdate'])?$Data['cec_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['cec_duedate'])?$Data['cec_duedate']:NULL,
@@ -2214,7 +2215,9 @@ class PurchaseEc extends REST_Controller {
   //OBTENER orden de compra
   public function getPurchaseEc_get(){
 
-        $sqlSelect = self::getColumn('dcec','cec');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('dcec','cec','','',$DECI_MALES);
 
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());

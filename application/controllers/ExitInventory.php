@@ -26,6 +26,8 @@ class ExitInventory extends REST_Controller {
   //CREAR NUEVA SALIDA
 	public function createExitInventory_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
+
       $Data = $this->post();
 			$DocNumVerificado = 0;
 			$DetalleCuentaLineaDocumento = new stdClass();
@@ -896,10 +898,10 @@ class ExitInventory extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuenta,
-									':ac1_debit' => round($debito,2),
-									':ac1_credit' => round($credito,2),
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
+									':ac1_debit' => round($debito, $DECI_MALES),
+									':ac1_credit' => round($credito, $DECI_MALES),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['isi_docdate'])?$Data['isi_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['isi_docdate'])?$Data['isi_docdate']:NULL,
@@ -1029,10 +1031,10 @@ class ExitInventory extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuentaGrupo,
-									':ac1_debit' => round($dbito, 2),
-									':ac1_credit' => round($cdito, 2),
-									':ac1_debit_sys' => round($MontoSysDB, 2),
-									':ac1_credit_sys' => round($MontoSysCR, 2),
+									':ac1_debit' => round($dbito, $DECI_MALES),
+									':ac1_credit' => round($cdito, $DECI_MALES),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['isi_docdate'])?$Data['isi_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['isi_docdate'])?$Data['isi_docdate']:NULL,
