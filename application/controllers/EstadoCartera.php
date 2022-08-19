@@ -112,7 +112,8 @@ class EstadoCartera extENDs REST_Controller {
 		dvfv.dvf_duedate)>=91
 		then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) -	(mac1.ac1_ven_credit) ,get_localcur())
 		ELSE 0
-		END mayor_noventa
+		END mayor_noventa,
+		'' as comentario_asiento
 
 
 		from mac1
@@ -121,6 +122,7 @@ class EstadoCartera extENDs REST_Controller {
 		inner join dvfv on dvfv.dvf_doctype = mac1.ac1_font_type and dvfv.dvf_docentry = mac1.ac1_font_key
 		inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '1'
+		and dvf_docdate <= '".$Data['fecha']."'
 
 		union all
 		select distinct
@@ -161,14 +163,19 @@ class EstadoCartera extENDs REST_Controller {
 		ELSE 0 END secenta_uno_noventa, CASE WHEN ('".$Data['fecha']."' -	gbpr.bpr_docdate)>=91
 		then get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,(mac1.ac1_ven_debit) -	(mac1.ac1_ven_credit),get_localcur())
 		ELSE 0
-		END mayor_noventa
+		END mayor_noventa,
+		'' as comentario_asiento
+
 		from mac1
 		inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 		inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 		inner join gbpr on gbpr.bpr_doctype = mac1.ac1_font_type and gbpr.bpr_docentry = mac1.ac1_font_key
 		inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '1'
+		and bpr_docdate <= '".$Data['fecha']."'
+
 		union all
+
 		select distinct
 		dmdt.mdt_docname,
 		mac1.ac1_font_key,
@@ -207,7 +214,9 @@ class EstadoCartera extENDs REST_Controller {
 		then
 		get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit),get_localcur())
 		ELSE 0
-		END mayor_noventa
+		END mayor_noventa,
+		'' comentario_asiento
+
 		from mac1
 		inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 		inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
@@ -215,6 +224,8 @@ class EstadoCartera extENDs REST_Controller {
 		mac1.ac1_font_key
 		inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '1'
+		and vnc_docdate <= '".$Data['fecha']."'
+
 		union all
 		select distinct
 		dmdt.mdt_docname,
@@ -257,7 +268,8 @@ class EstadoCartera extENDs REST_Controller {
 		then
 		get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 		ELSE 0
-		END mayor_noventa
+		END mayor_noventa,
+		'' as comentario_asiento
 
 		from mac1
 		inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
@@ -267,6 +279,7 @@ class EstadoCartera extENDs REST_Controller {
 		inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and
 		dmsn.dms_card_type = '1'
+		and vnd_docdate <= '".$Data['fecha']."'
 
 		union all
 
@@ -300,8 +313,8 @@ class EstadoCartera extENDs REST_Controller {
 		,get_localcur())
 		when mac1.ac1_cord = 1
 		then
-		(get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_credit
-		,get_localcur()) * -1)
+		get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_credit
+		,get_localcur())
 		end as total_doc,
 		get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit)
 		- (mac1.ac1_ven_credit) ,get_localcur()) as saldo_venc,
@@ -322,7 +335,10 @@ class EstadoCartera extENDs REST_Controller {
 		then
 		get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 		ELSE 0
-		END mayor_noventa
+		END mayor_noventa,
+		ac1_comments as comentario_asiento
+
+
 		from mac1
 		inner join dacc on mac1.ac1_account = dacc.acc_code and
 		acc_businessp = '1'
@@ -333,9 +349,8 @@ class EstadoCartera extENDs REST_Controller {
 		and mac1.ac1_legal_num = dmsn.dms_card_code
 		where dmsn.dms_card_type = '1'
 		and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+		and mac_doc_date <= '".$Data['fecha']."'
 		order by NombreCliente asc";
-
-		// print_r($sqlestadocuenta);exit();
 
 		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,
 		array(
@@ -420,6 +435,7 @@ class EstadoCartera extENDs REST_Controller {
 									<th class=""><b>Total Documento</b></th>
 									<th class=""><b>F. Ven Documento</b></th>
 									<th class=""><b>F. Corte</b></th>
+									<th class=""><b>referencia</b></th>
 									<th class=""><b>Dias Vencidos</b></th>
 									<th class=""><b>0-30</b></th>
 									<th class=""><b>31-60</b></th>
@@ -439,6 +455,7 @@ class EstadoCartera extENDs REST_Controller {
 									<td class="centro">'.$Data['currency']." ".number_format($value1['totalfactura'], $DECI_MALES, ',', '.').'</td>
 									<td class="centro">'.$this->dateformat->Date($value1['fechavencimiento']).'</td>
 									<td class="centro">'.$this->dateformat->Date($value['fechacorte']).'</td>
+									<td class="centro">'.$value1['comentario_asiento'].'</td>
 									<td class="centro">'.$value1['dias'].'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['uno_treinta'], $DECI_MALES, ',', '.').'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], $DECI_MALES, ',', '.').'</td>

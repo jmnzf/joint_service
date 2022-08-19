@@ -109,7 +109,8 @@ class EstadoCarteraPro extENDs REST_Controller {
                     WHEN ('".$Data['fecha']."'- dcfc.cfc_duedate) >= 91
                         then get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))  ,get_localcur())
                     ELSE 0
-                    END                                                  mayor_noventa
+                    END                                                  mayor_noventa,
+                    '' as comentario_asiento
 from mac1
          inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
          inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
@@ -176,7 +177,8 @@ select distinct dmdt.mdt_docname,
                     WHEN ('".$Data['fecha']."'- gbpe.bpe_docdate) >= 91
                         then get_dynamic_conversion(:currency,get_localcur(),gbpe.bpe_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0
-                    END                                                  mayor_noventa
+                    END                                                  mayor_noventa,
+                    '' as comentario_asiento
 
 from mac1
          inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
@@ -244,13 +246,14 @@ select distinct dmdt.mdt_docname,
                     WHEN ('".$Data['fecha']."'- dcnc.cnc_duedate) >= 91
                         then get_dynamic_conversion(:currency,get_localcur(),dcnc.cnc_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0
-                    END                                                  mayor_noventa
+                    END                                                  mayor_noventa,
+                    '' as comentario_asiento
 
 from mac1
          inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
          inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
          inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry =
-                                                                      mac1.ac1_font_key
+         mac1.ac1_font_key
          inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
 
@@ -317,7 +320,8 @@ select distinct dmdt.mdt_docname,
                         ('".$Data['fecha']."'- dcnd.cnd_duedate) >= 91
                         then get_dynamic_conversion(:currency,get_localcur(),dcnd.cnd_docdate,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0
-                    END                                                  mayor_noventa
+                    END                                                  mayor_noventa,
+                    '' as comentario_asiento
 
 from mac1
          inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp =
@@ -398,13 +402,13 @@ select  dmdt.mdt_docname,
                     WHEN ('".$Data['fecha']."'- tmac.mac_doc_duedate) >= 91
                         then get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_duedate ,SUM((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)),get_localcur())
                     ELSE 0
-                    END                                                   mayor_noventa
+                    END                                                   mayor_noventa,
+                    ac1_comments as comentario_asiento
 from mac1
-         inner join dacc on mac1.ac1_account = dacc.acc_code and
-                            acc_businessp = '1'
+         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
          inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
          inner join tmac on tmac.mac_trans_id = mac1.ac1_font_key and
-                            tmac.mac_doctype = mac1.ac1_font_type
+         tmac.mac_doctype = mac1.ac1_font_type
          inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type
     and mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
@@ -424,7 +428,7 @@ group by dmdt.mdt_docname,
          tmac.mac_doc_date,
          tmac.mac_doc_duedate,
          mac_trans_id,
-         mdt_docname, mac1.ac1_cord";
+         mdt_docname, mac1.ac1_cord,ac1_comments";
 
 		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array("currency" => $Data['currency']));
         // print_r($sqlestadocuenta);exit();die();
@@ -506,6 +510,7 @@ group by dmdt.mdt_docname,
 									<th class=""><b>Total Documento</b></th>
 									<th class=""><b>F. Ven Documento</b></th>
 									<th class=""><b>F. Corte</b></th>
+                                    <th class=""><b>Referencia</b></th>
 									<th class=""><b>Dias Vencidos</b></th>
 									<th class=""><b>0-30</b></th>
 									<th class=""><b>31-60</b></th>
@@ -525,6 +530,7 @@ group by dmdt.mdt_docname,
 									<td class="centro">'.$Data['currency']." ".number_format($value1['totalfactura'], $DECI_MALES, ',', '.').'</td>
 									<td class="centro">'.$this->dateformat->Date($value1['fechavencimiento']).'</td>
 									<td class="centro">'.$this->dateformat->Date($value1['fechacorte']).'</td>
+                                    <td class="centro">'.$value1['comentario_asiento'].'</td>
 									<td class="centro">'.$value1['dias'].'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['uno_treinta'], $DECI_MALES, ',', '.').'</td>
 									<td class="centro">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], $DECI_MALES, ',', '.').'</td>

@@ -124,7 +124,8 @@ class EstadoCuentaCl extends REST_Controller {
 					WHEN ( '".$Data['fecha']."' - dvfv.dvf_duedate) >=91
 						then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 				ELSE 0
-				END mayor_noventa
+				END mayor_noventa,
+				'' as referencia
 
 
 				from mac1
@@ -134,6 +135,7 @@ class EstadoCuentaCl extends REST_Controller {
 				inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 				where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 				and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
+				and dvf_docdate <= '".$Data['fecha']."'
 
 
 				union all
@@ -178,7 +180,8 @@ class EstadoCuentaCl extends REST_Controller {
 					WHEN ( '".$Data['fecha']."' - gbpr.bpr_docdate) >=91
 						then get_dynamic_conversion(:currency,get_localcur(),gbpr.bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 				ELSE 0
-				END mayor_noventa
+				END mayor_noventa,
+				'' as comentario_asiento
 
 				from mac1
 				inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
@@ -187,6 +190,7 @@ class EstadoCuentaCl extends REST_Controller {
 				inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 				where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 				and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
+				and bpr_docdate <= '".$Data['fecha']."'
 
 				union all
 				select distinct
@@ -233,7 +237,8 @@ class EstadoCuentaCl extends REST_Controller {
 					WHEN ( '".$Data['fecha']."' - dvnc.vnc_duedate) >=91
 						then get_dynamic_conversion(:currency,get_localcur(),dvnc.vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 				ELSE 0
-				END mayor_noventa
+				END mayor_noventa,
+				'' as comentario_asiento
 
 				from mac1
 				inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
@@ -242,6 +247,7 @@ class EstadoCuentaCl extends REST_Controller {
 				inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 				where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 				and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
+				and vnc_docdate <= '".$Data['fecha']."'
 
 				union all
 
@@ -289,7 +295,8 @@ class EstadoCuentaCl extends REST_Controller {
 					WHEN ( '".$Data['fecha']."' - dvnd.vnd_duedate) >=91
 						then get_dynamic_conversion(:currency,get_localcur(),dvnd.vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 				ELSE 0
-				END mayor_noventa
+				END mayor_noventa,
+				'' as comentario_asiento
 
 				from mac1
 				inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
@@ -298,6 +305,7 @@ class EstadoCuentaCl extends REST_Controller {
 				inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 				where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0
 				and mac1.ac1_legal_num = '".$Data['cardcode']."' and dmsn.dms_card_type = '1'
+				and vnd_docdate <= '".$Data['fecha']."'
 
 				union all
 				select
@@ -351,14 +359,16 @@ class EstadoCuentaCl extends REST_Controller {
 					WHEN ( '".$Data['fecha']."' - tmac.mac_doc_duedate)>=91
 						then   get_dynamic_conversion(:currency,get_localcur(),tmac.mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
 					ELSE 0
-				END mayor_noventa
+				END mayor_noventa,
+				ac1_comments as comentario_asiento
 				from mac1
 				inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 				inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
 				inner join tmac on tmac.mac_trans_id = mac1.ac1_font_key and tmac.mac_doctype = mac1.ac1_font_type
 				inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type and mac1.ac1_legal_num = dmsn.dms_card_code
 				where dmsn.dms_card_type = '1' and  mac1.ac1_legal_num = '".$Data['cardcode']."'
-				and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
+				and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+				and mac_doc_date <= '".$Data['fecha']."'";
 				// print_r($sqlestadocuenta);exit;
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array(":currency" => $Data['currency']));
          // print_r($sqlestadocuenta);exit();die();
@@ -391,6 +401,7 @@ class EstadoCuentaCl extends REST_Controller {
 											<td class="centro">'.$Data['currency']." ".number_format($value['totalfactura'], $DECI_MALES, ',', '.').'</td>
 											<td class="centro">'.$this->dateformat->Date($value['fechavencimiento']).'</td>
 											<td class="centro">'.$this->dateformat->Date($value['fechacorte']).'</td>
+											<td class="centro">'.$value['referencia'].'</td>
 											<td class="centro">'.$value['dias'].'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['uno_treinta'], $DECI_MALES, ',', '.').'</td>
 											<td class="centro">'.$Data['currency']." ".number_format($value['treinta_uno_secenta'], $DECI_MALES, ',', '.').'</td>
@@ -502,7 +513,8 @@ class EstadoCuentaCl extends REST_Controller {
 					<th class=""><b>Total Documento</b></th>
           <th class=""><b>F. Ven Documento</b></th>
           <th class=""><b>F. Corte</b></th>
-					<th class=""><b>Dias Vencidos</b></th>
+		  <th class=""><b>Referencia</b></th>
+		  <th class=""><b>Dias Vencidos</b></th>
           <th class=""><b>0-30</b></th>
           <th class=""><b>31-60</b></th>
           <th class=""><b>61-90</b></th>
