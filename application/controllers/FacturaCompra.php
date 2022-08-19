@@ -193,12 +193,12 @@ class FacturaCompra extends REST_Controller {
 				<tr>
           <td ><b>RIF :</b><span>'.$contenidoFC[0]['nit'].'</span></td>
           <td></td>
-          <td ><b>FECHA EXPEDICION :</b><span>'.$contenidoFC[0]['fechadocumento'].'</span></td>
+          <td ><b>FECHA DOCUMENTO :</b><span>'.$contenidoFC[0]['fechadocumento'].'</span></td>
          </tr>
 				 <tr>
          <td><b>NOMBRE PROVEEDOR :</b><span> '.$contenidoFC[0]['cliente'].'</span></td>
           <td></td>
-          <td><b>FECHA VENCIMIENTO :</b><span> '.$contenidoFC[0]['fechavendocumento'].'</span></td>
+          <td><b>FECHA FACTURA :</b><span> '.$contenidoFC[0]['fechavendocumento'].'</span></td>
          </tr>
 				 <tr>
          <td><b>DIRECCION:</b> <span> '.$contenidoFC[0]['direccion'].'</span></td>

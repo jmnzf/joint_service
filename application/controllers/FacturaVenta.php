@@ -580,6 +580,9 @@ class FacturaVenta extends REST_Controller {
 												<tr><td>&nbsp;</td></tr>
 												<tr><td>&nbsp;</td></tr>
 												<tr><td>&nbsp;</td></tr>
+												<tr><td>&nbsp;</td></tr>
+												<tr><td>&nbsp;</td></tr>
+												<tr><td>&nbsp;</td></tr>
 												<tr>
 															<td style="text-align: left;" class="">
 																	<p>'.$formatter->toWords($valorTotalDoc,2)." ".$contenidoFV[0]['nombremoneda'].'</p>
