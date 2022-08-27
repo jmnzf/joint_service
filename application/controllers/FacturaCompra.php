@@ -29,11 +29,11 @@ class FacturaCompra extends REST_Controller {
 
 
 	public function FacturaCompra_post(){
-				$DECI_MALES =  $this->generic->getDecimals();
+		$DECI_MALES =  $this->generic->getDecimals();
         $Data = $this->post();
-				$Data = $Data['CFC_DOCENTRY'];
+		$Data = $Data['CFC_DOCENTRY'];
 
-				$formatter = new NumeroALetras();
+		$formatter = new NumeroALetras();
 
 
 
@@ -84,6 +84,7 @@ class FacturaCompra extends REST_Controller {
 										CONCAT(T6.PGS_PREF_NUM,' ',T0.CFC_DOCNUM) NumeroDocumento,
 										to_char(T0.CFC_DOCDATE,'DD-MM-YYYY') FechaDocumento,
 										to_char(T0.CFC_DUEDATE,'DD-MM-YYYY') FechaVenDocumento,
+                                        to_char(T0.cfc_duedev,'DD-MM-YYYY') FechaFactura,
 										trim('COP' FROM t0.CFC_CURRENCY) MonedaDocumento,
 										T7.PGM_NAME_MONEDA NOMBREMONEDA,
 										T5.MEV_NAMES Vendedor,
@@ -162,7 +163,7 @@ class FacturaCompra extends REST_Controller {
                 <p><b>FACTURA DE COMPRA</b></p>
                 <p class="">'.$contenidoFC[0]['numerodocumento'].'</p>
                 <p class=""><b>#FISCAL :</b>'.$contenidoFC[0]['cfc_tax_control_num'].'</p>
-                <p class=""><b>CORRELATIVO :</b>'.$contenidoFC[0]['cfc_correl'].'</p>
+                <p class=""><b>NRO FACTURA :</b>'.$contenidoFC[0]['cfc_correl'].'</p>
 
             </th>
         </tr>
@@ -199,7 +200,7 @@ class FacturaCompra extends REST_Controller {
 				 <tr>
          <td><b>NOMBRE PROVEEDOR :</b><span> '.$contenidoFC[0]['cliente'].'</span></td>
           <td></td>
-          <td><b>FECHA FACTURA :</b><span> '.$contenidoFC[0]['fechavendocumento'].'</span></td>
+          <td><b>FECHA FACTURA :</b><span> '.$contenidoFC[0]['fechafactura'].'</span></td>
          </tr>
 				 <tr>
          <td><b>DIRECCION:</b> <span> '.$contenidoFC[0]['direccion'].'</span></td>
