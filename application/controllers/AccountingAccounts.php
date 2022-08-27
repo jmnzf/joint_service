@@ -188,7 +188,7 @@ class AccountingAccounts extends REST_Controller {
 														    cast(acc_code as varchar) ,
 														    acc_name,
 														    acc_level,
-														    round((select sum(t1.ac1_debit-t1.ac1_credit) from mac1 t1 where t1.ac1_account = acc_code), 2) as saldo,
+														    round((select sum(t1.ac1_debit-t1.ac1_credit) from mac1 t1 where t1.ac1_account = acc_code), get_decimals()) as saldo,
 														    acc_cash ,
 														    acc_cash_flow,
 														    acc_budget,

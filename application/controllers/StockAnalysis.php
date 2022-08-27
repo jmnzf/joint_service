@@ -24,6 +24,8 @@ class StockAnalysis extends REST_Controller {
 	}
 
   public function getStockAnalysis_post(){
+		$MONEDA_LOCAL = $this->generic->getLocalCurrency();
+
     $Data = $this->post();
     if((!isset($Data['dvf_doctype']) or $Data['dvf_doctype'] == '' or $Data['dvf_doctype'] == null) or
       (!isset($Data['dvf_docdate']) or $Data['dvf_docdate'] == '' or $Data['dvf_docdate'] == null) or
@@ -141,10 +143,10 @@ class StockAnalysis extends REST_Controller {
 									{$prefix}_docnum docnum,
 									{$detailPrefix}_itemname item_name,
 									{$prefix}_cardname cliente_name,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_linetotal),{MAIN}),2) )) * {$neg}) val_factura,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),2) )) * {$neg}) price,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_vatsum),{MAIN}),2) )) * {$neg}) val_impuesto,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),2) )) * {$neg}) total_docums,
+									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_linetotal),{MAIN}),get_decimals()) )) * {$neg}) val_factura,
+									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),get_decimals()) )) * {$neg}) price,
+									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_vatsum),{MAIN}),get_decimals()) )) * {$neg}) val_impuesto,
+									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),get_decimals()) )) * {$neg}) total_docums,
 									mga_name,
 									get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
 									{$prefix}_createby createby,
@@ -153,7 +155,7 @@ class StockAnalysis extends REST_Controller {
 									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado,
 									{$detailPrefix}_uom  unidad
 									".(($table =="dcfc")? ",mrt_name": ",''" )." rt_name,
-									".(($table =="dcfc")? "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg(crt_totalrt),{MAIN}),2))": "concat({CURR},round(0,2))" )." rt_total
+									".(($table =="dcfc")? "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg(crt_totalrt),{MAIN}),get_decimals()))": "concat({CURR},round(0,2))" )." rt_total
 									from {$table}
 									join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 									join dmdt on {$prefix}_doctype = mdt_doctype
@@ -179,8 +181,8 @@ class StockAnalysis extends REST_Controller {
 					$sqlSelect =	str_replace("{MAIN}","'".$main_currency."'",$sqlSelect);
 				}else{
 					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
-					$sqlSelect =	str_replace("{CURR}","'BS '",$sqlSelect);
-					$sqlSelect =	str_replace("{CURRD}","'BS'",$sqlSelect);
+					$sqlSelect =	str_replace("{CURR}","'".$MONEDA_LOCAL."'",$sqlSelect);
+					$sqlSelect =	str_replace("{CURRD}","'".$MONEDA_LOCAL."'",$sqlSelect);
 					$sqlSelect =	str_replace("{MAIN}","'".$main_currency."'",$sqlSelect);
 
 				}
@@ -278,10 +280,10 @@ class StockAnalysis extends REST_Controller {
 		  {$prefix}_docnum docnum,
 		  {$detailPrefix}_itemname item_name,
 		  {$prefix}_cardname cliente_name,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_linetotal),{MAIN}),2) )) * {$neg}) val_factura,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),2) )) * {$neg}) price,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_vatsum),{MAIN}),2) )) * {$neg}) val_impuesto,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),2) )) * {$neg}) total_docums,
+		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_linetotal),{MAIN}),get_decimals()) )) * {$neg}) val_factura,
+		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),get_decimals()) )) * {$neg}) price,
+		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_vatsum),{MAIN}),get_decimals()) )) * {$neg}) val_impuesto,
+		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),get_decimals()) )) * {$neg}) total_docums,
 		  get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
 		  mga_name,
 		  {$prefix}_createby createby,
@@ -290,7 +292,7 @@ class StockAnalysis extends REST_Controller {
 		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado,
 		  {$detailPrefix}_uom  unidad
 		  ".(($table =="dcfc")? ",mrt_name": ",''" )." rt_name,
-		  ".(($table =="dcfc")? "concat({CURR},round(get_dynamic_conversion({CURR},{$prefix}_currency,{$prefix}_docdate,avg(crt_totalrt),{MAIN}),2))": "concat({CURRD},round(0,2))" )." rt_total
+		  ".(($table =="dcfc")? "concat({CURR},round(get_dynamic_conversion({CURR},{$prefix}_currency,{$prefix}_docdate,avg(crt_totalrt),{MAIN}),get_decimals()))": "concat({CURRD},round(0,2))" )." rt_total
 		  from {$table}
 		  join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 		  join dmdt on {$prefix}_doctype = mdt_doctype

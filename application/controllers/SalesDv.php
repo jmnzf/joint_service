@@ -1109,7 +1109,7 @@ class SalesDv extends REST_Controller {
                 ':ac1_line'   => $AC1LINE
                 ));
 
-                
+
                 if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
                 // Se verifica que el detalle no de error insertando //
 
@@ -1131,7 +1131,7 @@ class SalesDv extends REST_Controller {
                 }
                 // print_r($dbito."\n");print_r($cdito);
       }
-     
+
       // FIN DEL PROCEDIEMIENTO PARA LLENAR LA CUENTA PUENTE
 
 
@@ -1415,8 +1415,8 @@ class SalesDv extends REST_Controller {
                   VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
                       $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-                      ':bed_docentry' => $Data['vdv_docentry'],
-                      ':bed_doctype' => $Data['vdv_doctype'],
+                      ':bed_docentry' => $Data['vdv_baseentry'],
+                      ':bed_doctype' => $Data['vdv_basetype'],
                       ':bed_status' => 3, //ESTADO CERRADO
                       ':bed_createby' => $Data['vdv_createby'],
                       ':bed_date' => date('Y-m-d'),
@@ -1686,25 +1686,27 @@ class SalesDv extends REST_Controller {
     //OBTENER Devolución de clientesES
     public function getSalesDv_get(){
 
-    $sqlSelect = self::getColumn('dvdv','vdv');
+      $DECI_MALES =  $this->generic->getDecimals();
+
+      $sqlSelect = self::getColumn('dvdv','vdv','','',$DECI_MALES);
 
 
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+      $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-    if(isset($resSelect[0])){
+      if(isset($resSelect[0])){
 
-      $respuesta = array(
-      'error' => false,
-      'data'  => $resSelect,
-      'mensaje' => '');
+        $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
 
-      }else{
+        }else{
 
-      $respuesta = array(
-        'error'   => true,
-        'data' => array(),
-        'mensaje' => 'busqueda sin resultados'
-      );
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje' => 'busqueda sin resultados'
+        );
 
       }
 

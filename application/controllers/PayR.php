@@ -23,11 +23,14 @@ class PayR extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
 
 	public function PayR_post(){
+
+				$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
 				$Data = $Data['BPR_DOCENTRY'];
@@ -101,7 +104,7 @@ class PayR extends REST_Controller {
         t1.pr1_vlrpaid total_apli,
         (t1.pr1_vlrtotal - t1.pr1_vlrpaid) saldo,
         t1.pr1_comments coments_origen
-      
+
       from gbpr t0
       left join bpr1 t1 on t0.bpr_docentry = t1.pr1_docnum
       join dmdt t2 on t1.pr1_doctype = t2.mdt_doctype
@@ -130,9 +133,9 @@ class PayR extends REST_Controller {
 											<td>'.$value['fecha_origen'].'</td>
 											<td>'.$value['fecha_ven'].'</td>
 											<td>'.$value['dias_ven'].'</td>
-											<td>$'.number_format($value['total_doc_origen'], 2, ',', '.').'</td>
-											<td>$'.number_format($value['total_apli'], 2, ',', '.').'</td>
-                      <td>$'.number_format($value['saldo'], 2, ',', '.').'</td>';
+											<td>$'.number_format($value['total_doc_origen'], $DECI_MALES, ',', '.').'</td>
+											<td>$'.number_format($value['total_apli'], $DECI_MALES, ',', '.').'</td>
+                      <td>$'.number_format($value['saldo'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				}
 
@@ -208,7 +211,7 @@ class PayR extends REST_Controller {
           </th>
         </tr>
         </table>
-        
+
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
@@ -246,7 +249,7 @@ class PayR extends REST_Controller {
         <br>
         <table width="100%">
         <tr>
-            <td style="text-align: left;"><b>TOTAL PAGADO: </b><span>$'.number_format($contenidoPAYE[0]['total_doc'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: left;"><b>TOTAL PAGADO: </b><span>$'.number_format($contenidoPAYE[0]['total_doc'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
             <td style="text-align: left;"><b>REFERENCIA: </b><span>'.$contenidoPAYE[0]['referencia'].'</span></p></td>

@@ -24,13 +24,16 @@ class EstadoCartera extENDs REST_Controller {
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('DateFormat');
+		$this->load->library('generic');
 
 	}
 
 
 	public function EstadoCartera_post(){
 
-        $Data = $this->post();
+		$DECI_MALES =  $this->generic->getDecimals();
+
+    $Data = $this->post();
 		// $Data = $Data['fecha'];
 		$totalfactura = 0;
 
@@ -280,7 +283,7 @@ class EstadoCartera extENDs REST_Controller {
 
 		union all
 
-		select 
+		select
 		dmdt.mdt_docname,
 		mac1.ac1_font_key,
 		case
@@ -449,15 +452,15 @@ class EstadoCartera extENDs REST_Controller {
 									<td class="centro">'.$value1['mdt_docname'].'</td>
 									<td style="width: 15%;" class="centro">'.$value1['numerodocumento'].'</td>
 									<td class="centro">'.$this->dateformat->Date($value1['fechadocumento']).'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['totalfactura'], 2, ',', '.').'</td>
+									<td class="centro">'.$Data['currency']." ".number_format($value1['totalfactura'], $DECI_MALES, ',', '.').'</td>
 									<td class="centro">'.$this->dateformat->Date($value1['fechavencimiento']).'</td>
 									<td class="centro">'.$this->dateformat->Date($value['fechacorte']).'</td>
 									<td class="centro">'.$value1['comentario_asiento'].'</td>
 									<td class="centro">'.$value1['dias'].'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['uno_treinta'], 2, ',', '.').'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], 2, ',', '.').'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['secenta_uno_noventa'], 2, ',', '.').'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['mayor_noventa'], 2, ',', '.').'</td>';
+									<td class="centro">'.$Data['currency']." ".number_format($value1['uno_treinta'], $DECI_MALES, ',', '.').'</td>
+									<td class="centro">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], $DECI_MALES, ',', '.').'</td>
+									<td class="centro">'.$Data['currency']." ".number_format($value1['secenta_uno_noventa'], $DECI_MALES, ',', '.').'</td>
+									<td class="centro">'.$Data['currency']." ".number_format($value1['mayor_noventa'], $DECI_MALES, ',', '.').'</td>';
 
 
 
@@ -480,14 +483,14 @@ class EstadoCartera extENDs REST_Controller {
 							<th>&nbsp;</th>
 							<th>&nbsp;</th>
 							<th><b>Total</b></th>
-							<th style="width: 10%;" class=""><b>'.$monedadocumento.' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), 2, ',', '.').'</b></th>
+							<th style="width: 10%;" class=""><b>'.$monedadocumento.' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), $DECI_MALES, ',', '.').'</b></th>
 							<th>&nbsp;</th>
 							<th>&nbsp;</th>
 							<th>&nbsp;</th>
-							<th class=""><b>'.$monedadocumento.' '.number_format($detail_0_30, 2, ',', '.').'</b></th>
-							<th class=""><b>'.$monedadocumento.' '.number_format($detail_30_60, 2, ',', '.').'</b></th>
-							<th class=""><b>'.$monedadocumento.' '.number_format($detail_60_90, 2, ',', '.').'</b></th>
-							<th class=""><b>'.$monedadocumento.' '.number_format($detail_mayor_90, 2, ',', '.').'</b></th>
+							<th class=""><b>'.$monedadocumento.' '.number_format($detail_0_30, $DECI_MALES, ',', '.').'</b></th>
+							<th class=""><b>'.$monedadocumento.' '.number_format($detail_30_60, $DECI_MALES, ',', '.').'</b></th>
+							<th class=""><b>'.$monedadocumento.' '.number_format($detail_60_90, $DECI_MALES, ',', '.').'</b></th>
+							<th class=""><b>'.$monedadocumento.' '.number_format($detail_mayor_90, $DECI_MALES, ',', '.').'</b></th>
 							</tr>';
 
 				$cuerpo .= $encabezado."<table width='100%'><tr>".$cabecera."</tr>".$totaldetalle.$detail_total."</table><br><br>";
@@ -502,11 +505,11 @@ class EstadoCartera extENDs REST_Controller {
 							<th style="width: 10%;">&nbsp;</th>
 							<th style="width: 24%;">&nbsp;</th>
 							<th><b>Total</th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format(($total_0_30+$total_30_60+$total_60_90+$total_mayor_90), 2, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_0_30, 2, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_30_60, 2, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_60_90, 2, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_mayor_90, 2, ',', '.').'</b></th>
+							<th class=" centro"><b>'.$monedadocumento.' '.number_format(($total_0_30+$total_30_60+$total_60_90+$total_mayor_90), $DECI_MALES, ',', '.').'</b></th>
+							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_0_30, $DECI_MALES, ',', '.').'</b></th>
+							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_30_60, $DECI_MALES, ',', '.').'</b></th>
+							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_60_90, $DECI_MALES, ',', '.').'</b></th>
+							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_mayor_90, $DECI_MALES, ',', '.').'</b></th>
 							</tr>
 					</table>';
 

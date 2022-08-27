@@ -19,6 +19,8 @@ class SalesOrder extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
+
 
 	}
 
@@ -934,7 +936,9 @@ class SalesOrder extends REST_Controller {
   //OBTENER PEDIDOS
   public function getSalesOrder_get(){
 
-        $sqlSelect = self::getColumn('dvov','vov');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('dvov','vov','','',$DECI_MALES);
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1341,10 +1345,10 @@ class SalesOrder extends REST_Controller {
 	public function getOpenSalesOrder_get(){
 
       	$request = $this->get();
-		// 
+		//
 		$where = "";
 		$array = [':tipo' => 2, ':estado' => 'Abierto'];
-		// 
+		//
 		if (isset($request['cardcode']) && !empty($request['cardcode'])) {
 			# code...
 			$where = "and vov_cardcode = :cardcode";

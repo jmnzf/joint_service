@@ -1,5 +1,5 @@
 <?php
-// FACTURA DE COMPRAS
+// PRESUPUESTOS
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');

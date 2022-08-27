@@ -23,12 +23,15 @@ class PdfPaymentRecived extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
-			$this->load->library('DateFormat');
+		$this->load->library('DateFormat');
+		$this->load->library('generic');
 
 	}
 
 
 	public function PdfPaymentRecived_post(){
+
+				$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
 				$Data = $Data['bpr_docentry'];
@@ -185,19 +188,19 @@ class PdfPaymentRecived extends REST_Controller {
 											<td>'.$value['docnum'].'</td>
 											<td>'.$this->dateformat->Date($value['docdate']).'</td>
 											<td>'.$value['comentario'].'</td>
-											<td>'.number_format($value['base'], 2, ',', '.').'</td>
-											<td>'.number_format($value['iva'], 2, ',', '.').'</td>
-											<td>'.number_format($value['exento'], 2, ',', '.').'</td>
+											<td>'.number_format($value['base'], $DECI_MALES, ',', '.').'</td>
+											<td>'.number_format($value['iva'], $DECI_MALES, ',', '.').'</td>
+											<td>'.number_format($value['exento'], $DECI_MALES, ',', '.').'</td>
 											<td>'.$value['porcentaje_ret_iva'].'</td>
-											<td>'.number_format($value['base_ret_iva'], 2, ',', '.').'</td>
-											<td>'.number_format(($value['neto'] + $value['exento']) - $value['base_ret_iva'] , 2, ',', '.').'</td>
-											<td>'.number_format($value['base'], 2, ',', '.').'</td>
+											<td>'.number_format($value['base_ret_iva'], $DECI_MALES, ',', '.').'</td>
+											<td>'.number_format(($value['neto'] + $value['exento']) - $value['base_ret_iva'] , $DECI_MALES, ',', '.').'</td>
+											<td>'.number_format($value['base'], $DECI_MALES, ',', '.').'</td>
 											<td>'.$value['porcentaje_ret_islr'].'</td>
-											<td>'.number_format($value['base_ret_islr'], 2, ',', '.').'</td>
+											<td>'.number_format($value['base_ret_islr'], $DECI_MALES, ',', '.').'</td>
 											<td>'.$value['porcentaje_ret_ipm'].'</td>
-											<td>'.number_format($value['base_ret_ipm'], 2, ',', '.').'</td>
-											<td>'.number_format($value['total'], 2, ',', '.').'</td>
-											<td>'.number_format($value['pr1_vlrpaid'], 2, ',', '.').'</td>';
+											<td>'.number_format($value['base_ret_ipm'], $DECI_MALES, ',', '.').'</td>
+											<td>'.number_format($value['total'], $DECI_MALES, ',', '.').'</td>
+											<td>'.number_format($value['pr1_vlrpaid'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				 $totales = $totales + ($value['pr1_vlrpaid']);
 				}
@@ -207,7 +210,7 @@ class PdfPaymentRecived extends REST_Controller {
 				<table width="100%" style="text-align: left;">
         			<tr>
             			<th style="text-align: left;">
-							<img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" 
+							<img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'"
 							width ="100" height ="40"></img>
 						</th>
             			<th>
@@ -325,17 +328,17 @@ class PdfPaymentRecived extends REST_Controller {
 					<tr>
 						<td style="text-align: left;"><b>COMENTARIO:</b><span>'.$contenidoOC[0]['bpr_memo'].'</td>
 						<td></td>
-						<td style="text-align: left;"><b>TASA:</b><span>'.number_format($contenidoOC[0]['tasa'], 2, ',', '.').'</td>
+						<td style="text-align: left;"><b>TASA:</b><span>'.number_format($contenidoOC[0]['tasa'], $DECI_MALES, ',', '.').'</td>
 					</tr>
 					<tr>
 						<td></td>
 						<td></td>
-						<td style="text-align: left;"><b>TOTAL BS:</b><span>'.number_format($totales, 2, ',', '.').'</td>
+						<td style="text-align: left;"><b>TOTAL BS:</b><span>'.number_format($totales, $DECI_MALES, ',', '.').'</td>
 					</tr>
 					<tr>
 						<td></td>
 						<td></td>
-						<td style="text-align: left;"><b>TOTAL USD:</b><span>'.number_format(($totales / $contenidoOC[0]['tasa']), 2, ',', '.').'</td>
+						<td style="text-align: left;"><b>TOTAL USD:</b><span>'.number_format(($totales / $contenidoOC[0]['tasa']), $DECI_MALES, ',', '.').'</td>
 					</tr>
 				</table>
 				</html>';

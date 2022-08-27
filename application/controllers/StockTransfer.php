@@ -26,6 +26,7 @@ class StockTransfer extends REST_Controller {
   //CREAR NUEVA SOLICITUD TRANSFERENCIA DE STOCKS
 	public function createSolStockTransfer_post(){
 
+		$DECI_MALES =  $this->generic->getDecimals();
 		$Data = $this->post();
 		$DetalleInventario = new stdClass();
 		$DetalleInventario2 = new stdClass();
@@ -278,12 +279,12 @@ class StockTransfer extends REST_Controller {
 
 															if(trim($Data['ist_currency']) != $MONEDALOCAL){
 
-																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), 2);
-																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 
 															}else{
 
-																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 
 															}
 
@@ -576,7 +577,9 @@ class StockTransfer extends REST_Controller {
 	//OBTENER SOLICITUD DE TRASLADO
 	public function getSolStockTransfer_get(){
 
-				$sqlSelect = self::getColumn('dist','ist');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+				$sqlSelect = self::getColumn('dist','ist','','',$DECI_MALES);
 
 				// $sqlSelect = "SELECT * FROM dist";
 
@@ -1573,9 +1576,9 @@ class StockTransfer extends REST_Controller {
 					    ':ac1_trans_id' => $resInsertAsiento,
 					    ':ac1_account' => $cuentaInventario,
 					    ':ac1_debit' => 0,
-					    ':ac1_credit' => round($grantotalAcumulado,2),
+					    ':ac1_credit' => round($grantotalAcumulado, $DECI_MALES),
 					    ':ac1_debit_sys' => 0,
-					    ':ac1_credit_sys' => round($MontoSysCR,2),
+					    ':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 					    ':ac1_currex' => 0,
 					    ':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
 					    ':ac1_doc_duedate' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
@@ -1664,9 +1667,9 @@ class StockTransfer extends REST_Controller {
 
 					    ':ac1_trans_id' => $resInsertAsiento,
 					    ':ac1_account' => $cuentaInventario,
-					    ':ac1_debit' => round($grantotalAcumulado,2),
+					    ':ac1_debit' => round($grantotalAcumulado, $DECI_MALES),
 					    ':ac1_credit' => 0,
-					    ':ac1_debit_sys' => round($MontoSysDB,2),
+					    ':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 					    ':ac1_credit_sys' => 0,
 					    ':ac1_currex' => 0,
 					    ':ac1_doc_date' => $this->validateDate($Data['its_docdate'])?$Data['its_docdate']:NULL,
@@ -1776,7 +1779,9 @@ class StockTransfer extends REST_Controller {
 	//OBTENER  TRASLADO
 	public function getStockTransfer_get(){
 
-				$sqlSelect = self::getColumn('dits','its');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+				$sqlSelect = self::getColumn('dits','its','','',$DECI_MALES);
 
 				// $sqlSelect = "SELECT * FROM dist";
 

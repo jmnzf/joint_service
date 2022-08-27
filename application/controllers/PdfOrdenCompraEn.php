@@ -24,12 +24,15 @@ class PdfOrdenCompraEn extends REST_Controller {
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('DateFormat');
+		$this->load->library('generic');
 
 
 	}
 
 
 	public function PdfOrdenCompraEn_post(){
+
+				$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
 				$Data = $Data['CPO_DOCENTRY'];
@@ -346,11 +349,11 @@ class PdfOrdenCompraEn extends REST_Controller {
 					$detalle = '<td>'.$value['referencia'].'</td>
 											<td>'.$value['descripcion'].'</td>
 											<td>'.$value['um'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], 2, ',', '.').'</td>
+											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], $DECI_MALES, ',', '.').'</td>
 											<td>'.$value['cantidad'].'</td>
 											<td>'.$value['prcdes'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], 2, ',', '.').'</td>';
+											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], $DECI_MALES, ',', '.').'</td>
+											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				}
 
@@ -359,7 +362,7 @@ class PdfOrdenCompraEn extends REST_Controller {
 						<table width="100%" style="text-align: left;">
 							<tr>
 								<th style="text-align: left;">
-									<img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" 
+									<img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'"
 									width ="100" height ="40"></img>
 								</th>
 								<th>
@@ -519,19 +522,19 @@ class PdfOrdenCompraEn extends REST_Controller {
 
         <tr>
 
-            <td style="text-align: right;"><b>DOCUMENT BASIS:</b> <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['base'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>DOCUMENT BASIS:</b> <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['base'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;"><b>DISCOUNT:</b> <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['descuento'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>DISCOUNT:</b> <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['descuento'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 				<tr>
-            <td style="text-align: right;"><b>SUBTOTAL:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['subtotal'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>SUBTOTAL:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['subtotal'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;"><b>Taxes:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['iva'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Taxes:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['iva'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;"><b>Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['totaldoc'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 				</table>
 				<table  width="100%">

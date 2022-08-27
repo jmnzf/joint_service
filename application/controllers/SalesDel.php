@@ -26,6 +26,7 @@ class SalesDel extends REST_Controller {
   //CREAR NUEVA Entrega de Ventas
 	public function createSalesDel_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 			$DetalleAsientoIva = new stdClass();
@@ -1283,10 +1284,10 @@ class SalesDel extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuentaInventario,
-									':ac1_debit' => round($dbito, 2),
-									':ac1_credit' => round($cdito, 2),
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
+									':ac1_debit' => round($dbito, $DECI_MALES),
+									':ac1_credit' => round($cdito, $DECI_MALES),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
@@ -1448,10 +1449,10 @@ class SalesDel extends REST_Controller {
 
 								':ac1_trans_id' => $resInsertAsiento,
 								':ac1_account' => $cuentaCosto,
-								':ac1_debit' => $dbito,
-								':ac1_credit' => $cdito,
-								':ac1_debit_sys' => round($MontoSysDB,2),
-								':ac1_credit_sys' => round($MontoSysCR,2),
+								':ac1_debit' => round($dbito, $DECI_MALES),
+								':ac1_credit' => round($cdito, $DECI_MALES),
+								':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+								':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 								':ac1_currex' => 0,
 								':ac1_doc_date' => $this->validateDate($Data['vem_docdate'])?$Data['vem_docdate']:NULL,
 								':ac1_doc_duedate' => $this->validateDate($Data['vem_duedate'])?$Data['vem_duedate']:NULL,
@@ -1912,7 +1913,9 @@ class SalesDel extends REST_Controller {
   //OBTENER Entrega de VentasES
   public function getSalesDel_get(){
 
-        $sqlSelect = self::getColumn('dvem','vem');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('dvem','vem','','',$DECI_MALES);
 
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());

@@ -23,11 +23,14 @@ class ApprovalsPDF extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
 
 	public function ApprovalsPDF_post(){
+
+				$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
 				$Data = $Data['PAP_DOCENTRY'];
@@ -139,11 +142,11 @@ class ApprovalsPDF extends REST_Controller {
 					$detalle = '<td>'.$value['referencia'].'</td>
 											<td>'.$value['descripcion'].'</td>
 											<td>'.$value['um'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], 2, ',', '.').'</td>
+											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], $DECI_MALES, ',', '.').'</td>
 											<td>'.$value['cantidad'].'</td>
 											<td>'.$value['prcdes'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], 2, ',', '.').'</td>';
+											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], $DECI_MALES, ',', '.').'</td>
+											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				}
 
@@ -253,19 +256,19 @@ class ApprovalsPDF extends REST_Controller {
         <br>
         <table width="100%">
         <tr>
-            <td style="text-align: right;">Base Documento: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['base'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Base Documento: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['base'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Descuento: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['descuento'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Descuento: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['descuento'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 				<tr>
-            <td style="text-align: right;">Sub Total: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['subtotal'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Sub Total: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['subtotal'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Impuestos: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['iva'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Impuestos: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['iva'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Total: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Total: <span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totaldoc'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 
         </table>

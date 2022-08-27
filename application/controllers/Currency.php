@@ -255,6 +255,35 @@ class Currency extends REST_Controller {
          $this->response($respuesta);
   }
 
+	//SE OBTIENEN LAS MONEDAS EXTRANJERAS
+	public function getIsCurrency_get(){
+
+		$sqlSelect = "SELECT * FROM  pgec WHERE pgm_iscurrency = 1";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+		if(isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		 $this->response($respuesta);
+	}
+
+	//
+
   //Actualiza el estado de una moneda
    public function updateStatus_post(){
 
@@ -312,6 +341,7 @@ class Currency extends REST_Controller {
 				 	$Data = $this->get();
 
 					$fecha = date('Y-m-d');
+					$moneda = "";
 
 
 					if(isset($Data['fecha']) && !empty($Data['fecha'])){
@@ -320,69 +350,60 @@ class Currency extends REST_Controller {
 
 					}
 
+					if(isset($Data['moneda']) && !empty($Data['moneda'])){
 
-					$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
-					$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
-
-					if(isset($resMonedaLoc[0])){
-
-								// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
-								$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
-								$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
-
-								if(isset($resMonedaSys[0])){
-
-
-									$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-									$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $fecha));
-
-									if(isset($resBusTasa[0])){
-
-														$respuesta = array(
-															'error'   => false,
-															'data'    => $resBusTasa,
-															'mensaje' => ''
-														);
-									}else{
-
-												$respuesta = array(
-													'error' => true,
-													'data'  => array(),
-													'mensaje' =>'No se encrontro la tasa de cambio'
-												);
-												$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-												return;
-									}
-
-
-								}else{
-
-										$respuesta = array(
-											'error' => true,
-											'data'  => array(),
-											'mensaje' =>'No se encontro la moneda de sistema.'
-										);
-
-										$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-										return;
-								}
+							$moneda = $Data['moneda'];
 
 					}else{
+
+						$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
+						$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
+
+						if ( isset($resMonedaLoc[0]) ){
+
+							$moneda =  $resMonedaLoc[0]['pgm_symbol'];
+
+						}else{
+
 							$respuesta = array(
 								'error' => true,
 								'data'  => array(),
-								'mensaje' =>'No se encontro la moneda local.'
+								'mensaje' =>'No se encrontro la tasa de cambio'
 							);
-
 							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
 							return;
+						}
 					}
 
+					$sqlBusTasa = "SELECT coalesce( get_tax_currency(:moneda, :fecha), 0) AS tsa_value";
+
+					$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(
+						':moneda' => $moneda,
+						':fecha' => $fecha
+
+				  ));
 
 
 
+					if(  isset($resBusTasa[0]) &&  $resBusTasa[0]['tsa_value'] > 0 ){
+
+						$respuesta = array(
+							'error'   => false,
+							'data'    => $resBusTasa,
+							'mensaje' => ''
+						);
+
+
+					}else{
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se encrontro la tasa de cambio'
+						);
+
+
+					}
 
 					 $this->response($respuesta);
 	 }

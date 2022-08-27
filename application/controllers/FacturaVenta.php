@@ -24,19 +24,23 @@ class FacturaVenta extends REST_Controller {
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('DateFormat');
+		$this->load->library('generic');
 
 	}
 
 
 	public function FacturaVenta_post(){
 
+				$DECI_MALES =  $this->generic->getDecimals();
+
         $Data = $this->post();
 				$Data = $Data['DVF_DOCENTRY'];
 
 				$formatter = new NumeroALetras();
 
+				//'setAutoTopMargin' => 'stretch','setAutoBottomMargin' => 'stretch',
 
-        $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','default_font' => 'arial']);
+        $mpdf = new \Mpdf\Mpdf(['margin-top' => 500,'default_font' => 'arial']);
 
 				//RUTA DE CARPETA EMPRESA
 				$company = $this->pedeo->queryTable("SELECT main_folder company FROM PARAMS",array());
@@ -55,11 +59,27 @@ class FacturaVenta extends REST_Controller {
 
 				//INFORMACION DE LA EMPRESA
 
-				$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
-																					   pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
-																					   CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
-																					   pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
-																						 FROM pgem", array());
+				$sql = "SELECT
+							pge_id,
+							pge_name_soc,
+							pge_small_name,
+							pge_add_soc,
+							pge_state_soc,
+							pge_city_soc,
+							pge_cou_soc,
+							CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type ,
+							pge_web_site, pge_logo,
+							CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1,
+							pge_branch, pge_mail,
+							pge_curr_first,
+							pge_curr_sys,
+							pge_cou_bank,
+							pge_bank_def,
+							pge_bank_acct,
+							pge_acc_type
+						FROM pgem";
+
+				$empresa = $this->pedeo->queryTable($sql, array());
 
 				if(!isset($empresa[0])){
 						$respuesta = array(
@@ -73,7 +93,11 @@ class FacturaVenta extends REST_Controller {
 	          return;
 				}
 
+<<<<<<< HEAD
 				$sqlcotizacion = "SELECT 
+=======
+				$sqlcotizacion = "SELECT
+>>>>>>> origin/master
 									concat(T0.dvf_cardname,' ',T2.dms_card_last_name) Cliente,
 									T0.dvf_cardcode Nit,
 									concat(T3.dmd_adress,' ',T3.dmd_city) Direccion,
@@ -302,8 +326,8 @@ class FacturaVenta extends REST_Controller {
 							$detalle = '	<td>'.$value['cantidad'].'</td>
 														<td>'.$value['referencia'].'</td>
 														<td>'.$value['descripcion'].'</td>
-														<td>'.$value['monedadocumento']." ".number_format($valorUnitario , 2, ',', '.').'</td>
-														<td>'.$value['monedadocumento']." ".number_format($valortotalLinea , 2, ',', '.').'</td>';
+														<td>'.$value['monedadocumento']." ".number_format($valorUnitario , $DECI_MALES, ',', '.').'</td>
+														<td>'.$value['monedadocumento']." ".number_format($valortotalLinea , $DECI_MALES, ',', '.').'</td>';
 
 							 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 							 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
@@ -358,6 +382,7 @@ class FacturaVenta extends REST_Controller {
 
 				$regimen = '';
 
+<<<<<<< HEAD
 				
 
 					$regimen = '<TABLE width="35%" style="vertical-align: bottom;">
@@ -370,6 +395,20 @@ class FacturaVenta extends REST_Controller {
 					</TABLE>';
 
 				
+=======
+
+
+					$regimen = '<TABLE width="35%" style="vertical-align: bottom;">
+					<TR><TH  style="text-align: left;">BASE DIVISA:</TH>
+					<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['tasa_igtf'], $DECI_MALES, ',', '.').'</TD>
+					<TR><TH  style="text-align: left;">% DE IGTF:</TH>
+					<TD style="text-align: left;">'.$contenidoFV[0]['dvf_taxigtf'].'%</TD>
+					<TR><TH style="text-align: left;">IMPUESTO DIVISA:</TH>
+					<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format(($contenidoFV[0]['tasa_igtf'] * $contenidoFV[0]['dvf_taxigtf']) / 100, $DECI_MALES, ',', '.').'</TD>
+					</TABLE>';
+
+
+>>>>>>> origin/master
 
 
         $header = '
@@ -593,31 +632,42 @@ class FacturaVenta extends REST_Controller {
 								<th>
 											<table width="100%">
 													<tr>
-															<td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalSubtotal, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalSubtotal, $DECI_MALES, ',', '.').'</span></td>
 													</tr>
 													<tr>
 															<td style="text-align: right;">Flete (E): <span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">Base Imponible: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalBase, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">Base Imponible: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalBase, $DECI_MALES, ',', '.').'</span></td>
 													</tr>
 													<tr>
 															<td style="text-align: right;">Monto total excento o exonerado:<span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'], 2, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalIva, 2, ',', '.').'</span></td>
+															<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'], $DECI_MALES, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalIva, $DECI_MALES, ',', '.').'</span></td>
 													</tr>
 													<tr>
+<<<<<<< HEAD
 															<td style="text-align: right;">IGTF: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format(($contenidoFV[0]['tasa_igtf'] * $contenidoFV[0]['dvf_taxigtf']) / 100, 2, ',', '.').'</span></td>
 													</tr>
 													<tr>
 															<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalDoc, 2, ',', '.').'</span></td>
+=======
+															<td style="text-align: right;">IGTF: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format(($contenidoFV[0]['tasa_igtf'] * $contenidoFV[0]['dvf_taxigtf']) / 100, $DECI_MALES, ',', '.').'</span></td>
+													</tr>
+													<tr>
+															<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalDoc, $DECI_MALES, ',', '.').'</span></td>
+>>>>>>> origin/master
 													</tr>
 											</table>
 								</th>
 						</tr>
         </table>
+<<<<<<< HEAD
 				
+=======
+
+>>>>>>> origin/master
 				<br>
 				'.$regimen.'
 				<br>

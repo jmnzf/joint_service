@@ -26,6 +26,7 @@ class PurchaseNd extends REST_Controller {
   //CREAR NUEVA nota debito DE compras
 	public function createPurchaseNd_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 			$DetalleAsientoIva = new stdClass();
@@ -988,9 +989,9 @@ class PurchaseNd extends REST_Controller {
 
 											':ac1_trans_id' => $resInsertAsiento,
 											':ac1_account' => $value->nd1_cuentaIva,
-											':ac1_debit' => round($granTotalIva, 2),
+											':ac1_debit' => round($granTotalIva, $DECI_MALES),
 											':ac1_credit' => 0,
-											':ac1_debit_sys' => round($MontoSysDB, 2),
+											':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 											':ac1_credit_sys' => 0,
 											':ac1_currex' => 0,
 											':ac1_doc_date' => $this->validateDate($Data['cnd_docdate'])?$Data['cnd_docdate']:NULL,
@@ -1025,7 +1026,7 @@ class PurchaseNd extends REST_Controller {
 											':ac1_mmcode' => 0,
 											':ac1_legal_num' => isset($Data['cnd_cardcode'])?$Data['cnd_cardcode']:NULL,
 											':ac1_codref' => 1,
-											':ac1_base_tax' => round($LineTotal, 2),
+											':ac1_base_tax' => round($LineTotal, $DECI_MALES),
 											':ac1_codret' => 0
 								));
 
@@ -1094,9 +1095,9 @@ class PurchaseNd extends REST_Controller {
 
 													':ac1_trans_id' => $resInsertAsiento,
 													':ac1_account' => $cuentaInventario,
-													':ac1_debit' => round($dbito, 2),
+													':ac1_debit' => round($dbito, $DECI_MALES),
 													':ac1_credit' => 0,
-													':ac1_debit_sys' => round($MontoSysDB, 2),
+													':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 													':ac1_credit_sys' => 0,
 													':ac1_currex' => 0,
 													':ac1_doc_date' => $this->validateDate($Data['cnd_docdate'])?$Data['cnd_docdate']:NULL,
@@ -1226,9 +1227,9 @@ class PurchaseNd extends REST_Controller {
 
 												':ac1_trans_id' => $resInsertAsiento,
 												':ac1_account' => $cuentaCosto,
-												':ac1_debit' => round($dbito, 2),
+												':ac1_debit' => round($dbito, $DECI_MALES),
 												':ac1_credit' => 0,
-												':ac1_debit_sys' => round($MontoSysDB, 2),
+												':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 												':ac1_credit_sys' => 0,
 												':ac1_currex' => 0,
 												':ac1_doc_date' => $this->validateDate($Data['cnd_docdate'])?$Data['cnd_docdate']:NULL,
@@ -1340,9 +1341,9 @@ class PurchaseNd extends REST_Controller {
 												':ac1_trans_id' => $resInsertAsiento,
 												':ac1_account' => $cuentaCxP,
 												':ac1_debit' => 0,
-												':ac1_credit' => round($TotalDoc, 2),
+												':ac1_credit' => round($TotalDoc, $DECI_MALES),
 												':ac1_debit_sys' => 0,
-												':ac1_credit_sys' => round($MontoSysCR, 2),
+												':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 												':ac1_currex' => 0,
 												':ac1_doc_date' => $this->validateDate($Data['cnd_docdate'])?$Data['cnd_docdate']:NULL,
 												':ac1_doc_duedate' => $this->validateDate($Data['cnd_duedate'])?$Data['cnd_duedate']:NULL,
@@ -1367,8 +1368,8 @@ class PurchaseNd extends REST_Controller {
 												':ac1_accperiod' => 1,
 												':ac1_close' => 0,
 												':ac1_cord' => 0,
-												':ac1_ven_debit' => round($TotalDoc2,2),
-												':ac1_ven_credit' => round($TotalDoc,2),
+												':ac1_ven_debit' => round($TotalDoc2, $DECI_MALES),
+												':ac1_ven_credit' => round($TotalDoc, $DECI_MALES),
 												':ac1_fiscal_acct' => 0,
 												':ac1_taxid' => 0,
 												':ac1_isrti' => 0,
@@ -1479,9 +1480,9 @@ class PurchaseNd extends REST_Controller {
 
 											':ac1_trans_id' => $resInsertAsiento,
 											':ac1_account' => $cuenta,
-											':ac1_debit' => round($totalRetencion, 2),
+											':ac1_debit' => round($totalRetencion, $DECI_MALES),
 											':ac1_credit' => 0,
-											':ac1_debit_sys' => round($MontoSysCR, 2),
+											':ac1_debit_sys' => round($MontoSysCR, $DECI_MALES),
 											':ac1_credit_sys' => 0,
 											':ac1_currex' => 0,
 											':ac1_doc_date' => $this->validateDate($Data['cnd_docdate'])?$Data['cnd_docdate']:NULL,
@@ -1512,7 +1513,7 @@ class PurchaseNd extends REST_Controller {
 											':ac1_fiscal_acct' => 0,
 											':ac1_taxid' => 1,
 											':ac1_isrti' => $Profitrt,
-											':ac1_basert' => round($Basert , 2),
+											':ac1_basert' => round($Basert , $DECI_MALES),
 											':ac1_mmcode' => 0,
 											':ac1_legal_num' => isset($Data['cnd_cardcode'])?$Data['cnd_cardcode']:NULL,
 											':ac1_codref' => 1,
@@ -1946,7 +1947,9 @@ class PurchaseNd extends REST_Controller {
   //OBTENER nota debito de compras
   public function getPurchaseNd_get(){
 
-        $sqlSelect = self::getColumn('dcnd','cnd');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('dcnd','cnd','','',$DECI_MALES);
 
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());

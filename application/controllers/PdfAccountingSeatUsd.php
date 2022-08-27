@@ -23,11 +23,14 @@ class PdfAccountingSeatUsd extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
 
 	public function PdfAccountingSeatUsd_post(){
+
+				$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
 				$Data = $Data['mac_trans_id'];
@@ -189,8 +192,8 @@ class PdfAccountingSeatUsd extends REST_Controller {
 											<td>'.$value['impuesto'].'</td>
 											<td>'.$value['retencion'].'</td>
 											<td>'.$value['ac1_uncode'].'</td>
-                      <td>'.number_format($value['ac1_debit_sys'], 2, ',', '.').'</td>
-                      <td>'.number_format($value['ac1_credit_sys'], 2, ',', '.').'</td>';
+                      <td>'.number_format($value['ac1_debit_sys'], $DECI_MALES, ',', '.').'</td>
+                      <td>'.number_format($value['ac1_credit_sys'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 
 				 $totaldeb = $totaldeb + ($value['ac1_debit']);
@@ -207,8 +210,8 @@ class PdfAccountingSeatUsd extends REST_Controller {
 										<th>&nbsp;</th>
 										<th>&nbsp;</th>
 										<th><b>total:</b></th>
-										<th><b>'.number_format($totaldebsys, 2, ',', '.').'</b></th>
-										<th><b>'.number_format($totalcresys, 2, ',', '.').'</b></th>
+										<th><b>'.number_format($totaldebsys, $DECI_MALES, ',', '.').'</b></th>
+										<th><b>'.number_format($totalcresys, $DECI_MALES, ',', '.').'</b></th>
 										</tr>';
 
 				}

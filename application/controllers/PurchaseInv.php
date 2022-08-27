@@ -26,6 +26,7 @@ class PurchaseInv extends REST_Controller {
   //CREAR NUEVA FACTURA DE compras
 	public function createPurchaseInv_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 			$DetalleAsientoIva = new stdClass();
@@ -602,7 +603,7 @@ class PurchaseInv extends REST_Controller {
 					}
 					//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 
-					
+
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
@@ -656,7 +657,7 @@ class PurchaseInv extends REST_Controller {
 											 return;
 								}
 
-								
+
 
 								// PROCESO PARA INSERTAR RETENCIONES
 
@@ -973,7 +974,7 @@ class PurchaseInv extends REST_Controller {
 	 															 }
 
 	 															 $NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-	 															 $NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+	 															 $NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal), $DECI_MALES);
 
 	 															 $sqlUpdateCostoCantidad =  "UPDATE tbdi
 	 																													 SET bdi_quantity = :bdi_quantity
@@ -1125,7 +1126,7 @@ class PurchaseInv extends REST_Controller {
 																}
 
 																$NuevoCostoPonderado = ($CantidadActual  *  $CostoActual) + ($CantidadNueva * $CostoNuevo );
-																$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal),2);
+																$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal), $DECI_MALES);
 
 																//SE VALIDA SI EL ARTICULO MANEJA LOTE
 																$sqlInsertCostoCantidad = '';
@@ -1661,16 +1662,16 @@ class PurchaseInv extends REST_Controller {
 									$MontoSysDB = $granTotalIvaOriginal;
 							}
 
-							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $value->fc1_cuentaIva,
-									':ac1_debit' => round($granTotalIva, 2),
+									':ac1_debit' => round($granTotalIva, $DECI_MALES),
 									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($MontoSysDB,2),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['cfc_docdate'])?$Data['cfc_docdate']:NULL,
@@ -1696,7 +1697,7 @@ class PurchaseInv extends REST_Controller {
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
-									':ac1_ven_debit' => round($granTotalIva, 2),
+									':ac1_ven_debit' => round($granTotalIva, $DECI_MALES),
 									':ac1_ven_credit' => 0,
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => $CodigoImp,
@@ -1706,7 +1707,7 @@ class PurchaseInv extends REST_Controller {
 									':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 									':ac1_codref' => 1,
 									':ac1_line' => $AC1LINE,
-									':ac1_base_tax' => round($LineTotal, 2),
+									':ac1_base_tax' => round($LineTotal, $DECI_MALES),
 									':ac1_codret' => 0
 						));
 
@@ -1827,8 +1828,8 @@ class PurchaseInv extends REST_Controller {
 														}
 												}
 
-												$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-												$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+												$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+												$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 
 												$AC1LINE = $AC1LINE+1;
@@ -1836,10 +1837,10 @@ class PurchaseInv extends REST_Controller {
 
 														':ac1_trans_id' => $resInsertAsiento,
 														':ac1_account' => $cuentaInventario,
-														':ac1_debit' => round($dbito, 2),
-														':ac1_credit' => round($cdito, 2),
-														':ac1_debit_sys' => round($MontoSysDB,2),
-														':ac1_credit_sys' => round($MontoSysCR,2),
+														':ac1_debit' => round($dbito, $DECI_MALES),
+														':ac1_credit' => round($cdito, $DECI_MALES),
+														':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+														':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 														':ac1_currex' => 0,
 														':ac1_doc_date' => $this->validateDate($Data['cfc_docdate'])?$Data['cfc_docdate']:NULL,
 														':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate'])?$Data['cfc_duedate']:NULL,
@@ -1864,8 +1865,8 @@ class PurchaseInv extends REST_Controller {
 														':ac1_accperiod' => 1,
 														':ac1_close' => 0,
 														':ac1_cord' => 0,
-														':ac1_ven_debit' => round($dbito, 2),
-														':ac1_ven_credit' => round($cdito, 2),
+														':ac1_ven_debit' => round($dbito, $DECI_MALES),
+														':ac1_ven_credit' => round($cdito, $DECI_MALES),
 														':ac1_fiscal_acct' => 0,
 														':ac1_taxid' => 0,
 														':ac1_isrti' => 0,
@@ -2019,18 +2020,18 @@ class PurchaseInv extends REST_Controller {
 														}
 												}
 
-												$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-												$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+												$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+												$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 												$AC1LINE = $AC1LINE+1;
 												$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 														':ac1_trans_id' => $resInsertAsiento,
 														':ac1_account' => $cuentaInventario,
-														':ac1_debit' => round($dbito, 2),
-														':ac1_credit' => round($cdito, 2),
-														':ac1_debit_sys' => round($MontoSysDB,2),
-														':ac1_credit_sys' => round($MontoSysCR,2),
+														':ac1_debit' => round($dbito, $DECI_MALES),
+														':ac1_credit' => round($cdito, $DECI_MALES),
+														':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+														':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 														':ac1_currex' => 0,
 														':ac1_doc_date' => $this->validateDate($Data['cfc_docdate'])?$Data['cfc_docdate']:NULL,
 														':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate'])?$Data['cfc_duedate']:NULL,
@@ -2055,8 +2056,8 @@ class PurchaseInv extends REST_Controller {
 														':ac1_accperiod' => 1,
 														':ac1_close' => 0,
 														':ac1_cord' => 0,
-														':ac1_ven_debit' => round($dbito, 2),
-														':ac1_ven_credit' => round($cdito, 2),
+														':ac1_ven_debit' => round($dbito, $DECI_MALES),
+														':ac1_ven_credit' => round($cdito, $DECI_MALES),
 														':ac1_fiscal_acct' => 0,
 														':ac1_taxid' => 0,
 														':ac1_isrti' => 0,
@@ -2133,8 +2134,8 @@ class PurchaseInv extends REST_Controller {
 											$MontoSysDB = $grantotalItemNoInventariableOriginal;
 									}
 
-								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 
 								$AC1LINE = $AC1LINE+1;
@@ -2142,9 +2143,9 @@ class PurchaseInv extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $CuentaItemNoInventariable,
-									':ac1_debit' =>  round($dbito, 2),
+									':ac1_debit' =>  round($dbito, $DECI_MALES),
 									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($MontoSysDB, 2),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['cfc_docdate'])?$Data['cfc_docdate']:NULL,
@@ -2170,7 +2171,7 @@ class PurchaseInv extends REST_Controller {
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
-									':ac1_ven_debit' => round($dbito, 2),
+									':ac1_ven_debit' => round($dbito, $DECI_MALES),
 									':ac1_ven_credit' => 0,
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => 0,
@@ -2244,8 +2245,8 @@ class PurchaseInv extends REST_Controller {
 										$MontoSysCR = $TotalDocOri;
 								}
 
-								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 
 								$AC1LINE = $AC1LINE+1;
@@ -2254,9 +2255,9 @@ class PurchaseInv extends REST_Controller {
 										':ac1_trans_id' => $resInsertAsiento,
 										':ac1_account' => $cuentaCxP,
 										':ac1_debit' => 0,
-										':ac1_credit' => round($TotalDoc, 2),
+										':ac1_credit' => round($TotalDoc, $DECI_MALES),
 										':ac1_debit_sys' => 0,
-										':ac1_credit_sys' => round($MontoSysCR,2),
+										':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 										':ac1_currex' => 0,
 										':ac1_doc_date' => $this->validateDate($Data['cfc_docdate'])?$Data['cfc_docdate']:NULL,
 										':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate'])?$Data['cfc_duedate']:NULL,
@@ -2282,7 +2283,7 @@ class PurchaseInv extends REST_Controller {
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
 										':ac1_ven_debit' => 0,
-										':ac1_ven_credit' => round($TotalDoc, 2),
+										':ac1_ven_credit' => round($TotalDoc, $DECI_MALES),
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => 0,
 										':ac1_isrti' => 0,
@@ -2394,8 +2395,8 @@ class PurchaseInv extends REST_Controller {
 									$MontoSysCR = 	$totalRetencionOriginal;
 							}
 
-							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+							$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+							$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 							$AC1LINE = $AC1LINE+1;
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -2403,9 +2404,9 @@ class PurchaseInv extends REST_Controller {
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuenta,
 									':ac1_debit' => 0,
-									':ac1_credit' => round($totalRetencion, 2),
+									':ac1_credit' => round($totalRetencion, $DECI_MALES),
 									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' => round($MontoSysCR, 2),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['cfc_docdate'])?$Data['cfc_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate'])?$Data['cfc_duedate']:NULL,
@@ -2431,11 +2432,11 @@ class PurchaseInv extends REST_Controller {
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
 									':ac1_ven_debit' => 0,
-									':ac1_ven_credit' => round($totalRetencion, 2),
+									':ac1_ven_credit' => round($totalRetencion, $DECI_MALES),
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => 0,
 									':ac1_isrti' => $Profitrt,
-									':ac1_basert' => round($Basert, 2),
+									':ac1_basert' => round($Basert, $DECI_MALES),
 									':ac1_mmcode' => 0,
 									':ac1_legal_num' => isset($Data['cfc_cardcode'])?$Data['cfc_cardcode']:NULL,
 									':ac1_codref' => 1,
@@ -2492,7 +2493,7 @@ class PurchaseInv extends REST_Controller {
 														$credito = ($SumaDebitosSYS - $SumaCreditosSYS);
 											}
 
-											if(round($debito+$credito, 2) > 0){
+											if(round($debito+$credito, $DECI_MALES) > 0){
 														$AC1LINE = $AC1LINE+1;
 														$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2500,8 +2501,8 @@ class PurchaseInv extends REST_Controller {
 																':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
 																':ac1_debit' => 0,
 																':ac1_credit' => 0,
-																':ac1_debit_sys' => round($debito,2),
-																':ac1_credit_sys' => round($credito,2),
+																':ac1_debit_sys' => round($debito, $DECI_MALES),
+																':ac1_credit_sys' => round($credito, $DECI_MALES),
 																':ac1_currex' => 0,
 																':ac1_doc_date' => $this->validateDate($Data['cfc_docdate'])?$Data['cfc_docdate']:NULL,
 																':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate'])?$Data['cfc_duedate']:NULL,
@@ -2526,8 +2527,8 @@ class PurchaseInv extends REST_Controller {
 																':ac1_accperiod' => 1,
 																':ac1_close' => 0,
 																':ac1_cord' => 0,
-																':ac1_ven_debit' => round($debito,2),
-																':ac1_ven_credit' => round($credito,2),
+																':ac1_ven_debit' => round($debito, $DECI_MALES),
+																':ac1_ven_credit' => round($credito, $DECI_MALES),
 																':ac1_fiscal_acct' => 0,
 																':ac1_taxid' => 0,
 																':ac1_isrti' => 0,
@@ -2601,7 +2602,7 @@ class PurchaseInv extends REST_Controller {
 
 
 
-					 
+
 					// VALIDANDO ESTADOS DE DOCUMENTOS
 
 					if ($Data['cfc_basetype'] == 12) {
@@ -2730,7 +2731,7 @@ class PurchaseInv extends REST_Controller {
 
 				$cantidad_del = $resta_cantidad;
 				$cantidad_fact = $resEstado2[0]['cantidad'];
-				
+
 				// print_r($item_del);
 				// print_r($item_fact);
 				// print_r($cantidad_del);
@@ -2861,7 +2862,7 @@ class PurchaseInv extends REST_Controller {
 				}
 			}
 		}
-     }							 
+     }
 }
 // print_r("validacion");exit();die();
 					// Si todo sale bien despues de insertar el detalle de la factura de compras
@@ -3061,10 +3062,12 @@ class PurchaseInv extends REST_Controller {
   //OBTENER Factura de compras
   public function getPurchaseInv_get(){
 	// CAMPOS DE RETENCIONES
+		$DECI_MALES =  $this->generic->getDecimals();
+
 		$campos = ",CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalret,'999,999,999,999.00'))) {prefix}_totalret,
 		CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalretiva,'999,999,999,999.00'))) {prefix}_totalretiva";
 
-		$sqlSelect = self::getColumn('dcfc','cfc',$campos);
+		$sqlSelect = self::getColumn('dcfc','cfc',$campos,'',$DECI_MALES);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

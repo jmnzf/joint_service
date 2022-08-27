@@ -25,6 +25,7 @@ class AccountReconciliations extends REST_Controller {
 
 	public function applyAccountReconciliations_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
   		$Data = $this->post();
       $AC1LINE = 0;
       $DocNumVerificado = 0;
@@ -1293,10 +1294,10 @@ class AccountReconciliations extends REST_Controller {
 
 												':ac1_trans_id' => $resInsertAsiento,
 												':ac1_account' => $cuenta,
-												':ac1_debit' => round($debito, 2),
-												':ac1_credit' => round($credito, 2),
-												':ac1_debit_sys' => round($MontoSysDB,2),
-												':ac1_credit_sys' => round($MontoSysCR,2),
+												':ac1_debit' => round($debito, $DECI_MALES),
+												':ac1_credit' => round($credito, $DECI_MALES),
+												':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+												':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 												':ac1_currex' => 0,
 												':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
 												':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
@@ -1422,7 +1423,7 @@ class AccountReconciliations extends REST_Controller {
 
 														':ac1_trans_id' => $resInsertAsiento,
 														':ac1_account' => $cuentaD,
-														':ac1_debit' => round($debito,2),
+														':ac1_debit' => round($debito, $DECI_MALES),
 														':ac1_credit' => 0,
 														':ac1_debit_sys' => 0,
 														':ac1_credit_sys' => 0,
@@ -1506,7 +1507,7 @@ class AccountReconciliations extends REST_Controller {
 														':ac1_trans_id' => $resInsertAsiento,
 														':ac1_account' => $cuentaD,
 														':ac1_debit' => 0,
-														':ac1_credit' => round($credito, 2),
+														':ac1_credit' => round($credito, $DECI_MALES),
 														':ac1_debit_sys' => 0,
 														':ac1_credit_sys' => 0,
 														':ac1_currex' => 0,
@@ -1601,7 +1602,7 @@ class AccountReconciliations extends REST_Controller {
 														':ac1_trans_id' => $resInsertAsiento,
 														':ac1_account' => $cuentaD,
 														':ac1_debit' => 0,
-														':ac1_credit' => round( $VlrDiffP, 2 ),
+														':ac1_credit' => round( $VlrDiffP, $DECI_MALES ),
 														':ac1_debit_sys' => 0,
 														':ac1_credit_sys' => 0,
 														':ac1_currex' => 0,
@@ -1675,7 +1676,7 @@ class AccountReconciliations extends REST_Controller {
 
 														':ac1_trans_id' => $resInsertAsiento,
 														':ac1_account' => $cuentaD,
-														':ac1_debit' =>  round( $VlrDiffN, 2 ),
+														':ac1_debit' =>  round( $VlrDiffN, $DECI_MALES ),
 														':ac1_credit' => 0,
 														':ac1_debit_sys' => 0,
 														':ac1_credit_sys' => 0,
@@ -1791,8 +1792,8 @@ class AccountReconciliations extends REST_Controller {
 										':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
 										':ac1_debit' => 0,
 										':ac1_credit' => 0,
-										':ac1_debit_sys' => round($debito, 2),
-										':ac1_credit_sys' => round($credito, 2),
+										':ac1_debit_sys' => round($debito, $DECI_MALES),
+										':ac1_credit_sys' => round($credito, $DECI_MALES),
 										':ac1_currex' => 0,
 										':ac1_doc_date' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
 										':ac1_doc_duedate' => $this->validateDate($Data['crc_docdate'])?$Data['crc_docdate']:NULL,
@@ -1888,8 +1889,8 @@ class AccountReconciliations extends REST_Controller {
 
 										':ac1_trans_id' => $resInsertAsiento,
 										':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
-										':ac1_debit' => round($ldebito, 2),
-										':ac1_credit' => round($lcredito, 2),
+										':ac1_debit' => round($ldebito, $DECI_MALES),
+										':ac1_credit' => round($lcredito, $DECI_MALES),
 										':ac1_debit_sys' => 0,
 										':ac1_credit_sys' => 0,
 										':ac1_currex' => 0,

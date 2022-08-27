@@ -19,12 +19,14 @@ class PurchOrder extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
   //CREAR NUEVA ORDEN DE COMPRA
 	public function createPurchOrder_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;
 
@@ -272,12 +274,12 @@ class PurchOrder extends REST_Controller {
 
 														  if(trim($Data['cpo_currency']) != $MONEDALOCAL){
 
-																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), 2);
-																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+																$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 
 															}else{
 
-																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), 2);
+																$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 
 															}
 
@@ -814,7 +816,7 @@ class PurchOrder extends REST_Controller {
 											sum(t1.sc1_quantity) cantidad
 									    from dcsc t0
 										inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-										where t0.csc_docentry = :csc_docentry 
+										where t0.csc_docentry = :csc_docentry
 										and t0.csc_doctype = :csc_doctype";
 
 
@@ -831,7 +833,7 @@ class PurchOrder extends REST_Controller {
 										inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
 										left join dcpo t2 on t0.csc_docentry = t2.cpo_baseentry and t0.csc_doctype = t2.cpo_basetype
 										left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
-										where t0.csc_docentry = :csc_docentry 
+										where t0.csc_docentry = :csc_docentry
 										and t0.csc_doctype = :csc_doctype";
 
 
@@ -1177,7 +1179,9 @@ class PurchOrder extends REST_Controller {
   //OBTENER orden de compra
   public function getPurchOrder_get(){
 
-        $sqlSelect = self::getColumn('dcpo','cpo');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('dcpo','cpo','','',$DECI_MALES);
 
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());

@@ -26,8 +26,8 @@ class SalesNc extends REST_Controller {
   //CREAR NUEVA Nota crédito de clientes
 	public function createSalesNc_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
-
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 			$DetalleAsientoIva = new stdClass();
 			$DetalleCostoInventario = new stdClass();
@@ -1165,8 +1165,8 @@ class SalesNc extends REST_Controller {
 										break;
 								}
 
-								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 
 								$TOTALCXCLOC = ($TOTALCXCLOC + ($debito+$credito));
@@ -1177,10 +1177,10 @@ class SalesNc extends REST_Controller {
 
 										':ac1_trans_id' => $resInsertAsiento,
 										':ac1_account' => $cuenta,
-										':ac1_debit' => round($debito, 2),
-										':ac1_credit' => round($credito, 2),
-										':ac1_debit_sys' => round($MontoSysDB, 2),
-										':ac1_credit_sys' => round($MontoSysCR, 2),
+										':ac1_debit' => round($debito, $DECI_MALES),
+										':ac1_credit' => round($credito, $DECI_MALES),
+										':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+										':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 										':ac1_currex' => 0,
 										':ac1_doc_date' => $this->validateDate($Data['vnc_docdate'])?$Data['vnc_docdate']:NULL,
 										':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate'])?$Data['vnc_duedate']:NULL,
@@ -1205,8 +1205,8 @@ class SalesNc extends REST_Controller {
 										':ac1_accperiod' => 1,
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
-										':ac1_ven_debit' => round($debito, 2),
-										':ac1_ven_credit' => round($credito, 2),
+										':ac1_ven_debit' => round($debito, $DECI_MALES),
+										':ac1_ven_credit' => round($credito, $DECI_MALES),
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => 0,
 										':ac1_isrti' => 0,
@@ -1255,10 +1255,10 @@ class SalesNc extends REST_Controller {
 								$Vat = 0;
 
 								foreach ($posicion as $key => $value) {
-											$granTotalIva = round($granTotalIva + $value->nc1_vatsum,2);
+											$granTotalIva = round($granTotalIva + $value->nc1_vatsum, $DECI_MALES);
 
 											$v1 = ($value->nc1_linetotal + ($value->nc1_quantity * $value->nc1_fixrate));
-											$granTotalIva2 = round($granTotalIva2 + ($v1 * ($value->nc1_vat / 100)), 2);
+											$granTotalIva2 = round($granTotalIva2 + ($v1 * ($value->nc1_vat / 100)), $DECI_MALES);
 
 											$LineTotal = ( $LineTotal +$value->nc1_linetotal );
 											$CodigoImp = $value->codimp;
@@ -1287,7 +1287,7 @@ class SalesNc extends REST_Controller {
 								}
 
 
-								$SumaDebitosSYS = ($SumaDebitosSYS + round($MontoSysDB,2));
+								$SumaDebitosSYS = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 								$AC1LINE = $AC1LINE+1;
 
 
@@ -1298,9 +1298,9 @@ class SalesNc extends REST_Controller {
 
 										':ac1_trans_id' => $resInsertAsiento,
 										':ac1_account' => $value->nc1_cuentaIva,
-										':ac1_debit' => round($granTotalIva, 2),
+										':ac1_debit' => round($granTotalIva, $DECI_MALES),
 										':ac1_credit' => 0,
-										':ac1_debit_sys' => round($MontoSysDB,2),
+										':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 										':ac1_credit_sys' => 0,
 										':ac1_currex' => 0,
 										':ac1_doc_date' => $this->validateDate($Data['vnc_docdate'])?$Data['vnc_docdate']:NULL,
@@ -1326,7 +1326,7 @@ class SalesNc extends REST_Controller {
 										':ac1_accperiod' => 1,
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
-										':ac1_ven_debit' => round($granTotalIva, 2),
+										':ac1_ven_debit' => round($granTotalIva, $DECI_MALES),
 										':ac1_ven_credit' => 0,
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => $CodigoImp,
@@ -1336,7 +1336,7 @@ class SalesNc extends REST_Controller {
 										':ac1_legal_num' => isset($Data['vnc_cardcode'])?$Data['vnc_cardcode']:NULL,
 										':ac1_codref' => 1,
 										':ac1_line'   => $AC1LINE,
-										':ac1_base_tax' => round($LineTotal, 2)
+										':ac1_base_tax' => round($LineTotal, $DECI_MALES)
 							));
 
 
@@ -1501,10 +1501,10 @@ class SalesNc extends REST_Controller {
 
 										':ac1_trans_id' => $resInsertAsiento,
 										':ac1_account' => $cuentaInventario,
-										':ac1_debit' => round($dbito, 2),
-										':ac1_credit' => round($cdito, 2),
-										':ac1_debit_sys' => round($MontoSysDB, 2),
-										':ac1_credit_sys' => round($MontoSysCR, 2),
+										':ac1_debit' => round($dbito, $DECI_MALES),
+										':ac1_credit' => round($cdito, $DECI_MALES),
+										':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+										':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 										':ac1_currex' => 0,
 										':ac1_doc_date' => $this->validateDate($Data['vnc_docdate'])?$Data['vnc_docdate']:NULL,
 										':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate'])?$Data['vnc_duedate']:NULL,
@@ -1529,8 +1529,8 @@ class SalesNc extends REST_Controller {
 										':ac1_accperiod' => 0,
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
-										':ac1_ven_debit' => round($dbito, 2),
-										':ac1_ven_credit' => round($cdito, 2),
+										':ac1_ven_debit' => round($dbito, $DECI_MALES),
+										':ac1_ven_credit' => round($cdito, $DECI_MALES),
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => 1,
 										':ac1_isrti' => 0,
@@ -1707,10 +1707,10 @@ class SalesNc extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuentaCosto,
-									':ac1_debit' => round($dbito, 2),
-									':ac1_credit' => round($cdito, 2),
-									':ac1_debit_sys' => round($MontoSysDB, 2),
-									':ac1_credit_sys' => round($MontoSysCR, 2),
+									':ac1_debit' => round($dbito, $DECI_MALES),
+									':ac1_credit' => round($cdito, $DECI_MALES),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['vnc_docdate'])?$Data['vnc_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate'])?$Data['vnc_duedate']:NULL,
@@ -1735,8 +1735,8 @@ class SalesNc extends REST_Controller {
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
-									':ac1_ven_debit' => round($dbito, 2),
-									':ac1_ven_credit' => round($cdito, 2),
+									':ac1_ven_debit' => round($dbito, $DECI_MALES),
+									':ac1_ven_credit' => round($cdito, $DECI_MALES),
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => 0,
 									':ac1_isrti' => 0,
@@ -1839,8 +1839,8 @@ class SalesNc extends REST_Controller {
 									}
 
 
-									$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-									$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+									$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+									$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 									$AC1LINE = $AC1LINE+1;
 
@@ -1856,10 +1856,10 @@ class SalesNc extends REST_Controller {
 
 											':ac1_trans_id' => $resInsertAsiento,
 											':ac1_account' => $cuentaCxC,
-											':ac1_debit' => round($debitoo, 2),
-											':ac1_credit' => round($creditoo, 2),
-											':ac1_debit_sys' => round($MontoSysDB, 2),
-											':ac1_credit_sys' => round($MontoSysCR, 2),
+											':ac1_debit' => round($debitoo, $DECI_MALES),
+											':ac1_credit' => round($creditoo, $DECI_MALES),
+											':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+											':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 											':ac1_currex' => 0,
 											':ac1_doc_date' => $this->validateDate($Data['vnc_docdate'])?$Data['vnc_docdate']:NULL,
 											':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate'])?$Data['vnc_duedate']:NULL,
@@ -1884,8 +1884,8 @@ class SalesNc extends REST_Controller {
 											':ac1_accperiod' => 1,
 											':ac1_close' => 0,
 											':ac1_cord' => 0,
-											':ac1_ven_debit' => round($ValorVenDebito, 2),
-											':ac1_ven_credit' => round($creditoo, 2),
+											':ac1_ven_debit' => round($ValorVenDebito, $DECI_MALES),
+											':ac1_ven_credit' => round($creditoo, $DECI_MALES),
 											':ac1_fiscal_acct' => 0,
 											':ac1_taxid' => 0,
 											':ac1_isrti' => 0,
@@ -1955,7 +1955,7 @@ class SalesNc extends REST_Controller {
 															$credito = ($SumaDebitosSYS - $SumaCreditosSYS);
 												}
 
-												if(round($debito+$credito, 2) > 0){
+												if(round($debito+$credito, $DECI_MALES) > 0){
 															$AC1LINE = $AC1LINE+1;
 															$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1963,8 +1963,8 @@ class SalesNc extends REST_Controller {
 																	':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
 																	':ac1_debit' => 0,
 																	':ac1_credit' => 0,
-																	':ac1_debit_sys' => round($debito,2),
-																	':ac1_credit_sys' => round($credito,2),
+																	':ac1_debit_sys' => round($debito, $DECI_MALES),
+																	':ac1_credit_sys' => round($credito, $DECI_MALES),
 																	':ac1_currex' => 0,
 																	':ac1_doc_date' => $this->validateDate($Data['vnc_docdate'])?$Data['vnc_docdate']:NULL,
 																	':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate'])?$Data['vnc_duedate']:NULL,
@@ -1989,8 +1989,8 @@ class SalesNc extends REST_Controller {
 																	':ac1_accperiod' => 1,
 																	':ac1_close' => 0,
 																	':ac1_cord' => 0,
-																	':ac1_ven_debit' => round($debito,2),
-																	':ac1_ven_credit' => round($credito,2),
+																	':ac1_ven_debit' => round($debito, $DECI_MALES),
+																	':ac1_ven_credit' => round($credito, $DECI_MALES),
 																	':ac1_fiscal_acct' => 0,
 																	':ac1_taxid' => 0,
 																	':ac1_isrti' => 0,
@@ -2230,8 +2230,8 @@ class SalesNc extends REST_Controller {
 
 						// FIN DE OPERACIONES VITALES
 
-						// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
-						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
+						// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_trans_id = :ac1_trans_id";
+						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
 						// print_r(json_encode($ressqlmac1));
 						// exit;
 
@@ -2468,7 +2468,9 @@ class SalesNc extends REST_Controller {
   //OBTENER Nota crédito de clientesES
   public function getSalesNc_get(){
 
-        $sqlSelect = self::getColumn('dvnc','vnc');
+				$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('dvnc','vnc','','',$DECI_MALES);
 
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());

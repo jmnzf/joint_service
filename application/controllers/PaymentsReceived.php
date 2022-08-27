@@ -25,7 +25,8 @@ class PaymentsReceived extends REST_Controller {
 
 	// Obtener pagos recibidos
   public function getPaymentsReceived_get(){
-    //
+
+
     $sqlSelect = "SELECT * FROM gbpr";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -53,6 +54,7 @@ class PaymentsReceived extends REST_Controller {
   //CREAR NUEVO PAGO
 	public function createPaymentsReceived_post(){
 
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;
 			$DetalleAsientoCuentaTercero = new stdClass();
@@ -1068,19 +1070,19 @@ class PaymentsReceived extends REST_Controller {
 
 							$VlrPagoEfectuado = $debito;
 
-							$DFPC  = $DFPC + round($credito, 2);
-							$DFPD  = $DFPD + round($debito, 2);
-							$DFPCS = $DFPCS + round($MontoSysCR, 2);
-							$DFPDS = $DFPDS + round($MontoSysDB, 2);
+							$DFPC  = $DFPC + round($credito, $DECI_MALES);
+							$DFPD  = $DFPD + round($debito, $DECI_MALES);
+							$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
+							$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuenta,
-									':ac1_debit' => round($debito, 2),
-									':ac1_credit' => round($credito, 2),
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
+									':ac1_debit' => round($debito, $DECI_MALES),
+									':ac1_credit' => round($credito, $DECI_MALES),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['bpr_docdate'])?$Data['bpr_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['bpr_docdate'])?$Data['bpr_docdate']:NULL,
@@ -1390,19 +1392,19 @@ class PaymentsReceived extends REST_Controller {
 
 										}
 
-										$DFPC  = $DFPC + round($credito, 2);
-										$DFPD  = $DFPD + round($debito, 2);
-										$DFPCS = $DFPCS + round($MontoSysCR, 2);
-										$DFPDS = $DFPDS + round($MontoSysDB, 2);
+										$DFPC  = $DFPC + round($credito, $DECI_MALES);
+										$DFPD  = $DFPD + round($debito, $DECI_MALES);
+										$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
+										$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
 										$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 												':ac1_trans_id' => $resInsertAsiento,
 												':ac1_account' => $cuentaLinea,
-												':ac1_debit' => round($debito, 2),
-												':ac1_credit' => round($credito, 2),
-												':ac1_debit_sys' => round($MontoSysDB,2),
-												':ac1_credit_sys' => round($MontoSysCR,2),
+												':ac1_debit' => round($debito, $DECI_MALES),
+												':ac1_credit' => round($credito, $DECI_MALES),
+												':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+												':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 												':ac1_currex' => 0,
 												':ac1_doc_date' => $this->validateDate($Data['bpr_docdate'])?$Data['bpr_docdate']:NULL,
 												':ac1_doc_duedate' => $this->validateDate($Data['bpr_docdate'])?$Data['bpr_docdate']:NULL,
@@ -1427,8 +1429,8 @@ class PaymentsReceived extends REST_Controller {
 												':ac1_accperiod' => 1,
 												':ac1_close' => 0,
 												':ac1_cord' => 0,
-												':ac1_ven_debit' => round($credito, 2),
-												':ac1_ven_credit' => round($credito, 2),
+												':ac1_ven_debit' => round($credito, $DECI_MALES),
+												':ac1_ven_credit' => round($credito, $DECI_MALES),
 												':ac1_fiscal_acct' => 0,
 												':ac1_taxid' => 1,
 												':ac1_isrti' => 0,
@@ -1590,20 +1592,20 @@ class PaymentsReceived extends REST_Controller {
 																		break;
 																}
 
-																$DFPC  = $DFPC + round($credito, 2);
-																$DFPD  = $DFPD + round($debito, 2);
-																$DFPCS = $DFPCS + round($MontoSysCR, 2);
-																$DFPDS = $DFPDS + round($MontoSysDB, 2);
+																$DFPC  = $DFPC + round($credito, $DECI_MALES);
+																$DFPD  = $DFPD + round($debito, $DECI_MALES);
+																$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
+																$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
 
 																$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 																		':ac1_trans_id' => $resInsertAsiento,
 																		':ac1_account' => $cuentaLinea,
-																		':ac1_debit' => round($debito, 2),
-																		':ac1_credit' => round($credito, 2),
-																		':ac1_debit_sys' => round($MontoSysDB,2),
-																		':ac1_credit_sys' => round($MontoSysCR,2),
+																		':ac1_debit' => round($debito, $DECI_MALES),
+																		':ac1_credit' => round($credito, $DECI_MALES),
+																		':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+																		':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 																		':ac1_currex' => 0,
 																		':ac1_doc_date' => $this->validateDate($Data['bpr_docdate'])?$Data['bpr_docdate']:NULL,
 																		':ac1_doc_duedate' => $this->validateDate($Data['bpr_docdate'])?$Data['bpr_docdate']:NULL,
@@ -1629,7 +1631,7 @@ class PaymentsReceived extends REST_Controller {
 																		':ac1_close' => 0,
 																		':ac1_cord' => 0,
 																		':ac1_ven_debit' => 0,
-																		':ac1_ven_credit' => round($credito, 2),
+																		':ac1_ven_credit' => round($credito, $DECI_MALES),
 																		':ac1_fiscal_acct' => 0,
 																		':ac1_taxid' => 1,
 																		':ac1_isrti' => 0,
@@ -1728,16 +1730,16 @@ class PaymentsReceived extends REST_Controller {
 
 
 											$DFPC  = $DFPC + 0;
-											$DFPD  = $DFPD + round($debito, 2);
+											$DFPD  = $DFPD + round($debito, $DECI_MALES);
 											$DFPCS = $DFPCS + 0;
-											$DFPDS = $DFPDS + round($MontoSysDB, 2);
+											$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
 
 											$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 													':ac1_trans_id' => $resInsertAsiento,
 													':ac1_account' => $cuentaD,
-													':ac1_debit' => round($debito,2),
+													':ac1_debit' => round($debito, $DECI_MALES),
 													':ac1_credit' => 0,
 													':ac1_debit_sys' => 0,
 													':ac1_credit_sys' => 0,
@@ -1813,9 +1815,9 @@ class PaymentsReceived extends REST_Controller {
 											$MontoSysCR = ($credito / $TasaLocSys);
 
 
-											$DFPC  = $DFPC + round($credito, 2);
+											$DFPC  = $DFPC + round($credito, $DECI_MALES);
 											$DFPD  = $DFPD + 0;
-											$DFPCS = $DFPCS + round($MontoSysCR, 2);
+											$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
 											$DFPDS = $DFPDS + 0;
 
 
@@ -1824,7 +1826,7 @@ class PaymentsReceived extends REST_Controller {
 													':ac1_trans_id' => $resInsertAsiento,
 													':ac1_account' => $cuentaD,
 													':ac1_debit' => 0,
-													':ac1_credit' => round($credito, 2),
+													':ac1_credit' => round($credito, $DECI_MALES),
 													':ac1_debit_sys' => 0,
 													':ac1_credit_sys' => 0,
 													':ac1_currex' => 0,
@@ -1938,8 +1940,8 @@ class PaymentsReceived extends REST_Controller {
 									':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
 									':ac1_debit' => 0,
 									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($debito, 2),
-									':ac1_credit_sys' => round($credito, 2),
+									':ac1_debit_sys' => round($debito, $DECI_MALES),
+									':ac1_credit_sys' => round($credito, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['bpr_docdate'])?$Data['bpr_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['bpr_docdate'])?$Data['bpr_docdate']:NULL,
@@ -2034,8 +2036,8 @@ class PaymentsReceived extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
-									':ac1_debit' => round($ldebito, 2),
-									':ac1_credit' => round($lcredito, 2),
+									':ac1_debit' => round($ldebito, $DECI_MALES),
+									':ac1_credit' => round($lcredito, $DECI_MALES),
 									':ac1_debit_sys' => 0,
 									':ac1_credit_sys' => 0,
 									':ac1_currex' => 0,
@@ -2306,7 +2308,7 @@ class PaymentsReceived extends REST_Controller {
 						//
 						// }
 					//
-					
+
 					//SE VALIDA LA CONTABILIDAD CREADA
  					$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
 

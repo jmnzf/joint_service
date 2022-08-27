@@ -19,6 +19,7 @@ class Quotation extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -828,8 +829,9 @@ class Quotation extends REST_Controller {
 
   //OBTENER COTIZACIONES
   public function getQuotation_get(){
+				$DECI_MALES =  $this->generic->getDecimals();
 
-        $sqlSelect = self::getColumn('dvct','dvc');
+        $sqlSelect = self::getColumn('dvct','dvc','','',$DECI_MALES);
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

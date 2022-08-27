@@ -26,6 +26,8 @@ class SalesInv extends REST_Controller {
   //CREAR NUEVA FACTURA DE VENTAS
 	public function createSalesInv_post(){
 
+
+			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 			$DetalleAsientoIva = new stdClass();
@@ -328,11 +330,11 @@ class SalesInv extends REST_Controller {
         $sqlInsert = "INSERT INTO dvfv(dvf_series, dvf_docnum, dvf_docdate, dvf_duedate, dvf_duedev, dvf_pricelist, dvf_cardcode,
                       dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
                       dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
-                      dvf_attch,dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,dvf_modelv,dvf_driverv,dvf_driverid)
+                      dvf_attch,dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfcurrency,dvf_igtfapplyed)
 											VALUES(:dvf_series, :dvf_docnum, :dvf_docdate, :dvf_duedate, :dvf_duedev, :dvf_pricelist, :dvf_cardcode, :dvf_cardname,
                       :dvf_currency, :dvf_contacid, :dvf_slpcode, :dvf_empid, :dvf_comment, :dvf_doctotal, :dvf_baseamnt, :dvf_taxtotal, :dvf_discprofit, :dvf_discount,
                       :dvf_createat, :dvf_baseentry, :dvf_basetype, :dvf_doctype, :dvf_idadd, :dvf_adress, :dvf_paytype, :dvf_attch,:dvf_createby,:dvf_correl,:dvf_transport,:dvf_sub_transport,:dvf_ci,:dvf_t_vehiculo,
-											:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid)";
+											:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfcurrency,:dvf_igtfapplyed)";
 
 
 				// Se Inicia la transaccion,
@@ -385,7 +387,11 @@ class SalesInv extends REST_Controller {
 								':dvf_placav' => isset($Data['dvf_placav'])?$Data['dvf_placav']:NULL,
 								':dvf_modelv' => isset($Data['dvf_modelv'])?$Data['dvf_modelv']:NULL,
 								':dvf_driverv' => isset($Data['dvf_driverv'])?$Data['dvf_driverv']:NULL,
-								':dvf_driverid'  => isset($Data['dvf_driverid'])?$Data['dvf_driverid']:NULL
+								':dvf_driverid'  => isset($Data['dvf_driverid'])?$Data['dvf_driverid']:NULL,
+								':dvf_igtf'  =>  isset($Data['dvf_igtf'])?$Data['dvf_igtf']:NULL,
+								':dvf_taxigtf' => isset($Data['dvf_taxigtf'])?$Data['dvf_taxigtf']:NULL,
+								':dvf_igtfcurrency' => isset($Data['dvf_igtfcurrency'])?$Data['dvf_igtfcurrency']:NULL,
+								':dvf_igtfapplyed' => isset($Data['dvf_igtfapplyed'])?$Data['dvf_igtfapplyed']:NULL
 							));
 
 					if(is_numeric($resInsert) && $resInsert > 0){
@@ -1186,6 +1192,7 @@ class SalesInv extends REST_Controller {
 								$proyecto = "";
 								$prc = "";
 								$unidad = "";
+
 								foreach ($posicion as $key => $value) {
 											$granTotalIngreso = ($granTotalIngreso + $value->fv1_linetotal);
 											$granTotalTasaFija = ($granTotalTasaFija + ($value->fv1_fixrate * $value->fv1_quantity));
@@ -1202,6 +1209,8 @@ class SalesInv extends REST_Controller {
 								$MontoSysDB = 0;
 								$MontoSysCR = 0;
 								$granTotalIngresoOriginal = $granTotalIngreso;
+
+
 
 								if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
 										$granTotalIngreso = ($granTotalIngreso * $TasaDocLoc);
@@ -1319,8 +1328,8 @@ class SalesInv extends REST_Controller {
 								}
 
 
-								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,$DECI_MALES));
+								$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,$DECI_MALES));
 
 
 								$TOTALCXCLOC = ($TOTALCXCLOC + ($debito+$credito));
@@ -1330,10 +1339,10 @@ class SalesInv extends REST_Controller {
 
 										':ac1_trans_id' => $resInsertAsiento,
 										':ac1_account' => $cuenta,
-										':ac1_debit' => round($debito,2),
-										':ac1_credit' => round($credito,2),
-										':ac1_debit_sys' => round($MontoSysDB,2),
-										':ac1_credit_sys' => round($MontoSysCR,2),
+										':ac1_debit' => round($debito,$DECI_MALES),
+										':ac1_credit' => round($credito,$DECI_MALES),
+										':ac1_debit_sys' => round($MontoSysDB,$DECI_MALES),
+										':ac1_credit_sys' => round($MontoSysCR,$DECI_MALES),
 										':ac1_currex' => 0,
 										':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
 										':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
@@ -1358,8 +1367,8 @@ class SalesInv extends REST_Controller {
 										':ac1_accperiod' => 1,
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
-										':ac1_ven_debit' => round($debito,2),
-										':ac1_ven_credit' => round($credito,2),
+										':ac1_ven_debit' => round($debito,$DECI_MALES),
+										':ac1_ven_credit' => round($credito,$DECI_MALES),
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => 0,
 										':ac1_isrti' => 0,
@@ -1410,10 +1419,10 @@ class SalesInv extends REST_Controller {
 								$Vat = 0;
 
 								foreach ($posicion as $key => $value) {
-											$granTotalIva = round($granTotalIva + $value->fv1_vatsum,2);
+											$granTotalIva = round($granTotalIva + $value->fv1_vatsum,$DECI_MALES);
 
 											$v1 = ($value->fv1_linetotal + ($value->fv1_quantity * $value->fv1_fixrate));
-											$granTotalIva2 = round($granTotalIva2 + ($v1 * ($value->fv1_vat / 100)), 2);
+											$granTotalIva2 = round($granTotalIva2 + ($v1 * ($value->fv1_vat / 100)), $DECI_MALES);
 
 											$LineTotal = ( $LineTotal +$value->fv1_linetotal );
 											$CodigoImp = $value->codimp;
@@ -1442,7 +1451,7 @@ class SalesInv extends REST_Controller {
 								}
 
 
-								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
+								$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,$DECI_MALES));
 								$AC1LINE = $AC1LINE+1;
 
 
@@ -1453,9 +1462,9 @@ class SalesInv extends REST_Controller {
 										':ac1_trans_id' => $resInsertAsiento,
 										':ac1_account' => $value->fv1_cuentaIva,
 										':ac1_debit' => 0,
-										':ac1_credit' => round($granTotalIva, 2),
+										':ac1_credit' => round($granTotalIva, $DECI_MALES),
 										':ac1_debit_sys' => 0,
-										':ac1_credit_sys' => round($MontoSysCR, 2),
+										':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 										':ac1_currex' => 0,
 										':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
 										':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
@@ -1481,7 +1490,7 @@ class SalesInv extends REST_Controller {
 										':ac1_close' => 0,
 										':ac1_cord' => 0,
 										':ac1_ven_debit' => 0,
-										':ac1_ven_credit' => round($granTotalIva, 2),
+										':ac1_ven_credit' => round($granTotalIva, $DECI_MALES),
 										':ac1_fiscal_acct' => 0,
 										':ac1_taxid' => $CodigoImp,
 										':ac1_isrti' => $Vat,
@@ -1490,7 +1499,7 @@ class SalesInv extends REST_Controller {
 										':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
 										':ac1_codref' => 1,
 										':ac1_line'   => 	$AC1LINE,
-										':ac1_base_tax' => round($LineTotal, 2)
+										':ac1_base_tax' => round($LineTotal, $DECI_MALES)
 							));
 
 
@@ -1654,10 +1663,10 @@ class SalesInv extends REST_Controller {
 
 												':ac1_trans_id' => $resInsertAsiento,
 												':ac1_account' => $cuentaInventario,
-												':ac1_debit' => round($dbito, 2),
-												':ac1_credit' => round($cdito, 2),
-												':ac1_debit_sys' => round($MontoSysDB,2),
-												':ac1_credit_sys' => round($MontoSysCR,2),
+												':ac1_debit' => round($dbito, $DECI_MALES),
+												':ac1_credit' => round($cdito, $DECI_MALES),
+												':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+												':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 												':ac1_currex' => 0,
 												':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
 												':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
@@ -1682,8 +1691,8 @@ class SalesInv extends REST_Controller {
 												':ac1_accperiod' => 1,
 												':ac1_close' => 0,
 												':ac1_cord' => 0,
-												':ac1_ven_debit' => round($dbito, 2),
-												':ac1_ven_credit' => round($cdito, 2),
+												':ac1_ven_debit' => round($dbito, $DECI_MALES),
+												':ac1_ven_credit' => round($cdito, $DECI_MALES),
 												':ac1_fiscal_acct' => 0,
 												':ac1_taxid' => 0,
 												':ac1_isrti' => 0,
@@ -2000,10 +2009,10 @@ class SalesInv extends REST_Controller {
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $cuentaCosto,
-									':ac1_debit' => round($dbito,2),
-									':ac1_credit' => round($cdito,2),
-									':ac1_debit_sys' => round($MontoSysDB,2),
-									':ac1_credit_sys' => round($MontoSysCR,2),
+									':ac1_debit' => round($dbito, $DECI_MALES),
+									':ac1_credit' => round($cdito, $DECI_MALES),
+									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 									':ac1_currex' => 0,
 									':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
 									':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
@@ -2028,8 +2037,8 @@ class SalesInv extends REST_Controller {
 									':ac1_accperiod' => 1,
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
-									':ac1_ven_debit' => round($dbito,2),
-									':ac1_ven_credit' => round($cdito,2),
+									':ac1_ven_debit' => round($dbito, $DECI_MALES),
+									':ac1_ven_credit' => round($cdito, $DECI_MALES),
 									':ac1_fiscal_acct' => 0,
 									':ac1_taxid' => 0,
 									':ac1_isrti' => 0,
@@ -2212,10 +2221,10 @@ class SalesInv extends REST_Controller {
 
 												':ac1_trans_id' => $resInsertAsiento,
 												':ac1_account' => $cuentaCosto,
-												':ac1_debit' => round($dbito, 2),
-												':ac1_credit' => round($cdito, 2),
-												':ac1_debit_sys' => round($MontoSysDB,2),
-												':ac1_credit_sys' => round($MontoSysCR,2),
+												':ac1_debit' => round($dbito, $DECI_MALES),
+												':ac1_credit' => round($cdito, $DECI_MALES),
+												':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+												':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 												':ac1_currex' => 0,
 												':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
 												':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
@@ -2240,8 +2249,8 @@ class SalesInv extends REST_Controller {
 												':ac1_accperiod' => 1,
 												':ac1_close' => 0,
 												':ac1_cord' => 0,
-												':ac1_ven_debit' => round($dbito, 2),
-												':ac1_ven_credit' => round($cdito, 2),
+												':ac1_ven_debit' => round($dbito, $DECI_MALES),
+												':ac1_ven_credit' => round($cdito, $DECI_MALES),
 												':ac1_fiscal_acct' => 0,
 												':ac1_taxid' => 0,
 												':ac1_isrti' => 0,
@@ -2280,6 +2289,8 @@ class SalesInv extends REST_Controller {
 
 					//Procedimiento para llenar cuentas por cobrar
 
+					  $TasaIGTF = 0;
+
 						$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 														 JOIN dmgs  AS f2
 														 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
@@ -2287,6 +2298,43 @@ class SalesInv extends REST_Controller {
 														 AND f1.dms_card_type = '1'";//1 para clientes";
 
 						$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['dvf_cardcode']));
+
+
+						if( isset($Data['dvf_igtf']) && $Data['dvf_igtf'] > 0 ){
+
+							$sqlTasaIGTF = "SELECT COALESCE( get_tax_currency(:moneda, :fecha), 0) AS tasa";
+							$resTasaIGTF = $this->pedeo->queryTable($sqlTasaIGTF, array(
+
+
+								':moneda' => $Data['dvf_igtfcurrency'],
+								':fecha' => $Data['dvf_docdate']
+
+							));
+
+							if( isset($resTasaIGTF[0]) && $resTasaIGTF[0]['tasa'] > 0){
+									// Se verifica que el detalle no de error insertando //
+
+									$TasaIGTF = $resTasaIGTF[0]['tasa'];
+
+							}else{
+
+									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'	  => $resTasaIGTF,
+											'mensaje'	=> 'No se encontro la tasa para el impuesto IGTF'
+										);
+
+										 $this->response($respuesta);
+
+										 return;
+							}
+
+
+						}
 
 
 
@@ -2298,76 +2346,120 @@ class SalesInv extends REST_Controller {
 									$MontoSysCR = 0;
 									$docTotal = 0;
 									$docTotalOriginal = 0;
+									$MontoIGTF = isset($Data['dvf_igtf']) ? round( ($Data['dvf_igtf'] * $TasaIGTF), $DECI_MALES ) : 0;
+
+
 
 									$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
 									$codigo2= substr($rescuentaCxC[0]['mgs_acct'], 0, 1);
 
-									// $docTotal = $Data['dvf_doctotal'];
-									// $docTotalOriginal = $docTotal;
-									//
-									//
-									// if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
-									//
-									// 		$docTotal = ($docTotal * $TasaDocLoc);
-									// }
-									//
-									// $dt = $Data['dvf_doctotal'];
+									$MontoIGTFSYS = round(($MontoIGTF / $TasaLocSys), $DECI_MALES);
+
 
 									if( $codigo2 == 1 || $codigo2 == "1" ){
 
 											$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
+											$debitoo = ($debitoo + $MontoIGTF);
+											$MontoSysDB =	($MontoSysDB + $MontoIGTFSYS);
+
+
 									}else if( $codigo2 == 2 || $codigo2 == "2" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+
+
 
 									}else if( $codigo2 == 3 || $codigo2 == "3" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR = ($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+
+
+
 									}else if( $codigo2 == 4 || $codigo2 == "4" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+
+
 
 									}else if( $codigo2 == 5  || $codigo2 == "5" ){
 
 											$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
+											$debitoo = ($debitoo + $MontoIGTF);
+											$MontoSysDB =	($MontoSysDB + $MontoIGTFSYS);
+
+
 									}else if( $codigo2 == 6 || $codigo2 == "6" ){
 
 											$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+
+											$debitoo = ($debitoo + $MontoIGTF);
+											$MontoSysDB =	($MontoSysDB + $MontoIGTFSYS);
+
+
 
 									}else if( $codigo2 == 7 || $codigo2 == "7" ){
 
 											$debitoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysDB =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
+
+											$debitoo = ($debitoo + $MontoIGTF);
+											$MontoSysDB =	($MontoSysDB + $MontoIGTFSYS);
+
+
 									}else if( $codigo2 == 9 || $codigo2 == "9" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+
+
 									}
 
 
-									$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR,2));
-									$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB,2));
+
+									if ( $creditoo == 0 ){
+										$SumaCreditosSYS = ($SumaCreditosSYS + $MontoIGTFSYS);
+									}else{
+										$SumaDebitosSYS = ($SumaDebitosSYS + $MontoIGTFSYS);
+									}
+
+
+									$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+									$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+
+
+
 									$AC1LINE = $AC1LINE+1;
 
 									$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 											':ac1_trans_id' => $resInsertAsiento,
 											':ac1_account' => $cuentaCxC,
-											':ac1_debit' => round($debitoo, 2),
-											':ac1_credit' => round($creditoo, 2),
-											':ac1_debit_sys' => round($MontoSysDB, 2),
-											':ac1_credit_sys' => round($MontoSysCR, 2),
+											':ac1_debit' => round($debitoo, $DECI_MALES),
+											':ac1_credit' => round($creditoo, $DECI_MALES),
+											':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+											':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 											':ac1_currex' => 0,
 											':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
 											':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
@@ -2392,8 +2484,8 @@ class SalesInv extends REST_Controller {
 											':ac1_accperiod' => 1,
 											':ac1_close' => 0,
 											':ac1_cord' => 0,
-											':ac1_ven_debit' => round($debitoo, 2),
-											':ac1_ven_credit' => round($creditoo, 2),
+											':ac1_ven_debit' => round($debitoo, $DECI_MALES),
+											':ac1_ven_credit' => round($creditoo, $DECI_MALES),
 											':ac1_fiscal_acct' => 0,
 											':ac1_taxid' => 0,
 											':ac1_isrti' => 0,
@@ -2443,7 +2535,12 @@ class SalesInv extends REST_Controller {
 
 						// SE VALIDA DIFERENCIA POR DECIMALES
 						// Y SE AGREGA UN ASIENTO DE DIFERENCIA EN DECIMALES
+						// AJUSTE AL PESO
 						// SEGUN SEA EL CASO
+						///
+
+
+
 						$debito  = 0;
 						$credito = 0;
 						if($SumaCreditosSYS > $SumaDebitosSYS || $SumaDebitosSYS > $SumaCreditosSYS){
@@ -2462,7 +2559,7 @@ class SalesInv extends REST_Controller {
 															$credito = ($SumaDebitosSYS - $SumaCreditosSYS);
 												}
 
-												if(round($debito+$credito, 2) > 0){
+												if(round($debito+$credito, $DECI_MALES) > 0){
 															$AC1LINE = $AC1LINE+1;
 															$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2470,8 +2567,8 @@ class SalesInv extends REST_Controller {
 																	':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
 																	':ac1_debit' => 0,
 																	':ac1_credit' => 0,
-																	':ac1_debit_sys' => round($debito,2),
-																	':ac1_credit_sys' => round($credito,2),
+																	':ac1_debit_sys' => round($debito, $DECI_MALES),
+																	':ac1_credit_sys' => round($credito, $DECI_MALES),
 																	':ac1_currex' => 0,
 																	':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
 																	':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
@@ -2547,6 +2644,126 @@ class SalesInv extends REST_Controller {
 						}
 
 						// FIN VALIDACION DIFERENCIA EN DECIMALES
+
+
+
+						// VALIDANDO IMPUESTO IGTF CASO PARA VENEZUELA
+
+						if ( isset($Data['dvf_igtf']) && $Data['dvf_igtf'] > 0 ) {
+
+							$sqlCuentaIGTF = "SELECT imm_acctcode FROM timm WHERE imm_code = :imm_code";
+							$resCuentaIGTF = $this->pedeo->queryTable($sqlCuentaIGTF, array(
+								':imm_code' => $Data['dvf_igtfcode']
+							));
+
+							if (isset( $resCuentaIGTF[0] ) && $resCuentaIGTF[0]['imm_acctcode'] > 0 ){
+
+								$cdito = 0;
+								$dbito = 0;
+								$MontoSysCR = 0;
+								$MontoSysDB = 0;
+
+
+								$cdito = isset($Data['dvf_igtf']) ? round( ($Data['dvf_igtf'] * $TasaIGTF), $DECI_MALES ) : 0;
+
+
+								if(trim($Data['dvf_currency']) != $MONEDASYS ){
+										$MontoSysCR = ($cdito / $TasaLocSys);
+								}else{
+										$MontoSysCR = $Data['dvf_igtf'];
+								}
+
+								$AC1LINE = $AC1LINE+1;
+								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+								':ac1_trans_id' => $resInsertAsiento,
+								':ac1_account' => $resCuentaIGTF[0]['imm_acctcode'],
+								':ac1_debit' => round($dbito, $DECI_MALES),
+								':ac1_credit' => round($cdito, $DECI_MALES),
+								':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+								':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+								':ac1_currex' => 0,
+								':ac1_doc_date' => $this->validateDate($Data['dvf_docdate'])?$Data['dvf_docdate']:NULL,
+								':ac1_doc_duedate' => $this->validateDate($Data['dvf_duedate'])?$Data['dvf_duedate']:NULL,
+								':ac1_debit_import' => 0,
+								':ac1_credit_import' => 0,
+								':ac1_debit_importsys' => 0,
+								':ac1_credit_importsys' => 0,
+								':ac1_font_key' => $resInsert,
+								':ac1_font_line' => 1,
+								':ac1_font_type' => is_numeric($Data['dvf_doctype'])?$Data['dvf_doctype']:0,
+								':ac1_accountvs' => 1,
+								':ac1_doctype' => 18,
+								':ac1_ref1' => "",
+								':ac1_ref2' => "",
+								':ac1_ref3' => "",
+								':ac1_prc_code' => $value->ac1_prc_code,
+								':ac1_uncode' => $value->ac1_uncode,
+								':ac1_prj_code' => $value->ac1_prj_code,
+								':ac1_rescon_date' => NULL,
+								':ac1_recon_total' => 0,
+								':ac1_made_user' => isset($Data['dvf_createby'])?$Data['dvf_createby']:NULL,
+								':ac1_accperiod' => 1,
+								':ac1_close' => 0,
+								':ac1_cord' => 0,
+								':ac1_ven_debit' => round($dbito, $DECI_MALES),
+								':ac1_ven_credit' => round($cdito, $DECI_MALES),
+								':ac1_fiscal_acct' => 0,
+								':ac1_taxid' => isset($Data['dvf_igtfcode'])?$Data['dvf_igtfcode']:NULL,
+								':ac1_isrti' => isset($Data['dvf_taxigtf'])?$Data['dvf_taxigtf']:NULL,
+								':ac1_basert' => 0,
+								':ac1_mmcode' => 0,
+								':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
+								':ac1_codref' => 1,
+								':ac1_line'   => 	$AC1LINE,
+								':ac1_base_tax' => isset($Data['dvf_igtfapplyed']) ? round( ($Data['dvf_igtfapplyed'] * $TasaIGTF), $DECI_MALES) : NULL,
+								));
+
+								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+								// Se verifica que el detalle no de error insertando //
+								}else{
+
+									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resDetalleAsiento,
+										'mensaje'	=> 'No se pudo registrar la factura de ventas'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resCuentaIGTF,
+									'mensaje'	=> 'No se encontro la cuenta contable para el impuesto IGTF'
+								);
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+						}
+
+
+
+						//
+
+
+
+
+
+
+
 						// FIN DE OPERACIONES VITALES
 
 
@@ -2590,12 +2807,6 @@ class SalesInv extends REST_Controller {
 							$cantidad_cot = $resEstado1[0]['cantidad'];
 							$cantidad_ord = $resEstado2[0]['cantidad'];
 
-
-
-	// print_r($item_cot);
-	// print_r($item_ord);
-	// print_r($cantidad_cot);
-	// print_r($cantidad_ord);exit();die();
 							if($item_cot == $item_ord  &&  $cantidad_cot == $cantidad_ord){
 
 										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
@@ -2669,12 +2880,6 @@ class SalesInv extends REST_Controller {
 						$cantidad_ord = $resEstado1[0]['cantidad'];
 						$cantidad_del = $resEstado2[0]['cantidad'];
 
-
-
-	// print_r($item_cot);
-	// print_r($item_ord);
-	// print_r($cantidad_cot);
-	// print_r($cantidad_ord);exit();die();
 						if($item_ord == $item_del  &&  $cantidad_ord == $cantidad_del){
 
 										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
@@ -2768,12 +2973,6 @@ class SalesInv extends REST_Controller {
 							$cantidad_del = $resta_cantidad;
 							$cantidad_fact = $resEstado2[0]['cantidad'];
 
-
-
-							// print_r($item_cot);
-							// print_r($item_ord);
-							// print_r($cantidad_cot);
-							// print_r($cantidad_ord);exit();die();
 
 
 
@@ -2915,6 +3114,11 @@ class SalesInv extends REST_Controller {
 
 						// FIN VALIDACION DE ESTADOS
 
+
+						// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
+						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+						// print_r(json_encode($ressqlmac1));
+						// exit;
 
 						//SE VALIDA LA CONTABILIDAD CREADA
 						 $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
@@ -3161,8 +3365,10 @@ class SalesInv extends REST_Controller {
 
   //OBTENER Factura de VentasES
   public function getSalesInv_get(){
-				// ".number_format($value['ivap'], 2, ',', '.').'
-        $sqlSelect = self::getColumn('dvfv','dvf');
+
+				$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('dvfv','dvf','','',$DECI_MALES);
 
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -3249,26 +3455,48 @@ class SalesInv extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM vfv1 WHERE fv1_docentry =:fv1_docentry";
+				$sqlSelect = "SELECT * FROM vfv1 WHERE fv1_docentry =:fv1_docentry";
+				$sqlSelectFv = "SELECT round(dvf_igtf * (get_tax_currency(dvf_igtfcurrency, dvf_docdate)), get_decimals()) as dvf_igtf, dvf_taxigtf,dvf_igtfcurrency, dvf_igtfapplyed, dvf_igtf as dvf_igtfrealvalue  FROM  dvfv WHERE dvf_docentry = :dvf_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fv1_docentry" => $Data['fv1_docentry']));
 
-				if(isset($resSelect[0])){
+				$resSelectFv = $this->pedeo->queryTable($sqlSelectFv, array(':dvf_docentry' => $Data['fv1_docentry']));
 
-					$respuesta = array(
-						'error' => false,
-						'data'  => $resSelect,
-						'mensaje' => '');
+				if(isset($resSelectFv[0])){
+
+					if(isset($resSelect[0])){
+
+						$arr = [];
+
+						$arr['detalle'] = $resSelect;
+						$arr['complemento'] = $resSelectFv;
+
+						$respuesta = array(
+							'error' => false,
+							'data'  => $arr,
+							'mensaje' => '');
+
+					}else{
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => array(),
+								'mensaje'	=> 'busqueda sin resultados'
+							);
+
+					}
 
 				}else{
 
-						$respuesta = array(
-							'error'   => true,
-							'data' => array(),
-							'mensaje'	=> 'busqueda sin resultados'
-						);
+					$respuesta = array(
+						'error'   => true,
+						'data' => array(),
+						'mensaje'	=> 'busqueda sin resultados'
+					);
 
 				}
+
+
 
 				 $this->response($respuesta);
 	}
