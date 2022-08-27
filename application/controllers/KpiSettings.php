@@ -88,12 +88,12 @@
 				'data'    => [],
 				'mensaje' => 'No se pudo guardar los datos'
 			);
-			// 
+			//
 			$config = json_encode($request['kst_config']); // CONFIGURACION DEL FRON DEL KPI.
 			$status = 1; // ESTADO - POR DEFECTO EN 1(ACTIVO)
-			// 
+			//
 			$stmt = $this->pdo->prepare("INSERT INTO tkpi (kst_name, kst_type, kst_kpi, kst_config, kst_status) VALUES (:kst_name, :kst_type, :kst_kpi, :kst_config, :kst_status)");
-			// 
+			//
 			$stmt->bindParam(':kst_name', $request['kst_kpiname']);
 			$stmt->bindParam(':kst_type', $request['kst_kpitype']);
 			$stmt->bindParam(':kst_kpi', $request['kst_queryid']);
@@ -181,15 +181,15 @@
 				'data'    => [],
 				'mensaje' => 'No se pudo guardar los datos'
 			);
-			// 
+			//
 			$insertId = false;
 			// VALIDAR QUE NO ESTE VACIO
 			if (!empty($request['rkg_kpiid'])) {
-				// 
+				//
 				$this->pedeo->updateRow("DELETE FROM rkpig WHERE rkg_groupid = :rkg_groupid", array(
 					':rkg_groupid' => $request['rkg_groupid']
 				));
-				// 
+				//
 				foreach ($request['rkg_kpiid'] as $key => $kpiId) {
 					//
 					$insertId = $this->pedeo->insertRow("INSERT INTO rkpig (rkg_groupid, rkg_kpiid) VALUES (:rkg_groupid, :rkg_kpiid)",
@@ -239,12 +239,12 @@
 				'data'    => [],
 				'mensaje' => 'No se pudo guardar los datos'
 			);
-			// 
+			//
 			$config = json_encode($request['kst_config']); // CONFIGURACION DEL FRON DEL KPI.
 			$status = 1; // ESTADO - POR DEFECTO EN 1(ACTIVO)
-			// 
+			//
 			$stmt = $this->pdo->prepare("UPDATE tkpi SET kst_name=:kst_name, kst_type=:kst_type, kst_kpi=:kst_kpi, kst_config=:kst_config, kst_status=:kst_status WHERE kst_id = :kst_id");
-			// 
+			//
 			$stmt->bindParam(':kst_name', $request['kst_kpiname']);
 			$stmt->bindParam(':kst_type', $request['kst_kpitype']);
 			$stmt->bindParam(':kst_kpi', $request['kst_queryid']);
@@ -329,6 +329,8 @@
 			// OBTENER DATOS REQUEST.
 			$request = $this->post();
 
+
+
 			if(!isset($request['ruc_user'])){
 
 				$this->response(array(
@@ -345,11 +347,11 @@
 				'data'    => [],
 				'mensaje' => 'busqueda sin resultados'
             );
-			// 
+			//
 	        $config = $this->pedeo->queryTable("SELECT tkpig.gkp_name, tkpig.gkp_description, tkpi.kst_type, tkpi.kst_config, csql.sql_query, tkpi.kst_kpi FROM rkpig INNER JOIN tkpig ON tkpig.gkp_id=rkpig.rkg_groupid INNER JOIN tkpi ON tkpi.kst_id=rkpig.rkg_kpiid INNER JOIN csql ON csql.sql_id=tkpi.kst_kpi INNER JOIN truc ON truc.ruc_query=csql.sql_id WHERE truc.ruc_user=:ruc_user AND tkpig.gkp_status=:kst_status AND tkpi.kst_status=:kst_status ORDER BY gkp_order ASC", [':ruc_user' => $request['ruc_user'], ':kst_status' => 1]);
 	        // VALIDAR RETORNO DE DATOS DE LA CONSULTA.
 	        if(isset($config[0])){
-				// 
+				//
 				$resultSet = [];
 				// RECORRER CONFIGURACIÓN.
 				foreach ($config as $key => $item) {
@@ -361,7 +363,7 @@
 						unset($item['sql_query']);
 						// ASIGNAR DATOS
 						$item['data'] = $result;
-						// 
+						//
 						$resultSet[$item['gkp_name']][] = $item;
 					}
 				}

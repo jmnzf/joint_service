@@ -1044,8 +1044,7 @@ class PurchaseOrder extends REST_Controller {
 
 							}
 
-						}
-						if ($Data['cpo_basetype'] == 11) {
+						}else if ($Data['cpo_basetype'] == 11) {
 
 
 							$sqlEstado1 = 'SELECT distinct
@@ -1125,6 +1124,187 @@ class PurchaseOrder extends REST_Controller {
 
 							}
 
+						}else if ($Data['coc_basetype'] == 21) {
+						
+							//BUSCAR EL DOCENTRY Y DOCTYPE DEL COD ORIGEN
+							$sql_aprov = "SELECT
+											pap_doctype,
+											pap_basetype,
+											pap_baseentry
+										FROM dpap
+										WHERE pap_origen = 11 and pap_doctype = :pap_doctype
+										and pap_docentry = :pap_docentry";
+	
+							$result_aprov = $this->pedeo->queryTable($sql_aprov,array(
+								':pap_doctype' => $Data['coc_basetype'],
+								':pap_docentry' => $Data['coc_baseentry']
+							));
+	
+							// print_r($result_aprov);exit();die();
+							if($result_aprov[0]['pap_basetype'] == 10){
+	
+							$sqlEstado1 = "SELECT
+												count(t1.sc1_itemcode) item,
+												sum(t1.sc1_quantity) cantidad
+											from dcsc t0
+											inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+											where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype";
+	
+	
+							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+								':csc_docentry' => $result_aprov[0]['pap_baseentry'],
+								':csc_doctype' => $result_aprov[0]['pap_basetype']
+								// ':vc1_itemcode' => $detail['ov1_itemcode']
+							));
+	
+							$sqlEstado2 = "SELECT
+												coalesce(count(distinct t3.oc1_itemcode),0) item,
+												coalesce(sum(t3.oc1_quantity),0) cantidad
+											from dcsc t0
+											inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+											left join dcpo t2 on t0.csc_docentry = ".$result_aprov[0]['pap_baseentry']." and t0.csc_doctype = ".$result_aprov[0]['pap_basetype']."
+											left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
+											where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
+	
+	
+							$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
+								':cpo_docentry' => $result_aprov[0]['pap_baseentry'],
+								':cpo_doctype' => $result_aprov[0]['pap_basetype']
+	
+							));
+	
+							$item_cot = $resEstado1[0]['item'];
+							$cantidad_cot = $resEstado1[0]['cantidad'];
+							$item_ord = $resEstado2[0]['item'];
+							$cantidad_ord = $resEstado2[0]['cantidad'];
+	
+							// print_r($item_cot);
+							// print_r($item_ord);
+							// print_r($cantidad_cot);
+							// print_r($cantidad_ord);exit();die();
+	
+	
+							if($item_cot == $item_ord  &&  $cantidad_cot == $cantidad_ord){
+	
+										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+	
+										$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+	
+	
+															':bed_docentry' => $result_aprov[0]['pap_baseentry'],
+															':bed_doctype' => $result_aprov[0]['pap_basetype'],
+															':bed_status' => 3, //ESTADO CERRADO
+															':bed_createby' => $Data['coc_createby'],
+															':bed_date' => date('Y-m-d'),
+															':bed_baseentry' => $resInsert,
+															':bed_basetype' => $Data['coc_doctype']
+										));
+	
+	
+										if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+	
+										}else{
+	
+												 $this->pedeo->trans_rollback();
+	
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resInsertEstado,
+														'mensaje'	=> 'No se pudo registrar la orden de compra'
+													);
+	
+	
+													$this->response($respuesta);
+	
+													return;
+										}
+	
+							}
+
+						}else if($result_aprov[0]['pap_basetype'] == 11){
+	
+							$sqlEstado1 = "SELECT
+												count(t1.oc1_itemcode) item,
+												sum(t1.oc1_quantity) cantidad
+											from dcoc t0
+											inner join coc1 t1 on t0.coc_docentry = t1.oc1_docentry
+											where t0.coc_docentry = :coc_docentry and t0.coc_doctype = :coc_doctype";
+	
+	
+							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+								':coc_docentry' => $result_aprov[0]['pap_baseentry'],
+								':coc_doctype' => $result_aprov[0]['pap_basetype']
+								// ':vc1_itemcode' => $detail['ov1_itemcode']
+							));
+	
+							$sqlEstado2 = "SELECT
+												coalesce(count(distinct t3.oc1_itemcode),0) item,
+												coalesce(sum(t3.oc1_quantity),0) cantidad
+											from dcoc t0
+											inner join coc1 t1 on t0.coc_docentry = t1.oc1_docentry
+											left join dcpo t2 on t0.coc_docentry = ".$result_aprov[0]['pap_baseentry']." and t0.csc_doctype = ".$result_aprov[0]['pap_basetype']."
+											left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
+											where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
+	
+	
+							$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
+								':cpo_docentry' => $result_aprov[0]['pap_baseentry'],
+								':cpo_doctype' => $result_aprov[0]['pap_basetype']
+	
+							));
+	
+							$item_cot = $resEstado1[0]['item'];
+							$cantidad_cot = $resEstado1[0]['cantidad'];
+							$item_ord = $resEstado2[0]['item'];
+							$cantidad_ord = $resEstado2[0]['cantidad'];
+	
+							// print_r($item_cot);
+							// print_r($item_ord);
+							// print_r($cantidad_cot);
+							// print_r($cantidad_ord);exit();die();
+	
+	
+							if($item_cot == $item_ord  &&  $cantidad_cot == $cantidad_ord){
+	
+										$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+	
+										$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+	
+	
+															':bed_docentry' => $result_aprov[0]['pap_baseentry'],
+															':bed_doctype' => $result_aprov[0]['pap_basetype'],
+															':bed_status' => 3, //ESTADO CERRADO
+															':bed_createby' => $Data['coc_createby'],
+															':bed_date' => date('Y-m-d'),
+															':bed_baseentry' => $resInsert,
+															':bed_basetype' => $Data['coc_doctype']
+										));
+	
+	
+										if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+	
+										}else{
+	
+												 $this->pedeo->trans_rollback();
+	
+													$respuesta = array(
+														'error'   => true,
+														'data' => $resInsertEstado,
+														'mensaje'	=> 'No se pudo registrar la orden de compra'
+													);
+	
+	
+													$this->response($respuesta);
+	
+													return;
+										}
+	
+							}
+
+						}
+	
 						}
 
 						// Si todo sale bien despues de insertar el detalle de la orden de compra
