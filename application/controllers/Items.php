@@ -402,14 +402,14 @@ class Items extends REST_Controller {
 				$Data = $this->get();
 
 
-
-				$sqlSelect = "SELECT
-													bdi_itemcode,
-													bdi_whscode,
-													bdi_avgprice
-													from tbdi
-													WHERE bdi_itemcode = :bdi_itemcode and
-													bdi_whscode = :bdi_whscode";
+				$sqlSelect = "SELECT distinct
+											bdi_itemcode,
+											bdi_whscode,
+											bdi_avgprice
+											from tbdi
+											WHERE bdi_itemcode = :bdi_itemcode and
+											bdi_whscode = :bdi_whscode
+											GROUP BY bdi_whscode, bdi_itemcode, bdi_avgprice";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 					':bdi_itemcode' => $Data['bdi_itemcode'],

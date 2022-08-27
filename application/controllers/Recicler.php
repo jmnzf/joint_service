@@ -11,7 +11,7 @@ require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 
 
-class Testt extends REST_Controller {
+class Recicler extends REST_Controller {
 
 	private $pdo;
 
@@ -28,15 +28,26 @@ class Testt extends REST_Controller {
 
 	}
 
+	//PROCEDIMIENTO PARA ELIMINAR LOS ARTICULOS DUPLICADOS EN LISTA DE PRECIOS//
+	public function ClearMpl1_post(){
 
-	public function index_post(){
+		$sqlSelect = "SELECT count(pl1_item_code), pl1_item_code
+						FROM mpl1
+						GROUP BY pl1_item_code
+						HAVING (count(pl1_item_code) > 1)";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 
+		if isset( $resSelect[0] ){
 
+			foreach ($resSelect as $key => $value) {
+				// code...
+			}
 
+		}
 
-
-
+		$this->response("Proceso finalizado");
 
 	}
 
