@@ -367,7 +367,7 @@ public function getOffertDetailBySN_get(){
 
 							// BUSCANDO MODELO PARA EL DOCUMENTO
 
-							$Emmpleado = '';
+							$Emmpleado = $Data['coc_createby'];
 
 							$sqlModeloDocumentoEmpleado = "SELECT * FROM tmau	WHERE mau_doctype = :mau_doctype AND mau_emp = :mau_emp AND mau_status = :mau_status";
 							$resModeloDocumentoEmpleado = $this->pedeo->queryTable($sqlModeloDocumentoEmpleado, array(
@@ -1051,7 +1051,7 @@ public function getOffertDetailBySN_get(){
 						}
 
 					}else if ($Data['coc_basetype'] == 21) {
-						
+
 						//BUSCAR EL DOCENTRY Y DOCTYPE DEL COD ORIGEN
 						$sql_aprov = "SELECT
 										pap_doctype,
