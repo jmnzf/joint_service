@@ -39,13 +39,7 @@ class Recicler extends REST_Controller {
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 
-		if isset( $resSelect[0] ){
 
-			foreach ($resSelect as $key => $value) {
-				// code...
-			}
-
-		}
 
 		$this->response("Proceso finalizado");
 
