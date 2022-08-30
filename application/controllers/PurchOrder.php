@@ -29,6 +29,7 @@ class PurchOrder extends REST_Controller {
 			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;
+			$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
 
       if(!isset($Data['detail'])){
 
@@ -754,6 +755,23 @@ class PurchOrder extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
+								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['po1_itemcode'] );
+
+								if( $CANTUOMPURCHASE == 0 ){
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' 		=> $detail['po1_itemcode'],
+									'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['po1_itemcode']
+								);
+
+								 $this->response($respuesta);
+
+								 return;
+								}
+
                 $sqlInsertDetail = "INSERT INTO cpo1(po1_docentry, po1_itemcode, po1_itemname, po1_quantity, po1_uom, po1_whscode,
                                     po1_price, po1_vat, po1_vatsum, po1_discount, po1_linetotal, po1_costcode, po1_ubusiness, po1_project,
                                     po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_linenum, po1_acciva, po1_codimp)VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,
@@ -764,7 +782,7 @@ class PurchOrder extends REST_Controller {
                         ':po1_docentry' => $resInsert,
                         ':po1_itemcode' => isset($detail['po1_itemcode'])?$detail['po1_itemcode']:NULL,
                         ':po1_itemname' => isset($detail['po1_itemname'])?$detail['po1_itemname']:NULL,
-                        ':po1_quantity' => is_numeric($detail['po1_quantity'])?$detail['po1_quantity']:0,
+                        ':po1_quantity' => is_numeric($detail['po1_quantity']) ? ( $detail['po1_quantity'] * $CANTUOMPURCHASE ) : 0,
                         ':po1_uom' => isset($detail['po1_uom'])?$detail['po1_uom']:NULL,
                         ':po1_whscode' => isset($detail['po1_whscode'])?$detail['po1_whscode']:NULL,
                         ':po1_price' => is_numeric($detail['po1_price'])?$detail['po1_price']:0,

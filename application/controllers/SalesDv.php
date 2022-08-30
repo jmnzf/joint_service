@@ -44,6 +44,7 @@ class SalesDv extends REST_Controller {
       $AgregarAsiento = true;
       $resInsertAsiento = "";
       $ResultadoInv = 0; // INDICA SI EXISTE AL MENOS UN ITEM QUE MANEJA INVENTARIO
+      $CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 
 
 
@@ -521,6 +522,23 @@ class SalesDv extends REST_Controller {
 
         foreach ($ContenidoDetalle as $key => $detail) {
 
+          $CANTUOMSALE = $this->generic->getUomSale( $detail['dv1_itemcode'] );
+
+          if( $CANTUOMSALE == 0 ){
+
+            $this->pedeo->trans_rollback();
+
+            $respuesta = array(
+              'error'   => true,
+              'data' 		=> $detail['dv1_itemcode'],
+              'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['dv1_itemcode']
+            );
+
+             $this->response($respuesta);
+
+             return;
+          }
+
           $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                               dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
                               dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
@@ -531,7 +549,7 @@ class SalesDv extends REST_Controller {
           ':dv1_docentry' => $resInsert,
           ':dv1_itemcode' => isset($detail['dv1_itemcode'])?$detail['dv1_itemcode']:NULL,
           ':dv1_itemname' => isset($detail['dv1_itemname'])?$detail['dv1_itemname']:NULL,
-          ':dv1_quantity' => is_numeric($detail['dv1_quantity'])?$detail['dv1_quantity']:0,
+          ':dv1_quantity' => is_numeric($detail['dv1_quantity']) ? ( $detail['dv1_quantity'] * $CANTUOMSALE ) : 0,
           ':dv1_uom' => isset($detail['dv1_uom'])?$detail['dv1_uom']:NULL,
           ':dv1_whscode' => isset($detail['dv1_whscode'])?$detail['dv1_whscode']:NULL,
           ':dv1_price' => is_numeric($detail['dv1_price'])?$detail['dv1_price']:0,
@@ -707,7 +725,7 @@ class SalesDv extends REST_Controller {
               $sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
               ':bmi_itemcode'  => isset($detail['dv1_itemcode'])?$detail['dv1_itemcode']:NULL,
-              ':bmi_quantity'  => is_numeric($detail['dv1_quantity'])? $detail['dv1_quantity'] * $Data['invtype']:0,
+              ':bmi_quantity'  => is_numeric($detail['dv1_quantity']) ? ( ( $detail['dv1_quantity'] * $CANTUOMSALE ) * $Data['invtype'] ) : 0,
               ':bmi_whscode'   => isset($detail['dv1_whscode'])?$detail['dv1_whscode']:NULL,
               ':bmi_createat'  => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
               ':bmi_createby'  => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL,
@@ -766,9 +784,9 @@ class SalesDv extends REST_Controller {
             //Se Aplica el movimiento en stock ***************
             // Buscando item en el stock
             $sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-                                                                                                                                                FROM tbdi
-                                                                                                                                                WHERE bdi_itemcode = :bdi_itemcode
-                                                                                                                                                AND bdi_whscode = :bdi_whscode";
+                                FROM tbdi
+                                WHERE bdi_itemcode = :bdi_itemcode
+                                AND bdi_whscode = :bdi_whscode";
 
             $resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
@@ -781,7 +799,7 @@ class SalesDv extends REST_Controller {
             // if($resCostoCantidad[0]['bdi_quantity'] > 0){
 
                 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-                $CantidadNueva = $detail['dv1_quantity'];
+                $CantidadNueva = ( $detail['dv1_quantity'] * $CANTUOMSALE );
 
 
                 $CantidadTotal = ($CantidadActual + $CantidadNueva);
@@ -847,7 +865,7 @@ class SalesDv extends REST_Controller {
             $DetalleCuentaPuente->dv1_vatsum = is_numeric($detail['dv1_vatsum'])?$detail['dv1_vatsum']:0;
             $DetalleCuentaPuente->dv1_price = is_numeric($detail['dv1_price'])?$detail['dv1_price']:0;
             $DetalleCuentaPuente->dv1_itemcode = isset($detail['dv1_itemcode'])?$detail['dv1_itemcode']:NULL;
-            $DetalleCuentaPuente->dv1_quantity = is_numeric($detail['dv1_quantity'])?$detail['dv1_quantity']:0;
+            $DetalleCuentaPuente->dv1_quantity = is_numeric($detail['dv1_quantity']) ? ( $detail['dv1_quantity'] * $CANTUOMSALE ) : 0;
             $DetalleCuentaPuente->dv1_whscode = isset($detail['dv1_whscode'])?$detail['dv1_whscode']:NULL;
 
 
@@ -860,7 +878,7 @@ class SalesDv extends REST_Controller {
             $DetalleCuentaInvetario->dv1_vatsum = is_numeric($detail['dv1_vatsum'])?$detail['dv1_vatsum']:0;
             $DetalleCuentaInvetario->dv1_price = is_numeric($detail['dv1_price'])?$detail['dv1_price']:0;
             $DetalleCuentaInvetario->dv1_itemcode = isset($detail['dv1_itemcode'])?$detail['dv1_itemcode']:NULL;
-            $DetalleCuentaInvetario->dv1_quantity = is_numeric($detail['dv1_quantity'])?$detail['dv1_quantity']:0;
+            $DetalleCuentaInvetario->dv1_quantity = is_numeric($detail['dv1_quantity']) ? ( $detail['dv1_quantity'] * $CANTUOMSALE ) : 0;
             $DetalleCuentaInvetario->dv1_whscode = isset($detail['dv1_whscode'])?$detail['dv1_whscode']:NULL;
 
 

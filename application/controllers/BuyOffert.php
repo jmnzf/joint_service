@@ -160,6 +160,7 @@ public function getOffertDetailBySN_get(){
 			$codigoCuenta = ""; //para saber la naturaleza
 			$grantotalCostoInventario = 0;
 			$DocNumVerificado = 0;
+			$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -916,6 +917,25 @@ public function getOffertDetailBySN_get(){
 
 					foreach ($ContenidoDetalle as $key => $detail) {
 
+
+								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['oc1_itemcode'] );
+
+								if( $CANTUOMPURCHASE == 0 ){
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+								'error'   => true,
+								'data' 		=> $detail['oc1_itemcode'],
+								'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['oc1_itemcode']
+								);
+
+								$this->response($respuesta);
+
+								return;
+								}
+
+
 								$sqlInsertDetail = "INSERT INTO coc1(oc1_docentry, oc1_itemcode, oc1_itemname, oc1_quantity, oc1_uom, oc1_whscode,
 																		oc1_price, oc1_vat, oc1_vatsum, oc1_discount, oc1_linetotal, oc1_costcode, oc1_ubusiness, oc1_project,
 																		oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva, oc1_codimp)VALUES(:oc1_docentry, :oc1_itemcode, :oc1_itemname, :oc1_quantity,
@@ -926,7 +946,7 @@ public function getOffertDetailBySN_get(){
 												':oc1_docentry' => $resInsert,
 												':oc1_itemcode' => isset($detail['oc1_itemcode'])?$detail['oc1_itemcode']:NULL,
 												':oc1_itemname' => isset($detail['oc1_itemname'])?$detail['oc1_itemname']:NULL,
-												':oc1_quantity' => is_numeric($detail['oc1_quantity'])?$detail['oc1_quantity']:0,
+												':oc1_quantity' => is_numeric($detail['oc1_quantity']) ? ( $detail['oc1_quantity'] * $CANTUOMPURCHASE ) : 0,
 												':oc1_uom' => isset($detail['oc1_uom'])?$detail['oc1_uom']:NULL,
 												':oc1_whscode' => isset($detail['oc1_whscode'])?$detail['oc1_whscode']:NULL,
 												':oc1_price' => is_numeric($detail['oc1_price'])?$detail['oc1_price']:0,

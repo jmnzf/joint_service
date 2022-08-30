@@ -46,6 +46,7 @@ class PurchaseRet extends REST_Controller {
 			$AC1LINE = 1;
 			$resInsertAsiento = "";
 			$ResultadoInv = 0; // INDICA SI EXISTE AL MENOS UN ITEM QUE MANEJA INVENTARIO
+			$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
 
 
 
@@ -576,6 +577,23 @@ class PurchaseRet extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
+								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['dc1_quantity'] );
+
+								if( $CANTUOMPURCHASE == 0 ){
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' 		=> $detail['dc1_quantity'],
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['dc1_quantity']
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+
                 $sqlInsertDetail = "INSERT INTO cdc1(dc1_docentry, dc1_itemcode, dc1_itemname, dc1_quantity, dc1_uom, dc1_whscode,
                                     dc1_price, dc1_vat, dc1_vatsum, dc1_discount, dc1_linetotal, dc1_costcode, dc1_ubusiness, dc1_project,
                                     dc1_acctcode, dc1_basetype, dc1_doctype, dc1_avprice, dc1_inventory, dc1_acciva, dc1_linenum, dc1_codimp)VALUES(:dc1_docentry, :dc1_itemcode, :dc1_itemname, :dc1_quantity,
@@ -586,7 +604,7 @@ class PurchaseRet extends REST_Controller {
                         ':dc1_docentry' => $resInsert,
                         ':dc1_itemcode' => isset($detail['dc1_itemcode'])?$detail['dc1_itemcode']:NULL,
                         ':dc1_itemname' => isset($detail['dc1_itemname'])?$detail['dc1_itemname']:NULL,
-                        ':dc1_quantity' => is_numeric($detail['dc1_quantity'])?$detail['dc1_quantity']:0,
+                        ':dc1_quantity' => is_numeric($detail['dc1_quantity']) ? ( $detail['dc1_quantity'] * $CANTUOMPURCHASE ) : 0,
                         ':dc1_uom' => isset($detail['dc1_uom'])?$detail['dc1_uom']:NULL,
                         ':dc1_whscode' => isset($detail['dc1_whscode'])?$detail['dc1_whscode']:NULL,
                         ':dc1_price' => is_numeric($detail['dc1_price'])?$detail['dc1_price']:0,
@@ -665,6 +683,9 @@ class PurchaseRet extends REST_Controller {
 								// si el item es inventariable
 								if( $ManejaInvetario == 1 ){
 
+
+
+
 											//se busca el costo del item en el momento de la creacion del documento de compra
 											// para almacenar en el movimiento de inventario
 											$sqlCostoMomentoRegistro = '';
@@ -692,7 +713,7 @@ class PurchaseRet extends REST_Controller {
 												//VALIDANDO CANTIDAD DE ARTICULOS
 
 														$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
-														$CANT_ARTICULOLN = is_numeric($detail['dc1_quantity'])? $detail['dc1_quantity'] : 0;
+														$CANT_ARTICULOLN = is_numeric($detail['dc1_quantity']) ? ( $detail['dc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 
 														if( ($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0){
 
@@ -722,7 +743,7 @@ class PurchaseRet extends REST_Controller {
 													$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 															 ':bmi_itemcode'  => isset($detail['dc1_itemcode'])?$detail['dc1_itemcode']:NULL,
-															 ':bmi_quantity'  => is_numeric($detail['dc1_quantity'])? $detail['dc1_quantity'] * $Data['invtype']:0,
+															 ':bmi_quantity'  => is_numeric($detail['dc1_quantity']) ? ( ( $detail['dc1_quantity'] * $CANTUOMPURCHASE )  * $Data['invtype'] ) : 0,
 															 ':bmi_whscode'   => isset($detail['dc1_whscode'])?$detail['dc1_whscode']:NULL,
 															 ':bmi_createat'  => $this->validateDate($Data['cdc_createat'])?$Data['cdc_createat']:NULL,
 															 ':bmi_createby'  => isset($Data['cdc_createby'])?$Data['cdc_createby']:NULL,
@@ -746,7 +767,7 @@ class PurchaseRet extends REST_Controller {
 													$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 															 ':bmi_itemcode'  => isset($detail['dc1_itemcode'])?$detail['dc1_itemcode']:NULL,
-															 ':bmi_quantity'  => is_numeric($detail['dc1_quantity'])? $detail['dc1_quantity'] * $Data['invtype']:0,
+															 ':bmi_quantity'  => is_numeric($detail['dc1_quantity']) ? ( ( $detail['dc1_quantity'] * $CANTUOMPURCHASE )  * $Data['invtype'] ) : 0,
 															 ':bmi_whscode'   => isset($detail['dc1_whscode'])?$detail['dc1_whscode']:NULL,
 															 ':bmi_createat'  => $this->validateDate($Data['cdc_createat'])?$Data['cdc_createat']:NULL,
 															 ':bmi_createby'  => isset($Data['cdc_createby'])?$Data['cdc_createby']:NULL,
@@ -840,7 +861,7 @@ class PurchaseRet extends REST_Controller {
 													if($resCostoCantidad[0]['bdi_quantity'] > 0){
 
 														$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-														$CantidadDevolucion = $detail['dc1_quantity'];
+														$CantidadDevolucion = ( $detail['dc1_quantity'] * $CANTUOMPURCHASE );
 														$CostoDevolucion = $detail['dc1_price'];
 														$CostoActual= $resCostoCantidad[0]['bdi_avgprice'];
 														$CantidadTotal = ($CantidadActual - $CantidadDevolucion);
@@ -969,7 +990,7 @@ class PurchaseRet extends REST_Controller {
 								$DetalleCuentaPuente->dc1_vatsum = is_numeric($detail['dc1_vatsum'])?$detail['dc1_vatsum']:0;
 								$DetalleCuentaPuente->dc1_price = is_numeric($detail['dc1_price'])?$detail['dc1_price']:0;
 								$DetalleCuentaPuente->dc1_itemcode = isset($detail['dc1_itemcode'])?$detail['dc1_itemcode']:NULL;
-								$DetalleCuentaPuente->dc1_quantity = is_numeric($detail['dc1_quantity'])?$detail['dc1_quantity']:0;
+								$DetalleCuentaPuente->dc1_quantity = is_numeric($detail['dc1_quantity']) ? ( $detail['dc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 								$DetalleCuentaPuente->dc1_whscode = isset($detail['dc1_whscode'])?$detail['dc1_whscode']:NULL;
 
 
@@ -982,7 +1003,7 @@ class PurchaseRet extends REST_Controller {
 								$DetalleCuentaInvetario->dc1_vatsum = is_numeric($detail['dc1_vatsum'])?$detail['dc1_vatsum']:0;
 								$DetalleCuentaInvetario->dc1_price = is_numeric($detail['dc1_price'])?$detail['dc1_price']:0;
 								$DetalleCuentaInvetario->dc1_itemcode = isset($detail['dc1_itemcode'])?$detail['dc1_itemcode']:NULL;
-								$DetalleCuentaInvetario->dc1_quantity = is_numeric($detail['dc1_quantity'])?$detail['dc1_quantity']:0;
+								$DetalleCuentaInvetario->dc1_quantity = is_numeric($detail['dc1_quantity']) ? ( $detail['dc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 								$DetalleCuentaInvetario->dc1_whscode = isset($detail['dc1_whscode'])?$detail['dc1_whscode']:NULL;
 
 

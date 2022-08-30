@@ -338,7 +338,7 @@ class Business extends REST_Controller {
 
 					$carpeta = $resMainFolder[0]['main_folder'];
 
-					$ruta = '/var/www/html/'.$carpeta.'/assets/img/';
+					$ruta = '/var/www/html/'.$carpeta.'/assets/img/reports/';
 
 					$nombreArchivo = "logo".".jpeg";
 
@@ -380,7 +380,7 @@ class Business extends REST_Controller {
 
 						fclose($file);
 
-						$url = "assets/img/".$nombreArchivo;
+						$url = "assets/img/reports/".$nombreArchivo;
 
 						$resUpdate = $this->pedeo->updateRow($sqlUpdate,array(
 

@@ -29,6 +29,7 @@ class SalesOrder extends REST_Controller {
 
       $Data = $this->post();
 			$DocNumVerificado = 0;
+			$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 
       if(!isset($Data['detail'])){
 
@@ -583,6 +584,23 @@ class SalesOrder extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
+								$CANTUOMSALE = $this->generic->getUomSale( $detail['ov1_itemcode'] );
+
+								if( $CANTUOMSALE == 0 ){
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' 		=> $detail['ov1_itemcode'],
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['ov1_itemcode']
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+
                 $sqlInsertDetail = "INSERT INTO vov1(ov1_docentry, ov1_itemcode, ov1_itemname, ov1_quantity, ov1_uom, ov1_whscode,
                                     ov1_price, ov1_vat, ov1_vatsum, ov1_discount, ov1_linetotal, ov1_costcode, ov1_ubusiness, ov1_project,
                                     ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva, ov1_codimp)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
@@ -593,7 +611,7 @@ class SalesOrder extends REST_Controller {
                         ':ov1_docentry' => $resInsert,
                         ':ov1_itemcode' => isset($detail['ov1_itemcode'])?$detail['ov1_itemcode']:NULL,
                         ':ov1_itemname' => isset($detail['ov1_itemname'])?$detail['ov1_itemname']:NULL,
-                        ':ov1_quantity' => is_numeric($detail['ov1_quantity'])?$detail['ov1_quantity']:0,
+                        ':ov1_quantity' => is_numeric($detail['ov1_quantity']) ? ( $detail['ov1_quantity'] * $CANTUOMSALE ) : 0,
                         ':ov1_uom' => isset($detail['ov1_uom'])?$detail['ov1_uom']:NULL,
                         ':ov1_whscode' => isset($detail['ov1_whscode'])?$detail['ov1_whscode']:NULL,
                         ':ov1_price' => is_numeric($detail['ov1_price'])?$detail['ov1_price']:0,

@@ -52,6 +52,7 @@ class PurchaseRequest extends REST_Controller {
 			$codigoCuenta = ""; //para saber la naturaleza
 			$grantotalCostoInventario = 0;
 			$DocNumVerificado = 0;
+			$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -706,6 +707,23 @@ class PurchaseRequest extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
+								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['sc1_itemcode'] );
+
+								if( $CANTUOMPURCHASE == 0 ){
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' 		=> $detail['sc1_itemcode'],
+									'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['sc1_itemcode']
+								);
+
+								 $this->response($respuesta);
+
+								 return;
+								}
+
                 $sqlInsertDetail = "INSERT INTO csc1(sc1_docentry, sc1_itemcode, sc1_itemname, sc1_quantity, sc1_uom, sc1_whscode,
                                     sc1_price, sc1_vat, sc1_vatsum, sc1_discount, sc1_linetotal, sc1_costcode, sc1_ubusiness, sc1_project,
                                     sc1_acctcode, sc1_basetype, sc1_doctype, sc1_avprice, sc1_inventory, sc1_acciva, sc1_codimp)VALUES(:sc1_docentry, :sc1_itemcode, :sc1_itemname, :sc1_quantity,
@@ -716,7 +734,7 @@ class PurchaseRequest extends REST_Controller {
                         ':sc1_docentry' => $resInsert,
                         ':sc1_itemcode' => isset($detail['sc1_itemcode'])?$detail['sc1_itemcode']:NULL,
                         ':sc1_itemname' => isset($detail['sc1_itemname'])?$detail['sc1_itemname']:NULL,
-                        ':sc1_quantity' => is_numeric($detail['sc1_quantity'])?$detail['sc1_quantity']:0,
+                        ':sc1_quantity' => is_numeric($detail['sc1_quantity']) ? ( $detail['sc1_quantity'] * $CANTUOMPURCHASE ) : 0,
                         ':sc1_uom' => isset($detail['sc1_uom'])?$detail['sc1_uom']:NULL,
                         ':sc1_whscode' => isset($detail['sc1_whscode'])?$detail['sc1_whscode']:NULL,
                         ':sc1_price' => is_numeric($detail['sc1_price'])?$detail['sc1_price']:0,

@@ -67,6 +67,7 @@ class PurchaseInv extends REST_Controller {
 			$TasaDocLoc = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL DOCUMENTO
 			$TasaLocSys = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL SISTEMA
 			$MONEDALOCAL = 0;
+			$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
 
 			// VARIABLES PARA SUMAS
 			$SumaCreditosSYS = 0;
@@ -335,12 +336,12 @@ class PurchaseInv extends REST_Controller {
               	':cfc_idadd' => isset($Data['cfc_idadd'])?$Data['cfc_idadd']:NULL,
               	':cfc_adress' => isset($Data['cfc_adress'])?$Data['cfc_adress']:NULL,
               	':cfc_paytype' => is_numeric($Data['cfc_paytype'])?$Data['cfc_paytype']:0,
-			  	':cfc_createby' => isset($Data['cfc_createby'])?$Data['cfc_createby']:NULL,
-				':cfc_totalret' => is_numeric($Data['cfc_totalret'])?$Data['cfc_totalret']:0,
-				':cfc_totalretiva' => is_numeric($Data['cfc_totalretiva'])?$Data['cfc_totalretiva']:0,
-              	':cfc_attch' => $this->getUrl(strlen(trim(($Data['cfc_attch']))) > 0 ? $Data['cfc_attch']:NULL, $resMainFolder[0]['main_folder']),
-				'cfc_correl' => isset($Data['cfc_correl'])?$Data['cfc_correl']:NULL,
-				'cfc_tax_control_num' => isset($Data['cfc_tax_control_num'])?$Data['cfc_tax_control_num']:NULL
+								':cfc_createby' => isset($Data['cfc_createby'])?$Data['cfc_createby']:NULL,
+								':cfc_totalret' => is_numeric($Data['cfc_totalret'])?$Data['cfc_totalret']:0,
+								':cfc_totalretiva' => is_numeric($Data['cfc_totalretiva'])?$Data['cfc_totalretiva']:0,
+								':cfc_attch' => $this->getUrl(strlen(trim(($Data['cfc_attch']))) > 0 ? $Data['cfc_attch']:NULL, $resMainFolder[0]['main_folder']),
+								'cfc_correl' => isset($Data['cfc_correl'])?$Data['cfc_correl']:NULL,
+								'cfc_tax_control_num' => isset($Data['cfc_tax_control_num'])?$Data['cfc_tax_control_num']:NULL
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -607,6 +608,24 @@ class PurchaseInv extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
+
+								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['fc1_itemcode'] );
+
+								if( $CANTUOMPURCHASE == 0 ){
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' 		=> $detail['fc1_itemcode'],
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['fc1_itemcode']
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+
                 $sqlInsertDetail = "INSERT INTO cfc1(fc1_docentry, fc1_itemcode, fc1_itemname, fc1_quantity, fc1_uom, fc1_whscode,
                                     fc1_price, fc1_vat, fc1_vatsum, fc1_discount, fc1_linetotal, fc1_costcode, fc1_ubusiness, fc1_project,
                                     fc1_acctcode, fc1_basetype, fc1_doctype, fc1_avprice, fc1_inventory, fc1_acciva, fc1_linenum, fc1_codimp)VALUES(:fc1_docentry, :fc1_itemcode, :fc1_itemname, :fc1_quantity,
@@ -617,7 +636,7 @@ class PurchaseInv extends REST_Controller {
                         ':fc1_docentry' => $resInsert,
                         ':fc1_itemcode' => isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL,
                         ':fc1_itemname' => isset($detail['fc1_itemname'])?$detail['fc1_itemname']:NULL,
-                        ':fc1_quantity' => is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0,
+                        ':fc1_quantity' => is_numeric($detail['fc1_quantity']) ? ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) : 0,
                         ':fc1_uom' => isset($detail['fc1_uom'])?$detail['fc1_uom']:NULL,
                         ':fc1_whscode' => isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL,
                         ':fc1_price' => is_numeric($detail['fc1_price'])?$detail['fc1_price']:0,
@@ -835,7 +854,7 @@ class PurchaseInv extends REST_Controller {
 													$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 															 ':bmi_itemcode' => isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL,
-															 ':bmi_quantity' => is_numeric($detail['fc1_quantity'])? $detail['fc1_quantity'] * $Data['invtype']:0,
+															 ':bmi_quantity' => is_numeric($detail['fc1_quantity']) ? ( ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) * $Data['invtype'] ) : 0,
 															 ':bmi_whscode'  => isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL,
 															 ':bmi_createat' => $this->validateDate($Data['cfc_createat'])?$Data['cfc_createat']:NULL,
 															 ':bmi_createby' => isset($Data['cfc_createby'])?$Data['cfc_createby']:NULL,
@@ -859,7 +878,7 @@ class PurchaseInv extends REST_Controller {
 													$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 															 ':bmi_itemcode' => isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL,
-															 ':bmi_quantity' => is_numeric($detail['fc1_quantity'])? $detail['fc1_quantity'] * $Data['invtype']:0,
+															 ':bmi_quantity' => is_numeric($detail['fc1_quantity']) ? ( ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) * $Data['invtype'] ) : 0,
 															 ':bmi_whscode'  => isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL,
 															 ':bmi_createat' => $this->validateDate($Data['cfc_createat'])?$Data['cfc_createat']:NULL,
 															 ':bmi_createby' => isset($Data['cfc_createby'])?$Data['cfc_createby']:NULL,
@@ -961,7 +980,7 @@ class PurchaseInv extends REST_Controller {
 	 															 $CantidadActual = $CantidadPorAlmacen;
 	 															 $CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
 
-	 															 $CantidadNueva = $detail['fc1_quantity'];
+	 															 $CantidadNueva = ( $detail['fc1_quantity'] * $CANTUOMPURCHASE );
 	 															 $CostoNuevo = $detail['fc1_price'];
 
 
@@ -1034,7 +1053,7 @@ class PurchaseInv extends REST_Controller {
 	 															 }
 															}else{
 																$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-																$CantidadNueva = $detail['fc1_quantity'];
+																$CantidadNueva = ( $detail['fc1_quantity'] * $CANTUOMPURCHASE );
 																$CostoNuevo = $detail['fc1_price'];
 
 
@@ -1116,7 +1135,7 @@ class PurchaseInv extends REST_Controller {
 																$CantidadActual = $CantidadPorAlmacen;
 																$CostoActual = $CostoPorAlmacen;
 
-																$CantidadNueva = $detail['fc1_quantity'];
+																$CantidadNueva = ( $detail['fc1_quantity'] * $CANTUOMPURCHASE );
 
 																$CantidadTotal = ($CantidadActual + $CantidadNueva);
 																$CantidadTotalItemSolo = ($CantidadItem + $CantidadNueva);
@@ -1141,7 +1160,7 @@ class PurchaseInv extends REST_Controller {
 
 																				':bdi_itemcode' => $detail['fc1_itemcode'],
 																				':bdi_whscode'  => $detail['fc1_whscode'],
-																				':bdi_quantity' => $detail['fc1_quantity'],
+																				':bdi_quantity' => ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ),
 																				':bdi_avgprice' => $NuevoCostoPonderado,
 																				':bdi_lote' 		=> $detail['ote_code']
 																	));
@@ -1155,7 +1174,7 @@ class PurchaseInv extends REST_Controller {
 
 																				':bdi_itemcode' => $detail['fc1_itemcode'],
 																				':bdi_whscode'  => $detail['fc1_whscode'],
-																				':bdi_quantity' => $detail['fc1_quantity'],
+																				':bdi_quantity' => ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ),
 																				':bdi_avgprice' => $NuevoCostoPonderado
 																	));
 																}
@@ -1238,7 +1257,7 @@ class PurchaseInv extends REST_Controller {
 
 																				':bdi_itemcode' => $detail['fc1_itemcode'],
 																				':bdi_whscode'  => $detail['fc1_whscode'],
-																				':bdi_quantity' => $detail['fc1_quantity'],
+																				':bdi_quantity' => ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ),
 																				':bdi_avgprice' => $CostoNuevo,
 																				':bdi_lote' 		=> $detail['ote_code']
 																	));
@@ -1252,7 +1271,7 @@ class PurchaseInv extends REST_Controller {
 
 																				':bdi_itemcode' => $detail['fc1_itemcode'],
 																				':bdi_whscode'  => $detail['fc1_whscode'],
-																				':bdi_quantity' => $detail['fc1_quantity'],
+																				':bdi_quantity' => ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ),
 																				':bdi_avgprice' => $CostoNuevo
 																	));
 																}
@@ -1383,7 +1402,7 @@ class PurchaseInv extends REST_Controller {
 								$DetalleAsientoIngreso->fc1_vatsum = is_numeric($detail['fc1_vatsum'])?$detail['fc1_vatsum']:0;
 								$DetalleAsientoIngreso->fc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 								$DetalleAsientoIngreso->fc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
-								$DetalleAsientoIngreso->fc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
+								$DetalleAsientoIngreso->fc1_quantity = is_numeric($detail['fc1_quantity']) ? ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 								$DetalleAsientoIngreso->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 
 
@@ -1397,7 +1416,7 @@ class PurchaseInv extends REST_Controller {
 								$DetalleAsientoIva->fc1_vatsum = is_numeric($detail['fc1_vatsum'])?$detail['fc1_vatsum']:0;
 								$DetalleAsientoIva->fc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 								$DetalleAsientoIva->fc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
-								$DetalleAsientoIva->fc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
+								$DetalleAsientoIva->fc1_quantity = is_numeric($detail['fc1_quantity']) ? ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 								$DetalleAsientoIva->fc1_cuentaIva = is_numeric($detail['fc1_cuentaIva'])?$detail['fc1_cuentaIva']:NULL;
 								$DetalleAsientoIva->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 								$DetalleAsientoIva->codimp = isset($detail['fc1_codimp'])?$detail['fc1_codimp']:NULL;
@@ -1437,7 +1456,7 @@ class PurchaseInv extends REST_Controller {
 									$DetalleCostoInventario->fc1_vatsum = is_numeric($detail['fc1_vatsum'])?$detail['fc1_vatsum']:0;
 									$DetalleCostoInventario->fc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 									$DetalleCostoInventario->fc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
-									$DetalleCostoInventario->fc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
+									$DetalleCostoInventario->fc1_quantity = is_numeric($detail['fc1_quantity']) ? $( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 									$DetalleCostoInventario->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 									$DetalleCostoInventario->fc1_inventory = $ManejaInvetario;
 
@@ -1451,7 +1470,7 @@ class PurchaseInv extends REST_Controller {
 									$DetalleCostoCosto->fc1_vatsum = is_numeric($detail['fc1_vatsum'])?$detail['fc1_vatsum']:0;
 									$DetalleCostoCosto->fc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 									$DetalleCostoCosto->fc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
-									$DetalleCostoCosto->fc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
+									$DetalleCostoCosto->fc1_quantity = is_numeric($detail['fc1_quantity']) ? ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 									$DetalleCostoCosto->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 									$DetalleCostoCosto->fc1_inventory = $ManejaInvetario;
 								}else{
@@ -1464,7 +1483,7 @@ class PurchaseInv extends REST_Controller {
 									$DetalleItemNoInventariable->nc1_vatsum = is_numeric($detail['fc1_vatsum'])?$detail['fc1_vatsum']:0;
 									$DetalleItemNoInventariable->nc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 									$DetalleItemNoInventariable->nc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
-									$DetalleItemNoInventariable->nc1_quantity = is_numeric($detail['fc1_quantity'])?$detail['fc1_quantity']:0;
+									$DetalleItemNoInventariable->nc1_quantity = is_numeric($detail['fc1_quantity']) ? ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 									$DetalleItemNoInventariable->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 								}
 

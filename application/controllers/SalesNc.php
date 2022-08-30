@@ -67,6 +67,7 @@ class SalesNc extends REST_Controller {
 			$TOTALCXCLOCIVA = 0;
 			$TOTALCXCSYSIVA = 0;
 			$exc_inv = 0;
+			$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -583,6 +584,24 @@ class SalesNc extends REST_Controller {
 
 						foreach ($ContenidoDetalle as $key => $detail) {
 
+
+									$CANTUOMSALE = $this->generic->getUomSale( $detail['nc1_itemcode'] );
+
+									if( $CANTUOMSALE == 0 ){
+
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data' 		=> $detail['nc1_itemcode'],
+											'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['nc1_itemcode']
+										);
+
+										 $this->response($respuesta);
+
+										 return;
+									}
+
 									$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
 																			nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
 																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_exc_inv,nc1_acciva,nc1_linenum)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
@@ -593,7 +612,7 @@ class SalesNc extends REST_Controller {
 													':nc1_docentry' => $resInsert,
 													':nc1_itemcode' => isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL,
 													':nc1_itemname' => isset($detail['nc1_itemname'])?$detail['nc1_itemname']:NULL,
-													':nc1_quantity' => is_numeric($detail['nc1_quantity'])?$detail['nc1_quantity']:0,
+													':nc1_quantity' => is_numeric($detail['nc1_quantity']) ? ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0,
 													':nc1_uom' => isset($detail['nc1_uom'])?$detail['nc1_uom']:NULL,
 													':nc1_whscode' => isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL,
 													':nc1_price' => is_numeric($detail['nc1_price'])?$detail['nc1_price']:0,
@@ -687,7 +706,7 @@ class SalesNc extends REST_Controller {
 													$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 															 ':bmi_itemcode'  => isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL,
-															 ':bmi_quantity'  => is_numeric($detail['nc1_quantity'])? $detail['nc1_quantity'] * $Data['invtype']:0,
+															 ':bmi_quantity'  => is_numeric($detail['nc1_quantity']) ?  ( ( $detail['nc1_quantity'] * $CANTUOMSALE ) * $Data['invtype'] ) : 0,
 															 ':bmi_whscode'   => isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL,
 															 ':bmi_createat'  => $this->validateDate($Data['vnc_createat'])?$Data['vnc_createat']:NULL,
 															 ':bmi_createby'  => isset($Data['vnc_createby'])?$Data['vnc_createby']:NULL,
@@ -744,7 +763,7 @@ class SalesNc extends REST_Controller {
 															if($resCostoCantidad[0]['bdi_quantity'] > 0){
 
 																	 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-																	 $CantidadNueva = $detail['nc1_quantity'];
+																	 $CantidadNueva =  ( $detail['nc1_quantity'] * $CANTUOMSALE );
 
 
 																	 $CantidadTotal = ($CantidadActual + $CantidadNueva);
@@ -826,7 +845,7 @@ class SalesNc extends REST_Controller {
 									$DetalleAsientoIngreso->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
 									$DetalleAsientoIngreso->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
 									$DetalleAsientoIngreso->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
-									$DetalleAsientoIngreso->nc1_quantity = is_numeric($detail['nc1_quantity'])?$detail['nc1_quantity']:0;
+									$DetalleAsientoIngreso->nc1_quantity = is_numeric($detail['nc1_quantity']) ?  ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0;
 									$DetalleAsientoIngreso->nc1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 									$DetalleAsientoIngreso->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
 
@@ -841,7 +860,7 @@ class SalesNc extends REST_Controller {
 									$DetalleAsientoIva->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
 									$DetalleAsientoIva->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
 									$DetalleAsientoIva->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
-									$DetalleAsientoIva->nc1_quantity = is_numeric($detail['nc1_quantity'])?$detail['nc1_quantity']:0;
+									$DetalleAsientoIva->nc1_quantity = is_numeric($detail['nc1_quantity']) ?  ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0;
 									$DetalleAsientoIva->nc1_cuentaIva = is_numeric($detail['nc1_cuentaIva'])?$detail['nc1_cuentaIva']:NULL;
 									$DetalleAsientoIva->nc1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 									$DetalleAsientoIva->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
@@ -861,7 +880,7 @@ class SalesNc extends REST_Controller {
 												$DetalleCostoInventario->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
 												$DetalleCostoInventario->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
 												$DetalleCostoInventario->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
-												$DetalleCostoInventario->nc1_quantity = is_numeric($detail['nc1_quantity'])?$detail['nc1_quantity']:0;
+												$DetalleCostoInventario->nc1_quantity = is_numeric($detail['nc1_quantity']) ?  ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0;
 												$DetalleCostoInventario->nc1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 												$DetalleCostoInventario->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
 
@@ -875,7 +894,7 @@ class SalesNc extends REST_Controller {
 												$DetalleCostoCosto->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
 												$DetalleCostoCosto->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
 												$DetalleCostoCosto->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
-												$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity'])?$detail['nc1_quantity']:0;
+												$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity']) ?  ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0;
 												$DetalleCostoCosto->nc1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 												$DetalleCostoCosto->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
 										}//ITEM INVENTARIABLE

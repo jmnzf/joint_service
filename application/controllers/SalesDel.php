@@ -56,6 +56,7 @@ class SalesDel extends REST_Controller {
 			$AgregarAsiento = true;
 			$resInsertAsiento = "";
 			$ResultadoInv = 0; // INDICA SI EXISTE AL MENOS UN ITEM QUE MANEJA INVENTARIO
+			$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 
 
 
@@ -665,6 +666,23 @@ class SalesDel extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
+								$CANTUOMSALE = $this->generic->getUomSale( $detail['em1_itemcode'] );
+
+								if( $CANTUOMSALE == 0 ){
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' 		=> $detail['em1_itemcode'],
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['em1_itemcode']
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+
                 $sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
                                     em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
                                     em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
@@ -675,7 +693,7 @@ class SalesDel extends REST_Controller {
                         ':em1_docentry' => $resInsert,
                         ':em1_itemcode' => isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
                         ':em1_itemname' => isset($detail['em1_itemname'])?$detail['em1_itemname']:NULL,
-                        ':em1_quantity' => is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0,
+                        ':em1_quantity' => is_numeric($detail['em1_quantity']) ?  ( $detail['em1_quantity'] * $CANTUOMSALE ) : 0,
                         ':em1_uom' => isset($detail['em1_uom'])?$detail['em1_uom']:NULL,
                         ':em1_whscode' => isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
                         ':em1_price' => is_numeric($detail['em1_price'])?$detail['em1_price']:0,
@@ -691,9 +709,9 @@ class SalesDel extends REST_Controller {
                         ':em1_doctype' => is_numeric($detail['em1_doctype'])?$detail['em1_doctype']:0,
                         ':em1_avprice' => is_numeric($detail['em1_avprice'])?$detail['em1_avprice']:0,
                         ':em1_inventory' => is_numeric($detail['em1_inventory'])?$detail['em1_inventory']:NULL,
-						':em1_acciva' => is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:0,
-						':em1_linenum'=> is_numeric($detail['em1_linenum'])?$detail['em1_linenum']:0,
-						':em1_codimp' => isset($detail['em1_codimp'])?$detail['em1_codimp']:NULL
+												':em1_acciva' => is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:0,
+												':em1_linenum'=> is_numeric($detail['em1_linenum'])?$detail['em1_linenum']:0,
+												':em1_codimp' => isset($detail['em1_codimp'])?$detail['em1_codimp']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -816,7 +834,7 @@ class SalesDel extends REST_Controller {
 											//VALIDANDO CANTIDAD DE ARTICULOS
 
 												$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
-												$CANT_ARTICULOLN = is_numeric($detail['em1_quantity'])? $detail['em1_quantity'] : 0;
+												$CANT_ARTICULOLN = is_numeric($detail['em1_quantity']) ? ( $detail['em1_quantity'] * $CANTUOMSALE ) : 0;
 
 												if( ($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0){
 
@@ -843,7 +861,7 @@ class SalesDel extends REST_Controller {
 											$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 													 ':bmi_itemcode'  		=> isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
-													 ':bmi_quantity'  		=> is_numeric($detail['em1_quantity'])? $detail['em1_quantity'] * $Data['invtype']:0,
+													 ':bmi_quantity'  		=> is_numeric($detail['em1_quantity']) ? ( ( $detail['em1_quantity'] * $CANTUOMSALE ) * $Data['invtype'] ) : 0,
 													 ':bmi_whscode'   		=> isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
 													 ':bmi_createat'  		=> $this->validateDate($Data['vem_createat'])?$Data['vem_createat']:NULL,
 													 ':bmi_createby'  		=> isset($Data['vem_createby'])?$Data['vem_createby']:NULL,
@@ -915,7 +933,7 @@ class SalesDel extends REST_Controller {
 												if($resCostoCantidad[0]['bdi_quantity'] > 0){
 
 														 $CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-														 $CantidadNueva = $detail['em1_quantity'];
+														 $CantidadNueva = ( $detail['em1_quantity'] * $CANTUOMSALE );
 
 
 														 $CantidadTotal = ($CantidadActual - $CantidadNueva);
@@ -985,7 +1003,7 @@ class SalesDel extends REST_Controller {
 								$DetalleAsientoIngreso->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
 								$DetalleAsientoIngreso->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
 								$DetalleAsientoIngreso->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
-								$DetalleAsientoIngreso->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+								$DetalleAsientoIngreso->em1_quantity = is_numeric($detail['em1_quantity']) ? ( $detail['em1_quantity'] * $CANTUOMSALE ) : 0;
 								$DetalleAsientoIngreso->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
 
@@ -999,7 +1017,7 @@ class SalesDel extends REST_Controller {
 								$DetalleAsientoIva->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
 								$DetalleAsientoIva->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
 								$DetalleAsientoIva->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
-								$DetalleAsientoIva->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+								$DetalleAsientoIva->em1_quantity = is_numeric($detail['em1_quantity']) ? ( $detail['em1_quantity'] * $CANTUOMSALE ) : 0;
 								$DetalleAsientoIva->em1_cuentaIva = is_numeric($detail['em1_cuentaIva'])?$detail['em1_cuentaIva']:NULL;
 								$DetalleAsientoIva->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
@@ -1041,7 +1059,7 @@ class SalesDel extends REST_Controller {
 									$DetalleCostoInventario->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
 									$DetalleCostoInventario->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
 									$DetalleCostoInventario->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
-									$DetalleCostoInventario->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+									$DetalleCostoInventario->em1_quantity = is_numeric($detail['em1_quantity']) ? ( $detail['em1_quantity'] * $CANTUOMSALE ) : 0;
 									$DetalleCostoInventario->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
 
@@ -1054,7 +1072,7 @@ class SalesDel extends REST_Controller {
 									$DetalleCostoCosto->em1_vatsum = is_numeric($detail['em1_vatsum'])?$detail['em1_vatsum']:0;
 									$DetalleCostoCosto->em1_price = is_numeric($detail['em1_price'])?$detail['em1_price']:0;
 									$DetalleCostoCosto->em1_itemcode = isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL;
-									$DetalleCostoCosto->em1_quantity = is_numeric($detail['em1_quantity'])?$detail['em1_quantity']:0;
+									$DetalleCostoCosto->em1_quantity = is_numeric($detail['em1_quantity']) ? ( $detail['em1_quantity'] * $CANTUOMSALE ) : 0;
 									$DetalleCostoCosto->em1_whscode = isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL;
 
 								}
