@@ -24,23 +24,19 @@ class FacturaVenta extends REST_Controller {
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('DateFormat');
-		$this->load->library('generic');
 
 	}
 
 
 	public function FacturaVenta_post(){
 
-				$DECI_MALES =  $this->generic->getDecimals();
-
         $Data = $this->post();
 				$Data = $Data['DVF_DOCENTRY'];
 
 				$formatter = new NumeroALetras();
 
-				//'setAutoTopMargin' => 'stretch','setAutoBottomMargin' => 'stretch',
 
-        $mpdf = new \Mpdf\Mpdf(['margin-top' => 500,'default_font' => 'arial']);
+        $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','default_font' => 'arial']);
 
 				//RUTA DE CARPETA EMPRESA
 				$company = $this->pedeo->queryTable("SELECT main_folder company FROM PARAMS",array());
@@ -59,27 +55,11 @@ class FacturaVenta extends REST_Controller {
 
 				//INFORMACION DE LA EMPRESA
 
-				$sql = "SELECT
-							pge_id,
-							pge_name_soc,
-							pge_small_name,
-							pge_add_soc,
-							pge_state_soc,
-							pge_city_soc,
-							pge_cou_soc,
-							CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type ,
-							pge_web_site, pge_logo,
-							CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1,
-							pge_branch, pge_mail,
-							pge_curr_first,
-							pge_curr_sys,
-							pge_cou_bank,
-							pge_bank_def,
-							pge_bank_acct,
-							pge_acc_type
-						FROM pgem";
-
-				$empresa = $this->pedeo->queryTable($sql, array());
+				$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
+																					   pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
+																					   CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
+																					   pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
+																						 FROM pgem", array());
 
 				if(!isset($empresa[0])){
 						$respuesta = array(
@@ -316,8 +296,8 @@ class FacturaVenta extends REST_Controller {
 							$detalle = '	<td>'.$value['cantidad'].'</td>
 														<td>'.$value['referencia'].'</td>
 														<td>'.$value['descripcion'].'</td>
-														<td>'.$value['monedadocumento']." ".number_format($valorUnitario , $DECI_MALES, ',', '.').'</td>
-														<td>'.$value['monedadocumento']." ".number_format($valortotalLinea , $DECI_MALES, ',', '.').'</td>';
+														<td>'.$value['monedadocumento']." ".number_format($valorUnitario , 2, ',', '.').'</td>
+														<td>'.$value['monedadocumento']." ".number_format($valortotalLinea , 2, ',', '.').'</td>';
 
 							 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 							 $TotalCantidad = ($TotalCantidad + ($value['cantidad']));
@@ -558,8 +538,8 @@ class FacturaVenta extends REST_Controller {
         <table width="100%">
         <tr class="">
           <th class="border_bottom" >CANT.</th>
-          <th class="border_bottom">artículo</th>
-          <th class="border_bottom">descrición</th>
+          <th class="border_bottom">MATERIAL</th>
+          <th class="border_bottom">DESCRIPCION</th>
           <th class="border_bottom">PRECIO UNITARIO</th>
           <th class="border_bottom">TOTAL</th>
         </tr>
@@ -607,9 +587,6 @@ class FacturaVenta extends REST_Controller {
 												<tr><td>&nbsp;</td></tr>
 												<tr><td>&nbsp;</td></tr>
 												<tr><td>&nbsp;</td></tr>
-												<tr><td>&nbsp;</td></tr>
-												<tr><td>&nbsp;</td></tr>
-												<tr><td>&nbsp;</td></tr>
 												<tr>
 															<td style="text-align: left;" class="">
 																	<p>'.$formatter->toWords($valorTotalDoc,2)." ".$contenidoFV[0]['nombremoneda'].'</p>
@@ -620,13 +597,13 @@ class FacturaVenta extends REST_Controller {
 								<th>
 											<table width="100%">
 													<tr>
-															<td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalSubtotal, $DECI_MALES, ',', '.').'</span></td>
+															<td style="text-align: right;">Sub Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalSubtotal, 2, ',', '.').'</span></td>
 													</tr>
 													<tr>
 															<td style="text-align: right;">Flete (E): <span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
 													</tr>
 													<tr>
-															<td style="text-align: right;">Base Imponible: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalBase, $DECI_MALES, ',', '.').'</span></td>
+															<td style="text-align: right;">Base Imponible: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalBase, 2, ',', '.').'</span></td>
 													</tr>
 													<tr>
 															<td style="text-align: right;">Monto total excento o exonerado:<span>'.$contenidoFV[0]['monedadocumento']." 0".'</span></td>
@@ -656,6 +633,21 @@ class FacturaVenta extends REST_Controller {
 				<br>
 				'.$regimen.'
 				<br>
+
+				<table border=1 width="50%">
+					<tr>
+							<th  style="width: 100px;">PLACA</th>
+							<th style="width: 100px;">PRECINTOS</th>
+					</tr>
+					<tr>
+							<td style="height: 50px;" >'.$contenidoFV[0]['placa'].'</td>
+							<td style="height: 50px;">'.$contenidoFV[0]['precintos'].'</td>
+					</tr>
+
+				</table>
+
+
+
         <br>
         <table width="100%" style="vertical-align: bottom;">
             <tr>

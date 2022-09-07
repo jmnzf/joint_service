@@ -176,7 +176,25 @@ class AccountingAccent extends REST_Controller {
 
             foreach ($ContenidoDetalle as $key => $detail) {
 
+								//VALIDANDO SI EXISTE LA CUENTA CONTABLE******
+								$ValidateAccount =$this->pedeo->queryTable("SELECT acc_code FROM dacc WHERE acc_code = :acc_code", array(
+									':acc_code' =>  $detail['ac1_account']
+								));
 
+								if ( !isset( $ValidateAccount[0] ) ){
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'    => $ValidateAccount,
+										'mensaje'	=> 'No existe la cuenta contable '.$detail['ac1_account'].' dentro del plan de cuentas'
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+								//*******
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
@@ -233,6 +251,10 @@ class AccountingAccent extends REST_Controller {
 									'data'    => $resInsertDetail,
 									'mensaje'	=> 'No se pudo registrar el asiento contable'
 								);
+
+								$this->response($respuesta);
+
+								return;
 							}
             }
 

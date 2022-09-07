@@ -54,6 +54,7 @@ class PurchaseEc extends REST_Controller {
 			$grantotalCostoInventario = 0;
 			$ManejaInvetario = 0;
 			$ManejaLote = 0;
+			$ManejaSerial = 0;
 
 			$TasaDocLoc = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL DOCUMENTO
 			$TasaLocSys = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL SISTEMA
@@ -600,7 +601,7 @@ class PurchaseEc extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data' 		=> $detail['ec1_itemcode'],
-										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['ec1_itemcode']
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['ec1_itemcode']
 									);
 
 									 $this->response($respuesta);
@@ -695,10 +696,43 @@ class PurchaseEc extends REST_Controller {
 								// si el item es inventariable
 
 
+
 								//AGREGAR ITEM Y CANTIDAD AL STOCK SI NO EXISTE
 								// //Se aplica el movimiento de inventario
 								// //Solo si el item es inventariable
 								if( $ManejaInvetario == 1 ){
+
+									//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+									$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+									$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
+
+											':dma_item_code' => $detail['ec1_itemcode'],
+											':dma_series_code'  => 1
+									));
+
+									if(isset($resItemSerial[0])){
+										$ManejaSerial = 1;
+
+										$AddSerial = $this->generic->addSerial( $detail['serials'], $detail['ec1_itemcode'], $Data['cec_doctype'], $resInsert, $DocNumVerificado, $Data['cec_docdate'], 1, $Data['cec_comment'], $detail['ec1_whscode'], $detail['ec1_quantity'], $Data['cec_createby'] );
+
+										if( isset($AddSerial['error']) && $AddSerial['error'] == false){
+
+										}else{
+											$respuesta = array(
+												'error'   => true,
+												'data'    => $AddSerial['data'],
+												'mensaje' => $AddSerial['mensaje']
+											);
+
+											$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+											return;
+										}
+
+									} else {
+										$ManejaSerial = 0;
+									}
+									//
 
 
 
@@ -2351,13 +2385,15 @@ class PurchaseEc extends REST_Controller {
 								t1.ec1_vat,
 								t1.ec1_vatsum iva_entrada,
 								(((t1.ec1_quantity - (coalesce(SUM(t3.dc1_quantity),0) + coalesce(SUM(t5.fc1_quantity),0))) * t1.ec1_price) * t1.ec1_vat) / 100 ec1_vatsum,
-								t1.ec1_whscode
+								t1.ec1_whscode,
+								dmar.dma_series_code
 								from dcec t0
 								left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
 								left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
 								left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
 								left join dcfc t4 on t0.cec_docentry = t4.cfc_baseentry and t0.cec_doctype = t4.cfc_basetype
 								left join cfc1 t5 on t4.cfc_docentry = t5.fc1_docentry and t1.ec1_itemcode = t5.fc1_itemcode
+								INNER JOIN dmar	ON t1.ec1_itemcode = dmar.dma_item_code
 								WHERE t1.ec1_docentry =:ec1_docentry
 								GROUP BY
 								t1.ec1_acciva,
@@ -2381,7 +2417,8 @@ class PurchaseEc extends REST_Controller {
 								t1.ec1_vat,
 								t1.ec1_vatsum,
 								t1.ec1_whscode,
-								t1.ec1_quantity
+								t1.ec1_quantity,
+								dmar.dma_series_code
 								--having (t1.ec1_quantity - (coalesce(SUM(t3.dc1_quantity),0) + coalesce(SUM(t5.fc1_quantity),0))) > 0
 								";
 

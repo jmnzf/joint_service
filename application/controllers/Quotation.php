@@ -585,7 +585,7 @@ class Quotation extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data' 		=> $detail['vc1_itemcode'],
-										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['vc1_itemcode']
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['vc1_itemcode']
 									);
 
 									 $this->response($respuesta);
@@ -894,7 +894,10 @@ class Quotation extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM dvct WHERE dvc_docentry =:dvc_docentry";
+				$sqlSelect = " SELECT dvct.*,dmar.dma_series_code
+												FROM dvct
+												INNER JOIN dmar	ON dvct.dvc_itemcode = dmar.dma_item_code
+												WHERE dvc_docentry =:dvc_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_docentry" => $Data['dvc_docentry']));
 

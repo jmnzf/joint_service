@@ -60,6 +60,7 @@ class SalesInv extends REST_Controller {
 			$SumaCreditosLOC = 0;
 			$SumaDebitoLOC = 0;
 			$ManejaInvetario = 0;
+			$ManejaSerial = 0;
 			$IVASINTASAFIJA = 0;
 			$AC1LINE = 1;
 			$SUMALINEAFIXRATE = 0;
@@ -674,7 +675,7 @@ class SalesInv extends REST_Controller {
 										$respuesta = array(
 											'error'   => true,
 											'data' 		=> $detail['fv1_itemcode'],
-											'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['fv1_itemcode']
+											'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['fv1_itemcode']
 										);
 
 										 $this->response($respuesta);
@@ -805,6 +806,40 @@ class SalesInv extends REST_Controller {
 
 											// se verifica de donde viene  el documento
 											if($Data['dvf_basetype'] != 3){
+
+
+												//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+												$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+												$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
+
+														':dma_item_code' => $detail['fv1_itemcode'],
+														':dma_series_code'  => 1
+												));
+
+												if(isset($resItemSerial[0])){
+													$ManejaSerial = 1;
+
+													$AddSerial = $this->generic->addSerial( $detail['serials'], $detail['fv1_itemcode'], $Data['dvf_doctype'], $resInsert, $DocNumVerificado, $Data['dvf_docdate'], 2, $Data['dvf_comment'], $detail['fv1_whscode'], $detail['fv1_quantity'], $Data['dvf_createby'] );
+
+													if( isset($AddSerial['error']) && $AddSerial['error'] == false){
+
+													}else{
+														$respuesta = array(
+															'error'   => true,
+															'data'    => $AddSerial['data'],
+															'mensaje' => $AddSerial['mensaje']
+														);
+
+														$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+														return;
+													}
+
+												} else {
+													$ManejaSerial = 0;
+												}
+
+												//
 
 												//se busca el costo del item en el momento de la creacion del documento de venta
 												// para almacenar en el movimiento de inventario
@@ -3476,7 +3511,11 @@ class SalesInv extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = "SELECT * FROM vfv1 WHERE fv1_docentry =:fv1_docentry";
+				$sqlSelect = "SELECT vfv1.*, dmar.dma_series_code  
+											FROM vfv1
+											INNER JOIN dmar
+											ON cfc1.fc1_itemcode = dmar.dma_item_code
+											WHERE fv1_docentry =:fv1_docentry";
 				$sqlSelectFv = "SELECT round(dvf_igtf * (get_tax_currency(dvf_igtfcurrency, dvf_docdate)), get_decimals()) as dvf_igtf, dvf_taxigtf,dvf_igtfcurrency, dvf_igtfapplyed, dvf_igtf as dvf_igtfrealvalue  FROM  dvfv WHERE dvf_docentry = :dvf_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fv1_docentry" => $Data['fv1_docentry']));

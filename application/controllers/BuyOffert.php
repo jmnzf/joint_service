@@ -927,7 +927,7 @@ public function getOffertDetailBySN_get(){
 								$respuesta = array(
 								'error'   => true,
 								'data' 		=> $detail['oc1_itemcode'],
-								'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['oc1_itemcode']
+								'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['oc1_itemcode']
 								);
 
 								$this->response($respuesta);

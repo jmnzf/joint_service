@@ -623,6 +623,9 @@ class StockTransfer extends REST_Controller {
 		$posicionInventario2 = 0;
 		$llaveInventario = "";
 		$llaveInventario2 = "";
+		$ManejaSerial = 0;
+
+		$DECI_MALES =  $this->generic->getDecimals();
 
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -1097,7 +1100,44 @@ class StockTransfer extends REST_Controller {
 										 return;
 							}
 
+
+
+
 							// VALIDAR PROCESO DE SALIDA
+
+
+							//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+							$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+							$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
+
+									':dma_item_code' => $detail['ts1_itemcode'],
+									':dma_series_code'  => 1
+							));
+
+							if(isset($resItemSerial[0])){
+								$ManejaSerial = 1;
+
+								$AddSerial = $this->generic->addSerial( $detail['serials'], $detail['ts1_itemcode'], $Data['its_doctype'], $resInsert, $DocNumVerificado, $Data['its_docdate'], 1, $Data['its_comment'], $detail['ts1_whscode'], $detail['ts1_quantity'], $Data['its_createby'] );
+
+								if( isset($AddSerial['error']) && $AddSerial['error'] == false){
+
+								}else{
+									$respuesta = array(
+										'error'   => true,
+										'data'    => $AddSerial['data'],
+										'mensaje' => $AddSerial['mensaje']
+									);
+
+									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+									return;
+								}
+
+							} else {
+								$ManejaSerial = 0;
+							}
+
+							//
 
 
 							//SE VALIDA EL SI EL ARTICULO MANEJA LOTE
@@ -1827,7 +1867,7 @@ class StockTransfer extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT ist1.*,dma_lotes_code FROM ist1 inner join dmar on dma_item_code = st1_itemcode WHERE st1_docentry =:st1_docentry";
+				$sqlSelect = " SELECT ist1.*,dma_lotes_code, dma_series_code FROM ist1 inner join dmar on dma_item_code = st1_itemcode WHERE st1_docentry =:st1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":st1_docentry" => $Data['st1_docentry']));
 

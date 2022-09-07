@@ -446,7 +446,8 @@ class EstadoCuentaPro extENDs REST_Controller {
 										         tmac.mac_doc_date,
 										         tmac.mac_doc_duedate,
 										         mac_trans_id,
-										         mdt_docname, mac1.ac1_cord,ac1_comments";
+										         mdt_docname, mac1.ac1_cord,ac1_comments
+														 HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0";
 
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array(":currency" => $Data['currency']));
         //   print_r($sqlestadocuenta);exit();die();

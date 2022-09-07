@@ -64,6 +64,7 @@ class PurchaseInv extends REST_Controller {
 			$ManejaInvetario = 0;
 			$TotalAcuRentencion = 0;
 			$ManejaLote = 0;
+			$ManejaSerial = 0;
 			$TasaDocLoc = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL DOCUMENTO
 			$TasaLocSys = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL SISTEMA
 			$MONEDALOCAL = 0;
@@ -618,7 +619,7 @@ class PurchaseInv extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data' 		=> $detail['fc1_itemcode'],
-										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['fc1_itemcode']
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['fc1_itemcode']
 									);
 
 									 $this->response($respuesta);
@@ -812,6 +813,39 @@ class PurchaseInv extends REST_Controller {
 										// si el documento no viene de una entrada de COMPRAS
 										// se hace todo el proceso
 									  if($Data['cfc_basetype'] != 13){
+
+											//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+											$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+											$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
+
+													':dma_item_code' => $detail['fc1_itemcode'],
+													':dma_series_code'  => 1
+											));
+
+											if(isset($resItemSerial[0])){
+												$ManejaSerial = 1;
+
+												$AddSerial = $this->generic->addSerial( $detail['serials'], $detail['fc1_itemcode'], $Data['cfc_doctype'], $resInsert, $DocNumVerificado, $Data['cfc_docdate'], 1, $Data['cfc_comment'], $detail['fc1_whscode'], $detail['fc1_quantity'], $Data['cfc_createby'] );
+
+												if( isset($AddSerial['error']) && $AddSerial['error'] == false){
+
+												}else{
+													$respuesta = array(
+														'error'   => true,
+														'data'    => $AddSerial['data'],
+														'mensaje' => $AddSerial['mensaje']
+													);
+
+													$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+													return;
+												}
+
+											} else {
+												$ManejaSerial = 0;
+											}
+
+											//
 
 											$sqlCostoMomentoRegistro = '';
 											$resCostoMomentoRegistro = [];
@@ -1456,7 +1490,7 @@ class PurchaseInv extends REST_Controller {
 									$DetalleCostoInventario->fc1_vatsum = is_numeric($detail['fc1_vatsum'])?$detail['fc1_vatsum']:0;
 									$DetalleCostoInventario->fc1_price = is_numeric($detail['fc1_price'])?$detail['fc1_price']:0;
 									$DetalleCostoInventario->fc1_itemcode = isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL;
-									$DetalleCostoInventario->fc1_quantity = is_numeric($detail['fc1_quantity']) ? $( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) : 0;
+									$DetalleCostoInventario->fc1_quantity = is_numeric($detail['fc1_quantity']) ? ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 									$DetalleCostoInventario->ec1_whscode = isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL;
 									$DetalleCostoInventario->fc1_inventory = $ManejaInvetario;
 
@@ -3187,8 +3221,10 @@ class PurchaseInv extends REST_Controller {
 
 				if(isset($resSelect[0])){
 					foreach ($resSelect as $key => $value) {
-						$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum
+						$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code 
 														FROM cfc1
+														INNER JOIN dmar
+														ON cfc1.fc1_itemcode = dmar.dma_item_code
 														INNER JOIN fcrt fc
 														ON cfc1.fc1_docentry = fc.crt_baseentry
 														AND cfc1.fc1_linenum = fc.crt_linenum

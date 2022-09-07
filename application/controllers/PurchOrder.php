@@ -764,7 +764,7 @@ class PurchOrder extends REST_Controller {
 								$respuesta = array(
 									'error'   => true,
 									'data' 		=> $detail['po1_itemcode'],
-									'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['po1_itemcode']
+									'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['po1_itemcode']
 								);
 
 								 $this->response($respuesta);
@@ -1286,7 +1286,10 @@ class PurchOrder extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM cpo1 WHERE po1_docentry =:po1_docentry";
+				$sqlSelect = " SELECT cpo1.*,dmar.dma_series_code
+											 FROM cpo1
+											 INNER JOIN dmar	ON cpo1.po1_itemcode = dmar.dma_item_code
+											 WHERE po1_docentry =:po1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":po1_docentry" => $Data['po1_docentry']));
 

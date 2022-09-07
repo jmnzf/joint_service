@@ -453,14 +453,7 @@ class AccountReconciliations extends REST_Controller {
 											$OP = 1;
 										}else if($detail['rc1_doctype'] == 18){
 
-											$OP = $Data['crc_cardtype'];
-
-											// $respuesta = array(
-											// 			'error'   => true,
-											// 			'data'    => [],
-											// 			'mensaje'	=> "Asientos manuales no contemplados");
-											//
-											// return $this->response($respuesta);
+											$OP = $detail['ac1_cord'];
 
 										}
 
@@ -522,7 +515,7 @@ class AccountReconciliations extends REST_Controller {
 
 											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-												':dvf_paytoday' => $VlrTotalOpc,
+												':dvf_paytoday' => round( $VlrTotalOpc, $DECI_MALES),
 												':dvf_docentry' => $detail['rc1_docentry'],
 												':dvf_doctype'  => $detail['rc1_doctype']
 
@@ -553,7 +546,7 @@ class AccountReconciliations extends REST_Controller {
 																						WHERE ac1_line_num = :ac1_line_num";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $VlrTotalOpc,
+												':ac1_ven_credit' => round( $VlrTotalOpc, $DECI_MALES ),
 												':ac1_line_num'   => $detail['ac1_line_num']
 
 											));
@@ -657,7 +650,7 @@ class AccountReconciliations extends REST_Controller {
 																						WHERE ac1_line_num = :ac1_line_num";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_debit' => $VlrTotalOpc,
+												':ac1_ven_debit' => round( $VlrTotalOpc, $DECI_MALES ),
 												':ac1_line_num'  => $detail['ac1_line_num'],
 
 											));
@@ -727,7 +720,7 @@ class AccountReconciliations extends REST_Controller {
 																						WHERE ac1_line_num = :ac1_line_num";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_debit' => $VlrTotalOpc,
+												':ac1_ven_debit' => round( $VlrTotalOpc, $DECI_MALES ),
 												':ac1_line_num'  => $detail['ac1_line_num'],
 
 											));
@@ -789,7 +782,7 @@ class AccountReconciliations extends REST_Controller {
 
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_debit'  => $VlrTotalOpc,
+												':ac1_ven_debit'  => round( $VlrTotalOpc, $DECI_MALES ),
 												':ac1_line_num'   => $detail['ac1_line_num']
 
 
@@ -894,7 +887,7 @@ class AccountReconciliations extends REST_Controller {
 
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $VlrTotalOpc,
+												':ac1_ven_credit' => round( $VlrTotalOpc, $DECI_MALES ),
 												':ac1_line_num'   => $detail['ac1_line_num']
 											));
 
@@ -966,7 +959,7 @@ class AccountReconciliations extends REST_Controller {
 
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $VlrTotalOpc,
+												':ac1_ven_credit' => round( $VlrTotalOpc, $DECI_MALES ),
 												':ac1_line_num'   => $detail['ac1_line_num']
 											));
 
@@ -1007,7 +1000,7 @@ class AccountReconciliations extends REST_Controller {
 
 												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-													':ac1_ven_debit' => $VlrPay,
+													':ac1_ven_debit'  => round( $VlrPay, $DECI_MALES ),
 													':ac1_line_num'   => $detail['ac1_line_num']
 												));
 
@@ -1033,7 +1026,7 @@ class AccountReconciliations extends REST_Controller {
 
 												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-													':ac1_ven_credit' => $VlrPay,
+													':ac1_ven_credit' => round( $VlrPay, $DECI_MALES ),
 													':ac1_line_num'   => $detail['ac1_line_num']
 												));
 

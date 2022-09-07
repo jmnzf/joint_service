@@ -41,6 +41,7 @@ class PurchaseRet extends REST_Controller {
 			$codigoCuenta = ""; //para saber la naturaleza
 			$ManejaInvetario = 0;
 			$ManejaLote = 0;
+			$ManejaLote = 0;
 			$DocNumVerificado = 0;
 
 			$AC1LINE = 1;
@@ -586,7 +587,7 @@ class PurchaseRet extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data' 		=> $detail['dc1_quantity'],
-										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['dc1_quantity']
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['dc1_quantity']
 									);
 
 									 $this->response($respuesta);
@@ -683,7 +684,38 @@ class PurchaseRet extends REST_Controller {
 								// si el item es inventariable
 								if( $ManejaInvetario == 1 ){
 
+											//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+											$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+											$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
 
+													':dma_item_code' => $detail['fc1_itemcode'],
+													':dma_series_code'  => 1
+											));
+
+											if(isset($resItemSerial[0])){
+												$ManejaSerial = 1;
+
+												$AddSerial = $this->generic->addSerial( $detail['serials'], $detail['dc1_itemcode'], $Data['cdc_doctype'], $resInsert, $DocNumVerificado, $Data['cdc_docdate'], 2, $Data['cdc_comment'], $detail['dc1_whscode'], $detail['dc1_quantity'], $Data['cdc_createby'] );
+
+												if( isset($AddSerial['error']) && $AddSerial['error'] == false){
+
+												}else{
+													$respuesta = array(
+														'error'   => true,
+														'data'    => $AddSerial['data'],
+														'mensaje' => $AddSerial['mensaje']
+													);
+
+													$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+													return;
+												}
+
+											} else {
+												$ManejaSerial = 0;
+											}
+
+											//
 
 
 											//se busca el costo del item en el momento de la creacion del documento de compra
@@ -1830,7 +1862,11 @@ class PurchaseRet extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM cdc1 WHERE dc1_docentry =:dc1_docentry";
+				$sqlSelect = " SELECT cdc1.*,dmar.dma_series_code
+											 FROM cdc1
+											 INNER JOIN dmar
+											 ON cdc1.dc1_itemcode = dmar.dma_item_code
+											 WHERE dc1_docentry = :dc1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dc1_docentry" => $Data['dc1_docentry']));
 

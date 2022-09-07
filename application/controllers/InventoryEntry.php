@@ -41,6 +41,7 @@ class InventoryEntry extends REST_Controller {
 			$posicionCuentaGrupo = 0;
 			$ManejaInvetario = 0;
 			$ManejaLote = 0;
+			$ManejaSerial = 0;
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -480,6 +481,39 @@ class InventoryEntry extends REST_Controller {
 								// FIN PROCESO ITEM MANEJA INVENTARIO Y LOTE
 								// si el item es inventariable
 								if( $ManejaInvetario == 1 ){
+
+										//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+										$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+										$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
+
+												':dma_item_code' => $detail['ei1_itemcode'],
+												':dma_series_code'  => 1
+										));
+
+										if(isset($resItemSerial[0])){
+											$ManejaSerial = 1;
+
+											$AddSerial = $this->generic->addSerial( $detail['serials'], $detail['ei1_itemcode'], $Data['iei_doctype'], $resInsert, $DocNumVerificado, $Data['iei_docdate'], 1, $Data['iei_comment'], $detail['ei1_whscode'], $detail['ei1_quantity'], $Data['iei_createby'] );
+
+											if( isset($AddSerial['error']) && $AddSerial['error'] == false){
+
+											}else{
+												$respuesta = array(
+													'error'   => true,
+													'data'    => $AddSerial['data'],
+													'mensaje' => $AddSerial['mensaje']
+												);
+
+												$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+												return;
+											}
+
+										} else {
+											$ManejaSerial = 0;
+										}
+
+										//
 
 										//se busca el costo del item en el momento de la creacion del documento de venta
 										//para almacenar en el movimiento de inventario

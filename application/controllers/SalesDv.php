@@ -40,6 +40,7 @@ class SalesDv extends REST_Controller {
       $codigoCuenta = ""; //para saber la naturaleza
       $DocNumVerificado = 0;
       $ManejaInvetario = 0;
+      $ManejaSerial = 0;
       $AC1LINE = 1;
       $AgregarAsiento = true;
       $resInsertAsiento = "";
@@ -531,7 +532,7 @@ class SalesDv extends REST_Controller {
             $respuesta = array(
               'error'   => true,
               'data' 		=> $detail['dv1_itemcode'],
-              'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['dv1_itemcode']
+              'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['dv1_itemcode']
             );
 
              $this->response($respuesta);
@@ -646,6 +647,39 @@ class SalesDv extends REST_Controller {
 
           // si el item es inventariable
           if( $ManejaInvetario == 1 ){
+
+            //SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+            $sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+            $resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
+
+                ':dma_item_code' => $detail['vd1_itemcode'],
+                ':dma_series_code'  => 1
+            ));
+
+            if(isset($resItemSerial[0])){
+              $ManejaSerial = 1;
+
+              $AddSerial = $this->generic->addSerial( $detail['serials'], $detail['vd1_itemcode'], $Data['vdv_doctype'], $resInsert, $DocNumVerificado, $Data['vdv_docdate'], 1, $Data['vdv_comment'], $detail['vd1_whscode'], $detail['vd1_quantity'], $Data['vdv_createby'] );
+
+              if( isset($AddSerial['error']) && $AddSerial['error'] == false){
+
+              }else{
+                $respuesta = array(
+                  'error'   => true,
+                  'data'    => $AddSerial['data'],
+                  'mensaje' => $AddSerial['mensaje']
+                );
+
+                $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+                return;
+              }
+
+            } else {
+              $ManejaSerial = 0;
+            }
+
+            //
 
             if ( $AgregarAsiento ){
 
@@ -1793,7 +1827,11 @@ class SalesDv extends REST_Controller {
         return;
       }
 
-      $sqlSelect = " SELECT * FROM vdv1 WHERE dv1_docentry =:dv1_docentry";
+      $sqlSelect = " SELECT vdv1.*, dma_series_code
+                     FROM vdv1
+                     INNER JOIN dmar
+                     ON cfc1.fc1_itemcode = dmar.dma_item_code
+                     WHERE dv1_docentry =:dv1_docentry";
 
       $resSelect = $this->pedeo->queryTable($sqlSelect, array(":dv1_docentry" => $Data['dv1_docentry']));
 

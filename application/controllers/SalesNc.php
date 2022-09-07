@@ -59,6 +59,7 @@ class SalesNc extends REST_Controller {
 			$SumaCreditosLOC = 0;
 			$SumaDebitoLOC = 0;
 			$ManejaInvetario = 0;
+			$ManejaSerial = 0;
 			$IVASINTASAFIJA = 0;
 			$AC1LINE = 1;
 			$SUMALINEAFIXRATE = 0;
@@ -594,7 +595,7 @@ class SalesNc extends REST_Controller {
 										$respuesta = array(
 											'error'   => true,
 											'data' 		=> $detail['nc1_itemcode'],
-											'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['nc1_itemcode']
+											'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['nc1_itemcode']
 										);
 
 										 $this->response($respuesta);
@@ -604,9 +605,9 @@ class SalesNc extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
 																			nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
-																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_exc_inv,nc1_acciva,nc1_linenum)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
+																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_exc_inv,nc1_acciva,nc1_linenum,nc1_codimp)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
 																			:nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
-																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_exc_inv, :nc1_acciva,:nc1_linenum)";
+																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_exc_inv, :nc1_acciva,:nc1_linenum,:nc1_codimp)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 													':nc1_docentry' => $resInsert,
@@ -630,7 +631,8 @@ class SalesNc extends REST_Controller {
 													':nc1_inventory' => is_numeric($detail['nc1_inventory'])?$detail['nc1_inventory']:NULL,
 													':nc1_exc_inv' => is_numeric($detail['nc1_exc_inv'])?$detail['nc1_exc_inv']:0,
 													':nc1_acciva' => is_numeric($detail['nc1_acciva'])?$detail['nc1_acciva']:0,
-													':nc1_linenum' => is_numeric($detail['nc1_linenum'])?$detail['nc1_linenum']:0
+													':nc1_linenum' => is_numeric($detail['nc1_linenum'])?$detail['nc1_linenum']:0,
+													':nc1_codimp'  => isset($detail['nc1_codimp'])?$detail['nc1_codimp']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -678,8 +680,43 @@ class SalesNc extends REST_Controller {
 
 											// si el item es inventariable
 											if(	$ManejaInvetario == 1){
-													//Se aplica el movimiento de inventario
 
+													//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+													$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+													$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
+
+															':dma_item_code' => $detail['nc1_itemcode'],
+															':dma_series_code'  => 1
+													));
+
+													if(isset($resItemSerial[0])){
+														$ManejaSerial = 1;
+
+														$AddSerial = $this->generic->addSerial( $detail['serials'], $detail['nc1_itemcode'], $Data['vnc_doctype'], $resInsert, $DocNumVerificado, $Data['vnc_docdate'], 1, $Data['vnc_comment'], $detail['nc1_whscode'], $detail['nc1_quantity'], $Data['vnc_createby'] );
+
+														if( isset($AddSerial['error']) && $AddSerial['error'] == false){
+
+														}else{
+															$respuesta = array(
+																'error'   => true,
+																'data'    => $AddSerial['data'],
+																'mensaje' => $AddSerial['mensaje']
+															);
+
+															$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+															return;
+														}
+
+													} else {
+														$ManejaSerial = 0;
+													}
+
+													//
+
+
+
+													//Se aplica el movimiento de inventario
 													//BUSCANDO COSTO DE ARTICULO PARA RIGISTRARLO EN EL MOVIMIENTO
 													$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
 													$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['nc1_whscode'], ':bdi_itemcode' => $detail['nc1_itemcode']));
@@ -2576,7 +2613,11 @@ class SalesNc extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM vnc1 WHERE nc1_docentry =:nc1_docentry";
+				$sqlSelect = " SELECT vnc1.*, dmar.dma_series_code
+											 FROM vnc1
+											 INNER JOIN dmar
+											 ON cfc1.fc1_itemcode = dmar.dma_item_code
+											 WHERE nc1_docentry =:nc1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":nc1_docentry" => $Data['nc1_docentry']));
 

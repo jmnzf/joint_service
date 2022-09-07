@@ -63,6 +63,7 @@ class PurchaseNc extends REST_Controller {
 			$DocNumVerificado = 0;
 			$ManejaInvetario  = 0;
 			$ManejaLote = 0;
+			$ManejaSerial = 0;
 			$TasaDocLoc = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL DOCUMENTO
 			$TasaLocSys = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL SISTEMA
 			$MONEDALOCAL='';
@@ -609,7 +610,7 @@ class PurchaseNc extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data' 		=> $detail['nc1_itemcode'],
-										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '+$detail['nc1_itemcode']
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['nc1_itemcode']
 									);
 
 									 $this->response($respuesta);
@@ -619,9 +620,9 @@ class PurchaseNc extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO cnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
                                     nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
-                                    nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_acciva, nc1_linenum,fc1_codimp)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
+                                    nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_acciva, nc1_linenum,nc1_codimp)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
                                     :nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
-                                    :nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_acciva, :nc1_linenum,:fc1_codimp)";
+                                    :nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_acciva, :nc1_linenum,:nc1_codimp)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':nc1_docentry' => $resInsert,
@@ -796,6 +797,39 @@ class PurchaseNc extends REST_Controller {
 										if( $exc_inv == 1 ){
 											// si el item es inventariable
 											if( $ManejaInvetario == 1 ){
+
+														//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+														$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+														$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
+
+																':dma_item_code' => $detail['nc1_itemcode'],
+																':dma_series_code'  => 1
+														));
+
+														if(isset($resItemSerial[0])){
+															$ManejaSerial = 1;
+
+															$AddSerial = $this->generic->addSerial( $detail['serials'], $detail['nc1_itemcode'], $Data['cnc_doctype'], $resInsert, $DocNumVerificado, $Data['cnc_docdate'], 2, $Data['cnc_comment'], $detail['nc1_whscode'], $detail['nc1_quantity'], $Data['cnc_createby'] );
+
+															if( isset($AddSerial['error']) && $AddSerial['error'] == false){
+
+															}else{
+																$respuesta = array(
+																	'error'   => true,
+																	'data'    => $AddSerial['data'],
+																	'mensaje' => $AddSerial['mensaje']
+																);
+
+																$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+																return;
+															}
+
+														} else {
+															$ManejaSerial = 0;
+														}
+
+														//
 
 														//se busca el costo del item en el momento de la creacion del documento de venta
 														// para almacenar en el movimiento de inventario
@@ -1089,7 +1123,7 @@ class PurchaseNc extends REST_Controller {
 									$DetalleAsientoIva->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ( $detail['nc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 									$DetalleAsientoIva->nc1_cuentaIva = is_numeric($detail['nc1_cuentaIva'])?$detail['nc1_cuentaIva']:NULL;
 									$DetalleAsientoIva->em1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
-									$DetalleAsientoIva->codimp = isset($detail['fc1_codimp'])?$detail['fc1_codimp']:NULL;
+									$DetalleAsientoIva->codimp = isset($detail['nc1_codimp'])?$detail['nc1_codimp']:NULL;
 
 									// se busca la cuenta contable del costoInventario y costoCosto
 									// $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost, f1.mga_accretpurch FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
@@ -1173,6 +1207,18 @@ class PurchaseNc extends REST_Controller {
 											$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ( $detail['nc1_quantity'] * $CANTUOMPURCHASE ) : 0;
 											$DetalleCostoCosto->em1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 											$DetalleCostoCosto->ac1_inventory = $ManejaInvetario;
+										}else{
+											$DetalleItemNoInventariable->ac1_account =  is_numeric($detail['nc1_acctcode'])?$detail['nc1_acctcode']: 0;
+											$DetalleItemNoInventariable->ac1_prc_code = isset($detail['nc1_costcode'])?$detail['nc1_costcode']:NULL;
+											$DetalleItemNoInventariable->ac1_uncode = isset($detail['nc1_ubusiness'])?$detail['nc1_ubusiness']:NULL;
+											$DetalleItemNoInventariable->ac1_prj_code = isset($detail['nc1_project'])?$detail['nc1_project']:NULL;
+											$DetalleItemNoInventariable->nc1_linetotal = is_numeric($detail['nc1_linetotal'])?$detail['nc1_linetotal']:0;
+											$DetalleItemNoInventariable->nc1_vat = is_numeric($detail['nc1_vat'])?$detail['nc1_vat']:0;
+											$DetalleItemNoInventariable->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
+											$DetalleItemNoInventariable->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
+											$DetalleItemNoInventariable->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
+											$DetalleItemNoInventariable->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ( $detail['nc1_quantity'] * $CANTUOMPURCHASE ) : 0;
+											$DetalleItemNoInventariable->em1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 										}
 									}
 
@@ -1206,6 +1252,8 @@ class PurchaseNc extends REST_Controller {
 											if( $ManejaInvetario == 1 ){
 												$DetalleCostoCosto->codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 												$llaveCostoCosto = $DetalleCostoCosto->ac1_account;
+											}else{
+												$llaveItemNoInventariable = $DetalleItemNoInventariable->ac1_uncode.$DetalleItemNoInventariable->ac1_prc_code.$DetalleItemNoInventariable->ac1_prj_code.$DetalleItemNoInventariable->ac1_account;
 											}
 									}
 
@@ -1283,6 +1331,19 @@ class PurchaseNc extends REST_Controller {
 
 													array_push( $inArrayCostoCosto, $llaveCostoCosto );
 													$posicionCostoCosto = $this->buscarPosicion( $llaveCostoCosto, $inArrayCostoCosto );
+
+											}
+											// ITEM NO INVENTARIABLE
+										}else{
+
+											if(in_array( $llaveItemNoInventariable, $inArrayItemNoInventariable )){
+
+													$posicionItemNoInventariable = $this->buscarPosicion( $llaveItemNoInventariable, $inArrayItemNoInventariable );
+
+											}else{
+
+													array_push( $inArrayItemNoInventariable, $llaveItemNoInventariable );
+													$posicionItemNoInventariable = $this->buscarPosicion( $llaveItemNoInventariable, $inArrayItemNoInventariable );
 
 											}
 										}
@@ -1370,6 +1431,19 @@ class PurchaseNc extends REST_Controller {
 											}
 
 											array_push( $DetalleConsolidadoCostoCosto[$posicionCostoCosto], $DetalleCostoCosto );
+										}else{
+
+											if( isset($DetalleConsolidadoItemNoInventariable[$posicionItemNoInventariable])){
+
+												if(!is_array($DetalleConsolidadoItemNoInventariable[$posicionItemNoInventariable])){
+													$DetalleConsolidadoItemNoInventariable[$posicionItemNoInventariable] = array();
+												}
+
+											}else{
+												$DetalleConsolidadoItemNoInventariable[$posicionItemNoInventariable] = array();
+											}
+
+											array_push( $DetalleConsolidadoItemNoInventariable[$posicionItemNoInventariable], $DetalleItemNoInventariable );
 										}
 									}
           }
@@ -1387,9 +1461,9 @@ class PurchaseNc extends REST_Controller {
 
 							foreach ($posicion as $key => $value) {
 								$granTotalIva = $granTotalIva + $value->nc1_vatsum;
-								$Vat = $value->fc1_vat;
+								$Vat = $value->nc1_vat;
 								// if( $Vat > 0 ){
-								$LineTotal = ($LineTotal + $value->fc1_linetotal);
+								$LineTotal = ($LineTotal + $value->nc1_linetotal);
 								// }
 								$CodigoImp = $value->codimp;
 							}
@@ -1709,20 +1783,12 @@ class PurchaseNc extends REST_Controller {
 
 								foreach ($posicion as $key => $value) {
 
-													$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost, f1.mga_accretpurch FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-
-													$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->nc1_itemcode));
-
-													if(!isset($resArticulo[0])){
-
-													}
-
 
 													$sinDatos++;
-													$CuentaItemNoInventariable = $resArticulo[0]['mga_accretpurch'];
+													$CuentaItemNoInventariable = $value->ac1_account;
 													$grantotalItemNoInventariable = ($grantotalItemNoInventariable + $value->nc1_linetotal );
 
-										}
+								}
 
 
 
@@ -2819,7 +2885,11 @@ class PurchaseNc extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM cnc1 WHERE nc1_docentry =:nc1_docentry";
+				$sqlSelect = " SELECT cnc1.*,dmar.dma_series_code   
+											 FROM cnc1
+											 INNER JOIN dmar
+											 ON cnc1.nc1_itemcode = dmar.dma_item_code
+											 WHERE nc1_docentry =:nc1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":nc1_docentry" => $Data['nc1_docentry']));
 

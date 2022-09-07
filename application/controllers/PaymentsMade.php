@@ -610,7 +610,7 @@ class PaymentsMade extends REST_Controller {
 
 											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-												':cfc_paytoday' => $VlrTotalOpc,
+												':cfc_paytoday' => round( $VlrTotalOpc, $DECI_MALES ),
 												':cfc_docentry' => $detail['pe1_docentry'],
 												':cfc_doctype' =>  $detail['pe1_doctype']
 
@@ -641,7 +641,7 @@ class PaymentsMade extends REST_Controller {
 
 											$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-												':cnc_paytoday' => $VlrTotalOpc,
+												':cnc_paytoday' => round( $VlrTotalOpc, $DECI_MALES ),
 												':cnc_docentry' => $detail['pe1_docentry'],
 												':cnc_doctype'  => $detail['pe1_doctype']
 
@@ -677,7 +677,7 @@ class PaymentsMade extends REST_Controller {
 
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_debit'  => $VlrTotalOpc,
+												':ac1_ven_debit'  => round( $VlrTotalOpc, $DECI_MALES ),
 												':ac1_legal_num'  => $detail['pe1_tercero'],
 												':ac1_font_key'   => $detail['pe1_docentry'],
 												':ac1_font_type'  => $detail['pe1_doctype'],
@@ -715,7 +715,7 @@ class PaymentsMade extends REST_Controller {
 																						AND ac1_account = :ac1_account";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $VlrTotalOpc,
+												':ac1_ven_credit' => round( $VlrTotalOpc, $DECI_MALES ),
 												':ac1_legal_num'  => $detail['pe1_tercero'],
 												':ac1_font_key'   => $detail['pe1_docentry'],
 												':ac1_font_type'  => $detail['pe1_doctype'],
@@ -750,7 +750,7 @@ class PaymentsMade extends REST_Controller {
 																						AND ac1_account = :ac1_account";
 											$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-												':ac1_ven_credit' => $VlrTotalOpc,
+												':ac1_ven_credit' => round( $VlrTotalOpc, $DECI_MALES ),
 												':ac1_legal_num'  => $detail['pe1_tercero'],
 												':ac1_font_key'   => $detail['pe1_docentry'],
 												':ac1_font_type'  => $detail['pe1_doctype'],
@@ -879,7 +879,7 @@ class PaymentsMade extends REST_Controller {
 
 												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-													':ac1_ven_debit' => $VlrTotalOpc,
+													':ac1_ven_debit' => round( $VlrTotalOpc, $DECI_MALES ),
 													':ac1_line_num'  => $detail['ac1_line_num']
 												));
 
@@ -905,7 +905,7 @@ class PaymentsMade extends REST_Controller {
 
 												$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-													':ac1_ven_credit' => $VlrTotalOpc,
+													':ac1_ven_credit' => round( $VlrTotalOpc, $DECI_MALES ),
 													':ac1_line_num'   => $detail['ac1_line_num']
 												));
 

@@ -1064,7 +1064,10 @@ class PurchaseRequest extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT * FROM csc1 WHERE sc1_docentry =:sc1_docentry";
+				$sqlSelect = " SELECT csc1.*, dmar.dma_series_code
+											 FROM csc1
+											 INNER JOIN dmar	ON csc1.sc1_itemcode = dmar.dma_item_code
+											 WHERE sc1_docentry =:sc1_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":sc1_docentry" => $Data['sc1_docentry']));
 

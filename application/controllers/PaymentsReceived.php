@@ -623,7 +623,7 @@ class PaymentsReceived extends REST_Controller {
 
 															$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-																':dvf_paytoday' => $VlrTotalOpc,
+																':dvf_paytoday' => round( $VlrTotalOpc, $DECI_MALES ),
 																':dvf_docentry' => $detail['pr1_docentry'],
 																':dvf_doctype'  => $detail['pr1_doctype']
 
@@ -654,7 +654,7 @@ class PaymentsReceived extends REST_Controller {
 
 															$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay,array(
 
-																':vnc_paytoday' => $VlrTotalOpc,
+																':vnc_paytoday' => round( $VlrTotalOpc, $DECI_MALES ),
 																':vnc_docentry' => $detail['pr1_docentry'],
 																':vnc_doctype'  => $detail['pr1_doctype']
 
@@ -690,7 +690,7 @@ class PaymentsReceived extends REST_Controller {
 																										WHERE ac1_line_num = :ac1_line_num";
 															$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-																':ac1_ven_credit' => $VlrTotalOpc,
+																':ac1_ven_credit' => round ( $VlrTotalOpc, $DECI_MALES ),
 																':ac1_line_num' 	=> $detail['ac1_line_num']
 
 
@@ -724,7 +724,7 @@ class PaymentsReceived extends REST_Controller {
 
 															$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-																':ac1_ven_debit' => $VlrTotalOpc,
+																':ac1_ven_debit' => round( $VlrTotalOpc, $DECI_MALES ),
 																':ac1_line_num' => $detail['ac1_line_num']
 
 															));
@@ -843,7 +843,7 @@ class PaymentsReceived extends REST_Controller {
 
 																	$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-																		':ac1_ven_debit' => $VlrTotalOpc,
+																		':ac1_ven_debit' => round( $VlrTotalOpc, $DECI_MALES ),
 																		':ac1_line_num'  => $detail['ac1_line_num']
 																	));
 
@@ -871,7 +871,7 @@ class PaymentsReceived extends REST_Controller {
 
 																	$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-																		':ac1_ven_credit' => $VlrTotalOpc,
+																		':ac1_ven_credit' => round( $VlrTotalOpc, $DECI_MALES ),
 																		':ac1_line_num'   => $detail['ac1_line_num']
 																	));
 
