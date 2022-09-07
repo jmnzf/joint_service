@@ -781,7 +781,7 @@ class BusinessPartner extends REST_Controller {
 
           $this->pedeo->trans_commit();
 
-          $fixrate = $this->pedeo->queryTable("SELECT getfixrate() AS fixrate",array());
+          $fixrate = $this->pedeo->queryTable("SELECT tbdc.*,getfixrate() as fixrate from tbdc where  tbdc.bdc_clasify = :dms_classtype ",array(":dms_classtype"=>$Data['dms_classtype']));
 
           $respuesta = array(
             'error' => false,
