@@ -160,7 +160,7 @@ class PdfPaymentMade extends REST_Controller {
 											left join dcfc t2 on t1.pe1_docentry = t2.cfc_docentry and t1.pe1_doctype = t2.cfc_doctype
 											left join dcnc t3 on t1.pe1_docentry = t3.cnc_docentry and t1.pe1_doctype = t3.cnc_doctype
 											left join dcnd t4 on t1.pe1_docentry = t4.cnd_docentry and t1.pe1_doctype = t4.cnd_doctype
-											left join gbpe t6 on t1.pe1_docentry = t6.bpe_docentry and t1.pe1_doctype = t6.bpe_doctype
+											left join gbpe t6 on t1.pe1_docnum = t6.bpe_docentry and t1.pe1_doctype = t6.bpe_doctype
 											inner join dmdt t5 on t1.pe1_doctype = t5.mdt_doctype
 											where t0.bpe_docentry = :bpe_docentry";
 

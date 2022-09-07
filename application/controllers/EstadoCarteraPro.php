@@ -117,7 +117,7 @@ from mac1
          inner join dcfc on dcfc.cfc_doctype = mac1.ac1_font_type and dcfc.cfc_docentry = mac1.ac1_font_key
          inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
-
+and dcfc.cfc_docdate <= '{$Data['fecha']}'
 GROUP BY dmdt.mdt_docname,
          mac1.ac1_font_key,
          mac1.ac1_legal_num,
@@ -187,7 +187,7 @@ from mac1
                                                                       mac1.ac1_font_key
          inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 where  dmsn.dms_card_type = '2'
-
+and gbpe.bpe_docdate <= '{$Data['fecha']}'
 GROUP BY dmdt.mdt_docname,
          mac1.ac1_font_key,
          mac1.ac1_legal_num,
@@ -252,11 +252,10 @@ select distinct dmdt.mdt_docname,
 from mac1
          inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
          inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
-         inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry =
-         mac1.ac1_font_key
+         inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry = mac1.ac1_font_key
          inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
-
+and dcnc.cnc_docdate <= '{$Data['fecha']}'
 GROUP BY dmdt.mdt_docname,
          mac1.ac1_font_key,
          mac1.ac1_legal_num,
@@ -322,16 +321,14 @@ select distinct dmdt.mdt_docname,
                     ELSE 0
                     END                                                  mayor_noventa,
                     '' as comentario_asiento
-
 from mac1
-         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp =
-                                                                 '1'
+         inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
          inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
          inner join dcnd on dcnd.cnd_doctype = mac1.ac1_font_type and
                             dcnd.cnd_docentry = mac1.ac1_font_key
          inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
-
+and dcnd.cnd_docdate <= '{$Data['fecha']}'
 group by dmdt.mdt_docname,
          mac1.ac1_font_key,
          mac1.ac1_legal_num,
@@ -412,6 +409,7 @@ from mac1
          inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type
     and mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
+and tmac.mac_doc_date <= '{$Data['fecha']}'
 group by dmdt.mdt_docname,
          mac1.ac1_font_key,
          case
@@ -431,8 +429,7 @@ group by dmdt.mdt_docname,
          mdt_docname, mac1.ac1_cord,ac1_comments
 				 HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0";
 
-		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array("currency" => $Data['currency']));
-        // print_r($sqlestadocuenta);exit();die();
+		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array(":currency" => $Data['currency']));
 		if(!isset($contenidoestadocuenta[0])){
 			$respuesta = array(
 				 'error' => true,

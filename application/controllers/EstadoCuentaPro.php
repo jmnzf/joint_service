@@ -128,6 +128,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 										         inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 										where mac1.ac1_legal_num = '".$Data['cardcode']."'
 										  and dmsn.dms_card_type = '2'
+										  and dcfc.cfc_docdate <= '{$Data['fecha']}'
 
 										GROUP BY dmdt.mdt_docname,
 										         mac1.ac1_font_key,
@@ -198,6 +199,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 										                                                                      mac1.ac1_font_key
 										         inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 										where mac1.ac1_legal_num = '".$Data['cardcode']."'
+										and gbpe.bpe_docdate = '{$Data['fecha']}'
 										  and dmsn.dms_card_type = '2'
 
 										GROUP BY dmdt.mdt_docname,
@@ -267,6 +269,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 										                                                                      mac1.ac1_font_key
 										         inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 										where mac1.ac1_legal_num = '".$Data['cardcode']."'
+										and dcnc.cnc_docdate <= '{$Data['fecha']}'
 										  and ABS((mac1.ac1_ven_debit) -
 										          (mac1.ac1_ven_credit)) > 0
 										  and dmsn.dms_card_type = '2'
@@ -344,9 +347,11 @@ class EstadoCuentaPro extENDs REST_Controller {
 										                            dcnd.cnd_docentry = mac1.ac1_font_key
 										         inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 										where mac1.ac1_legal_num = '".$Data['cardcode']."'
+										and dcnd.cnd_docdate <= '{$Data['fecha']}'
 										  and ABS((mac1.ac1_ven_debit) -
 										          (mac1.ac1_ven_credit)) > 0
 										  and dmsn.dms_card_type = '2'
+
 
 										group by dmdt.mdt_docname,
 										         mac1.ac1_font_key,
@@ -428,6 +433,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 										         inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type
 										    and mac1.ac1_legal_num = dmsn.dms_card_code
 										where dmsn.dms_card_type = '2'
+										and tmac.mac_doc_date <= '{$Data['fecha']}'
 										  and mac1.ac1_legal_num =
 										      '".$Data['cardcode']."'
 										group by dmdt.mdt_docname,
@@ -450,7 +456,7 @@ class EstadoCuentaPro extENDs REST_Controller {
 														 HAVING ABS(sum((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit))) > 0";
 
 				$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,array(":currency" => $Data['currency']));
-        //   print_r($sqlestadocuenta);exit();die();
+          print_r($sqlestadocuenta);exit();die();
 				if(!isset($contenidoestadocuenta[0])){
 						$respuesta = array(
 							 'error' => true,
