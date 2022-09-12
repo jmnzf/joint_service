@@ -782,7 +782,7 @@ class PurchOrder extends REST_Controller {
                         ':po1_docentry' => $resInsert,
                         ':po1_itemcode' => isset($detail['po1_itemcode'])?$detail['po1_itemcode']:NULL,
                         ':po1_itemname' => isset($detail['po1_itemname'])?$detail['po1_itemname']:NULL,
-                        ':po1_quantity' => is_numeric($detail['po1_quantity']) ? ( $detail['po1_quantity'] * $CANTUOMPURCHASE ) : 0,
+                        ':po1_quantity' => is_numeric($detail['po1_quantity']) ? $detail['po1_quantity']  : 0,
                         ':po1_uom' => isset($detail['po1_uom'])?$detail['po1_uom']:NULL,
                         ':po1_whscode' => isset($detail['po1_whscode'])?$detail['po1_whscode']:NULL,
                         ':po1_price' => is_numeric($detail['po1_price'])?$detail['po1_price']:0,

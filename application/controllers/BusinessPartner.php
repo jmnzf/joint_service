@@ -219,7 +219,7 @@ class BusinessPartner extends REST_Controller {
 
       }
 
-      $sqlUpdate = "UPDATE dmsn SET dms_enabled = :dms_enabled, dms_card_code = :dms_card_code, dms_card_name = :dms_card_name, dms_card_type = :dms_card_type,
+      $sqlUpdate = "UPDATE dmsn SET dms_enabled = :dms_enabled, dms_card_name = :dms_card_name, dms_card_type = :dms_card_type,
                     dms_short_name = :dms_short_name, dms_phone1 = :dms_phone1, dms_phone2 = :dms_phone2, dms_cel = :dms_cel,
                     dms_email = :dms_email, dms_inv_mail = :dms_inv_mail, dms_group_num = :dms_group_num, dms_web_site = :dms_web_site,
                     dms_sip_code = :dms_sip_code, dms_agent = :dms_agent, dms_pay_type = :dms_pay_type, dms_limit_cred = :dms_limit_cred,
@@ -229,8 +229,6 @@ class BusinessPartner extends REST_Controller {
 			$this->pedeo->trans_begin();
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-
-            ':dms_card_code' => isset($Data['dms_card_code'])?$Data['dms_card_code']:NULL,
             ':dms_card_name' => isset($Data['dms_card_name'])?$Data['dms_card_name']:NULL,
             ':dms_card_type' => isset($Data['dms_card_type'])?$Data['dms_card_type']:0,
             ':dms_short_name' => isset($Data['dms_short_name'])?$Data['dms_short_name']:NULL,
@@ -744,21 +742,20 @@ class BusinessPartner extends REST_Controller {
           }
 
           $sqlInsertAdd = "INSERT INTO dmsd(dmd_state_mm, dmd_state, dmd_id_add, dmd_delivery_add, dmd_country, dmd_city,
-          dmd_card_code, dmd_adress, dmd_tonw)VALUES(:dmd_state_mm, :dmd_state, :dmd_id_add, :dmd_delivery_add,
-          :dmd_country, :dmd_city, :dmd_card_code, :dmd_adress, :dmd_tonw)";
+          dmd_card_code, dmd_adress, dmd_tonw, dmd_ppal)VALUES(:dmd_state_mm, :dmd_state, :dmd_id_add, :dmd_delivery_add,
+          :dmd_country, :dmd_city, :dmd_card_code, :dmd_adress, :dmd_tonw, :dmd_ppal)";
 
           $resInsertAdd = $this->pedeo->insertRow($sqlInsertAdd, array(
-
             ':dmd_state_mm' => $Data['dmd_state_mm'],
             ':dmd_state' => $Data['dmd_state'],
             ':dmd_id_add' => $Data['dmd_id_add'],
-            ':dmd_delivery_add' => $Data['dmd_delivery_add'],
+            ':dmd_delivery_add' => 1,
             ':dmd_country' => $Data['dmd_country'],
             ':dmd_city' => $Data['dmd_city'],
             ':dmd_card_code' => $Data['dms_card_code'],
             ':dmd_adress' => $Data['dmd_adress'],
-            ':dmd_tonw' => $Data['dmd_tonw']
-
+            ':dmd_tonw' => $Data['dmd_tonw'],
+            ':dmd_ppal' => 1
           ));
 
           if (is_numeric($resInsertAdd) && $resInsertAdd > 0) {

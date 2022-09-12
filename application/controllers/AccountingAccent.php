@@ -26,6 +26,7 @@ class AccountingAccent extends REST_Controller {
 
   //CREAR NUEVO ASIENTO CONTABLE
 	public function createAccountingAccent_post(){
+
 			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;
@@ -155,7 +156,7 @@ class AccountingAccent extends REST_Controller {
             ':mac_sys_total' => is_numeric($Data['mac_sys_total'])?$Data['mac_sys_total']:0,
             ':mac_trans_dode' => is_numeric($Data['mac_trans_dode'])?$Data['mac_trans_dode']:0,
             ':mac_beline_nume' => is_numeric($Data['mac_beline_nume'])?$Data['mac_beline_nume']:0,
-            ':mac_vat_date' => $this->validateDate($Data['mac_vat_date'])?$Data['mac_vat_date']:0,
+            ':mac_vat_date' => $this->validateDate($Data['mac_vat_date'])?$Data['mac_vat_date']:null,
             ':mac_serie' => is_numeric($Data['mac_serie'])?$Data['mac_serie']:0,
             ':mac_number' => is_numeric($Data['mac_number'])?$Data['mac_number']:0,
             ':mac_bammntsys' => is_numeric($Data['mac_bammntsys'])?$Data['mac_bammntsys']:0,
@@ -172,6 +173,32 @@ class AccountingAccent extends REST_Controller {
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0 ){
+
+						// Se actualiza la serie de la numeracion del documento
+
+						$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+																				 WHERE pgs_id = :pgs_id";
+						$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+								':pgs_nextnum' => $DocNumVerificado,
+								':pgs_id'      => $Data['mac_serie']
+						));
+
+						if(is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1){
+
+						}else{
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'    => $resActualizarNumeracion,
+										'mensaje'	=> 'No se pudo crear el asiento'
+									);
+
+									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+									return;
+						}
+						// Fin de la actualizacion de la numeracion del documento
 
 
             foreach ($ContenidoDetalle as $key => $detail) {
@@ -195,6 +222,53 @@ class AccountingAccent extends REST_Controller {
 									return;
 								}
 								//*******
+								// VALIDACION CENTRO DE COSTO, UNIDAD DE NEGOCIO y PROYECTO
+								$ValidateDmun = $this->pedeo->queryTable("SELECT * FROM dmun WHERE dun_un_code  = :dun_un_code", array(':dun_un_code' => $detail['ac1_uncode']));
+								$ValidateDmpj = $this->pedeo->queryTable("SELECT * FROM dmpj WHERE dpj_pj_code  = :dpj_pj_code", array(':dpj_pj_code' => $detail['ac1_prj_code']));
+								$ValidateDmcc = $this->pedeo->queryTable("SELECT * FROM dmcc WHERE dcc_prc_code = :dcc_prc_code", array(':dcc_prc_code' => $detail['ac1_prc_code']));
+
+								if ( !isset( $ValidateDmun[0] ) ){
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'    => $ValidateDmun,
+										'mensaje'	=> 'No existe la unidad de negocio '.$detail['ac1_uncode']
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+
+								if ( !isset( $ValidateDmpj[0] ) ){
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'    => $ValidateDmpj,
+										'mensaje'	=> 'No existe el proyecto '.$detail['ac1_prj_code']
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+
+								if ( !isset( $ValidateDmcc[0] ) ){
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'    => $ValidateDmcc,
+										'mensaje'	=> 'No existe el centro de costo '.$detail['ac1_prc_code']
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+								//
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
@@ -1296,8 +1370,8 @@ class AccountingAccent extends REST_Controller {
 		}else{
 			$respuesta = array(
 				'error' => true,
-				'data' => [],
-				'mensaje' => 'No se pudo realizar la operacion'
+				'data' => $resSelect,
+				'mensaje' => 'El Documento esta cerrado'
 			);
 		}
 

@@ -613,7 +613,7 @@ class SalesNc extends REST_Controller {
 													':nc1_docentry' => $resInsert,
 													':nc1_itemcode' => isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL,
 													':nc1_itemname' => isset($detail['nc1_itemname'])?$detail['nc1_itemname']:NULL,
-													':nc1_quantity' => is_numeric($detail['nc1_quantity']) ? ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0,
+													':nc1_quantity' => is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity']: 0,
 													':nc1_uom' => isset($detail['nc1_uom'])?$detail['nc1_uom']:NULL,
 													':nc1_whscode' => isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL,
 													':nc1_price' => is_numeric($detail['nc1_price'])?$detail['nc1_price']:0,

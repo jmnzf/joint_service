@@ -865,7 +865,7 @@ class PurchaseNc extends REST_Controller {
 																$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 																		 ':bmi_itemcode' => isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL,
-																		 ':bmi_quantity' => is_numeric($detail['nc1_quantity']) ? ( ( $detail['nc1_quantity'] * $CANTUOMPURCHASE ) * $Data['invtype'] ) : 0,
+																		 ':bmi_quantity' => is_numeric($detail['nc1_quantity']) ? ( $detail['nc1_quantity'] * $Data['invtype'] ) : 0,
 																		 ':bmi_whscode'  => isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL,
 																		 ':bmi_createat' => $this->validateDate($Data['cnc_createat'])?$Data['cnc_createat']:NULL,
 																		 ':bmi_createby' => isset($Data['cnc_createby'])?$Data['cnc_createby']:NULL,
@@ -2885,7 +2885,7 @@ class PurchaseNc extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = " SELECT cnc1.*,dmar.dma_series_code   
+				$sqlSelect = " SELECT cnc1.*,dmar.dma_series_code
 											 FROM cnc1
 											 INNER JOIN dmar
 											 ON cnc1.nc1_itemcode = dmar.dma_item_code

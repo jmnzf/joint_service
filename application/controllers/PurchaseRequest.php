@@ -734,7 +734,7 @@ class PurchaseRequest extends REST_Controller {
                         ':sc1_docentry' => $resInsert,
                         ':sc1_itemcode' => isset($detail['sc1_itemcode'])?$detail['sc1_itemcode']:NULL,
                         ':sc1_itemname' => isset($detail['sc1_itemname'])?$detail['sc1_itemname']:NULL,
-                        ':sc1_quantity' => is_numeric($detail['sc1_quantity']) ? ( $detail['sc1_quantity'] * $CANTUOMPURCHASE ) : 0,
+                        ':sc1_quantity' => is_numeric($detail['sc1_quantity']) ? $detail['sc1_quantity']: 0,
                         ':sc1_uom' => isset($detail['sc1_uom'])?$detail['sc1_uom']:NULL,
                         ':sc1_whscode' => isset($detail['sc1_whscode'])?$detail['sc1_whscode']:NULL,
                         ':sc1_price' => is_numeric($detail['sc1_price'])?$detail['sc1_price']:0,

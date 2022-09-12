@@ -33,6 +33,8 @@ class PdfPaymentRecived extends REST_Controller {
 
 				$DECI_MALES =  $this->generic->getDecimals();
 
+				exit;
+
         $Data = $this->post();
 				$Data = $Data['bpr_docentry'];
 
@@ -83,6 +85,7 @@ class PdfPaymentRecived extends REST_Controller {
 				0 cuenta_bene,
 				t1.pr1_docnum ,
 				t1.pr1_doctype,
+				t0.bpr_comments,
 				case
 						when t6.bpr_doctype = t1.pr1_doctype then 'Anticipo'
 						else t5.mdt_docname
@@ -178,6 +181,32 @@ class PdfPaymentRecived extends REST_Controller {
 
 						return;
 				}
+
+				$sqlCuentaContable = "SELECT acc_name, acc_code
+															FROM mac1
+															INNER JOIN dacc
+															ON ac1_account  = acc_code
+															WHERE ac1_font_key = :ac1_font_key
+															AND ac1_font_type = :ac1_font_type
+															AND ac1_debit != :ac1_debit";
+
+				$resSqlCuentaContable = $this->pedeo->queryTable($sqlCuentaContable, array(
+					 ':ac1_font_key'  => $contenidoOC[0]['pr1_docnum'],
+					 ':ac1_font_type' => $contenidoOC[0]['pr1_doctype'],
+					 ':ac1_debit' 		=> 0
+				));
+
+				if(!isset($resSqlCuentaContable[0])){
+						$respuesta = array(
+							 'error' => true,
+							 'data'  => $resSqlCuentaContable,
+							 'mensaje' =>'no se encontro el documento'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
 				// print_r($contenidoOC);exit();die();
 
 				$totaldetalle = '';
@@ -187,7 +216,6 @@ class PdfPaymentRecived extends REST_Controller {
 					$detalle = '<td>'.$value['tipo'].'</td>
 											<td>'.$value['docnum'].'</td>
 											<td>'.$this->dateformat->Date($value['docdate']).'</td>
-											<td>'.$value['comentario'].'</td>
 											<td>'.number_format($value['base'], $DECI_MALES, ',', '.').'</td>
 											<td>'.number_format($value['iva'], $DECI_MALES, ',', '.').'</td>
 											<td>'.number_format($value['exento'], $DECI_MALES, ',', '.').'</td>
@@ -277,7 +305,7 @@ class PdfPaymentRecived extends REST_Controller {
 					<td><b>nombre cliente:</b> <span>'.$contenidoOC[0]['bpr_cardname'].'</span></p></td>
 				</tr>
 				<tr>
-					<td><b>cuenta:</b> <span>'.$contenidoOC[0]['cuenta_bene'].'</span></p></td>
+					<td><b>cuenta:</b> <span>'.$resSqlCuentaContable[0]['acc_name']." ".$resSqlCuentaContable[0]['acc_name'].'</span></p></td>
 				</tr>
 
 				</table>
@@ -297,7 +325,6 @@ class PdfPaymentRecived extends REST_Controller {
           <th><b>TIPO DOC</b></th>
 					<th><b># DOC</b></th>
 					<th><b>FECHA DOC</b></th>
-					<th><b>COMENTARIO</b></th>
 					<th><b>TOTAL BASE</b></th>
 					<th><b>TOTAL IVA</b></th>
 					<th><b>TOTAL EXE</b></th>
@@ -326,7 +353,7 @@ class PdfPaymentRecived extends REST_Controller {
 
 				<table width="100%">
 					<tr>
-						<td style="text-align: left;"><b>COMENTARIO:</b><span>'.$contenidoOC[0]['bpr_memo'].'</td>
+						<td style="text-align: left;"><b>COMENTARIO:</b><span>'.$contenidoOC[0]['bpr_memo']." / ".$contenidoOC[0]['bpr_comments'].'</td>
 						<td></td>
 						<td style="text-align: left;"><b>TASA:</b><span>'.number_format($contenidoOC[0]['tasa'], $DECI_MALES, ',', '.').'</td>
 					</tr>

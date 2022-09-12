@@ -550,7 +550,7 @@ class SalesDv extends REST_Controller {
           ':dv1_docentry' => $resInsert,
           ':dv1_itemcode' => isset($detail['dv1_itemcode'])?$detail['dv1_itemcode']:NULL,
           ':dv1_itemname' => isset($detail['dv1_itemname'])?$detail['dv1_itemname']:NULL,
-          ':dv1_quantity' => is_numeric($detail['dv1_quantity']) ? ( $detail['dv1_quantity'] * $CANTUOMSALE ) : 0,
+          ':dv1_quantity' => is_numeric($detail['dv1_quantity']) ? $detail['dv1_quantity'] : 0,
           ':dv1_uom' => isset($detail['dv1_uom'])?$detail['dv1_uom']:NULL,
           ':dv1_whscode' => isset($detail['dv1_whscode'])?$detail['dv1_whscode']:NULL,
           ':dv1_price' => is_numeric($detail['dv1_price'])?$detail['dv1_price']:0,

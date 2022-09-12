@@ -1213,8 +1213,9 @@ class Reports extends REST_Controller {
 	public function  logBook_post(){
 		$Data = $this->post();
 
-    if( !isset($Data['dvf_docdate']) OR
-        !isset($Data['dvf_duedate'])
+    if( !isset($Data['inicio']) OR
+        !isset($Data['fin'])OR
+				!isset($Data['tipo'])
       ){
       $this->response(array(
         'error'  => true,
@@ -1226,14 +1227,35 @@ class Reports extends REST_Controller {
     }
 
 		$sqlSelect = "SELECT
-									fv.dvf_docentry, fv.dvf_docdate, dmdt.mdt_docname as dvf_doctype, fv.dvf_docnum, fv.dvf_correl,
-									fv.dvf_cardcode, fv.dvf_cardname, dvf_doctotal, '' excentas, fv.dvf_baseamnt, fv.dvf_taxtotal
+									fv.dvf_docentry as docentry, fv.dvf_docdate as docdate, dmdt.mdt_docname as doctype, fv.dvf_docnum as docnum , fv.dvf_correl as correl,
+									fv.dvf_cardcode as cardcode, fv.dvf_cardname as cardname, dvf_doctotal as doctotal, '' excentas, fv.dvf_baseamnt as baseamnt, fv.dvf_taxtotal as taxtotal,
+									fv.dvf_currency as moneda
 									from dvfv fv
 									inner join dmdt
 									on dvf_doctype = mdt_doctype
-									WHERE fv.dvf_docdate >= :dvf_docdate and fv.dvf_duedate <=:dvf_duedate";
+									WHERE fv.dvf_".$Data['tipo']." between :dvf_docdate and :dvf_duedate
+									-- NOTA CREDITO
+									union all
+									SELECT
+									nc.vnc_docentry as docentry, nc.vnc_docdate as docdate, dmdt.mdt_docname as doctype, nc.vnc_docnum as docnum, 0 as correl,
+									nc.vnc_cardcode as cardcode, nc.vnc_cardname as cardname, vnc_doctotal as doctotal, '' excentas, nc.vnc_baseamnt as baseamnt, nc.vnc_taxtotal as taxtotal,
+									nc.vnc_currency as moneda
+									from dvnc nc
+									inner join dmdt
+									on vnc_doctype = mdt_doctype
+									WHERE nc.vnc_".$Data['tipo']." between :dvf_docdate and :dvf_duedate
+									-- NOTA DEBITO
+									union all
+									SELECT
+									nd.vnd_docentry as docentry, nd.vnd_docdate as docdate, dmdt.mdt_docname as doctype, nd.vnd_docnum as docnum, 0 as correl,
+									nd.vnd_cardcode as cardcode, nd.vnd_cardname as cardname, vnd_doctotal as doctotal, '' excentas, nd.vnd_baseamnt as baseamnt, nd.vnd_taxtotal as taxtotal,
+									nd.vnd_currency as moneda
+									from dvnd nd
+									inner join dmdt
+									on vnd_doctype = mdt_doctype
+									WHERE nd.vnd_".$Data['tipo']." between :dvf_docdate and :dvf_duedate";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":dvf_docdate" =>$Data['dvf_docdate'],":dvf_duedate"=>$Data['dvf_duedate']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":dvf_docdate" =>$Data['inicio'],":dvf_duedate"=>$Data['fin']));
 		if(isset($resSelect[0])){
 
 			$respuesta = array(
@@ -1258,8 +1280,9 @@ class Reports extends REST_Controller {
 	public function  logShoppingBook_post(){
 		$Data = $this->post();
 
-		if( !isset($Data['cfc_docdate']) OR
-				!isset($Data['cfc_duedate'])
+		if( !isset($Data['inicio']) OR
+				!isset($Data['fin']) OR
+				!isset($Data['tipo'])
 			){
 			$this->response(array(
 				'error'  => true,
@@ -1270,15 +1293,45 @@ class Reports extends REST_Controller {
 			return ;
 		}
 
-		$sqlSelect = "SELECT
-									fc.cfc_docentry, fc.cfc_docdate, dmdt.mdt_docname as cfc_doctype, fc.cfc_docnum, 0 as cfc_correl,
-									fc.cfc_cardcode, fc.cfc_cardname, cfc_doctotal, '' excentas, fc.cfc_baseamnt, fc.cfc_taxtotal
+		$sqlSelect = "SELECT fc.cfc_docentry as docentry, fc.cfc_docdate as docdate, dmdt.mdt_docname as cfc_doctype, fc.cfc_docnum as docnum, 0 as cfc_correl,
+									fc.cfc_cardcode as cardcode, fc.cfc_cardname as cardname, cfc_doctotal as  doctotal, '' excentas, fc.cfc_baseamnt as baseamnt, fc.cfc_taxtotal as taxtotal,
+									fc.cfc_correl as referencia,fc.cfc_tax_control_num as numerofiscal,
+									coalesce(round(get_ret(fc.cfc_doctype,fc.cfc_docentry),get_decimals()), 0 ) as totalretencion,
+									get_retname(fc.cfc_doctype,fc.cfc_docentry) as retenciones,
+									coalesce(round(get_retiva(fc.cfc_doctype,fc.cfc_docentry),get_decimals()), 0 ) as retencioniva,
+									fc.cfc_currency  as moneda
 									from dcfc fc
 									inner join dmdt
 									on cfc_doctype = mdt_doctype
-									WHERE fc.cfc_docdate >= :cfc_docdate and fc.cfc_duedate <=:cfc_duedate";
+									WHERE  fc.cfc_".$Data['tipo']." between :cfc_docdate and :cfc_duedate
+									--NOTAS CREDITO
+									union all
+									SELECT nc.cnc_docentry as docentry, nc.cnc_docdate as docdate, dmdt.mdt_docname as cnc_doctype, nc.cnc_docnum as docnum, 0 as cnc_correl,
+									nc.cnc_cardcode as cardcode, nc.cnc_cardname as cardname, cnc_doctotal, '' excentas, nc.cnc_baseamnt as baseamnt, nc.cnc_taxtotal as taxtotal,
+									'' as referencia, '' as numerofiscal,
+									coalesce(round(get_ret(nc.cnc_doctype,nc.cnc_docentry),get_decimals()), 0 ) as totalretencion,
+									get_retname(nc.cnc_doctype,nc.cnc_docentry) as retenciones,
+									coalesce(round(get_retiva(nc.cnc_doctype,nc.cnc_docentry),get_decimals()), 0 ) as retencioniva,
+									nc.cnc_currency  as moneda
+									from dcnc nc
+									left join dmdt
+									on cnc_doctype = mdt_doctype
+									WHERE  nc.cnc_".$Data['tipo']." between :cfc_docdate and :cfc_duedate
+									--NOTAS DEBITO
+									union all
+									SELECT nd.cnd_docentry as docentry, nd.cnd_docdate as docdate, dmdt.mdt_docname as cnd_doctype, nd.cnd_docnum as docnum, 0 as cnd_correl,
+									nd.cnd_cardcode as cardcode, nd.cnd_cardname as cardname, cnd_doctotal as doctotal, '' excentas, nd.cnd_baseamnt as baseamnt, nd.cnd_taxtotal as taxtotal,
+									'' as referencia, '' as numerofiscal,
+									coalesce(round(get_ret(nd.cnd_doctype,nd.cnd_docentry),get_decimals()), 0 ) as totalretencion,
+									get_retname(nd.cnd_doctype,nd.cnd_docentry) as retenciones,
+									coalesce(round(get_retiva(nd.cnd_doctype,nd.cnd_docentry),get_decimals()), 0 ) as retencioniva,
+									nd.cnd_currency  as moneda
+									from dcnd nd
+									left join dmdt
+									on cnd_doctype = mdt_doctype
+									WHERE  nd.cnd_".$Data['tipo']." between :cfc_docdate and :cfc_duedate";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":cfc_docdate" =>$Data['cfc_docdate'],":cfc_duedate"=>$Data['cfc_duedate']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":cfc_docdate" =>$Data['inicio'],":cfc_duedate"=>$Data['fin']));
 		if(isset($resSelect[0])){
 
 			$respuesta = array(

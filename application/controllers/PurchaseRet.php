@@ -605,7 +605,7 @@ class PurchaseRet extends REST_Controller {
                         ':dc1_docentry' => $resInsert,
                         ':dc1_itemcode' => isset($detail['dc1_itemcode'])?$detail['dc1_itemcode']:NULL,
                         ':dc1_itemname' => isset($detail['dc1_itemname'])?$detail['dc1_itemname']:NULL,
-                        ':dc1_quantity' => is_numeric($detail['dc1_quantity']) ? ( $detail['dc1_quantity'] * $CANTUOMPURCHASE ) : 0,
+                        ':dc1_quantity' => is_numeric($detail['dc1_quantity']) ? $detail['dc1_quantity']: 0,
                         ':dc1_uom' => isset($detail['dc1_uom'])?$detail['dc1_uom']:NULL,
                         ':dc1_whscode' => isset($detail['dc1_whscode'])?$detail['dc1_whscode']:NULL,
                         ':dc1_price' => is_numeric($detail['dc1_price'])?$detail['dc1_price']:0,

@@ -23,6 +23,7 @@ class PayR extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('DateFormat');
 		$this->load->library('generic');
 
 	}
@@ -91,7 +92,11 @@ class PayR extends REST_Controller {
         t0.bpr_datetransfer fecha_transf,
         t0.bpr_doctotal total_doc,
         t0.bpr_currency moneda,
+				t0.bpr_docentry,
+				t0.bpr_doctype,
         t1.pr1_doctype origen,
+				t0.bpr_comments,
+				t0.bpr_reftransfer,
         substr(t2.mdt_docname,1,1)||substr(t2.mdt_docname,7,1) tipo,
         case
           when t1.pr1_doctype = 15 then (select aa.dvf_docnum from dvfv aa where aa.dvf_docentry = t1.pr1_docentry)
@@ -124,14 +129,40 @@ class PayR extends REST_Controller {
 						return;
 				}
 
+				$sqlCuentaContable = "SELECT acc_name, acc_code
+															FROM mac1
+															INNER JOIN dacc
+															ON ac1_account  = acc_code
+															WHERE ac1_font_key = :ac1_font_key
+															AND ac1_font_type = :ac1_font_type
+															AND ac1_debit != :ac1_debit";
+
+				$resSqlCuentaContable = $this->pedeo->queryTable($sqlCuentaContable, array(
+					 ':ac1_font_key'  => $contenidoPAYE[0]['bpr_docentry'],
+					 ':ac1_font_type' => $contenidoPAYE[0]['bpr_doctype'],
+					 ':ac1_debit' 		=> 0
+				));
+
+				if(!isset($resSqlCuentaContable[0])){
+						$respuesta = array(
+							 'error' => true,
+							 'data'  => $resSqlCuentaContable,
+							 'mensaje' =>'no se encontro el documento'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+
 
 				$totaldetalle = '';
 				foreach ($contenidoPAYE as $key => $value) {
 					// code...
 					$detalle = '<td>'.$value['tipo'].'</td>
-                      <td>'.$value['docnum'].'</td>
-											<td>'.$value['fecha_origen'].'</td>
-											<td>'.$value['fecha_ven'].'</td>
+                      <td>'.$value['numero_doc'].'</td>
+											<td>'.$this->dateformat->Date($value['fecha_origen']).'</td>
+											<td>'.$this->dateformat->Date($value['fecha_ven']).'</td>
 											<td>'.$value['dias_ven'].'</td>
 											<td>$'.number_format($value['total_doc_origen'], $DECI_MALES, ',', '.').'</td>
 											<td>$'.number_format($value['total_apli'], $DECI_MALES, ',', '.').'</td>
@@ -182,7 +213,7 @@ class PayR extends REST_Controller {
           </th>
           <th>
             <p><b>FECHA DE DOCUMENTO<b></p>
-            <p>'.$contenidoPAYE[0]['fecha_doc'].'</p>
+            <p>'.$this->dateformat->Date($contenidoPAYE[0]['fecha_doc']).'</p>
           </th>
         </tr>
         <tr>
@@ -207,7 +238,7 @@ class PayR extends REST_Controller {
           </th>
           <th>
             <p><b>FECHA DE CREACION <b></p>
-            <p>'.$contenidoPAYE[0]['fecha_cre'].'</p>
+            <p>'.$this->dateformat->Date($contenidoPAYE[0]['fecha_cre']).'</p>
           </th>
         </tr>
         </table>
@@ -252,13 +283,17 @@ class PayR extends REST_Controller {
             <td style="text-align: left;"><b>TOTAL PAGADO: </b><span>$'.number_format($contenidoPAYE[0]['total_doc'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: left;"><b>REFERENCIA: </b><span>'.$contenidoPAYE[0]['referencia'].'</span></p></td>
+            <td style="text-align: left;"><b>REFERENCIA: </b><span>'.$contenidoPAYE[0]['bpr_reftransfer'].'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: left;"><b>COMENTARIO APLICADO: </b><span>'.$contenidoPAYE[0]['comentarios'].'</span></span></p></td>
+            <td style="text-align: left;"><b>COMENTARIO APLICADO: </b><span>'.$contenidoPAYE[0]['comentarios']." / ".$contenidoPAYE[0]['bpr_comments'].'</span></span></p></td>
         </tr>
         <tr>
-            <td style="text-align: left;"><b>FECHA DE TRANSFERENCIA: </b><span>'.$contenidoPAYE[0]['fecha_transf'].'</span></p></td>
+            <td style="text-align: left;"><b>FECHA DE TRANSFERENCIA: </b><span>'.$this->dateformat->Date($contenidoPAYE[0]['fecha_transf']).'</span></p></td>
+        </tr>
+
+				<tr>
+            <td style="text-align: left;"><b>CUENTA: </b><span>'.$resSqlCuentaContable[0]['acc_code']." ".$resSqlCuentaContable[0]['acc_name'].'</span></p></td>
         </tr>
 
         </table>

@@ -603,7 +603,7 @@ class Quotation extends REST_Controller {
                         ':vc1_docentry' => $resInsert,
                         ':vc1_itemcode' => isset($detail['vc1_itemcode'])?$detail['vc1_itemcode']:NULL,
                         ':vc1_itemname' => isset($detail['vc1_itemname'])?$detail['vc1_itemname']:NULL,
-                        ':vc1_quantity' => is_numeric($detail['vc1_quantity']) ? ( $detail['vc1_quantity'] * $CANTUOMSALE ) : 0,
+                        ':vc1_quantity' => is_numeric($detail['vc1_quantity']) ? $detail['vc1_quantity']: 0,
                         ':vc1_uom' => isset($detail['vc1_uom'])?$detail['vc1_uom']:NULL,
                         ':vc1_whscode' => isset($detail['vc1_whscode'])?$detail['vc1_whscode']:NULL,
                         ':vc1_price' => is_numeric($detail['vc1_price'])?$detail['vc1_price']:0,

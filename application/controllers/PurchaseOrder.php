@@ -1132,12 +1132,12 @@ class PurchaseOrder extends REST_Controller {
 											pap_basetype,
 											pap_baseentry
 										FROM dpap
-										WHERE pap_origen = 11 and pap_doctype = :pap_doctype
+										WHERE pap_origen = ".$Data['cpo_doctype']." and pap_doctype = :pap_doctype
 										and pap_docentry = :pap_docentry";
 	
 							$result_aprov = $this->pedeo->queryTable($sql_aprov,array(
-								':pap_doctype' => $Data['coc_basetype'],
-								':pap_docentry' => $Data['coc_baseentry']
+								':pap_doctype' => $Data['cpo_doctype'],
+								':pap_docentry' => $Data['cpo_baseentry']
 							));
 	
 							// print_r($result_aprov);exit();die();

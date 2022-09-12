@@ -20,6 +20,7 @@ class StockAnalysis extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -143,10 +144,10 @@ class StockAnalysis extends REST_Controller {
 									{$prefix}_docnum docnum,
 									{$detailPrefix}_itemname item_name,
 									{$prefix}_cardname cliente_name,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_linetotal),{MAIN}),get_decimals()) )) * {$neg}) val_factura,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),get_decimals()) )) * {$neg}) price,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_vatsum),{MAIN}),get_decimals()) )) * {$neg}) val_impuesto,
-									concat({CURR},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),get_decimals()) )) * {$neg}) total_docums,
+									concat({CURR}, get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, avg({$detailPrefix}_linetotal * {$neg} ), {MAIN} ) )   val_factura,
+									concat({CURR}, get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, avg({$detailPrefix}_price::numeric * {$neg} ), {MAIN} ) )  price,
+									concat({CURR}, get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, avg({$detailPrefix}_vatsum * {$neg}), {MAIN} ) )   val_impuesto,
+									concat({CURR}, get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, (avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum) * {$neg} ),{MAIN} ) )  total_docums,
 									mga_name,
 									get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
 									{$prefix}_createby createby,
@@ -154,8 +155,8 @@ class StockAnalysis extends REST_Controller {
 									(SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
 									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado,
 									{$detailPrefix}_uom  unidad
-									".(($table =="dcfc")? ",mrt_name": ",''" )." rt_name,
-									".(($table =="dcfc")? "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg(crt_totalrt),{MAIN}),get_decimals()))": "concat({CURR},round(0,2))" )." rt_total
+									".(($table =="dcfc")? ",get_retnameperline(cfc_doctype,cfc_docentry,fc1_linenum)": ",'N/A'" )." rt_name,
+									".(($table =="dcfc")? "case when get_dynamic_conversion({CURR},cfc_currency,cfc_docdate,get_retperline(cfc_doctype,cfc_docentry,fc1_linenum),{CURR}) > 0 then  concat({CURR},get_dynamic_conversion({CURR},{$prefix}_currency,{$prefix}_docdate,get_retperline(cfc_doctype,cfc_docentry,fc1_linenum),{MAIN})) else '' end ": "concat({CURR},round(0,2))" )." rt_total
 									from {$table}
 									join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 									join dmdt on {$prefix}_doctype = mdt_doctype
@@ -166,7 +167,7 @@ class StockAnalysis extends REST_Controller {
 									".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum
 									left join dmrt on mrt_id = crt_type" : "")."
 									where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-									group by {$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "mrt_name,crt_totalrt,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
+									group by {$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_doctype,cfc_docentry,fc1_linenum,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
 									break;
 						}
 
@@ -280,10 +281,10 @@ class StockAnalysis extends REST_Controller {
 		  {$prefix}_docnum docnum,
 		  {$detailPrefix}_itemname item_name,
 		  {$prefix}_cardname cliente_name,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_linetotal),{MAIN}),get_decimals()) )) * {$neg}) val_factura,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_price::numeric),{MAIN}),get_decimals()) )) * {$neg}) price,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,avg({$detailPrefix}_vatsum),{MAIN}),get_decimals()) )) * {$neg}) val_impuesto,
-		  concat({$convertir},round((round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,(avg({$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum)),{MAIN}),get_decimals()) )) * {$neg}) total_docums,
+		  concat({$convertir}, get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, avg( {$detailPrefix}_linetotal * {$neg} ),{MAIN} ) )  val_factura,
+		  concat({$convertir}, get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, avg( {$detailPrefix}_price::numeric * {$neg} ),{MAIN} ))  price,
+		  concat({$convertir}, get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, avg( {$detailPrefix}_vatsum * {$neg} ),{MAIN} ) )  val_impuesto,
+		  concat({$convertir}, get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, ( avg( {$detailPrefix}_linetotal) + avg({$detailPrefix}_vatsum) * {$neg} ),{MAIN}) ) total_docums,
 		  get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
 		  mga_name,
 		  {$prefix}_createby createby,
@@ -291,8 +292,8 @@ class StockAnalysis extends REST_Controller {
 		  (SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = {$prefix}_createby) us_name,
 		  (SELECT {$originPre}_docnum FROM {$origin} WHERE {$originPre}_docentry  = {$prefix}_baseentry AND {$originPre}_doctype  = {$prefix}_basetype) doc_afectado,
 		  {$detailPrefix}_uom  unidad
-		  ".(($table =="dcfc")? ",mrt_name": ",''" )." rt_name,
-		  ".(($table =="dcfc")? "concat({CURR},round(get_dynamic_conversion({CURR},{$prefix}_currency,{$prefix}_docdate,avg(crt_totalrt),{MAIN}),get_decimals()))": "concat({CURRD},round(0,2))" )." rt_total
+		  ".(($table =="dcfc")? ",get_retnameperline(cfc_doctype,cfc_docentry,fc1_linenum)": ",'N/A'" )." rt_name,
+		  ".(($table =="dcfc")? " case when get_dynamic_conversion({CURR},cfc_currency,cfc_docdate,get_retperline(cfc_doctype,cfc_docentry,fc1_linenum),{CURR}) > 0 then  concat({CURR},get_dynamic_conversion({CURR},{$prefix}_currency,{$prefix}_docdate,get_retperline(cfc_doctype,cfc_docentry,fc1_linenum),{MAIN})) else '' end ": "concat({CURRD},round(0,2))" )." rt_total
 		  from {$table}
 		  join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 		  join dmdt on {$prefix}_doctype = mdt_doctype
@@ -304,7 +305,7 @@ class StockAnalysis extends REST_Controller {
 		  ".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum
 			left join dmrt on mrt_id = crt_type" : "")."
 		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card}
-		  group by {$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "mrt_name,crt_totalrt,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
+		  group by {$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_docentry,fc1_linenum,cfc_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
 		  UNION ALL
 		  ";
 		}

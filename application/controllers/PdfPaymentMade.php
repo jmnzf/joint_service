@@ -80,9 +80,13 @@ class PdfPaymentMade extends REST_Controller {
 											    t0.bpe_docdate,
 													t0.bpe_datetransfer,
 											    t0.bpe_docnum,
+													t0.bpe_reftransfer,
 											    0 cuenta_bene,
 											    t1.pe1_docnum ,
 											    t1.pe1_doctype,
+													t0.bpe_comments,
+													t0.bpe_doctype,
+													t0.bpe_docentry,
 											    case
 														when t6.bpe_doctype = t1.pe1_doctype then 'Anticipo'
 														else t5.mdt_docname
@@ -115,7 +119,7 @@ class PdfPaymentMade extends REST_Controller {
 											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_baseamnt
 											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_baseamnt
 											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_baseamnt
-											        when t6.bpe_doctype = t1.pe1_doctype then t6.bpe_doctotal * -1
+											        when t6.bpe_doctype = t1.pe1_doctype then 0
 											    end base,
 											    case
 											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_taxtotal
@@ -129,18 +133,24 @@ class PdfPaymentMade extends REST_Controller {
 											        when t2.cfc_doctype = t1.pe1_doctype then t2.cfc_baseamnt + t2.cfc_taxtotal
 											        when t3.cnc_doctype = t1.pe1_doctype then t3.cnc_baseamnt + t3.cnc_taxtotal
 											        when t4.cnd_doctype =  t1.pe1_doctype then t4.cnd_baseamnt + t4.cnd_taxtotal
-											        when t6.bpe_doctype = t1.pe1_doctype then t6.bpe_doctotal * -1
+											        when t6.bpe_doctype = t1.pe1_doctype then 0
 											    end neto,
 											    coalesce((select sum(a.crt_basert) from fcrt a
 											    where a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype and a.crt_type = 3),0)  base_ret_iva,
+													coalesce((select sum(a.crt_totalrt) from fcrt a
+													where a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype and a.crt_type = 3),0)  crt_totalrtiva,
 											    (select a.mrt_tasa from dmrt a inner join fcrt b on a.mrt_id = b.crt_typert
 											    where b.crt_baseentry = t2.cfc_docentry and b.crt_basetype = t2.cfc_doctype and b.crt_type = 3 ) porcentaje_ret_iva,
 											    coalesce((select sum(a.crt_basert) from fcrt a
 											    where a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype and a.crt_type = 2),0) base_ret_islr,
+													coalesce((select sum(a.crt_totalrt) from fcrt a
+													where a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype and a.crt_type = 2),0) crt_totalrtislr,
 											    (select a.mrt_tasa from dmrt a inner join fcrt b on a.mrt_id = b.crt_typert
 											    where b.crt_baseentry = t2.cfc_docentry and b.crt_basetype = t2.cfc_doctype and b.crt_type = 2) porcentaje_ret_islr,
 											    coalesce((select sum(a.crt_basert) from fcrt a
 											    where a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype and a.crt_type = 1),0) base_ret_ipm,
+													coalesce((select sum(a.crt_totalrt) from fcrt a
+												 	where a.crt_baseentry = t2.cfc_docentry and a.crt_basetype = t2.cfc_doctype and a.crt_type = 1),0) crt_totalrtipm,
 											    (select a.mrt_tasa from dmrt a inner join fcrt b on a.mrt_id = b.crt_typert
 											    where b.crt_baseentry = t2.cfc_docentry and b.crt_basetype = t2.cfc_doctype and b.crt_type = 1) porcentaje_ret_ipm,
 											    case
@@ -177,6 +187,32 @@ class PdfPaymentMade extends REST_Controller {
 
 						return;
 				}
+
+				$sqlCuentaContable = "SELECT acc_name, acc_code
+															FROM mac1
+															INNER JOIN dacc
+															ON ac1_account  = acc_code
+															WHERE ac1_font_key = :ac1_font_key
+															AND ac1_font_type = :ac1_font_type
+															AND ac1_debit = :ac1_debit";
+
+				$resSqlCuentaContable = $this->pedeo->queryTable($sqlCuentaContable, array(
+					 ':ac1_font_key'  => $contenidoOC[0]['bpe_docentry'],
+					 ':ac1_font_type' => $contenidoOC[0]['bpe_doctype'],
+					 ':ac1_debit' 		=> 0
+				));
+
+				if(!isset($resSqlCuentaContable[0])){
+						$respuesta = array(
+							 'error' => true,
+							 'data'  => $resSqlCuentaContable,
+							 'mensaje' =>'no se encontro el documento'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
 				// print_r($contenidoOC);exit();die();
 
 				$totaldetalle = '';
@@ -186,18 +222,17 @@ class PdfPaymentMade extends REST_Controller {
 					$detalle = '<td>'.$value['tipo'].'</td>
 											<td>'.$value['docnum'].'</td>
 											<td>'.$this->dateformat->Date($value['docdate']).'</td>
-											<td>'.$value['comentario'].'</td>
 											<td>'.number_format($value['base'], $DECI_MALES, ',', '.').'</td>
 											<td>'.number_format($value['iva'], $DECI_MALES, ',', '.').'</td>
 											<td>'.number_format($value['exento'], $DECI_MALES, ',', '.').'</td>
 											<td>'.$value['porcentaje_ret_iva'].'</td>
-											<td>'.number_format($value['base_ret_iva'], $DECI_MALES, ',', '.').'</td>
+											<td>'.number_format($value['crt_totalrtiva'], $DECI_MALES, ',', '.').'</td>
 											<td>'.number_format(($value['neto'] + $value['exento']) - $value['base_ret_iva'] , $DECI_MALES, ',', '.').'</td>
 											<td>'.number_format($value['base'], $DECI_MALES, ',', '.').'</td>
 											<td>'.$value['porcentaje_ret_islr'].'</td>
-											<td>'.number_format($value['base_ret_islr'], $DECI_MALES, ',', '.').'</td>
+											<td>'.number_format($value['crt_totalrtislr'], $DECI_MALES, ',', '.').'</td>
 											<td>'.$value['porcentaje_ret_ipm'].'</td>
-											<td>'.number_format($value['base_ret_ipm'], $DECI_MALES, ',', '.').'</td>
+											<td>'.number_format($value['crt_totalrtipm'], $DECI_MALES, ',', '.').'</td>
 											<td>'.number_format($value['total'], $DECI_MALES, ',', '.').'</td>
 											<td>'.number_format($value['pe1_vlrpaid'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
@@ -274,7 +309,9 @@ class PdfPaymentMade extends REST_Controller {
 					<td><b>nombre proveedor:</b> <span>'.$contenidoOC[0]['bpe_cardname'].'</span></p></td>
 				</tr>
 				<tr>
-					<td><b>cuenta:</b> <span>'.$contenidoOC[0]['cuenta_bene'].'</span></p></td>
+					<td><b>cuenta:</b> <span>'.$resSqlCuentaContable[0]['acc_code']."  ".$resSqlCuentaContable[0]['acc_name'].'</span></p></td>
+					<td>&nbsp;</td>
+					<td><b>referencia:</b> <span>'.$contenidoOC[0]['bpe_reftransfer'].'</span></p></td>
 				</tr>
 
 				</table>
@@ -294,7 +331,6 @@ class PdfPaymentMade extends REST_Controller {
           <th><b>TIPO DOC</b></th>
 					<th><b># DOC</b></th>
 					<th><b>FECHA DOC</b></th>
-					<th><b>COMENTARIO</b></th>
 					<th><b>TOTAL BASE</b></th>
 					<th><b>TOTAL IVA</b></th>
 					<th><b>TOTAL EXE</b></th>
@@ -323,7 +359,7 @@ class PdfPaymentMade extends REST_Controller {
 
 				<table width="100%">
 					<tr>
-						<td style="text-align: left;"><b>COMENTARIO:</b><span>'.$contenidoOC[0]['bpe_memo'].'</td>
+						<td style="text-align: left;"><b>COMENTARIO:</b><span>'.$contenidoOC[0]['bpe_memo']."  /  ".$contenidoOC[0]['bpe_comments'].'</td>
 						<td></td>
 						<td style="text-align: left;"><b>TASA:</b><span>'.number_format($contenidoOC[0]['tasa'], $DECI_MALES, ',', '.').'</td>
 					</tr>

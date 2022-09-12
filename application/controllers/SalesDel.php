@@ -694,7 +694,7 @@ class SalesDel extends REST_Controller {
                         ':em1_docentry' => $resInsert,
                         ':em1_itemcode' => isset($detail['em1_itemcode'])?$detail['em1_itemcode']:NULL,
                         ':em1_itemname' => isset($detail['em1_itemname'])?$detail['em1_itemname']:NULL,
-                        ':em1_quantity' => is_numeric($detail['em1_quantity']) ?  ( $detail['em1_quantity'] * $CANTUOMSALE ) : 0,
+                        ':em1_quantity' => is_numeric($detail['em1_quantity']) ? $detail['em1_quantity']: 0,
                         ':em1_uom' => isset($detail['em1_uom'])?$detail['em1_uom']:NULL,
                         ':em1_whscode' => isset($detail['em1_whscode'])?$detail['em1_whscode']:NULL,
                         ':em1_price' => is_numeric($detail['em1_price'])?$detail['em1_price']:0,

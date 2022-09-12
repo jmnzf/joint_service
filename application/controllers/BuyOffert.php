@@ -946,7 +946,7 @@ public function getOffertDetailBySN_get(){
 												':oc1_docentry' => $resInsert,
 												':oc1_itemcode' => isset($detail['oc1_itemcode'])?$detail['oc1_itemcode']:NULL,
 												':oc1_itemname' => isset($detail['oc1_itemname'])?$detail['oc1_itemname']:NULL,
-												':oc1_quantity' => is_numeric($detail['oc1_quantity']) ? ( $detail['oc1_quantity'] * $CANTUOMPURCHASE ) : 0,
+												':oc1_quantity' => is_numeric($detail['oc1_quantity']) ? $detail['oc1_quantity'] : 0,
 												':oc1_uom' => isset($detail['oc1_uom'])?$detail['oc1_uom']:NULL,
 												':oc1_whscode' => isset($detail['oc1_whscode'])?$detail['oc1_whscode']:NULL,
 												':oc1_price' => is_numeric($detail['oc1_price'])?$detail['oc1_price']:0,
@@ -1078,7 +1078,7 @@ public function getOffertDetailBySN_get(){
 										pap_basetype,
 										pap_baseentry
 									FROM dpap
-									WHERE pap_origen = 11 and pap_doctype = :pap_doctype
+									WHERE pap_origen = ".$Data['coc_doctype']." and pap_doctype = :pap_doctype
 									and pap_docentry = :pap_docentry";
 
 						$result_aprov = $this->pedeo->queryTable($sql_aprov,array(

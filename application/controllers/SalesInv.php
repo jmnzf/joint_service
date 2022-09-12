@@ -695,7 +695,7 @@ class SalesInv extends REST_Controller {
 													':fv1_docentry' => $resInsert,
 													':fv1_itemcode' => isset($detail['fv1_itemcode'])?$detail['fv1_itemcode']:NULL,
 													':fv1_itemname' => isset($detail['fv1_itemname'])?$detail['fv1_itemname']:NULL,
-													':fv1_quantity' => is_numeric($detail['fv1_quantity']) ? ( $detail['fv1_quantity'] * $CANTUOMSALE ) : 0,
+													':fv1_quantity' => is_numeric($detail['fv1_quantity']) ? $detail['fv1_quantity']: 0,
 													':fv1_uom' => isset($detail['fv1_uom'])?$detail['fv1_uom']:NULL,
 													':fv1_whscode' => isset($detail['fv1_whscode'])?$detail['fv1_whscode']:NULL,
 													':fv1_price' => is_numeric($detail['fv1_price'])?$detail['fv1_price']:0,
@@ -3511,7 +3511,7 @@ class SalesInv extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = "SELECT vfv1.*, dmar.dma_series_code  
+				$sqlSelect = "SELECT vfv1.*, dmar.dma_series_code
 											FROM vfv1
 											INNER JOIN dmar
 											ON cfc1.fc1_itemcode = dmar.dma_item_code

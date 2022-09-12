@@ -637,7 +637,7 @@ class PurchaseInv extends REST_Controller {
                         ':fc1_docentry' => $resInsert,
                         ':fc1_itemcode' => isset($detail['fc1_itemcode'])?$detail['fc1_itemcode']:NULL,
                         ':fc1_itemname' => isset($detail['fc1_itemname'])?$detail['fc1_itemname']:NULL,
-                        ':fc1_quantity' => is_numeric($detail['fc1_quantity']) ? ( $detail['fc1_quantity'] * $CANTUOMPURCHASE ) : 0,
+                        ':fc1_quantity' => is_numeric($detail['fc1_quantity']) ? $detail['fc1_quantity']: 0,
                         ':fc1_uom' => isset($detail['fc1_uom'])?$detail['fc1_uom']:NULL,
                         ':fc1_whscode' => isset($detail['fc1_whscode'])?$detail['fc1_whscode']:NULL,
                         ':fc1_price' => is_numeric($detail['fc1_price'])?$detail['fc1_price']:0,
@@ -1962,7 +1962,7 @@ class PurchaseInv extends REST_Controller {
 
 							//CUENTA PUENTE DE INVENTARIO
 
-							$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch FROM pgem";
+							$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem";
 							$rescuentainventario = $this->pedeo->queryTable($sqlcuentainventario, array());
 
 							if ( isset($rescuentainventario[0]) && $rescuentainventario[0]['pge_bridge_inv_purch'] != 0 ){
@@ -1999,7 +1999,13 @@ class PurchaseInv extends REST_Controller {
 												if( $value->fc1_inventory == 1 || $value->fc1_inventory  == '1' ){
 
 													$sinDatos++;
-													$cuentaInventario = $rescuentainventario[0]['pge_bridge_inv_purch'];
+
+													if ( isset( $Data['cfc_api'] ) && $Data['cfc_api'] == 1 ){
+														$cuentaInventario = $rescuentainventario[0]['pge_bridge_purch_int'];
+													}else{
+														$cuentaInventario = $rescuentainventario[0]['pge_bridge_inv_purch'];
+													}
+
 													$grantotalCostoInventario = ($grantotalCostoInventario + $value->fc1_linetotal);
 
 												}
@@ -2631,6 +2637,12 @@ class PurchaseInv extends REST_Controller {
 								}
 					}
 
+					// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
+					// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+					// print_r(json_encode($ressqlmac1));
+					// exit;
+					// exit;
+
 					//SE VALIDA LA CONTABILIDAD CREADA
 					 $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
 
@@ -3221,7 +3233,7 @@ class PurchaseInv extends REST_Controller {
 
 				if(isset($resSelect[0])){
 					foreach ($resSelect as $key => $value) {
-						$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code 
+						$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
 														FROM cfc1
 														INNER JOIN dmar
 														ON cfc1.fc1_itemcode = dmar.dma_item_code
