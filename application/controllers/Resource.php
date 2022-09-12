@@ -32,10 +32,12 @@ class Resource extends REST_Controller
 
         if (isset($resSelect[0])) {
             $sqlTopics = "SELECT rrp_idproperty from trrp where rrp_idresource = :rrp_idresource";
-
+            $sqlCost = "SELECT * from trrc where \"rrc_resourceId\" = :rrc_resourceId";
             foreach ($resSelect as $key => $resource) {
                 $resTopics = $this->pedeo->queryTable($sqlTopics, array(":rrp_idresource" => $resource['mrp_id']));
+                $resCost = $this->pedeo->queryTable($sqlCost, array(":rrc_resourceId" => $resource['mrp_id']));
                 $resSelect[$key]['topics'] = $resTopics;
+                $resSelect[$key]['cost'] = $resCost;
             }
 
             $respuesta = array(
