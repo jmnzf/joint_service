@@ -132,7 +132,8 @@ class PdfAccountingSeatUsd extends REST_Controller {
                               when t12.cdc_doctype = t0.mac_base_type then t12.cdc_docnum
                               when t14.crc_doctype = t0.mac_base_type then t14.crc_docnum
                               else t0.mac_doc_num
-                          end numero
+                          end numero,
+													t18.dcc_prc_code
 					  					from tmac t0
                       inner join mac1 t1 on t0.mac_trans_id = t1.ac1_trans_id
                       left join dacc t2 on t1.ac1_account = t2.acc_code
@@ -150,6 +151,7 @@ class PdfAccountingSeatUsd extends REST_Controller {
                       left join dcrc t14 on t0.mac_base_type = t14.crc_doctype and t0.mac_base_entry = t14.crc_docentry
                       left join dmtx t16 on t1.ac1_taxid = t16.dmi_code
 											left join dmrt t17 on t1.ac1_codret = t17.mrt_id
+											Left join dmcc t18 on t1.ac1_prc_code = t18.dcc_prc_code
                       where t0.mac_trans_id = :mac_trans_id
                       order by conteo ASC";
 
@@ -191,7 +193,7 @@ class PdfAccountingSeatUsd extends REST_Controller {
 											<td>'.$value['acc_name'].'</td>
 											<td>'.$value['impuesto'].'</td>
 											<td>'.$value['retencion'].'</td>
-											<td>'.$value['ac1_uncode'].'</td>
+											<td>'.$value['dcc_prc_code'].'</td>
                       <td>'.number_format($value['ac1_debit_sys'], $DECI_MALES, ',', '.').'</td>
                       <td>'.number_format($value['ac1_credit_sys'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';

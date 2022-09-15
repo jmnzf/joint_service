@@ -1124,7 +1124,7 @@ class PurchaseOrder extends REST_Controller {
 
 							}
 
-						}else if ($Data['coc_basetype'] == 21) {
+						}else if ($Data['cpo_basetype'] == 21) {
 						
 							//BUSCAR EL DOCENTRY Y DOCTYPE DEL COD ORIGEN
 							$sql_aprov = "SELECT

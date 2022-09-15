@@ -108,11 +108,21 @@ class PayR extends REST_Controller {
         t1.pr1_vlrtotal total_doc_origen,
         t1.pr1_vlrpaid total_apli,
         (t1.pr1_vlrtotal - t1.pr1_vlrpaid) saldo,
-        t1.pr1_comments coments_origen
+        t1.pr1_comments coments_origen,
+				case
+						when t3.dvf_doctype = t1.pr1_doctype then t3.dvf_docnum
+						when t4.vnc_doctype = t1.pr1_doctype then t4.vnc_docnum
+						when t5.vnd_doctype =  t1.pr1_doctype then t5.vnd_docnum
+						when t6.bpr_doctype = t1.pr1_doctype then t6.bpr_docnum
+				end docnumorg
 
       from gbpr t0
       left join bpr1 t1 on t0.bpr_docentry = t1.pr1_docnum
       join dmdt t2 on t1.pr1_doctype = t2.mdt_doctype
+			left join dvfv t3 on t1.pr1_docentry = t3.dvf_docentry and t1.pr1_doctype = t3.dvf_doctype
+			left join dvnc t4 on t1.pr1_docentry = t4.vnc_docentry and t1.pr1_doctype = t4.vnc_doctype
+			left join dvnd t5 on t1.pr1_docentry = t5.vnd_docentry and t1.pr1_doctype = t5.vnd_doctype
+			left join gbpr t6 on t1.pr1_docnum = t6.bpr_docentry and t1.pr1_doctype = t6.bpr_doctype
       where t0.bpr_docentry = :bpr_docentry";
 
 				$contenidoPAYE = $this->pedeo->queryTable($sqlpagoE,array(':bpr_docentry'=>$Data));
@@ -160,7 +170,7 @@ class PayR extends REST_Controller {
 				foreach ($contenidoPAYE as $key => $value) {
 					// code...
 					$detalle = '<td>'.$value['tipo'].'</td>
-                      <td>'.$value['numero_doc'].'</td>
+                      <td>'.$value['docnumorg'].'</td>
 											<td>'.$this->dateformat->Date($value['fecha_origen']).'</td>
 											<td>'.$this->dateformat->Date($value['fecha_ven']).'</td>
 											<td>'.$value['dias_ven'].'</td>

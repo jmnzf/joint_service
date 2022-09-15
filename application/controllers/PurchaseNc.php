@@ -26,6 +26,7 @@ class PurchaseNc extends REST_Controller {
   //CREAR NUEVA nota credito
 	public function createPurchaseNc_post(){
 
+
 			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
@@ -628,7 +629,7 @@ class PurchaseNc extends REST_Controller {
                         ':nc1_docentry' => $resInsert,
                         ':nc1_itemcode' => isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL,
                         ':nc1_itemname' => isset($detail['nc1_itemname'])?$detail['nc1_itemname']:NULL,
-                        ':nc1_quantity' => is_numeric($detail['nc1_quantity']) ? ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0,
+                        ':nc1_quantity' => is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0,
                         ':nc1_uom' => isset($detail['nc1_uom'])?$detail['nc1_uom']:NULL,
                         ':nc1_whscode' => isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL,
                         ':nc1_price' => is_numeric($detail['nc1_price'])?$detail['nc1_price']:0,
@@ -1882,7 +1883,7 @@ class PurchaseNc extends REST_Controller {
 
 							 //CUENTA PUENTE DE INVENTARIO
 
-								$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch FROM pgem";
+								$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem";
 								$rescuentainventario = $this->pedeo->queryTable($sqlcuentainventario, array());
 
 								if ( isset($rescuentainventario[0]) && $rescuentainventario[0]['pge_bridge_inv_purch'] != 0 ){
@@ -1915,7 +1916,13 @@ class PurchaseNc extends REST_Controller {
 											if( $value->ac1_inventory == 1 || $value->ac1_inventory  == '1' ){
 
 												$sinDatos++;
-												$cuentaInventario = $rescuentainventario[0]['pge_bridge_inv_purch'];
+
+												if ( isset( $Data['cnc_api'] ) && $Data['cnc_api'] == 1 ){
+													$cuentaInventario = $rescuentainventario[0]['pge_bridge_purch_int'];
+												}else{
+													$cuentaInventario = $rescuentainventario[0]['pge_bridge_inv_purch'];
+												}
+
 												$grantotalCostoInventario = ($grantotalCostoInventario + $value->nc1_linetotal);
 
 											}

@@ -578,7 +578,7 @@ class PurchaseRet extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
-								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['dc1_quantity'] );
+								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['dc1_itemcode'] );
 
 								if( $CANTUOMPURCHASE == 0 ){
 
@@ -587,7 +587,7 @@ class PurchaseRet extends REST_Controller {
 									$respuesta = array(
 										'error'   => true,
 										'data' 		=> $detail['dc1_quantity'],
-										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['dc1_quantity']
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['dc1_itemcode']
 									);
 
 									 $this->response($respuesta);
@@ -688,7 +688,7 @@ class PurchaseRet extends REST_Controller {
 											$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
 											$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
 
-													':dma_item_code' => $detail['fc1_itemcode'],
+													':dma_item_code' => $detail['dc1_itemcode'],
 													':dma_series_code'  => 1
 											));
 
@@ -1110,7 +1110,7 @@ class PurchaseRet extends REST_Controller {
 
 
 
-									$sqlArticulo = "SELECT pge_bridge_inv FROM pgem"; // Cuenta  puente inventario
+									$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem"; // Cuenta  puente inventario
 									$resArticulo = $this->pedeo->queryTable($sqlArticulo, array());// Cuenta costo puente
 
 									$centroCosto = $value->dc1_prc_code;
@@ -1124,7 +1124,13 @@ class PurchaseRet extends REST_Controller {
 												$MontoSysDB = 0;
 												$MontoSysCR = 0;
 
-												$cuentaPuente  = $resArticulo[0]['pge_bridge_inv'];
+												if ( isset( $Data['cdc_api'] ) && $Data['cdc_api'] == 1 ){
+													$cuentaPuente  = $resArticulo[0]['pge_bridge_purch_int'];
+												}else{
+													$cuentaPuente  = $resArticulo[0]['pge_bridge_inv_purch'];
+												}
+
+
 
 												$costoArticulo = $value->dc1_price;
 												$cantidadArticulo = $value->dc1_quantity;
@@ -1458,6 +1464,11 @@ class PurchaseRet extends REST_Controller {
 				}
 
 				 //FIN PROCEDIMIENTO PARA LLENAR CUENTA INVENTARIO
+
+				 // $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
+				 // $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+				 // print_r(json_encode($ressqlmac1));
+				 // exit;
 
 				 //SE VALIDA LA CONTABILIDAD CREADA
 	       if ($ResultadoInv == 1){

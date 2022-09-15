@@ -64,6 +64,36 @@ class Items extends REST_Controller {
 			}
 			// FIN BUSQUEDA CONSECUTIVO DE ARTICULO
 
+			//VALIDACION ITEM MANEJA SERIAL
+			if ( isset($Data['dma_series_code']) && $Data['dma_series_code'] == 1 ){
+				if ( $Data['dma_uom_purch'] == $Data['dma_uom_sale'] ){
+
+					if ( $Data['dma_uom_pemb'] == 1 && $Data['dma_uom_semb'] == 1 ){
+
+					}else{
+						$respuesta = array(
+							'error' => true,
+							'data'  => [],
+							'mensaje' => 'El articulo maneja serial, la cantidad de embalaje debe ser uno (1 Compras y Ventas)');
+
+						$this->response($respuesta);
+
+						return;
+					}
+
+				}else{
+					$respuesta = array(
+						'error' => true,
+						'data'  => [],
+						'mensaje' => 'Si el articulo maneja serial, las unidades con que se vende y se compra no pueden tener equivalencias');
+
+					$this->response($respuesta);
+
+					return;
+				}
+			}
+			//
+
 			$this->pedeo->trans_begin();
 
 			try {
@@ -108,13 +138,13 @@ class Items extends REST_Controller {
 				            ':dma_tax_sales' => is_numeric($Data['dma_tax_sales'])?$Data['dma_tax_sales']:0,
 				            ':dma_acct_type' => is_numeric($Data['dma_acct_type'])?$Data['dma_acct_type']:0,
 				            ':dma_avprice' => is_numeric($Data['dma_avprice'])?$Data['dma_avprice']:0,
-							':dma_uom_weight' => is_numeric($Data['dma_uom_weight'])?$Data['dma_uom_weight']:0,
-							':dma_uom_umvol'    => is_numeric($Data['dma_uom_umvol'])?$Data['dma_uom_umvol']:0,
-							':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty'])?$Data['dma_uom_vqty']:0,
-							':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn'])?$Data['dma_uom_weightn']:0,
-							':dma_uom_sizedim'  => is_numeric($Data['dma_uom_sizedim'])?$Data['dma_uom_sizedim']:0,
-							':dma_lotes_code' => isset($Data['dma_lotes_code'])?$Data['dma_lotes_code']:'0',
-							':dma_emisionmethod' => isset($Data['dma_emisionmethod'])?$Data['dma_emisionmethod']:0
+										':dma_uom_weight' => is_numeric($Data['dma_uom_weight'])?$Data['dma_uom_weight']:0,
+										':dma_uom_umvol'    => is_numeric($Data['dma_uom_umvol'])?$Data['dma_uom_umvol']:0,
+										':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty'])?$Data['dma_uom_vqty']:0,
+										':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn'])?$Data['dma_uom_weightn']:0,
+										':dma_uom_sizedim'  => is_numeric($Data['dma_uom_sizedim'])?$Data['dma_uom_sizedim']:0,
+										':dma_lotes_code' => isset($Data['dma_lotes_code'])?$Data['dma_lotes_code']:'0',
+										':dma_emisionmethod' => isset($Data['dma_emisionmethod'])?$Data['dma_emisionmethod']:0
 
 				      ));
 
@@ -189,6 +219,38 @@ class Items extends REST_Controller {
           return;
 
       }
+
+
+			//VALIDACION ITEM MANEJA SERIAL
+			if ( isset($Data['dma_series_code']) && $Data['dma_series_code'] == 1 ){
+				if ( $Data['dma_uom_purch'] == $Data['dma_uom_sale'] ){
+
+					if ( $Data['dma_uom_pemb'] == 1 && $Data['dma_uom_semb'] == 1 ){
+
+					}else{
+						$respuesta = array(
+							'error' => true,
+							'data'  => [],
+							'mensaje' => 'El articulo maneja serial, la cantidad de embalaje debe ser uno (1 Compras y Ventas)');
+
+						$this->response($respuesta);
+
+						return;
+					}
+
+				}else{
+					$respuesta = array(
+						'error' => true,
+						'data'  => [],
+						'mensaje' => 'Si el articulo maneja serial, las unidades con que se vende y se compra no pueden tener equivalencias');
+
+					$this->response($respuesta);
+
+					return;
+				}
+			}
+			//
+
 
 			$this->pedeo->trans_begin();
 
