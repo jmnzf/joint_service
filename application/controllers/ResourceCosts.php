@@ -67,29 +67,34 @@ class ResourceCosts extends REST_Controller
         $costs = json_decode($Data['cost'], true);
 
         // print_r($costs);exit;
-        if (count($costs) < 1) {
-            $respuesta = array(
-                'error' => true,
-                'data'  => array(),
-                'mensaje' => 'La informacion enviada no es valida'
-            );
+        // if (count($costs) < 1) {
+        //     $respuesta = array(
+        //         'error' => true,
+        //         'data'  => array(),
+        //         'mensaje' => 'La informacion enviada no es valida'
+        //     );
 
-            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+        //     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-            return;
-        }
+        //     return;
+        // }
 
 
         $sql = "SELECT * FROM trrc where \"rrc_resourceId\" = :rrc_resourceId";
 
-        $resourceId = $costs[0]['rrc_resourceId'];
+        $resourceId = $Data['resourceId'];
         $resSelect = $this->pedeo->queryTable($sql,array(":rrc_resourceId" =>$resourceId));
 
         if(isset($resSelect[0])){
             $this->pedeo->queryTable("DELETE FROM trrc WHERE \"rrc_resourceId\" = :rrc_resourceId", array(":rrc_resourceId" => $resourceId));
-
+            $respuesta = array(
+                'error' => false,
+                'data'  => [],
+                'mensaje' => 'Operacion exitosa'
+            );
         }
 
+       if(count($costs) > 0){
         $sqlInsert =  "INSERT INTO trrc (rrc_reference,rrc_cost, \"rrc_resourceId\", rrc_currency) VALUES(:rrc_reference,:rrc_cost, :rrc_resourceId, :rrc_currency)";
         $this->pedeo->trans_begin();
         foreach ($costs as $key => $cost) {
@@ -122,6 +127,7 @@ class ResourceCosts extends REST_Controller
             'data'  => $resInsert,
             'mensaje' => 'Operacion exitosa'
         );
+       }
 
         $this->response($respuesta);
     }
