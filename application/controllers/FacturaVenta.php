@@ -74,7 +74,7 @@ class FacturaVenta extends REST_Controller {
 				}
 
 				$sqlcotizacion = "SELECT
-													concat(T0.dvf_cardname,' ',T2.dms_card_last_name) Cliente,
+													T0.dvf_cardname || ' ' || T2.dms_card_last_name Cliente,
 													T0.dvf_cardcode Nit,
 													concat(T3.dmd_adress,' ',T3.dmd_city) Direccion,
 												    T3.dmd_state_mm ciudad,
@@ -82,7 +82,7 @@ class FacturaVenta extends REST_Controller {
 													T2.dms_phone1 Telefono,
 													T2.dms_email Email,
 													t0.dvf_docnum,
-													ConCAT(T6.pgs_pref_num,' ',T0.dvf_docnum) NumeroDocumento,
+													T6.pgs_pref_num || ' ' || T0.dvf_docnum NumeroDocumento,
 													to_char(T0.dvf_docdate,'DD-MM-YYYY') FechaDocumento,
 													to_char(T0.dvf_duedate,'DD-MM-YYYY') FechaVenDocumento,
 													trim('COP' from t0.dvf_currency) MonedaDocumento,
@@ -591,7 +591,7 @@ class FacturaVenta extends REST_Controller {
 															<td style="text-align: left;" class="">
 																	<p>'.$formatter->toWords($valorTotalDoc,2)." ".$contenidoFV[0]['nombremoneda'].'</p>
 															</td>
-													</tr>
+												</tr>
 											</table>
 								</th>
 								<th>

@@ -3514,9 +3514,9 @@ class SalesInv extends REST_Controller {
 				$sqlSelect = "SELECT vfv1.*, dmar.dma_series_code
 											FROM vfv1
 											INNER JOIN dmar
-											ON cfc1.fc1_itemcode = dmar.dma_item_code
+											ON vfv1.fv1_itemcode = dmar.dma_item_code
 											WHERE fv1_docentry =:fv1_docentry";
-				$sqlSelectFv = "SELECT round(dvf_igtf * (get_tax_currency(dvf_igtfcurrency, dvf_docdate)), get_decimals()) as dvf_igtf, dvf_taxigtf,dvf_igtfcurrency, dvf_igtfapplyed, dvf_igtf as dvf_igtfrealvalue  FROM  dvfv WHERE dvf_docentry = :dvf_docentry";
+				$sqlSelectFv = "SELECT coalesce(round(dvf_igtf * (get_tax_currency(dvf_igtfcurrency, dvf_docdate)), get_decimals()),0) as dvf_igtf, dvf_taxigtf,dvf_igtfcurrency, dvf_igtfapplyed, dvf_igtf as dvf_igtfrealvalue  FROM  dvfv WHERE dvf_docentry = :dvf_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fv1_docentry" => $Data['fv1_docentry']));
 
