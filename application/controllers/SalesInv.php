@@ -70,6 +70,8 @@ class SalesInv extends REST_Controller {
 			$TOTALCXCSYSIVA = 0;
 			$AgregarAsiento = true;
 			$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
+			$DetalleIgtf = 0; // DETALLE DE DIVISAS APLICADAS IGTF
+
 
 
 
@@ -126,6 +128,40 @@ class SalesInv extends REST_Controller {
 
 					return;
 			}
+
+			// VALIDANDO IMPUESTO IGTF CASO PARA VENEZUELA
+
+			if ( isset($Data['dvf_igtf']) && $Data['dvf_igtf'] > 0 ) {
+
+				if(!isset($Data['detailigtf'])){
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'La informacion enviada no es valida'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+				}
+
+				$DetalleIgtf = json_decode($Data['detailigtf'], true);
+
+
+				if(!is_array($DetalleIgtf)){
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se pudo validar el monto en IGTF'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
+			}
+
 			//
 			//VALIDANDO PERIODO CONTABLE
 			$periodo = $this->generic->ValidatePeriod($Data['dvf_duedev'], $Data['dvf_docdate'],$Data['dvf_duedate'],1);
@@ -332,11 +368,11 @@ class SalesInv extends REST_Controller {
         $sqlInsert = "INSERT INTO dvfv(dvf_series, dvf_docnum, dvf_docdate, dvf_duedate, dvf_duedev, dvf_pricelist, dvf_cardcode,
                       dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
                       dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
-                      dvf_attch,dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfcurrency,dvf_igtfapplyed)
+                      dvf_attch,dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed)
 											VALUES(:dvf_series, :dvf_docnum, :dvf_docdate, :dvf_duedate, :dvf_duedev, :dvf_pricelist, :dvf_cardcode, :dvf_cardname,
                       :dvf_currency, :dvf_contacid, :dvf_slpcode, :dvf_empid, :dvf_comment, :dvf_doctotal, :dvf_baseamnt, :dvf_taxtotal, :dvf_discprofit, :dvf_discount,
                       :dvf_createat, :dvf_baseentry, :dvf_basetype, :dvf_doctype, :dvf_idadd, :dvf_adress, :dvf_paytype, :dvf_attch,:dvf_createby,:dvf_correl,:dvf_transport,:dvf_sub_transport,:dvf_ci,:dvf_t_vehiculo,
-											:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfcurrency,:dvf_igtfapplyed)";
+											:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfapplyed)";
 
 
 				// Se Inicia la transaccion,
@@ -392,7 +428,6 @@ class SalesInv extends REST_Controller {
 								':dvf_driverid'  => isset($Data['dvf_driverid'])?$Data['dvf_driverid']:NULL,
 								':dvf_igtf'  =>  isset($Data['dvf_igtf'])?$Data['dvf_igtf']:NULL,
 								':dvf_taxigtf' => isset($Data['dvf_taxigtf'])?$Data['dvf_taxigtf']:NULL,
-								':dvf_igtfcurrency' => isset($Data['dvf_igtfcurrency'])?$Data['dvf_igtfcurrency']:NULL,
 								':dvf_igtfapplyed' => isset($Data['dvf_igtfapplyed'])?$Data['dvf_igtfapplyed']:NULL
 							));
 
@@ -2362,20 +2397,19 @@ class SalesInv extends REST_Controller {
 							$resTasaIGTF = $this->pedeo->queryTable($sqlTasaIGTF, array(
 
 
-								':moneda' => $Data['dvf_igtfcurrency'],
-								':fecha' => $Data['dvf_docdate']
+								':moneda' => $Data['dvf_currency'],
+								':fecha'  => $Data['dvf_docdate']
 
 							));
 
 							if( isset($resTasaIGTF[0]) && $resTasaIGTF[0]['tasa'] > 0){
-									// Se verifica que el detalle no de error insertando //
+
 
 									$TasaIGTF = $resTasaIGTF[0]['tasa'];
 
 							}else{
 
-									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-									// se retorna el error y se detiene la ejecucion del codigo restante.
+
 										$this->pedeo->trans_rollback();
 
 										$respuesta = array(
@@ -2402,7 +2436,36 @@ class SalesInv extends REST_Controller {
 									$MontoSysCR = 0;
 									$docTotal = 0;
 									$docTotalOriginal = 0;
-									$MontoIGTF = isset($Data['dvf_igtf']) ? round( ($Data['dvf_igtf'] * $TasaIGTF), $DECI_MALES ) : 0;
+									$MontoIGTF = 0;
+									$MontoIGTFSYS = 0;
+
+									if ( isset($Data['dvf_igtf']) && $Data['dvf_igtf']  > 0 ){
+
+										$MontoIGTF = $Data['dvf_igtf'];
+										$MontoIGTFSYS  = $Data['dvf_igtf'];
+
+
+										if( trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+											$MontoIGTF = ( $MontoIGTF * $TasaDocLoc );
+											$MontoIGTFSYS = ( $MontoIGTF / $TasaLocSys );
+
+										}
+
+										if ( trim($Data['dvf_currency']) != $MONEDASYS ){
+
+											$MontoIGTFSYS = ( $MontoIGTF / $TasaLocSys );
+
+										}else{
+
+											$MontoIGTFSYS = $Data['dvf_igtf'];
+
+										}
+
+									}
+
+
+
 
 
 
@@ -2707,6 +2770,37 @@ class SalesInv extends REST_Controller {
 
 						if ( isset($Data['dvf_igtf']) && $Data['dvf_igtf'] > 0 ) {
 
+
+							foreach ($DetalleIgtf as $key => $val) {
+								$sqlInsertIgtf = "INSERT INTO igtf(gtf_currency, gtf_docentry, gtf_doctype, gtf_value, gtf_tax)VALUES(:gtf_currency, :gtf_docentry, :gtf_doctype, :gtf_value, :gtf_tax)";
+								$resInserIgtf = $this->pedeo->insertRow($sqlInsertIgtf, array(
+									':gtf_currency' => $val['gtf_currency'],
+									':gtf_docentry' => $resInsert,
+									':gtf_doctype'  => $Data['dvf_doctype'],
+									':gtf_value'	  => $val['gtf_value'],
+									':gtf_tax'		  => $Data['dvf_taxigtf']
+								));
+
+								if(is_numeric($resInserIgtf) && $resInserIgtf > 0){
+
+								}else{
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error' => true,
+										'data'  => $resInserIgtf,
+										'mensaje' =>'Error al insertar el detalle del IGTF'
+									);
+
+									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+									return;
+								}
+							}
+
+
+
 							$sqlCuentaIGTF = "SELECT imm_acctcode FROM timm WHERE imm_code = :imm_code";
 							$resCuentaIGTF = $this->pedeo->queryTable($sqlCuentaIGTF, array(
 								':imm_code' => $Data['dvf_igtfcode']
@@ -2718,9 +2812,19 @@ class SalesInv extends REST_Controller {
 								$dbito = 0;
 								$MontoSysCR = 0;
 								$MontoSysDB = 0;
+								$BaseIgtf = $Data['dvf_igtfapplyed'];
 
 
-								$cdito = isset($Data['dvf_igtf']) ? round( ($Data['dvf_igtf'] * $TasaIGTF), $DECI_MALES ) : 0;
+								$cdito = $Data['dvf_igtf'];
+
+
+
+								if(trim($Data['dvf_currency']) != $MONEDALOCAL ){
+
+										$cdito = ( $cdito * $TasaDocLoc );
+										$BaseIgtf = ( $BaseIgtf * $TasaDocLoc );
+								}
+
 
 
 								if(trim($Data['dvf_currency']) != $MONEDASYS ){
@@ -2772,7 +2876,7 @@ class SalesInv extends REST_Controller {
 								':ac1_legal_num' => isset($Data['dvf_cardcode'])?$Data['dvf_cardcode']:NULL,
 								':ac1_codref' => 1,
 								':ac1_line'   => 	$AC1LINE,
-								':ac1_base_tax' => isset($Data['dvf_igtfapplyed']) ? round( ($Data['dvf_igtfapplyed'] * $TasaIGTF), $DECI_MALES) : NULL,
+								':ac1_base_tax' => $BaseIgtf
 								));
 
 								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){

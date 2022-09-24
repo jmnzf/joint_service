@@ -62,6 +62,7 @@ class PurchaseEc extends REST_Controller {
 			$resInsertAsiento = "";
 			$ResultadoInv = 0; // INDICA SI EXISTE AL MENOS UN ITEM QUE MANEJA INVENTARIO
 			$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
+			$CANTUOMSALE = 0;
 
 
 			// Se globaliza la variable sqlDetalleAsiento
@@ -595,8 +596,10 @@ class PurchaseEc extends REST_Controller {
 
 
 								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['ec1_itemcode'] );
+								$CANTUOMSALE = $this->generic->getUomSale( $detail['ec1_itemcode'] );
 
-								if( $CANTUOMPURCHASE == 0 ){
+
+								if( $CANTUOMPURCHASE == 0 || $CANTUOMSALE == 0 ){
 
 									$this->pedeo->trans_rollback();
 
@@ -981,8 +984,10 @@ class PurchaseEc extends REST_Controller {
 													$CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
 
 													$CantidadNueva = ( $detail['ec1_quantity'] * $CANTUOMPURCHASE );
-													$CostoNuevo = $detail['ec1_price'];
 
+													//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+													$CostoNuevo = ( ( $detail['ec1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+													//
 													$CantidadTotal = ($CantidadActual + $CantidadNueva);
 													$CantidadTotalItemSolo = ($CantidadItem + $CantidadNueva);
 
@@ -1142,7 +1147,10 @@ class PurchaseEc extends REST_Controller {
 													$CostoActual = $CostoPorAlmacen;
 
 													$CantidadNueva = ( $detail['ec1_quantity'] * $CANTUOMPURCHASE );
-													$CostoNuevo = $detail['ec1_price'];
+
+													//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+													$CostoNuevo = ( ( $detail['ec1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+													//
 
 													$CantidadTotal = ($CantidadActual + $CantidadNueva);
 													$CantidadTotalItemSolo = ($CantidadItem + $CantidadNueva);
@@ -1244,7 +1252,9 @@ class PurchaseEc extends REST_Controller {
 													}
 
 												}else{
-													$CostoNuevo =  $detail['ec1_price'];
+													//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+													$CostoNuevo = ( ( $detail['ec1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+													//
 
 													if(trim($Data['cec_currency']) != $MONEDALOCAL ){
 														 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);

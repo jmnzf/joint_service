@@ -26,7 +26,10 @@ class AccountingAccent extends REST_Controller {
 
   //CREAR NUEVO ASIENTO CONTABLE
 	public function createAccountingAccent_post(){
-	
+
+
+		exit;
+
 			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;

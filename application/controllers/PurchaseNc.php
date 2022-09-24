@@ -1012,6 +1012,10 @@ class PurchaseNc extends REST_Controller {
 																					 'data'    => $resUpdateCostoCantidad,
 																					 'mensaje'	=> 'No se pudo crear la nota credito'
 																				 );
+
+																				 $this->response($respuesta);
+
+																				 return;
 																		}
 
 															}else{
@@ -1020,10 +1024,14 @@ class PurchaseNc extends REST_Controller {
 
 																				 $respuesta = array(
 																					 'error'   => true,
-																					 'data'    => $resUpdateCostoCantidad,
+																					 'data'    => $resCostoCantidad,
 																					 'mensaje' => 'No hay existencia para el item: '.$detail['nc1_itemcode']
 																				 );
-																}
+
+																				 $this->response($respuesta);
+
+																				 return;
+															}
 
 														}else{
 
@@ -1031,7 +1039,7 @@ class PurchaseNc extends REST_Controller {
 
 																		$respuesta = array(
 																			'error'   => true,
-																			'data' 		=> $resInsertCostoCantidad,
+																			'data' 		=> $resCostoCantidad,
 																			'mensaje'	=> 'El item no existe en el stock '.$detail['nc1_itemcode']
 																		);
 

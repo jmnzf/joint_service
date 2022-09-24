@@ -1294,9 +1294,9 @@ class Reports extends REST_Controller {
 		}
 
 		$sqlSelect = "SELECT fc.cfc_docentry as docentry, fc.cfc_docdate as docdate, dmdt.mdt_docname as cfc_doctype, fc.cfc_docnum as docnum, 0 as cfc_correl,
-									fc.cfc_cardcode as cardcode, fc.cfc_cardname as cardname, cfc_doctotal as  doctotal, '' excentas, fc.cfc_baseamnt as baseamnt, fc.cfc_taxtotal as taxtotal,
+									fc.cfc_cardcode as cardcode, fc.cfc_cardname as cardname, round(cfc_doctotal, get_decimals()) as  doctotal, '' excentas, round(fc.cfc_baseamnt, get_decimals()) as baseamnt, round(fc.cfc_taxtotal, get_decimals()) as taxtotal,
 									fc.cfc_correl as referencia,fc.cfc_tax_control_num as numerofiscal,
-									coalesce(round(get_ret(fc.cfc_doctype,fc.cfc_docentry),get_decimals()), 0 ) as totalretencion,
+									abs(coalesce(round(get_ret(fc.cfc_doctype,fc.cfc_docentry),get_decimals()), 0 ) - coalesce(round(get_retiva(fc.cfc_doctype,fc.cfc_docentry),get_decimals()), 0 ))as totalretencion,
 									get_retname(fc.cfc_doctype,fc.cfc_docentry) as retenciones,
 									coalesce(round(get_retiva(fc.cfc_doctype,fc.cfc_docentry),get_decimals()), 0 ) as retencioniva,
 									fc.cfc_currency  as moneda
@@ -1307,9 +1307,9 @@ class Reports extends REST_Controller {
 									--NOTAS CREDITO
 									union all
 									SELECT nc.cnc_docentry as docentry, nc.cnc_docdate as docdate, dmdt.mdt_docname as cnc_doctype, nc.cnc_docnum as docnum, 0 as cnc_correl,
-									nc.cnc_cardcode as cardcode, nc.cnc_cardname as cardname, cnc_doctotal, '' excentas, nc.cnc_baseamnt as baseamnt, nc.cnc_taxtotal as taxtotal,
+									nc.cnc_cardcode as cardcode, nc.cnc_cardname as cardname, round(cnc_doctotal, get_decimals()) as doctotal, '' excentas, round(nc.cnc_baseamnt, get_decimals()) as baseamnt, round(nc.cnc_taxtotal, get_decimals()) as taxtotal,
 									'' as referencia, '' as numerofiscal,
-									coalesce(round(get_ret(nc.cnc_doctype,nc.cnc_docentry),get_decimals()), 0 ) as totalretencion,
+									abs(coalesce(round(get_ret(nc.cnc_doctype,nc.cnc_docentry),get_decimals()), 0 ) - 	coalesce(round(get_retiva(nc.cnc_doctype,nc.cnc_docentry),get_decimals()), 0 )) as totalretencion,
 									get_retname(nc.cnc_doctype,nc.cnc_docentry) as retenciones,
 									coalesce(round(get_retiva(nc.cnc_doctype,nc.cnc_docentry),get_decimals()), 0 ) as retencioniva,
 									nc.cnc_currency  as moneda
@@ -1322,7 +1322,7 @@ class Reports extends REST_Controller {
 									SELECT nd.cnd_docentry as docentry, nd.cnd_docdate as docdate, dmdt.mdt_docname as cnd_doctype, nd.cnd_docnum as docnum, 0 as cnd_correl,
 									nd.cnd_cardcode as cardcode, nd.cnd_cardname as cardname, cnd_doctotal as doctotal, '' excentas, nd.cnd_baseamnt as baseamnt, nd.cnd_taxtotal as taxtotal,
 									'' as referencia, '' as numerofiscal,
-									coalesce(round(get_ret(nd.cnd_doctype,nd.cnd_docentry),get_decimals()), 0 ) as totalretencion,
+									abs(coalesce(round(get_ret(nd.cnd_doctype,nd.cnd_docentry),get_decimals()), 0 ) - coalesce(round(get_retiva(nd.cnd_doctype,nd.cnd_docentry),get_decimals()), 0 )) as totalretencion,
 									get_retname(nd.cnd_doctype,nd.cnd_docentry) as retenciones,
 									coalesce(round(get_retiva(nd.cnd_doctype,nd.cnd_docentry),get_decimals()), 0 ) as retencioniva,
 									nd.cnd_currency  as moneda

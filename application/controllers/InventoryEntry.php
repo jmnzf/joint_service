@@ -42,6 +42,8 @@ class InventoryEntry extends REST_Controller {
 			$ManejaInvetario = 0;
 			$ManejaLote = 0;
 			$ManejaSerial = 0;
+			$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
+			$CANTUOMSALE = 0;
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -398,6 +400,24 @@ class InventoryEntry extends REST_Controller {
 
           foreach ($ContenidoDetalle as $key => $detail) {
 
+								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['ei1_itemname'] );
+								$CANTUOMSALE = $this->generic->getUomSale( $detail['ei1_itemcode'] );
+
+								if( $CANTUOMPURCHASE == 0 || $CANTUOMSALE == 0 ){
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' 		=> $detail['ei1_itemcode'],
+										'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: '.$detail['ei1_itemcode']
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+
                 $sqlInsertDetail = "INSERT INTO iei1 (ei1_docentry, ei1_itemcode, ei1_itemname, ei1_quantity, ei1_uom, ei1_whscode, ei1_price, ei1_vat, ei1_vatsum, ei1_discount, ei1_linetotal,
 																		ei1_costcode, ei1_ubusiness,ei1_project, ei1_acctcode, ei1_basetype, ei1_doctype, ei1_avprice, ei1_inventory,  ei1_linenum, ei1_acciva,ei1_concept)
                                     VALUES
@@ -552,10 +572,12 @@ class InventoryEntry extends REST_Controller {
 														$CostoActual = 	$resCostoMomentoRegistro[0]['bdi_avgprice'];
 
 
-														$CantidadNueva = $detail['ei1_quantity'];
-														$CostoNuevo = $detail['ei1_price'];
+														$CantidadNueva = ( $detail['ei1_quantity'] * $CANTUOMPURCHASE );
+														//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+														$CostoNuevo = ( ( $detail['ei1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+														//
 
-														 $CantidadTotal = ($CantidadActual + $CantidadNueva);
+														$CantidadTotal = ($CantidadActual + $CantidadNueva);
 
 														if(trim($Data['iei_currency']) != $MONEDALOCAL ){
 															 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
@@ -566,7 +588,9 @@ class InventoryEntry extends REST_Controller {
 
 											}else{
 
-														$CostoNuevo = $detail['ei1_price'];
+														//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+														$CostoNuevo = ( ( $detail['ei1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+														//
 
 														if(trim($Data['iei_currency']) != $MONEDALOCAL ){
 															 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
@@ -588,7 +612,7 @@ class InventoryEntry extends REST_Controller {
 												$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 														 ':bmi_itemcode' => isset($detail['ei1_itemcode'])?$detail['ei1_itemcode']:NULL,
-														 ':bmi_quantity' => is_numeric($detail['ei1_quantity'])? $detail['ei1_quantity'] * $Data['invtype']:0,
+														 ':bmi_quantity' => is_numeric($detail['ei1_quantity'])? ( ($detail['ei1_quantity'] * $CANTUOMPURCHASE ) * $Data['invtype'] ) :0,
 														 ':bmi_whscode'  => isset($detail['ei1_whscode'])?$detail['ei1_whscode']:NULL,
 														 ':bmi_createat' => $this->validateDate($Data['iei_createat'])?$Data['iei_createat']:NULL,
 														 ':bmi_createby' => isset($Data['iei_createby'])?$Data['iei_createby']:NULL,
@@ -803,7 +827,10 @@ class InventoryEntry extends REST_Controller {
 
 
 														 $CantidadNueva = $detail['ei1_quantity'];
-														 $CostoNuevo = $detail['ei1_price'];
+														 //SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+														 $CostoNuevo = ( ( $detail['ei1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+														 //
+
 
 
 														 $CantidadTotal = ($CantidadActual + $CantidadNueva);
@@ -882,7 +909,10 @@ class InventoryEntry extends REST_Controller {
 
 															$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
 															$CantidadNueva = $detail['ei1_quantity'];
-															$CostoNuevo = $detail['ei1_price'];
+
+															//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+															$CostoNuevo = ( ( $detail['ei1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+															//
 
 															if(trim($Data['iei_currency']) != $MONEDALOCAL ){
 																 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
@@ -963,7 +993,10 @@ class InventoryEntry extends REST_Controller {
 															$CostoActual = $CostoPorAlmacen;
 
 															$CantidadNueva = $detail['ei1_quantity'];
-															$CostoNuevo = $detail['ei1_price'];
+															//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+															$CostoNuevo = ( ( $detail['ei1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+															//
+
 
 															$CantidadTotal = ($CantidadActual + $CantidadNueva);
 															$CantidadTotalItemSolo = ($CantidadItem + $CantidadNueva);
@@ -1064,7 +1097,10 @@ class InventoryEntry extends REST_Controller {
 																}
 															}
 														}else{
-															$CostoNuevo =  $detail['ei1_price'];
+															//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+															$CostoNuevo = ( ( $detail['ei1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+															//
+
 
 															if(trim($Data['iei_currency']) != $MONEDALOCAL ){
 																 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);

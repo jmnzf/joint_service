@@ -69,6 +69,7 @@ class PurchaseInv extends REST_Controller {
 			$TasaLocSys = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL SISTEMA
 			$MONEDALOCAL = 0;
 			$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
+			$CANTUOMSALE = 0;
 
 			// VARIABLES PARA SUMAS
 			$SumaCreditosSYS = 0;
@@ -611,8 +612,9 @@ class PurchaseInv extends REST_Controller {
 
 
 								$CANTUOMPURCHASE = $this->generic->getUomPurchase( $detail['fc1_itemcode'] );
+								$CANTUOMSALE = $this->generic->getUomSale( $detail['fc1_itemcode'] );
 
-								if( $CANTUOMPURCHASE == 0 ){
+								if( $CANTUOMPURCHASE == 0 || $CANTUOMSALE == 0 ){
 
 									$this->pedeo->trans_rollback();
 
@@ -1015,9 +1017,9 @@ class PurchaseInv extends REST_Controller {
 	 															 $CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
 
 	 															 $CantidadNueva = ( $detail['fc1_quantity'] * $CANTUOMPURCHASE );
-	 															 $CostoNuevo = $detail['fc1_price'];
-
-
+																 //SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+																 $CostoNuevo = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+																 //
 	 															 $CantidadTotal = ($CantidadActual + $CantidadNueva);
 	 															 $CantidadTotalItemSolo = ($CantidadItem + $CantidadNueva);
 
@@ -1088,9 +1090,9 @@ class PurchaseInv extends REST_Controller {
 															}else{
 																$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
 																$CantidadNueva = ( $detail['fc1_quantity'] * $CANTUOMPURCHASE );
-																$CostoNuevo = $detail['fc1_price'];
-
-
+																//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+																$CostoNuevo = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+																//
 																$CantidadTotal = ($CantidadActual + $CantidadNueva);
 
 																if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
@@ -1164,7 +1166,9 @@ class PurchaseInv extends REST_Controller {
 												 // Se inserta en el stock con el precio de compra
 												}else{
 															if( $CantidadPorAlmacen > 0 ){
-																$CostoNuevo =  $detail['fc1_price'];
+																//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+																$CostoNuevo = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+																//
 																$CantidadItem = 0;
 																$CantidadActual = $CantidadPorAlmacen;
 																$CostoActual = $CostoPorAlmacen;
@@ -1271,8 +1275,9 @@ class PurchaseInv extends REST_Controller {
 
 
 															}else{
-
-																$CostoNuevo =  $detail['fc1_price'];
+																//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
+																$CostoNuevo = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+																//
 
 																if(trim($Data['cfc_currency']) != $MONEDALOCAL ){
 																	 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
