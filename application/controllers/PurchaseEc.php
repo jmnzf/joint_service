@@ -599,6 +599,7 @@ class PurchaseEc extends REST_Controller {
 								$CANTUOMSALE = $this->generic->getUomSale( $detail['ec1_itemcode'] );
 
 
+
 								if( $CANTUOMPURCHASE == 0 || $CANTUOMSALE == 0 ){
 
 									$this->pedeo->trans_rollback();

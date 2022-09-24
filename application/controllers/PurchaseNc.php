@@ -2402,6 +2402,64 @@ class PurchaseNc extends REST_Controller {
 
 					// VALIDANDO ESTADOS DE DOCUMENTOS
 
+					// SE VALIDA QUE LA FACTURA BASE NO SEA MENOR QUE LA NOTA CREDITO
+					if( $Data['cnc_basetype'] == 15 ){
+
+						$sqlBaseFactura = "SELECT * FROM dcfc WHERE cdc_docentry = :cdc_docentry";
+						$resBaseFactura = $this->pedeo->queryTable($sqlBaseFactura, array(':cdc_docentry' => $Data['cnc_baseentry'] ));
+
+						if ( isset( $resBaseFactura[0] ) ){
+
+							$tFC = $resBaseFactura[0]['cfc_doctotal'];
+
+							$tNC =  $Data['cnc_doctotal'];
+
+							if(trim($resBaseFactura[0]['cfc_currency']) != $MONEDALOCAL ){
+								 $tFC = ( $tFC * $TasaDocLoc );
+							}
+
+							if(trim($Data['cnc_currency']) != $MONEDALOCAL ){
+									$tNC  = ( $tNC * $TasaDocLoc );
+							}
+
+
+							if ( $tNC > $tFC ){
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resBaseFactura,
+									'mensaje'	=> 'La valor total de nota credito es mayor a la factura base'
+								);
+
+								 $this->response($respuesta);
+
+								 return;
+
+							}
+
+
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resBaseFactura,
+								'mensaje'	=> 'No se encontro la factura base'
+							);
+
+							 $this->response($respuesta);
+
+							 return;
+						}
+
+
+					}
+
+
 					//SE VALIDA QUE EL PAY TO DAY DE LA FACTURA
 					if($Data['cnc_basetype'] == 15) { // SOLO CUANDO ES UNA FACTURA
 

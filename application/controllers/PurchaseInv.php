@@ -3184,9 +3184,9 @@ class PurchaseInv extends REST_Controller {
 				// Y SE AGREGA UN ASIENTO DE DIFERENCIA EN DECIMALES
 				// SEGUN SEA EL CASO
 
-					// FIN VALIDACION DIFERENCIA EN DECIMALES
+				// FIN VALIDACION DIFERENCIA EN DECIMALES
 
-				$sqlSelect = " SELECT * FROM dcfc WHERE cfc_docentry =:cfc_docentry";
+				$sqlSelect = " SELECT * FROM dcfc WHERE cfc_docentry =:cfc_docentry ";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cfc_docentry" => $Data['cfc_docentry']));
 

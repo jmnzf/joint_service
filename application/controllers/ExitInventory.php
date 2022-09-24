@@ -486,6 +486,18 @@ class ExitInventory extends REST_Controller {
 											if(isset($resItemSerial[0])){
 												$ManejaSerial = 1;
 
+												if( !isset( $detail['serials'] ) ){
+													$respuesta = array(
+														'error'   => true,
+														'data'    => [],
+														'mensaje' => 'No se encontraron los seriales para el articulo: '.$detail['si1_itemcode']
+													);
+
+													$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+													return;
+												}
+
 												$AddSerial = $this->generic->addSerial( $detail['serials'], $detail['si1_itemcode'], $Data['isi_doctype'], $resInsert, $DocNumVerificado, $Data['isi_docdate'], 2, $Data['isi_comment'], $detail['si1_whscode'], $detail['si1_quantity'], $Data['isi_createby'] );
 
 												if( isset($AddSerial['error']) && $AddSerial['error'] == false){

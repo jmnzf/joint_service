@@ -2098,6 +2098,64 @@ class SalesNc extends REST_Controller {
 						}
 						// FIN VALIDACION DIFERENCIA EN DECIMALES
 
+
+						// SE VALIDA QUE LA FACTURA BASE NO SEA MENOR QUE LA NOTA CREDITO
+						if( $Data['vnc_basetype'] == 5 ){
+
+							$sqlBaseFactura = "SELECT * FROM dvfv WHERE dvf_docentry = :dvf_docentry";
+							$resBaseFactura = $this->pedeo->queryTable($sqlBaseFactura, array(':dvf_docentry' => $Data['vnc_baseentry'] ));
+
+							if ( isset( $resBaseFactura[0] ) ){
+
+								$tFC = $resBaseFactura[0]['dvf_doctotal'];
+
+								$tNC =  $Data['vnc_doctotal'];
+
+								if(trim($resBaseFactura[0]['dvf_currency']) != $MONEDALOCAL ){
+									 $tFC = ( $tFC * $TasaDocLoc );
+								}
+
+								if(trim($Data['vnc_currency']) != $MONEDALOCAL ){
+										$tNC  = ( $tNC * $TasaDocLoc );
+								}
+
+
+								if ( $tNC > $tFC ){
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resBaseFactura,
+										'mensaje'	=> 'La valor total de nota credito es mayor a la factura base'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+
+								}
+
+
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resBaseFactura,
+									'mensaje'	=> 'No se encontro la factura base'
+								);
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+
+
+						}
+
 						//SE ACTUALIZA EL PAY TO DAY DE LA FACTURA
 						if($Data['vnc_basetype'] == 5) { // SOLO CUANDO ES UNA FACTURA
 

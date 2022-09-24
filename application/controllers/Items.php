@@ -48,22 +48,6 @@ class Items extends REST_Controller {
 
       }
 
-			// SE BUSCA EL CONSECUTIVO DE ARTICULO
-			$sqlConsecutivo = "SELECT max(dma_id)+1 AS conse FROM dmar";
-			$resConsecutivo = $this->pedeo->queryTable($sqlConsecutivo, array());
-
-			if(!isset($resConsecutivo[0])){
-					$respuesta = array(
-						'error' => true,
-						'data'  => [],
-						'mensaje' => 'no se encontro el consecutivo');
-
-					$this->response($respuesta);
-
-					return;
-			}
-			// FIN BUSQUEDA CONSECUTIVO DE ARTICULO
-
 			//VALIDACION ITEM MANEJA SERIAL
 			if ( isset($Data['dma_series_code']) && $Data['dma_series_code'] == 1 ){
 				if ( $Data['dma_uom_purch'] == $Data['dma_uom_sale'] ){
@@ -111,7 +95,7 @@ class Items extends REST_Controller {
 
 				      $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-				            ':dma_item_code' => isset($Data['dma_item_code'])?$Data['dma_item_code'].$resConsecutivo[0]['conse'] : NULL,
+				            ':dma_item_code' => isset($Data['dma_item_code'])?$Data['dma_item_code'] : NULL,
 				            ':dma_item_name' => isset($Data['dma_item_name'])?$Data['dma_item_name'] : NULL,
 				            ':dma_generic_name' => isset($Data['dma_generic_name'])?$Data['dma_generic_name']: NULL,
 				            ':dma_item_purch' => isset($Data['dma_item_purch'])?$Data['dma_item_purch']: NULL,
