@@ -135,6 +135,7 @@ class FacturaVenta extends REST_Controller {
 									t1.fv1_quantity,
 									t2.dms_rtype regimen,
 									T0.dvf_taxigtf,
+									T0.dvf_igtf,
 									t0.dvf_igtfapplyed,
 									get_dynamic_conversion(get_localcur(),t0.dvf_igtfcurrency,t0.dvf_docdate,t0.dvf_igtfapplyed,get_localcur()) as base_igtf,
 									get_dynamic_conversion(get_localcur(),t0.dvf_igtfcurrency,t0.dvf_docdate,t0.dvf_igtf,get_localcur()) as imp_igtf
@@ -343,15 +344,15 @@ class FacturaVenta extends REST_Controller {
 				}
 
 
-                $sqlIgtf = "SELECT gtf_currency,
+                $sqlIgtf = "SELECT 
 				gtf_value,
-				get_dynamic_conversion(get_localcur(), gtf_currency, dvf_docdate, gtf_value, get_localcur()) as igtf_value,
-				round((gtf_value * gtf_tax / 100) * tsa_value,get_decimals()) as gtf_tax,
-				tsa_value
+				tsa_value,
+				igtf.*,
+				round((gtf_taxdivisa * tsa_value),get_decimals()) as imp_value
 				from dvfv
 				inner join igtf on igtf.gtf_docentry  = dvf_docentry and igtf.gtf_doctype = dvf_doctype
-				inner join tasa on tsa_date = dvf_docdate and tsa_currd = gtf_currency
-                where dvf_docentry = :DVF_DOCENTRY and dvf_doctype =  5";
+				inner join tasa on tsa_date = dvf_docdate and tsa_currd = gtf_currency and tsa_curro = get_localcur()
+				where dvf_docentry = :DVF_DOCENTRY and dvf_doctype =  5 order by gtf_balancer desc";
 
                 $resIgtf = $this->pedeo->queryTable($sqlIgtf,array(':DVF_DOCENTRY' => $Data));
                 $igtfTable = "<table width='50%' style='vertical-align: bottom;'>
@@ -369,24 +370,24 @@ class FacturaVenta extends REST_Controller {
                 if(isset($resIgtf[0])){
 					$restante = $contenidoFV[0]['totaldoc'];
                     foreach ($resIgtf as $key => $value) {
-						$restante-= $value['igtf_value'];
+						$restante-= $value['gtf_value'];
                         $igtfTable.="<tr >
                         <td>{$value['gtf_currency']}</td>
                         <td>{$value['tsa_value']}</td>
                         <td>{$value['gtf_value']}</td>
-                        <td>{$value['igtf_value']}</td>
-                        <td>{$value['gtf_tax']}</td>
-                        <td>{$restante}</td>
+                        <td>{$value['gtf_collected']}</td>
+                        <td>{$value['imp_value']}</td>
+                        <td>{$value['gtf_balancer']}</td>
                     </tr>";
 
-                    $igtfTotal+= $value['igtf_value'];
-                    $impIgtf+= $value['gtf_tax'];
+                    $igtfTotal+= $value['gtf_collected'];
+                    $impIgtf+= $value['gtf_taxdivisa'];
                         
                     }
                     // print_r($contenidoFV[0]);exit;
                     $igtfTable.= "<tr style=\"border-top:1px solid #000;\">
 					<td colspan=\"5\" style='border-top:1px solid #000; text-align: left;'><p>monto recibido en BS</p></td>
-                    <td  style=\"text-align: center; border-top:1px solid #000;\"> ".($contenidoFV[0]['totaldoc'] - $igtfTotal)."</td>
+                    <td  style=\"text-align: center; border-top:1px solid #000;\"> ".round(($contenidoFV[0]['totaldoc'] - $igtfTotal),$DECI_MALES)."</td>
                     </tr>";
                     
                 }
@@ -689,7 +690,7 @@ class FacturaVenta extends REST_Controller {
 									<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'], 2, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalIva, 2, ',', '.').'</span></td>
 								</tr>
 								<tr>
-									<td style="text-align: right;">IGTF: <span>'.$contenidoFV[0]['monedadocumento'].' {igtfValue}</span></td>
+									<td style="text-align: right;">IGTF: <span>'.$contenidoFV[0]['monedadocumento'].' '.$contenidoFV[0]['dvf_igtf'].'</span></td>
 								</tr>
 								<tr>
 									<td style="text-align: right;">Valor Total: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalDoc,$DECI_MALES , ',', '.').'</span></td>
@@ -724,8 +725,6 @@ class FacturaVenta extends REST_Controller {
 					<br>
 					<br>
 				</table>';
-
-				$html = str_replace("{igtfValue}",number_format($impIgtf, $DECI_MALES, ',', '.'),$html);
 				// print_r($html);exit();die(); 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
