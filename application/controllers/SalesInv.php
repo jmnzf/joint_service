@@ -2772,13 +2772,18 @@ class SalesInv extends REST_Controller {
 
 
 							foreach ($DetalleIgtf as $key => $val) {
-								$sqlInsertIgtf = "INSERT INTO igtf(gtf_currency, gtf_docentry, gtf_doctype, gtf_value, gtf_tax)VALUES(:gtf_currency, :gtf_docentry, :gtf_doctype, :gtf_value, :gtf_tax)";
+								$sqlInsertIgtf = "INSERT INTO igtf(gtf_currency, gtf_docentry, gtf_doctype, gtf_value, gtf_tax, gtf_taxdivisa, gft_docvalue, gtf_collected, gtf_balancer)VALUES(:gtf_currency, :gtf_docentry, :gtf_doctype, :gtf_value, :gtf_tax, :gtf_taxdivisa, :gft_docvalue, :gtf_collected, :gtf_balancer)";
 								$resInserIgtf = $this->pedeo->insertRow($sqlInsertIgtf, array(
-									':gtf_currency' => $val['gtf_currency'],
-									':gtf_docentry' => $resInsert,
-									':gtf_doctype'  => $Data['dvf_doctype'],
-									':gtf_value'	  => $val['gtf_value'],
-									':gtf_tax'		  => $Data['dvf_taxigtf']
+									':gtf_currency'  => $val['gtf_currency'],
+									':gtf_docentry'  => $resInsert,
+									':gtf_doctype'   => $Data['dvf_doctype'],
+									':gtf_value'	   => $val['gtf_value'],
+									':gtf_tax'		   => $Data['dvf_taxigtf'],
+									':gtf_taxdivisa' => $val['gtf_taxdivisa'],
+									':gft_docvalue'  => $val['gft_docvalue'],
+									':gtf_collected' => $val['gtf_collected'],
+									':gtf_balancer'  => $val['gtf_balancer']
+
 								));
 
 								if(is_numeric($resInserIgtf) && $resInserIgtf > 0){
