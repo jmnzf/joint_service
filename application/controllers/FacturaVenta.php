@@ -690,6 +690,9 @@ class FacturaVenta extends REST_Controller {
 									<td style="text-align: right;">IVA 16% Sobre '.number_format($contenidoFV[0]['base'], 2, ',', '.').': <span>'.$contenidoFV[0]['monedadocumento']." ".number_format($valorTotalIva, 2, ',', '.').'</span></td>
 								</tr>
 								<tr>
+									<td style="text-align: right;">Valor Factura: <span>'.$contenidoFV[0]['monedadocumento']." ".number_format(($contenidoFV[0]['base']+$valorTotalIva), 2, ',', '.').'</span></td>
+								</tr>
+								<tr>
 									<td style="text-align: right;">IGTF: <span>'.$contenidoFV[0]['monedadocumento'].' '.$contenidoFV[0]['dvf_igtf'].'</span></td>
 								</tr>
 								<tr>
