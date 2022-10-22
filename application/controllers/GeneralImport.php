@@ -93,6 +93,41 @@ class GeneralImport extends REST_Controller {
 		$this->response($respuesta);
     }
 
+    public function get_TableInfo_post(){
+        $Data = $this->post();
+
+        $sqlSelect = "SELECT 
+        table_info.column_name, 
+        case 
+        when table_info.is_nullable = 'YES' then 1 
+        ELSE  0 
+        end required
+         FROM 
+        information_schema.columns as table_info
+        join information_schema.key_column_usage as key_info 
+        on table_info.table_name = key_info.table_name
+        where
+        table_info.table_name = :table and table_info.column_name <> key_info.column_name";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":table" => $Data['table']));
+
+		if (isset($resSelect[0])) {
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+			$respuesta = array(
+				'error' => true,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		}
+		$this->response($respuesta);
+    
+    }
+
     private function dataFormat($data){
         $dataformated =  array();
        foreach ($data as $key => $item) {
