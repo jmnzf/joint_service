@@ -26,7 +26,6 @@ class SalesInv extends REST_Controller {
   //CREAR NUEVA FACTURA DE VENTAS
 	public function createSalesInv_post(){
 
-
 			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
@@ -368,11 +367,11 @@ class SalesInv extends REST_Controller {
         $sqlInsert = "INSERT INTO dvfv(dvf_series, dvf_docnum, dvf_docdate, dvf_duedate, dvf_duedev, dvf_pricelist, dvf_cardcode,
                       dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
                       dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
-                      dvf_attch,dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed)
+                      dvf_attch,dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed,dvf_igtfcode)
 											VALUES(:dvf_series, :dvf_docnum, :dvf_docdate, :dvf_duedate, :dvf_duedev, :dvf_pricelist, :dvf_cardcode, :dvf_cardname,
                       :dvf_currency, :dvf_contacid, :dvf_slpcode, :dvf_empid, :dvf_comment, :dvf_doctotal, :dvf_baseamnt, :dvf_taxtotal, :dvf_discprofit, :dvf_discount,
                       :dvf_createat, :dvf_baseentry, :dvf_basetype, :dvf_doctype, :dvf_idadd, :dvf_adress, :dvf_paytype, :dvf_attch,:dvf_createby,:dvf_correl,:dvf_transport,:dvf_sub_transport,:dvf_ci,:dvf_t_vehiculo,
-											:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfapplyed)";
+											:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfapplyed,:dvf_igtfcode)";
 
 
 				// Se Inicia la transaccion,
@@ -428,7 +427,8 @@ class SalesInv extends REST_Controller {
 								':dvf_driverid'  => isset($Data['dvf_driverid'])?$Data['dvf_driverid']:NULL,
 								':dvf_igtf'  =>  isset($Data['dvf_igtf'])?$Data['dvf_igtf']:NULL,
 								':dvf_taxigtf' => isset($Data['dvf_taxigtf'])?$Data['dvf_taxigtf']:NULL,
-								':dvf_igtfapplyed' => isset($Data['dvf_igtfapplyed'])?$Data['dvf_igtfapplyed']:NULL
+								':dvf_igtfapplyed' => isset($Data['dvf_igtfapplyed'])?$Data['dvf_igtfapplyed']:NULL,
+								':dvf_igtfcode' => isset($Data['dvf_igtfcode'])?$Data['dvf_igtfcode']:NULL
 							));
 
 					if(is_numeric($resInsert) && $resInsert > 0){
@@ -3625,7 +3625,13 @@ class SalesInv extends REST_Controller {
 											INNER JOIN dmar
 											ON vfv1.fv1_itemcode = dmar.dma_item_code
 											WHERE fv1_docentry =:fv1_docentry";
-				$sqlSelectFv = "SELECT coalesce(round(dvf_igtf * (get_tax_currency(dvf_igtfcurrency, dvf_docdate)), get_decimals()),0) as dvf_igtf, dvf_taxigtf,dvf_igtfcurrency, dvf_igtfapplyed, dvf_igtf as dvf_igtfrealvalue  FROM  dvfv WHERE dvf_docentry = :dvf_docentry";
+
+				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
+												FROM dvfv
+												LEFT JOIN igtf
+												ON dvf_docentry = gtf_docentry
+												AND dvf_doctype = gtf_doctype
+												WHERE dvf_docentry = :dvf_docentry";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fv1_docentry" => $Data['fv1_docentry']));
 

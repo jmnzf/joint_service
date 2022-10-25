@@ -871,7 +871,7 @@ class PurchaseInv extends REST_Controller {
 											}
 
 
-											$CostoArticuloMv = $detail['fc1_price'];
+											$CostoArticuloMv = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
 											$CantidadMBI = 0;
 
 											if(isset($resCostoMomentoRegistro[0])){
@@ -1005,6 +1005,9 @@ class PurchaseInv extends REST_Controller {
 																':bdi_itemcode' => $detail['fc1_itemcode'],
 																':bdi_whscode'  => $detail['fc1_whscode']
 													));
+
+													$CantidadPorAlmacen = isset($resCostoCantidad[0]['bdi_quantity'])?$resCostoCantidad[0]['bdi_quantity']:0;
+													$CostoPorAlmacen = isset($resCostoCantidad[0]['bdi_avgprice'])?$resCostoCantidad[0]['bdi_avgprice']:0;
 												}
 
 												// SI EXISTE EL ITEM EN EL STOCK
@@ -3093,7 +3096,7 @@ class PurchaseInv extends REST_Controller {
 
 												$respuesta = array(
 													'error'   => true,
-													'data' => $resInsert,
+													'data' => $resInsertDetail,
 													'mensaje'	=> 'No se pudo registrar la factura de compras'
 												);
 

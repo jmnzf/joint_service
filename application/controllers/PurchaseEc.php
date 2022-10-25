@@ -784,7 +784,7 @@ class PurchaseEc extends REST_Controller {
 													 ':bmi_createby'  => isset($Data['cec_createby'])?$Data['cec_createby']:NULL,
 													 ':bmy_doctype'   => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0,
 													 ':bmy_baseentry' => $resInsert,
-													 ':bmi_cost'      => $detail['ec1_price'],
+													 ':bmi_cost'      => ( ( $detail['ec1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE ),
 													 ':bmi_currequantity' 	=> 0,
 													 ':bmi_basenum'			=> $DocNumVerificado,
 													 ':bmi_docdate' => $this->validateDate($Data['cec_docdate'])?$Data['cec_docdate']:NULL,
@@ -806,7 +806,7 @@ class PurchaseEc extends REST_Controller {
 													 ':bmi_createby'  => isset($Data['cec_createby'])?$Data['cec_createby']:NULL,
 													 ':bmy_doctype'   => is_numeric($Data['cec_doctype'])?$Data['cec_doctype']:0,
 													 ':bmy_baseentry' => $resInsert,
-													 ':bmi_cost'      => $detail['ec1_price'],
+													 ':bmi_cost'      => ( ( $detail['ec1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE ),
 													 ':bmi_currequantity' 	=> 0,
 													 ':bmi_basenum'			=> $DocNumVerificado,
 													 ':bmi_docdate' => $this->validateDate($Data['cec_docdate'])?$Data['cec_docdate']:NULL,
@@ -1256,7 +1256,6 @@ class PurchaseEc extends REST_Controller {
 													//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
 													$CostoNuevo = ( ( $detail['ec1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
 													//
-
 													if(trim($Data['cec_currency']) != $MONEDALOCAL ){
 														 $CostoNuevo = ($CostoNuevo * $TasaDocLoc);
 													}

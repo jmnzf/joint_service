@@ -293,9 +293,9 @@ class PurchaseNc extends REST_Controller {
         $sqlInsert = "INSERT INTO dcnc(cnc_series, cnc_docnum, cnc_docdate, cnc_duedate, cnc_duedev, cnc_pricelist, cnc_cardcode,
                       cnc_cardname, cnc_currency, cnc_contacid, cnc_slpcode, cnc_empid, cnc_comment, cnc_doctotal, cnc_baseamnt, cnc_taxtotal,
                       cnc_discprofit, cnc_discount, cnc_createat, cnc_baseentry, cnc_basetype, cnc_doctype, cnc_idadd, cnc_adress, cnc_paytype,
-                      cnc_attch,cnc_createby)VALUES(:cnc_series, :cnc_docnum, :cnc_docdate, :cnc_duedate, :cnc_duedev, :cnc_pricelist, :cnc_cardcode, :cnc_cardname,
+                      cnc_attch,cnc_createby, cnc_totalret, cnc_totalretiva)VALUES(:cnc_series, :cnc_docnum, :cnc_docdate, :cnc_duedate, :cnc_duedev, :cnc_pricelist, :cnc_cardcode, :cnc_cardname,
                       :cnc_currency, :cnc_contacid, :cnc_slpcode, :cnc_empid, :cnc_comment, :cnc_doctotal, :cnc_baseamnt, :cnc_taxtotal, :cnc_discprofit, :cnc_discount,
-                      :cnc_createat, :cnc_baseentry, :cnc_basetype, :cnc_doctype, :cnc_idadd, :cnc_adress, :cnc_paytype, :cnc_attch,:cnc_createby)";
+                      :cnc_createat, :cnc_baseentry, :cnc_basetype, :cnc_doctype, :cnc_idadd, :cnc_adress, :cnc_paytype, :cnc_attch,:cnc_createby, :cnc_totalret, :cnc_totalretiva)";
 
 
 				// Se Inicia la transaccion,
@@ -333,7 +333,9 @@ class PurchaseNc extends REST_Controller {
               ':cnc_adress' => isset($Data['cnc_adress'])?$Data['cnc_adress']:NULL,
               ':cnc_paytype' => is_numeric($Data['cnc_paytype'])?$Data['cnc_paytype']:0,
 							':cnc_createby' => isset($Data['cnc_createby'])?$Data['cnc_createby']:NULL,
-              ':cnc_attch' => $this->getUrl(count(trim(($Data['cnc_attch']))) > 0 ? $Data['cnc_attch']:NULL, $resMainFolder[0]['main_folder'])
+              ':cnc_attch' => $this->getUrl(count(trim(($Data['cnc_attch']))) > 0 ? $Data['cnc_attch']:NULL, $resMainFolder[0]['main_folder']),
+							':cnc_totalret' => is_numeric($Data['cnc_totalret'])?$Data['cnc_totalret']:0,
+							':cnc_totalretiva' => is_numeric($Data['cnc_totalretiva'])?$Data['cnc_totalretiva']:0
 						));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -2405,8 +2407,8 @@ class PurchaseNc extends REST_Controller {
 					// SE VALIDA QUE LA FACTURA BASE NO SEA MENOR QUE LA NOTA CREDITO
 					if( $Data['cnc_basetype'] == 15 ){
 
-						$sqlBaseFactura = "SELECT * FROM dcfc WHERE cdc_docentry = :cdc_docentry";
-						$resBaseFactura = $this->pedeo->queryTable($sqlBaseFactura, array(':cdc_docentry' => $Data['cnc_baseentry'] ));
+						$sqlBaseFactura = "SELECT * FROM dcfc WHERE cfc_docentry = :cfc_docentry";
+						$resBaseFactura = $this->pedeo->queryTable($sqlBaseFactura, array(':cfc_docentry' => $Data['cnc_baseentry'] ));
 
 						if ( isset( $resBaseFactura[0] ) ){
 
@@ -2967,6 +2969,22 @@ class PurchaseNc extends REST_Controller {
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":nc1_docentry" => $Data['nc1_docentry']));
 
 				if(isset($resSelect[0])){
+					foreach ($resSelect as $key => $value) {
+						$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
+														FROM cnc1
+														INNER JOIN dmar
+														ON cnc1.nc1_itemcode = dmar.dma_item_code
+														INNER JOIN fcrt fc
+														ON cnc1.nc1_docentry = fc.crt_baseentry
+														AND cnc1.nc1_linenum = fc.crt_linenum
+														WHERE nc1_docentry = :nc1_docentry";
+
+								$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':nc1_docentry' => $Data['nc1_docentry']));
+
+							if(isset($resSelect2[0])){
+								$resSelect[$key]['retenciones'] = $resSelect2;
+							}
+					}
 
 					$respuesta = array(
 						'error' => false,

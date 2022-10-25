@@ -111,7 +111,9 @@ class NcCompra extends REST_Controller {
 													T0.CNC_DOCTOTAL TotalDoc,
 													T0.CNC_COMMENT Comentarios,
 													t6.pgs_mde,
-													t6.pgs_mpfn
+													t6.pgs_mpfn,
+													coalesce(t0.CNC_TOTALRET, 0) totalret,
+													coalesce(t0.CNC_TOTALRETIVA, 0) totalretiva
 												FROM DCNC t0
 												INNER JOIN CNC1 T1 ON t0.CNC_docentry = t1.NC1_docentry
 												LEFT JOIN DMSN T2 ON t0.CNC_cardcode = t2.dms_card_code
@@ -299,19 +301,25 @@ class NcCompra extends REST_Controller {
         <br>
         <table width="100%">
         <tr>
-            <td style="text-align: right;">Base Documento: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['base'], $DECI_MALES, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Base Documento: </b><span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['base'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Descuento: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['descuento'], $DECI_MALES, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Descuento: </b><span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['descuento'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 				<tr>
-            <td style="text-align: right;">Sub Total: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['subtotal'], $DECI_MALES, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Sub Total: </b><span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['subtotal'], $DECI_MALES, ',', '.').'</span></p></td>
+        </tr>
+				<tr>
+						<td style="text-align: right;"><b>Total Retención IVA: </b></b><span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['totalretiva'], $DECI_MALES, ',', '.').'</span></p></td>
+				</tr>
+				<tr>
+						<td style="text-align: right;"><b>Total Retención: </b><span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['totalret'], $DECI_MALES, ',', '.').'</span></p></td>
+				</tr>
+        <tr>
+            <td style="text-align: right;"><b>Impuestos: </b><span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['iva'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;">Impuestos: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['iva'], $DECI_MALES, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;">Total: <span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['totaldoc'], $DECI_MALES, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Total: </b><span>'.$contenidoNcC[0]['monedadocumento']." ".number_format($contenidoNcC[0]['totaldoc'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 
         </table>

@@ -105,7 +105,8 @@ class FacturaCompra extends REST_Controller {
 										T0.CFC_TAXTOTAL Iva,
 										T0.CFC_DOCTOTAL TotalDoc,
 										T0.CFC_COMMENT Comentarios,
-										t0.CFC_TOTALRET totalret,
+										coalesce(t0.CFC_TOTALRET, 0) totalret,
+										coalesce(t0.CFC_TOTALRETIVA, 0) totalretiva,
 										t0.cfc_tax_control_num,
 										T0.cfc_correl
 									FROM DCFC t0
@@ -257,7 +258,10 @@ class FacturaCompra extends REST_Controller {
             <td style="text-align: right;"><b>Sub Total: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['subtotal'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 				<tr>
-            <td style="text-align: right;"><b>Total Retencion: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totalret'], $DECI_MALES, ',', '.').'</span></p></td>
+						<td style="text-align: right;"><b>Total Retención IVA: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totalretiva'], $DECI_MALES, ',', '.').'</span></p></td>
+				</tr>
+				<tr>
+            <td style="text-align: right;"><b>Total Retención: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['totalret'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
             <td style="text-align: right;"><b>Impuestos: </b><span>'.$contenidoFC[0]['monedadocumento']." ".number_format($contenidoFC[0]['iva'], $DECI_MALES, ',', '.').'</span></p></td>

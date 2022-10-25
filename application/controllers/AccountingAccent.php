@@ -27,9 +27,6 @@ class AccountingAccent extends REST_Controller {
   //CREAR NUEVO ASIENTO CONTABLE
 	public function createAccountingAccent_post(){
 
-
-		exit;
-
 			$DECI_MALES =  $this->generic->getDecimals();
       $Data = $this->post();
 			$DocNumVerificado = 0;
@@ -225,10 +222,11 @@ class AccountingAccent extends REST_Controller {
 									return;
 								}
 								//*******
-								// VALIDACION CENTRO DE COSTO, UNIDAD DE NEGOCIO y PROYECTO
-								$ValidateDmun = $this->pedeo->queryTable("SELECT * FROM dmun WHERE dun_un_code  = :dun_un_code", array(':dun_un_code' => $detail['ac1_uncode']));
-								$ValidateDmpj = $this->pedeo->queryTable("SELECT * FROM dmpj WHERE dpj_pj_code  = :dpj_pj_code", array(':dpj_pj_code' => $detail['ac1_prj_code']));
-								$ValidateDmcc = $this->pedeo->queryTable("SELECT * FROM dmcc WHERE dcc_prc_code = :dcc_prc_code", array(':dcc_prc_code' => $detail['ac1_prc_code']));
+								//VALIDACION CENTRO DE COSTO, UNIDAD DE NEGOCIO, PROYECTO Y SOCIO DE NEGOCIO
+								$ValidateDmun = $this->pedeo->queryTable("SELECT * FROM dmun WHERE trim(dun_un_code)  = :dun_un_code", array(':dun_un_code' => trim($detail['ac1_uncode'])));
+								$ValidateDmpj = $this->pedeo->queryTable("SELECT * FROM dmpj WHERE trim(dpj_pj_code)  = :dpj_pj_code", array(':dpj_pj_code' => trim($detail['ac1_prj_code'])));
+								$ValidateDmcc = $this->pedeo->queryTable("SELECT * FROM dmcc WHERE trim(dcc_prc_code) = :dcc_prc_code", array(':dcc_prc_code' => trim($detail['ac1_prc_code'])));
+								$ValidateSn   = $this->pedeo->queryTable("SELECT * FROM dmsn WHERE trim(dms_card_code) = :dms_card_code",array(':dms_card_code' => trim($detail['ac1_legal_num'])));
 
 								if ( !isset( $ValidateDmun[0] ) ){
 									$this->pedeo->trans_rollback();
@@ -265,6 +263,20 @@ class AccountingAccent extends REST_Controller {
 										'error'   => true,
 										'data'    => $ValidateDmcc,
 										'mensaje'	=> 'No existe el centro de costo '.$detail['ac1_prc_code']
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+
+								if ( !isset( $ValidateSn[0] ) ){
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'    => $ValidateSn,
+										'mensaje'	=> 'No existe el socio de negocio '.$detail['ac1_legal_num']
 									);
 
 									$this->response($respuesta);
