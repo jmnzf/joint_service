@@ -52,7 +52,7 @@ class GeneralImport extends REST_Controller {
                 $respuesta = array(
                     'error'   => true,
                     'data'    => $resInsert,
-                    'mensaje'	=> 'No se pudo registrar el asiento contable'
+                    'mensaje'	=> 'No se pudo importar los datos'
                 );
 
                 $this->response($respuesta);
@@ -66,7 +66,7 @@ class GeneralImport extends REST_Controller {
             $respuesta = array(
             'error' => false,
             'data' => $resInsert,
-            'mensaje' =>'Asiento contable registrado con exito'
+            'mensaje' =>'Datos importados con exito'
             );
 
         $this->response($respuesta);
