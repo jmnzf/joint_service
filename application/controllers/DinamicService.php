@@ -4,11 +4,21 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
+
+use LDAP\Result;
 use Restserver\libraries\REST_Controller;
 
 class DinamicService extends REST_Controller {
 
 	private $pdo;
+	private $NombreSecuencia;
+	private $NombreTablaFinal;
+	private $NombreControlador;
+	private $idMenu;
+	private $FileConfig;
+	private $ConfigOri;
+	private $Json;
+	private $ArrSelect2;
 
 	public function __construct(){
 
@@ -21,54 +31,150 @@ class DinamicService extends REST_Controller {
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
         $this->load->library('pedeo', [$this->pdo]);
 
+		$this->ArrSelect2 = [];
+
 	}
 
-  //CREAR NUEVO CRUD
+  	//CREAR NUEVO CRUD
 	public function createDinamicService_post(){
 
         $Data = $this->post();
 
 
-		
-
         if( !isset( $Data['data'] ) ){
-
             $this->response(array("error" => true, "data" =>'',"mensaje" => "Falta el parametro data"));
-
             exit;
         }
 
-        // $Data = json_decode($Data['data'], true);
+
         $Data = json_decode($Data['data'], true);
-	
+
+		// $Data = $Data['data'];
+// print_r($Data);exit;
+		if( !isset( $Data['method_static'] ) ){
+            $this->response(array("error" => true, "data" =>'',"mensaje" => "Falta el parametro metodo"));
+            exit;
+        }
+
+
         $Controlador = 'DynamicPage';// CONTROLADOR PREDETERMINADO
 
-        // $this->pedeo->trans_begin();
+		$company = $this->pedeo->queryTable("SELECT main_folder FROM PARAMS",array());
 
-        // $NombreSecuencia   = $this->createSequence( $Data['form_table'], $Data['primary_key'] );
-        // $NombreTablaFinal  = $this->createTable($Data['form'], $Data['form_table'], $Data['primary_key'], $NombreSecuencia, $Data['form_desctable']);
-        // $NombreControlador = $this->createHeader($Data['form_name'], $Data['form'],  $NombreTablaFinal, $Data['primary_key']);
+        if(!isset($company[0])){
+			$respuesta = array(
+	           'error' => true,
+	           'data'  => $company,
+	           'mensaje' =>'no esta registrada la ruta de la empresa'
+		    );
 
-        //INICIA TRANSACCION EN LA BD
+          	$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          	return;
+		}
+
+		$JSON = "/var/www/html/".$company[0]['main_folder']."/assets/json/config_dinamic.json";
+
+		$dataJson = @file_get_contents($JSON);
+		$this->ConfigOri = $dataJson;
+		$this->Json = $JSON;
 
 
-        // $idMenu =  $this->createMenu($Data['form_name'], $Controlador);
+		// $this->createGet( $Data['form_table'], $Data['form'], $Data['primary_key'] );
 
 
-		$this->createConfigFile(100, 'Nomina',$Data['form'],$Data['primary_key']);
+        $this->NombreSecuencia   = $this->createSequence( $Data['form_table'], $Data['primary_key'] );
 
-		print_r($idMenu);
+        $this->NombreTablaFinal  = $this->createTable($Data['form'], $Data['form_table'], $Data['primary_key'], $this->NombreSecuencia, $Data['form_desctable']);
+
+		if ( $Data['method_static'] == 0 ){
+ 			$this->NombreControlador = $this->createHeader($Data['nombre_controlador'], $Data['form'],  $this->NombreTablaFinal, $Data['primary_key']);
+		}else{
+			$this->NombreControlador = "DinamicCrud";
+		}
+
+        $this->idMenu =  $this->createMenu($Data['form_name'], $Controlador);
+
+		$this->FileConfig = $this->createConfigFile($this->idMenu,$this->NombreControlador,$Data['form'],$Data['primary_key'],$Data['colum_status']);
+		// $this->FileConfig = $this->createConfigFile(100,"DinamicCrud",$Data['form'],$Data['primary_key']);
 
 
+		$this->mergeConfig($this->FileConfig, $dataJson, $JSON);
 
 
+		$this->insertConfig();
+		$this->response(array("error" => false, "data" =>[],"mensaje" => "Proceso finalizado"));
+		// $this->response( $this->FileConfig );
+	}
 
-        $this->response(array("error" => false, "data" =>[],"mensaje" => "Proceso finalizado"));
+	public function getForms_get(){
+
+		$sqlSelect = " SELECT * FROM cffd ";
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+		$respuesta = array(
+			'error' => true,
+			'data'  => $resSelect,
+			'mensaje' =>'Busqueda sin resultados'
+		 );
+
+		if( isset($resSelect[0]) ){
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' =>''
+			);
+		}
+
+		$this->response( $respuesta );
+	}
+
+
+	private function mergeConfig($FileConfig, $dataJson, $JSON){
+
+		$obj = json_decode($dataJson, true);
+		$obj2 = json_encode($FileConfig);
+
+		array_push($obj ,  json_decode($obj2, true));
+
+		$archivo = fopen($JSON, "w+b");
+
+
+        if ( $archivo ) {
+
+            file_put_contents($JSON, json_encode($obj));
+            fclose($archivo);
+
+        }else{
+
+           $this->cancelProcess("No se pudo añadir la configuracion al archivo ".json_encode($archivo));
+
+        }
+
+	}
+
+	private function insertConfig(){
+
+		$sqlInsert = "INSERT INTO cffd(ffd_table, ffd_config, ffd_controller)VALUES(:ffd_table, :ffd_config, :ffd_controller)";
+
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+
+			':ffd_table'      => $this->NombreTablaFinal,
+			':ffd_config'     => json_encode($this->FileConfig),
+			':ffd_controller' => $this->NombreControlador
+		));
+
+		if (is_numeric($resInsert) && $resInsert > 0 ){
+
+		}else{
+			$this->cancelProcess("No se pudo guardar la configuración ".json_encode($resInsert));
+		}
 	}
 
 
 
-	private function createConfigFile($idMenu, $CtlrService, $form, $llave){
+	private function createConfigFile($idMenu, $CtlrService, $form, $llave, $status=""){
 
 		$json = new \stdClass();
 		$contenidoDataTable =  new \stdClass();
@@ -84,6 +190,8 @@ class DinamicService extends REST_Controller {
 		$json->apiById = "";
 		$json->apiDetailById = "";
 		$json->apiDownload = "";
+		$json->table = $this->NombreTablaFinal;
+		$json->pkey  = $llave;
 
 
 		$contenidoDataTable->columns = [];
@@ -96,20 +204,20 @@ class DinamicService extends REST_Controller {
 
 			$contenidoColumns = new \stdClass();
 
-			if ( $value['colum_status'] == 1 ) {
+			if ( isset($value['colum_status']) && $value['colum_status'] == 1 ) {
 				$contenidoColumns->data  = $value['field_name'];
 				$contenidoColumns->name  = $value['field_name'];
 				$contenidoColumns->title = $value['colum_title'];
+
+
+				array_push($contenidoDataTable->columns, $contenidoColumns);
 			}
-
-
-			array_push($contenidoDataTable->columns, $contenidoColumns);
 		}
 
 
 
 		$contenidoDataTable->order=[[0, "desc"]];
-		$contenidoDataTable->statusField = $form[0]['colum_status'];
+		$contenidoDataTable->statusField = !empty($status) ? $status: "";
 
 		$json->datatable = $contenidoDataTable;
 
@@ -123,11 +231,23 @@ class DinamicService extends REST_Controller {
 
 			switch($value['field_type']){
 
-				case 'text':
+				case 'input':
+					$contenidoField->type    = $value['input_type'];
+					$contenidoField->title   = $value['colum_title'];
+					$contenidoField->id      = $value['field_name'];
+					$contenidoField->col     = $value['column_size'];
+
+
+					array_push($contenidoForm->field, $contenidoField);
+					break;
+
+				case 'textarea':
 					$contenidoField->type  = $value['field_type'];
 					$contenidoField->title = $value['colum_title'];
 					$contenidoField->id    = $value['field_name'];
 					$contenidoField->col   = $value['column_size'];
+					$contenidoField->col   = $value['column_size'];
+					$contenidoField->rows  = $value['texarea_rows'];
 
 					array_push($contenidoForm->field, $contenidoField);
 					break;
@@ -151,25 +271,35 @@ class DinamicService extends REST_Controller {
 					break;
 
 				case 'select2':
-					$contenidoField->type  = $value['field_type'];
-					$contenidoField->title = $value['colum_title'];
-					$contenidoField->id    = $value['field_name'];
-					$contenidoField->col   = $value['column_size'];
-					$contenidoField->data  = [];
-					$contenidoField->api   = $value['api_service'];
+
+					foreach ($this->ArrSelect2 as $key => $select) {
+						if (trim($select['name']) == trim($value['field_name']) ){
+							$get = "?id=".$select['id']."&text=".$select['text']."&table=".$select['table'];
+
+							$contenidoField->type     = $value['field_type'];
+							$contenidoField->title    = $value['colum_title'];
+							$contenidoField->id       = $value['field_name'];
+							$contenidoField->col      = $value['column_size'];
+							$contenidoField->data     = [];
+							$contenidoField->api      = "DinamicCrud/select".$get;
+						}
+					}
 
 					array_push($contenidoForm->field, $contenidoField);
 					break;
 
 			}
 
-			if ( $value['field_required'] == 1 ||  $value['field_required'] == '1' ){
-				$requerido = new \stdClass();
-				$requerido->required = 'true';
-				$campo = $value['field_name'];
-				$contenidoRules->$campo = $requerido;
+			if ( isset( $value['field_required'] )){
 
-				array_push($contenidoForm->rules, $contenidoRules);
+				if ($value['field_required'] == 1 ||  $value['field_required'] == '1' ){
+					$requerido = new \stdClass();
+					$requerido->required = 'true';
+					$campo = $value['field_name'];
+					$contenidoRules->$campo = $requerido;
+
+					array_push($contenidoForm->rules, $contenidoRules);
+				}
 			}
 
 		}
@@ -180,23 +310,20 @@ class DinamicService extends REST_Controller {
 		$json->form = $contenidoForm;
 
 
-
-
-
-		print_r(json_encode($json));exit;
+		return $json;
 
 	}
 
 	private function createMenu($NombreMenu, $Controlador){
 
 		$sqlInsert = "INSERT INTO menu( men_nombre, men_icon, men_controller, men_action, men_sub_menu, men_id_menu, men_id_estado )
-									VALUES (:men_nombre, :men_icon, :men_controller, :men_action, :men_sub_menu, :men_id_menu, :men_id_estado)";
+					 VALUES (:men_nombre, :men_icon, :men_controller, :men_action, :men_sub_menu, :men_id_menu, :men_id_estado)";
 
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
 			':men_nombre' => $NombreMenu,
 			':men_icon' => "",
 			':men_controller' => $Controlador,
-			':men_action' => "",
+			':men_action' => "Index",
 			':men_sub_menu' => 0,
 			':men_id_menu' => 161,
 			':men_id_estado' => 1
@@ -206,17 +333,7 @@ class DinamicService extends REST_Controller {
 
 		}else{
 
-			$this->pedeo->trans_rollback();
-
-			$respuesta = array(
-				"error"   => true,
-				"data"    => $resInsert,
-				"mensaje" => "No se pudo crear el menu"
-			);
-
-			$this->response($respuesta);
-
-			exit;
+			$this->cancelProcess("No se pudo insertar el menu ".json_encode($resInsert));
 		}
 
 		return $resInsert;
@@ -258,17 +375,8 @@ class DinamicService extends REST_Controller {
 
 				}else{
 
-					$this->pedeo->trans_rollback();
+					$this->cancelProcess("No se puedo crear la secuencia ".json_encode($resSecuencia));
 
-					$respuesta = array(
-						"error"   => true,
-						"data"    => $resSecuencia,
-						"mensaje" => "No se pudo crear la secuencia"
-					);
-
-					$this->response($respuesta);
-
-					exit;
 				}
 
 
@@ -285,7 +393,7 @@ class DinamicService extends REST_Controller {
 	private function createTable($form,$table,$primarykey,$secuencia,$Comentario){
 
 		$hacer = true;
-		$ac = 0;
+		$acc = 0;
 
 		while ( $hacer ) {
 
@@ -318,27 +426,18 @@ class DinamicService extends REST_Controller {
 
 				}else{
 
-					$this->pedeo->trans_rollback();
-
-					$respuesta = array(
-						"error"   => true,
-						"data"    => $resTabla,
-						"mensaje" => "No se pudo crear la tabla"
-					);
-
-					$this->response($respuesta);
-
-					exit;
+					$this->cancelProcess("No se pudo crear la tabla ".json_encode($resTabla));
 				}
 
 
 
 			}else{
 				$acc++;
-				$table = $table.$ac;
+				$table = $table.$acc;
 			}
 
 		}
+
 
 		return $table;
 
@@ -359,26 +458,30 @@ class DinamicService extends REST_Controller {
 		}
 		$campos = "";
 		foreach ($data as $key => $element) {
-			$campos .= "\n";
-			switch ($element['date_type']) {
-				case 'text':
-					$campos.= $element["field_name"].' '.'character varying('.$element["length_max"].') COLLATE pg_catalog.'."default ,";
-					break;
-				case 'date':
-					$campos.= $element["field_name"].' '."date ,";
-					break;
-				case 'datetime':
-					$campos.= $element["field_name"].' '."timestamp without time zone ,";
-					break;
-				case 'numeric':
-					$campos.= $element["field_name"].' '."numeric ,";
-					break;
-				case 'longtext':
-					$campos.= $element["field_name"].' '.'text  COLLATE pg_catalog.'."default ,";
-					break;
-				default:
-					// code...
-					break;
+
+			if ( $element["field_name"] != $PrimaryKey ){
+
+				$campos .= "\n";
+				switch ($element['date_type']) {
+					case 'text':
+						$campos.= $element["field_name"].' '.'character varying('.$element["length_field"].') COLLATE pg_catalog.'."default ,";
+						break;
+					case 'date':
+						$campos.= $element["field_name"].' '."date ,";
+						break;
+					case 'datetime':
+						$campos.= $element["field_name"].' '."timestamp without time zone ,";
+						break;
+					case 'numeric':
+						$campos.= $element["field_name"].' '."numeric ,";
+						break;
+					case 'longtext':
+						$campos.= $element["field_name"].' '.'text  COLLATE pg_catalog.'."default ,";
+						break;
+					default:
+						// code...
+						break;
+				}
 			}
 		}
 		$campos.= "\n";
@@ -388,7 +491,7 @@ class DinamicService extends REST_Controller {
 
 	}
 
-	private function createInsert($data, $table){
+	private function createInsert($data, $table, $primarykey){
 
 
 		$insert = "INSERT INTO ".$table;
@@ -398,8 +501,13 @@ class DinamicService extends REST_Controller {
 		$arrayValidateInsert = "";
 
 		foreach ( $data as $key => $element ) {
-			$campos.= trim($element['field_name']).', ';
-			$values.= trim(':'.$element['field_name']).', ';
+
+			if ($element['field_name'] != $primarykey ){
+
+				$campos.= trim($element['field_name']).', ';
+				$values.= trim(':'.$element['field_name']).', ';
+			}
+
 		}
 
 		$campos = substr(trim($campos), 0, -1);
@@ -413,6 +521,7 @@ class DinamicService extends REST_Controller {
 			$arrayValidateInsert.= "!isset(\$Data['".str_replace(":", "",trim($field))."']) OR \n";
 
 		}
+
 		$arrayInsert = substr(trim($arrayInsert), 0, -1);
 		$arrayValidateInsert = substr(trim($arrayValidateInsert), 0, -2);
 
@@ -465,9 +574,14 @@ class DinamicService extends REST_Controller {
 		$arrayValidateUpdate = "";
 
 		foreach ( $data as $key => $element ) {
-			$campos.= trim($element['field_name']).' = '. trim(':'.$element['field_name']) .' , ';
 
-			$soloCampos.= trim($element['field_name']).', ';
+			if ( $element['field_name'] != $primaryKey ){
+
+				$campos.= trim($element['field_name']).' = '. trim(':'.$element['field_name']) .' , ';
+
+				$soloCampos.= trim($element['field_name']).', ';
+			}
+
 		}
 
 		$campos = substr(trim($campos), 0, -1);
@@ -528,11 +642,43 @@ class DinamicService extends REST_Controller {
 		return $result;
 	}
 
-	private function createGet($table){
+	private function createGet($table, $data, $pkey){
+		$campos ="";
+		$complemento = "";
+		$values ="";
+		foreach ( $data as $key => $element ) {
+
+			switch ($element['field_type']) {
+				case 'select':
+					$campos.=$this->infoSelect($element);
+					break;
+
+				case 'select2':
+					$res = $this->infoSelect2($element,$table,$pkey);
+					if(isset($res[0])){
+						$campos.=$res[0];
+						$complemento.=$res[1];
+					}
+					break;
+
+				default:
+					$campos.= trim($element['field_name']).' , ';
+					break;
+			}
+
+		}
+
+		if ( substr(trim($campos), -1) == ',' ){
+
+			$campos = substr(trim($campos), 0, -1);
+		}
+
+		$sql = "SELECT ".$campos." FROM ".$table." ".$complemento;
+
 		$result  = "";
 		$result .= "public function index_get(){";
 		$result .= "\n";
-		$result .= "\$resSelect = \$this->pedeo->queryTable('SELECT * FROM ".$table."',array());";
+		$result .= "\$resSelect = \$this->pedeo->queryTable(\"".$sql."\",array());";
 		$result .= "\n";
 		$result .= "\n";
 		$result .= "if ( isset(\$resSelect[0]) ) { ";
@@ -550,8 +696,60 @@ class DinamicService extends REST_Controller {
 		$result .= "\n";
 		$result .= "}";
 
+
 		return $result;
 	}
+
+	private function infoSelect($element){
+
+		$result = "";
+		$campos = "CASE ";
+		foreach ($element['fill_select'] as $key => $item) {
+			if ( is_numeric($item['id']) ){
+				$campos.=" WHEN ".$element['field_name']."::numeric = ".$item['id']." THEN '".$item['text']."'";
+			}else{
+				$campos.=" WHEN ".$element['field_name']." = '".$item['id']."' THEN '".$item['text']."'";
+			}
+
+		}
+		if ( isset($element['fill_select'][0]) ){
+			$campos.=" END AS ".$element['field_name'].", ";
+
+			$result = $campos;
+		}
+
+		return $result;
+	}
+
+	private function infoSelect2($element,$table,$pkey){
+
+		$result = [];
+		$campos = "";
+		$left  = "LEFT JOIN ";
+		$sql    = "SELECT * FROM cffd WHERE ffd_id = :ffd_id";
+		$ressql = $this->pedeo->queryTable( $sql, array( ':ffd_id' => $element['id_formulario'] ) );
+
+		if ( isset($ressql[0]) ){
+			$config = json_decode($ressql[0]['ffd_config']);
+
+			$campos.= $config->table.".".$element['campo_formulario']." AS ".$element['field_name'].", ";
+
+
+			$left.= $config->table." ON ".$table.".".($element['date_type'] == 'numeric' ? $element['field_name']."::numeric" : $element['field_name'])." = ".$config->table.".".$element['campoid_formulario']." ";
+
+			array_push($result, $campos);
+			array_push($result, $left);
+
+			array_push($this->ArrSelect2, array( "id" =>$element['campoid_formulario'], "text" => $element['campo_formulario'], "table" => $config->table, "name" => $element['field_name'] ));
+
+		}else{
+
+			$this->cancelProcess('No se encontro el id del formulario # '.$element['id_formulario']."" );
+		}
+
+		return $result;
+	}
+
 
 
 
@@ -577,8 +775,8 @@ class DinamicService extends REST_Controller {
 
 
         $update = $this->createUpdate($form, $table, $primarik);
-        $insert = $this->createInsert($form, $table);
-        $get    = $this->createGet($table);
+        $insert = $this->createInsert($form, $table, $primarik);
+        $get    = $this->createGet($table,$form,$primarik);
 
         $controller = ucfirst($controller);
 		$controller = str_replace(" ", "",trim($controller));
@@ -587,15 +785,15 @@ class DinamicService extends REST_Controller {
         $file = $controller;
         $ruta = getcwd().'/application/controllers/';
 
-        // while($hacer){
+        while($hacer){
 
-        //     if( file_exists($ruta.$file.'.php') ){
-        //         $ac++;
-        //         $file = $controller.$ac;
-        //     }else{
-        //         $hacer = false;
-        //     }
-        // }
+            if( file_exists($ruta.$file.'.php') ){
+                $ac++;
+                $file = $controller.$ac;
+            }else{
+                $hacer = false;
+            }
+        }
 
         $result  = "";
 		$result .= "\n";
@@ -651,26 +849,19 @@ class DinamicService extends REST_Controller {
         $result .= "\n";
         $result .= "}";
 
-        $archivo = fopen($ruta.$file.'.php', "w+b");
+		$archivo = fopen($ruta.$file.'.php', "w");
 
-        if ( $archivo ) {
-
+        if ($archivo) {
 
             file_put_contents($ruta.$file.'.php', "<?php \n".$result);
             fclose($archivo);
 
+			chmod($ruta.$file.'.php', 0777);
+
+
         }else{
 
-            $respuesta = array(
-				"error"   => true,
-				"data"    => [],
-				"mensaje" => "No se pudo crear el archivo controlador"
-			);
-
-			$this->response($respuesta);
-
-			exit;
-
+           $this->cancelProcess("No se puedo crear el controlador");
         }
 
 
@@ -679,6 +870,33 @@ class DinamicService extends REST_Controller {
 
 
 	}
+
+	private function cancelProcess($mensaje){
+
+
+		$this->pedeo->queryTable("DROP SEQUENCE IF EXISTS ".$this->NombreSecuencia." CASCADE ", array());
+		$this->pedeo->queryTable("DROP TABLE IF EXISTS ".$this->NombreTablaFinal, array());
+		$this->pedeo->deleteRow("DELETE FROM menu WHERE men_id = :men_id ", array(':men_id' => $this->idMenu));
+
+		$ruta = getcwd().'/application/controllers/';
+
+      	if( file_exists( $ruta.$this->NombreControlador.'.php' ) ){
+			unlink($ruta.$this->NombreControlador.'.php');
+		}
+
+		$archivo = fopen($this->Json, "w+b");
+
+        if ( $archivo ) {
+            file_put_contents($this->Json, $this->ConfigOri);
+            fclose($archivo);
+        }
+
+		$this->response(array("error" => true, "data" =>[],"mensaje" => $mensaje));
+
+		exit;
+
+	}
+
 
 
 

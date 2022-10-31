@@ -110,7 +110,8 @@ class NcVenta extends REST_Controller {
 													T0.VNC_DOCTOTAL TotalDoc,
 													T0.VNC_COMMENT Comentarios,
 													t6.pgs_mde,
-													t6.pgs_mpfn
+													t6.pgs_mpfn,
+													coalesce(T0.vnc_igtf, 0) as vnc_igtf
 												FROM DVNC t0
 												INNER JOIN VNC1 T1 ON t0.VNC_docentry = t1.NC1_docentry
 												LEFT JOIN DMSN T2 ON t0.VNC_cardcode = t2.dms_card_code
@@ -311,6 +312,9 @@ class NcVenta extends REST_Controller {
         <tr>
             <td style="text-align: right;">Impuestos: <span>'.$contenidoNcV[0]['monedadocumento']." ".number_format($contenidoNcV[0]['iva'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
+				<tr>
+					<td style="text-align: right;">IGTF: <span>'.$contenidoNcV[0]['monedadocumento'].' '.number_format($contenidoNcV[0]['vnc_igtf'], $DECI_MALES, ',', '.').'</span></td>
+				</tr>
         <tr>
             <td style="text-align: right;">Total: <span>'.$contenidoNcV[0]['monedadocumento']." ".number_format($contenidoNcV[0]['totaldoc'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>

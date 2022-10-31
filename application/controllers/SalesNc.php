@@ -69,6 +69,7 @@ class SalesNc extends REST_Controller {
 			$TOTALCXCSYSIVA = 0;
 			$exc_inv = 0;
 			$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
+			$DetalleIgtf = 0; // DETALLE DE DIVISAS APLICADAS IGTF
 
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -121,6 +122,40 @@ class SalesNc extends REST_Controller {
 					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 					return;
+			}
+			//
+
+			// VALIDANDO IMPUESTO IGTF CASO PARA VENEZUELA
+
+			if ( isset($Data['dvf_igtf']) && $Data['dvf_igtf'] > 0 ) {
+
+				if(!isset($Data['detailigtf'])){
+
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' =>'La informacion enviada no es valida'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+				}
+
+				$DetalleIgtf = json_decode($Data['detailigtf'], true);
+
+
+				if(!is_array($DetalleIgtf)){
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' =>'No se pudo validar el monto en IGTF'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+				}
 			}
 			//
 
@@ -277,9 +312,9 @@ class SalesNc extends REST_Controller {
         $sqlInsert = "INSERT INTO dvnc(vnc_series, vnc_docnum, vnc_docdate, vnc_duedate, vnc_duedev, vnc_pricelist, vnc_cardcode,
                       vnc_cardname, vnc_currency, vnc_contacid, vnc_slpcode, vnc_empid, vnc_comment, vnc_doctotal, vnc_baseamnt, vnc_taxtotal,
                       vnc_discprofit, vnc_discount, vnc_createat, vnc_baseentry, vnc_basetype, vnc_doctype, vnc_idadd, vnc_adress, vnc_paytype,
-                      vnc_attch,vnc_createby)VALUES(:vnc_series, :vnc_docnum, :vnc_docdate, :vnc_duedate, :vnc_duedev, :vnc_pricelist, :vnc_cardcode, :vnc_cardname,
+                      vnc_attch,vnc_createby, vnc_igtf, vnc_taxigtf, vnc_igtfapplyed, vnc_igtfcode)VALUES(:vnc_series, :vnc_docnum, :vnc_docdate, :vnc_duedate, :vnc_duedev, :vnc_pricelist, :vnc_cardcode, :vnc_cardname,
                       :vnc_currency, :vnc_contacid, :vnc_slpcode, :vnc_empid, :vnc_comment, :vnc_doctotal, :vnc_baseamnt, :vnc_taxtotal, :vnc_discprofit, :vnc_discount,
-                      :vnc_createat, :vnc_baseentry, :vnc_basetype, :vnc_doctype, :vnc_idadd, :vnc_adress, :vnc_paytype, :vnc_attch,:vnc_createby)";
+                      :vnc_createat, :vnc_baseentry, :vnc_basetype, :vnc_doctype, :vnc_idadd, :vnc_adress, :vnc_paytype, :vnc_attch,:vnc_createby,:vnc_igtf, :vnc_taxigtf, :vnc_igtfapplyed, :vnc_igtfcode)";
 
 
 				// Se Inicia la transaccion,
@@ -320,7 +355,11 @@ class SalesNc extends REST_Controller {
 								':vnc_adress' => isset($Data['vnc_adress'])?$Data['vnc_adress']:NULL,
 								':vnc_paytype' => is_numeric($Data['vnc_paytype'])?$Data['vnc_paytype']:0,
 								':vnc_createby' => isset($Data['vnc_createby'])?$Data['vnc_createby']:NULL,
-								':vnc_attch'   => $this->getUrl(count(trim(($Data['vnc_attch']))) > 0 ? $Data['vnc_attch']:NULL)
+								':vnc_attch'   => $this->getUrl(count(trim(($Data['vnc_attch']))) > 0 ? $Data['vnc_attch']:NULL),
+								':vnc_igtf'  =>  isset($Data['dvf_igtf'])?$Data['dvf_igtf']:NULL,
+								':vnc_taxigtf' => isset($Data['dvf_taxigtf'])?$Data['dvf_taxigtf']:NULL,
+								':vnc_igtfapplyed' => isset($Data['dvf_igtfapplyed'])?$Data['dvf_igtfapplyed']:NULL,
+								':vnc_igtfcode' => isset($Data['dvf_igtfcode'])?$Data['dvf_igtfcode']:NULL
 
 							));
 
@@ -1418,8 +1457,6 @@ class SalesNc extends REST_Controller {
 						}
 
 						//FIN Procedimiento para llenar Impuestos
-
-
 						//Procedimiento para llenar costo inventario
 						foreach ($DetalleConsolidadoCostoInventario as $key => $posicion) {
 								$grantotalCostoInventario = 0 ;
@@ -1830,6 +1867,8 @@ class SalesNc extends REST_Controller {
 
 					//Procedimiento para llenar cuentas por cobrar
 
+						$TasaIGTF = 0;
+
 						$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
 														 JOIN dmgs  AS f2
 														 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
@@ -1838,7 +1877,40 @@ class SalesNc extends REST_Controller {
 
 						$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['vnc_cardcode']));
 
+						if( isset($Data['dvf_igtf']) && $Data['dvf_igtf'] > 0 ){
 
+							$sqlTasaIGTF = "SELECT COALESCE( get_tax_currency(:moneda, :fecha), 0) AS tasa";
+							$resTasaIGTF = $this->pedeo->queryTable($sqlTasaIGTF, array(
+
+
+								':moneda' => $Data['vnc_currency'],
+								':fecha'  => $Data['vnc_docdate']
+
+							));
+
+							if( isset($resTasaIGTF[0]) && $resTasaIGTF[0]['tasa'] > 0){
+
+
+									$TasaIGTF = $resTasaIGTF[0]['tasa'];
+
+							}else{
+
+
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'	  => $resTasaIGTF,
+											'mensaje'	=> 'No se encontro la tasa para el impuesto IGTF'
+										);
+
+										 $this->response($respuesta);
+
+										 return;
+							}
+
+
+						}
 
 						if(isset( $rescuentaCxC[0] )){
 
@@ -1848,9 +1920,38 @@ class SalesNc extends REST_Controller {
 									$MontoSysCR = 0;
 									$docTotal = 0;
 									$docTotalOriginal = 0;
+									$MontoIGTF = 0;
+									$MontoIGTFSYS = 0;
+
+									if ( isset($Data['dvf_igtf']) && $Data['dvf_igtf']  > 0 ){
+
+										$MontoIGTF = $Data['dvf_igtf'];
+										$MontoIGTFSYS  = $Data['dvf_igtf'];
+
+
+										if( trim($Data['vnc_currency']) != $MONEDALOCAL ){
+
+											$MontoIGTF = ( $MontoIGTF * $TasaDocLoc );
+											$MontoIGTFSYS = ( $MontoIGTF / $TasaLocSys );
+
+										}
+
+										if ( trim($Data['vnc_currency']) != $MONEDASYS ){
+
+											$MontoIGTFSYS = ( $MontoIGTF / $TasaLocSys );
+
+										}else{
+
+											$MontoIGTFSYS = $Data['dvf_igtf'];
+
+										}
+
+									}
 
 									$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
 									$codigo2= substr($rescuentaCxC[0]['mgs_acct'], 0, 1);
+
+									$MontoIGTFSYS = round(($MontoIGTF / $TasaLocSys), $DECI_MALES);
 
 
 									if( $codigo2 == 1 || $codigo2 == "1" ){
@@ -1858,41 +1959,77 @@ class SalesNc extends REST_Controller {
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+
 									}else if( $codigo2 == 2 || $codigo2 == "2" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
 
 									}else if( $codigo2 == 3 || $codigo2 == "3" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR = ($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+
+
 									}else if( $codigo2 == 4 || $codigo2 == "4" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+
 
 									}else if( $codigo2 == 5  || $codigo2 == "5" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
+
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+
 									}else if( $codigo2 == 6 || $codigo2 == "6" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
 
 									}else if( $codigo2 == 7 || $codigo2 == "7" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
+
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+
 									}else if( $codigo2 == 9 || $codigo2 == "9" ){
 
 											$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
 											$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+											$creditoo = ($creditoo + $MontoIGTF);
+											$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
 									}
+
+									if ( $creditoo == 0 ){
+										$SumaCreditosSYS = ($SumaCreditosSYS + $MontoIGTFSYS);
+									}else{
+										$SumaDebitosSYS = ($SumaDebitosSYS + $MontoIGTFSYS);
+									}
+
 
 
 									$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
@@ -2098,6 +2235,160 @@ class SalesNc extends REST_Controller {
 						}
 						// FIN VALIDACION DIFERENCIA EN DECIMALES
 
+						// VALIDANDO IMPUESTO IGTF CASO PARA VENEZUELA
+
+
+
+						if ( isset($Data['dvf_igtf']) && $Data['dvf_igtf'] > 0 ) {
+
+							foreach ($DetalleIgtf as $key => $val) {
+								$sqlInsertIgtf = "INSERT INTO igtf(gtf_currency, gtf_docentry, gtf_doctype, gtf_value, gtf_tax, gtf_taxdivisa, gft_docvalue, gtf_collected, gtf_balancer)VALUES(:gtf_currency, :gtf_docentry, :gtf_doctype, :gtf_value, :gtf_tax, :gtf_taxdivisa, :gft_docvalue, :gtf_collected, :gtf_balancer)";
+								$resInserIgtf = $this->pedeo->insertRow($sqlInsertIgtf, array(
+									':gtf_currency'  => $val['gtf_currency'],
+									':gtf_docentry'  => $resInsert,
+									':gtf_doctype'   => $Data['vnc_doctype'],
+									':gtf_value'	   => $val['gtf_value'],
+									':gtf_tax'		   => $Data['dvf_taxigtf'],
+									':gtf_taxdivisa' => $val['gtf_taxdivisa'],
+									':gft_docvalue'  => $val['gft_docvalue'],
+									':gtf_collected' => $val['gtf_collected'],
+									':gtf_balancer'  => $val['gtf_balancer']
+
+								));
+
+								if(is_numeric($resInserIgtf) && $resInserIgtf > 0){
+
+								}else{
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error' => true,
+										'data'  => $resInserIgtf,
+										'mensaje' =>'Error al insertar el detalle del IGTF'
+									);
+
+									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+									return;
+								}
+							}
+
+
+
+							$sqlCuentaIGTF = "SELECT imm_acctcode FROM timm WHERE imm_code = :imm_code";
+							$resCuentaIGTF = $this->pedeo->queryTable($sqlCuentaIGTF, array(
+								':imm_code' => $Data['dvf_igtfcode']
+							));
+
+							if (isset( $resCuentaIGTF[0] ) && $resCuentaIGTF[0]['imm_acctcode'] > 0 ){
+
+								$cdito = 0;
+								$dbito = 0;
+								$MontoSysCR = 0;
+								$MontoSysDB = 0;
+								$BaseIgtf = $Data['dvf_igtfapplyed'];
+
+
+								$dbito = $Data['dvf_igtf'];
+
+
+
+								if(trim($Data['vnc_currency']) != $MONEDALOCAL ){
+
+										$dbito = ( $dbito * $TasaDocLoc );
+										$BaseIgtf = ( $BaseIgtf * $TasaDocLoc );
+								}
+
+
+
+								if(trim($Data['vnc_currency']) != $MONEDASYS ){
+										$MontoSysDB = ($dbito / $TasaLocSys);
+								}else{
+										$MontoSysDB = $Data['dvf_igtf'];
+								}
+
+								$AC1LINE = $AC1LINE+1;
+								$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+								':ac1_trans_id' => $resInsertAsiento,
+								':ac1_account' => $resCuentaIGTF[0]['imm_acctcode'],
+								':ac1_debit' => round($dbito, $DECI_MALES),
+								':ac1_credit' => round($cdito, $DECI_MALES),
+								':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+								':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+								':ac1_currex' => 0,
+								':ac1_doc_date' => $this->validateDate($Data['vnc_docdate'])?$Data['vnc_docdate']:NULL,
+								':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate'])?$Data['vnc_duedate']:NULL,
+								':ac1_debit_import' => 0,
+								':ac1_credit_import' => 0,
+								':ac1_debit_importsys' => 0,
+								':ac1_credit_importsys' => 0,
+								':ac1_font_key' => $resInsert,
+								':ac1_font_line' => 1,
+								':ac1_font_type' => is_numeric($Data['vnc_doctype'])?$Data['vnc_doctype']:0,
+								':ac1_accountvs' => 1,
+								':ac1_doctype' => 18,
+								':ac1_ref1' => "",
+								':ac1_ref2' => "",
+								':ac1_ref3' => "",
+								':ac1_prc_code' => $value->ac1_prc_code,
+								':ac1_uncode' => $value->ac1_uncode,
+								':ac1_prj_code' => $value->ac1_prj_code,
+								':ac1_rescon_date' => NULL,
+								':ac1_recon_total' => 0,
+								':ac1_made_user' => isset($Data['vnc_createby'])?$Data['vnc_createby']:NULL,
+								':ac1_accperiod' => 1,
+								':ac1_close' => 0,
+								':ac1_cord' => 0,
+								':ac1_ven_debit' => round($dbito, $DECI_MALES),
+								':ac1_ven_credit' => round($cdito, $DECI_MALES),
+								':ac1_fiscal_acct' => 0,
+								':ac1_taxid' => isset($Data['vnc_igtfcode'])?$Data['vnc_igtfcode']:NULL,
+								':ac1_isrti' => isset($Data['vnc_taxigtf'])?$Data['vnc_taxigtf']:NULL,
+								':ac1_basert' => 0,
+								':ac1_mmcode' => 0,
+								':ac1_legal_num' => isset($Data['vnc_cardcode'])?$Data['vnc_cardcode']:NULL,
+								':ac1_codref' => 1,
+								':ac1_line'   => 	$AC1LINE,
+								':ac1_base_tax' => $BaseIgtf
+								));
+
+								if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+								// Se verifica que el detalle no de error insertando //
+								}else{
+
+									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resDetalleAsiento,
+										'mensaje'	=> 'No se pudo registrar la factura de ventas'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+								}
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resCuentaIGTF,
+									'mensaje'	=> 'No se encontro la cuenta contable para el impuesto IGTF'
+								);
+
+								 $this->response($respuesta);
+
+								 return;
+							}
+						}
+						//
 
 						// SE VALIDA QUE LA FACTURA BASE NO SEA MENOR QUE LA NOTA CREDITO
 						if( $Data['vnc_basetype'] == 5 ){
@@ -2344,7 +2635,8 @@ class SalesNc extends REST_Controller {
 
 						// FIN DE OPERACIONES VITALES
 
-						// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_trans_id = :ac1_trans_id";
+
+						// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
 						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
 						// print_r(json_encode($ressqlmac1));
 						// exit;
@@ -2674,25 +2966,50 @@ class SalesNc extends REST_Controller {
 				$sqlSelect = " SELECT vnc1.*, dmar.dma_series_code
 											 FROM vnc1
 											 INNER JOIN dmar
-											 ON cfc1.fc1_itemcode = dmar.dma_item_code
+											 ON vnc1.nc1_itemcode = dmar.dma_item_code
 											 WHERE nc1_docentry =:nc1_docentry";
 
+			  $sqlSelectNcv = "SELECT round(get_dynamic_conversion(vnc_currency,vnc_currency,vnc_docdate,vnc_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(vnc_currency,vnc_currency,vnc_docdate,vnc_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed, vnc_igtfcode as dvf_igtfcode, igtf.*
+												FROM dvnc
+												LEFT JOIN igtf
+												ON vnc_docentry = gtf_docentry
+												AND vnc_doctype = gtf_doctype
+												WHERE vnc_docentry = :nc1_docentry";
+
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":nc1_docentry" => $Data['nc1_docentry']));
+				$resSelectNcv = $this->pedeo->queryTable($sqlSelectNcv, array(':nc1_docentry' => $Data['nc1_docentry']));
 
-				if(isset($resSelect[0])){
+				if(isset($resSelectNcv[0])){
 
-					$respuesta = array(
-						'error' => false,
-						'data'  => $resSelect,
-						'mensaje' => '');
+					if(isset($resSelect[0])){
+
+						$arr = [];
+
+						$arr['detalle'] = $resSelect;
+						$arr['complemento'] = $resSelectNcv;
+
+						$respuesta = array(
+							'error' => false,
+							'data'  => $arr,
+							'mensaje' => '');
+
+					}else{
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => array(),
+								'mensaje'	=> 'busqueda sin resultados'
+							);
+
+					}
 
 				}else{
 
-						$respuesta = array(
-							'error'   => true,
-							'data' => array(),
-							'mensaje'	=> 'busqueda sin resultados'
-						);
+					$respuesta = array(
+						'error'   => true,
+						'data' => array(),
+						'mensaje'	=> 'busqueda sin resultados'
+					);
 
 				}
 
