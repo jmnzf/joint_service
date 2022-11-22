@@ -375,7 +375,7 @@ class BusinessPartner extends REST_Controller {
   // Obtener Socios de negocio
   public function getBusinessPartner_get(){
 
-        $sqlSelect = " SELECT * FROM dmsn";
+        $sqlSelect = "SELECT concat(dms_card_name, ' ', dms_card_last_name) AS nombreyapellido,* FROM dmsn ";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
