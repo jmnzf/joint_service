@@ -118,7 +118,7 @@ return $this->response($respuesta);
 
 
 public function index_get(){
-$resSelect = $this->pedeo->queryTable("SELECT napp.app_docnum AS aee_empleado, naes.aes_name AS aee_eps, naep.aep_name AS aee_fpensiones, naec.aec__name AS aee_fcensatias, nabc.abc_name AS aee_boxcompensation, aee_id , CASE  WHEN aee_status::numeric = 1 THEN 'Activo' WHEN aee_status::numeric = 0 THEN 'Inactivo' END AS aee_status FROM naee LEFT JOIN napp ON naee.aee_empleado::numeric = napp.app_id LEFT JOIN naes ON naee.aee_eps::numeric = naes.aes_id LEFT JOIN naep ON naee.aee_fpensiones::numeric = naep.aep_id LEFT JOIN naec ON naee.aee_fcensatias::numeric = naec.aec_id LEFT JOIN nabc ON naee.aee_boxcompensation = nabc.abc_id ",array());
+$resSelect = $this->pedeo->queryTable("SELECT napp.app_docnum AS aee_empleado, naes.aes_name AS aee_eps, naep.aep_name AS aee_fpensiones, naec.aec__name AS aee_fcensatias, nabc.abc_name AS aee_boxcompensation, aee_id , CASE  WHEN aee_status::numeric = 1 THEN 'Activo' WHEN aee_status::numeric = 0 THEN 'Inactivo' END AS aee_status FROM naee LEFT JOIN napp ON naee.aee_empleado::numeric = napp.app_id LEFT JOIN naes ON naee.aee_eps::numeric = naes.aes_id LEFT JOIN naep ON naee.aee_fpensiones::numeric = naep.aep_id LEFT JOIN naec ON naee.aee_fcensatias::numeric = naec.aec_id LEFT JOIN nabc ON naee.aee_boxcompensation::numeric = nabc.abc_id ",array());
 
 if ( isset($resSelect[0]) ) { 
 

@@ -873,7 +873,7 @@ class SalesNc extends REST_Controller {
 
 																			 $respuesta = array(
 																				 'error'   => true,
-																				 'data'    => $resUpdateCostoCantidad,
+																				 'data'    => $resCostoCantidad,
 																				 'mensaje' => 'No hay existencia para el item: '.$detail['nc1_itemcode']
 																			 );
 															}
@@ -884,7 +884,7 @@ class SalesNc extends REST_Controller {
 
 																	$respuesta = array(
 																		'error'   => true,
-																		'data' 		=> $resInsertCostoCantidad,
+																		'data' 		=> $resCostoCantidad,
 																		'mensaje'	=> 'El item no existe en el stock '.$detail['nc1_itemcode']
 																	);
 
@@ -921,7 +921,7 @@ class SalesNc extends REST_Controller {
 									$DetalleAsientoIngreso->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
 									$DetalleAsientoIngreso->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
 									$DetalleAsientoIngreso->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
-									$DetalleAsientoIngreso->nc1_quantity = is_numeric($detail['nc1_quantity']) ?  ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0;
+									$DetalleAsientoIngreso->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 									$DetalleAsientoIngreso->nc1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 									$DetalleAsientoIngreso->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
 
@@ -936,7 +936,7 @@ class SalesNc extends REST_Controller {
 									$DetalleAsientoIva->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
 									$DetalleAsientoIva->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
 									$DetalleAsientoIva->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
-									$DetalleAsientoIva->nc1_quantity = is_numeric($detail['nc1_quantity']) ?  ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0;
+									$DetalleAsientoIva->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 									$DetalleAsientoIva->nc1_cuentaIva = is_numeric($detail['nc1_cuentaIva'])?$detail['nc1_cuentaIva']:NULL;
 									$DetalleAsientoIva->nc1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 									$DetalleAsientoIva->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
@@ -956,7 +956,7 @@ class SalesNc extends REST_Controller {
 												$DetalleCostoInventario->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
 												$DetalleCostoInventario->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
 												$DetalleCostoInventario->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
-												$DetalleCostoInventario->nc1_quantity = is_numeric($detail['nc1_quantity']) ?  ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0;
+												$DetalleCostoInventario->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 												$DetalleCostoInventario->nc1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 												$DetalleCostoInventario->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
 
@@ -970,7 +970,7 @@ class SalesNc extends REST_Controller {
 												$DetalleCostoCosto->nc1_vatsum = is_numeric($detail['nc1_vatsum'])?$detail['nc1_vatsum']:0;
 												$DetalleCostoCosto->nc1_price = is_numeric($detail['nc1_price'])?$detail['nc1_price']:0;
 												$DetalleCostoCosto->nc1_itemcode = isset($detail['nc1_itemcode'])?$detail['nc1_itemcode']:NULL;
-												$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity']) ?  ( $detail['nc1_quantity'] * $CANTUOMSALE ) : 0;
+												$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 												$DetalleCostoCosto->nc1_whscode = isset($detail['nc1_whscode'])?$detail['nc1_whscode']:NULL;
 												$DetalleCostoCosto->nc1_fixrate = is_numeric($detail['nc1_fixrate'])?$detail['nc1_fixrate']:0;
 										}//ITEM INVENTARIABLE

@@ -6,7 +6,7 @@ use Restserver\libraries\REST_Controller;
 
 
 
-class Fondodepensiones extends REST_Controller
+class Conceptosdeliquidacion extends REST_Controller
 {
 
     private $pdo;
@@ -28,7 +28,13 @@ class Fondodepensiones extends REST_Controller
 
         $Data = $this->post();
 
-        if (!isset($Data['aep_name'])) {
+        if (
+            !isset($Data['alc_name']) or
+            !isset($Data['alc_conceptnature']) or
+            !isset($Data['alc_conceptgroup']) or
+            !isset($Data['alc_profitliq']) or
+            !isset($Data['alc_status'])
+        ) {
 
             $respuesta = array(
                 'error' => true, 'data' => array(), 'mensaje' => 'Faltan parametros'
@@ -37,9 +43,13 @@ class Fondodepensiones extends REST_Controller
             return $this->response($respuesta);
         }
 
-        $resInsert = $this->pedeo->insertRow('INSERT INTO naep(aep_name,aep_ledaccount) VALUES(:aep_name, :aep_ledaccount)', array(
-            ':aep_name' => $Data['aep_name'],
-            ':aep_ledaccount' => $Data['aep_ledaccount']
+        $resInsert = $this->pedeo->insertRow('INSERT INTO nalc(alc_name, alc_conceptnature, alc_conceptgroup, alc_profitliq, alc_status, alc_ledaccount) VALUES(:alc_name, :alc_conceptnature, :alc_conceptgroup, :alc_profitliq, :alc_status, :alc_ledaccount)', array(
+            ':alc_name' => $Data['alc_name'],
+            ':alc_conceptnature' => $Data['alc_conceptnature'],
+            ':alc_conceptgroup' => $Data['alc_conceptgroup'],
+            ':alc_profitliq' => $Data['alc_profitliq'],
+            ':alc_ledaccount' => $Data['alc_ledaccount'],
+            ':alc_status' => $Data['alc_status']
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
@@ -67,8 +77,12 @@ class Fondodepensiones extends REST_Controller
         $Data = $this->post();
 
         if (
-            !isset($Data['aep_name']) or
-            !isset($Data['aep_id'])
+            !isset($Data['alc_name']) or
+            !isset($Data['alc_conceptnature']) or
+            !isset($Data['alc_conceptgroup']) or
+            !isset($Data['alc_profitliq']) or
+            !isset($Data['alc_status']) or
+            !isset($Data['alc_id'])
         ) {
 
             $respuesta = array(
@@ -78,10 +92,14 @@ class Fondodepensiones extends REST_Controller
             return $this->response($respuesta);
         }
 
-        $resUpdate = $this->pedeo->updateRow('UPDATE naep SET aep_name = :aep_name, aep_ledaccount = :aep_ledaccount  WHERE aep_id = :aep_id', array(
-            'aep_name' => $Data['aep_name'],
-            'aep_ledaccount' => $Data['aep_ledaccount'],
-            'aep_id' => $Data['aep_id']
+        $resUpdate = $this->pedeo->updateRow('UPDATE nalc SET alc_name = :alc_name , alc_conceptnature = :alc_conceptnature , alc_conceptgroup = :alc_conceptgroup , alc_profitliq = :alc_profitliq , alc_status = :alc_status, alc_ledaccount = :alc_ledaccount  WHERE alc_id = :alc_id', array(
+            'alc_name' => $Data['alc_name'],
+            'alc_conceptnature' => $Data['alc_conceptnature'],
+            'alc_conceptgroup' => $Data['alc_conceptgroup'],
+            'alc_profitliq' => $Data['alc_profitliq'],
+            'alc_status' => $Data['alc_status'],
+            'alc_ledaccount' => $Data['alc_ledaccount'],
+            'alc_id' => $Data['alc_id']
         ));
 
         if (is_numeric($resUpdate) && $resUpdate == 1) {
@@ -105,7 +123,7 @@ class Fondodepensiones extends REST_Controller
 
     public function index_get()
     {
-        $resSelect = $this->pedeo->queryTable("SELECT aep_name , aep_id, aep_ledaccount  FROM naep ", array());
+        $resSelect = $this->pedeo->queryTable("SELECT alc_name ,alc_ledaccount, nanc.anc_name AS alc_conceptnature, nacl.acl_name AS alc_conceptgroup, alc_profitliq , alc_id , CASE  WHEN alc_status::numeric = 1 THEN 'Activo' WHEN alc_status::numeric = 0 THEN 'Inactivo' END AS alc_status FROM nalc LEFT JOIN nanc ON nalc.alc_conceptnature::numeric = nanc.anc_id LEFT JOIN nacl ON nalc.alc_conceptgroup::numeric = nacl.acl_id ", array());
 
         if (isset($resSelect[0])) {
 

@@ -3,13 +3,15 @@
 // SEGUN EL DIA ANTERIOR
 // BUSCA TODAS LAS TASAS Y LA INSERTA CON LA FECHA DE ACTUAL
 defined('BASEPATH') OR exit('No direct script access allowed');
-
+// require_once(APPPATH."/controllers/Lote.php");
 require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
+
 
 class JobTasa extends REST_Controller {
 
 	private $pdo;
+	private $controller;
 
 	public function __construct(){
 
@@ -20,7 +22,7 @@ class JobTasa extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
 
 	}
 
@@ -38,49 +40,49 @@ class JobTasa extends REST_Controller {
 
 				foreach ($resSql as $key => $value) {
 
-							$sqlInsert = "INSERT INTO tasa(tsa_eq, tsa_curro, tsa_value, tsa_currd, tsa_date, tsa_createby)
-														VALUES (:tsa_eq, :tsa_curro, :tsa_value, :tsa_currd, :tsa_date, :tsa_createby)";
+							// $sqlInsert = "INSERT INTO tasa(tsa_eq, tsa_curro, tsa_value, tsa_currd, tsa_date, tsa_createby)
+							// 							VALUES (:tsa_eq, :tsa_curro, :tsa_value, :tsa_currd, :tsa_date, :tsa_createby)";
 
 
-							$resInsert = $this->pedeo->insertRow($sqlInsert, array(
-											':tsa_eq'    =>  1,
-											':tsa_curro' => $value['tsa_curro'],
-											':tsa_value' => $value['tsa_value'],
-											':tsa_currd' => $value['tsa_currd'],
-											':tsa_createby' => 'system',
-											':tsa_date'  => date('Y-m-d')
-							));
+							// $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+							// 				':tsa_eq'    =>  1,
+							// 				':tsa_curro' => $value['tsa_curro'],
+							// 				':tsa_value' => $value['tsa_value'],
+							// 				':tsa_currd' => $value['tsa_currd'],
+							// 				':tsa_createby' => 'system',
+							// 				':tsa_date'  => date('Y-m-d')
+							// ));
 
-							if(is_numeric($resInsert) && $resInsert > 0 ){
+							// if(is_numeric($resInsert) && $resInsert > 0 ){
 
 
 
-							}else{
+							// }else{
 
-										$this->pedeo->trans_rollback();
+							// 			$this->pedeo->trans_rollback();
 
-										$respuesta = array(
-											'error'   => true,
-											'data' => array(),
-											'mensaje'	=> 'No se pudo registrar la tasa'
-										);
+							// 			$respuesta = array(
+							// 				'error'   => true,
+							// 				'data' => array(),
+							// 				'mensaje'	=> 'No se pudo registrar la tasa'
+							// 			);
 
-										$this->response($respuesta);
+							// 			$this->response($respuesta);
 
-										return;
+							// 			return;
 
-							}
+							// }
 				}
 
 
 
 				$this->pedeo->trans_commit();
 
-				$respuesta = array(
-				'error' => false,
-				'data' => $resInsert,
-				'mensaje' =>'Proeso finalizado con exito'
-				);
+				// $respuesta = array(
+				// 'error' => false,
+				// 'data' => $resInsert,
+				// 'mensaje' =>'Proeso finalizado con exito'
+				// );
 
 
 		}else{
@@ -94,5 +96,16 @@ class JobTasa extends REST_Controller {
 		}
 
 			$this->response($respuesta);
+	}
+
+	public function getMetodos_post(){
+
+		// $controller = new lote();
+
+		// $respuesta = $controller->validateDate('2022-11-01');
+
+		
+
+		$this->response($respuesta);
 	}
 }

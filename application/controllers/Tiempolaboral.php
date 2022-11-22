@@ -6,7 +6,7 @@ use Restserver\libraries\REST_Controller;
 
 
 
-class Fondodepensiones extends REST_Controller
+class Tiempolaboral extends REST_Controller
 {
 
     private $pdo;
@@ -28,7 +28,11 @@ class Fondodepensiones extends REST_Controller
 
         $Data = $this->post();
 
-        if (!isset($Data['aep_name'])) {
+        if (
+            !isset($Data['atl_dayswork']) or
+            !isset($Data['atl_workhours']) or
+            !isset($Data['atl_status'])
+        ) {
 
             $respuesta = array(
                 'error' => true, 'data' => array(), 'mensaje' => 'Faltan parametros'
@@ -37,9 +41,10 @@ class Fondodepensiones extends REST_Controller
             return $this->response($respuesta);
         }
 
-        $resInsert = $this->pedeo->insertRow('INSERT INTO naep(aep_name,aep_ledaccount) VALUES(:aep_name, :aep_ledaccount)', array(
-            ':aep_name' => $Data['aep_name'],
-            ':aep_ledaccount' => $Data['aep_ledaccount']
+        $resInsert = $this->pedeo->insertRow('INSERT INTO natl(atl_dayswork, atl_workhours, atl_status) VALUES(:atl_dayswork, :atl_workhours, :atl_status)', array(
+            ':atl_dayswork' => $Data['atl_dayswork'],
+            ':atl_workhours' => $Data['atl_workhours'],
+            ':atl_status' => $Data['atl_status']
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
@@ -67,8 +72,10 @@ class Fondodepensiones extends REST_Controller
         $Data = $this->post();
 
         if (
-            !isset($Data['aep_name']) or
-            !isset($Data['aep_id'])
+            !isset($Data['atl_dayswork']) or
+            !isset($Data['atl_workhours']) or
+            !isset($Data['atl_status']) or
+            !isset($Data['atl_id'])
         ) {
 
             $respuesta = array(
@@ -78,10 +85,11 @@ class Fondodepensiones extends REST_Controller
             return $this->response($respuesta);
         }
 
-        $resUpdate = $this->pedeo->updateRow('UPDATE naep SET aep_name = :aep_name, aep_ledaccount = :aep_ledaccount  WHERE aep_id = :aep_id', array(
-            'aep_name' => $Data['aep_name'],
-            'aep_ledaccount' => $Data['aep_ledaccount'],
-            'aep_id' => $Data['aep_id']
+        $resUpdate = $this->pedeo->updateRow('UPDATE natl SET atl_dayswork = :atl_dayswork , atl_workhours = :atl_workhours , atl_status = :atl_status  WHERE atl_id = :atl_id', array(
+            'atl_dayswork' => $Data['atl_dayswork'],
+            'atl_workhours' => $Data['atl_workhours'],
+            'atl_status' => $Data['atl_status'],
+            'atl_id' => $Data['atl_id']
         ));
 
         if (is_numeric($resUpdate) && $resUpdate == 1) {
@@ -105,7 +113,7 @@ class Fondodepensiones extends REST_Controller
 
     public function index_get()
     {
-        $resSelect = $this->pedeo->queryTable("SELECT aep_name , aep_id, aep_ledaccount  FROM naep ", array());
+        $resSelect = $this->pedeo->queryTable("SELECT atl_dayswork , atl_workhours , atl_id , CASE  WHEN atl_status::numeric = 1 THEN 'Activo' WHEN atl_status::numeric = 0 THEN 'Inactivo' END AS atl_status FROM natl ", array());
 
         if (isset($resSelect[0])) {
 

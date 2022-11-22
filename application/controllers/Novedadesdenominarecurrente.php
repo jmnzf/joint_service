@@ -6,7 +6,7 @@ use Restserver\libraries\REST_Controller;
 
 
 
-class Fondodepensiones extends REST_Controller
+class Novedadesdenominarecurrente extends REST_Controller
 {
 
     private $pdo;
@@ -28,7 +28,11 @@ class Fondodepensiones extends REST_Controller
 
         $Data = $this->post();
 
-        if (!isset($Data['aep_name'])) {
+        if (
+            !isset($Data['anr_empleado']) or
+            !isset($Data['anr_concept']) or
+            !isset($Data['anr_status'])
+        ) {
 
             $respuesta = array(
                 'error' => true, 'data' => array(), 'mensaje' => 'Faltan parametros'
@@ -37,9 +41,10 @@ class Fondodepensiones extends REST_Controller
             return $this->response($respuesta);
         }
 
-        $resInsert = $this->pedeo->insertRow('INSERT INTO naep(aep_name,aep_ledaccount) VALUES(:aep_name, :aep_ledaccount)', array(
-            ':aep_name' => $Data['aep_name'],
-            ':aep_ledaccount' => $Data['aep_ledaccount']
+        $resInsert = $this->pedeo->insertRow('INSERT INTO nanr(anr_empleado, anr_concept, anr_status) VALUES(:anr_empleado, :anr_concept, :anr_status)', array(
+            ':anr_empleado' => $Data['anr_empleado'],
+            ':anr_concept' => $Data['anr_concept'],
+            ':anr_status' => $Data['anr_status']
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
@@ -67,8 +72,10 @@ class Fondodepensiones extends REST_Controller
         $Data = $this->post();
 
         if (
-            !isset($Data['aep_name']) or
-            !isset($Data['aep_id'])
+            !isset($Data['anr_empleado']) or
+            !isset($Data['anr_concept']) or
+            !isset($Data['anr_status']) or
+            !isset($Data['anr_id'])
         ) {
 
             $respuesta = array(
@@ -78,10 +85,11 @@ class Fondodepensiones extends REST_Controller
             return $this->response($respuesta);
         }
 
-        $resUpdate = $this->pedeo->updateRow('UPDATE naep SET aep_name = :aep_name, aep_ledaccount = :aep_ledaccount  WHERE aep_id = :aep_id', array(
-            'aep_name' => $Data['aep_name'],
-            'aep_ledaccount' => $Data['aep_ledaccount'],
-            'aep_id' => $Data['aep_id']
+        $resUpdate = $this->pedeo->updateRow('UPDATE nanr SET anr_empleado = :anr_empleado , anr_concept = :anr_concept , anr_status = :anr_status  WHERE anr_id = :anr_id', array(
+            'anr_empleado' => $Data['anr_empleado'],
+            'anr_concept' => $Data['anr_concept'],
+            'anr_status' => $Data['anr_status'],
+            'anr_id' => $Data['anr_id']
         ));
 
         if (is_numeric($resUpdate) && $resUpdate == 1) {
@@ -105,7 +113,7 @@ class Fondodepensiones extends REST_Controller
 
     public function index_get()
     {
-        $resSelect = $this->pedeo->queryTable("SELECT aep_name , aep_id, aep_ledaccount  FROM naep ", array());
+        $resSelect = $this->pedeo->queryTable("SELECT napp.app_docnum AS anr_empleado, nalc.alc_name AS anr_concept, CASE  WHEN anr_status::numeric = 1 THEN 'Activo' WHEN anr_status::numeric = 0 THEN 'Inactivo' END AS anr_status , anr_id  FROM nanr LEFT JOIN napp ON nanr.anr_empleado::numeric = napp.app_id LEFT JOIN nalc ON nanr.anr_concept::numeric = nalc.alc_id ", array());
 
         if (isset($resSelect[0])) {
 
