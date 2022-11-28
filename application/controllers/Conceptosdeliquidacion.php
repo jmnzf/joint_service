@@ -43,12 +43,13 @@ class Conceptosdeliquidacion extends REST_Controller
             return $this->response($respuesta);
         }
 
-        $resInsert = $this->pedeo->insertRow('INSERT INTO nalc(alc_name, alc_conceptnature, alc_conceptgroup, alc_profitliq, alc_status, alc_ledaccount) VALUES(:alc_name, :alc_conceptnature, :alc_conceptgroup, :alc_profitliq, :alc_status, :alc_ledaccount)', array(
+        $resInsert = $this->pedeo->insertRow('INSERT INTO nalc(alc_name, alc_conceptnature, alc_conceptgroup, alc_profitliq, alc_status, alc_ledaccount, alc_ledamethod) VALUES(:alc_name, :alc_conceptnature, :alc_conceptgroup, :alc_profitliq, :alc_status, :alc_ledaccount, :alc_ledamethod)', array(
             ':alc_name' => $Data['alc_name'],
             ':alc_conceptnature' => $Data['alc_conceptnature'],
             ':alc_conceptgroup' => $Data['alc_conceptgroup'],
             ':alc_profitliq' => $Data['alc_profitliq'],
             ':alc_ledaccount' => $Data['alc_ledaccount'],
+            ':alc_ledamethod' => $Data['alc_ledamethod'],
             ':alc_status' => $Data['alc_status']
         ));
 
@@ -92,13 +93,14 @@ class Conceptosdeliquidacion extends REST_Controller
             return $this->response($respuesta);
         }
 
-        $resUpdate = $this->pedeo->updateRow('UPDATE nalc SET alc_name = :alc_name , alc_conceptnature = :alc_conceptnature , alc_conceptgroup = :alc_conceptgroup , alc_profitliq = :alc_profitliq , alc_status = :alc_status, alc_ledaccount = :alc_ledaccount  WHERE alc_id = :alc_id', array(
+        $resUpdate = $this->pedeo->updateRow('UPDATE nalc SET alc_name = :alc_name , alc_conceptnature = :alc_conceptnature , alc_conceptgroup = :alc_conceptgroup , alc_profitliq = :alc_profitliq , alc_status = :alc_status, alc_ledaccount = :alc_ledaccount, alc_ledamethod = :alc_ledamethod  WHERE alc_id = :alc_id', array(
             'alc_name' => $Data['alc_name'],
             'alc_conceptnature' => $Data['alc_conceptnature'],
             'alc_conceptgroup' => $Data['alc_conceptgroup'],
             'alc_profitliq' => $Data['alc_profitliq'],
             'alc_status' => $Data['alc_status'],
             'alc_ledaccount' => $Data['alc_ledaccount'],
+            'alc_ledamethod' => $Data['alc_ledamethod'],
             'alc_id' => $Data['alc_id']
         ));
 
@@ -123,7 +125,7 @@ class Conceptosdeliquidacion extends REST_Controller
 
     public function index_get()
     {
-        $resSelect = $this->pedeo->queryTable("SELECT alc_name ,alc_ledaccount, nanc.anc_name AS alc_conceptnature, nacl.acl_name AS alc_conceptgroup, alc_profitliq , alc_id , CASE  WHEN alc_status::numeric = 1 THEN 'Activo' WHEN alc_status::numeric = 0 THEN 'Inactivo' END AS alc_status FROM nalc LEFT JOIN nanc ON nalc.alc_conceptnature::numeric = nanc.anc_id LEFT JOIN nacl ON nalc.alc_conceptgroup::numeric = nacl.acl_id ", array());
+        $resSelect = $this->pedeo->queryTable("SELECT alc_name ,alc_ledaccount,alc_ledamethod, nanc.anc_name AS alc_conceptnature, nacl.acl_name AS alc_conceptgroup, alc_profitliq , alc_id , CASE  WHEN alc_status::numeric = 1 THEN 'Activo' WHEN alc_status::numeric = 0 THEN 'Inactivo' END AS alc_status FROM nalc LEFT JOIN nanc ON nalc.alc_conceptnature::numeric = nanc.anc_id LEFT JOIN nacl ON nalc.alc_conceptgroup::numeric = nacl.acl_id ", array());
 
         if (isset($resSelect[0])) {
 

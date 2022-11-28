@@ -243,6 +243,49 @@ class Branch extends REST_Controller {
          $this->response($respuesta);
   }
 
+  	//OBTENER SUCURSALES POR EMPRESA
+	public function getBranchByBusiness_get(){
+
+    $Data = $this->get();
+
+    if(!isset($Data['pgs_company_id'])){
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' =>'La informacion enviada no es valida'
+      );
+
+      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+      return;
+    }
+
+
+    $sqlSelect = "SELECT * FROM pges WHERE pgs_company_id = :pgs_company_id";
+
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgs_company_id' => $Data['pgs_company_id']));
+
+    if(isset($resSelect[0])){
+
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
+
+    }else{
+
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje'	=> 'busqueda sin resultados'
+        );
+
+    }
+
+     $this->response($respuesta);
+  }
+
   //Actualiza el estado de una sucursal
    public function updateStatus_post(){
 
