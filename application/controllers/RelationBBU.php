@@ -49,7 +49,7 @@ class RelationBBU extends REST_Controller
             return;
         }
 
-        $sqlSelect = " SELECT * FROM pgus WHERE bbu_business = :bbu_business AND bbu_branch = :bbu_branch AND bbu_user = :bbu_user";
+        $sqlSelect = " SELECT * FROM rbbu WHERE bbu_business = :bbu_business AND bbu_branch = :bbu_branch AND bbu_user = :bbu_user";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':bbu_business' => $DataRelation['bbu_business'], ':bbu_branch' => $DataRelation['bbu_branch'], ':bbu_user' => $DataRelation['bbu_user']));
 
