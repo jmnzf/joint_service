@@ -285,6 +285,50 @@ class Branch extends REST_Controller {
 
      $this->response($respuesta);
   }
+  	//OBTENER SUCURSALES POR EMPRESA RELACION
+	public function getBranchByRelation_get(){
+
+    $Data = $this->get();
+
+    if(!isset($Data['bbu_business']) OR !isset($Data['bbu_user'])){
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' =>'La informacion enviada no es valida'
+      );
+
+      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+      return;
+    }
+
+    $sqlSelect = "SELECT DISTINCT pges.* FROM rbbu
+                  LEFT JOIN pges
+                  ON rbbu.bbu_branch = pges.pgs_id
+                  WHERE pges.pgs_company_id = :bbu_business AND  rbbu.bbu_user = :bbu_user";
+
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(':bbu_business' => $Data['bbu_business'], ':bbu_user' => $Data['bbu_user'] ));
+
+    if(isset($resSelect[0])){
+
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
+
+    }else{
+
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje'	=> 'busqueda sin resultados'
+        );
+
+    }
+
+     $this->response($respuesta);
+  }
 
   //Actualiza el estado de una sucursal
    public function updateStatus_post(){
