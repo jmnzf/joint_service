@@ -270,20 +270,23 @@ class AccountingAccent extends REST_Controller {
 									return;
 								}
 
-								if ( !isset( $ValidateSn[0] ) ){
-									$this->pedeo->trans_rollback();
+								if ( !empty(($detail['ac1_legal_num']) ) ) {
 
-									$respuesta = array(
-										'error'   => true,
-										'data'    => $ValidateSn,
-										'mensaje'	=> 'No existe el socio de negocio '.$detail['ac1_legal_num']
-									);
-
-									$this->response($respuesta);
-
-									return;
+									if ( !isset( $ValidateSn[0] ) ){
+										$this->pedeo->trans_rollback();
+	
+										$respuesta = array(
+											'error'   => true,
+											'data'    => $ValidateSn,
+											'mensaje'	=> 'No existe el socio de negocio '.$detail['ac1_legal_num']
+										);
+	
+										$this->response($respuesta);
+	
+										return;
+									}
 								}
-								//
+
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
@@ -496,7 +499,7 @@ class AccountingAccent extends REST_Controller {
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlInsertDetail, array(
 
-								':ac1_trans_id' => $resInsertAsiento,
+								':ac1_trans_id' => $resInsert,
 								':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
 								':ac1_debit' => round($ldebito, $DECI_MALES),
 								':ac1_credit' => round($lcredito, $DECI_MALES),

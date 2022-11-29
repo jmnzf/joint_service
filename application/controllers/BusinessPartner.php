@@ -702,6 +702,56 @@ class BusinessPartner extends REST_Controller
     $this->response($respuesta);
   }
 
+   // Obtener Socios de negocio con filtros
+   public function getFilterBusinessPartner_post()
+   {
+
+     $Data = $this->post();
+
+     $filtro = "";
+
+
+
+    if (!empty($Data['slt_group_num'])){
+      $filtro .= " AND  dmsn.dms_group_num::int = ".$Data['slt_group_num'];
+    }
+
+    if (!empty($Data['slt_sales_num'])){
+      $filtro .= " AND dmsn.dms_sip_code = ".$Data['slt_sales_num'];
+    }
+
+    if (!empty($Data['slt_owner_num'])){
+      $filtro .= " AND dmsn.dms_agent = ".$Data['slt_owner_num'];
+    }
+
+    if (isset($Data['slt_state_num'])){
+      $filtro .= " AND dmsn.dms_enabled = ".$Data['slt_state_num'];
+    }
+ 
+    $sqlSelect = "SELECT concat(dms_card_name, ' ', dms_card_last_name) AS nombreyapellido, * FROM dmsn WHERE 1 = 1 ".$filtro;
+
+ 
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+ 
+    if (isset($resSelect[0])) {
+ 
+      $respuesta = array(
+         'error' => false,
+         'data'  => $resSelect,
+         'mensaje' => ''
+       );
+    } else {
+ 
+      $respuesta = array(
+         'error'   => true,
+         'data' => array(),
+         'mensaje'  => 'busqueda sin resultados'
+      );
+    }
+ 
+     $this->response($respuesta);
+   }
+
   //Crear nuevo socio de negocio
   public function createCompleteBusinessPartner_post()
   {
