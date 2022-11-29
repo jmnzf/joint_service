@@ -30,24 +30,36 @@ class ToFileExcel extends REST_Controller
 
     public function createExcel_post(){
 
+        $Data = $this->post();
+
+      
+
+        if ( !isset($Data['sql']) OR !isset($Data['equivalence'])){
+            
+            $respuesta = array( 
+                'error'   => true,
+                'data'    => [],
+                'mensaje' => 'Faltan parametros'
+            );
+
+            return $this->response($respuesta);
+
+
+
+        }
+
         $COLUMNS = [
                     'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
                     'AA','AB','AC','AD','AE','AF','AG','AH','AI','AJ','AK','AL','AM','AN','AO','AP','AQ','AR','AS','AT','AU','AV','AW','AX','AY','AZ'
                    ];
+        
+                   
+        $EQUIVALE = json_decode($Data['equivalence'], true);   
 
-        $EQUIVALE = array(
-            'ote_id'         => 'ID',	
-            'ote_code'       => 'CODIGO',
-            'ote_createdate' => 'FECHA CREACION',	
-            'ote_duedate'    => 'FECHA VENCIMIENTO',	
-            'ote_createby'   => 'CREADO POR',	
-            'ote_date'	     => 'FECHA',
-            'ote_baseentry'	 => 'CODIGO DOCUMENTO',
-            'ote_basetype'   => 'TIPO DOCUMENTO',
-            'ote_docnum'     => 'NUMERO DOCUMENTO'
-        );
 
-        $Data = $this->post();
+        $USEDCOLUMNS = [];
+
+        
 
         $respuesta = array( 
             'error'  => true,
@@ -56,7 +68,19 @@ class ToFileExcel extends REST_Controller
         );
 
 
-        $resSelect = $this->pedeo->queryTable("SELECT * FROM Lote", array());
+        $resSelect = $this->pedeo->queryTable($Data['sql'], array());
+
+        if ( !isset($resSelect[0]) ){
+                
+            $respuesta = array( 
+                'error'   => true,
+                'data'    => [],
+                'mensaje' => 'No hay resultados para la consulta enviada'
+            );
+
+            return $this->response($respuesta);
+
+        }
 
 
         $campos = array_keys($resSelect[0]);
@@ -68,27 +92,21 @@ class ToFileExcel extends REST_Controller
         
         for ($i=0; $i < count($campos) ; $i++) { 
             $sheet->setCellValue($COLUMNS[$i].'1', $EQUIVALE[$campos[$i]]);    
+            array_push($USEDCOLUMNS, $COLUMNS[$i]);
+        }
+
+        $acc = 2; // SEGUNDA FILA YA LA PRIMERA SE RESERVA PARA LOS ENCABEZADOS
+        for ($i=0; $i < count($resSelect); $i++) { 
+
+            for ($a=0; $a < count($USEDCOLUMNS); $a++) { 
+
+                $sheet->setCellValue($USEDCOLUMNS[$a].$acc, $resSelect[$i][$campos[$a]]);  
+
+            }
+
+            $acc++;
         }
         
-
-
-        // $sqlSelect = $Data['sql'];
-
-
-        // $resSelect = $this->pedeo->queryTable($sqlSelect, array());
-
-        // if ( isset($resSelect[0])){
-
-        // }else{
-
-        //     $respuesta = array( 
-        //         'error'=>true,
-        //         'data'=>$resSelect,
-        //         'mensaje'=>'Busqueda sin resultados'
-        //     );
-        // }
-
-
         $filename ="doc.xlsx";
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment; filename="'.$filename.'"');
