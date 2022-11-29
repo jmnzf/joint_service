@@ -48,10 +48,25 @@ class PartnersAddresses extends REST_Controller {
         return;
       }
 
+        $sqlSelect = "SELECT dmd_id_add FROM dmsd WHERE dmd_card_code = :dmd_card_code AND dmd_id_add = :dmd_id_add";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+        ':dmd_card_code' => $Data['dmd_card_code'],
+			  ':dmd_id_add'    => $Data['dmd_id_add']
+
+        ));
+        if (isset($resSelect[0])) {
+        $respuesta = array(
+        'error' => true,
+        'data'  => [],
+        'mensaje' => 'Ya existe un id de dirección con ese codigo, no es posible crear. '
+        );
+        $this->response($respuesta);
+        return;
+        }
 
       $sqlInsert = "INSERT INTO dmsd(dmd_state_mm, dmd_state, dmd_id_add, dmd_delivery_add, dmd_country, dmd_city,
-                    dmd_card_code, dmd_adress, dmd_tonw)VALUES(:dmd_state_mm, :dmd_state, :dmd_id_add, :dmd_delivery_add,
-                    :dmd_country, :dmd_city, :dmd_card_code, :dmd_adress, :dmd_tonw)";
+                    dmd_card_code, dmd_adress, dmd_tonw, dmd_lat, dmd_long)VALUES(:dmd_state_mm, :dmd_state, :dmd_id_add, :dmd_delivery_add,
+                    :dmd_country, :dmd_city, :dmd_card_code, :dmd_adress, :dmd_tonw, :dmd_lat, :dmd_long)";
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -63,6 +78,8 @@ class PartnersAddresses extends REST_Controller {
              ':dmd_city' => $Data['dmd_city'],
              ':dmd_card_code' => $Data['dmd_card_code'],
              ':dmd_adress' => $Data['dmd_adress'],
+             ':dmd_lat' => isset($Data['dmd_lat'])?$Data['dmd_lat']:"",
+             ':dmd_long' => isset($Data['dmd_long'])?$Data['dmd_long']:"",
              ':dmd_tonw' => $Data['dmd_tonw']
 
       ));
@@ -179,7 +196,20 @@ class PartnersAddresses extends REST_Controller {
           return;
         }
 
-        $sqlSelect = " SELECT * FROM dmsd WHERE dmd_card_code = :dmd_card_code";
+        $sqlSelect = "SELECT DISTINCT pais.pdm_country AS pais,
+                      depar.pdm_states AS departamento,
+                      ciudad.pdm_municipality AS ciudad,
+                      mun.pdm_municipality AS municipio,
+                      dmsd.* FROM dmsd
+                      INNER JOIN tpdm pais
+                          ON pais.pdm_codcountry = dmsd.dmd_country
+                      INNER JOIN tpdm depar
+                          ON  depar.pdm_codstates = dmsd.dmd_state
+                      INNER JOIN tpdm ciudad
+                          ON ciudad.pdm_codmunicipality = dmsd.dmd_city
+                      INNER JOIN tpdm mun
+                          ON mun.pdm_codmunicipality = dmsd.dmd_state_mm
+                          WHERE dmd_card_code =  :dmd_card_code";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dmd_card_code' => $Data['dmd_card_code']));
 
