@@ -333,6 +333,36 @@ class MaterialList extends REST_Controller {
 		$this->response($respuesta);
 	}
 
+	public function getMaterialListByDoc_post(){
+		$Data = $this->post();
+
+		$sqlSelect = "SELECT prlm.* from  dmar
+		inner join {$Data['table']}  on dmar.dma_item_code = {$Data['itemfield']}
+		left join prlm on rlm_item_code = dma_item_code
+		where {$Data['filter']} =  :docentry";
+
+		
+		$resSelect =  $this->pedeo->queryTable($sqlSelect, array(":docentry" => $Data['docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
 
 
 }
