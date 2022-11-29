@@ -36,7 +36,7 @@ class ManufacturingOrder extends REST_Controller {
         !isset($Data['bof_date']) OR
         !isset($Data['bof_duedate']) OR
         !isset($Data['bof_user']) OR
-        !isset($Data['bof_cust_order']) OR
+        // !isset($Data['bof_cust_order']) OR
         !isset($Data['bof_ccost']) OR
         !isset($Data['bof_status']) OR
         !isset($Data['bof_project'])){
