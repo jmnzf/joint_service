@@ -576,6 +576,93 @@ class BusinessPartner extends REST_Controller
     $this->response($respuesta);
   }
 
+  //ACTUALIZAR CUENTA BANCARIA DE SOCIO DE NEGOCIO
+  //COMO LA PRINCIPAL
+  public function updateAccBank_post()
+  {
+    $Data = $this->post();
+    if (!isset($Data['dmb_card_code']) or !isset($Data['dmb_id'])) {
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'La informacion enviada no es valida'
+      );
+
+      $this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+      return;
+    }
+
+    $resUpdate = NULL;
+
+    $update = $this->pedeo->updateRow('UPDATE dmsb SET dmb_major = 0 WHERE dmb_card_code = :dmb_card_code', [':dmb_card_code' => $Data['dmb_card_code']]);
+    if (is_numeric($update) && $update > 0) {
+      //
+      $resUpdate = $this->pedeo->updateRow(
+        "UPDATE dmsb SET dmb_major = :dmb_major WHERE dmb_id = :dmb_id",
+        array(
+          ':dmb_major' => 1,
+          ':dmb_id' => $Data['dmb_id']
+        )
+      );
+    }
+
+    $respuesta = array(
+      'error'   => true,
+      'data'    => $update,
+      'mensaje'  => 'No se pudo actualizar la dirreccion del socio de negocio'
+    );
+
+    if (is_numeric($resUpdate) && $resUpdate == 1) {
+      $respuesta = array(
+        'error'   => false,
+        'data'    => $resUpdate,
+        'mensaje' => 'Se actualizó la dirreccion del socio de negocio'
+      );
+    }
+
+    $this->response($respuesta);
+  }
+
+
+    //ACTUALIZAR DIRECCION DE SOCIO DE NEGOCIO
+  //HABILITAR/DESABILITAR
+  public function updateAccBankStatus_post()
+  {
+    $Data = $this->post();
+
+    if (!isset($Data['dmb_status']) or !isset($Data['dmb_id'])) {
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'La informacion enviada no es valida'
+      );
+
+      $this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+      return;
+    }
+
+    $update = $this->pedeo->updateRow('UPDATE dmsb SET dmb_status = :dmb_status WHERE dmb_id = :dmb_id', [':dmb_status' => $Data['dmb_status'], ':dmb_id' => $Data['dmb_id']]);
+
+    $respuesta = array(
+      'error'   => true,
+      'data'    => $update,
+      'mensaje'  => 'No se pudo actualizar la cuenta de banco del socio de negocio'
+    );
+
+    if (is_numeric($update) && $update == 1) {
+      $respuesta = array(
+        'error'   => false,
+        'data'    => $update,
+        'mensaje' => 'Se actualizó el estado de la cuenta de banco del socio de negocio'
+      );
+    }
+
+    $this->response($respuesta);
+  }
+
+
   //ACTUALIZAR DIRECCION DE SOCIO DE NEGOCIO
   //COMO LA PRINCIPAL
   public function updateAddress_post()
