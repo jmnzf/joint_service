@@ -152,27 +152,64 @@ class Ubicaciones extends REST_Controller
         }
     }
 
-      // OBTENER TIPOS DE UBICACIONES
-  public function getTypeUbication_get(){
+    // OBTENER UBICACIONES POR ALMACEN
+    public function getUbicationByWarehouse_get()
+    {
+        $Data = $this->get();
+        if(!isset($Data['dws_code'])){
 
-    $sqlSelect = " SELECT dub_code AS id, dub_name AS text FROM tdub WHERE dub_status = 1";
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' =>'La informacion enviada no es valida'
+            );
 
-    if(isset($resSelect[0])){
-      $respuesta = array(
-        'error' => false,
-        'data'  => $resSelect,
-        'mensaje' => '');
-    }else{
-        $respuesta = array(
-          'error'   => true,
-          'data' => array(),
-          'mensaje'	=> 'busqueda sin resultados'
-        );
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
+            return;
+        }
+
+        $sqlSelect = "SELECT ubc_type , ubc_code , ubc_alto_cm , ubc_ancho_cm , ubc_largo_cm , ubc_resistencia_kg , ubc_id , CASE  WHEN ubc_status::numeric = 1 THEN 'Activo' WHEN ubc_status::numeric = 0 THEN 'Inactivo' END AS ubc_status, ubc_warehouse, dmws.dws_name AS nombre_almacen, tdub.dub_name AS nombre_tipo FROM tubc LEFT JOIN dmws ON dmws.dws_code = tubc.ubc_warehouse LEFT JOIN tdub ON tdub.dub_code = tubc.ubc_type WHERE ubc_warehouse = :codewarehouse AND ubc_status = 1";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':codewarehouse' => $Data['dws_code']));
+
+        if (isset($resSelect[0])) {
+            $respuesta = array(
+                'error' => false,
+                'data'  => $resSelect,
+                'mensaje' => ''
+            );
+        } else {
+            $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'    => 'busqueda sin resultados'
+            );
+        }
+
+        $this->response($respuesta);
     }
 
-     $this->response($respuesta);
-}
+    // OBTENER TIPOS DE UBICACIONES
+    public function getTypeUbication_get()
+    {
 
+        $sqlSelect = " SELECT dub_code AS id, dub_name AS text FROM tdub WHERE dub_status = 1";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+        if (isset($resSelect[0])) {
+            $respuesta = array(
+                'error' => false,
+                'data'  => $resSelect,
+                'mensaje' => ''
+            );
+        } else {
+            $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'    => 'busqueda sin resultados'
+            );
+        }
+
+        $this->response($respuesta);
+    }
 }
