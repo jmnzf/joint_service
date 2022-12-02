@@ -148,4 +148,44 @@ class UnitMeasurement extends REST_Controller
 
     $this->response($respuesta);
   }
+
+  //OBTENER UNIDADES DE MEDIDA SEGUN TIPO
+  public function getUnitMeasurementByType_get()
+  {
+    
+      $Data = $this->get();
+      // print_r($Data['dmu_id']);exit;die;
+
+      if(!isset($Data['dmu_id'])){
+
+          $respuesta = array(
+              'error' => true,
+              'data'  => array(),
+              'mensaje' =>'La informacion enviada no es valida'
+          );
+
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          return;
+      }
+
+      $sqlSelect = "SELECT dmu_id, dmu_nameum  FROM dmum WHERE dmu_type = (SELECT dmu_type FROM dmum WHERE dmu_id = :dmu_id)";
+      $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dmu_id' => $Data['dmu_id']));
+
+      if (isset($resSelect[0])) {
+          $respuesta = array(
+              'error' => false,
+              'data'  => $resSelect,
+              'mensaje' => ''
+          );
+      } else {
+          $respuesta = array(
+              'error'   => true,
+              'data' => array(),
+              'mensaje'    => 'busqueda sin resultados'
+          );
+      }
+
+      $this->response($respuesta);
+  }
 }
