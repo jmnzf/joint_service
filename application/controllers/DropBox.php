@@ -7,7 +7,7 @@ use Restserver\libraries\REST_Controller;
 class DropBox extends REST_Controller {
 
 	private $pdo;
-  private $api_key = "HfeWgQQMzC4AAAAAAAAAAVWMFAaPCQSnaAIv7UvQS_7VS0Np6rH3UlXzQWao7AWl";
+  private $api_key = "sl.BUNP87nOKIGiXQCEB_V14wtrBnv_x75zQ-G7jc_-7ih1dVkZVtXoe9PFMPwI3JX8cy0TZV4NedCtO1RD6Ypl7_Qff1-xlk893D5ckS8_XpC0W6HEvwOT2IKnDW7tRHhXBX3DoN-M";
 	public function __construct(){
 
 		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
@@ -83,37 +83,55 @@ class DropBox extends REST_Controller {
         $curl = curl_init();
         $Data = $this->post();
         $path = $Data['path'];
+        $dir  = getcwd()."/application/attachment/".$_FILES['file']['name'];
 
         $filePath = "{$path}/{$_FILES['file']['name']}";
-        move_uploaded_file($_FILES['file']['tmp_name'], "serpentservice/application/attachment/".$_FILES['file']['name']);
-   
-        // $cheaders = array('Authorization: Bearer '.$this->api_key	,
-        //                     'Content-Type: application/octet-stream',
-        //                     'Dropbox-API-Arg: {"path":"'.$filePath.'", "mode":"add"}');
+
+       
+
+        if (move_uploaded_file($_FILES['file']['tmp_name'], $dir) ){
+
+          $fp = fopen($dir, 'rb');
+          $size = filesize($dir);
+          $file2 = pathinfo($dir);
+
+          $cheaders = array('Authorization: Bearer '.$this->api_key	,
+                            'Content-Type: application/octet-stream',
+                            'Dropbox-API-Arg: {"path":"'.$filePath.'", "mode":"add"}');
         
-        //   $ch = curl_init('https://content.dropboxapi.com/2/files/upload');
-        //   curl_setopt($ch, CURLOPT_HTTPHEADER, $cheaders);
-        //   curl_setopt($ch, CURLOPT_PUT, true);
-        //   curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-        //   curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        //   curl_setopt($ch, CURLOPT_INFILE, $fp);
-        //   curl_setopt($ch, CURLOPT_INFILESIZE, $size);
-        //   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+          $ch = curl_init('https://content.dropboxapi.com/2/files/upload');
+          curl_setopt($ch, CURLOPT_HTTPHEADER, $cheaders);
+          curl_setopt($ch, CURLOPT_PUT, true);
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+          curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+          curl_setopt($ch, CURLOPT_INFILE, $fp);
+          curl_setopt($ch, CURLOPT_INFILESIZE, $size);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         
-        //   $response = curl_exec($ch);       
+          $response = curl_exec($ch);       
         
-        // 	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        //   curl_close($ch);
-        //   fclose($fp);
-        if($http_code == 200){
-          $respuesta = array(
-            'error' => true,
-            'data' => $this->createShareLink($path),
-            'mensaje' => 'Error'
-          );
+        	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+          curl_close($ch);
+          fclose($fp);
+          if($http_code == 200){
+            $respuesta = array(
+              'error' => false,
+              'data' => $this->createShareLink($filePath),
+              'mensaje' => 'Operacion exitosa'
+            );
+          }else{
+            $respuesta = array(
+              'error' => true,
+              'data' => [],
+              'mensaje' => 'No se pudo realizar la operación'
+            );
+          }
+
         }
+   
       $this->response($respuesta);
     }
+
     private function createShareLink($path){
       $curl = curl_init();
 
@@ -128,14 +146,13 @@ class DropBox extends REST_Controller {
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_CUSTOMREQUEST => 'POST',
         CURLOPT_POSTFIELDS =>'{
-          "path":"'.'{
-            "path":"'.$path.'",
-            "settings":{
-                "audience": "public",
-                "access": "viewer",
-                "requested_visibility": "public",
-                "allow_download": true
-            }
+          "path": "'.$path.'",
+          "settings": {
+            "audience": "public",
+            "access": "viewer",
+            "requested_visibility": "public",
+            "allow_download": true
+          }
         }',
         CURLOPT_HTTPHEADER => array(
           'Authorization: Bearer '.$this->api_key,
@@ -148,22 +165,15 @@ class DropBox extends REST_Controller {
       curl_close($curl);
 
       $response = json_decode($response,true);
-
-			$url = $response[0]['url'];
-			$url = str_replace("dl=0","raw=1",$url);
-			$resp =  ["path_lower"=> $response[0]['path'],'url'=>$url];
+      
+      $resp = [];
+			
       if($http_code == 200){
-        $respuesta = array(
-          'error' => false,
-          'data' => $resp,
-          'mensaje' => 'Operacion exitosa'
-      );
-      }else{
-        $respuesta = array(
-          'error' => true,
-          'data' => json_decode($response,true),
-          'mensaje' => 'Error'
-        );
+        $url = $response['url'];
+			  $url = str_replace("dl=0","raw=1",$url);
+			  $resp =  ["path_lower"=> $response['path_lower'],'url'=>$url];
+
+        $respuesta = $resp;
       }
       return $respuesta;
     }
