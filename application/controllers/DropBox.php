@@ -126,7 +126,7 @@ class DropBox extends REST_Controller {
               'mensaje' => 'No se pudo realizar la operación'
             );
           }
-
+        unlink($dir);
         }
    
       $this->response($respuesta);
