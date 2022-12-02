@@ -87,14 +87,19 @@ class Items extends REST_Controller
 		try {
 
 			$sqlInsert = "INSERT INTO dmar(dma_item_code, dma_item_name, dma_generic_name, dma_item_purch, dma_item_inv, dma_item_sales,
-				                    dma_group_code, dma_attach, dma_enabled, dma_firm_code, dma_series_code, dma_sup_set, dma_sku_sup, dma_uom_purch,
-				                    dma_uom_pqty, dma_uom_pemb, dma_uom_pembqty, dma_tax_purch, dma_price_list, dma_price, dma_uom_sale,
-				                    dma_uom_sqty, dma_uom_semb, dma_uom_embqty, dma_tax_sales, dma_acct_type, dma_avprice,dma_uom_weight,dma_uom_umvol,
-														dma_uom_vqty, dma_uom_weightn, dma_uom_sizedim,dma_lotes_code, dma_emisionmethod, dma_long_description, dma_item_mat)VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
-														:dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,:dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set,
-														:dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,:dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty,
-														:dma_uom_semb, :dma_uom_embqty, :dma_tax_sales, :dma_acct_type,:dma_avprice,:dma_uom_weight, :dma_uom_umvol, :dma_uom_vqty, :dma_uom_weightn,
-														:dma_uom_sizedim,:dma_lotes_code, :dma_emisionmethod, :dma_long_description, :dma_item_mat)";
+						dma_group_code, dma_attach, dma_enabled, dma_firm_code, dma_series_code, dma_sup_set, dma_sku_sup, dma_uom_purch,
+						dma_uom_pqty, dma_uom_pemb, dma_uom_pembqty, dma_tax_purch, dma_price_list, dma_price, dma_uom_sale,
+						dma_uom_sqty, dma_uom_semb, dma_uom_embqty, dma_tax_sales, dma_acct_type, dma_avprice,dma_uom_weight,dma_uom_umvol,
+						dma_uom_vqty, dma_uom_weightn, dma_uom_sizedim,dma_lotes_code, dma_emisionmethod, dma_long_description, dma_item_mat,
+						dma_accounting, dma_acctin, dma_acct_out, dma_acct_inv, dma_acct_stockn, dma_acct_stockp, dma_acct_redu, dma_acct_amp,
+						dma_acct_cost, dma_acct_return, dma_uom_width, dma_uom_tall, dma_uom_length, dma_uom_vol, dma_um_inventory)
+						VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
+						:dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,:dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set,
+						:dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,:dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty,
+						:dma_uom_semb, :dma_uom_embqty, :dma_tax_sales, :dma_acct_type,:dma_avprice,:dma_uom_weight, :dma_uom_umvol, :dma_uom_vqty, :dma_uom_weightn,
+						:dma_uom_sizedim,:dma_lotes_code, :dma_emisionmethod, :dma_long_description, :dma_item_mat,
+						:dma_accounting, :dma_acctin, :dma_acct_out, :dma_acct_inv, :dma_acct_stockn, :dma_acct_stockp, :dma_acct_redu, :dma_acct_amp,
+						:dma_acct_cost, :dma_acct_return, :dma_uom_width, :dma_uom_tall, :dma_uom_length, :dma_uom_vol, :dma_um_inventory)";
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -130,11 +135,29 @@ class Items extends REST_Controller
 				':dma_uom_umvol'    => is_numeric($Data['dma_uom_umvol']) ? $Data['dma_uom_umvol'] : 0,
 				':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty']) ? $Data['dma_uom_vqty'] : 0,
 				':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn']) ? $Data['dma_uom_weightn'] : 0,
-				':dma_uom_sizedim'  => is_numeric($Data['dma_uom_sizedim']) ? $Data['dma_uom_sizedim'] : 0,
+				':dma_uom_sizedim'  => isset($Data['dma_uom_sizedim']) ? $Data['dma_uom_sizedim'] : 0,
 				':dma_lotes_code' => isset($Data['dma_lotes_code']) ? $Data['dma_lotes_code'] : '0',
 				':dma_emisionmethod' => isset($Data['dma_emisionmethod']) ? $Data['dma_emisionmethod'] : 0,
 				':dma_long_description' => isset($Data['dma_long_description']) ? $Data['dma_long_description'] : NULL,
-				':dma_item_mat' => isset($Data['dma_item_mat']) ? $Data['dma_item_mat'] : 0
+				':dma_um_inventory' => isset($Data['dma_um_inventory']) ? $Data['dma_um_inventory'] : NULL,
+				':dma_item_mat' => isset($Data['dma_item_mat']) ? $Data['dma_item_mat'] : 0,
+				//CUENTAS CONTABLES
+				':dma_accounting' => isset($Data['dma_accounting']) ? $Data['dma_accounting'] : NULL,
+				':dma_acctin' => isset($Data['dma_acctin']) ? $Data['dma_acctin'] : 0,
+				':dma_acct_out' => isset($Data['dma_acct_out']) ? $Data['dma_acct_out'] : 0,
+				':dma_acct_inv' => isset($Data['dma_acct_inv']) ? $Data['dma_acct_inv'] : 0,
+				':dma_acct_stockn' => isset($Data['dma_acct_stockn']) ? $Data['dma_acct_stockn'] : 0,
+				':dma_acct_stockp' => isset($Data['dma_acct_stockp']) ? $Data['dma_acct_stockp'] : 0,
+				':dma_acct_redu' => isset($Data['dma_acct_redu']) ? $Data['dma_acct_redu'] : 0,
+				':dma_acct_amp' => isset($Data['dma_acct_amp']) ? $Data['dma_acct_amp'] : 0,
+				':dma_acct_cost' => isset($Data['dma_acct_cost']) ? $Data['dma_acct_cost'] : 0,
+				':dma_acct_return' => isset($Data['dma_acct_return']) ? $Data['dma_acct_return'] : 0,
+				// VOLUMEN
+				':dma_uom_width' => isset($Data['dma_uom_width']) ? $Data['dma_uom_width'] : 0,
+				':dma_uom_tall' => isset($Data['dma_uom_tall']) ? $Data['dma_uom_tall'] : 0,
+				':dma_uom_length' => isset($Data['dma_uom_length']) ? $Data['dma_uom_length'] : 0,
+				':dma_uom_vol' => isset($Data['dma_uom_vol']) ? $Data['dma_uom_vol'] : 0,
+
 
 			));
 
@@ -244,17 +267,21 @@ class Items extends REST_Controller
 
 		try {
 			$sqlUpdate = "UPDATE dmar
-											SET dma_item_code = :dma_item_code, dma_item_name = :dma_item_name, dma_generic_name = :dma_generic_name,
-											dma_item_purch = :dma_item_purch, dma_item_inv = :dma_item_inv, dma_item_sales = :dma_item_sales,
-											dma_group_code = :dma_group_code, dma_attach = :dma_attach, dma_enabled = :dma_enabled, dma_firm_code = :dma_firm_code,
-											dma_series_code = :dma_series_code, dma_sup_set = :dma_sup_set, dma_sku_sup = :dma_sku_sup, dma_uom_purch = :dma_uom_purch,
-											dma_uom_pqty = :dma_uom_pqty, dma_uom_pemb = :dma_uom_pemb, dma_uom_pembqty = :dma_uom_pembqty, dma_tax_purch = :dma_tax_purch,
-											dma_price_list = :dma_price_list, dma_price = :dma_price, dma_uom_sale = :dma_uom_sale, dma_uom_sqty = :dma_uom_sqty,
-											dma_uom_semb = :dma_uom_semb, dma_uom_embqty = :dma_uom_embqty, dma_tax_sales = :dma_tax_sales, dma_acct_type = :dma_acct_type,
-											dma_avprice = :dma_avprice,dma_uom_weight = :dma_uom_weight, dma_uom_umvol = :dma_uom_umvol, dma_uom_vqty = :dma_uom_vqty,
-											dma_uom_weightn = :dma_uom_weightn, dma_uom_sizedim = :dma_uom_sizedim, dma_lotes_code = :dma_lotes_code, dma_emisionmethod = :dma_emisionmethod,
-											dma_long_description = :dma_long_description, dma_item_mat = :dma_item_mat WHERE dma_id = :dma_id";
-
+						SET dma_item_code = :dma_item_code, dma_item_name = :dma_item_name, dma_generic_name = :dma_generic_name,
+						dma_item_purch = :dma_item_purch, dma_item_inv = :dma_item_inv, dma_item_sales = :dma_item_sales,
+						dma_group_code = :dma_group_code, dma_attach = :dma_attach, dma_enabled = :dma_enabled, dma_firm_code = :dma_firm_code,
+						dma_series_code = :dma_series_code, dma_sup_set = :dma_sup_set, dma_sku_sup = :dma_sku_sup, dma_uom_purch = :dma_uom_purch,
+						dma_uom_pqty = :dma_uom_pqty, dma_uom_pemb = :dma_uom_pemb, dma_uom_pembqty = :dma_uom_pembqty, dma_tax_purch = :dma_tax_purch,
+						dma_price_list = :dma_price_list, dma_price = :dma_price, dma_uom_sale = :dma_uom_sale, dma_uom_sqty = :dma_uom_sqty,
+						dma_uom_semb = :dma_uom_semb, dma_uom_embqty = :dma_uom_embqty, dma_tax_sales = :dma_tax_sales, dma_acct_type = :dma_acct_type,
+						dma_avprice = :dma_avprice,dma_uom_weight = :dma_uom_weight, dma_uom_umvol = :dma_uom_umvol, dma_uom_vqty = :dma_uom_vqty,
+						dma_uom_weightn = :dma_uom_weightn, dma_uom_sizedim = :dma_uom_sizedim, dma_lotes_code = :dma_lotes_code, dma_emisionmethod = :dma_emisionmethod,
+						dma_long_description = :dma_long_description, dma_item_mat = :dma_item_mat,
+						dma_accounting = :dma_accounting, dma_acctin = :dma_acctin, dma_acct_out = :dma_acct_out, dma_acct_inv = :dma_acct_inv,
+						dma_acct_stockn = :dma_acct_stockn, dma_acct_stockp = :dma_acct_stockp, dma_acct_redu = :dma_acct_redu, 
+						dma_acct_amp = :dma_acct_amp, dma_acct_cost = :dma_acct_cost, dma_acct_return = :dma_acct_return,
+						dma_uom_width = :dma_uom_width, dma_uom_tall = :dma_uom_tall, dma_uom_length = :dma_uom_length, dma_uom_vol = :dma_uom_vol, dma_um_inventory = :dma_um_inventory
+						WHERE dma_id = :dma_id";
 
 			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
@@ -289,12 +316,29 @@ class Items extends REST_Controller
 				':dma_uom_umvol'    => isset($Data['dma_uom_umvol']) ? $Data['dma_uom_umvol'] : 0,
 				':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty']) ? $Data['dma_uom_vqty'] : 0,
 				':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn']) ? $Data['dma_uom_weightn'] : 0,
-				':dma_uom_sizedim'  => is_numeric($Data['dma_uom_sizedim']) ? $Data['dma_uom_sizedim'] : 0,
+				':dma_uom_sizedim'  => isset($Data['dma_uom_sizedim']) ? $Data['dma_uom_sizedim'] : 0,
 				':dma_lotes_code' => isset($Data['dma_lotes_code']) ? $Data['dma_lotes_code'] : '0',
 				':dma_emisionmethod' => isset($Data['dma_emisionmethod']) ? $Data['dma_emisionmethod'] : 0,
 				':dma_long_description' => isset($Data['dma_long_description']) ? $Data['dma_long_description'] : NULL,
 				':dma_item_mat' => isset($Data['dma_item_mat']) ? $Data['dma_item_mat'] : 0,
-				':dma_id' => $Data['dma_id']
+				':dma_um_inventory' => isset($Data['dma_um_inventory']) ? $Data['dma_um_inventory'] : NULL,
+				':dma_id' => $Data['dma_id'],
+				//CUENTAS CONTABLES
+				':dma_accounting' => isset($Data['dma_accounting']) ? $Data['dma_accounting'] : NULL,
+				':dma_acctin' => isset($Data['dma_acctin']) ? $Data['dma_acctin'] : 0,
+				':dma_acct_out' => isset($Data['dma_acct_out']) ? $Data['dma_acct_out'] : 0,
+				':dma_acct_inv' => isset($Data['dma_acct_inv']) ? $Data['dma_acct_inv'] : 0,
+				':dma_acct_stockn' => isset($Data['dma_acct_stockn']) ? $Data['dma_acct_stockn'] : 0,
+				':dma_acct_stockp' => isset($Data['dma_acct_stockp']) ? $Data['dma_acct_stockp'] : 0,
+				':dma_acct_redu' => isset($Data['dma_acct_redu']) ? $Data['dma_acct_redu'] : 0,
+				':dma_acct_amp' => isset($Data['dma_acct_amp']) ? $Data['dma_acct_amp'] : 0,
+				':dma_acct_cost' => isset($Data['dma_acct_cost']) ? $Data['dma_acct_cost'] : 0,
+				':dma_acct_return' => isset($Data['dma_acct_return']) ? $Data['dma_acct_return'] : 0,
+				// VOLUMEN
+				':dma_uom_width' => isset($Data['dma_uom_width']) ? $Data['dma_uom_width'] : 0,
+				':dma_uom_tall' => isset($Data['dma_uom_tall']) ? $Data['dma_uom_tall'] : 0,
+				':dma_uom_length' => isset($Data['dma_uom_length']) ? $Data['dma_uom_length'] : 0,
+				':dma_uom_vol' => isset($Data['dma_uom_vol']) ? $Data['dma_uom_vol'] : 0,
 			));
 
 			if (is_numeric($resUpdate) && $resUpdate == 1) {
