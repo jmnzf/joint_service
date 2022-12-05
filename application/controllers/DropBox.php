@@ -7,7 +7,7 @@ use Restserver\libraries\REST_Controller;
 class DropBox extends REST_Controller {
 
 	private $pdo;
-  private $api_key = "HfeWgQQMzC4AAAAAAAAAAVWMFAaPCQSnaAIv7UvQS_7VS0Np6rH3UlXzQWao7AWl";
+  private $api_key = "sl.BUTg1ke8PkLWMGDrz_Y0aSupmHlZIGxrOKxo7Y9cYzqwy8g8xWSs0hbZCHXXqsgg4FREiwMcWX9iiyoqvGj72NuxC3B0pkuBJEEmicK6MUitT6JejCkUFbE2WAxcuf1AKmhuUCZQ";
 	public function __construct(){
 
 		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
@@ -79,41 +79,54 @@ class DropBox extends REST_Controller {
       $this->response($respuesta);
     }
 
-    public function uploadFile_post(){      
-        $curl = curl_init();
-        $Data = $this->post();
-        $path = $Data['path'];
+    public function uploadFile_post(){
+    $Data = $this->post();
+    if (
+      !isset($Data['dma_card_code'])
+    ) {
 
-        $filePath = "{$path}/{$_FILES['file']['name']}";
-        move_uploaded_file($_FILES['file']['tmp_name'], "serpentservice/application/attachment/".$_FILES['file']['name']);
-   
-        // $cheaders = array('Authorization: Bearer '.$this->api_key	,
-        //                     'Content-Type: application/octet-stream',
-        //                     'Dropbox-API-Arg: {"path":"'.$filePath.'", "mode":"add"}');
-        
-        //   $ch = curl_init('https://content.dropboxapi.com/2/files/upload');
-        //   curl_setopt($ch, CURLOPT_HTTPHEADER, $cheaders);
-        //   curl_setopt($ch, CURLOPT_PUT, true);
-        //   curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-        //   curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        //   curl_setopt($ch, CURLOPT_INFILE, $fp);
-        //   curl_setopt($ch, CURLOPT_INFILESIZE, $size);
-        //   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        
-        //   $response = curl_exec($ch);       
-        
-        // 	$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        //   curl_close($ch);
-        //   fclose($fp);
-        if($http_code == 200){
-          $respuesta = array(
-            'error' => true,
-            'data' => $this->createShareLink($path),
-            'mensaje' => 'Error'
-          );
-        }
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'La informacion enviada no es valida'
+      );
+
+      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+      return;
+    }
+    
+    $url = $this->createShareLink("{$Data['path']}/{$Data['name']}")['url'];
+
+
+    $sqlInsert = "INSERT INTO dmsa( dma_card_code, dma_attach, dma_description)
+      VALUES (:dma_card_code, :dma_attach, :dma_description)";
+
+
+    $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+      ':dma_card_code' => $Data['dma_card_code'],
+      ':dma_attach' => $url,
+      ':dma_description' => $Data['dma_description']
+    ));
+
+
+    if (is_numeric($resInsert) && $resInsert > 0) {
+      $respuesta = array(
+        'error'   => false,
+        'data'    => $resInsert,
+        'mensaje' => 'Anexo agregado'
+      );
+    } else {
+
+      $respuesta = array(
+        'error'   => true,
+        'data'     => $resInsert,
+        'mensaje' => 'No se pudo agreagar anexo'
+      );
+    }
       $this->response($respuesta);
     }
+
     private function createShareLink($path){
       $curl = curl_init();
 
@@ -128,14 +141,13 @@ class DropBox extends REST_Controller {
         CURLOPT_SSL_VERIFYPEER => false,
         CURLOPT_CUSTOMREQUEST => 'POST',
         CURLOPT_POSTFIELDS =>'{
-          "path":"'.'{
-            "path":"'.$path.'",
-            "settings":{
-                "audience": "public",
-                "access": "viewer",
-                "requested_visibility": "public",
-                "allow_download": true
-            }
+          "path": "'.$path.'",
+          "settings": {
+            "audience": "public",
+            "access": "viewer",
+            "requested_visibility": "public",
+            "allow_download": true
+          }
         }',
         CURLOPT_HTTPHEADER => array(
           'Authorization: Bearer '.$this->api_key,
@@ -148,23 +160,13 @@ class DropBox extends REST_Controller {
       curl_close($curl);
 
       $response = json_decode($response,true);
-
-			$url = $response[0]['url'];
-			$url = str_replace("dl=0","raw=1",$url);
-			$resp =  ["path_lower"=> $response[0]['path'],'url'=>$url];
+      $resp = [];
+			
       if($http_code == 200){
-        $respuesta = array(
-          'error' => false,
-          'data' => $resp,
-          'mensaje' => 'Operacion exitosa'
-      );
-      }else{
-        $respuesta = array(
-          'error' => true,
-          'data' => json_decode($response,true),
-          'mensaje' => 'Error'
-        );
+        $url = $response['url'];
+			  $url = str_replace("dl=0","raw=1",$url);
+			  $resp =  ["path_lower"=> $response['path_lower'],'url'=>$url];
       }
-      return $respuesta;
+      return $resp;
     }
 }
