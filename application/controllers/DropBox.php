@@ -7,7 +7,7 @@ use Restserver\libraries\REST_Controller;
 class DropBox extends REST_Controller {
 
 	private $pdo;
-  private $api_key = "sl.BUTg1ke8PkLWMGDrz_Y0aSupmHlZIGxrOKxo7Y9cYzqwy8g8xWSs0hbZCHXXqsgg4FREiwMcWX9iiyoqvGj72NuxC3B0pkuBJEEmicK6MUitT6JejCkUFbE2WAxcuf1AKmhuUCZQ";
+  private $api_key = "sl.BUZz2Jt3n9kUzu4dgdQnkj43h7vqORCeX-KsfRS1sPXxfObsXQfIzV0f-sowmQpwyqYsvF8LS20Vn5J84DHKVfkMk387zMnWffICgKBTCNNfANuUXMXst0RbbCYvXGwxqMsgSZoD";
 	public function __construct(){
 
 		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
@@ -81,8 +81,12 @@ class DropBox extends REST_Controller {
 
     public function uploadFile_post(){
     $Data = $this->post();
+
     if (
-      !isset($Data['dma_card_code'])
+      !isset($Data['code']) OR
+      !isset($Data['table']) OR
+      !isset($Data['prefix'])OR
+      !isset($Data['description'])
     ) {
 
       $respuesta = array(
@@ -95,18 +99,21 @@ class DropBox extends REST_Controller {
 
       return;
     }
-    
+
+    $table = $Data['table'];
+    $prefix = $Data['prefix'];
+
     $url = $this->createShareLink("{$Data['path']}/{$Data['name']}")['url'];
 
 
-    $sqlInsert = "INSERT INTO dmsa( dma_card_code, dma_attach, dma_description)
-      VALUES (:dma_card_code, :dma_attach, :dma_description)";
+    $sqlInsert = "INSERT INTO {$table}( code, {$prefix}_attach, {$prefix}_description)
+      VALUES (:code, :attach, :description)";
 
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-      ':dma_card_code' => $Data['dma_card_code'],
-      ':dma_attach' => $url,
-      ':dma_description' => $Data['dma_description']
+      ':code' => $Data['code'],
+      ':attach' => $url,
+      ':description' => $Data['description']
     ));
 
 
