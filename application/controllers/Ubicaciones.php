@@ -169,7 +169,7 @@ class Ubicaciones extends REST_Controller
             return;
         }
 
-        $sqlSelect = "SELECT ubc_type , ubc_code , ubc_alto_cm , ubc_ancho_cm , ubc_largo_cm , ubc_resistencia_kg , ubc_id , CASE  WHEN ubc_status::numeric = 1 THEN 'Activo' WHEN ubc_status::numeric = 0 THEN 'Inactivo' END AS ubc_status, ubc_warehouse, dmws.dws_name AS nombre_almacen, tdub.dub_name AS nombre_tipo FROM tubc LEFT JOIN dmws ON dmws.dws_code = tubc.ubc_warehouse LEFT JOIN tdub ON tdub.dub_code = tubc.ubc_type WHERE ubc_warehouse = :codewarehouse AND ubc_status = 1";
+        $sqlSelect = "SELECT concat(ubc_code, ' - ', tdub.dub_name) AS nombrecode, ubc_type , ubc_code , ubc_alto_cm , ubc_ancho_cm , ubc_largo_cm , ubc_resistencia_kg , ubc_id , CASE  WHEN ubc_status::numeric = 1 THEN 'Activo' WHEN ubc_status::numeric = 0 THEN 'Inactivo' END AS ubc_status, ubc_warehouse, dmws.dws_name AS nombre_almacen, tdub.dub_name AS nombre_tipo FROM tubc LEFT JOIN dmws ON dmws.dws_code = tubc.ubc_warehouse LEFT JOIN tdub ON tdub.dub_code = tubc.ubc_type WHERE ubc_warehouse = :codewarehouse AND ubc_status = 1";
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':codewarehouse' => $Data['dws_code']));
 
         if (isset($resSelect[0])) {

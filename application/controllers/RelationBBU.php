@@ -35,7 +35,8 @@ class RelationBBU extends REST_Controller
             !isset($DataRelation['bbu_business']) or
             !isset($DataRelation['bbu_branch']) or
             !isset($DataRelation['bbu_user']) or
-            !isset($DataRelation['bbu_status']) 
+            !isset($DataRelation['bbu_status']) or
+            !isset($DataRelation['bbu_main']) 
         ) {
 
             $respuesta = array(
@@ -64,8 +65,15 @@ class RelationBBU extends REST_Controller
             $this->response($respuesta);
             return;
         }
+        if ($DataRelation['bbu_main'] == 1) {
+            $sqlUpdate = "UPDATE rbbu SET bbu_main = :bbu_main WHERE bbu_user = :bbu_user";
+            $this->pedeo->updateRow($sqlUpdate, array(
+                ':bbu_main' => 0,
+                ':bbu_user' => $DataRelation['bbu_user']
+            ));
+        }
 
-        $sqlInsert = "INSERT INTO rbbu(bbu_business, bbu_branch, bbu_user, bbu_status) VALUES(:bbu_business, :bbu_branch, :bbu_user, :bbu_status)";
+        $sqlInsert = "INSERT INTO rbbu(bbu_business, bbu_branch, bbu_user, bbu_status, bbu_main) VALUES(:bbu_business, :bbu_branch, :bbu_user, :bbu_status, :bbu_main)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -73,6 +81,7 @@ class RelationBBU extends REST_Controller
             ':bbu_branch' => $DataRelation['bbu_branch'],
             ':bbu_user' => $DataRelation['bbu_user'],
             ':bbu_status' => $DataRelation['bbu_status'],
+            ':bbu_main' => $DataRelation['bbu_main']
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
@@ -113,7 +122,15 @@ class RelationBBU extends REST_Controller
             return;
         }
 
-        $sqlUpdate = "UPDATE rbbu SET bbu_business = :bbu_business, bbu_branch = :bbu_branch, bbu_user = :bbu_user, bbu_status = :bbu_status WHERE bbu_id = :bbu_id";
+        if ($DataRelation['bbu_main'] == 1) {
+            $sqlUpdate = "UPDATE rbbu SET bbu_main = :bbu_main WHERE bbu_user = :bbu_user";
+            $this->pedeo->updateRow($sqlUpdate, array(
+                ':bbu_main' => 0,
+                ':bbu_user' => $DataRelation['bbu_user']
+            ));
+        }
+
+        $sqlUpdate = "UPDATE rbbu SET bbu_business = :bbu_business, bbu_branch = :bbu_branch, bbu_user = :bbu_user, bbu_status = :bbu_status, bbu_main = :bbu_main WHERE bbu_id = :bbu_id";
 
 
         $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -121,6 +138,7 @@ class RelationBBU extends REST_Controller
             ':bbu_branch' => $DataRelation['bbu_branch'],
             ':bbu_user' => $DataRelation['bbu_user'],
             ':bbu_status' => $DataRelation['bbu_status'],
+            ':bbu_main' => $DataRelation['bbu_main'],
             ':bbu_id' => $DataRelation['bbu_id']
         ));
 
@@ -177,4 +195,50 @@ class RelationBBU extends REST_Controller
         $this->response($respuesta);
     }
 
+    // Obtener empresa y sucursal predeterminada por Usuario
+    public function getRelationByUser_get()
+    {
+        $DataRelation = $this->get();
+
+        if (!isset($DataRelation['bbu_user'])) {
+
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'La informacion enviada no es valida'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+        $sqlSelect = "SELECT pgem.pge_small_name AS empresa, pges.pgs_small_name AS sucursal, concat(pgus.pgu_name_user, ' ', pgus.pgu_lname_user) AS usuario, pgem.pge_client_default AS codigoempresa, pgem.pge_name_soc AS nombrelargoempresa, rbbu.* FROM rbbu
+        INNER JOIN pgem
+        ON pgem.pge_id = rbbu.bbu_business
+        INNER JOIN pges
+        ON pges.pgs_id = rbbu.bbu_branch
+        INNER JOIN pgus
+        ON pgus.pgu_id_usuario = rbbu.bbu_user 
+        WHERE rbbu.bbu_user = :usuario AND rbbu.bbu_main = 1";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':usuario' => $DataRelation['bbu_user']));
+
+        if (isset($resSelect[0])) {
+
+            $respuesta = array(
+                'error' => false,
+                'data'  => $resSelect,
+                'mensaje' => ''
+            );
+        } else {
+
+            $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'    => 'busqueda sin resultados'
+            );
+        }
+
+        $this->response($respuesta);
+    }
 }
