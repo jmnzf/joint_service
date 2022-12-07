@@ -31,7 +31,9 @@ class Currency extends REST_Controller {
       if(!isset($DataCurrency['Pgm_NameMoneda']) OR
          !isset($DataCurrency['Pgm_Symbol']) OR
          !isset($DataCurrency['Pgm_Enabled']) OR
-			   !isset($DataCurrency['pgm_principal'])){
+		 !isset($DataCurrency['pgm_principal']) OR
+		 !isset($DataCurrency['pgm_system']) OR 
+		 !isset($DataCurrency['pgm_iscurrency'])){
 
         $respuesta = array(
           'error' => true,
@@ -69,8 +71,8 @@ class Currency extends REST_Controller {
 			}
 
 
-      $sqlInsert = "INSERT INTO pgec(pgm_name_moneda,  pgm_symbol,  pgm_enabled, pgm_principal)
-                    VALUES(:Pgm_NameMoneda, :Pgm_Symbol, :Pgm_Enabled, :pgm_principal)";
+      $sqlInsert = "INSERT INTO pgec(pgm_name_moneda,  pgm_symbol,  pgm_enabled, pgm_principal, pgm_system, pgm_iscurrency)
+                    VALUES(:Pgm_NameMoneda, :Pgm_Symbol, :Pgm_Enabled, :pgm_principal, :pgm_system, :pgm_iscurrency)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -78,7 +80,9 @@ class Currency extends REST_Controller {
             ':Pgm_NameMoneda' => $DataCurrency['Pgm_NameMoneda'],
             ':Pgm_Symbol'     => $DataCurrency['Pgm_Symbol'],
             ':Pgm_Enabled'    => 1,
-						':pgm_principal'  => $DataCurrency['pgm_principal']
+			':pgm_principal'  => $DataCurrency['pgm_principal'],
+			':pgm_system'  => $DataCurrency['pgm_system'],
+			':pgm_iscurrency'  => $DataCurrency['pgm_iscurrency'],
       ));
 
       if(is_numeric($resInsert) && $resInsert > 0){
@@ -112,7 +116,9 @@ class Currency extends REST_Controller {
          !isset($DataCurrency['Pgm_Symbol']) OR
          !isset($DataCurrency['Pgm_Enabled']) OR
          !isset($DataCurrency['Pgm_IdMoneda']) OR
-			   !isset($DataCurrency['pgm_principal'])){
+		 !isset($DataCurrency['pgm_principal']) OR 
+		 !isset($DataCurrency['pgm_system']) OR 
+		 !isset($DataCurrency['pgm_iscurrency'])){
 
         $respuesta = array(
           'error' => true,
@@ -152,7 +158,7 @@ class Currency extends REST_Controller {
 
 			}
 
-      $sqlUpdate = "UPDATE pgec SET pgm_name_moneda = :Pgm_NameMoneda, pgm_symbol = :Pgm_Symbol, pgm_enabled = :Pgm_Enabled, pgm_principal = :pgm_principal WHERE pgm_id_moneda = :Pgm_IdMoneda";
+      $sqlUpdate = "UPDATE pgec SET pgm_name_moneda = :Pgm_NameMoneda, pgm_symbol = :Pgm_Symbol, pgm_enabled = :Pgm_Enabled, pgm_principal = :pgm_principal, pgm_system = :pgm_system, pgm_iscurrency = :pgm_iscurrency WHERE pgm_id_moneda = :Pgm_IdMoneda";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -161,7 +167,9 @@ class Currency extends REST_Controller {
             ':Pgm_Symbol'     => $DataCurrency['Pgm_Symbol'],
             ':Pgm_Enabled'    => $DataCurrency['Pgm_Enabled'],
             ':Pgm_IdMoneda'   => $DataCurrency['Pgm_IdMoneda'],
-						':pgm_principal'  => $DataCurrency['pgm_principal']
+			':pgm_principal'  => $DataCurrency['pgm_principal'],
+			':pgm_system'  => $DataCurrency['pgm_system'],
+			':pgm_iscurrency'  => $DataCurrency['pgm_iscurrency'],
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
