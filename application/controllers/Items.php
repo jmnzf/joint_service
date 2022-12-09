@@ -580,7 +580,51 @@ class Items extends REST_Controller
 
 		$this->response($respuesta);
 	}
+	//Obtener articulo id del articulo
+	public function getTotalWarehouseByItem_get()
+	{
 
+		$Data = $this->get();
+
+		if (!isset($Data['item_code'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT sum(ei1_quantity) as total, ei1_whscode, dmws.dws_name, ei1_uom
+					from iei1
+					left join dmws on dmws.dws_code = iei1.ei1_whscode
+					where ei1_itemcode = :item_code
+					group by ei1_whscode, dmws.dws_name, ei1_uom";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':item_code' => $Data['item_code']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 
 	//Inactivar o Activar Articulo
 	public function updateItemsStatus_post()
@@ -631,9 +675,7 @@ class Items extends REST_Controller
 		$this->response($respuesta);
 	}
 
-	/**
-	 * FUNCTION PARA CONTRUIR EL CONDICIONAL DEL FILTRO DEL DATATABLE.
-	 */
+	/** * FUNCTION PARA CONTRUIR EL CONDICIONAL DEL FILTRO DEL DATATABLE. */
 	public function get_Filter($columns, $value)
 	{
 		//
