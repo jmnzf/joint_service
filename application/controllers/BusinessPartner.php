@@ -79,11 +79,11 @@ class BusinessPartner extends REST_Controller
     $sqlInsert = "INSERT INTO dmsn(dms_card_code, dms_card_name, dms_card_type, dms_short_name, dms_phone1, dms_phone2,
                     dms_cel, dms_email, dms_inv_mail, dms_group_num, dms_web_site, dms_sip_code, dms_agent, dms_pay_type,
                     dms_limit_cred, dms_inter, dms_price_list, dms_acct_sn, dms_acct_asn, dms_card_last_name, dms_enabled,
-										dms_rtype,dms_classtype,dms_tax_regime, dms_reg_merc)
+										dms_rtype,dms_classtype,dms_tax_regime, dms_reg_merc, dms_id_type)
 	                  VALUES (:dms_card_code, :dms_card_name, :dms_card_type, :dms_short_name, :dms_phone1, :dms_phone2,
                     :dms_cel, :dms_email, :dms_inv_mail, :dms_group_num, :dms_web_site, :dms_sip_code, :dms_agent, :dms_pay_type,
                     :dms_limit_cred, :dms_inter, :dms_price_list, :dms_acct_sn, :dms_acct_asn, :dms_card_last_name, :dms_enabled,
-										:dms_rtype,:dms_classtype,:dms_tax_regime, :dms_reg_merc)";
+										:dms_rtype,:dms_classtype,:dms_tax_regime, :dms_reg_merc, :dms_id_type)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -111,7 +111,8 @@ class BusinessPartner extends REST_Controller
       ':dms_rtype' => isset($Data['dms_rtype']) ? $Data['dms_rtype'] : NULL,
       ':dms_classtype' => isset($Data['dms_classtype']) ? $Data['dms_classtype'] : NULL,
       ':dms_reg_merc' => isset($Data['dms_reg_merc']) ? $Data['dms_reg_merc'] : NULL,
-      ':dms_tax_regime' => isset($Data['dms_tax_regime']) ? $Data['dms_tax_regime'] : NULL
+      ':dms_tax_regime' => isset($Data['dms_tax_regime']) ? $Data['dms_tax_regime'] : NULL,
+      ':dms_id_type' => is_numeric($Data['dms_id_type']) ? $Data['dms_id_type'] : 0
 
 
 
@@ -254,7 +255,8 @@ class BusinessPartner extends REST_Controller
                     dms_email = :dms_email, dms_inv_mail = :dms_inv_mail, dms_group_num = :dms_group_num, dms_web_site = :dms_web_site,
                     dms_sip_code = :dms_sip_code, dms_agent = :dms_agent, dms_pay_type = :dms_pay_type, dms_limit_cred = :dms_limit_cred,
                     dms_inter = :dms_inter, dms_price_list = :dms_price_list, dms_acct_sn = :dms_acct_sn, dms_acct_asn = :dms_acct_asn , dms_card_last_name = :dms_card_last_name,
-									  dms_rtype = :dms_rtype, dms_classtype = :dms_classtype, dms_tax_regime = :dms_tax_regime, dms_reg_merc =:dms_reg_merc   WHERE dms_id = :dms_id";
+									  dms_rtype = :dms_rtype, dms_classtype = :dms_classtype, dms_tax_regime = :dms_tax_regime, dms_reg_merc =:dms_reg_merc,
+                    dms_id_type = :dms_id_type   WHERE dms_id = :dms_id";
 
     $this->pedeo->trans_begin();
 
@@ -283,7 +285,8 @@ class BusinessPartner extends REST_Controller
       ':dms_rtype' => isset($Data['dms_rtype']) ? $Data['dms_rtype'] : NULL,
       ':dms_classtype' => isset($Data['dms_classtype']) ? $Data['dms_classtype'] : NULL,
       ':dms_reg_merc' => isset($Data['dms_reg_merc']) ? $Data['dms_reg_merc'] : NULL,
-      ':dms_tax_regime' => isset($Data['dms_tax_regime']) ? $Data['dms_tax_regime'] : NULL
+      ':dms_tax_regime' => isset($Data['dms_tax_regime']) ? $Data['dms_tax_regime'] : NULL,
+      ':dms_id_type' => is_numeric($Data['dms_id_type']) ? $Data['dms_id_type'] : 0
     ));
 
     if (is_numeric($resUpdate) && $resUpdate == 1) {
