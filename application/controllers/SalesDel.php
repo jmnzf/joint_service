@@ -23,6 +23,7 @@ class SalesDel extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('account');
 	}
 
 	//CREAR NUEVA Entrega de Ventas
@@ -30,6 +31,7 @@ class SalesDel extends REST_Controller
 	{
 
 		$DECI_MALES =  $this->generic->getDecimals();
+
 		$Data = $this->post();
 		$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 		$DetalleAsientoIva = new stdClass();
@@ -300,10 +302,10 @@ class SalesDel extends REST_Controller
 			if (isset($resDocModelo[0])) {
 
 				$sqlModUser = "SELECT aus_id FROM taus
-																	 INNER JOIN pgus
-																	 ON aus_id_usuario = pgu_id_usuario
-																	 WHERE aus_id_model = :aus_id_model
-																	 AND pgu_code_user = :pgu_code_user";
+								INNER JOIN pgus
+								ON aus_id_usuario = pgu_id_usuario
+								WHERE aus_id_model = :aus_id_model
+								AND pgu_code_user = :pgu_code_user";
 
 				$resModUser = $this->pedeo->queryTable($sqlModUser, array(':aus_id_model' => $resDocModelo[0]['mau_docentry'], ':pgu_code_user' => $Data['vem_createby']));
 
@@ -389,10 +391,10 @@ class SalesDel extends REST_Controller
 		$sqlInsert = "INSERT INTO dvem(vem_series, vem_docnum, vem_docdate, vem_duedate, vem_duedev, vem_pricelist, vem_cardcode,
                       vem_cardname, vem_currency, vem_contacid, vem_slpcode, vem_empid, vem_comment, vem_doctotal, vem_baseamnt, vem_taxtotal,
                       vem_discprofit, vem_discount, vem_createat, vem_baseentry, vem_basetype, vem_doctype, vem_idadd, vem_adress, vem_paytype,
-                      vem_attch,vem_createby,vem_transport,vem_sup_transport,vem_ci,vem_t_vehiculo,vem_guia,vem_opl,vem_placa,vem_precinto,vem_placav,vem_modelv,vem_driverv,vem_driverid)
+                      vem_createby,vem_transport,vem_sup_transport,vem_ci,vem_t_vehiculo,vem_guia,vem_opl,vem_placa,vem_precinto,vem_placav,vem_modelv,vem_driverv,vem_driverid)
 					  VALUES(:vem_series, :vem_docnum, :vem_docdate, :vem_duedate, :vem_duedev, :vem_pricelist, :vem_cardcode, :vem_cardname,
                       :vem_currency, :vem_contacid, :vem_slpcode, :vem_empid, :vem_comment, :vem_doctotal, :vem_baseamnt, :vem_taxtotal, :vem_discprofit, :vem_discount,
-                      :vem_createat, :vem_baseentry, :vem_basetype, :vem_doctype, :vem_idadd, :vem_adress, :vem_paytype, :vem_attch,:vem_createby,
+                      :vem_createat, :vem_baseentry, :vem_basetype, :vem_doctype, :vem_idadd, :vem_adress, :vem_paytype,:vem_createby,
 					  :vem_transport,:vem_sup_transport,:vem_ci,:vem_t_vehiculo,:vem_guia,:vem_opl,:vem_placa,:vem_precinto,:vem_placav,:vem_modelv,:vem_driverv,:vem_driverid)";
 
 
@@ -442,7 +444,6 @@ class SalesDel extends REST_Controller
 			':vem_guia' => isset($Data['vem_guia']) ? $Data['vem_guia'] : NULL,
 			':vem_opl' => isset($Data['vem_opl']) ? $Data['vem_opl'] : NULL,
 			':vem_placa' => isset($Data['vem_placa']) ? $Data['vem_placa'] : NULL,
-			':vem_attch' => $this->getUrl(count(trim(($Data['vem_attch']))) > 0 ? $Data['vem_attch'] : NULL, $resMainFolder[0]['main_folder']),
 
 			':vem_precinto' => isset($Data['vem_precinto']) ? $Data['vem_precinto'] : NULL,
 			':vem_placav' => isset($Data['vem_placav']) ? $Data['vem_placav'] : NULL,
@@ -872,7 +873,7 @@ class SalesDel extends REST_Controller
 
 						//Se aplica el movimiento de inventario
 						$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
-																						 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
+											VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
 
 						$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -932,9 +933,9 @@ class SalesDel extends REST_Controller
 					//Se Aplica el movimiento en stock ***************
 					// Buscando item en el stock
 					$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-																						FROM tbdi
-																						WHERE bdi_itemcode = :bdi_itemcode
-																						AND bdi_whscode = :bdi_whscode";
+										FROM tbdi
+										WHERE bdi_itemcode = :bdi_itemcode
+										AND bdi_whscode = :bdi_whscode";
 
 					$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
@@ -953,8 +954,8 @@ class SalesDel extends REST_Controller
 							$CantidadTotal = ($CantidadActual - $CantidadNueva);
 
 							$sqlUpdateCostoCantidad =  "UPDATE tbdi
-																												 SET bdi_quantity = :bdi_quantity
-																												 WHERE  bdi_id = :bdi_id";
+														SET bdi_quantity = :bdi_quantity
+														WHERE  bdi_id = :bdi_id";
 
 							$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
@@ -1206,11 +1207,9 @@ class SalesDel extends REST_Controller
 				$cuentaInventario = "";
 				foreach ($posicion as $key => $value) {
 
-					$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+					$CUENTASINV = $this->account->getAccountItem($value->em1_itemcode, $value->em1_whscode);
 
-					$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':dma_item_code' => $value->em1_itemcode));
-
-					if (isset($resArticulo[0])) {
+					if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
 						$dbito = 0;
 						$cdito = 0;
 
@@ -1223,7 +1222,7 @@ class SalesDel extends REST_Controller
 
 						if (isset($resCosto[0])) {
 
-							$cuentaInventario = $resArticulo[0]['mga_acct_inv'];
+							$cuentaInventario = $CUENTASINV['data']['acct_inv'];
 
 
 							$costoArticulo = $resCosto[0]['bdi_avgprice'];
@@ -1235,7 +1234,7 @@ class SalesDel extends REST_Controller
 
 							$respuesta = array(
 								'error'   => true,
-								'data'	  => $resArticulo,
+								'data'	  => $resCosto,
 								'mensaje'	=> 'No se encontro el costo para el item: ' . $value->em1_itemcode
 							);
 
@@ -1250,7 +1249,7 @@ class SalesDel extends REST_Controller
 
 						$respuesta = array(
 							'error'   => true,
-							'data'	  => $resArticulo,
+							'data'	  => $CUENTASINV['mensaje'],
 							'mensaje'	=> 'No se encontro la cuenta de inventario y costo para el item ' . $value->em1_itemcode
 						);
 
@@ -1609,11 +1608,11 @@ class SalesDel extends REST_Controller
 
 
 				$sqlEstado1 = "SELECT
-																			count(t1.ov1_itemcode) item,
-																			sum(t1.ov1_quantity) cantidad
-																			from dvov t0
-																			inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-																			where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
+							count(t1.ov1_itemcode) item,
+							sum(t1.ov1_quantity) cantidad
+							from dvov t0
+							inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+							where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
 
 
 				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
@@ -1623,13 +1622,13 @@ class SalesDel extends REST_Controller
 
 
 				$sqlEstado2 = "SELECT
-																				coalesce(count(distinct t3.em1_itemcode),0) item,
-																				coalesce(sum(t3.em1_quantity),0) cantidad
-																				from dvov t0
-																				left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-																				left join dvem t2 on t0.vov_docentry = t2.vem_baseentry
-																				left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
-																			  where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
+							coalesce(count(distinct t3.em1_itemcode),0) item,
+							coalesce(sum(t3.em1_quantity),0) cantidad
+							from dvov t0
+							left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+							left join dvem t2 on t0.vov_docentry = t2.vem_baseentry
+							left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
+							where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
 				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
 					':vov_docentry' => $Data['vem_baseentry'],
 					':vov_doctype' => $Data['vem_basetype']
@@ -1649,7 +1648,7 @@ class SalesDel extends REST_Controller
 				if ($item_ord == $item_del  &&  $cantidad_ord == $cantidad_del) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
@@ -1806,7 +1805,7 @@ class SalesDel extends REST_Controller
 										vem_empid=:vem_empid, vem_comment=:vem_comment, vem_doctotal=:vem_doctotal, vem_baseamnt=:vem_baseamnt,
 										vem_taxtotal=:vem_taxtotal, vem_discprofit=:vem_discprofit, vem_discount=:vem_discount, vem_createat=:vem_createat,
 										vem_baseentry=:vem_baseentry, vem_basetype=:vem_basetype, vem_doctype=:vem_doctype, vem_idadd=:vem_idadd,
-										vem_adress=:vem_adress, vem_paytype=:vem_paytype, vem_attch=:vem_attch WHERE vem_docentry=:vem_docentry";
+										vem_adress=:vem_adress, vem_paytype=:vem_paytype WHERE vem_docentry=:vem_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -1835,7 +1834,6 @@ class SalesDel extends REST_Controller
 			':vem_idadd' => isset($Data['vem_idadd']) ? $Data['vem_idadd'] : NULL,
 			':vem_adress' => isset($Data['vem_adress']) ? $Data['vem_adress'] : NULL,
 			':vem_paytype' => is_numeric($Data['vem_paytype']) ? $Data['vem_paytype'] : 0,
-			':vem_attch' => $this->getUrl(count(trim(($Data['vem_attch']))) > 0 ? $Data['vem_attch'] : NULL, $resMainFolder[0]['main_folder']),
 			':vem_docentry' => $Data['vem_docentry']
 		));
 
@@ -1886,7 +1884,7 @@ class SalesDel extends REST_Controller
 
 					$respuesta = array(
 						'error'   => true,
-						'data' => $resInsert,
+						'data' => $resInsertDetail,
 						'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
 					);
 
@@ -2215,9 +2213,9 @@ class SalesDel extends REST_Controller
 		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
 									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
 									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
-									pap_attch,pap_createby,pap_origen)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									pap_createby,pap_origen)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
 									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
-									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen)";
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype,:pap_createby,:pap_origen)";
 
 		// Se Inicia la transaccion,
 		// Todas las consultas de modificacion siguientes
@@ -2254,7 +2252,6 @@ class SalesDel extends REST_Controller
 			':pap_adress' => isset($Encabezado[$prefijoe . '_adress']) ? $Encabezado[$prefijoe . '_adress'] : NULL,
 			':pap_paytype' => is_numeric($Encabezado[$prefijoe . '_paytype']) ? $Encabezado[$prefijoe . '_paytype'] : 0,
 			':pap_createby' => isset($Encabezado[$prefijoe . '_createby']) ? $Encabezado[$prefijoe . '_createby'] : NULL,
-			':pap_attch' => $this->getUrl(count(trim(($Encabezado[$prefijoe . '_attch']))) > 0 ? $Encabezado[$prefijoe . '_attch'] : NULL, $Carpeta),
 			':pap_origen' => is_numeric($Encabezado[$prefijoe . '_doctype']) ? $Encabezado[$prefijoe . '_doctype'] : 0,
 
 		));

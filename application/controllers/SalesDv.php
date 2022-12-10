@@ -20,7 +20,7 @@ class SalesDv extends REST_Controller {
       $this->pdo = $this->load->database('pdo', true)->conn_id;
       $this->load->library('pedeo', [$this->pdo]);
       $this->load->library('generic');
-
+      $this->load->library('account');
     }
 
   //CREAR NUEVA Devolución de clientes
@@ -275,9 +275,9 @@ class SalesDv extends REST_Controller {
       $sqlInsert = "INSERT INTO dvdv(vdv_series, vdv_docnum, vdv_docdate, vdv_duedate, vdv_duedev, vdv_pricelist, vdv_cardcode,
           vdv_cardname, vdv_currency, vdv_contacid, vdv_slpcode, vdv_empid, vdv_comment, vdv_doctotal, vdv_baseamnt, vdv_taxtotal,
           vdv_discprofit, vdv_discount, vdv_createat, vdv_baseentry, vdv_basetype, vdv_doctype, vdv_idadd, vdv_adress, vdv_paytype,
-          vdv_attch,vdv_createby)VALUES(:vdv_series, :vdv_docnum, :vdv_docdate, :vdv_duedate, :vdv_duedev, :vdv_pricelist, :vdv_cardcode, :vdv_cardname,
+          vdv_createby)VALUES(:vdv_series, :vdv_docnum, :vdv_docdate, :vdv_duedate, :vdv_duedev, :vdv_pricelist, :vdv_cardcode, :vdv_cardname,
           :vdv_currency, :vdv_contacid, :vdv_slpcode, :vdv_empid, :vdv_comment, :vdv_doctotal, :vdv_baseamnt, :vdv_taxtotal, :vdv_discprofit, :vdv_discount,
-          :vdv_createat, :vdv_baseentry, :vdv_basetype, :vdv_doctype, :vdv_idadd, :vdv_adress, :vdv_paytype, :vdv_attch,:vdv_createby)";
+          :vdv_createat, :vdv_baseentry, :vdv_basetype, :vdv_doctype, :vdv_idadd, :vdv_adress, :vdv_paytype,:vdv_createby)";
 
 
       // Se Inicia la transaccion,
@@ -314,8 +314,7 @@ class SalesDv extends REST_Controller {
         ':vdv_idadd' => isset($Data['vdv_idadd'])?$Data['vdv_idadd']:NULL,
         ':vdv_adress' => isset($Data['vdv_adress'])?$Data['vdv_adress']:NULL,
         ':vdv_paytype' => is_numeric($Data['vdv_paytype'])?$Data['vdv_paytype']:0,
-        ':vdv_createby' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL,
-        ':vdv_attch' => $this->getUrl(count(trim(($Data['vdv_attch']))) > 0 ? $Data['vdv_attch']:NULL, $resMainFolder[0]['main_folder'])
+        ':vdv_createby' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL
       ));
 
       if(is_numeric($resInsert) && $resInsert > 0){
@@ -480,9 +479,9 @@ class SalesDv extends REST_Controller {
         }else{
 
           $sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-                                                                                                                                          bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-                                                                                                                                          VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-                                                                                                                                          :bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+                          bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+                          VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+                          :bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
 
           $resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -506,9 +505,9 @@ class SalesDv extends REST_Controller {
               $this->pedeo->trans_rollback();
 
               $respuesta = array(
-                              'error'   => true,
-                              'data'    => $resInsertEstado,
-                              'mensaje' => 'No se pudo registrar el movimiento del documento'
+                  'error'   => true,
+                  'data'    => $resInsertEstado,
+                  'mensaje' => 'No se pudo registrar el movimiento del documento'
               );
 
 
@@ -754,7 +753,7 @@ class SalesDv extends REST_Controller {
 
               //Se aplica el movimiento de inventario
               $sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
-                                                                                                                                                  VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
+                                    VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
 
               $sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -767,7 +766,7 @@ class SalesDv extends REST_Controller {
               ':bmy_baseentry' => $resInsert,
               ':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
               ':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
-              ':bmi_basenum'                                                => $DocNumVerificado,
+              ':bmi_basenum' => $DocNumVerificado,
               ':bmi_docdate' => $this->validateDate($Data['vdv_docdate'])?$Data['vdv_docdate']:NULL,
               ':bmi_duedate' => $this->validateDate($Data['vdv_duedate'])?$Data['vdv_duedate']:NULL,
               ':bmi_duedev'  => $this->validateDate($Data['vdv_duedev'])?$Data['vdv_duedev']:NULL,
@@ -870,7 +869,7 @@ class SalesDv extends REST_Controller {
 
                 $respuesta = array(
                     'error'   => true,
-                    'data'    => $resInsertCostoCantidad,
+                    'data'    => $resCostoCantidad,
                     'mensaje' => 'El item no existe en el stock '.$detail['dv1_itemcode']
                 );
 
@@ -1202,21 +1201,20 @@ class SalesDv extends REST_Controller {
                         $codigoProyecto = '';
                         foreach ($posicion as $key => $value) {
 
-                          $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-                          $resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->dv1_itemcode));
+                          $CUENTASINV = $this->account->getAccountItem($value->dv1_itemcode, $value->dv1_whscode);
 
                           $centroCosto = $value->dv1_prc_code;
                           $unidadNegocio = $value->dv1_uncode;
                           $codigoProyecto = $value->dv1_prj_code;
 
-                          if(isset($resArticulo[0])){
+                          if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
 
                               $dbito = 0;
                               $cdito = 0;
                               $MontoSysDB = 0;
                               $MontoSysCR = 0;
 
-                              $cuentaInventario = $resArticulo[0]['mga_acct_inv'];
+                              $cuentaInventario = $CUENTASINV['data']['acct_inv'];
 
                               // BUSCANDO COSTO CON EL QUE SE REALIZO LA ENTREGA
                               $sqlcostoentrega = "SELECT bmi_cost,bmy_baseentry,bmy_doctype
@@ -1261,7 +1259,7 @@ class SalesDv extends REST_Controller {
 
                                 $respuesta = array(
                                     'error'   => true,
-                                    'data'    => $resArticulo,
+                                    'data'    => $CUENTASINV,
                                     'mensaje' => 'No se encontro la cuenta de inventario'
                                 );
 
@@ -1620,7 +1618,7 @@ class SalesDv extends REST_Controller {
                     vdv_empid=:vdv_empid, vdv_comment=:vdv_comment, vdv_doctotal=:vdv_doctotal, vdv_baseamnt=:vdv_baseamnt,
                     vdv_taxtotal=:vdv_taxtotal, vdv_discprofit=:vdv_discprofit, vdv_discount=:vdv_discount, vdv_createat=:vdv_createat,
                     vdv_baseentry=:vdv_baseentry, vdv_basetype=:vdv_basetype, vdv_doctype=:vdv_doctype, vdv_idadd=:vdv_idadd,
-                    vdv_adress=:vdv_adress, vdv_paytype=:vdv_paytype, vdv_attch=:vdv_attch WHERE vdv_docentry=:vdv_docentry";
+                    vdv_adress=:vdv_adress, vdv_paytype=:vdv_paytype WHERE vdv_docentry=:vdv_docentry";
 
       $this->pedeo->trans_begin();
 
@@ -1649,7 +1647,6 @@ class SalesDv extends REST_Controller {
         ':vdv_idadd' => isset($Data['vdv_idadd'])?$Data['vdv_idadd']:NULL,
         ':vdv_adress' => isset($Data['vdv_adress'])?$Data['vdv_adress']:NULL,
         ':vdv_paytype' => is_numeric($Data['vdv_paytype'])?$Data['vdv_paytype']:0,
-        ':vdv_attch' => $this->getUrl(count(trim(($Data['vdv_attch']))) > 0 ? $Data['vdv_attch']:NULL, $resMainFolder[0]['main_folder']),
         ':vdv_docentry' => $Data['vdv_docentry']
       ));
 
@@ -1693,19 +1690,19 @@ class SalesDv extends REST_Controller {
                                         // Se verifica que el detalle no de error insertando //
         }else{
 
-                                        // si falla algun insert del detalle de la Devolución de clientes se devuelven los cambios realizados por la transaccion,
-                                        // se retorna el error y se detiene la ejecucion del codigo restante.
-                                                        $this->pedeo->trans_rollback();
+        // si falla algun insert del detalle de la Devolución de clientes se devuelven los cambios realizados por la transaccion,
+        // se retorna el error y se detiene la ejecucion del codigo restante.
+          $this->pedeo->trans_rollback();
 
-                                                        $respuesta = array(
-                                                                        'error'   => true,
-                                                                        'data' => $resInsert,
-                                                                        'mensaje'                => 'No se pudo registrar la Devolución de clientes 11'
-                                                        );
+          $respuesta = array(
+            'error'   => true,
+            'data'    => $resInsertDetail,
+            'mensaje' => 'No se pudo registrar la Devolución de clientes 11'
+          );
 
-                                                        $this->response($respuesta);
+          $this->response($respuesta);
 
-                                                        return;
+          return;
         }
       }
 

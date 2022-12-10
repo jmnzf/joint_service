@@ -23,6 +23,7 @@ class PurchaseEc extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('account');
 	}
 
 	//CREAR ENTRADA COMPRAS
@@ -280,9 +281,9 @@ class PurchaseEc extends REST_Controller
 		$sqlInsert = "INSERT INTO dcec(cec_series, cec_docnum, cec_docdate, cec_duedate, cec_duedev, cec_pricelist, cec_cardcode,
                       cec_cardname, cec_currency, cec_contacid, cec_slpcode, cec_empid, cec_comment, cec_doctotal, cec_baseamnt, cec_taxtotal,
                       cec_discprofit, cec_discount, cec_createat, cec_baseentry, cec_basetype, cec_doctype, cec_idadd, cec_adress, cec_paytype,
-                      cec_attch,cec_createby,cec_correl,cec_api)VALUES(:cec_series, :cec_docnum, :cec_docdate, :cec_duedate, :cec_duedev, :cec_pricelist, :cec_cardcode, :cec_cardname,
+                      cec_createby,cec_correl,cec_api)VALUES(:cec_series, :cec_docnum, :cec_docdate, :cec_duedate, :cec_duedev, :cec_pricelist, :cec_cardcode, :cec_cardname,
                       :cec_currency, :cec_contacid, :cec_slpcode, :cec_empid, :cec_comment, :cec_doctotal, :cec_baseamnt, :cec_taxtotal, :cec_discprofit, :cec_discount,
-                      :cec_createat, :cec_baseentry, :cec_basetype, :cec_doctype, :cec_idadd, :cec_adress, :cec_paytype, :cec_attch,:cec_createby,:cec_correl,:cec_api)";
+                      :cec_createat, :cec_baseentry, :cec_basetype, :cec_doctype, :cec_idadd, :cec_adress, :cec_paytype,:cec_createby,:cec_correl,:cec_api)";
 
 
 		// Se Inicia la transaccion,
@@ -320,7 +321,6 @@ class PurchaseEc extends REST_Controller
 			':cec_adress' => isset($Data['cec_adress']) ? $Data['cec_adress'] : NULL,
 			':cec_paytype' => is_numeric($Data['cec_paytype']) ? $Data['cec_paytype'] : 0,
 			':cec_createby' => isset($Data['cec_createby']) ? $Data['cec_createby'] : NULL,
-			':cec_attch' => $this->getUrl(count(trim(($Data['cec_attch']))) > 0 ? $Data['cec_attch'] : NULL, $resMainFolder[0]['main_folder']),
 			':cec_correl' => isset($Data['cec_correl']) ? $Data['cec_correl'] : NULL,
 			':cec_api' => isset($Data['cec_api']) ? $Data['cec_api'] : 0
 
@@ -762,7 +762,7 @@ class PurchaseEc extends REST_Controller
 							$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 								':bmi_itemcode'  => isset($detail['ec1_itemcode']) ? $detail['ec1_itemcode'] : NULL,
-								':bmi_quantity'  => ( $this->generic->getCantInv( $detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE ) * $Data['invtype'] ),
+								':bmi_quantity'  => ($this->generic->getCantInv($detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * $Data['invtype']),
 								':bmi_whscode'   => isset($detail['ec1_whscode']) ? $detail['ec1_whscode'] : NULL,
 								':bmi_createat'  => $this->validateDate($Data['cec_createat']) ? $Data['cec_createat'] : NULL,
 								':bmi_createby'  => isset($Data['cec_createby']) ? $Data['cec_createby'] : NULL,
@@ -784,7 +784,7 @@ class PurchaseEc extends REST_Controller
 							$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 								':bmi_itemcode'  => isset($detail['ec1_itemcode']) ? $detail['ec1_itemcode'] : NULL,
-								':bmi_quantity'  => ( $this->generic->getCantInv( $detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE ) * $Data['invtype'] ),
+								':bmi_quantity'  => ($this->generic->getCantInv($detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * $Data['invtype']),
 								':bmi_whscode'   => isset($detail['ec1_whscode']) ? $detail['ec1_whscode'] : NULL,
 								':bmi_createat'  => $this->validateDate($Data['cec_createat']) ? $Data['cec_createat'] : NULL,
 								':bmi_createby'  => isset($Data['cec_createby']) ? $Data['cec_createby'] : NULL,
@@ -833,7 +833,7 @@ class PurchaseEc extends REST_Controller
 							$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 								':bmi_itemcode' => isset($detail['ec1_itemcode']) ? $detail['ec1_itemcode'] : NULL,
-								':bmi_quantity' => ( $this->generic->getCantInv( $detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE ) * $Data['invtype'] ),
+								':bmi_quantity' => ($this->generic->getCantInv($detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * $Data['invtype']),
 								':bmi_whscode'  => isset($detail['ec1_whscode']) ? $detail['ec1_whscode'] : NULL,
 								':bmi_createat' => $this->validateDate($Data['cec_createat']) ? $Data['cec_createat'] : NULL,
 								':bmi_createby' => isset($Data['cec_createby']) ? $Data['cec_createby'] : NULL,
@@ -856,7 +856,7 @@ class PurchaseEc extends REST_Controller
 							$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 								':bmi_itemcode' => isset($detail['ec1_itemcode']) ? $detail['ec1_itemcode'] : NULL,
-								':bmi_quantity' => ( $this->generic->getCantInv( $detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE ) * $Data['invtype'] ),
+								':bmi_quantity' => ($this->generic->getCantInv($detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * $Data['invtype']),
 								':bmi_whscode'  => isset($detail['ec1_whscode']) ? $detail['ec1_whscode'] : NULL,
 								':bmi_createat' => $this->validateDate($Data['cec_createat']) ? $Data['cec_createat'] : NULL,
 								':bmi_createby' => isset($Data['cec_createby']) ? $Data['cec_createby'] : NULL,
@@ -1406,27 +1406,6 @@ class PurchaseEc extends REST_Controller
 				if ($ManejaInvetario  == 1) {
 					$DetalleCostoInventario = new stdClass();
 					$DetalleCostoCosto = new stdClass();
-
-
-					// se busca la cuenta contable del costoInventario y costoCosto
-					// $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-					//
-					// $resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $detail['ec1_itemcode']));
-					//
-					// if(!isset($resArticulo[0])){
-					//
-					// 			$this->pedeo->trans_rollback();
-					//
-					// 			$respuesta = array(
-					// 				'error'   => true,
-					// 				'data' => $resArticulo,
-					// 				'mensaje'	=> 'No se pudo registrar la entrada de compras 2'
-					// 			);
-					//
-					// 			 $this->response($respuesta);
-					//
-					// 			 return;
-					// }
 
 
 					$DetalleCostoInventario->ac1_account = is_numeric($detail['ec1_acctcode']) ? $detail['ec1_acctcode'] : 0;
@@ -2089,7 +2068,7 @@ class PurchaseEc extends REST_Controller
 										cec_empid=:cec_empid, cec_comment=:cec_comment, cec_doctotal=:cec_doctotal, cec_baseamnt=:cec_baseamnt,
 										cec_taxtotal=:cec_taxtotal, cec_discprofit=:cec_discprofit, cec_discount=:cec_discount, cec_createat=:cec_createat,
 										cec_baseentry=:cec_baseentry, cec_basetype=:cec_basetype, cec_doctype=:cec_doctype, cec_idadd=:cec_idadd,
-										cec_adress=:cec_adress, cec_paytype=:cec_paytype, cec_attch=:cec_attch WHERE cec_docentry=:cec_docentry";
+										cec_adress=:cec_adress, cec_paytype=:cec_paytype WHERE cec_docentry=:cec_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -2117,7 +2096,6 @@ class PurchaseEc extends REST_Controller
 			':cec_idadd' => isset($Data['cec_idadd']) ? $Data['cec_idadd'] : NULL,
 			':cec_adress' => isset($Data['cec_adress']) ? $Data['cec_adress'] : NULL,
 			':cec_paytype' => is_numeric($Data['cec_paytype']) ? $Data['cec_paytype'] : 0,
-			':cec_attch' => $this->getUrl(count(trim(($Data['cec_attch']))) > 0 ? $Data['cec_attch'] : NULL, $resMainFolder[0]['main_folder']),
 			':cec_docentry' => $Data['cec_docentry']
 		));
 
@@ -2364,25 +2342,23 @@ class PurchaseEc extends REST_Controller
 		$seriales = "SELECT msn_line, msn_itemcode, string_agg(msn_sn, ',') AS serials FROM tmsn  WHERE msn_baseentry = :msn_baseentry AND msn_basetype = :msn_basetype GROUP BY  msn_itemcode,msn_line";
 
 
-		$resseriales = $this->pedeo->queryTable($seriales, array( ":msn_baseentry" => $Data['ec1_docentry'], ":msn_basetype" => 13 ));
+		$resseriales = $this->pedeo->queryTable($seriales, array(":msn_baseentry" => $Data['ec1_docentry'], ":msn_basetype" => 13));
 
 
-		if ( isset( $resseriales[0] ) && isset( $resSelect[0] ) ) {
-
-			$respuesta = array(
-				'error' => false,
-				'data'  => array("detalle"=> $resSelect, "complemento" =>$resseriales),
-				'mensaje' => ''
-			);
-
-		}else if ( isset($resSelect[0]) ) {
+		if (isset($resseriales[0]) && isset($resSelect[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => array("detalle"=> $resSelect),
+				'data'  => array("detalle" => $resSelect, "complemento" => $resseriales),
 				'mensaje' => ''
 			);
+		} else if (isset($resSelect[0])) {
 
+			$respuesta = array(
+				'error' => false,
+				'data'  => array("detalle" => $resSelect),
+				'mensaje' => ''
+			);
 		} else {
 
 			$respuesta = array(
@@ -2392,7 +2368,7 @@ class PurchaseEc extends REST_Controller
 			);
 		}
 
-	
+
 
 		$this->response($respuesta);
 	}

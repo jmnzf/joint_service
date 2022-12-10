@@ -23,6 +23,7 @@ class InventoryEntry extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('account');
 	}
 
 	//CREAR NUEVA ENTRADA
@@ -1423,15 +1424,11 @@ class InventoryEntry extends REST_Controller
 					$unidad = $value->ei1_ubusiness;
 					$proyecto = $value->ei1_project;
 
+					$CUENTASINV = $this->account->getAccountItem($value->ei1_itemcode, $value->ei1_whscode);
 
+					if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
 
-					$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-
-					$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->ei1_itemcode));
-
-					if (isset($resArticulo[0])) {
-
-						$cuenta = $resArticulo[0]['mga_acct_inv'];
+						$cuenta = $CUENTASINV['data']['acct_inv'];
 					} else {
 						// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 						// se retorna el error y se detiene la ejecucion del codigo restante.
@@ -1439,7 +1436,7 @@ class InventoryEntry extends REST_Controller
 
 						$respuesta = array(
 							'error'   => true,
-							'data'	  => $resArticulo,
+							'data'	  => $CUENTASINV,
 							'mensaje'	=> 'No se encontro la cuenta del grupo de articulo para el item ' . $value->ei1_itemcode
 						);
 
@@ -1610,19 +1607,19 @@ class InventoryEntry extends REST_Controller
 	{
 
 		$sqlSelect = "SELECT
-        							t0.iei_docentry,
-        							t0.iei_currency,
-											t2.mdt_docname,
-											t0.iei_docnum,
-											t0.iei_docdate,
-											t0.iei_cardname,
-											t0.iei_comment,
-											CONCAT(T0.iei_currency,' ',to_char(t0.iei_baseamnt,'999,999,999,999.00')) iei_baseamnt,
-											CONCAT(T0.iei_currency,' ',to_char(t0.iei_doctotal,'999,999,999,999.00')) iei_doctotal,
-											t1.mev_names iei_slpcode
-										 FROM miei t0
-										 LEFT JOIN dmev t1 on t0.iei_slpcode = t1.mev_id
-										 LEFT JOIN dmdt t2 on t0.iei_doctype = t2.mdt_doctype";
+					t0.iei_docentry,
+					t0.iei_currency,
+							t2.mdt_docname,
+							t0.iei_docnum,
+							t0.iei_docdate,
+							t0.iei_cardname,
+							t0.iei_comment,
+							CONCAT(T0.iei_currency,' ',to_char(t0.iei_baseamnt,'999,999,999,999.00')) iei_baseamnt,
+							CONCAT(T0.iei_currency,' ',to_char(t0.iei_doctotal,'999,999,999,999.00')) iei_doctotal,
+							t1.mev_names iei_slpcode
+							FROM miei t0
+							LEFT JOIN dmev t1 on t0.iei_slpcode = t1.mev_id
+							LEFT JOIN dmdt t2 on t0.iei_doctype = t2.mdt_doctype";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
