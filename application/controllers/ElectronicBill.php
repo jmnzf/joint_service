@@ -44,22 +44,22 @@ class ElectronicBill extends REST_Controller {
         $resBusiness = $this->pedeo->queryTable($sqlBusiness,array());
 
         //SQL VISTA DE FACTURAS
-        $sql = "SELECT * FROM invoices WHERE numero_fac = 357";
+        $sqlTercero = "SELECT * FROM terceros";
 
         //RETORNO DE DATOS DE FACTURAS
-        $resSql = $this->pedeo->queryTable($sql, array());
+        $resSqlTercero = $this->pedeo->queryTable($sqlTercero, array());
 
         //VALIDAR SI HAY DATOS DE FACTURA
-        if(isset($resSql[0])){
+        if(isset($resSqlTercero[0])){
 
             //INICIAR TRANSACCION
             $this->fe->trans_begin();
 
             //RECORRER RETORNO DE FACTURAS
-            // foreach ($resSql as $key => $resSql[0]) {
+            // foreach ($resSql as $key => $sql) {
                 # code...
 
-                // print_r($resSql[0]);exit;
+                print_r($resSqlTercero[0]);exit;
 
                 //INSERTAR DATOS A TABLA DE TERCEROS BD FE
                 $insertTercero = "INSERT INTO \"Tercero\"(\"CodigoTercero\",\"CodigoTipoPersona\",\"CodigoTipoRegimen\",\"CodigoTipoIdentificacion\",
@@ -70,21 +70,21 @@ class ElectronicBill extends REST_Controller {
                 :EsAgenteRetenedorICA,:Usuario,:Estado)";
 
                 $resInsertTercero = $this->fe->insertRow($insertTercero,array(
-                    ':CodigoTercero' => $resSql[0]['codigo_sn1'],
-                    ':CodigoTipoPersona' => isset($resSql[0]['codigo_sn1']) ? $resSql[0]['codigo_sn1'] : NULL ,
-                    ':CodigoTipoRegimen' => $resSql[0]['codigo_regimen'],
-                    ':CodigoTipoIdentificacion' => $resSql[0]['tipo_doc'],
-                    ':NumeroIdentificacion' => $resSql[0]['codigo_sn1'],
-                    ':DV' => isset($resSql[0]['codigo_sn1']) ? 1 : 0,
-                    ':NombreTercero' => $resSql[0]['nombre_sn'],
-                    ':Email' => $resSql[0]['correo'],
-                    ':EmailRespuesta' => $resSql[0]['correo'],
-                    ':CodigoActividadEconomica' => isset($resSql[0]['codigo_regimen']) ? $resSql[0]['codigo_regimen'] : NULL,
-                    ':GranContribuyente' =>  $resSql[0]['codigo_regimen'] == 'GC' ? 1 : 0 ,
-                    ':EsAutoretenedor' =>  $resSql[0]['codigo_regimen'] == 'AR'  ? 1 : 0 ,
-                    ':EsAgenteRetenedorIVA' =>  $resSql[0]['codigo_regimen'] == 'RS'  ? 1 : 0 ,
-                    ':EsAgenteRetenedorReteFuente' =>  $resSql[0]['codigo_regimen'] == 'RS' ? 1 : 0 ,
-                    ':EsAgenteRetenedorICA' =>  $resSql[0]['codigo_regimen'] == 'RS' ? 1 : 0 ,
+                    ':CodigoTercero' => $resSqlTercero[0]['codigo_sn1'],
+                    ':CodigoTipoPersona' => isset($resSqlTercero[0]['codigo_sn1']) ? $resSqlTercero[0]['codigo_sn1'] : NULL ,
+                    ':CodigoTipoRegimen' => $resSqlTercero[0]['codigo_regimen'],
+                    ':CodigoTipoIdentificacion' => $resSqlTercero[0]['tipo_doc'],
+                    ':NumeroIdentificacion' => $resSqlTercero[0]['codigo_sn1'],
+                    ':DV' => isset($resSqlTercero[0]['codigo_sn1']) ? 1 : 0,
+                    ':NombreTercero' => $resSqlTercero[0]['nombre_sn'],
+                    ':Email' => $resSqlTercero[0]['correo'],
+                    ':EmailRespuesta' => $resSqlTercero[0]['correo'],
+                    ':CodigoActividadEconomica' => isset($resSqlTercero[0]['codigo_regimen']) ? $resSqlTercero[0]['codigo_regimen'] : NULL,
+                    ':GranContribuyente' =>  $resSqlTercero[0]['codigo_regimen'] == 'GC' ? 1 : 0 ,
+                    ':EsAutoretenedor' =>  $resSqlTercero[0]['codigo_regimen'] == 'AR'  ? 1 : 0 ,
+                    ':EsAgenteRetenedorIVA' =>  $resSqlTercero[0]['codigo_regimen'] == 'RS'  ? 1 : 0 ,
+                    ':EsAgenteRetenedorReteFuente' =>  $resSqlTercero[0]['codigo_regimen'] == 'RS' ? 1 : 0 ,
+                    ':EsAgenteRetenedorICA' =>  $resSqlTercero[0]['codigo_regimen'] == 'RS' ? 1 : 0 ,
                     ':Usuario' => 1,
                     ':Estado' => 1
                 ));
@@ -100,17 +100,17 @@ class ElectronicBill extends REST_Controller {
                     :Telefono2,:Usuario,:Estado)";
 
                     $resInsertDireccion = $this->fe->insertRow($insertDireccion,array(
-                        ':CodigoTercero' => isset($resSql[0]['codigo_sn1']) ? $resSql[0]['codigo_sn1'] : NULL,
-                        ':EsPrincipal' => isset($resSql[0]['principal']) ?  1 : 0,
-                        ':EsEntrega' => isset($resSql[0]['principal']) ? 1 : 0,
-                        ':CodigoPais' => isset($resSql[0]['pais']) ? $resSql[0]['pais'] : NULL,
-                        ':CodigoDepto' => isset($resSql[0]['dpto']) ? $resSql[0]['dpto'] : NULL,
-                        ':CodigoCiudad' => isset($resSql[0]['ciudad']) ? $resSql[0]['ciudad']: NULL,
-                        ':CodigoBarrio' => isset($resSql[0]['ciudad']) ? $resSql[0]['ciudad']: NULL,
-                        ':CodigoZona' => isset($resSql[0]['ciudad']) ? $resSql[0]['ciudad']: NULL,
-                        ':Direccion' => isset($resSql[0]['direccion']) ? $resSql[0]['direccion']:NULL ,
-                        ':Telefono' => isset($resSql[0]['telefono']) ? $resSql[0]['telefono']:NULL ,
-                        ':Telefono2' => isset($resSql[0]['telefono2']) ? $resSql[0]['telefono']: NULL,
+                        ':CodigoTercero' => isset($resSqlTercero[0]['codigo_sn1']) ? $resSqlTercero[0]['codigo_sn1'] : NULL,
+                        ':EsPrincipal' => isset($resSqlTercero[0]['principal']) ?  1 : 0,
+                        ':EsEntrega' => isset($resSqlTercero[0]['principal']) ? 1 : 0,
+                        ':CodigoPais' => isset($resSqlTercero[0]['pais']) ? $resSqlTercero[0]['pais'] : NULL,
+                        ':CodigoDepto' => isset($resSqlTercero[0]['dpto']) ? $resSqlTercero[0]['dpto'] : NULL,
+                        ':CodigoCiudad' => isset($resSqlTercero[0]['ciudad']) ? $resSqlTercero[0]['ciudad']: NULL,
+                        ':CodigoBarrio' => isset($resSqlTercero[0]['ciudad']) ? $resSqlTercero[0]['ciudad']: NULL,
+                        ':CodigoZona' => isset($resSqlTercero[0]['ciudad']) ? $resSqlTercero[0]['ciudad']: NULL,
+                        ':Direccion' => isset($resSqlTercero[0]['direccion']) ? $resSqlTercero[0]['direccion']:NULL ,
+                        ':Telefono' => isset($resSqlTercero[0]['telefono']) ? $resSqlTercero[0]['telefono']:NULL ,
+                        ':Telefono2' => isset($resSqlTercero[0]['telefono2']) ? $resSqlTercero[0]['telefono']: NULL,
                         ':Usuario' => 1,
                         ':Estado' => 1
 
@@ -118,8 +118,10 @@ class ElectronicBill extends REST_Controller {
 
                     if(is_numeric($resInsertDireccion) && $resInsertDireccion > 0){
 
-                        //PASAR VALOR A LETRAS
-                        $valorLetra = $formatter->toWords($resSql[0]['total'],2);
+                        foreach ($resSqlTercero as $key => $value1) {
+                            # code...
+                            //PASAR VALOR A LETRAS
+                        $valorLetra = $formatter->toWords($value1['total'],2);
                         //INSERTAR DATOS DE CABECERA DE FACTURA A BD FE
                         $insertFactura = "INSERT INTO \"Factura\" (\"CodigoEmpresa\",\"Sucursal\",\"CodigoResolucion\",\"Tipo\",\"Numero\",\"CodigoConcepto\",
                         \"FechaFactura\",\"CodigoTercero\",\"CodigoDireccionTercero\",\"DireccionEntrega\",\"CodigoFormaPago\",\"CodigoVendedor\",\"NumeroCuota\",
@@ -135,29 +137,29 @@ class ElectronicBill extends REST_Controller {
                             ':CodigoEmpresa' => $resBusiness[0]['pge_name_soc'],
                             ':Sucursal' => '000',
                             ':CodigoResolucion' => '000',
-                            ':Tipo' => isset($resSql[0]['prefijo']) ? $resSql[0]['prefijo'] : NULL,
-                            ':Numero' => isset($resSql[0]['numero_fac']) ? $resSql[0]['numero_fac'] : NULL,
-                            ':CodigoConcepto' => isset($resSql[0]['prefijo']) ? $resSql[0]['prefijo'] : NULL,
-                            ':FechaFactura' => isset($resSql[0]['fecha_contab']) ? $resSql[0]['fecha_contab'] : NULL,
-                            ':CodigoTercero' => isset($resSql[0]['codigo_sn1']) ? $resSql[0]['codigo_sn1'] : NULL,
-                            ':CodigoDireccionTercero' => isset($resSql[0]['codigo_direccion']) ? $resSql[0]['codigo_direccion'] : NULL,
-                            ':DireccionEntrega' => isset($resSql[0]['direccion']) ? $resSql[0]['direccion'] : NULL,
-                            ':CodigoFormaPago' => is_numeric($resSql[0]['tipo_pago']) ? $resSql[0]['tipo_pago'] : 0,
-                            ':CodigoVendedor' => is_numeric($resSql[0]['id_vendedor']) ? $resSql[0]['id_vendedor'] : 0,
+                            ':Tipo' => isset($value1['prefijo']) ? $value1['prefijo'] : NULL,
+                            ':Numero' => isset($value1['numero_fac']) ? $value1['numero_fac'] : NULL,
+                            ':CodigoConcepto' => isset($value1['prefijo']) ? $value1['prefijo'] : NULL,
+                            ':FechaFactura' => isset($value1['fecha_contab']) ? $value1['fecha_contab'] : NULL,
+                            ':CodigoTercero' => isset($value1['codigo_sn1']) ? $value1['codigo_sn1'] : NULL,
+                            ':CodigoDireccionTercero' => isset($value1['codigo_direccion']) ? $value1['codigo_direccion'] : NULL,
+                            ':DireccionEntrega' => isset($value1['direccion']) ? $value1['direccion'] : NULL,
+                            ':CodigoFormaPago' => is_numeric($value1['tipo_pago']) ? $value1['tipo_pago'] : 0,
+                            ':CodigoVendedor' => is_numeric($value1['id_vendedor']) ? $value1['id_vendedor'] : 0,
                             ':NumeroCuota' => '0',
-                            ':Descripcion' => isset($resSql[0]['comentarios']) ? $resSql[0]['comentarios'] : NULL,
-                            ':FechaEntrega' => isset($resSql[0]['fecha_contab']) ? $resSql[0]['fecha_contab'] : NULL,
-                            ':ValorSubTotal' => is_numeric($resSql[0]['base']) ? $resSql[0]['base'] : 0,
-                            ':ValorImpuestos' => is_numeric($resSql[0]['total_iva']) ? $resSql[0]['total_iva'] : 0,
-                            ':ValorRetencion' => is_numeric($resSql[0]['retencion']) ? $resSql[0]['retencion'] : 0,
-                            ':ValorDescuento' => is_numeric($resSql[0]['descuento']) ? $resSql[0]['descuento'] : 0,
-                            ':ValorTotal' => is_numeric($resSql[0]['total']) ? $resSql[0]['total'] : 0,
+                            ':Descripcion' => isset($value1['comentarios']) ? $value1['comentarios'] : NULL,
+                            ':FechaEntrega' => isset($value1['fecha_contab']) ? $value1['fecha_contab'] : NULL,
+                            ':ValorSubTotal' => is_numeric($value1['base']) ? $value1['base'] : 0,
+                            ':ValorImpuestos' => is_numeric($value1['total_iva']) ? $value1['total_iva'] : 0,
+                            ':ValorRetencion' => is_numeric($value1['retencion']) ? $value1['retencion'] : 0,
+                            ':ValorDescuento' => is_numeric($value1['descuento']) ? $value1['descuento'] : 0,
+                            ':ValorTotal' => is_numeric($value1['total']) ? $value1['total'] : 0,
                             ':ValorInicial' => 0,
                             ':ValorLetras' => $valorLetra,
-                            ':CodigoMoneda' => isset($resSql[0]['moneda']) ? $resSql[0]['moneda'] : NULL,
+                            ':CodigoMoneda' => isset($value1['moneda']) ? $value1['moneda'] : NULL,
                             ':TasaCambio' => 0,
-                            ':TipoFactura' => isset($resSql[0]['prefijo']) ? $resSql[0]['prefijo'] : NULL,
-                            ':NumeroFactura' => isset($resSql[0]['numero_fac']) ? $resSql[0]['numero_fac'] : NULL,
+                            ':TipoFactura' => isset($value1['prefijo']) ? $value1['prefijo'] : NULL,
+                            ':NumeroFactura' => isset($value1['numero_fac']) ? $value1['numero_fac'] : NULL,
                             ':TipoSoporte' => '',
                             ':NumeroSoporte' => '',
                             ':TipoRespaldo' => '',
@@ -168,7 +170,7 @@ class ElectronicBill extends REST_Controller {
 
                         if (is_numeric($resInsertFactura) && $resInsertFactura > 0){
 
-                            foreach ($resSql as $key => $value) {
+                            foreach ($resSqlTercero as $key => $value) {
                                 // print_r($value['codigo_item']);exit;
                                 # code...
                                 //INSERTAR DATOS DE DETALLE DE FACTURA A BD FE
@@ -194,7 +196,7 @@ class ElectronicBill extends REST_Controller {
                                     ':CodigoFactura' => isset($value['numero_fac']) ? $value['numero_fac'] : NULL,
                                     ':CodigoProducto' => isset($value['codigo_item']) ? $value['codigo_item'] : NULL,
                                     ':DescripcionProducto' => isset($value['codigo_item']) ? $value['codigo_item'] : NULL,
-                                    ':CodigoUnidad' => '1',
+                                    ':CodigoUnidad' => isset($value['codigo_und_medida']) ? $value['codigo_und_medida'] : 0,
                                     ':ValorUnitario' => is_numeric($value['precio_und']) ? $value['precio_und'] : 0,
                                     ':Cantidad' => is_numeric($value['cantidad']) ? $value['cantidad'] : 0,
                                     ':ValorSubTotal' => is_numeric($value['precio_und']) ? $value['precio_und'] * $value['cantidad']: 0,
@@ -244,7 +246,7 @@ class ElectronicBill extends REST_Controller {
                             return;
 
                         }
-
+                        }
 
                     }else{
 
@@ -280,7 +282,7 @@ class ElectronicBill extends REST_Controller {
 
             $respuesta = array(
                 'error'   => true,
-                'data'    => $resInsertTercero,
+                'data'    => $resSqlTercero,
                 'mensaje'	=> 'Factura ingresada exitosamente'
                 );
 
