@@ -23,6 +23,7 @@ class ExitInventory extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('account');
 	}
 
 	//CREAR NUEVA SALIDA
@@ -730,7 +731,7 @@ class ExitInventory extends REST_Controller
 
 						$respuesta = array(
 							'error'   => true,
-							'data' 		=> $resInsertCostoCantidad,
+							'data' 		=> $resCostoCantidad,
 							'mensaje'	=> 'El item no existe en el stock ' . $detail['si1_itemcode']
 						);
 
@@ -1000,13 +1001,11 @@ class ExitInventory extends REST_Controller
 				$MontoSysCR = 0;
 				foreach ($posicion as $key => $value) {
 
-					$sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
+					$CUENTASINV = $this->account->getAccountItem($value->em1_itemcode, $value->em1_whscode);
 
-					$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->si1_itemcode));
+					if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
 
-					if (isset($resArticulo[0])) {
-
-						$cuentaGrupo = $resArticulo[0]['mga_acct_inv'];
+						$cuentaGrupo = $CUENTASINV['data']['acct_inv'];
 						$grantotalCuentaGrupo = ($grantotalCuentaGrupo + $value->si1_linetotal);
 					} else {
 						// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
@@ -1015,7 +1014,7 @@ class ExitInventory extends REST_Controller
 
 						$respuesta = array(
 							'error'   => true,
-							'data'	  => $resArticulo,
+							'data'	  => $CUENTASINV,
 							'mensaje'	=> 'No se encontro la cuenta del grupo de articulo para el item ' . $value->si1_itemcode
 						);
 

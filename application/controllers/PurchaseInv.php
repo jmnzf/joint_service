@@ -23,6 +23,7 @@ class PurchaseInv extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('account');
 	}
 
 	//CREAR NUEVA FACTURA DE compras
@@ -1105,9 +1106,9 @@ class PurchaseInv extends REST_Controller
 									// SE ACTUALZAN TODOS LOS COSTOS PONDERADOS DE LOS ARTICULOS EN EL ALMACEN
 									if ($ManejaLote == 1) {
 										$sqlUpdateCostoCantidad = "UPDATE tbdi
-																														 SET bdi_avgprice = :bdi_avgprice
-																														 WHERE bdi_itemcode = :bdi_itemcode
-																														 AND bdi_whscode = :bdi_whscode";
+															SET bdi_avgprice = :bdi_avgprice
+															WHERE bdi_itemcode = :bdi_itemcode
+															AND bdi_whscode = :bdi_whscode";
 
 										$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
@@ -1163,7 +1164,7 @@ class PurchaseInv extends REST_Controller
 
 									if ($ManejaLote == 1) {
 										$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote)
-																														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
+																 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
 
 
 										$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1176,7 +1177,7 @@ class PurchaseInv extends REST_Controller
 										));
 									} else {
 										$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
-																														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+																VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
 
 
 										$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1212,9 +1213,9 @@ class PurchaseInv extends REST_Controller
 									// SE ACTUALZAN TODOS LOS COSTOS PONDERADOS DE LOS ARTICULOS EN EL ALMACEN
 									if ($ManejaLote == 1) {
 										$sqlUpdateCostoCantidad = "UPDATE tbdi
-																							SET bdi_avgprice = :bdi_avgprice
-																							WHERE bdi_itemcode = :bdi_itemcode
-																							AND bdi_whscode = :bdi_whscode";
+																SET bdi_avgprice = :bdi_avgprice
+																WHERE bdi_itemcode = :bdi_itemcode
+																AND bdi_whscode = :bdi_whscode";
 
 										$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
@@ -1256,7 +1257,7 @@ class PurchaseInv extends REST_Controller
 
 									if ($ManejaLote == 1) {
 										$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote)
-																														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
+																 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
 
 
 										$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1270,7 +1271,7 @@ class PurchaseInv extends REST_Controller
 									} else {
 
 										$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
-																														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+																VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
 
 
 										$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1309,9 +1310,9 @@ class PurchaseInv extends REST_Controller
 									// SE ACTUALZAN TODOS LOS COSTOS PONDERADOS DE LOS ARTICULOS EN EL ALMACEN
 									if ($ManejaLote == 1) {
 										$sqlUpdateCostoCantidad = "UPDATE tbdi
-																								SET bdi_avgprice = :bdi_avgprice
-																								WHERE bdi_itemcode = :bdi_itemcode
-																								AND bdi_whscode = :bdi_whscode";
+																SET bdi_avgprice = :bdi_avgprice
+																WHERE bdi_itemcode = :bdi_itemcode
+																AND bdi_whscode = :bdi_whscode";
 
 										$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
@@ -1350,7 +1351,7 @@ class PurchaseInv extends REST_Controller
 								if (!isset($resFindLote[0])) {
 									// SI NO SE HA CREADO EL LOTE SE INGRESA
 									$sqlInsertLote = "INSERT INTO lote(ote_code, ote_createdate, ote_duedate, ote_createby, ote_date, ote_baseentry, ote_basetype, ote_docnum)
-																							VALUES(:ote_code, :ote_createdate, :ote_duedate, :ote_createby, :ote_date, :ote_baseentry, :ote_basetype, :ote_docnum)";
+													VALUES(:ote_code, :ote_createdate, :ote_duedate, :ote_createby, :ote_date, :ote_baseentry, :ote_basetype, :ote_docnum)";
 									$resInsertLote = $this->pedeo->insertRow($sqlInsertLote, array(
 
 										':ote_code' => $detail['ote_code'],
@@ -1385,7 +1386,7 @@ class PurchaseInv extends REST_Controller
 						}
 						// EN CASO CONTRARIO NO SE MUEVE INVENTARIO
 						// ADICIONAL SE VERIFICA SI EL ARTICULO MANEJA SERIAL
-					}else{
+					} else {
 						//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
 						$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
 						$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
@@ -1414,7 +1415,6 @@ class PurchaseInv extends REST_Controller
 						} else {
 							$ManejaSerial = 0;
 						}
-	
 					}
 				}
 
@@ -2639,11 +2639,11 @@ class PurchaseInv extends REST_Controller
 
 
 				$sqlEstado1 = "SELECT
-											count(t1.po1_itemcode) item,
-											sum(t1.po1_quantity) cantidad
-										from dcpo t0
-										inner join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
-										where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
+							count(t1.po1_itemcode) item,
+							sum(t1.po1_quantity) cantidad
+						from dcpo t0
+						inner join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
+						where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
 
 
 				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
@@ -2653,13 +2653,13 @@ class PurchaseInv extends REST_Controller
 
 
 				$sqlEstado2 = "SELECT
-											coalesce(count(distinct t3.fc1_itemcode),0) item,
-											coalesce(sum(t3.fc1_quantity),0) cantidad
-										from dcpo t0
-										left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
-										left join dcfc t2 on t0.cpo_docentry = t2.cfc_baseentry
-										left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.po1_itemcode = t3.fc1_itemcode
-										where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
+								coalesce(count(distinct t3.fc1_itemcode),0) item,
+								coalesce(sum(t3.fc1_quantity),0) cantidad
+							from dcpo t0
+							left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
+							left join dcfc t2 on t0.cpo_docentry = t2.cfc_baseentry
+							left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.po1_itemcode = t3.fc1_itemcode
+							where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
 				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
 					':cpo_docentry' => $Data['cfc_baseentry'],
 					':cpo_doctype' => $Data['cfc_basetype']
@@ -2972,7 +2972,7 @@ class PurchaseInv extends REST_Controller
 										cfc_empid=:cfc_empid, cfc_comment=:cfc_comment, cfc_doctotal=:cfc_doctotal, cfc_baseamnt=:cfc_baseamnt,
 										cfc_taxtotal=:cfc_taxtotal, cfc_discprofit=:cfc_discprofit, cfc_discount=:cfc_discount, cfc_createat=:cfc_createat,
 										cfc_baseentry=:cfc_baseentry, cfc_basetype=:cfc_basetype, cfc_doctype=:cfc_doctype, cfc_idadd=:cfc_idadd,
-										cfc_adress=:cfc_adress, cfc_paytype=:cfc_paytype, cfc_attch=:cfc_attch WHERE cfc_docentry=:cfc_docentry";
+										cfc_adress=:cfc_adress, cfc_paytype=:cfc_paytype WHERE cfc_docentry=:cfc_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -3001,7 +3001,6 @@ class PurchaseInv extends REST_Controller
 			':cfc_idadd' => isset($Data['cfc_idadd']) ? $Data['cfc_idadd'] : NULL,
 			':cfc_adress' => isset($Data['cfc_adress']) ? $Data['cfc_adress'] : NULL,
 			':cfc_paytype' => is_numeric($Data['cfc_paytype']) ? $Data['cfc_paytype'] : 0,
-			':cfc_attch' => $this->getUrl(count(trim(($Data['cfc_attch']))) > 0 ? $Data['cfc_attch'] : NULL, $resMainFolder[0]['main_folder']),
 			':cfc_docentry' => $Data['cfc_docentry']
 		));
 
