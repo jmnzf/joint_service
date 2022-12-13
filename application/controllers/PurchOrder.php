@@ -774,9 +774,9 @@ class PurchOrder extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO cpo1(po1_docentry, po1_itemcode, po1_itemname, po1_quantity, po1_uom, po1_whscode,
                                     po1_price, po1_vat, po1_vatsum, po1_discount, po1_linetotal, po1_costcode, po1_ubusiness, po1_project,
-                                    po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_linenum, po1_acciva, po1_codimp)VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,
+                                    po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_linenum, po1_acciva, po1_codimp, po1_ubication)VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,
                                     :po1_uom, :po1_whscode,:po1_price, :po1_vat, :po1_vatsum, :po1_discount, :po1_linetotal, :po1_costcode, :po1_ubusiness, :po1_project,
-                                    :po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, :po1_inventory,:po1_linenum,:po1_acciva, :po1_codimp)";
+                                    :po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, :po1_inventory,:po1_linenum,:po1_acciva, :po1_codimp, :po1_ubication)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':po1_docentry' => $resInsert,
@@ -798,9 +798,10 @@ class PurchOrder extends REST_Controller {
                         ':po1_doctype' => is_numeric($detail['po1_doctype'])?$detail['po1_doctype']:0,
                         ':po1_avprice' => is_numeric($detail['po1_avprice'])?$detail['po1_avprice']:0,
                         ':po1_inventory' => is_numeric($detail['po1_inventory'])?$detail['po1_inventory']:NULL,
-												':po1_linenum' => is_numeric($detail['po1_linenum'])?$detail['po1_linenum']:NULL,
-												':po1_acciva' => is_numeric($detail['po1_acciva'])?$detail['po1_acciva']:NULL,
-												':po1_codimp' => isset($detail['po1_codimp'])?$detail['po1_codimp']:NULL
+						':po1_linenum' => is_numeric($detail['po1_linenum'])?$detail['po1_linenum']:NULL,
+						':po1_acciva' => is_numeric($detail['po1_acciva'])?$detail['po1_acciva']:NULL,
+						':po1_codimp' => isset($detail['po1_codimp'])?$detail['po1_codimp']:NULL,
+						':po1_ubication' => isset($detail['po1_ubication'])?$detail['po1_ubication']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1120,9 +1121,9 @@ class PurchOrder extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO cpo1(po1_docentry, po1_itemcode, po1_itemname, po1_quantity, po1_uom, po1_whscode,
 																			po1_price, po1_vat, po1_vatsum, po1_discount, po1_linetotal, po1_costcode, po1_ubusiness, po1_project,
-																			po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_acciva, po1_linenum)VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,
+																			po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_acciva, po1_linenum, po1_ubication)VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,
 																			:po1_uom, :po1_whscode,:po1_price, :po1_vat, :po1_vatsum, :po1_discount, :po1_linetotal, :po1_costcode, :po1_ubusiness, :po1_project,
-																			:po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, :po1_inventory, :po1_acciva,:po1_linenum)";
+																			:po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, :po1_inventory, :po1_acciva,:po1_linenum, :po1_ubication)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 											':po1_docentry' => $Data['cpo_docentry'],
@@ -1145,7 +1146,8 @@ class PurchOrder extends REST_Controller {
 											':po1_avprice' => is_numeric($detail['po1_avprice'])?$detail['po1_avprice']:0,
 											':po1_inventory' => is_numeric($detail['po1_inventory'])?$detail['po1_inventory']:NULL,
 											':po1_acciva' => is_numeric($detail['po1_acciva'])?$detail['po1_acciva']:NULL,
-											':po1_linenum' => is_numeric($detail['po1_linenum'])?$detail['po1_linenum']:NULL
+											':po1_linenum' => is_numeric($detail['po1_linenum'])?$detail['po1_linenum']:NULL,
+											':po1_ubication' => is_numeric($detail['po1_ubication'])?$detail['po1_ubication']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
