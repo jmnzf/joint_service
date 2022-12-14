@@ -31,6 +31,22 @@ class SalesNd extends REST_Controller
 	{
 
 		try {
+
+			if (!isset($Data['vnd_business']) OR
+				!isset($Data['vnd_branch'])) {
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+
+
 			$DECI_MALES =  $this->generic->getDecimals();
 			$Data = $this->post();
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
@@ -270,9 +286,10 @@ class SalesNd extends REST_Controller
 			$sqlInsert = "INSERT INTO dvnd(vnd_series, vnd_docnum, vnd_docdate, vnd_duedate, vnd_duedev, vnd_pricelist, vnd_cardcode,
 					                      vnd_cardname, vnd_currency, vnd_contacid, vnd_slpcode, vnd_empid, vnd_comment, vnd_doctotal, vnd_baseamnt, vnd_taxtotal,
 					                      vnd_discprofit, vnd_discount, vnd_createat, vnd_baseentry, vnd_basetype, vnd_doctype, vnd_idadd, vnd_adress, vnd_paytype,
-					                      vnd_createby)VALUES(:vnd_series, :vnd_docnum, :vnd_docdate, :vnd_duedate, :vnd_duedev, :vnd_pricelist, :vnd_cardcode, :vnd_cardname,
+					                      vnd_createby,vnd_business,vnd_branch)VALUES(:vnd_series, :vnd_docnum, :vnd_docdate, :vnd_duedate, :vnd_duedev, :vnd_pricelist, :vnd_cardcode, :vnd_cardname,
 					                      :vnd_currency, :vnd_contacid, :vnd_slpcode, :vnd_empid, :vnd_comment, :vnd_doctotal, :vnd_baseamnt, :vnd_taxtotal, :vnd_discprofit, :vnd_discount,
-					                      :vnd_createat, :vnd_baseentry, :vnd_basetype, :vnd_doctype, :vnd_idadd, :vnd_adress, :vnd_paytype,:vnd_createby)";
+					                      :vnd_createat, :vnd_baseentry, :vnd_basetype, :vnd_doctype, :vnd_idadd, :vnd_adress, :vnd_paytype,:vnd_createby,
+										  :vnd_business,:vnd_branch)";
 
 
 			// Se Inicia la transaccion,
@@ -284,9 +301,6 @@ class SalesNd extends REST_Controller
 
 
 			$this->pedeo->trans_begin();
-
-
-
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
 				':vnd_docnum' => $DocNumVerificado,
@@ -314,7 +328,9 @@ class SalesNd extends REST_Controller
 				':vnd_idadd' => isset($Data['vnd_idadd']) ? $Data['vnd_idadd'] : NULL,
 				':vnd_adress' => isset($Data['vnd_adress']) ? $Data['vnd_adress'] : NULL,
 				':vnd_paytype' => is_numeric($Data['vnd_paytype']) ? $Data['vnd_paytype'] : 0,
-				':vnd_createby' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL
+				':vnd_createby' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL,
+				':vnd_business' => isset($Data['vnd_business']) ? $Data['vnd_business'] : NULL,
+				':vnd_branch' => isset($Data['vnd_branch']) ? $Data['vnd_branch'] : NULL
 			));
 
 			if (is_numeric($resInsert) && $resInsert > 0) {
@@ -576,9 +592,9 @@ class SalesNd extends REST_Controller
 
 					$sqlInsertDetail = "INSERT INTO vnd1(nd1_docentry, nd1_itemcode, nd1_itemname, nd1_quantity, nd1_uom, nd1_whscode,
 																							nd1_price, nd1_vat, nd1_vatsum, nd1_discount, nd1_linetotal, nd1_costcode, nd1_ubusiness, nd1_project,
-																							nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
+																							nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory,nd1_ubication)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
 																							:nd1_uom, :nd1_whscode,:nd1_price, :nd1_vat, :nd1_vatsum, :nd1_discount, :nd1_linetotal, :nd1_costcode, :nd1_ubusiness, :nd1_project,
-																							:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory)";
+																							:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory,:nd1_ubication)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':nd1_docentry' => $resInsert,
@@ -599,7 +615,8 @@ class SalesNd extends REST_Controller
 						':nd1_basetype' => is_numeric($detail['nd1_basetype']) ? $detail['nd1_basetype'] : 0,
 						':nd1_doctype' => is_numeric($detail['nd1_doctype']) ? $detail['nd1_doctype'] : 0,
 						':nd1_avprice' => is_numeric($detail['nd1_avprice']) ? $detail['nd1_avprice'] : 0,
-						':nd1_inventory' => is_numeric($detail['nd1_inventory']) ? $detail['nd1_inventory'] : NULL
+						':nd1_inventory' => is_numeric($detail['nd1_inventory']) ? $detail['nd1_inventory'] : NULL,
+						':nd1_ubication' => is_numeric($detail['nd1_ubication']) ? $detail['nd1_ubication'] : NULL
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1316,7 +1333,8 @@ class SalesNd extends REST_Controller
 										vnd_empid=:vnd_empid, vnd_comment=:vnd_comment, vnd_doctotal=:vnd_doctotal, vnd_baseamnt=:vnd_baseamnt,
 										vnd_taxtotal=:vnd_taxtotal, vnd_discprofit=:vnd_discprofit, vnd_discount=:vnd_discount, vnd_createat=:vnd_createat,
 										vnd_baseentry=:vnd_baseentry, vnd_basetype=:vnd_basetype, vnd_doctype=:vnd_doctype, vnd_idadd=:vnd_idadd,
-										vnd_adress=:vnd_adress, vnd_paytype=:vnd_paytype WHERE vnd_docentry=:vnd_docentry";
+										vnd_adress=:vnd_adress, vnd_paytype=:vnd_paytype ,vnd_business = :vnd_business,vnd_branch = :vnd_branch
+										WHERE vnd_docentry=:vnd_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -1345,7 +1363,10 @@ class SalesNd extends REST_Controller
 			':vnd_idadd' => isset($Data['vnd_idadd']) ? $Data['vnd_idadd'] : NULL,
 			':vnd_adress' => isset($Data['vnd_adress']) ? $Data['vnd_adress'] : NULL,
 			':vnd_paytype' => is_numeric($Data['vnd_paytype']) ? $Data['vnd_paytype'] : 0,
-			':vnd_docentry' => $Data['vnd_docentry']
+			':vnd_business' => isset($Data['vnd_business']) ? $Data['vnd_business'] : NULL,
+			':vnd_branch' => isset($Data['vnd_branch']) ? $Data['vnd_branch'] : NULL,
+			':vnd_docentry' => $Data['vnd_docentry'],
+			
 		));
 
 		if (is_numeric($resUpdate) && $resUpdate == 1) {
@@ -1356,9 +1377,9 @@ class SalesNd extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vnd1(nd1_docentry, nd1_itemcode, nd1_itemname, nd1_quantity, nd1_uom, nd1_whscode,
 																			nd1_price, nd1_vat, nd1_vatsum, nd1_discount, nd1_linetotal, nd1_costcode, nd1_ubusiness, nd1_project,
-																			nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory, nd1_acciva)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
+																			nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory, nd1_acciva,nd1_ubication)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
 																			:nd1_uom, :nd1_whscode,:nd1_price, :nd1_vat, :nd1_vatsum, :nd1_discount, :nd1_linetotal, :nd1_costcode, :nd1_ubusiness, :nd1_project,
-																			:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory, :nd1_acciva)";
+																			:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory, :nd1_acciva,:nd1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':nd1_docentry' => $Data['vnd_docentry'],
@@ -1380,7 +1401,8 @@ class SalesNd extends REST_Controller
 					':nd1_doctype' => is_numeric($detail['nd1_doctype']) ? $detail['nd1_doctype'] : 0,
 					':nd1_avprice' => is_numeric($detail['nd1_avprice']) ? $detail['nd1_avprice'] : 0,
 					':nd1_inventory' => is_numeric($detail['nd1_inventory']) ? $detail['nd1_inventory'] : NULL,
-					':nd1_acciva' => is_numeric($detail['nd1_cuentaIva']) ? $detail['nd1_cuentaIva'] : NULL
+					':nd1_acciva' => is_numeric($detail['nd1_cuentaIva']) ? $detail['nd1_cuentaIva'] : NULL,
+					':nd1_ubication' => isset($detail['nd1_ubication']) ? $detail['nd1_ubication'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

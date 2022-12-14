@@ -24,7 +24,21 @@ class SalesDv extends REST_Controller {
     }
 
   //CREAR NUEVA Devolución de clientes
-    public function createSalesDv_post(){
+    public function createSalesDv_post()
+    {
+      if (!isset($Data['vdv_business']) OR
+				!isset($Data['vdv_branch'])) {
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
 
       $Data = $this->post();
       $DetalleCuentaPuente = new stdClass();
@@ -275,9 +289,9 @@ class SalesDv extends REST_Controller {
       $sqlInsert = "INSERT INTO dvdv(vdv_series, vdv_docnum, vdv_docdate, vdv_duedate, vdv_duedev, vdv_pricelist, vdv_cardcode,
           vdv_cardname, vdv_currency, vdv_contacid, vdv_slpcode, vdv_empid, vdv_comment, vdv_doctotal, vdv_baseamnt, vdv_taxtotal,
           vdv_discprofit, vdv_discount, vdv_createat, vdv_baseentry, vdv_basetype, vdv_doctype, vdv_idadd, vdv_adress, vdv_paytype,
-          vdv_createby)VALUES(:vdv_series, :vdv_docnum, :vdv_docdate, :vdv_duedate, :vdv_duedev, :vdv_pricelist, :vdv_cardcode, :vdv_cardname,
+          vdv_createby,vdv_business,vdv_branch)VALUES(:vdv_series, :vdv_docnum, :vdv_docdate, :vdv_duedate, :vdv_duedev, :vdv_pricelist, :vdv_cardcode, :vdv_cardname,
           :vdv_currency, :vdv_contacid, :vdv_slpcode, :vdv_empid, :vdv_comment, :vdv_doctotal, :vdv_baseamnt, :vdv_taxtotal, :vdv_discprofit, :vdv_discount,
-          :vdv_createat, :vdv_baseentry, :vdv_basetype, :vdv_doctype, :vdv_idadd, :vdv_adress, :vdv_paytype,:vdv_createby)";
+          :vdv_createat, :vdv_baseentry, :vdv_basetype, :vdv_doctype, :vdv_idadd, :vdv_adress, :vdv_paytype,:vdv_createby,:vdv_business,:vdv_branch)";
 
 
       // Se Inicia la transaccion,
@@ -314,7 +328,9 @@ class SalesDv extends REST_Controller {
         ':vdv_idadd' => isset($Data['vdv_idadd'])?$Data['vdv_idadd']:NULL,
         ':vdv_adress' => isset($Data['vdv_adress'])?$Data['vdv_adress']:NULL,
         ':vdv_paytype' => is_numeric($Data['vdv_paytype'])?$Data['vdv_paytype']:0,
-        ':vdv_createby' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL
+        ':vdv_createby' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL,
+        ':vdv_business' => isset($Data['vdv_business'])?$Data['vdv_business']:NULL,
+        ':vdv_branch' => isset($Data['vdv_branch'])?$Data['vdv_branch']:NULL
       ));
 
       if(is_numeric($resInsert) && $resInsert > 0){
@@ -541,9 +557,9 @@ class SalesDv extends REST_Controller {
 
           $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                               dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
+                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp,dv1_ubication)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
                               :dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,
-                              :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp)";
+                              :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp,dv1_ubication)";
 
           $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
           ':dv1_docentry' => $resInsert,
@@ -567,7 +583,8 @@ class SalesDv extends REST_Controller {
           ':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL,
           ':dv1_linenum' => is_numeric($detail['dv1_linenum'])?$detail['dv1_linenum']:0,
           ':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0,
-          ':dv1_codimp' => isset($detail['dv1_codimp'])?$detail['dv1_codimp']:NULL
+          ':dv1_codimp' => isset($detail['dv1_codimp'])?$detail['dv1_codimp']:NULL,
+          ':dv1_ubication' => isset($detail['dv1_ubication'])?$detail['dv1_ubication']:NULL
 
           ));
 
@@ -1618,7 +1635,8 @@ class SalesDv extends REST_Controller {
                     vdv_empid=:vdv_empid, vdv_comment=:vdv_comment, vdv_doctotal=:vdv_doctotal, vdv_baseamnt=:vdv_baseamnt,
                     vdv_taxtotal=:vdv_taxtotal, vdv_discprofit=:vdv_discprofit, vdv_discount=:vdv_discount, vdv_createat=:vdv_createat,
                     vdv_baseentry=:vdv_baseentry, vdv_basetype=:vdv_basetype, vdv_doctype=:vdv_doctype, vdv_idadd=:vdv_idadd,
-                    vdv_adress=:vdv_adress, vdv_paytype=:vdv_paytype WHERE vdv_docentry=:vdv_docentry";
+                    vdv_adress=:vdv_adress, vdv_paytype=:vdv_paytype ,vdv_business = :vdv_business,vdv_branch = :vdv_branch
+                    WHERE vdv_docentry=:vdv_docentry";
 
       $this->pedeo->trans_begin();
 
@@ -1647,6 +1665,8 @@ class SalesDv extends REST_Controller {
         ':vdv_idadd' => isset($Data['vdv_idadd'])?$Data['vdv_idadd']:NULL,
         ':vdv_adress' => isset($Data['vdv_adress'])?$Data['vdv_adress']:NULL,
         ':vdv_paytype' => is_numeric($Data['vdv_paytype'])?$Data['vdv_paytype']:0,
+        ':vdv_business' => isset($Data['vdv_business'])?$Data['vdv_business']:NULL,
+        ':vdv_branch' => isset($Data['vdv_branch'])?$Data['vdv_branch']:NULL,
         ':vdv_docentry' => $Data['vdv_docentry']
       ));
 

@@ -29,6 +29,19 @@ class SalesNc extends REST_Controller
 	//CREAR NUEVA Nota crédito de clientes
 	public function createSalesNc_post()
 	{
+		if (!isset($Data['vnc_business']) OR
+				!isset($Data['vnc_branch'])) {
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
 
 		$DECI_MALES =  $this->generic->getDecimals();
 		$Data = $this->post();
@@ -309,9 +322,10 @@ class SalesNc extends REST_Controller
 		$sqlInsert = "INSERT INTO dvnc(vnc_series, vnc_docnum, vnc_docdate, vnc_duedate, vnc_duedev, vnc_pricelist, vnc_cardcode,
                       vnc_cardname, vnc_currency, vnc_contacid, vnc_slpcode, vnc_empid, vnc_comment, vnc_doctotal, vnc_baseamnt, vnc_taxtotal,
                       vnc_discprofit, vnc_discount, vnc_createat, vnc_baseentry, vnc_basetype, vnc_doctype, vnc_idadd, vnc_adress, vnc_paytype,
-                      vnc_createby, vnc_igtf, vnc_taxigtf, vnc_igtfapplyed, vnc_igtfcode)VALUES(:vnc_series, :vnc_docnum, :vnc_docdate, :vnc_duedate, :vnc_duedev, :vnc_pricelist, :vnc_cardcode, :vnc_cardname,
+                      vnc_createby, vnc_igtf, vnc_taxigtf, vnc_igtfapplyed, vnc_igtfcode,vnc_business,vnc_branch)VALUES(:vnc_series, :vnc_docnum, :vnc_docdate, :vnc_duedate, :vnc_duedev, :vnc_pricelist, :vnc_cardcode, :vnc_cardname,
                       :vnc_currency, :vnc_contacid, :vnc_slpcode, :vnc_empid, :vnc_comment, :vnc_doctotal, :vnc_baseamnt, :vnc_taxtotal, :vnc_discprofit, :vnc_discount,
-                      :vnc_createat, :vnc_baseentry, :vnc_basetype, :vnc_doctype, :vnc_idadd, :vnc_adress, :vnc_paytype,:vnc_createby,:vnc_igtf, :vnc_taxigtf, :vnc_igtfapplyed, :vnc_igtfcode)";
+                      :vnc_createat, :vnc_baseentry, :vnc_basetype, :vnc_doctype, :vnc_idadd, :vnc_adress, :vnc_paytype,:vnc_createby,:vnc_igtf, 
+					  :vnc_taxigtf, :vnc_igtfapplyed, :vnc_igtfcode,:vnc_business,:vnc_branch)";
 
 
 		// Se Inicia la transaccion,
@@ -355,7 +369,9 @@ class SalesNc extends REST_Controller
 				':vnc_igtf'  =>  isset($Data['dvf_igtf']) ? $Data['dvf_igtf'] : NULL,
 				':vnc_taxigtf' => isset($Data['dvf_taxigtf']) ? $Data['dvf_taxigtf'] : NULL,
 				':vnc_igtfapplyed' => isset($Data['dvf_igtfapplyed']) ? $Data['dvf_igtfapplyed'] : NULL,
-				':vnc_igtfcode' => isset($Data['dvf_igtfcode']) ? $Data['dvf_igtfcode'] : NULL
+				':vnc_igtfcode' => isset($Data['dvf_igtfcode']) ? $Data['dvf_igtfcode'] : NULL,
+				':vnc_business' => isset($Data['vnc_business']) ? $Data['vnc_business'] : NULL,
+				':vnc_branch' => isset($Data['vnc_branch']) ? $Data['vnc_branch'] : NULL
 
 			));
 
@@ -633,9 +649,9 @@ class SalesNc extends REST_Controller
 
 					$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
 																			nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
-																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_exc_inv,nc1_acciva,nc1_linenum,nc1_codimp)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
+																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_exc_inv,nc1_acciva,nc1_linenum,nc1_codimp,nc1_ubication)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
 																			:nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
-																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_exc_inv, :nc1_acciva,:nc1_linenum,:nc1_codimp)";
+																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_exc_inv, :nc1_acciva,:nc1_linenum,:nc1_codimp,:nc1_ubication)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':nc1_docentry' => $resInsert,
@@ -660,7 +676,8 @@ class SalesNc extends REST_Controller
 						':nc1_exc_inv' => is_numeric($detail['nc1_exc_inv']) ? $detail['nc1_exc_inv'] : 0,
 						':nc1_acciva' => is_numeric($detail['nc1_acciva']) ? $detail['nc1_acciva'] : 0,
 						':nc1_linenum' => is_numeric($detail['nc1_linenum']) ? $detail['nc1_linenum'] : 0,
-						':nc1_codimp'  => isset($detail['nc1_codimp']) ? $detail['nc1_codimp'] : NULL
+						':nc1_codimp'  => isset($detail['nc1_codimp']) ? $detail['nc1_codimp'] : NULL,
+						':nc1_ubication'  => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -2656,7 +2673,8 @@ class SalesNc extends REST_Controller
 										vnc_empid=:vnc_empid, vnc_comment=:vnc_comment, vnc_doctotal=:vnc_doctotal, vnc_baseamnt=:vnc_baseamnt,
 										vnc_taxtotal=:vnc_taxtotal, vnc_discprofit=:vnc_discprofit, vnc_discount=:vnc_discount, vnc_createat=:vnc_createat,
 										vnc_baseentry=:vnc_baseentry, vnc_basetype=:vnc_basetype, vnc_doctype=:vnc_doctype, vnc_idadd=:vnc_idadd,
-										vnc_adress=:vnc_adress, vnc_paytype=:vnc_paytype WHERE vnc_docentry=:vnc_docentry";
+										vnc_adress=:vnc_adress, vnc_paytype=:vnc_paytype ,vnc_business = :vnc_business,vnc_branch = :vnc_branch
+										WHERE vnc_docentry=:vnc_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -2685,6 +2703,8 @@ class SalesNc extends REST_Controller
 			':vnc_idadd' => isset($Data['vnc_idadd']) ? $Data['vnc_idadd'] : NULL,
 			':vnc_adress' => isset($Data['vnc_adress']) ? $Data['vnc_adress'] : NULL,
 			':vnc_paytype' => is_numeric($Data['vnc_paytype']) ? $Data['vnc_paytype'] : 0,
+			':vnc_business' => isset($Data['vnc_business']) ? $Data['vnc_business'] : NULL,
+			':vnc_branch' => isset($Data['vnc_branch']) ? $Data['vnc_branch'] : NULL,
 			':vnc_docentry' => $Data['vnc_docentry']
 		));
 
@@ -2696,9 +2716,9 @@ class SalesNc extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
 																			nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
-																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory,nc1_cuentaIva)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
+																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory,nc1_cuentaIva,nc1_ubication)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
 																			:nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
-																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory,:nc1_cuentaIva)";
+																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory,:nc1_cuentaIva,:nc1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':nc1_docentry' => $Data['vnc_docentry'],
@@ -2720,7 +2740,8 @@ class SalesNc extends REST_Controller
 					':nc1_doctype' => is_numeric($detail['nc1_doctype']) ? $detail['nc1_doctype'] : 0,
 					':nc1_avprice' => is_numeric($detail['nc1_avprice']) ? $detail['nc1_avprice'] : 0,
 					':nc1_inventory' => is_numeric($detail['nc1_inventory']) ? $detail['nc1_inventory'] : NULL,
-					':nc1_acciva' => is_numeric($detail['nc1_cuentaIva']) ? $detail['nc1_cuentaIva'] : 0
+					':nc1_acciva' => is_numeric($detail['nc1_cuentaIva']) ? $detail['nc1_cuentaIva'] : 0,
+					':nc1_ubication' => is_numeric($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL,
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

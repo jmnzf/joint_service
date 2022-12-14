@@ -29,6 +29,19 @@ class SalesDel extends REST_Controller
 	//CREAR NUEVA Entrega de Ventas
 	public function createSalesDel_post()
 	{
+		if (!isset($Data['vem_business']) OR
+				!isset($Data['vem_branch'])) {
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
@@ -391,11 +404,13 @@ class SalesDel extends REST_Controller
 		$sqlInsert = "INSERT INTO dvem(vem_series, vem_docnum, vem_docdate, vem_duedate, vem_duedev, vem_pricelist, vem_cardcode,
                       vem_cardname, vem_currency, vem_contacid, vem_slpcode, vem_empid, vem_comment, vem_doctotal, vem_baseamnt, vem_taxtotal,
                       vem_discprofit, vem_discount, vem_createat, vem_baseentry, vem_basetype, vem_doctype, vem_idadd, vem_adress, vem_paytype,
-                      vem_createby,vem_transport,vem_sup_transport,vem_ci,vem_t_vehiculo,vem_guia,vem_opl,vem_placa,vem_precinto,vem_placav,vem_modelv,vem_driverv,vem_driverid)
+                      vem_createby,vem_transport,vem_sup_transport,vem_ci,vem_t_vehiculo,vem_guia,vem_opl,vem_placa,vem_precinto,vem_placav,vem_modelv,
+					  vem_driverv,vem_driverid,vem_business,vem_branch)
 					  VALUES(:vem_series, :vem_docnum, :vem_docdate, :vem_duedate, :vem_duedev, :vem_pricelist, :vem_cardcode, :vem_cardname,
                       :vem_currency, :vem_contacid, :vem_slpcode, :vem_empid, :vem_comment, :vem_doctotal, :vem_baseamnt, :vem_taxtotal, :vem_discprofit, :vem_discount,
                       :vem_createat, :vem_baseentry, :vem_basetype, :vem_doctype, :vem_idadd, :vem_adress, :vem_paytype,:vem_createby,
-					  :vem_transport,:vem_sup_transport,:vem_ci,:vem_t_vehiculo,:vem_guia,:vem_opl,:vem_placa,:vem_precinto,:vem_placav,:vem_modelv,:vem_driverv,:vem_driverid)";
+					  :vem_transport,:vem_sup_transport,:vem_ci,:vem_t_vehiculo,:vem_guia,:vem_opl,:vem_placa,:vem_precinto,:vem_placav,:vem_modelv,
+					  :vem_driverv,:vem_driverid,:vem_business,:vem_branch)";
 
 
 
@@ -449,7 +464,9 @@ class SalesDel extends REST_Controller
 			':vem_placav' => isset($Data['vem_placav']) ? $Data['vem_placav'] : NULL,
 			':vem_modelv' => isset($Data['vem_modelv']) ? $Data['vem_modelv'] : NULL,
 			':vem_driverv' => isset($Data['vem_driverv']) ? $Data['vem_driverv'] : NULL,
-			':vem_driverid' => isset($Data['vem_driverid']) ? $Data['vem_driverid'] : NULL
+			':vem_driverid' => isset($Data['vem_driverid']) ? $Data['vem_driverid'] : NULL,
+			':vem_business' => isset($Data['vem_business']) ? $Data['vem_business'] : NULL,
+			':vem_branch' => isset($Data['vem_branch']) ? $Data['vem_branch'] : NULL
 
 
 
@@ -674,9 +691,9 @@ class SalesDel extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
                                     em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
+                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp,em1_ubication)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
                                     :em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
-                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp)";
+                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp,:em1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':em1_docentry' => $resInsert,
@@ -700,7 +717,8 @@ class SalesDel extends REST_Controller
 					':em1_inventory' => is_numeric($detail['em1_inventory']) ? $detail['em1_inventory'] : NULL,
 					':em1_acciva' => is_numeric($detail['em1_cuentaIva']) ? $detail['em1_cuentaIva'] : 0,
 					':em1_linenum' => is_numeric($detail['em1_linenum']) ? $detail['em1_linenum'] : 0,
-					':em1_codimp' => isset($detail['em1_codimp']) ? $detail['em1_codimp'] : NULL
+					':em1_codimp' => isset($detail['em1_codimp']) ? $detail['em1_codimp'] : NULL,
+					':em1_ubication' => isset($detail['em1_ubication']) ? $detail['em1_ubication'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1805,7 +1823,8 @@ class SalesDel extends REST_Controller
 										vem_empid=:vem_empid, vem_comment=:vem_comment, vem_doctotal=:vem_doctotal, vem_baseamnt=:vem_baseamnt,
 										vem_taxtotal=:vem_taxtotal, vem_discprofit=:vem_discprofit, vem_discount=:vem_discount, vem_createat=:vem_createat,
 										vem_baseentry=:vem_baseentry, vem_basetype=:vem_basetype, vem_doctype=:vem_doctype, vem_idadd=:vem_idadd,
-										vem_adress=:vem_adress, vem_paytype=:vem_paytype WHERE vem_docentry=:vem_docentry";
+										vem_adress=:vem_adress, vem_paytype=:vem_paytype ,vem_business = :vem_business,vem_branch = :vem_branch
+										WHERE vem_docentry=:vem_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -1834,6 +1853,8 @@ class SalesDel extends REST_Controller
 			':vem_idadd' => isset($Data['vem_idadd']) ? $Data['vem_idadd'] : NULL,
 			':vem_adress' => isset($Data['vem_adress']) ? $Data['vem_adress'] : NULL,
 			':vem_paytype' => is_numeric($Data['vem_paytype']) ? $Data['vem_paytype'] : 0,
+			':vem_business' => isset($Data['vem_business']) ? $Data['vem_business'] : NULL,
+			':vem_branch' => isset($Data['vem_branch']) ? $Data['vem_branch'] : NULL,
 			':vem_docentry' => $Data['vem_docentry']
 		));
 
@@ -1845,9 +1866,9 @@ class SalesDel extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
 																			em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-																			em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory,em1_acciva)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
+																			em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory,em1_acciva,em1_ubication)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
 																			:em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
-																			:em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva)";
+																			:em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva,:em1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':em1_docentry' => $Data['vem_docentry'],
@@ -1869,7 +1890,8 @@ class SalesDel extends REST_Controller
 					':em1_doctype' => is_numeric($detail['em1_doctype']) ? $detail['em1_doctype'] : 0,
 					':em1_avprice' => is_numeric($detail['em1_avprice']) ? $detail['em1_avprice'] : 0,
 					':em1_inventory' => is_numeric($detail['em1_inventory']) ? $detail['em1_inventory'] : NULL,
-					':em1_acciva' => is_numeric($detail['em1_cuentaIva']) ? $detail['em1_cuentaIva'] : 0
+					':em1_acciva' => is_numeric($detail['em1_cuentaIva']) ? $detail['em1_cuentaIva'] : 0,
+					':em1_ubication' => isset($detail['em1_ubication']) ? $detail['em1_ubication'] : NULL,
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

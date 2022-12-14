@@ -31,6 +31,20 @@ class SalesOrder extends REST_Controller {
 			$DocNumVerificado = 0;
 			$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 
+			if (!isset($Data['vov_business']) OR
+				!isset($Data['vov_branch'])) {
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'La informacion enviada no es valida'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+
       if(!isset($Data['detail'])){
 
         $respuesta = array(
@@ -333,9 +347,9 @@ class SalesOrder extends REST_Controller {
         $sqlInsert = "INSERT INTO dvov(vov_series, vov_docnum, vov_docdate, vov_duedate, vov_duedev, vov_pricelist, vov_cardcode,
                       vov_cardname, vov_currency, vov_contacid, vov_slpcode, vov_empid, vov_comment, vov_doctotal, vov_baseamnt, vov_taxtotal,
                       vov_discprofit, vov_discount, vov_createat, vov_baseentry, vov_basetype, vov_doctype, vov_idadd, vov_adress, vov_paytype,
-                      vov_attch,vov_createby)VALUES(:vov_series, :vov_docnum, :vov_docdate, :vov_duedate, :vov_duedev, :vov_pricelist, :vov_cardcode, :vov_cardname,
+                      vov_attch,vov_createby,vov_business,vov_branch)VALUES(:vov_series, :vov_docnum, :vov_docdate, :vov_duedate, :vov_duedev, :vov_pricelist, :vov_cardcode, :vov_cardname,
                       :vov_currency, :vov_contacid, :vov_slpcode, :vov_empid, :vov_comment, :vov_doctotal, :vov_baseamnt, :vov_taxtotal, :vov_discprofit, :vov_discount,
-                      :vov_createat, :vov_baseentry, :vov_basetype, :vov_doctype, :vov_idadd, :vov_adress, :vov_paytype, :vov_attch,:vov_createby)";
+                      :vov_createat, :vov_baseentry, :vov_basetype, :vov_doctype, :vov_idadd, :vov_adress, :vov_paytype, :vov_attch,:vov_createby,:vov_business,:vov_branch)";
 
 
 				// Se Inicia la transaccion,
@@ -347,34 +361,36 @@ class SalesOrder extends REST_Controller {
 			  $this->pedeo->trans_begin();
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':vov_docnum' => $DocNumVerificado,
-              ':vov_series' => is_numeric($Data['vov_series'])?$Data['vov_series']:0,
-              ':vov_docdate' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
-              ':vov_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
-              ':vov_duedev' => $this->validateDate($Data['vov_duedev'])?$Data['vov_duedev']:NULL,
-              ':vov_pricelist' => is_numeric($Data['vov_pricelist'])?$Data['vov_pricelist']:0,
-              ':vov_cardcode' => isset($Data['vov_cardcode'])?$Data['vov_cardcode']:NULL,
-              ':vov_cardname' => isset($Data['vov_cardname'])?$Data['vov_cardname']:NULL,
-              ':vov_currency' => isset($Data['vov_currency'])?$Data['vov_currency']:NULL,
-              ':vov_contacid' => isset($Data['vov_contacid'])?$Data['vov_contacid']:NULL,
-              ':vov_slpcode' => is_numeric($Data['vov_slpcode'])?$Data['vov_slpcode']:0,
-              ':vov_empid' => is_numeric($Data['vov_empid'])?$Data['vov_empid']:0,
-              ':vov_comment' => isset($Data['vov_comment'])?$Data['vov_comment']:NULL,
-              ':vov_doctotal' => is_numeric($Data['vov_doctotal'])?$Data['vov_doctotal']:0,
-              ':vov_baseamnt' => is_numeric($Data['vov_baseamnt'])?$Data['vov_baseamnt']:0,
-              ':vov_taxtotal' => is_numeric($Data['vov_taxtotal'])?$Data['vov_taxtotal']:0,
-              ':vov_discprofit' => is_numeric($Data['vov_discprofit'])?$Data['vov_discprofit']:0,
-              ':vov_discount' => is_numeric($Data['vov_discount'])?$Data['vov_discount']:0,
-              ':vov_createat' => $this->validateDate($Data['vov_createat'])?$Data['vov_createat']:NULL,
-              ':vov_baseentry' => is_numeric($Data['vov_baseentry'])?$Data['vov_baseentry']:0,
-              ':vov_basetype' => is_numeric($Data['vov_basetype'])?$Data['vov_basetype']:0,
-              ':vov_doctype' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
-              ':vov_idadd' => isset($Data['vov_idadd'])?$Data['vov_idadd']:NULL,
-              ':vov_adress' => isset($Data['vov_adress'])?$Data['vov_adress']:NULL,
-              ':vov_paytype' => is_numeric($Data['vov_paytype'])?$Data['vov_paytype']:0,
-							':vov_createby' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
-              ':vov_attch' => $this->getUrl(count(trim(($Data['vov_attch']))) > 0 ? $Data['vov_attch']:NULL, $resMainFolder[0]['main_folder'])
-						));
+              	':vov_docnum' => $DocNumVerificado,
+              	':vov_series' => is_numeric($Data['vov_series'])?$Data['vov_series']:0,
+              	':vov_docdate' => $this->validateDate($Data['vov_docdate'])?$Data['vov_docdate']:NULL,
+              	':vov_duedate' => $this->validateDate($Data['vov_duedate'])?$Data['vov_duedate']:NULL,
+              	':vov_duedev' => $this->validateDate($Data['vov_duedev'])?$Data['vov_duedev']:NULL,
+              	':vov_pricelist' => is_numeric($Data['vov_pricelist'])?$Data['vov_pricelist']:0,
+              	':vov_cardcode' => isset($Data['vov_cardcode'])?$Data['vov_cardcode']:NULL,
+              	':vov_cardname' => isset($Data['vov_cardname'])?$Data['vov_cardname']:NULL,
+              	':vov_currency' => isset($Data['vov_currency'])?$Data['vov_currency']:NULL,
+              	':vov_contacid' => isset($Data['vov_contacid'])?$Data['vov_contacid']:NULL,
+              	':vov_slpcode' => is_numeric($Data['vov_slpcode'])?$Data['vov_slpcode']:0,
+              	':vov_empid' => is_numeric($Data['vov_empid'])?$Data['vov_empid']:0,
+              	':vov_comment' => isset($Data['vov_comment'])?$Data['vov_comment']:NULL,
+              	':vov_doctotal' => is_numeric($Data['vov_doctotal'])?$Data['vov_doctotal']:0,
+              	':vov_baseamnt' => is_numeric($Data['vov_baseamnt'])?$Data['vov_baseamnt']:0,
+              	':vov_taxtotal' => is_numeric($Data['vov_taxtotal'])?$Data['vov_taxtotal']:0,
+              	':vov_discprofit' => is_numeric($Data['vov_discprofit'])?$Data['vov_discprofit']:0,
+              	':vov_discount' => is_numeric($Data['vov_discount'])?$Data['vov_discount']:0,
+              	':vov_createat' => $this->validateDate($Data['vov_createat'])?$Data['vov_createat']:NULL,
+              	':vov_baseentry' => is_numeric($Data['vov_baseentry'])?$Data['vov_baseentry']:0,
+              	':vov_basetype' => is_numeric($Data['vov_basetype'])?$Data['vov_basetype']:0,
+              	':vov_doctype' => is_numeric($Data['vov_doctype'])?$Data['vov_doctype']:0,
+              	':vov_idadd' => isset($Data['vov_idadd'])?$Data['vov_idadd']:NULL,
+              	':vov_adress' => isset($Data['vov_adress'])?$Data['vov_adress']:NULL,
+              	':vov_paytype' => is_numeric($Data['vov_paytype'])?$Data['vov_paytype']:0,
+				':vov_createby' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
+				':vov_business' => isset($Data['vov_business'])?$Data['vov_business']:NULL,
+				':vov_branch' => isset($Data['vov_branch'])?$Data['vov_branch']:NULL,
+              	':vov_attch' => $this->getUrl(count(trim(($Data['vov_attch']))) > 0 ? $Data['vov_attch']:NULL, $resMainFolder[0]['main_folder'])
+			));
 
         if(is_numeric($resInsert) && $resInsert > 0){
 
@@ -603,9 +619,9 @@ class SalesOrder extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vov1(ov1_docentry, ov1_itemcode, ov1_itemname, ov1_quantity, ov1_uom, ov1_whscode,
                                     ov1_price, ov1_vat, ov1_vatsum, ov1_discount, ov1_linetotal, ov1_costcode, ov1_ubusiness, ov1_project,
-                                    ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva, ov1_codimp)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
+                                    ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva, ov1_codimp,ov1_ubication)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
                                     :ov1_uom, :ov1_whscode,:ov1_price, :ov1_vat, :ov1_vatsum, :ov1_discount, :ov1_linetotal, :ov1_costcode, :ov1_ubusiness, :ov1_project,
-                                    :ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory, :ov1_acciva, :ov1_codimp)";
+                                    :ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory, :ov1_acciva, :ov1_codimp,:ov1_ubication)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':ov1_docentry' => $resInsert,
@@ -627,8 +643,9 @@ class SalesOrder extends REST_Controller {
                         ':ov1_doctype' => is_numeric($detail['ov1_doctype'])?$detail['ov1_doctype']:0,
                         ':ov1_avprice' => is_numeric($detail['ov1_avprice'])?$detail['ov1_avprice']:0,
                         ':ov1_inventory' => is_numeric($detail['ov1_inventory'])?$detail['ov1_inventory']:NULL,
-												':ov1_acciva' => is_numeric($detail['ov1_acciva'])?$detail['ov1_acciva']:NULL,
-												':ov1_codimp' => isset($detail['ov1_codimp'])?$detail['ov1_codimp']:NULL
+						':ov1_acciva' => is_numeric($detail['ov1_acciva'])?$detail['ov1_acciva']:NULL,
+						':ov1_codimp' => isset($detail['ov1_codimp'])?$detail['ov1_codimp']:NULL,
+						':ov1_ubication' => isset($detail['ov1_ubication'])?$detail['ov1_ubication']:NULL
                 ));
 
 								if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -837,7 +854,8 @@ class SalesOrder extends REST_Controller {
 										vov_empid=:vov_empid, vov_comment=:vov_comment, vov_doctotal=:vov_doctotal, vov_baseamnt=:vov_baseamnt,
 										vov_taxtotal=:vov_taxtotal, vov_discprofit=:vov_discprofit, vov_discount=:vov_discount, vov_createat=:vov_createat,
 										vov_baseentry=:vov_baseentry, vov_basetype=:vov_basetype, vov_doctype=:vov_doctype, vov_idadd=:vov_idadd,
-										vov_adress=:vov_adress, vov_paytype=:vov_paytype, vov_attch=:vov_attch WHERE vov_docentry=:vov_docentry";
+										vov_adress=:vov_adress, vov_paytype=:vov_paytype, vov_attch=:vov_attch , vov_business = :vov_business,vov_branch = :vov_branch
+										WHERE vov_docentry=:vov_docentry";
 
       $this->pedeo->trans_begin();
 
@@ -866,6 +884,8 @@ class SalesOrder extends REST_Controller {
 							':vov_idadd' => isset($Data['vov_idadd'])?$Data['vov_idadd']:NULL,
 							':vov_adress' => isset($Data['vov_adress'])?$Data['vov_adress']:NULL,
 							':vov_paytype' => is_numeric($Data['vov_paytype'])?$Data['vov_paytype']:0,
+							':vov_business' => isset($Data['vov_business'])?$Data['vov_business']:NULL,
+							':vov_branch' => isset($Data['vov_branch'])?$Data['vov_branch']:NULL,
 							':vov_attch' => $this->getUrl(count(trim(($Data['vov_attch']))) > 0 ? $Data['vov_attch']:NULL , $resMainFolder[0]['main_folder']),
 							':vov_docentry' => $Data['vov_docentry']
       ));
@@ -878,9 +898,9 @@ class SalesOrder extends REST_Controller {
 
 									$sqlInsertDetail = "INSERT INTO vov1(ov1_docentry, ov1_itemcode, ov1_itemname, ov1_quantity, ov1_uom, ov1_whscode,
 																			ov1_price, ov1_vat, ov1_vatsum, ov1_discount, ov1_linetotal, ov1_costcode, ov1_ubusiness, ov1_project,
-																			ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
+																			ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva,ov1_ubication)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
 																			:ov1_uom, :ov1_whscode,:ov1_price, :ov1_vat, :ov1_vatsum, :ov1_discount, :ov1_linetotal, :ov1_costcode, :ov1_ubusiness, :ov1_project,
-																			:ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory, :ov1_acciva)";
+																			:ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory, :ov1_acciva,:ov1_ubication)";
 
 									$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 											':ov1_docentry' => $resInsert,
@@ -902,7 +922,8 @@ class SalesOrder extends REST_Controller {
 											':ov1_doctype' => is_numeric($detail['ov1_doctype'])?$detail['ov1_doctype']:0,
 											':ov1_avprice' => is_numeric($detail['ov1_avprice'])?$detail['ov1_avprice']:0,
 											':ov1_inventory' => is_numeric($detail['ov1_inventory'])?$detail['ov1_inventory']:NULL,
-											':ov1_acciva' => is_numeric($detail['ov1_acciva'])?$detail['ov1_acciva']:NULL
+											':ov1_acciva' => is_numeric($detail['ov1_acciva'])?$detail['ov1_acciva']:NULL,
+											':ov1_ubication' => is_numeric($detail['ov1_ubication'])?$detail['ov1_ubication']:NULL
 									));
 
 									if(is_numeric($resInsertDetail) && $resInsertDetail > 0){

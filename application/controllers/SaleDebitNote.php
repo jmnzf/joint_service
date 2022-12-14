@@ -69,10 +69,11 @@ class SaleDebitNote extends REST_Controller {
 
         $sqlInsert = "INSERT INTO dvnd(vnd_doc_num, vnd_doc_date, vnd_doc_duedate, vnd_doc_duedev, vnd_price_list, vnd_card_code, vnd_card_name,
                       vnd_currency, vnd_contacid, vnd_slp_code, vnd_empid, vnd_comment, vnd_doc_total, vnd_base_amnt, vnd_tax_total, vnd_disc_profit,
-                      vnd_discount, vnd_createat, vnd_base_entry, vnd_base_type, vnd_doc_type, vnd_id_add, vnd_adress, vnd_pay_type, vnd_attch)
+                      vnd_discount, vnd_createat, vnd_base_entry, vnd_base_type, vnd_doc_type, vnd_id_add, vnd_adress, vnd_pay_type, vnd_attch,
+                      vnd_business,vnd_branch)
 	                    VALUES (:vnd_doc_num,:vnd_doc_date,:vnd_doc_duedate,:vnd_doc_duedev,:vnd_price_list,:vnd_card_code,:vnd_card_name,:vnd_currency,
                       :vnd_contacid,:vnd_slp_code,:vnd_empid,:vnd_comment,:vnd_doc_total,:vnd_base_amnt,:vnd_tax_total,:vnd_disc_profit,:vnd_discount,
-                      :vnd_createat,:vnd_base_entry,:vnd_base_type,:vnd_doc_type,:vnd_id_add,:vnd_adress,:vnd_pay_type,:vnd_attch)";
+                      :vnd_createat,:vnd_base_entry,:vnd_base_type,:vnd_doc_type,:vnd_id_add,:vnd_adress,:vnd_pay_type,:vnd_attch,:vnd_business,:vnd_branch)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -100,7 +101,10 @@ class SaleDebitNote extends REST_Controller {
               ':vnd_id_add' => $Data['vnd_id_add'],
               ':vnd_adress' => $Data['vnd_adress'],
               ':vnd_pay_type' => $Data['vnd_pay_type'],
-              ':vnd_attch' => $this->getUrl($Data['vnd_attch'])
+              ':vnd_attch' => $this->getUrl($Data['vnd_attch']),
+              ':vnd_business' => $Data['vnd_business'],
+              ':vnd_branch' => $Data['vnd_branch']
+              
 
         ));
 
@@ -113,9 +117,9 @@ class SaleDebitNote extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vnd1(nd1_doc_entry, nd1_item_code, nd1_quantity, nd1_uom, nd1_whscode, nd1_price, nd1_vat, nd1_vat_sum,
                                     nd1_discount, nd1_line_total, nd1_cost_code, nd1_ubusiness, nd1_project, nd1_acct_code, nd1_base_type, nd1_doc_type,
-                                    nd1_avprice, nd1_inventory, nd1_item_name)VALUES(:nd1_doc_entry,:nd1_item_code,:nd1_quantity,:nd1_uom,:nd1_whscode,:nd1_price,:nd1_vat,
+                                    nd1_avprice, nd1_inventory, nd1_item_name,nd1_ubication)VALUES(:nd1_doc_entry,:nd1_item_code,:nd1_quantity,:nd1_uom,:nd1_whscode,:nd1_price,:nd1_vat,
                                     :nd1_vat_sum,:nd1_discount,:nd1_line_total,:nd1_cost_code,:nd1_ubusiness,:nd1_project,:nd1_acct_code,:nd1_base_type,
-                                    :nd1_doc_type,:nd1_avprice,:nd1_inventory,nd1_item_name)";
+                                    :nd1_doc_type,:nd1_avprice,:nd1_inventory,nd1_item_name,:nd1_ubication)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':nd1_doc_entry' => $resInsert,
@@ -136,7 +140,8 @@ class SaleDebitNote extends REST_Controller {
                         ':nd1_doc_type' => $Data['nd1_doc_type'],
                         ':nd1_avprice' => $Data['nd1_avprice'],
                         ':nd1_inventory' => $Data['nd1_inventory'],
-                        ':nd1_item_name' => $Data['nd1_item_name']
+                        ':nd1_item_name' => $Data['nd1_item_name'],
+                        ':nd1_ubication' => isset($Data['nd1_ubication']) ? $Data['nd1_ubication'] : NULL
                 ));
           }
 
@@ -211,7 +216,7 @@ class SaleDebitNote extends REST_Controller {
                     vnd_contacid =:vnd_contacid, vnd_slp_code =:vnd_slp_code, vnd_empid =:vnd_empid, vnd_comment =:vnd_comment, vnd_doc_total =:vnd_doc_total,
                     vnd_base_amnt =:vnd_base_amnt, vnd_tax_total =:vnd_tax_total, vnd_disc_profit =:vnd_disc_profit, vnd_discount =:vnd_discount, vnd_createat =:vnd_createat,
                     vnd_base_entry =:vnd_base_entry, vnd_base_type =:vnd_base_type, vnd_doc_type =:vnd_doc_type, vnd_id_add =:vnd_id_add, vnd_adress =:vnd_adress,
-                    vnd_pay_type =:vnd_pay_type, vnd_attch =:vnd_attch
+                    vnd_pay_type =:vnd_pay_type, vnd_attch =:vnd_attch,vnd_business = :vnd_business,vnd_branch = vnd_branch,vnd_ubication = :vnd_ubication
 	                  WHERE vnd_doc_entry = :vnd_doc_entry ";
 
 
@@ -241,7 +246,7 @@ class SaleDebitNote extends REST_Controller {
               ':vnd_id_add' => $Data['vnd_id_add'],
               ':vnd_adress' => $Data['vnd_adress'],
               ':vnd_pay_type' => $Data['vnd_pay_type'],
-              ':vnd_attch' => $this->getUrl($Data['vnd_attch'])
+              ':vnd_attch' => $this->getUrl($Data['vnd_attch']),
 							':vnd_doc_entry' => $Data['vnd_doc_entry'],
       ));
 
