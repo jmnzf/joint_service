@@ -31,8 +31,8 @@ class SalesOrder extends REST_Controller {
 			$DocNumVerificado = 0;
 			$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 
-			if (!isset($Data['vov_business']) OR
-				!isset($Data['vov_branch'])) {
+			if (!isset($Data['business']) OR
+				!isset($Data['branch'])) {
 
 				$respuesta = array(
 					'error' => true,
@@ -347,9 +347,9 @@ class SalesOrder extends REST_Controller {
         $sqlInsert = "INSERT INTO dvov(vov_series, vov_docnum, vov_docdate, vov_duedate, vov_duedev, vov_pricelist, vov_cardcode,
                       vov_cardname, vov_currency, vov_contacid, vov_slpcode, vov_empid, vov_comment, vov_doctotal, vov_baseamnt, vov_taxtotal,
                       vov_discprofit, vov_discount, vov_createat, vov_baseentry, vov_basetype, vov_doctype, vov_idadd, vov_adress, vov_paytype,
-                      vov_attch,vov_createby,vov_business,vov_branch)VALUES(:vov_series, :vov_docnum, :vov_docdate, :vov_duedate, :vov_duedev, :vov_pricelist, :vov_cardcode, :vov_cardname,
+                      vov_attch,vov_createby,business,branch)VALUES(:vov_series, :vov_docnum, :vov_docdate, :vov_duedate, :vov_duedev, :vov_pricelist, :vov_cardcode, :vov_cardname,
                       :vov_currency, :vov_contacid, :vov_slpcode, :vov_empid, :vov_comment, :vov_doctotal, :vov_baseamnt, :vov_taxtotal, :vov_discprofit, :vov_discount,
-                      :vov_createat, :vov_baseentry, :vov_basetype, :vov_doctype, :vov_idadd, :vov_adress, :vov_paytype, :vov_attch,:vov_createby,:vov_business,:vov_branch)";
+                      :vov_createat, :vov_baseentry, :vov_basetype, :vov_doctype, :vov_idadd, :vov_adress, :vov_paytype, :vov_attch,:vov_createby,:business,:branch)";
 
 
 				// Se Inicia la transaccion,
@@ -387,8 +387,8 @@ class SalesOrder extends REST_Controller {
               	':vov_adress' => isset($Data['vov_adress'])?$Data['vov_adress']:NULL,
               	':vov_paytype' => is_numeric($Data['vov_paytype'])?$Data['vov_paytype']:0,
 				':vov_createby' => isset($Data['vov_createby'])?$Data['vov_createby']:NULL,
-				':vov_business' => isset($Data['vov_business'])?$Data['vov_business']:NULL,
-				':vov_branch' => isset($Data['vov_branch'])?$Data['vov_branch']:NULL,
+				':business' => isset($Data['business'])?$Data['business']:NULL,
+				':branch' => isset($Data['branch'])?$Data['branch']:NULL,
               	':vov_attch' => $this->getUrl(count(trim(($Data['vov_attch']))) > 0 ? $Data['vov_attch']:NULL, $resMainFolder[0]['main_folder'])
 			));
 
@@ -854,7 +854,7 @@ class SalesOrder extends REST_Controller {
 										vov_empid=:vov_empid, vov_comment=:vov_comment, vov_doctotal=:vov_doctotal, vov_baseamnt=:vov_baseamnt,
 										vov_taxtotal=:vov_taxtotal, vov_discprofit=:vov_discprofit, vov_discount=:vov_discount, vov_createat=:vov_createat,
 										vov_baseentry=:vov_baseentry, vov_basetype=:vov_basetype, vov_doctype=:vov_doctype, vov_idadd=:vov_idadd,
-										vov_adress=:vov_adress, vov_paytype=:vov_paytype, vov_attch=:vov_attch , vov_business = :vov_business,vov_branch = :vov_branch
+										vov_adress=:vov_adress, vov_paytype=:vov_paytype, vov_attch=:vov_attch , business = :business,branch = :branch
 										WHERE vov_docentry=:vov_docentry";
 
       $this->pedeo->trans_begin();
@@ -884,8 +884,8 @@ class SalesOrder extends REST_Controller {
 							':vov_idadd' => isset($Data['vov_idadd'])?$Data['vov_idadd']:NULL,
 							':vov_adress' => isset($Data['vov_adress'])?$Data['vov_adress']:NULL,
 							':vov_paytype' => is_numeric($Data['vov_paytype'])?$Data['vov_paytype']:0,
-							':vov_business' => isset($Data['vov_business'])?$Data['vov_business']:NULL,
-							':vov_branch' => isset($Data['vov_branch'])?$Data['vov_branch']:NULL,
+							':business' => isset($Data['business'])?$Data['business']:NULL,
+							':branch' => isset($Data['branch'])?$Data['branch']:NULL,
 							':vov_attch' => $this->getUrl(count(trim(($Data['vov_attch']))) > 0 ? $Data['vov_attch']:NULL , $resMainFolder[0]['main_folder']),
 							':vov_docentry' => $Data['vov_docentry']
       ));

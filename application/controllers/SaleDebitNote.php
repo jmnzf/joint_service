@@ -70,10 +70,10 @@ class SaleDebitNote extends REST_Controller {
         $sqlInsert = "INSERT INTO dvnd(vnd_doc_num, vnd_doc_date, vnd_doc_duedate, vnd_doc_duedev, vnd_price_list, vnd_card_code, vnd_card_name,
                       vnd_currency, vnd_contacid, vnd_slp_code, vnd_empid, vnd_comment, vnd_doc_total, vnd_base_amnt, vnd_tax_total, vnd_disc_profit,
                       vnd_discount, vnd_createat, vnd_base_entry, vnd_base_type, vnd_doc_type, vnd_id_add, vnd_adress, vnd_pay_type, vnd_attch,
-                      vnd_business,vnd_branch)
+                      business,branch)
 	                    VALUES (:vnd_doc_num,:vnd_doc_date,:vnd_doc_duedate,:vnd_doc_duedev,:vnd_price_list,:vnd_card_code,:vnd_card_name,:vnd_currency,
                       :vnd_contacid,:vnd_slp_code,:vnd_empid,:vnd_comment,:vnd_doc_total,:vnd_base_amnt,:vnd_tax_total,:vnd_disc_profit,:vnd_discount,
-                      :vnd_createat,:vnd_base_entry,:vnd_base_type,:vnd_doc_type,:vnd_id_add,:vnd_adress,:vnd_pay_type,:vnd_attch,:vnd_business,:vnd_branch)";
+                      :vnd_createat,:vnd_base_entry,:vnd_base_type,:vnd_doc_type,:vnd_id_add,:vnd_adress,:vnd_pay_type,:vnd_attch,:business,:branch)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -102,8 +102,8 @@ class SaleDebitNote extends REST_Controller {
               ':vnd_adress' => $Data['vnd_adress'],
               ':vnd_pay_type' => $Data['vnd_pay_type'],
               ':vnd_attch' => $this->getUrl($Data['vnd_attch']),
-              ':vnd_business' => $Data['vnd_business'],
-              ':vnd_branch' => $Data['vnd_branch']
+              ':business' => $Data['business'],
+              ':branch' => $Data['branch']
               
 
         ));
@@ -216,7 +216,7 @@ class SaleDebitNote extends REST_Controller {
                     vnd_contacid =:vnd_contacid, vnd_slp_code =:vnd_slp_code, vnd_empid =:vnd_empid, vnd_comment =:vnd_comment, vnd_doc_total =:vnd_doc_total,
                     vnd_base_amnt =:vnd_base_amnt, vnd_tax_total =:vnd_tax_total, vnd_disc_profit =:vnd_disc_profit, vnd_discount =:vnd_discount, vnd_createat =:vnd_createat,
                     vnd_base_entry =:vnd_base_entry, vnd_base_type =:vnd_base_type, vnd_doc_type =:vnd_doc_type, vnd_id_add =:vnd_id_add, vnd_adress =:vnd_adress,
-                    vnd_pay_type =:vnd_pay_type, vnd_attch =:vnd_attch,vnd_business = :vnd_business,vnd_branch = vnd_branch,vnd_ubication = :vnd_ubication
+                    vnd_pay_type =:vnd_pay_type, vnd_attch =:vnd_attch,business = :business,branch = branch,vnd_ubication = :vnd_ubication
 	                  WHERE vnd_doc_entry = :vnd_doc_entry ";
 
 

@@ -29,8 +29,8 @@ class SalesDel extends REST_Controller
 	//CREAR NUEVA Entrega de Ventas
 	public function createSalesDel_post()
 	{
-		if (!isset($Data['vem_business']) OR
-				!isset($Data['vem_branch'])) {
+		if (!isset($Data['business']) OR
+				!isset($Data['branch'])) {
 
 				$respuesta = array(
 					'error' => true,
@@ -405,12 +405,12 @@ class SalesDel extends REST_Controller
                       vem_cardname, vem_currency, vem_contacid, vem_slpcode, vem_empid, vem_comment, vem_doctotal, vem_baseamnt, vem_taxtotal,
                       vem_discprofit, vem_discount, vem_createat, vem_baseentry, vem_basetype, vem_doctype, vem_idadd, vem_adress, vem_paytype,
                       vem_createby,vem_transport,vem_sup_transport,vem_ci,vem_t_vehiculo,vem_guia,vem_opl,vem_placa,vem_precinto,vem_placav,vem_modelv,
-					  vem_driverv,vem_driverid,vem_business,vem_branch)
+					  vem_driverv,vem_driverid,business,branch)
 					  VALUES(:vem_series, :vem_docnum, :vem_docdate, :vem_duedate, :vem_duedev, :vem_pricelist, :vem_cardcode, :vem_cardname,
                       :vem_currency, :vem_contacid, :vem_slpcode, :vem_empid, :vem_comment, :vem_doctotal, :vem_baseamnt, :vem_taxtotal, :vem_discprofit, :vem_discount,
                       :vem_createat, :vem_baseentry, :vem_basetype, :vem_doctype, :vem_idadd, :vem_adress, :vem_paytype,:vem_createby,
 					  :vem_transport,:vem_sup_transport,:vem_ci,:vem_t_vehiculo,:vem_guia,:vem_opl,:vem_placa,:vem_precinto,:vem_placav,:vem_modelv,
-					  :vem_driverv,:vem_driverid,:vem_business,:vem_branch)";
+					  :vem_driverv,:vem_driverid,:business,:branch)";
 
 
 
@@ -465,8 +465,8 @@ class SalesDel extends REST_Controller
 			':vem_modelv' => isset($Data['vem_modelv']) ? $Data['vem_modelv'] : NULL,
 			':vem_driverv' => isset($Data['vem_driverv']) ? $Data['vem_driverv'] : NULL,
 			':vem_driverid' => isset($Data['vem_driverid']) ? $Data['vem_driverid'] : NULL,
-			':vem_business' => isset($Data['vem_business']) ? $Data['vem_business'] : NULL,
-			':vem_branch' => isset($Data['vem_branch']) ? $Data['vem_branch'] : NULL
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 
 
 
@@ -1823,7 +1823,7 @@ class SalesDel extends REST_Controller
 										vem_empid=:vem_empid, vem_comment=:vem_comment, vem_doctotal=:vem_doctotal, vem_baseamnt=:vem_baseamnt,
 										vem_taxtotal=:vem_taxtotal, vem_discprofit=:vem_discprofit, vem_discount=:vem_discount, vem_createat=:vem_createat,
 										vem_baseentry=:vem_baseentry, vem_basetype=:vem_basetype, vem_doctype=:vem_doctype, vem_idadd=:vem_idadd,
-										vem_adress=:vem_adress, vem_paytype=:vem_paytype ,vem_business = :vem_business,vem_branch = :vem_branch
+										vem_adress=:vem_adress, vem_paytype=:vem_paytype ,business = :business,branch = :branch
 										WHERE vem_docentry=:vem_docentry";
 
 		$this->pedeo->trans_begin();
@@ -1853,8 +1853,8 @@ class SalesDel extends REST_Controller
 			':vem_idadd' => isset($Data['vem_idadd']) ? $Data['vem_idadd'] : NULL,
 			':vem_adress' => isset($Data['vem_adress']) ? $Data['vem_adress'] : NULL,
 			':vem_paytype' => is_numeric($Data['vem_paytype']) ? $Data['vem_paytype'] : 0,
-			':vem_business' => isset($Data['vem_business']) ? $Data['vem_business'] : NULL,
-			':vem_branch' => isset($Data['vem_branch']) ? $Data['vem_branch'] : NULL,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 			':vem_docentry' => $Data['vem_docentry']
 		));
 

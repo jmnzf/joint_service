@@ -29,8 +29,8 @@ class Quotation extends REST_Controller
 	public function createQuotation_post()
 	{
 
-		if (!isset($Data['dvc_business']) OR
-				!isset($Data['dvc_branch'])) {
+		if (!isset($Data['business']) OR
+				!isset($Data['branch'])) {
 
 				$respuesta = array(
 					'error' => true,
@@ -334,7 +334,7 @@ class Quotation extends REST_Controller
 		$sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                    dvc_createby,dvc_business,dvc_branch)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
+                    dvc_createby,business,branch)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
                       :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
                       :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype,:dvc_createby)";
 
@@ -374,8 +374,8 @@ class Quotation extends REST_Controller
 			':dvc_adress' => isset($Data['dvc_adress']) ? $Data['dvc_adress'] : NULL,
 			':dvc_paytype' => is_numeric($Data['dvc_paytype']) ? $Data['dvc_paytype'] : 0,
 			':dvc_createby' => isset($Data['dvc_createby']) ? $Data['dvc_createby'] : NULL,
-			':dvc_business' => isset($Data['dvc_business']) ? $Data['dvc_business'] : NULL,
-			':dvc_branch' => isset($Data['dvc_branch']) ? $Data['dvc_branch'] : NULL
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 		
 		));
 
@@ -732,7 +732,7 @@ class Quotation extends REST_Controller
 										dvc_empid=:dvc_empid, dvc_comment=:dvc_comment, dvc_doctotal=:dvc_doctotal, dvc_baseamnt=:dvc_baseamnt,
 										dvc_taxtotal=:dvc_taxtotal, dvc_discprofit=:dvc_discprofit, dvc_discount=:dvc_discount, dvc_createat=:dvc_createat,
 										dvc_baseentry=:dvc_baseentry, dvc_basetype=:dvc_basetype, dvc_doctype=:dvc_doctype, dvc_idadd=:dvc_idadd,
-										dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype ,dvc_business = :dvc_business,dvc_branch = :dvc_branch
+										dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype ,business = :business,branch = :branch
 										WHERE dvc_docentry=:dvc_docentry";
 
 		$this->pedeo->trans_begin();
@@ -761,8 +761,8 @@ class Quotation extends REST_Controller
 			':dvc_idadd' => isset($Data['dvc_idadd']) ? $Data['dvc_idadd'] : NULL,
 			':dvc_adress' => isset($Data['dvc_adress']) ? $Data['dvc_adress'] : NULL,
 			':dvc_paytype' => is_numeric($Data['dvc_paytype']) ? $Data['dvc_paytype'] : 0,
-			':dvc_business' => isset($Data['dvc_business']) ? $Data['dvc_business'] : NULL,
-			':dvc_branch' => isset($Data['dvc_branch']) ? $Data['dvc_branch'] : NULL,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 			':dvc_docentry' => $Data['dvc_docentry']
 		));
 

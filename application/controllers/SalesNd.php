@@ -32,8 +32,8 @@ class SalesNd extends REST_Controller
 
 		try {
 
-			if (!isset($Data['vnd_business']) OR
-				!isset($Data['vnd_branch'])) {
+			if (!isset($Data['business']) OR
+				!isset($Data['branch'])) {
 
 				$respuesta = array(
 					'error' => true,
@@ -286,10 +286,10 @@ class SalesNd extends REST_Controller
 			$sqlInsert = "INSERT INTO dvnd(vnd_series, vnd_docnum, vnd_docdate, vnd_duedate, vnd_duedev, vnd_pricelist, vnd_cardcode,
 					                      vnd_cardname, vnd_currency, vnd_contacid, vnd_slpcode, vnd_empid, vnd_comment, vnd_doctotal, vnd_baseamnt, vnd_taxtotal,
 					                      vnd_discprofit, vnd_discount, vnd_createat, vnd_baseentry, vnd_basetype, vnd_doctype, vnd_idadd, vnd_adress, vnd_paytype,
-					                      vnd_createby,vnd_business,vnd_branch)VALUES(:vnd_series, :vnd_docnum, :vnd_docdate, :vnd_duedate, :vnd_duedev, :vnd_pricelist, :vnd_cardcode, :vnd_cardname,
+					                      vnd_createby,business,branch)VALUES(:vnd_series, :vnd_docnum, :vnd_docdate, :vnd_duedate, :vnd_duedev, :vnd_pricelist, :vnd_cardcode, :vnd_cardname,
 					                      :vnd_currency, :vnd_contacid, :vnd_slpcode, :vnd_empid, :vnd_comment, :vnd_doctotal, :vnd_baseamnt, :vnd_taxtotal, :vnd_discprofit, :vnd_discount,
 					                      :vnd_createat, :vnd_baseentry, :vnd_basetype, :vnd_doctype, :vnd_idadd, :vnd_adress, :vnd_paytype,:vnd_createby,
-										  :vnd_business,:vnd_branch)";
+										  :business,:branch)";
 
 
 			// Se Inicia la transaccion,
@@ -329,8 +329,8 @@ class SalesNd extends REST_Controller
 				':vnd_adress' => isset($Data['vnd_adress']) ? $Data['vnd_adress'] : NULL,
 				':vnd_paytype' => is_numeric($Data['vnd_paytype']) ? $Data['vnd_paytype'] : 0,
 				':vnd_createby' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL,
-				':vnd_business' => isset($Data['vnd_business']) ? $Data['vnd_business'] : NULL,
-				':vnd_branch' => isset($Data['vnd_branch']) ? $Data['vnd_branch'] : NULL
+				':business' => isset($Data['business']) ? $Data['business'] : NULL,
+				':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 			));
 
 			if (is_numeric($resInsert) && $resInsert > 0) {
@@ -1333,7 +1333,7 @@ class SalesNd extends REST_Controller
 										vnd_empid=:vnd_empid, vnd_comment=:vnd_comment, vnd_doctotal=:vnd_doctotal, vnd_baseamnt=:vnd_baseamnt,
 										vnd_taxtotal=:vnd_taxtotal, vnd_discprofit=:vnd_discprofit, vnd_discount=:vnd_discount, vnd_createat=:vnd_createat,
 										vnd_baseentry=:vnd_baseentry, vnd_basetype=:vnd_basetype, vnd_doctype=:vnd_doctype, vnd_idadd=:vnd_idadd,
-										vnd_adress=:vnd_adress, vnd_paytype=:vnd_paytype ,vnd_business = :vnd_business,vnd_branch = :vnd_branch
+										vnd_adress=:vnd_adress, vnd_paytype=:vnd_paytype ,business = :business,branch = :branch
 										WHERE vnd_docentry=:vnd_docentry";
 
 		$this->pedeo->trans_begin();
@@ -1363,8 +1363,8 @@ class SalesNd extends REST_Controller
 			':vnd_idadd' => isset($Data['vnd_idadd']) ? $Data['vnd_idadd'] : NULL,
 			':vnd_adress' => isset($Data['vnd_adress']) ? $Data['vnd_adress'] : NULL,
 			':vnd_paytype' => is_numeric($Data['vnd_paytype']) ? $Data['vnd_paytype'] : 0,
-			':vnd_business' => isset($Data['vnd_business']) ? $Data['vnd_business'] : NULL,
-			':vnd_branch' => isset($Data['vnd_branch']) ? $Data['vnd_branch'] : NULL,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 			':vnd_docentry' => $Data['vnd_docentry'],
 			
 		));

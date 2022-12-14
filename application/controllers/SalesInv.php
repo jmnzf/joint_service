@@ -29,8 +29,8 @@ class SalesInv extends REST_Controller
 	//CREAR NUEVA FACTURA DE VENTAS
 	public function createSalesInv_post()
 	{
-		if (!isset($Data['dvf_business']) OR
-				!isset($Data['dvf_branch'])) {
+		if (!isset($Data['business']) OR
+				!isset($Data['branch'])) {
 
 				$respuesta = array(
 					'error' => true,
@@ -377,12 +377,12 @@ class SalesInv extends REST_Controller
 						dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
 						dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
 						dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,
-						dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed,dvf_igtfcode,dvf_business,dvf_branch)
+						dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed,dvf_igtfcode,business,branch)
 						VALUES(:dvf_series, :dvf_docnum, :dvf_docdate, :dvf_duedate, :dvf_duedev, :dvf_pricelist, :dvf_cardcode, :dvf_cardname,
 						:dvf_currency, :dvf_contacid, :dvf_slpcode, :dvf_empid, :dvf_comment, :dvf_doctotal, :dvf_baseamnt, :dvf_taxtotal, :dvf_discprofit, :dvf_discount,
 						:dvf_createat, :dvf_baseentry, :dvf_basetype, :dvf_doctype, :dvf_idadd, :dvf_adress, :dvf_paytype, :dvf_createby,:dvf_correl,:dvf_transport,:dvf_sub_transport,:dvf_ci,:dvf_t_vehiculo,
 						:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfapplyed,
-						:dvf_igtfcode,:dvf_business,:dvf_branch)";
+						:dvf_igtfcode,:business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -439,8 +439,8 @@ class SalesInv extends REST_Controller
 				':dvf_taxigtf' => isset($Data['dvf_taxigtf']) ? $Data['dvf_taxigtf'] : NULL,
 				':dvf_igtfapplyed' => isset($Data['dvf_igtfapplyed']) ? $Data['dvf_igtfapplyed'] : NULL,
 				':dvf_igtfcode' => isset($Data['dvf_igtfcode']) ? $Data['dvf_igtfcode'] : NULL,
-				':dvf_business' => isset($Data['dvf_business']) ? $Data['dvf_business'] : NULL,
-				':dvf_branch' => isset($Data['dvf_branch']) ? $Data['dvf_branch'] : NULL
+				':business' => isset($Data['business']) ? $Data['business'] : NULL,
+				':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 			));
 
 			if (is_numeric($resInsert) && $resInsert > 0) {
@@ -3314,7 +3314,7 @@ class SalesInv extends REST_Controller
 										dvf_empid=:dvf_empid, dvf_comment=:dvf_comment, dvf_doctotal=:dvf_doctotal, dvf_baseamnt=:dvf_baseamnt,
 										dvf_taxtotal=:dvf_taxtotal, dvf_discprofit=:dvf_discprofit, dvf_discount=:dvf_discount, dvf_createat=:dvf_createat,
 										dvf_baseentry=:dvf_baseentry, dvf_basetype=:dvf_basetype, dvf_doctype=:dvf_doctype, dvf_idadd=:dvf_idadd,
-										dvf_adress=:dvf_adress, dvf_paytype=:dvf_paytype,dvf_business = :dvf_business,dvf_branch = :dvf_branch
+										dvf_adress=:dvf_adress, dvf_paytype=:dvf_paytype,business = :business,branch = :branch
 										WHERE dvf_docentry=:dvf_docentry";
 
 		$this->pedeo->trans_begin();
@@ -3344,8 +3344,8 @@ class SalesInv extends REST_Controller
 			':dvf_idadd' => isset($Data['dvf_idadd']) ? $Data['dvf_idadd'] : NULL,
 			':dvf_adress' => isset($Data['dvf_adress']) ? $Data['dvf_adress'] : NULL,
 			':dvf_paytype' => is_numeric($Data['dvf_paytype']) ? $Data['dvf_paytype'] : 0,
-			':dvf_business' => isset($Data['dvf_business']) ? $Data['dvf_business'] : NULL,
-			':dvf_branch' => isset($Data['dvf_branch']) ? $Data['dvf_branch'] : NULL,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 			':dvf_docentry' => $Data['dvf_docentry']
 		));
 

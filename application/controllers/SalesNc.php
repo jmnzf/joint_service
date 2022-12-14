@@ -30,7 +30,7 @@ class SalesNc extends REST_Controller
 	public function createSalesNc_post()
 	{
 		if (!isset($Data['vnc_business']) OR
-				!isset($Data['vnc_branch'])) {
+				!isset($Data['branch'])) {
 
 				$respuesta = array(
 					'error' => true,
@@ -322,10 +322,10 @@ class SalesNc extends REST_Controller
 		$sqlInsert = "INSERT INTO dvnc(vnc_series, vnc_docnum, vnc_docdate, vnc_duedate, vnc_duedev, vnc_pricelist, vnc_cardcode,
                       vnc_cardname, vnc_currency, vnc_contacid, vnc_slpcode, vnc_empid, vnc_comment, vnc_doctotal, vnc_baseamnt, vnc_taxtotal,
                       vnc_discprofit, vnc_discount, vnc_createat, vnc_baseentry, vnc_basetype, vnc_doctype, vnc_idadd, vnc_adress, vnc_paytype,
-                      vnc_createby, vnc_igtf, vnc_taxigtf, vnc_igtfapplyed, vnc_igtfcode,vnc_business,vnc_branch)VALUES(:vnc_series, :vnc_docnum, :vnc_docdate, :vnc_duedate, :vnc_duedev, :vnc_pricelist, :vnc_cardcode, :vnc_cardname,
+                      vnc_createby, vnc_igtf, vnc_taxigtf, vnc_igtfapplyed, vnc_igtfcode,vnc_business,branch)VALUES(:vnc_series, :vnc_docnum, :vnc_docdate, :vnc_duedate, :vnc_duedev, :vnc_pricelist, :vnc_cardcode, :vnc_cardname,
                       :vnc_currency, :vnc_contacid, :vnc_slpcode, :vnc_empid, :vnc_comment, :vnc_doctotal, :vnc_baseamnt, :vnc_taxtotal, :vnc_discprofit, :vnc_discount,
                       :vnc_createat, :vnc_baseentry, :vnc_basetype, :vnc_doctype, :vnc_idadd, :vnc_adress, :vnc_paytype,:vnc_createby,:vnc_igtf, 
-					  :vnc_taxigtf, :vnc_igtfapplyed, :vnc_igtfcode,:vnc_business,:vnc_branch)";
+					  :vnc_taxigtf, :vnc_igtfapplyed, :vnc_igtfcode,:vnc_business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -371,7 +371,7 @@ class SalesNc extends REST_Controller
 				':vnc_igtfapplyed' => isset($Data['dvf_igtfapplyed']) ? $Data['dvf_igtfapplyed'] : NULL,
 				':vnc_igtfcode' => isset($Data['dvf_igtfcode']) ? $Data['dvf_igtfcode'] : NULL,
 				':vnc_business' => isset($Data['vnc_business']) ? $Data['vnc_business'] : NULL,
-				':vnc_branch' => isset($Data['vnc_branch']) ? $Data['vnc_branch'] : NULL
+				':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 
 			));
 
@@ -2673,7 +2673,7 @@ class SalesNc extends REST_Controller
 										vnc_empid=:vnc_empid, vnc_comment=:vnc_comment, vnc_doctotal=:vnc_doctotal, vnc_baseamnt=:vnc_baseamnt,
 										vnc_taxtotal=:vnc_taxtotal, vnc_discprofit=:vnc_discprofit, vnc_discount=:vnc_discount, vnc_createat=:vnc_createat,
 										vnc_baseentry=:vnc_baseentry, vnc_basetype=:vnc_basetype, vnc_doctype=:vnc_doctype, vnc_idadd=:vnc_idadd,
-										vnc_adress=:vnc_adress, vnc_paytype=:vnc_paytype ,vnc_business = :vnc_business,vnc_branch = :vnc_branch
+										vnc_adress=:vnc_adress, vnc_paytype=:vnc_paytype ,vnc_business = :vnc_business,branch = :branch
 										WHERE vnc_docentry=:vnc_docentry";
 
 		$this->pedeo->trans_begin();
@@ -2704,7 +2704,7 @@ class SalesNc extends REST_Controller
 			':vnc_adress' => isset($Data['vnc_adress']) ? $Data['vnc_adress'] : NULL,
 			':vnc_paytype' => is_numeric($Data['vnc_paytype']) ? $Data['vnc_paytype'] : 0,
 			':vnc_business' => isset($Data['vnc_business']) ? $Data['vnc_business'] : NULL,
-			':vnc_branch' => isset($Data['vnc_branch']) ? $Data['vnc_branch'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 			':vnc_docentry' => $Data['vnc_docentry']
 		));
 
