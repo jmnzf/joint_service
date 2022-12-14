@@ -913,13 +913,14 @@ class ParModule extends REST_Controller {
 		 return;
 	 }
 
-	 $sqlInsert = "INSERT INTO mtdr(tdr_name, tdr_status)
-								VALUES(:tdr_name, :tdr_status)";
+	 $sqlInsert = "INSERT INTO mtdr(tdr_name, tdr_status, tdr_percentage)
+								VALUES(:tdr_name, :tdr_status, :tdr_percentage)";
 
 
 	 $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 			':tdr_name' => $Data['tdr_name'],
-			':tdr_status' => $Data['tdr_status']
+			':tdr_status' => $Data['tdr_status'],
+			':tdr_percentage' => $Data['tdr_percentage']
 	 ));
 
 
@@ -962,7 +963,7 @@ class ParModule extends REST_Controller {
 		 return;
 	 }
 
-	 $sqlUpdate = "UPDATE mtdr SET tdr_name = :tdr_name, tdr_status = :tdr_status
+	 $sqlUpdate = "UPDATE mtdr SET tdr_name = :tdr_name, tdr_status = :tdr_status, tdr_percentage = :tdr_percentage
 								 WHERE tdr_id = :tdr_id";
 
 
@@ -970,6 +971,7 @@ class ParModule extends REST_Controller {
 
 				 ':tdr_name' => $Data['tdr_name'],
 				 ':tdr_status' => $Data['tdr_status'],
+				 ':tdr_percentage' => $Data['tdr_percentage'],
 				 ':tdr_id' => $Data['tdr_id']
 	 ));
 
