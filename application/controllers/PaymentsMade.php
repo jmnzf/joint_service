@@ -27,7 +27,22 @@ class PaymentsMade extends REST_Controller {
 	//OBTENER PAGOS REALIZADOS
   public function getPaymentsMade_get(){
 
-    $sqlSelect = "SELECT * FROM gbpe";
+		$Data = $this->get();
+		$filtro = "";
+
+		if(!empty($Data['bpe_cardcode'])) {
+			$filtro .= " AND bpe_cardcode  = '{$Data['bpe_cardcode']}'";
+		}
+		if(!empty($Data['bpe_docdate'])) {
+			$filtro .= " AND bpe_docdate  BETWEEN '{$Data['bpe_docdate']}'  AND '{$Data['bpe_taxdate']}' ";
+		}
+		
+		if(!empty($Data['bpe_createby'])){
+			$filtro .= " AND bpe_createby  = '{$Data['bpe_createby']}'";
+		}
+
+
+    $sqlSelect = "SELECT * FROM gbpe WHERE 1 = 1".$filtro;
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

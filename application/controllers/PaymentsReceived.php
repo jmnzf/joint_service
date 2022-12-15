@@ -26,9 +26,22 @@ class PaymentsReceived extends REST_Controller {
 	// Obtener pagos recibidos
   public function getPaymentsReceived_get(){
 
+		$Data = $this->get();
+		$filtro = "";
+		if(!empty($Data['bpr_cardcode'])) {
+			$filtro .= " AND bpr_cardcode  = '{$Data['bpr_cardcode']}'";
+		}
+		if(!empty($Data['bpr_docdate'])) {
+			$filtro .= " AND bpr_docdate  BETWEEN '{$Data['bpr_docdate']}'  AND '{$Data['bpr_taxdate']}' ";
+		}
+		
+		if(!empty($Data['bpr_createby'])){
+			$filtro .= " AND bpr_createby  = '{$Data['bpr_createby']}'";
+		}
 
-    $sqlSelect = "SELECT * FROM gbpr";
 
+    $sqlSelect = "SELECT * FROM gbpr WHERE 1 = 1 ".$filtro;
+		
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
     if(isset($resSelect[0])){

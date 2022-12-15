@@ -60,8 +60,8 @@ class PartnersAccBank extends REST_Controller {
         return;
         }
 
-      $sqlInsert = "INSERT INTO dmsb(dmb_card_code,dmb_bank, dmb_bank_type, dmb_num_acc, dmb_major, dmb_status)VALUES(
-        :dmb_card_code, :dmb_bank, :dmb_bank_type, :dmb_num_acc, :dmb_major, :dmb_status)";
+      $sqlInsert = "INSERT INTO dmsb(dmb_card_code,dmb_bank, dmb_bank_type, dmb_num_acc, dmb_major, dmb_status, dmb_account)VALUES(
+        :dmb_card_code, :dmb_bank, :dmb_bank_type, :dmb_num_acc, :dmb_major, :dmb_status, :dmb_account)";
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -70,7 +70,8 @@ class PartnersAccBank extends REST_Controller {
              ':dmb_num_acc' => $Data['dmb_num_acc'],
              ':dmb_major' => $Data['dmb_major'],
              ':dmb_status' => $Data['dmb_status'],
-             ':dmb_card_code' => $Data['dmb_card_code']
+             ':dmb_card_code' => $Data['dmb_card_code'],
+             ':dmb_account' => $Data['dmb_account']
       ));
 
       if(is_numeric($resInsert) && $resInsert > 0){
@@ -124,7 +125,7 @@ class PartnersAccBank extends REST_Controller {
       $sqlUpdate = "UPDATE dmsb
                   	SET dmb_card_code = :dmb_card_code, dmb_bank = :dmb_bank,
                     dmb_bank_type = :dmb_bank_type, dmb_num_acc = :dmb_num_acc,
-                    dmb_major = :dmb_major, dmb_status = :dmb_status
+                    dmb_major = :dmb_major, dmb_status = :dmb_status, dmb_account = :dmb_account
                   	WHERE dmb_id = :dmb_id";
 
 
@@ -136,7 +137,8 @@ class PartnersAccBank extends REST_Controller {
         ':dmb_major' => $Data['dmb_major'],
         ':dmb_status' => $Data['dmb_status'],
         ':dmb_card_code' => $Data['dmb_card_code'],
-        ':dmb_id' => $Data['dmb_id']
+        ':dmb_id' => $Data['dmb_id'],
+        ':dmb_account' => $Data['dmb_account']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
