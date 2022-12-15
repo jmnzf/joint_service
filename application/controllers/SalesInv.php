@@ -29,13 +29,15 @@ class SalesInv extends REST_Controller
 	//CREAR NUEVA FACTURA DE VENTAS
 	public function createSalesInv_post()
 	{
+		$Data = $this->post();
+		// print_r($Data);exit;
 		if (!isset($Data['business']) OR
 				!isset($Data['branch'])) {
 
 				$respuesta = array(
 					'error' => true,
 					'data'  => array(),
-					'mensaje' => 'La informacion enviada no es valida'
+					'mensaje' => 'La informacion enviada no es valida AAA'
 				);
 
 				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -44,7 +46,6 @@ class SalesInv extends REST_Controller
 			}
 
 		$DECI_MALES =  $this->generic->getDecimals();
-		$Data = $this->post();
 		$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 		$DetalleAsientoIva = new stdClass();
 		$DetalleCostoInventario = new stdClass();
@@ -729,7 +730,7 @@ class SalesInv extends REST_Controller
 																			fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
 																			fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate, fv1_codimp,fv1_ubication)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,
 																			:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, :fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,
-																			:fv1_acctcode, :fv1_basetype, :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate, :fv1_codimp,fv1_ubication)";
+																			:fv1_acctcode, :fv1_basetype, :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate, :fv1_codimp,:fv1_ubication)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':fv1_docentry' => $resInsert,
@@ -3359,7 +3360,7 @@ class SalesInv extends REST_Controller
 																			fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
 																			fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva,fv1_ubication)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,
 																			:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, :fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,
-																			:fv1_acctcode, :fv1_basetype, :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva,fv1_ubication)";
+																			:fv1_acctcode, :fv1_basetype, :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva,:fv1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':fv1_docentry' => $Data['dvf_docentry'],
@@ -3382,7 +3383,7 @@ class SalesInv extends REST_Controller
 					':fv1_avprice' => is_numeric($detail['fv1_avprice']) ? $detail['fv1_avprice'] : 0,
 					':fv1_inventory' => is_numeric($detail['fv1_inventory']) ? $detail['fv1_inventory'] : NULL,
 					':fv1_acciva' => is_numeric($detail['fv1_cuentaIva']) ? $detail['fv1_cuentaIva'] : 0,
-					':fv1_ubication' => isset($detail['fv1_ubication']) ? $detail['fv1_ubication'] : NULL,
+					':fv1_ubication' => isset($detail['fv1_ubication']) ? $detail['fv1_ubication'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

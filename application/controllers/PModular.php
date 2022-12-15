@@ -378,5 +378,44 @@ class PModular extends REST_Controller {
 
 		$this->response($respuesta);
 	}
+	// OBTIENE LAS OPCIONES Y EL PRECIOS PARA UN PARAMETRO ESPECIFICO
+	public function getOptions_get(){
+
+		$Data = $this->get();
+
+		$sqlSelect = "SELECT lpc_price, 
+					pgn_name,
+					get_params(pgn_table, pgn_prefix, pe1_vparamcode) AS parametro
+					FROM mepe
+					INNER JOIN mlpc
+					ON epe_listpcode = lpc_id
+					INNER JOIN epe1
+					ON epe_id = pe1_epeid
+					INNER JOIN mpgn
+					ON pe1_paramcode = pgn_id
+					WHERE epe_id = :epe_id
+					ORDER BY pgn_name";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':epe_id' => $Data['epe_id']));
+
+		if(isset($resSelect[0])){
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $resSelect,
+					'mensaje' => '');
+
+		}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+		}
+
+		$this->response($respuesta);
+	}
 
 }
