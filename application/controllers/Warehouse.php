@@ -24,6 +24,7 @@ class Warehouse extends REST_Controller {
 
   //CREAR NUEVO ALMACEN
 	public function createWarehouse_post(){
+
       $Data = $this->post();
 
       if(!isset($Data['dws_code']) OR
@@ -38,7 +39,7 @@ class Warehouse extends REST_Controller {
          !isset($Data['dws_acct_cost']) OR
          !isset($Data['dws_enabled']) OR
          !isset($Data['dws_acct_return']) OR
-         !isset($Data['dws_business']) OR
+         !isset($Data['business']) OR
          !isset($Data['dws_acct_inv'])){
 
         $respuesta = array(
@@ -53,8 +54,8 @@ class Warehouse extends REST_Controller {
       }
 
         $sqlInsert = "INSERT INTO dmws(dws_code, dws_name, dws_ubication, dws_acctin, dws_acct_out, dws_acct_stockn, dws_acct_stockp, dws_acct_redu,
-                      dws_acct_amp, dws_acct_cost, dws_enabled, dws_acct_return, dws_acct_inv, dws_business)VALUES (:dws_code, :dws_name, :dws_ubication, :dws_acctin, :dws_acct_out,
-                      :dws_acct_stockn, :dws_acct_stockp, :dws_acct_redu, :dws_acct_amp, :dws_acct_cost, :dws_enabled, :dws_acct_return, :dws_acct_inv, :dws_business)";
+                      dws_acct_amp, dws_acct_cost, dws_enabled, dws_acct_return, dws_acct_inv, business)VALUES (:dws_code, :dws_name, :dws_ubication, :dws_acctin, :dws_acct_out,
+                      :dws_acct_stockn, :dws_acct_stockp, :dws_acct_redu, :dws_acct_amp, :dws_acct_cost, :dws_enabled, :dws_acct_return, :dws_acct_inv, :business)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -71,7 +72,7 @@ class Warehouse extends REST_Controller {
               ':dws_acct_cost' => $Data['dws_acct_cost'],
               ':dws_enabled' => $Data['dws_enabled'],
               ':dws_acct_return' => $Data['dws_acct_return'],
-              ':dws_business' => $Data['dws_business'],
+              ':business' => $Data['business'],
               ':dws_acct_inv' => $Data['dws_acct_inv']
         ));
 
@@ -114,7 +115,7 @@ class Warehouse extends REST_Controller {
          !isset($Data['dws_acct_cost']) OR
          !isset($Data['dws_enabled']) OR
          !isset($Data['dws_acct_return']) OR
-         !isset($Data['dws_business']) OR
+         !isset($Data['business']) OR
          !isset($Data['dws_id'])){
 
 
@@ -133,7 +134,7 @@ class Warehouse extends REST_Controller {
       $sqlUpdate = "UPDATE dmws SET dws_id =:dws_id, dws_code = :dws_code, dws_name = :dws_name, dws_ubication = :dws_ubication, dws_acctin = :dws_acctin,
                     dws_acct_out = :dws_acct_out, dws_acct_stockn = :dws_acct_stockn, dws_acct_stockp = :dws_acct_stockp,
                     dws_acct_redu = :dws_acct_redu, dws_acct_amp = :dws_acct_amp, dws_acct_cost = :dws_acct_cost, dws_enabled = :dws_enabled,
-                    dws_acct_return = :dws_acct_return, dws_acct_inv = :dws_acct_inv, dws_business = :dws_business WHERE dws_id = :dws_id";
+                    dws_acct_return = :dws_acct_return, dws_acct_inv = :dws_acct_inv, business = :business WHERE dws_id = :dws_id";
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
@@ -150,7 +151,7 @@ class Warehouse extends REST_Controller {
               ':dws_enabled' => $Data['dws_enabled'],
               ':dws_acct_return' => $Data['dws_acct_return'],
               ':dws_acct_inv' => $Data['dws_acct_inv'],
-              ':dws_business' => $Data['dws_business'],
+              ':business' => $Data['business'],
               ':dws_id' => $Data['dws_id']
       ));
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -179,9 +180,23 @@ class Warehouse extends REST_Controller {
   // OBTENER ALMACENES
   public function getWarehouse_get(){
 
-        $sqlSelect = " SELECT dmws.*, pgem.pge_small_name AS empresanombre FROM dmws LEFT JOIN pgem ON pgem.pge_id = dmws.dws_business";
+        $Data = $this->get();
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+        if(!isset($Data['business'])){
+          $respuesta = array(
+            'error' => true,
+            'data'  => array(),
+            'mensaje' =>'La informacion enviada no es valida'
+          );
+
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          return;
+        }
+
+        $sqlSelect = " SELECT dmws.*, pgem.pge_small_name AS empresanombre FROM dmws LEFT JOIN pgem ON pgem.pge_id = business WHERE business = :business";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 
         if(isset($resSelect[0])){
 
@@ -208,8 +223,7 @@ class Warehouse extends REST_Controller {
 
         $Data = $this->get();
 
-        if(!isset($Data['dws_id'])){
-
+        if( !isset($Data['dws_id']) OR !isset($Data['dws_id']) ){
 
           $respuesta = array(
             'error' => true,
@@ -248,8 +262,24 @@ class Warehouse extends REST_Controller {
   // OBTENER ALMACENEN QUE MANEJAN UBICACION
   public function getWarehouseByUbication_get(){
 
-        $sqlSelect = " SELECT dws_code AS id, dws_name AS text FROM dmws WHERE dws_ubication = 1 AND dws_enabled = 1";
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+        $Data = $this->get();
+
+        if( !isset($Data['business']) ){
+
+          $respuesta = array(
+            'error' => true,
+            'data'  => array(),
+            'mensaje' =>'La informacion enviada no es valida'
+          );
+
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          return;
+        }
+
+
+        $sqlSelect = " SELECT dws_code AS id, dws_name AS text FROM dmws WHERE dws_ubication = 1 AND dws_enabled = 1 AND business = :business";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
         if(isset($resSelect[0])){
           $respuesta = array(
             'error' => false,

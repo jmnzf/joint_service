@@ -2790,10 +2790,24 @@ class SalesNc extends REST_Controller
 	//OBTENER Nota crédito de clientesES
 	public function getSalesNc_get()
 	{
+		$Data = $this->get();
+
+		if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvnc', 'vnc', '', '', $DECI_MALES);
+		$sqlSelect = self::getColumn('dvnc', 'vnc', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());

@@ -25,11 +25,26 @@ class BuyOffert extends REST_Controller {
 
 	public function getOffert_get(){
 
+		$Data = $this->get();
+
+		if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dcoc','coc','','',$DECI_MALES);
+		$sqlSelect = self::getColumn('dcoc','coc','','',$DECI_MALES, $Data['business'], $Data['branch']);
 
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+   		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
     if(isset($resSelect[0])){
 
@@ -109,7 +124,7 @@ public function getOffertDetailBySN_get(){
 		return;
 	}
 
-		$sqlSelect = "SELECT * from dcoc	where coc_cardcode = :dms_card_code";
+		$sqlSelect = "SELECT * from dcoc where coc_cardcode = :dms_card_code";
 
 	$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dms_card_code" => $Data['dms_card_code']));
 	if(isset($resSelect[0])){
@@ -496,9 +511,9 @@ public function getOffertDetailBySN_get(){
 				$sqlInsert = "INSERT INTO dcoc(coc_series, coc_docnum, coc_docdate, coc_duedate, coc_duedev, coc_pricelist, coc_cardcode,
 											coc_cardname, coc_currency, coc_contacid, coc_slpcode, coc_empid, coc_comment, coc_doctotal, coc_baseamnt, coc_taxtotal,
 											coc_discprofit, coc_discount, coc_createat, coc_baseentry, coc_basetype, coc_doctype, coc_idadd, coc_adress, coc_paytype,
-											coc_attch,coc_createby)VALUES(:coc_series, :coc_docnum, :coc_docdate, :coc_duedate, :coc_duedev, :coc_pricelist, :coc_cardcode, :coc_cardname,
+											coc_createby)VALUES(:coc_series, :coc_docnum, :coc_docdate, :coc_duedate, :coc_duedev, :coc_pricelist, :coc_cardcode, :coc_cardname,
 											:coc_currency, :coc_contacid, :coc_slpcode, :coc_empid, :coc_comment, :coc_doctotal, :coc_baseamnt, :coc_taxtotal, :coc_discprofit, :coc_discount,
-											:coc_createat, :coc_baseentry, :coc_basetype, :coc_doctype, :coc_idadd, :coc_adress, :coc_paytype, :coc_attch,:coc_createby)";
+											:coc_createat, :coc_baseentry, :coc_basetype, :coc_doctype, :coc_idadd, :coc_adress, :coc_paytype,:coc_createby)";
 
 
 				// Se Inicia la transaccion,
@@ -535,8 +550,7 @@ public function getOffertDetailBySN_get(){
 							':coc_idadd' => isset($Data['coc_idadd'])?$Data['coc_idadd']:NULL,
 							':coc_adress' => isset($Data['coc_adress'])?$Data['coc_adress']:NULL,
 							':coc_paytype' => is_numeric($Data['coc_paytype'])?$Data['coc_paytype']:0,
-							':coc_createby' => isset($Data['coc_createby'])?$Data['coc_createby']:NULL,
-							':coc_attch' => $this->getUrl(count(trim(($Data['coc_attch']))) > 0 ? $Data['coc_attch']:NULL, $resMainFolder[0]['main_folder'])
+							':coc_createby' => isset($Data['coc_createby'])?$Data['coc_createby']:NULL
 						));
 
 				if(is_numeric($resInsert) && $resInsert > 0){
@@ -1250,9 +1264,9 @@ public function getOffertDetailBySN_get(){
 		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
 									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
 									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
-									pap_attch,pap_createby,pap_origen,pap_qtyrq,pap_qtyap,pap_model)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									pap_createby,pap_origen,pap_qtyrq,pap_qtyap,pap_model)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
 									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
-									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen,:pap_qtyrq,:pap_qtyap,:pap_model)";
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype,:pap_createby,:pap_origen,:pap_qtyrq,:pap_qtyap,:pap_model)";
 
 		// Se Inicia la transaccion,
 		// Todas las consultas de modificacion siguientes
@@ -1289,7 +1303,6 @@ public function getOffertDetailBySN_get(){
 					':pap_adress' => isset($Encabezado[$prefijoe.'_adress'])?$Encabezado[$prefijoe.'_adress']:NULL,
 					':pap_paytype' => is_numeric($Encabezado[$prefijoe.'_paytype'])?$Encabezado[$prefijoe.'_paytype']:0,
 					':pap_createby' => isset($Encabezado[$prefijoe.'_createby'])?$Encabezado[$prefijoe.'_createby']:NULL,
-					':pap_attch' => $this->getUrl(count(trim(($Encabezado[$prefijoe.'_attch']))) > 0 ? $Encabezado[$prefijoe.'_attch']:NULL, $Carpeta),
 					':pap_origen' => is_numeric($Encabezado[$prefijoe.'_doctype'])?$Encabezado[$prefijoe.'_doctype']:0,
 					':pap_qtyrq' => $Cantidad,
 					':pap_qtyap' => $CantidadAP,

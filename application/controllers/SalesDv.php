@@ -1,5 +1,5 @@
 <?php
-// Devolución de clientesES
+// Devolución de VENTAS
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
@@ -1755,9 +1755,24 @@ class SalesDv extends REST_Controller {
     //OBTENER Devolución de clientesES
     public function getSalesDv_get(){
 
+      $Data = $this->get();
+
+      if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+  
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' => 'La informacion enviada no es valida'
+        );
+  
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+  
+        return;
+      }
+
       $DECI_MALES =  $this->generic->getDecimals();
 
-      $sqlSelect = self::getColumn('dvdv','vdv','','',$DECI_MALES);
+      $sqlSelect = self::getColumn('dvdv','vdv','','',$DECI_MALES, $Data['business'], $Data['branch']);
 
 
       $resSelect = $this->pedeo->queryTable($sqlSelect, array());

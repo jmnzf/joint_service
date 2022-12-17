@@ -996,8 +996,8 @@ class SalesInv extends REST_Controller
 									$CantidadTotal = ($CantidadActual - $CantidadNueva);
 
 									$sqlUpdateCostoCantidad =  "UPDATE tbdi
-																														 SET bdi_quantity = :bdi_quantity
-																														 WHERE  bdi_id = :bdi_id";
+																SET bdi_quantity = :bdi_quantity
+																WHERE  bdi_id = :bdi_id";
 
 									$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
@@ -3436,10 +3436,24 @@ class SalesInv extends REST_Controller
 	//OBTENER Factura de VentasES
 	public function getSalesInv_get()
 	{
+		$Data = $this->get();
+
+		if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+	
+		  $respuesta = array(
+			'error' => true,
+			'data'  => array(),
+			'mensaje' => 'La informacion enviada no es valida'
+		  );
+	
+		  $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+	
+		  return;
+		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvfv', 'dvf', '', '', $DECI_MALES);
+		$sqlSelect = self::getColumn('dvfv', 'dvf', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());

@@ -338,8 +338,8 @@ class BpContracts extends REST_Controller {
 
 
 
-        $sqlInsert = "INSERT INTO tcsn(	csn_docnum, csn_docdate, csn_duedate, csn_duedev, csn_pricelist, csn_cardcode, csn_cardname, csn_contacid, csn_slpcode, csn_empid, csn_comment, csn_doctotal, csn_baseamnt, csn_taxtotal, csn_discprofit, csn_discount, csn_createat, csn_baseentry, csn_basetype, csn_doctype, csn_idadd, csn_adress, csn_paytype, csn_attch, csn_series, csn_createby, csn_currency, csn_origen, csn_ref, csn_canceled, csn_enddate, csn_signaturedate, csn_description, csn_prjcode)
-											VALUES (:csn_docnum, :csn_docdate, :csn_duedate, :csn_duedev, :csn_pricelist, :csn_cardcode, :csn_cardname, :csn_contacid, :csn_slpcode, :csn_empid, :csn_comment, :csn_doctotal, :csn_baseamnt, :csn_taxtotal, :csn_discprofit, :csn_discount, :csn_createat, :csn_baseentry, :csn_basetype, :csn_doctype, :csn_idadd, :csn_adress, :csn_paytype, :csn_attch, :csn_series, :csn_createby, :csn_currency, :csn_origen, :csn_ref, :csn_canceled, :csn_enddate, :csn_signaturedate, :csn_description, :csn_prjcode)";
+        $sqlInsert = "INSERT INTO tcsn(	csn_docnum, csn_docdate, csn_duedate, csn_duedev, csn_pricelist, csn_cardcode, csn_cardname, csn_contacid, csn_slpcode, csn_empid, csn_comment, csn_doctotal, csn_baseamnt, csn_taxtotal, csn_discprofit, csn_discount, csn_createat, csn_baseentry, csn_basetype, csn_doctype, csn_idadd, csn_adress, csn_paytype, csn_series, csn_createby, csn_currency, csn_origen, csn_ref, csn_canceled, csn_enddate, csn_signaturedate, csn_description, csn_prjcode)
+					VALUES (:csn_docnum, :csn_docdate, :csn_duedate, :csn_duedev, :csn_pricelist, :csn_cardcode, :csn_cardname, :csn_contacid, :csn_slpcode, :csn_empid, :csn_comment, :csn_doctotal, :csn_baseamnt, :csn_taxtotal, :csn_discprofit, :csn_discount, :csn_createat, :csn_baseentry, :csn_basetype, :csn_doctype, :csn_idadd, :csn_adress, :csn_paytype, :csn_series, :csn_createby, :csn_currency, :csn_origen, :csn_ref, :csn_canceled, :csn_enddate, :csn_signaturedate, :csn_description, :csn_prjcode)";
 
 
 				// Se Inicia la transaccion,
@@ -374,7 +374,6 @@ class BpContracts extends REST_Controller {
 							':csn_idadd' => isset($Data['csn_idadd'])?$Data['csn_idadd']:NULL,
 							':csn_adress' => isset($Data['csn_adress'])?$Data['csn_adress']:NULL,
 							':csn_paytype' => is_numeric($Data['csn_paytype'])?$Data['csn_paytype']:0,
-							':csn_attch' => $this->getUrl(count(trim(($Data['csn_attch']))) > 0 ? $Data['csn_attch']:NULL, $resMainFolder[0]['main_folder']),
 							':csn_series' => is_numeric($Data['csn_series'])?$Data['csn_series']:0,
 							':csn_createby' => isset($Data['csn_createby'])?$Data['csn_createby']:NULL,
 							':csn_currency' => isset($Data['csn_currency'])?$Data['csn_currency']:NULL,
@@ -803,9 +802,24 @@ class BpContracts extends REST_Controller {
   //OBTENER CONTRATOS
   public function getContracts_get(){
 
-				$DECI_MALES =  $this->generic->getDecimals();
+		$Data = $this->get();
 
-        $sqlSelect = self::getColumn('tcsn','csn','','',$DECI_MALES);
+		if ( !isset($Data['business']) OR !isset($Data['branch'] )) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$DECI_MALES =  $this->generic->getDecimals();
+
+        $sqlSelect = self::getColumn('tcsn','csn','','',$DECI_MALES, $Data['business'], $Data['branch']);
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -835,7 +849,7 @@ class BpContracts extends REST_Controller {
 
 			$Data = $this->get();
 
-			if(!isset($Data['dms_card_code'])){
+			if(!isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch'])){
 
 				$respuesta = array(
 					'error' => true,
@@ -849,10 +863,11 @@ class BpContracts extends REST_Controller {
 			}
 
 			$sqlSelect = "SELECT DISTINCT dc.* from responsestatus rs
-									join  tcsn dc on dc.csn_doctype = rs.tipo and rs.estado = 'Abierto'
-									where dc.csn_cardcode = :csn_cardcode";
+						join  tcsn dc on dc.csn_doctype = rs.tipo and rs.estado = 'Abierto'
+						where dc.csn_cardcode = :csn_cardcode
+						AND dc.business = :business AND dc.branch = :branch";
 
-			$resSelect = $this->pedeo->queryTable($sqlSelect, array(":csn_cardcode" => $Data['dms_card_code']));
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array(":csn_cardcode" => $Data['dms_card_code'], ':business' => $Data['business'], ':branch' => $Data['branch']));
 
 			if(isset($resSelect[0])){
 				$respuesta = array(
@@ -1063,9 +1078,9 @@ class BpContracts extends REST_Controller {
 		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
 									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
 									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
-									pap_attch,pap_createby,pap_origen)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									pap_createby,pap_origen)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
 									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
-									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen)";
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype,:pap_createby,:pap_origen)";
 
 		// Se Inicia la transaccion,
 		// Todas las consultas de modificacion siguientes
@@ -1102,7 +1117,6 @@ class BpContracts extends REST_Controller {
 					':pap_adress' => isset($Encabezado[$prefijoe.'_adress'])?$Encabezado[$prefijoe.'_adress']:NULL,
 					':pap_paytype' => is_numeric($Encabezado[$prefijoe.'_paytype'])?$Encabezado[$prefijoe.'_paytype']:0,
 					':pap_createby' => isset($Encabezado[$prefijoe.'_createby'])?$Encabezado[$prefijoe.'_createby']:NULL,
-					':pap_attch' => $this->getUrl(count(trim(($Encabezado[$prefijoe.'_attch']))) > 0 ? $Encabezado[$prefijoe.'_attch']:NULL, $Carpeta),
 					':pap_origen' => is_numeric($Encabezado[$prefijoe.'_doctype'])?$Encabezado[$prefijoe.'_doctype']:0,
 
 				));

@@ -133,26 +133,26 @@ class Approvals extends REST_Controller {
 	}
 
 
-	//OBTENER MODELO DE APROBACIONES -> por usuario
+	//OBTENER MODELO DE APROBACIONES
 	public function getApprovalModel_get(){
 
 				$Data = $this->get();
 
 				$sqlSelect = "SELECT
-																t0.mau_docentry,
-																t1.mdt_docname,
-																t1.mdt_doctype,
-																t0.mau_quantity,
-																t0.mau_decription,
-																t0.mau_date,
+							t0.mau_docentry,
+							t1.mdt_docname,
+							t1.mdt_doctype,
+							t0.mau_quantity,
+							t0.mau_decription,
+							t0.mau_date,
 
-																CASE
-																	WHEN t0.mau_status = 1 THEN 'Activo'
-																	ELSE 'Inactivo'
-																END AS estado
-														FROM tmau t0
-														INNER JOIN dmdt t1
-														ON t0.mau_doctype = t1.mdt_doctype";
+							CASE
+								WHEN t0.mau_status = 1 THEN 'Activo'
+								ELSE 'Inactivo'
+							END AS estado
+							FROM tmau t0
+							INNER JOIN dmdt t1
+							ON t0.mau_doctype = t1.mdt_doctype";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -350,13 +350,15 @@ class Approvals extends REST_Controller {
 				 $this->response($respuesta);
 	}
 
-			//OBTENER APROBACIONES
+	//OBTENER APROBACIONES
 	public function getApprovalBySN_get(){
 
 				$Data = $this->get();
 
 				if(!isset($Data['dms_card_code']) OR
-					!isset($Data['pap_origen'])){// SOLICITANTE
+				!isset($Data['dms_card_code']) OR
+				!isset($Data['dms_card_code']) OR
+				!isset($Data['pap_origen'])){// SOLICITANTE
 
 					$respuesta = array(
 						'error' => true,
@@ -371,13 +373,15 @@ class Approvals extends REST_Controller {
 				}
 
 				$sqlSelect = "SELECT distinct t0.*,(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry) estado FROM dpap t0
-															where t0.pap_cardcode  = CAST(:pap_cardcode AS VARCHAR)  and t0.pap_origen = :pap_origen  AND
-															(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry)  = 'Aprobado' ";
+							where t0.pap_cardcode  = CAST(:pap_cardcode AS VARCHAR)  and t0.pap_origen = :pap_origen AND t0.business = :business AND t0.branch = :branch AND
+							(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry)  = 'Aprobado' ";
 
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 					":pap_cardcode" => $Data['dms_card_code'],
-					":pap_origen" => $Data['pap_origen']
+					":pap_origen"   => $Data['pap_origen'],
+					":business" 	=> $Data['business'],
+					":branch" 		=> $Data['branch']
 				));
 
 				if(isset($resSelect[0])){
@@ -483,7 +487,7 @@ class Approvals extends REST_Controller {
 
 
 						if(is_numeric($resInsert) && $resInsert > 0){
-									//VALIDACION DE CANTIDADES DE REGISTRO PARA APROBAR == CARIDAD DE APROBACIONES POR MODELO DE DOCUMENTO
+									//VALIDACION DE CANTIDADES DE REGISTRO PARA APROBAR == CANTIDAD DE APROBACIONES POR MODELO DE DOCUMENTO
 									$sqlComp = "SELECT COALESCE(case when t2.bad_estado = 1 then count(t2.bad_estado) end, 0) aprobados,
 															 COALESCE(case when t2.bad_estado = 2 then count(t2.bad_estado) end, 0 ) rechazados,
 															  COALESCE(case when t2.bad_estado = 2 then count(t2.bad_estado) end, 0) +  COALESCE(case when t2.bad_estado = 1 then count(t2.bad_estado) end, 0) total_respuestas,
