@@ -1,16 +1,19 @@
 <?php
 // DATOS MAESTROS ASIENTOS CONTABLES
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-require_once(APPPATH.'/libraries/REST_Controller.php');
-require_once(APPPATH.'/libraries/Generic.php');
+require_once(APPPATH . '/libraries/REST_Controller.php');
+require_once(APPPATH . '/libraries/Generic.php');
+
 use Restserver\libraries\REST_Controller;
 
-class AccountingAccent extends REST_Controller {
+class AccountingAccent extends REST_Controller
+{
 
 	private $pdo;
 
-	public function __construct(){
+	public function __construct()
+	{
 
 		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
 		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
@@ -19,607 +22,635 @@ class AccountingAccent extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
-
 	}
 
-  //CREAR NUEVO ASIENTO CONTABLE
-	public function createAccountingAccent_post(){
+	//CREAR NUEVO ASIENTO CONTABLE
+	public function createAccountingAccent_post()
+	{
+		$Data = $this->post();
 
-			$DECI_MALES =  $this->generic->getDecimals();
-      $Data = $this->post();
-			$DocNumVerificado = 0;
+		if (!isset($Data['business']) or !isset($Data['branch'])) {
 
-			$sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, 				ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type)
-													VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type)";
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
 
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-      if(!isset($Data['detail'])){
-
-        $respuesta = array(
-          'error' => true,
-          'data'  => array(),
-          'mensaje' =>'La informacion enviada no es valida'
-        );
-
-        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-        return;
-      }
-
-        $ContenidoDetalle = json_decode($Data['detail'], true);
+			return;
+		}
 
 
-        if(!is_array($ContenidoDetalle)){
-            $respuesta = array(
-                'error' => true,
-                'data'  => array(),
-                'mensaje' =>'No se encontro el detalle de la cuenta'
-            );
 
-            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-            return;
-        }
+		$DECI_MALES =  $this->generic->getDecimals();
 
-				//
-				//VALIDANDO PERIODO CONTABLE
-				$periodo = $this->generic->ValidatePeriod($Data['mac_legal_date'], $Data['mac_doc_date'],$Data['mac_doc_duedate'],0);
+		$DocNumVerificado = 0;
 
-				if( isset($periodo['error']) && $periodo['error'] == false){
+		$sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type, business, branch)
+						VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type, :business, :branch)";
 
-				}else{
+
+		if (!isset($Data['detail'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$ContenidoDetalle = json_decode($Data['detail'], true);
+
+
+		if (!is_array($ContenidoDetalle)) {
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se encontro el detalle de la cuenta'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		//
+		//VALIDANDO PERIODO CONTABLE
+		$periodo = $this->generic->ValidatePeriod($Data['mac_legal_date'], $Data['mac_doc_date'], $Data['mac_doc_duedate'], 0);
+
+		if (isset($periodo['error']) && $periodo['error'] == false) {
+		} else {
+			$respuesta = array(
+				'error'   => true,
+				'data'    => [],
+				'mensaje' => isset($periodo['mensaje']) ? $periodo['mensaje'] : 'no se pudo validar el periodo contable'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+		//PERIODO CONTABLE
+		//
+
+
+		//BUSCANDO LA NUMERACION DEL DOCUMENTO
+		$sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+
+		$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['mac_serie']));
+
+		if (isset($resNumeracion[0])) {
+
+			$numeroActual = $resNumeracion[0]['pgs_nextnum'];
+			$numeroFinal  = $resNumeracion[0]['pgs_last_num'];
+			$numeroSiguiente = ($numeroActual + 1);
+
+			if ($numeroSiguiente <= $numeroFinal) {
+
+				$DocNumVerificado = $numeroSiguiente;
+			} else {
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'La serie de la numeración esta llena'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+		} else {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se encontro la serie de numeración para el documento'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+
+
+		// Se Inicia la transaccion,
+		// Todas las consultas de modificacion siguientes
+		// aplicaran solo despues que se confirme la transaccion,
+		// de lo contrario no se aplicaran los cambios y se devolvera
+		// la base de datos a su estado original.
+
+		$this->pedeo->trans_begin();
+
+		$sqlInsert = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, mac_currency, mac_doctype, business, branch)
+                      VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :mac_currency, :mac_doctype, :business, :branch)";
+
+
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+
+			':mac_doc_num' => $DocNumVerificado,
+			':mac_status' => is_numeric($Data['mac_status']) ? $Data['mac_status'] : 0,
+			':mac_base_type' => 18,
+			':mac_base_entry' => 0,
+			':mac_doc_date' => $this->validateDate($Data['mac_doc_date']) ? $Data['mac_doc_date'] : NULL,
+			':mac_doc_duedate' => $this->validateDate($Data['mac_doc_duedate']) ? $Data['mac_doc_duedate'] : NULL,
+			':mac_legal_date' => $this->validateDate($Data['mac_legal_date']) ? $Data['mac_legal_date'] : NULL,
+			':mac_ref1' => isset($Data['mac_ref1']) ? $Data['mac_ref1'] : NULL,
+			':mac_ref2' => isset($Data['mac_ref2']) ? $Data['mac_ref2'] : NULL,
+			':mac_ref3' => isset($Data['mac_ref3']) ? $Data['mac_ref3'] : NULL,
+			':mac_loc_total' => is_numeric($Data['mac_loc_total']) ? $Data['mac_loc_total'] : 0,
+			':mac_fc_total' => is_numeric($Data['mac_fc_total']) ? $Data['mac_fc_total'] : 0,
+			':mac_sys_total' => is_numeric($Data['mac_sys_total']) ? $Data['mac_sys_total'] : 0,
+			':mac_trans_dode' => is_numeric($Data['mac_trans_dode']) ? $Data['mac_trans_dode'] : 0,
+			':mac_beline_nume' => is_numeric($Data['mac_beline_nume']) ? $Data['mac_beline_nume'] : 0,
+			':mac_vat_date' => $this->validateDate($Data['mac_vat_date']) ? $Data['mac_vat_date'] : null,
+			':mac_serie' => is_numeric($Data['mac_serie']) ? $Data['mac_serie'] : 0,
+			':mac_number' => is_numeric($Data['mac_number']) ? $Data['mac_number'] : 0,
+			':mac_bammntsys' => is_numeric($Data['mac_bammntsys']) ? $Data['mac_bammntsys'] : 0,
+			':mac_bammnt' => is_numeric($Data['mac_bammnt']) ? $Data['mac_bammnt'] : 0,
+			':mac_wtsum' => is_numeric($Data['mac_wtsum']) ? $Data['mac_wtsum'] : 0,
+			':mac_vatsum' => is_numeric($Data['mac_vatsum']) ? $Data['mac_vatsum'] : 0,
+			':mac_comments' => isset($Data['mac_comments']) ? $Data['mac_comments'] : NULL,
+			':mac_create_date' => $this->validateDate($Data['mac_create_date']) ? $Data['mac_create_date'] : NULL,
+			':mac_made_usuer' => isset($Data['mac_made_usuer']) ? $Data['mac_made_usuer'] : NULL,
+			':mac_update_date' => $this->validateDate($Data['mac_update_date']) ? $Data['mac_update_date'] : NULL,
+			':mac_update_user' => isset($Data['mac_update_user']) ? $Data['mac_update_user'] : NULL,
+			':mac_currency' => isset($Data['mac_currency']) ? $Data['mac_currency'] : NULL,
+			':mac_doctype' => 18,
+			':business' => $Data['business'],
+			':branch' => $Data['branch']
+		));
+
+		if (is_numeric($resInsert) && $resInsert > 0) {
+
+			// Se actualiza la serie de la numeracion del documento
+
+			$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+																				 WHERE pgs_id = :pgs_id";
+			$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+				':pgs_nextnum' => $DocNumVerificado,
+				':pgs_id'      => $Data['mac_serie']
+			));
+
+			if (is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1) {
+			} else {
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data'    => $resActualizarNumeracion,
+					'mensaje'	=> 'No se pudo crear el asiento'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			// Fin de la actualizacion de la numeracion del documento
+
+
+			foreach ($ContenidoDetalle as $key => $detail) {
+
+				//VALIDANDO SI EXISTE LA CUENTA CONTABLE******
+				$ValidateAccount = $this->pedeo->queryTable("SELECT acc_code FROM dacc WHERE acc_code = :acc_code", array(
+					':acc_code' =>  $detail['ac1_account']
+				));
+
+				if (!isset($ValidateAccount[0])) {
+					$this->pedeo->trans_rollback();
+
 					$respuesta = array(
 						'error'   => true,
-						'data'    => [],
-						'mensaje' => isset($periodo['mensaje'])?$periodo['mensaje']:'no se pudo validar el periodo contable'
+						'data'    => $ValidateAccount,
+						'mensaje'	=> 'No existe la cuenta contable ' . $detail['ac1_account'] . ' dentro del plan de cuentas'
 					);
 
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+					$this->response($respuesta);
 
 					return;
 				}
-				//PERIODO CONTABLE
-				//
+				//*******
+				//VALIDACION CENTRO DE COSTO, UNIDAD DE NEGOCIO, PROYECTO Y SOCIO DE NEGOCIO
+				$ValidateDmun = $this->pedeo->queryTable("SELECT * FROM dmun WHERE trim(dun_un_code)  = :dun_un_code", array(':dun_un_code' => trim($detail['ac1_uncode'])));
+				$ValidateDmpj = $this->pedeo->queryTable("SELECT * FROM dmpj WHERE trim(dpj_pj_code)  = :dpj_pj_code", array(':dpj_pj_code' => trim($detail['ac1_prj_code'])));
+				$ValidateDmcc = $this->pedeo->queryTable("SELECT * FROM dmcc WHERE trim(dcc_prc_code) = :dcc_prc_code", array(':dcc_prc_code' => trim($detail['ac1_prc_code'])));
+				$ValidateSn   = $this->pedeo->queryTable("SELECT * FROM dmsn WHERE trim(dms_card_code) = :dms_card_code", array(':dms_card_code' => trim($detail['ac1_legal_num'])));
 
+				if (!isset($ValidateDmun[0])) {
+					$this->pedeo->trans_rollback();
 
-				//BUSCANDO LA NUMERACION DEL DOCUMENTO
-				$sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+					$respuesta = array(
+						'error'   => true,
+						'data'    => $ValidateDmun,
+						'mensaje'	=> 'No existe la unidad de negocio ' . $detail['ac1_uncode']
+					);
 
-				$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['mac_serie']));
+					$this->response($respuesta);
 
-				if(isset($resNumeracion[0])){
+					return;
+				}
 
-						$numeroActual = $resNumeracion[0]['pgs_nextnum'];
-						$numeroFinal  = $resNumeracion[0]['pgs_last_num'];
-						$numeroSiguiente = ($numeroActual + 1);
+				if (!isset($ValidateDmpj[0])) {
+					$this->pedeo->trans_rollback();
 
-						if( $numeroSiguiente <= $numeroFinal ){
+					$respuesta = array(
+						'error'   => true,
+						'data'    => $ValidateDmpj,
+						'mensaje'	=> 'No existe el proyecto ' . $detail['ac1_prj_code']
+					);
 
-								$DocNumVerificado = $numeroSiguiente;
+					$this->response($respuesta);
 
-						}	else {
+					return;
+				}
 
-								$respuesta = array(
-									'error' => true,
-									'data'  => array(),
-									'mensaje' =>'La serie de la numeración esta llena'
-								);
+				if (!isset($ValidateDmcc[0])) {
+					$this->pedeo->trans_rollback();
 
-								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+					$respuesta = array(
+						'error'   => true,
+						'data'    => $ValidateDmcc,
+						'mensaje'	=> 'No existe el centro de costo ' . $detail['ac1_prc_code']
+					);
 
-								return;
-						}
+					$this->response($respuesta);
 
-				}else{
+					return;
+				}
+
+				if (!empty(($detail['ac1_legal_num']))) {
+
+					if (!isset($ValidateSn[0])) {
+						$this->pedeo->trans_rollback();
 
 						$respuesta = array(
-							'error' => true,
-							'data'  => array(),
-							'mensaje' =>'No se encontro la serie de numeración para el documento'
+							'error'   => true,
+							'data'    => $ValidateSn,
+							'mensaje'	=> 'No existe el socio de negocio ' . $detail['ac1_legal_num']
 						);
 
-						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+						$this->response($respuesta);
 
 						return;
+					}
 				}
 
 
+				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
-				// Se Inicia la transaccion,
-				// Todas las consultas de modificacion siguientes
-				// aplicaran solo despues que se confirme la transaccion,
-				// de lo contrario no se aplicaran los cambios y se devolvera
-				// la base de datos a su estado original.
+					':ac1_trans_id' => $resInsert,
+					':ac1_account' => is_numeric($detail['ac1_account']) ? $detail['ac1_account'] : 0,
+					':ac1_debit' => is_numeric($detail['ac1_debit']) ? round($detail['ac1_debit'], $DECI_MALES) : 0,
+					':ac1_credit' => is_numeric($detail['ac1_credit']) ? round($detail['ac1_credit'], $DECI_MALES) : 0,
+					':ac1_debit_sys' => is_numeric($detail['ac1_debit_sys']) ? round($detail['ac1_debit_sys'], $DECI_MALES) : 0,
+					':ac1_credit_sys' => is_numeric($detail['ac1_credit_sys']) ? round($detail['ac1_credit_sys'], $DECI_MALES) : 0,
+					':ac1_currex' => is_numeric($detail['ac1_currex']) ? $detail['ac1_currex'] : 0,
+					':ac1_doc_date' => $this->validateDate($detail['ac1_doc_date']) ? $detail['ac1_doc_date'] : NULL,
+					':ac1_doc_duedate' => $this->validateDate($detail['ac1_doc_duedate']) ? $detail['ac1_doc_duedate'] : NULL,
+					':ac1_debit_import' => is_numeric($detail['ac1_debit_import']) ? $detail['ac1_debit_import'] : 0,
+					':ac1_credit_import' => is_numeric($detail['ac1_credit_import']) ? $detail['ac1_credit_import'] : 0,
+					':ac1_debit_importsys' => is_numeric($detail['ac1_debit_importsys']) ? $detail['ac1_debit_importsys'] : 0,
+					':ac1_credit_importsys' => is_numeric($detail['ac1_credit_importsys']) ? $detail['ac1_credit_importsys'] : 0,
+					':ac1_font_key' => $resInsert,
+					':ac1_font_line' => is_numeric($detail['ac1_font_line']) ? $detail['ac1_font_line'] : 0,
+					':ac1_font_type' => 18,
+					':ac1_accountvs' => is_numeric($detail['ac1_accountvs']) ? $detail['ac1_accountvs'] : 0,
+					':ac1_doctype' => is_numeric($detail['ac1_doctype']) ? $detail['ac1_doctype'] : 0,
+					':ac1_ref1' => isset($detail['ac1_ref1']) ? $detail['ac1_ref1'] : NULL,
+					':ac1_ref2' => isset($detail['ac1_ref2']) ? $detail['ac1_ref2'] : NULL,
+					':ac1_ref3' => isset($detail['ac1_ref3']) ? $detail['ac1_ref3'] : NULL,
+					':ac1_prc_code' => isset($detail['ac1_prc_code']) ? $detail['ac1_prc_code'] : NULL,
+					':ac1_uncode' => isset($detail['ac1_uncode']) ? $detail['ac1_uncode'] : NULL,
+					':ac1_prj_code' => isset($detail['ac1_prj_code']) ? $detail['ac1_prj_code'] : NULL,
+					':ac1_rescon_date' => $this->validateDate($detail['ac1_rescon_date']) ? $detail['ac1_rescon_date'] : NULL,
+					':ac1_recon_total' => is_numeric($detail['ac1_recon_total']) ? $detail['ac1_recon_total'] : 0,
+					':ac1_made_user' => isset($detail['ac1_made_user']) ? $detail['ac1_made_user'] : NULL,
+					':ac1_accperiod' => is_numeric($detail['ac1_accperiod']) ? $detail['ac1_accperiod'] : NULL,
+					':ac1_close' => is_numeric($detail['ac1_close']) ? $detail['ac1_close'] : 0,
+					':ac1_cord' => is_numeric($detail['ac1_cord']) ? $detail['ac1_cord'] : 0,
+					':ac1_ven_debit' => is_numeric($detail['ac1_debit']) ? round($detail['ac1_debit'], $DECI_MALES) : 0,
+					':ac1_ven_credit' => is_numeric($detail['ac1_credit']) ? round($detail['ac1_credit'], $DECI_MALES) : 0,
+					':ac1_fiscal_acct' => is_numeric($detail['ac1_fiscal_acct']) ? $detail['ac1_fiscal_acct'] : 0,
+					':ac1_taxid' => is_numeric($detail['ac1_taxid']) ? $detail['ac1_taxid'] : 0,
+					':ac1_isrti' => is_numeric($detail['ac1_isrti']) ? $detail['ac1_isrti'] : 0,
+					':ac1_basert' => is_numeric($detail['ac1_basert']) ? $detail['ac1_basert'] : 0,
+					':ac1_mmcode' => is_numeric($detail['ac1_mmcode']) ? $detail['ac1_mmcode'] : 0,
+					':ac1_legal_num' => isset($detail['ac1_legal_num']) ? $detail['ac1_legal_num'] : NULL,
+					':ac1_codref' => is_numeric($detail['ac1_codref']) ? $detail['ac1_codref'] : 0,
+					':ac1_card_type' => isset($detail['ac1_card_type']) ? $detail['ac1_card_type'] : 0,
+					':business' => $detail['business'],
+					':branch'   => $detail['branch']
+				));
 
-				$this->pedeo->trans_begin();
+				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
+				} else {
 
-        $sqlInsert = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, mac_currency, mac_doctype)
-                      VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :mac_currency, :mac_doctype)";
+					$this->pedeo->trans_rollback();
 
+					$respuesta = array(
+						'error'   => true,
+						'data'    => $resInsertDetail,
+						'mensaje'	=> 'No se pudo registrar el asiento contable'
+					);
 
-        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+					$this->response($respuesta);
 
-            ':mac_doc_num' => $DocNumVerificado,
-            ':mac_status' => is_numeric($Data['mac_status'])?$Data['mac_status']:0,
-            ':mac_base_type' => 18,
-            ':mac_base_entry' => 0,
-            ':mac_doc_date' => $this->validateDate($Data['mac_doc_date'])?$Data['mac_doc_date']:NULL,
-            ':mac_doc_duedate' => $this->validateDate($Data['mac_doc_duedate'])?$Data['mac_doc_duedate']:NULL,
-            ':mac_legal_date' => $this->validateDate($Data['mac_legal_date'])?$Data['mac_legal_date']:NULL,
-            ':mac_ref1' => isset($Data['mac_ref1'])?$Data['mac_ref1']:NULL,
-            ':mac_ref2' => isset($Data['mac_ref2'])?$Data['mac_ref2']:NULL,
-            ':mac_ref3' => isset($Data['mac_ref3'])?$Data['mac_ref3']:NULL,
-            ':mac_loc_total' => is_numeric($Data['mac_loc_total'])?$Data['mac_loc_total']:0,
-            ':mac_fc_total' => is_numeric($Data['mac_fc_total'])?$Data['mac_fc_total']:0,
-            ':mac_sys_total' => is_numeric($Data['mac_sys_total'])?$Data['mac_sys_total']:0,
-            ':mac_trans_dode' => is_numeric($Data['mac_trans_dode'])?$Data['mac_trans_dode']:0,
-            ':mac_beline_nume' => is_numeric($Data['mac_beline_nume'])?$Data['mac_beline_nume']:0,
-            ':mac_vat_date' => $this->validateDate($Data['mac_vat_date'])?$Data['mac_vat_date']:null,
-            ':mac_serie' => is_numeric($Data['mac_serie'])?$Data['mac_serie']:0,
-            ':mac_number' => is_numeric($Data['mac_number'])?$Data['mac_number']:0,
-            ':mac_bammntsys' => is_numeric($Data['mac_bammntsys'])?$Data['mac_bammntsys']:0,
-            ':mac_bammnt' => is_numeric($Data['mac_bammnt'])?$Data['mac_bammnt']:0,
-            ':mac_wtsum' => is_numeric($Data['mac_wtsum'])?$Data['mac_wtsum']:0,
-            ':mac_vatsum' => is_numeric($Data['mac_vatsum'])?$Data['mac_vatsum']:0,
-            ':mac_comments' => isset($Data['mac_comments'])?$Data['mac_comments']:NULL,
-            ':mac_create_date' => $this->validateDate($Data['mac_create_date'])?$Data['mac_create_date']:NULL,
-            ':mac_made_usuer' => isset($Data['mac_made_usuer'])?$Data['mac_made_usuer']:NULL,
-            ':mac_update_date' => $this->validateDate($Data['mac_update_date'])?$Data['mac_update_date']:NULL,
-            ':mac_update_user' => isset($Data['mac_update_user'])?$Data['mac_update_user']:NULL,
-						':mac_currency' => isset($Data['mac_currency'])?$Data['mac_currency']:NULL,
-						':mac_doctype' => 18
-        ));
-
-        if(is_numeric($resInsert) && $resInsert > 0 ){
-
-						// Se actualiza la serie de la numeracion del documento
-
-						$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
-																				 WHERE pgs_id = :pgs_id";
-						$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
-								':pgs_nextnum' => $DocNumVerificado,
-								':pgs_id'      => $Data['mac_serie']
-						));
-
-						if(is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1){
-
-						}else{
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'    => $resActualizarNumeracion,
-										'mensaje'	=> 'No se pudo crear el asiento'
-									);
-
-									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-									return;
-						}
-						// Fin de la actualizacion de la numeracion del documento
+					return;
+				}
+			}
 
 
-            foreach ($ContenidoDetalle as $key => $detail) {
+			//VALIDANDDO DIFERENCIA EN PESO DE MONEDA DE SISTEMA
 
-								//VALIDANDO SI EXISTE LA CUENTA CONTABLE******
-								$ValidateAccount =$this->pedeo->queryTable("SELECT acc_code FROM dacc WHERE acc_code = :acc_code", array(
-									':acc_code' =>  $detail['ac1_account']
-								));
-
-								if ( !isset( $ValidateAccount[0] ) ){
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'    => $ValidateAccount,
-										'mensaje'	=> 'No existe la cuenta contable '.$detail['ac1_account'].' dentro del plan de cuentas'
-									);
-
-									$this->response($respuesta);
-
-									return;
-								}
-								//*******
-								//VALIDACION CENTRO DE COSTO, UNIDAD DE NEGOCIO, PROYECTO Y SOCIO DE NEGOCIO
-								$ValidateDmun = $this->pedeo->queryTable("SELECT * FROM dmun WHERE trim(dun_un_code)  = :dun_un_code", array(':dun_un_code' => trim($detail['ac1_uncode'])));
-								$ValidateDmpj = $this->pedeo->queryTable("SELECT * FROM dmpj WHERE trim(dpj_pj_code)  = :dpj_pj_code", array(':dpj_pj_code' => trim($detail['ac1_prj_code'])));
-								$ValidateDmcc = $this->pedeo->queryTable("SELECT * FROM dmcc WHERE trim(dcc_prc_code) = :dcc_prc_code", array(':dcc_prc_code' => trim($detail['ac1_prc_code'])));
-								$ValidateSn   = $this->pedeo->queryTable("SELECT * FROM dmsn WHERE trim(dms_card_code) = :dms_card_code",array(':dms_card_code' => trim($detail['ac1_legal_num'])));
-
-								if ( !isset( $ValidateDmun[0] ) ){
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'    => $ValidateDmun,
-										'mensaje'	=> 'No existe la unidad de negocio '.$detail['ac1_uncode']
-									);
-
-									$this->response($respuesta);
-
-									return;
-								}
-
-								if ( !isset( $ValidateDmpj[0] ) ){
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'    => $ValidateDmpj,
-										'mensaje'	=> 'No existe el proyecto '.$detail['ac1_prj_code']
-									);
-
-									$this->response($respuesta);
-
-									return;
-								}
-
-								if ( !isset( $ValidateDmcc[0] ) ){
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'    => $ValidateDmcc,
-										'mensaje'	=> 'No existe el centro de costo '.$detail['ac1_prc_code']
-									);
-
-									$this->response($respuesta);
-
-									return;
-								}
-
-								if ( !empty(($detail['ac1_legal_num']) ) ) {
-
-									if ( !isset( $ValidateSn[0] ) ){
-										$this->pedeo->trans_rollback();
-	
-										$respuesta = array(
-											'error'   => true,
-											'data'    => $ValidateSn,
-											'mensaje'	=> 'No existe el socio de negocio '.$detail['ac1_legal_num']
-										);
-	
-										$this->response($respuesta);
-	
-										return;
-									}
-								}
-
-
-                $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-
-                    ':ac1_trans_id' => $resInsert,
-                    ':ac1_account' => is_numeric($detail['ac1_account'])?$detail['ac1_account']:0,
-                    ':ac1_debit' => is_numeric($detail['ac1_debit'])?round($detail['ac1_debit'], $DECI_MALES ):0,
-                    ':ac1_credit' => is_numeric($detail['ac1_credit'])?round($detail['ac1_credit'], $DECI_MALES ):0,
-                    ':ac1_debit_sys' => is_numeric($detail['ac1_debit_sys'])?round($detail['ac1_debit_sys'], $DECI_MALES ):0,
-                    ':ac1_credit_sys' => is_numeric($detail['ac1_credit_sys'])?round($detail['ac1_credit_sys'], $DECI_MALES ):0,
-                    ':ac1_currex' => is_numeric($detail['ac1_currex'])?$detail['ac1_currex']:0,
-                    ':ac1_doc_date' => $this->validateDate($detail['ac1_doc_date'])?$detail['ac1_doc_date']:NULL,
-                    ':ac1_doc_duedate' => $this->validateDate($detail['ac1_doc_duedate'])?$detail['ac1_doc_duedate']:NULL,
-                    ':ac1_debit_import' => is_numeric($detail['ac1_debit_import'])?$detail['ac1_debit_import']:0,
-                    ':ac1_credit_import' => is_numeric($detail['ac1_credit_import'])?$detail['ac1_credit_import']:0,
-                    ':ac1_debit_importsys' => is_numeric($detail['ac1_debit_importsys'])?$detail['ac1_debit_importsys']:0,
-                    ':ac1_credit_importsys' => is_numeric($detail['ac1_credit_importsys'])?$detail['ac1_credit_importsys']:0,
-                    ':ac1_font_key' => $resInsert,
-                    ':ac1_font_line' => is_numeric($detail['ac1_font_line'])?$detail['ac1_font_line']:0,
-                    ':ac1_font_type' => 18,
-                    ':ac1_accountvs' => is_numeric($detail['ac1_accountvs'])?$detail['ac1_accountvs']:0,
-                    ':ac1_doctype' => is_numeric($detail['ac1_doctype'])?$detail['ac1_doctype']:0,
-                    ':ac1_ref1' => isset($detail['ac1_ref1'])?$detail['ac1_ref1']:NULL,
-                    ':ac1_ref2' => isset($detail['ac1_ref2'])?$detail['ac1_ref2']:NULL,
-                    ':ac1_ref3' => isset($detail['ac1_ref3'])?$detail['ac1_ref3']:NULL,
-                    ':ac1_prc_code' => isset($detail['ac1_prc_code'])?$detail['ac1_prc_code']:NULL,
-                    ':ac1_uncode' => isset($detail['ac1_uncode'])?$detail['ac1_uncode']:NULL,
-                    ':ac1_prj_code' => isset($detail['ac1_prj_code'])?$detail['ac1_prj_code']:NULL,
-                    ':ac1_rescon_date' => $this->validateDate($detail['ac1_rescon_date'])?$detail['ac1_rescon_date']:NULL,
-                    ':ac1_recon_total' => is_numeric($detail['ac1_recon_total'])?$detail['ac1_recon_total']:0,
-                    ':ac1_made_user' => isset($detail['ac1_made_user'])?$detail['ac1_made_user']:NULL,
-                    ':ac1_accperiod' => is_numeric($detail['ac1_accperiod'])?$detail['ac1_accperiod']:NULL,
-                    ':ac1_close' => is_numeric($detail['ac1_close'])?$detail['ac1_close']:0,
-                    ':ac1_cord' => is_numeric($detail['ac1_cord'])?$detail['ac1_cord']:0,
-                    ':ac1_ven_debit' => is_numeric($detail['ac1_debit'])?round($detail['ac1_debit'], $DECI_MALES):0,
-                    ':ac1_ven_credit' => is_numeric($detail['ac1_credit'])?round($detail['ac1_credit'], $DECI_MALES):0,
-                    ':ac1_fiscal_acct' => is_numeric($detail['ac1_fiscal_acct'])?$detail['ac1_fiscal_acct']:0,
-                    ':ac1_taxid' => is_numeric($detail['ac1_taxid'])?$detail['ac1_taxid']:0,
-                    ':ac1_isrti' => is_numeric($detail['ac1_isrti'])?$detail['ac1_isrti']:0,
-                    ':ac1_basert' => is_numeric($detail['ac1_basert'])?$detail['ac1_basert']:0,
-                    ':ac1_mmcode' => is_numeric($detail['ac1_mmcode'])?$detail['ac1_mmcode']:0,
-                    ':ac1_legal_num' => isset($detail['ac1_legal_num'])?$detail['ac1_legal_num']:NULL,
-                    ':ac1_codref' => is_numeric($detail['ac1_codref'])?$detail['ac1_codref']:0,
-										':ac1_card_type' => isset($detail['ac1_card_type'])?$detail['ac1_card_type']:0
-              ));
-
-							if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
-
-							}else{
-
-								$this->pedeo->trans_rollback();
-
-								$respuesta = array(
-									'error'   => true,
-									'data'    => $resInsertDetail,
-									'mensaje'	=> 'No se pudo registrar el asiento contable'
-								);
-
-								$this->response($respuesta);
-
-								return;
-							}
-            }
-
-
-						//VALIDANDDO DIFERENCIA EN PESO DE MONEDA DE SISTEMA
-
-						$sqlDiffPeso = "SELECT sum(coalesce(ac1_debit_sys,0)) as debito, sum(coalesce(ac1_credit_sys,0)) as credito,
+			$sqlDiffPeso = "SELECT sum(coalesce(ac1_debit_sys,0)) as debito, sum(coalesce(ac1_credit_sys,0)) as credito,
 														sum(coalesce(ac1_debit,0)) as ldebito, sum(coalesce(ac1_credit,0)) as lcredito
 														from mac1
 														where ac1_trans_id = :ac1_trans_id";
 
-						$resDiffPeso = $this->pedeo->queryTable($sqlDiffPeso, array(
-							':ac1_trans_id' => $resInsert
-						));
+			$resDiffPeso = $this->pedeo->queryTable($sqlDiffPeso, array(
+				':ac1_trans_id' => $resInsert
+			));
 
 
 
 
-						if( isset($resDiffPeso[0]['debito']) && abs(($resDiffPeso[0]['debito'] - $resDiffPeso[0]['credito'])) > 0 ){
+			if (isset($resDiffPeso[0]['debito']) && abs(($resDiffPeso[0]['debito'] - $resDiffPeso[0]['credito'])) > 0) {
 
-							$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
-							$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
 
-							if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
+				} else {
 
-							}else{
+					$this->pedeo->trans_rollback();
 
-								$this->pedeo->trans_rollback();
+					$respuesta = array(
+						'error'   => true,
+						'data'	  => $resCuentaDiferenciaDecimal,
+						'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+					);
 
-								$respuesta = array(
-									'error'   => true,
-									'data'	  => $resCuentaDiferenciaDecimal,
-									'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
-								);
+					$this->response($respuesta);
 
-								 $this->response($respuesta);
+					return;
+				}
 
-								 return;
-							}
+				$debito  = $resDiffPeso[0]['debito'];
+				$credito = $resDiffPeso[0]['credito'];
 
-							$debito  = $resDiffPeso[0]['debito'];
-							$credito = $resDiffPeso[0]['credito'];
+				if ($debito > $credito) {
+					$credito = abs(($debito - $credito));
+					$debito = 0;
+				} else {
+					$debito = abs(($credito - $debito));
+					$credito = 0;
+				}
 
-							if( $debito > $credito ){
-								$credito = abs(($debito - $credito));
-								$debito = 0;
-							}else{
-								$debito = abs(($credito - $debito));
-								$credito = 0;
-							}
+				$resDetalleAsiento = $this->pedeo->insertRow($sqlInsertDetail, array(
 
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlInsertDetail, array(
-
-								':ac1_trans_id' => $resInsert,
-								':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
-								':ac1_debit' => 0,
-								':ac1_credit' => 0,
-								':ac1_debit_sys' => round($debito, $DECI_MALES),
-								':ac1_credit_sys' => round($credito, $DECI_MALES),
-								':ac1_currex' => 0,
-								':ac1_doc_date' => $this->validateDate($Data['mac_doc_date'])?$Data['mac_doc_date']:NULL,
-								':ac1_doc_duedate' => $this->validateDate($Data['mac_doc_duedate'])?$Data['mac_doc_duedate']:NULL,
-								':ac1_debit_import' => 0,
-								':ac1_credit_import' => 0,
-								':ac1_debit_importsys' => 0,
-								':ac1_credit_importsys' => 0,
-								':ac1_font_key' => $resInsert,
-								':ac1_font_line' => 1,
-								':ac1_font_type' => 18,
-								':ac1_accountvs' => 1,
-								':ac1_doctype' => 18,
-								':ac1_ref1' => "",
-								':ac1_ref2' => "",
-								':ac1_ref3' => "",
-								':ac1_prc_code' => 0,
-								':ac1_uncode' => 0,
-								':ac1_prj_code' => NULL,
-								':ac1_rescon_date' => NULL,
-								':ac1_recon_total' => 0,
-								':ac1_made_user' => isset($Data['mac_made_usuer'])?$Data['mac_made_usuer']:NULL,
-								':ac1_accperiod' => 1,
-								':ac1_close' => 0,
-								':ac1_cord' => 0,
-								':ac1_ven_debit' => 0,
-								':ac1_ven_credit' => 0,
-								':ac1_fiscal_acct' => 0,
-								':ac1_taxid' => 0,
-								':ac1_isrti' => 0,
-								':ac1_basert' => 0,
-								':ac1_mmcode' => 0,
-								':ac1_legal_num' => NULL,
-								':ac1_codref' => 1,
-								':ac1_card_type' => 0
-							));
-
-
-
-							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-									// Se verifica que el detalle no de error insertando //
-							}else{
-									// si falla algun insert del detalle  se devuelven los cambios realizados por la transaccion,
-									// se retorna el error y se detiene la ejecucion del codigo restante.
-										$this->pedeo->trans_rollback();
-
-										$respuesta = array(
-											'error'   => true,
-											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la conciliación de bancos, occurio un error al insertar el detalle del asiento diferencia en cambio'
-										);
-
-										 $this->response($respuesta);
-
-										 return;
-							}
+					':ac1_trans_id' => $resInsert,
+					':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+					':ac1_debit' => 0,
+					':ac1_credit' => 0,
+					':ac1_debit_sys' => round($debito, $DECI_MALES),
+					':ac1_credit_sys' => round($credito, $DECI_MALES),
+					':ac1_currex' => 0,
+					':ac1_doc_date' => $this->validateDate($Data['mac_doc_date']) ? $Data['mac_doc_date'] : NULL,
+					':ac1_doc_duedate' => $this->validateDate($Data['mac_doc_duedate']) ? $Data['mac_doc_duedate'] : NULL,
+					':ac1_debit_import' => 0,
+					':ac1_credit_import' => 0,
+					':ac1_debit_importsys' => 0,
+					':ac1_credit_importsys' => 0,
+					':ac1_font_key' => $resInsert,
+					':ac1_font_line' => 1,
+					':ac1_font_type' => 18,
+					':ac1_accountvs' => 1,
+					':ac1_doctype' => 18,
+					':ac1_ref1' => "",
+					':ac1_ref2' => "",
+					':ac1_ref3' => "",
+					':ac1_prc_code' => 0,
+					':ac1_uncode' => 0,
+					':ac1_prj_code' => NULL,
+					':ac1_rescon_date' => NULL,
+					':ac1_recon_total' => 0,
+					':ac1_made_user' => isset($Data['mac_made_usuer']) ? $Data['mac_made_usuer'] : NULL,
+					':ac1_accperiod' => 1,
+					':ac1_close' => 0,
+					':ac1_cord' => 0,
+					':ac1_ven_debit' => 0,
+					':ac1_ven_credit' => 0,
+					':ac1_fiscal_acct' => 0,
+					':ac1_taxid' => 0,
+					':ac1_isrti' => 0,
+					':ac1_basert' => 0,
+					':ac1_mmcode' => 0,
+					':ac1_legal_num' => NULL,
+					':ac1_codref' => 1,
+					':ac1_card_type' => 0,
+					':business' => $detail['business'],
+					':branch'   => $detail['branch']
+				));
 
 
 
-						}else if( isset($resDiffPeso[0]['ldebito']) && abs(($resDiffPeso[0]['ldebito'] - $resDiffPeso[0]['lcredito'])) > 0 ){
+				if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+					// Se verifica que el detalle no de error insertando //
+				} else {
+					// si falla algun insert del detalle  se devuelven los cambios realizados por la transaccion,
+					// se retorna el error y se detiene la ejecucion del codigo restante.
+					$this->pedeo->trans_rollback();
 
-							$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
-							$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+					$respuesta = array(
+						'error'   => true,
+						'data'	  => $resDetalleAsiento,
+						'mensaje'	=> 'No se pudo registrar la conciliación de bancos, occurio un error al insertar el detalle del asiento diferencia en cambio'
+					);
 
-							if(isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])){
+					$this->response($respuesta);
 
-							}else{
+					return;
+				}
+			} else if (isset($resDiffPeso[0]['ldebito']) && abs(($resDiffPeso[0]['ldebito'] - $resDiffPeso[0]['lcredito'])) > 0) {
 
-								$this->pedeo->trans_rollback();
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
 
-								$respuesta = array(
-									'error'   => true,
-									'data'	  => $resCuentaDiferenciaDecimal,
-									'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
-								);
+				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
+				} else {
 
-								 $this->response($respuesta);
+					$this->pedeo->trans_rollback();
 
-								 return;
-							}
+					$respuesta = array(
+						'error'   => true,
+						'data'	  => $resCuentaDiferenciaDecimal,
+						'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+					);
 
-							$ldebito  = $resDiffPeso[0]['ldebito'];
-							$lcredito = $resDiffPeso[0]['lcredito'];
+					$this->response($respuesta);
 
-							if( $ldebito > $lcredito ){
-								$lcredito = abs(($ldebito - $lcredito));
-								$ldebito = 0;
-							}else{
-								$ldebito = abs(($lcredito - $ldebito));
-								$lcredito = 0;
-							}
+					return;
+				}
 
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlInsertDetail, array(
+				$ldebito  = $resDiffPeso[0]['ldebito'];
+				$lcredito = $resDiffPeso[0]['lcredito'];
 
-								':ac1_trans_id' => $resInsert,
-								':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
-								':ac1_debit' => round($ldebito, $DECI_MALES),
-								':ac1_credit' => round($lcredito, $DECI_MALES),
-								':ac1_debit_sys' => 0,
-								':ac1_credit_sys' => 0,
-								':ac1_currex' => 0,
-								':ac1_doc_date' => $this->validateDate($Data['mac_doc_date'])?$Data['mac_doc_date']:NULL,
-								':ac1_doc_duedate' => $this->validateDate($Data['mac_doc_duedate'])?$Data['mac_doc_duedate']:NULL,
-								':ac1_debit_import' => 0,
-								':ac1_credit_import' => 0,
-								':ac1_debit_importsys' => 0,
-								':ac1_credit_importsys' => 0,
-								':ac1_font_key' => $resInsert,
-								':ac1_font_line' => 1,
-								':ac1_font_type' => 18,
-								':ac1_accountvs' => 1,
-								':ac1_doctype' => 18,
-								':ac1_ref1' => "",
-								':ac1_ref2' => "",
-								':ac1_ref3' => "",
-								':ac1_prc_code' => 0,
-								':ac1_uncode' => 0,
-								':ac1_prj_code' => NULL,
-								':ac1_rescon_date' => NULL,
-								':ac1_recon_total' => 0,
-								':ac1_made_user' => isset($Data['mac_made_usuer'])?$Data['mac_made_usuer']:NULL,
-								':ac1_accperiod' => 1,
-								':ac1_close' => 0,
-								':ac1_cord' => 0,
-								':ac1_ven_debit' => 0,
-								':ac1_ven_credit' => 0,
-								':ac1_fiscal_acct' => 0,
-								':ac1_taxid' => 0,
-								':ac1_isrti' => 0,
-								':ac1_basert' => 0,
-								':ac1_mmcode' => 0,
-								':ac1_legal_num' => NULL,
-								':ac1_codref' => 1,
-								':ac1_card_type' => 0
+				if ($ldebito > $lcredito) {
+					$lcredito = abs(($ldebito - $lcredito));
+					$ldebito = 0;
+				} else {
+					$ldebito = abs(($lcredito - $ldebito));
+					$lcredito = 0;
+				}
 
-							));
+				$resDetalleAsiento = $this->pedeo->insertRow($sqlInsertDetail, array(
 
+					':ac1_trans_id' => $resInsert,
+					':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+					':ac1_debit' => round($ldebito, $DECI_MALES),
+					':ac1_credit' => round($lcredito, $DECI_MALES),
+					':ac1_debit_sys' => 0,
+					':ac1_credit_sys' => 0,
+					':ac1_currex' => 0,
+					':ac1_doc_date' => $this->validateDate($Data['mac_doc_date']) ? $Data['mac_doc_date'] : NULL,
+					':ac1_doc_duedate' => $this->validateDate($Data['mac_doc_duedate']) ? $Data['mac_doc_duedate'] : NULL,
+					':ac1_debit_import' => 0,
+					':ac1_credit_import' => 0,
+					':ac1_debit_importsys' => 0,
+					':ac1_credit_importsys' => 0,
+					':ac1_font_key' => $resInsert,
+					':ac1_font_line' => 1,
+					':ac1_font_type' => 18,
+					':ac1_accountvs' => 1,
+					':ac1_doctype' => 18,
+					':ac1_ref1' => "",
+					':ac1_ref2' => "",
+					':ac1_ref3' => "",
+					':ac1_prc_code' => 0,
+					':ac1_uncode' => 0,
+					':ac1_prj_code' => NULL,
+					':ac1_rescon_date' => NULL,
+					':ac1_recon_total' => 0,
+					':ac1_made_user' => isset($Data['mac_made_usuer']) ? $Data['mac_made_usuer'] : NULL,
+					':ac1_accperiod' => 1,
+					':ac1_close' => 0,
+					':ac1_cord' => 0,
+					':ac1_ven_debit' => 0,
+					':ac1_ven_credit' => 0,
+					':ac1_fiscal_acct' => 0,
+					':ac1_taxid' => 0,
+					':ac1_isrti' => 0,
+					':ac1_basert' => 0,
+					':ac1_mmcode' => 0,
+					':ac1_legal_num' => NULL,
+					':ac1_codref' => 1,
+					':ac1_card_type' => 0,
+					':business' => $detail['business'],
+					':branch'   => $detail['branch']
 
-
-							if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-									// Se verifica que el detalle no de error insertando //
-							}else{
-									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-									// se retorna el error y se detiene la ejecucion del codigo restante.
-										$this->pedeo->trans_rollback();
-
-										$respuesta = array(
-											'error'   => true,
-											'data'	  => $resDetalleAsiento,
-											'mensaje'	=> 'No se pudo registrar la conciliación de bancos, occurio un error al insertar el detalle del asiento diferencia en cambio'
-										);
-
-										 $this->response($respuesta);
-
-										 return;
-							}
-						}
-
-
-						// $sqlmac1 = "SELECT * FROM  mac1 where ac1_trans_id =:ac1_trans_id";
-						// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsert));
-						// print_r(json_encode($ressqlmac1));
-						// exit;
+				));
 
 
 
-						//SE VALIDA LA CONTABILIDAD CREADA
-						 $validateCont = $this->generic->validateAccountingAccent($resInsert);
+				if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+					// Se verifica que el detalle no de error insertando //
+				} else {
+					// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+					// se retorna el error y se detiene la ejecucion del codigo restante.
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data'	  => $resDetalleAsiento,
+						'mensaje'	=> 'No se pudo registrar la conciliación de bancos, occurio un error al insertar el detalle del asiento diferencia en cambio'
+					);
+
+					$this->response($respuesta);
+
+					return;
+				}
+			}
 
 
-						 if( isset($validateCont['error']) && $validateCont['error'] == false ){
+			// $sqlmac1 = "SELECT * FROM  mac1 where ac1_trans_id =:ac1_trans_id";
+			// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsert));
+			// print_r(json_encode($ressqlmac1));
+			// exit;
 
-						 }else{
 
-								 $this->pedeo->trans_rollback();
 
-								 $respuesta = array(
-									 'error'   => true,
-									 'data' 	 => $validateCont['data'],
-									 'mensaje' => $validateCont['mensaje']
-								 );
+			//SE VALIDA LA CONTABILIDAD CREADA
+			$validateCont = $this->generic->validateAccountingAccent($resInsert);
 
-								 $this->response($respuesta);
 
-								 return;
-						 }
-						//
+			if (isset($validateCont['error']) && $validateCont['error'] == false) {
+			} else {
 
-						$this->pedeo->trans_commit();
+				$this->pedeo->trans_rollback();
 
-            $respuesta = array(
-            'error' => false,
-            'data' => $resInsert,
-            'mensaje' =>'Asiento contable registrado con exito'
-            );
+				$respuesta = array(
+					'error'   => true,
+					'data' 	 => $validateCont['data'],
+					'mensaje' => $validateCont['mensaje']
+				);
 
-        }else{
-							$this->pedeo->trans_rollback();
+				$this->response($respuesta);
 
-              $respuesta = array(
-                'error'   => true,
-                'data'    => $resInsert,
-                'mensaje'	=> 'No se pudo registrar el asiento contable'
-              );
+				return;
+			}
+			//
 
-        }
+			$this->pedeo->trans_commit();
 
-         $this->response($respuesta);
+			$respuesta = array(
+				'error' => false,
+				'data' => $resInsert,
+				'mensaje' => 'Asiento contable registrado con exito'
+			);
+		} else {
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error'   => true,
+				'data'    => $resInsert,
+				'mensaje'	=> 'No se pudo registrar el asiento contable'
+			);
+		}
+
+		$this->response($respuesta);
 	}
 
 
 	// OBTENER ASIENTOS CONTABLES
-  public function getAccountingAccent_get(){
+	public function getAccountingAccent_get()
+	{
 
-    	$sqlSelect = "SELECT	distinct
+		$Data = $this->get();
+
+		if (!isset($Data['business']) or !isset($Data['branch'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT	distinct
 			t0.mac_trans_id docnum,
 			t0.mac_trans_id numero_transaccion,
 		case
@@ -723,146 +754,147 @@ class AccountingAccent extends REST_Controller {
 		left join dcnd t15 on t0.mac_base_entry = t15.cnd_docentry and t0.mac_base_type= t15.cnd_doctype
 		left join dits t17 on t0.mac_base_entry = t17.its_docentry  and t0.mac_base_type = t17.its_doctype
 		left join dcrc t18 on t0.mac_base_entry = t18.crc_docentry  and t0.mac_base_type = t18.crc_doctype
-		left join dcrb t19 on t0.mac_base_entry = t19.crb_id and t0.mac_base_type = t19.crb_doctype";
+		left join dcrb t19 on t0.mac_base_entry = t19.crb_id and t0.mac_base_type = t19.crb_doctype
+		WHERE t0.business = :business AND t0.branch = :branch";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business'], ":branch" => $Data['branch']));
 
-        if(isset($resSelect[0])){
+		if (isset($resSelect[0])) {
 
-          $respuesta = array(
-            'error' => false,
-            'data'  => $resSelect,
-            'mensaje' => '');
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
 
-        }else{
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
 
-            $respuesta = array(
-              'error'   => true,
-              'data' => array(),
-              'mensaje'	=> 'busqueda sin resultados'
-            );
-
-        }
-
-         $this->response($respuesta);
-  }
+		$this->response($respuesta);
+	}
 
 
 	// OBTENER ASIENTO CONTABLE POR ID
-	public function getAccountingAccentById_get(){
+	public function getAccountingAccentById_get()
+	{
 
-				$Data = $this->get();
+		$Data = $this->get();
 
-				if(!isset($Data['mac_trans_id'])){
+		if (!isset($Data['mac_trans_id'])) {
 
-					$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' =>'La informacion enviada no es valida'
-					);
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
 
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-					return;
-				}
+			return;
+		}
 
-				$sqlSelect = "SELECT DISTINCT
-																t0.ac1_trans_id docnum,
-																t0.ac1_trans_id numero_transaccion,
-																case
-																    when coalesce(t0.ac1_font_type,0) = 3 then 'Entrega'
-																    when coalesce(t0.ac1_font_type,0) = 4 then 'Devolucion'
-																    when coalesce(t0.ac1_font_type,0) = 5 then 'Factura Cliente'
-																    when coalesce(t0.ac1_font_type,0) = 6 then 'Nota Credito Cliente'
-																    when coalesce(t0.ac1_font_type,0) = 7 then 'Nota Debito Cliente'
-																    when coalesce(t0.ac1_font_type,0) = 8 then 'Salida Mercancia'
-																    when coalesce(t0.ac1_font_type,0) = 9 then 'Entrada Mercancia'
-																    when coalesce(t0.ac1_font_type,0) = 13 then 'Entrada Compras'
-																    when coalesce(t0.ac1_font_type,0) = 14 then 'Devolucion Compra'
-																    when coalesce(t0.ac1_font_type,0) = 15 then 'Factura Proveedores'
-																    when coalesce(t0.ac1_font_type,0) = 16 then 'Nota Credito Compras'
-																    when coalesce(t0.ac1_font_type,0) = 17 then 'Nota Debito Compras'
-																    when coalesce(t0.ac1_font_type,0) = 18 then 'Asiento Manual'
-																    when coalesce(t0.ac1_font_type,0) = 19 then 'Pagos Efectuado'
-																    when coalesce(t0.ac1_font_type,0) = 20 then 'Pagos Recibidos'
-																end origen,
-																case
-																    when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_docnum
-																    when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_docnum
-																    when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_docnum
-																    when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_docnum
-																    when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_docnum
-																    when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_docnum
-																    when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_docnum
-																    when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_docnum
-																    when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_docnum
-																    when coalesce(t0.ac1_font_type,0) = 15 then t14.cnc_docnum
-																    when coalesce(t0.ac1_font_type,0) = 16 then t15.cnd_docnum
-																    when coalesce(t0.ac1_font_type,0) = 17 then t12.cec_docnum
-																    when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
-																    when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
-																    when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
-																end numero_origen,
-																COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
-																from mac1 t0
-																left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
-																left join dvdv t2 on t0.ac1_font_key = t2.vdv_docentry and t0.ac1_font_type = t2.vdv_doctype
-																left join dvfv t3 on t0.ac1_font_key = t3.dvf_docentry and t0.ac1_font_type = t3.dvf_doctype
-																Left join dacc t4 on t0.ac1_account = t4.acc_code
-																left join misi t5 on t0.ac1_font_key = t5.isi_docentry and t0.ac1_font_type = t5.isi_doctype
-																left join miei t6 on t0.ac1_font_key = t6.iei_docentry and t0.ac1_font_type = t6.iei_doctype
-																left join dcfc t7 on t0.ac1_font_key = t7.cfc_docentry and t0.ac1_font_type = t7.cfc_doctype
-																left join gbpe t8 on t0.ac1_font_key = t8.bpe_docentry and t0.ac1_font_type = t8.bpe_doctype
-																left join gbpr t9 on t0.ac1_font_key = t9.bpr_docentry and t0.ac1_font_type = t9.bpr_doctype
-																left join dvnc t10 on t0.ac1_font_key = t10.vnc_docentry and t0.ac1_font_type = t10.vnc_doctype
-																left join dvnd t11 on t0.ac1_font_key = t11.vnd_docentry and t0.ac1_font_type = t11.vnd_doctype
-																left join dcec t12 on t0.ac1_font_key = t12.cec_docentry and t0.ac1_font_type = t12.cec_doctype
-																left join dcdc t13 on t0.ac1_font_key = t13.cdc_docentry and t0.ac1_font_type = t13.cdc_doctype
-																left join dcnc t14 on t0.ac1_font_key = t14.cnc_docentry and t0.ac1_font_type = t14.cnc_doctype
-																left join dcnd t15 on t0.ac1_font_key = t15.cnd_docentry and t0.ac1_font_type = t15.cnd_doctype
-																WHERE mac_trans_id = :mac_trans_id";
+		$sqlSelect = "SELECT DISTINCT
+			t0.ac1_trans_id docnum,
+			t0.ac1_trans_id numero_transaccion,
+			case
+				when coalesce(t0.ac1_font_type,0) = 3 then 'Entrega'
+				when coalesce(t0.ac1_font_type,0) = 4 then 'Devolucion'
+				when coalesce(t0.ac1_font_type,0) = 5 then 'Factura Cliente'
+				when coalesce(t0.ac1_font_type,0) = 6 then 'Nota Credito Cliente'
+				when coalesce(t0.ac1_font_type,0) = 7 then 'Nota Debito Cliente'
+				when coalesce(t0.ac1_font_type,0) = 8 then 'Salida Mercancia'
+				when coalesce(t0.ac1_font_type,0) = 9 then 'Entrada Mercancia'
+				when coalesce(t0.ac1_font_type,0) = 13 then 'Entrada Compras'
+				when coalesce(t0.ac1_font_type,0) = 14 then 'Devolucion Compra'
+				when coalesce(t0.ac1_font_type,0) = 15 then 'Factura Proveedores'
+				when coalesce(t0.ac1_font_type,0) = 16 then 'Nota Credito Compras'
+				when coalesce(t0.ac1_font_type,0) = 17 then 'Nota Debito Compras'
+				when coalesce(t0.ac1_font_type,0) = 18 then 'Asiento Manual'
+				when coalesce(t0.ac1_font_type,0) = 19 then 'Pagos Efectuado'
+				when coalesce(t0.ac1_font_type,0) = 20 then 'Pagos Recibidos'
+			end origen,
+			case
+				when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_docnum
+				when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_docnum
+				when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_docnum
+				when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_docnum
+				when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_docnum
+				when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_docnum
+				when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_docnum
+				when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_docnum
+				when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_docnum
+				when coalesce(t0.ac1_font_type,0) = 15 then t14.cnc_docnum
+				when coalesce(t0.ac1_font_type,0) = 16 then t15.cnd_docnum
+				when coalesce(t0.ac1_font_type,0) = 17 then t12.cec_docnum
+				when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
+				when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
+				when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
+			end numero_origen,
+			COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
+			from mac1 t0
+			left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
+			left join dvdv t2 on t0.ac1_font_key = t2.vdv_docentry and t0.ac1_font_type = t2.vdv_doctype
+			left join dvfv t3 on t0.ac1_font_key = t3.dvf_docentry and t0.ac1_font_type = t3.dvf_doctype
+			Left join dacc t4 on t0.ac1_account = t4.acc_code
+			left join misi t5 on t0.ac1_font_key = t5.isi_docentry and t0.ac1_font_type = t5.isi_doctype
+			left join miei t6 on t0.ac1_font_key = t6.iei_docentry and t0.ac1_font_type = t6.iei_doctype
+			left join dcfc t7 on t0.ac1_font_key = t7.cfc_docentry and t0.ac1_font_type = t7.cfc_doctype
+			left join gbpe t8 on t0.ac1_font_key = t8.bpe_docentry and t0.ac1_font_type = t8.bpe_doctype
+			left join gbpr t9 on t0.ac1_font_key = t9.bpr_docentry and t0.ac1_font_type = t9.bpr_doctype
+			left join dvnc t10 on t0.ac1_font_key = t10.vnc_docentry and t0.ac1_font_type = t10.vnc_doctype
+			left join dvnd t11 on t0.ac1_font_key = t11.vnd_docentry and t0.ac1_font_type = t11.vnd_doctype
+			left join dcec t12 on t0.ac1_font_key = t12.cec_docentry and t0.ac1_font_type = t12.cec_doctype
+			left join dcdc t13 on t0.ac1_font_key = t13.cdc_docentry and t0.ac1_font_type = t13.cdc_doctype
+			left join dcnc t14 on t0.ac1_font_key = t14.cnc_docentry and t0.ac1_font_type = t14.cnc_doctype
+			left join dcnd t15 on t0.ac1_font_key = t15.cnd_docentry and t0.ac1_font_type = t15.cnd_doctype
+			WHERE mac_trans_id = :mac_trans_id";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_trans_id' => $Data['mac_trans_id']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_trans_id' => $Data['mac_trans_id']));
 
-				if(isset($resSelect[0])){
+		if (isset($resSelect[0])) {
 
-					$respuesta = array(
-						'error' => false,
-						'data'  => $resSelect,
-						'mensaje' => '');
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
 
-				}else{
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
 
-						$respuesta = array(
-							'error'   => true,
-							'data' => array(),
-							'mensaje'	=> 'busqueda sin resultados'
-						);
-
-				}
-
-				 $this->response($respuesta);
+		$this->response($respuesta);
 	}
 
 
 	//OBTENER DETALLE ASIENTO CONTABLE POR ID ASIENTO
-	public function getAccountingAccentDetail_get(){
+	public function getAccountingAccentDetail_get()
+	{
 
-				$Data = $this->get();
+		$Data = $this->get();
 
-				if(!isset($Data['ac1_trans_id'])){
+		if (!isset($Data['ac1_trans_id'])) {
 
-					$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' =>'La informacion enviada no es valida'
-					);
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
 
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-					return;
-				}
-				$sqlSelect = "--ENTREGA DE VENTAS
+			return;
+		}
+		$sqlSelect = "--ENTREGA DE VENTAS
 											SELECT distinct
 											mac1.ac1_trans_id as docnum,
 											mac1.ac1_trans_id as numero_transaccion,
@@ -1215,37 +1247,37 @@ class AccountingAccent extends REST_Controller {
 											where mac1.ac1_trans_id = :ac1_trans_id
 											and dacc.acc_enabled = 1";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
 
-				if(isset($resSelect[0])){
+		if (isset($resSelect[0])) {
 
-					$respuesta = array(
-						'error' => false,
-						'data'  => $resSelect,
-						'mensaje' => '');
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
 
-				}else{
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
 
-						$respuesta = array(
-							'error'   => true,
-							'data' => array(),
-							'mensaje'	=> 'busqueda sin resultados'
-						);
-
-				}
-
-				 $this->response($respuesta);
+		$this->response($respuesta);
 	}
 
-	public function getAccentByDoc_post(){
+	public function getAccentByDoc_post()
+	{
 		$Data = $this->post();
 
-		if(!isset($Data['mac_base_type']) OR !isset($Data['mac_base_entry'])){
+		if (!isset($Data['mac_base_type']) or !isset($Data['mac_base_entry'])) {
 
 			$respuesta = array(
 				'error' => true,
 				'data'  => array(),
-				'mensaje' =>'La informacion enviada no es valida'
+				'mensaje' => 'La informacion enviada no es valida'
 			);
 
 			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -1295,34 +1327,34 @@ class AccountingAccent extends REST_Controller {
 		AND t0.mac_base_entry = :mac_base_entry";
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_base_type' => $Data['mac_base_type'], ':mac_base_entry' => $Data['mac_base_entry']));
 
-		if(isset($resSelect[0])){
+		if (isset($resSelect[0])) {
 
 			$respuesta = array(
 				'error' => false,
 				'data'  => $resSelect,
-				'mensaje' => '');
+				'mensaje' => ''
+			);
+		} else {
 
-		}else{
-
-				$respuesta = array(
-					'error'   => true,
-					'data' => array(),
-					'mensaje'	=> 'busqueda sin resultados'
-				);
-
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
 		}
 
-		 $this->response($respuesta);
+		$this->response($respuesta);
 	}
 
 
 
-	private function validateDate($fecha){
-			if(strlen($fecha) == 10 OR strlen($fecha) > 10){
-				return true;
-			}else{
-				return false;
-			}
+	private function validateDate($fecha)
+	{
+		if (strlen($fecha) == 10 or strlen($fecha) > 10) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	//FUNCION PARA ACTUALIZAR COMENTARIO
@@ -1334,27 +1366,28 @@ class AccountingAccent extends REST_Controller {
 		// SE INSTANCIA LA CLASE GENERIC PARA VALIDAR EL PERIODO CONTABLE
 		$generic = new Generic();
 
-		if(!isset($Data['mac_trans_id']) OR
-		   !isset($Data['mac_doc_date']) OR
-		   !isset($Data['mac_doc_duedate']) OR
-		   !isset($Data['mac_comments'])){
+		if (
+			!isset($Data['mac_trans_id']) or
+			!isset($Data['mac_doc_date']) or
+			!isset($Data['mac_doc_duedate']) or
+			!isset($Data['mac_comments'])
+		) {
 			$respuesta = array(
 				'error' => true,
 				'data'  => array(),
-				'mensaje' =>'La informacion enviada no es valida'
+				'mensaje' => 'La informacion enviada no es valida'
 			);
 
 			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 			return;
-
 		}
 
 		// SE VERIFICA QUE EL PERIODO CONTABLE ESTE ACTIVO
-		$periodo = $generic->ValidatePeriod($Data['mac_doc_date'],$Data['mac_doc_date'],$Data['mac_doc_duedate'],1);
+		$periodo = $generic->ValidatePeriod($Data['mac_doc_date'], $Data['mac_doc_date'], $Data['mac_doc_duedate'], 1);
 
 		if ($periodo['error']) {
-			$this->response($periodo,REST_Controller::HTTP_BAD_REQUEST);
+			$this->response($periodo, REST_Controller::HTTP_BAD_REQUEST);
 			return;
 		}
 
@@ -1385,7 +1418,7 @@ class AccountingAccent extends REST_Controller {
 					'mensaje' => 'No se pudo realizar la operacion'
 				);
 			}
-		}else{
+		} else {
 			$respuesta = array(
 				'error' => true,
 				'data' => $resSelect,
@@ -1394,8 +1427,5 @@ class AccountingAccent extends REST_Controller {
 		}
 
 		$this->response($respuesta);
-
 	}
-
-
 }

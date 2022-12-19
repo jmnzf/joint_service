@@ -1091,7 +1091,7 @@ class SalesOrder extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['dms_card_code'])) {
+		if (!isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -1109,9 +1109,10 @@ class SalesOrder extends REST_Controller
 					FROM dvov t0
 					left join estado_doc t1 on t0.vov_docentry = t1.entry and t0.vov_doctype = t1.tipo
 					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-					where t2.estado = 'Abierto' and t0.vov_cardcode =:vov_cardcode";
+					where t2.estado = 'Abierto' and t0.vov_cardcode =:vov_cardcode
+					AND t0.business = :business AND t0.branch = :branch";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vov_cardcode" => $Data['dms_card_code']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vov_cardcode" => $Data['dms_card_code'],":business" => $Data['business'],":branch" => $Data['branch']));
 
 		if (isset($resSelect[0])) {
 

@@ -28,6 +28,7 @@ class Quotation extends REST_Controller
 	//CREAR NUEVA COTIZACION
 	public function createQuotation_post()
 	{
+		$Data = $this->post();
 
 		if (!isset($Data['business']) OR
 				!isset($Data['branch'])) {
@@ -41,9 +42,9 @@ class Quotation extends REST_Controller
 				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 				return;
-			}
+		}
 
-		$Data = $this->post();
+	
 		$DocNumVerificado = 0;
 		$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 
@@ -334,9 +335,9 @@ class Quotation extends REST_Controller
 		$sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                    dvc_createby,business,branch)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
+                      dvc_createby,business,branch)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
                       :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
-                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype,:dvc_createby)";
+                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype,:dvc_createby,:business,:branch)";
 
 
 		// Se Inicia la transaccion,

@@ -29,7 +29,9 @@ class SalesNc extends REST_Controller
 	//CREAR NUEVA Nota crédito de clientes
 	public function createSalesNc_post()
 	{
-		if (!isset($Data['vnc_business']) OR
+		$Data = $this->post();
+
+		if (!isset($Data['business']) OR
 				!isset($Data['branch'])) {
 
 				$respuesta = array(
@@ -41,10 +43,10 @@ class SalesNc extends REST_Controller
 				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 				return;
-			}
+		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
-		$Data = $this->post();
+		
 		$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 		$DetalleAsientoIva = new stdClass();
 		$DetalleCostoInventario = new stdClass();
@@ -92,11 +94,11 @@ class SalesNc extends REST_Controller
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax, business, branch)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line, :ac1_base_tax)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line, :ac1_base_tax, :business, :branch)";
 
 
 
@@ -322,10 +324,10 @@ class SalesNc extends REST_Controller
 		$sqlInsert = "INSERT INTO dvnc(vnc_series, vnc_docnum, vnc_docdate, vnc_duedate, vnc_duedev, vnc_pricelist, vnc_cardcode,
                       vnc_cardname, vnc_currency, vnc_contacid, vnc_slpcode, vnc_empid, vnc_comment, vnc_doctotal, vnc_baseamnt, vnc_taxtotal,
                       vnc_discprofit, vnc_discount, vnc_createat, vnc_baseentry, vnc_basetype, vnc_doctype, vnc_idadd, vnc_adress, vnc_paytype,
-                      vnc_createby, vnc_igtf, vnc_taxigtf, vnc_igtfapplyed, vnc_igtfcode,vnc_business,branch)VALUES(:vnc_series, :vnc_docnum, :vnc_docdate, :vnc_duedate, :vnc_duedev, :vnc_pricelist, :vnc_cardcode, :vnc_cardname,
+                      vnc_createby, vnc_igtf, vnc_taxigtf, vnc_igtfapplyed, vnc_igtfcode,business,branch)VALUES(:vnc_series, :vnc_docnum, :vnc_docdate, :vnc_duedate, :vnc_duedev, :vnc_pricelist, :vnc_cardcode, :vnc_cardname,
                       :vnc_currency, :vnc_contacid, :vnc_slpcode, :vnc_empid, :vnc_comment, :vnc_doctotal, :vnc_baseamnt, :vnc_taxtotal, :vnc_discprofit, :vnc_discount,
                       :vnc_createat, :vnc_baseentry, :vnc_basetype, :vnc_doctype, :vnc_idadd, :vnc_adress, :vnc_paytype,:vnc_createby,:vnc_igtf, 
-					  :vnc_taxigtf, :vnc_igtfapplyed, :vnc_igtfcode,:vnc_business,:branch)";
+					  :vnc_taxigtf, :vnc_igtfapplyed, :vnc_igtfcode,:business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -370,7 +372,7 @@ class SalesNc extends REST_Controller
 				':vnc_taxigtf' => isset($Data['dvf_taxigtf']) ? $Data['dvf_taxigtf'] : NULL,
 				':vnc_igtfapplyed' => isset($Data['dvf_igtfapplyed']) ? $Data['dvf_igtfapplyed'] : NULL,
 				':vnc_igtfcode' => isset($Data['dvf_igtfcode']) ? $Data['dvf_igtfcode'] : NULL,
-				':vnc_business' => isset($Data['vnc_business']) ? $Data['vnc_business'] : NULL,
+				':business' => isset($Data['business']) ? $Data['business'] : NULL,
 				':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 
 			));
@@ -443,8 +445,8 @@ class SalesNc extends REST_Controller
 
 				//Se agregan los asientos contables*/*******
 
-				$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
-																 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+				$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
+								 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
 
 
 				$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
@@ -475,7 +477,9 @@ class SalesNc extends REST_Controller
 					':mac_create_date' => $this->validateDate($Data['vnc_createat']) ? $Data['vnc_createat'] : NULL,
 					':mac_made_usuer' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
 					':mac_update_date' => date("Y-m-d"),
-					':mac_update_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL
+					':mac_update_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
+					':business' => $Data['business'],
+					':branch' 	=> $Data['branch']
 				));
 
 
@@ -1280,7 +1284,9 @@ class SalesNc extends REST_Controller
 						':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 						':ac1_codref' => 1,
 						':ac1_line'   => $AC1LINE,
-						':ac1_base_tax' => 0
+						':ac1_base_tax' => 0,
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch']
 					));
 
 
@@ -1400,7 +1406,9 @@ class SalesNc extends REST_Controller
 						':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 						':ac1_codref' => 1,
 						':ac1_line'   => $AC1LINE,
-						':ac1_base_tax' => round($LineTotal, $DECI_MALES)
+						':ac1_base_tax' => round($LineTotal, $DECI_MALES),
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch']
 					));
 
 
@@ -1596,7 +1604,9 @@ class SalesNc extends REST_Controller
 						':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 						':ac1_codref' => 1,
 						':ac1_line'   => $AC1LINE,
-						':ac1_base_tax' => 0
+						':ac1_base_tax' => 0,
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch']
 					));
 
 					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1798,7 +1808,9 @@ class SalesNc extends REST_Controller
 						':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 						':ac1_codref' => 1,
 						':ac1_line'   => $AC1LINE,
-						':ac1_base_tax' => 0
+						':ac1_base_tax' => 0,
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch']
 					));
 
 					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -2028,7 +2040,9 @@ class SalesNc extends REST_Controller
 						':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 						':ac1_codref' => 1,
 						':ac1_line'   => $AC1LINE,
-						':ac1_base_tax' => 0
+						':ac1_base_tax' => 0,
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch']
 					));
 
 					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -2131,7 +2145,9 @@ class SalesNc extends REST_Controller
 								':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 								':ac1_codref' => 1,
 								':ac1_line'   => 	$AC1LINE,
-								':ac1_base_tax' => 0
+								':ac1_base_tax' => 0,
+								':business' => $Data['business'],
+								':branch' 	=> $Data['branch']
 							));
 
 							if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -2285,7 +2301,9 @@ class SalesNc extends REST_Controller
 							':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 							':ac1_codref' => 1,
 							':ac1_line'   => 	$AC1LINE,
-							':ac1_base_tax' => $BaseIgtf
+							':ac1_base_tax' => $BaseIgtf,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch']
 						));
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -2669,12 +2687,11 @@ class SalesNc extends REST_Controller
 		}
 
 		$sqlUpdate = "UPDATE dvnc	SET vnc_docdate=:vnc_docdate,vnc_duedate=:vnc_duedate, vnc_duedev=:vnc_duedev, vnc_pricelist=:vnc_pricelist, vnc_cardcode=:vnc_cardcode,
-			  						vnc_cardname=:vnc_cardname, vnc_currency=:vnc_currency, vnc_contacid=:vnc_contacid, vnc_slpcode=:vnc_slpcode,
-										vnc_empid=:vnc_empid, vnc_comment=:vnc_comment, vnc_doctotal=:vnc_doctotal, vnc_baseamnt=:vnc_baseamnt,
-										vnc_taxtotal=:vnc_taxtotal, vnc_discprofit=:vnc_discprofit, vnc_discount=:vnc_discount, vnc_createat=:vnc_createat,
-										vnc_baseentry=:vnc_baseentry, vnc_basetype=:vnc_basetype, vnc_doctype=:vnc_doctype, vnc_idadd=:vnc_idadd,
-										vnc_adress=:vnc_adress, vnc_paytype=:vnc_paytype ,vnc_business = :vnc_business,branch = :branch
-										WHERE vnc_docentry=:vnc_docentry";
+				vnc_cardname=:vnc_cardname, vnc_currency=:vnc_currency, vnc_contacid=:vnc_contacid, vnc_slpcode=:vnc_slpcode,
+				vnc_empid=:vnc_empid, vnc_comment=:vnc_comment, vnc_doctotal=:vnc_doctotal, vnc_baseamnt=:vnc_baseamnt,
+				vnc_taxtotal=:vnc_taxtotal, vnc_discprofit=:vnc_discprofit, vnc_discount=:vnc_discount, vnc_createat=:vnc_createat,
+				vnc_baseentry=:vnc_baseentry, vnc_basetype=:vnc_basetype, vnc_doctype=:vnc_doctype, vnc_idadd=:vnc_idadd,
+				vnc_adress=:vnc_adress, vnc_paytype=:vnc_paytype WHERE vnc_docentry=:vnc_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -2703,7 +2720,7 @@ class SalesNc extends REST_Controller
 			':vnc_idadd' => isset($Data['vnc_idadd']) ? $Data['vnc_idadd'] : NULL,
 			':vnc_adress' => isset($Data['vnc_adress']) ? $Data['vnc_adress'] : NULL,
 			':vnc_paytype' => is_numeric($Data['vnc_paytype']) ? $Data['vnc_paytype'] : 0,
-			':vnc_business' => isset($Data['vnc_business']) ? $Data['vnc_business'] : NULL,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 			':vnc_docentry' => $Data['vnc_docentry']
 		));
@@ -2952,7 +2969,7 @@ class SalesNc extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['dms_card_code'])) {
+		if (!isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -2965,9 +2982,17 @@ class SalesNc extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM dvnc WHERE vnc_cardcode =:vnc_cardcode";
+		$sqlSelect = " SELECT * 
+					FROM dvnc 
+					left join estado_doc t1 
+                    on t0.vnc_docentry = t1.entry and t0.vnc_doctype = t1.tipo
+					left join responsestatus t2 
+                    on t1.entry = t2.id and t1.tipo = t2.tipo
+					WHERE t2.estado = 'Abierto' and t0.vnc_cardcode =:vnc_cardcode
+					AND t0.business = :business 
+					AND t0.branch = :branch";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vnc_cardcode" => $Data['dms_card_code']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vnc_cardcode" => $Data['dms_card_code'],":business" => $Data['business'],":branch" => $Data['branch']));
 
 		if (isset($resSelect[0])) {
 

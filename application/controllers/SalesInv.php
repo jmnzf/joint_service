@@ -37,7 +37,7 @@ class SalesInv extends REST_Controller
 				$respuesta = array(
 					'error' => true,
 					'data'  => array(),
-					'mensaje' => 'La informacion enviada no es valida AAA'
+					'mensaje' => 'La informacion enviada no es valida'
 				);
 
 				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -96,11 +96,11 @@ class SalesInv extends REST_Controller
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax, business, branch)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line, :ac1_base_tax)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line, :ac1_base_tax, :business, :branch)";
 
 
 		if (!isset($Data['detail'])) {
@@ -476,8 +476,8 @@ class SalesInv extends REST_Controller
 				//Se agrega encabezado del asiento contable
 
 
-				$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
-																 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+				$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
+																 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
 
 
 				$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
@@ -508,7 +508,9 @@ class SalesInv extends REST_Controller
 					':mac_create_date' => $this->validateDate($Data['dvf_createat']) ? $Data['dvf_createat'] : NULL,
 					':mac_made_usuer' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
 					':mac_update_date' => date("Y-m-d"),
-					':mac_update_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL
+					':mac_update_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
+					':business' => $Data['business'],
+					':branch' 	=> $Data['branch']
 				));
 
 
@@ -1435,7 +1437,9 @@ class SalesInv extends REST_Controller
 						':ac1_legal_num' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 						':ac1_codref' => 1,
 						':ac1_line'   => 	$AC1LINE,
-						':ac1_base_tax' => 0
+						':ac1_base_tax' => 0,
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch']
 					));
 
 
@@ -1556,7 +1560,9 @@ class SalesInv extends REST_Controller
 						':ac1_legal_num' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 						':ac1_codref' => 1,
 						':ac1_line'   => 	$AC1LINE,
-						':ac1_base_tax' => round($LineTotal, $DECI_MALES)
+						':ac1_base_tax' => round($LineTotal, $DECI_MALES),
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch']
 					));
 
 
@@ -1753,7 +1759,9 @@ class SalesInv extends REST_Controller
 							':ac1_legal_num' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 							':ac1_codref' => 1,
 							':ac1_line'   => 	$AC1LINE,
-							':ac1_base_tax' => 0
+							':ac1_base_tax' => 0,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch']
 						));
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -2089,7 +2097,9 @@ class SalesInv extends REST_Controller
 						':ac1_legal_num' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 						':ac1_codref' => 1,
 						':ac1_line'   => 	$AC1LINE,
-						':ac1_base_tax' => 0
+						':ac1_base_tax' => 0,
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch']
 					));
 
 					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -2298,7 +2308,9 @@ class SalesInv extends REST_Controller
 							':ac1_legal_num' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 							':ac1_codref' => 1,
 							':ac1_line'   => 	$AC1LINE,
-							':ac1_base_tax' => 0
+							':ac1_base_tax' => 0,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch']
 						));
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -2534,7 +2546,9 @@ class SalesInv extends REST_Controller
 						':ac1_legal_num' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 						':ac1_codref' => 1,
 						':ac1_line'   => 	$AC1LINE,
-						':ac1_base_tax' => 0
+						':ac1_base_tax' => 0,
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch']
 					));
 
 					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -2641,7 +2655,9 @@ class SalesInv extends REST_Controller
 								':ac1_legal_num' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 								':ac1_codref' => 1,
 								':ac1_line'   => 	$AC1LINE,
-								':ac1_base_tax' => 0
+								':ac1_base_tax' => 0,
+								':business' => $Data['business'],
+								':branch' 	=> $Data['branch']
 							));
 
 							if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -2797,7 +2813,9 @@ class SalesInv extends REST_Controller
 							':ac1_legal_num' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 							':ac1_codref' => 1,
 							':ac1_line'   => 	$AC1LINE,
-							':ac1_base_tax' => $BaseIgtf
+							':ac1_base_tax' => $BaseIgtf,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch']
 						));
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -3602,7 +3620,7 @@ class SalesInv extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['dms_card_code'])) {
+		if (!isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -3616,13 +3634,14 @@ class SalesInv extends REST_Controller
 		}
 
 		$sqlSelect = "SELECT
-												t0.*
-											FROM dvfv t0
-											left join estado_doc t1 on t0.dvf_docentry = t1.entry and t0.dvf_doctype = t1.tipo
-											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-											where t2.estado = 'Abierto' and t0.dvf_cardcode =:dvf_cardcode";
+						t0.*
+					FROM dvfv t0
+					left join estado_doc t1 on t0.dvf_docentry = t1.entry and t0.dvf_doctype = t1.tipo
+					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
+					WHERE t2.estado = 'Abierto' and t0.dvf_cardcode =:dvf_cardcode
+					AND t0.business = :business AND t0.branch = :branch";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvf_cardcode" => $Data['dms_card_code']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvf_cardcode" => $Data['dms_card_code'],':business' => $Data['business'], ':branch' => $Data['branch']));
 
 		if (isset($resSelect[0])) {
 
