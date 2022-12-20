@@ -461,6 +461,21 @@ class User extends REST_Controller
 	public function getUserListAuth_get()
 	{
 
+		$Data = $this->get();
+
+		if (!isset($Data['business']) OR !isset($Data['branch'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
 		$sqlSelect = "SELECT aus_id,
 					pgus.pgu_id_usuario as id, concat(pgus.pgu_name_user,' ', COALESCE(pgus.pgu_lname_user,''))as nombre,
 					pgu_code_user as user,
@@ -478,9 +493,10 @@ class User extends REST_Controller
 					INNER JOIN pgus
 					ON taus.aus_id_usuario = pgus.pgu_id_usuario
 					INNER JOIN tmau
-					ON tmau.mau_docentry = taus.aus_id_model";
+					ON tmau.mau_docentry = taus.aus_id_model
+					WHERE tmau.business = :business AND tmau.branch = :branch";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
 
 		if (isset($resSelect[0])) {
 

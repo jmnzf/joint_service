@@ -50,6 +50,20 @@ class Tasa extends REST_Controller {
         }
 
 
+        if ( $Data['tsa_curro'] == $Data['tsa_currd'] ) {
+
+          $respuesta = array(
+            'error' => true,
+            'data'  => array(),
+            'mensaje' => 'No se puede crear una tasa con la misma moneda en origen y destino'
+          );
+
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          return;
+        }
+
+
         $sqlInsert = "INSERT INTO tasa(tsa_eq, tsa_curro, tsa_value, tsa_currd, tsa_date, tsa_createby)
           	          VALUES (:tsa_eq, :tsa_curro, :tsa_value, :tsa_currd, :tsa_date, :tsa_createby)";
 

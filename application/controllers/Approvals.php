@@ -195,7 +195,7 @@ class Approvals extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['code_user']) OR !isset($Data['business'])) {
+		if (!isset($Data['code_user']) or !isset($Data['business'])) {
 
 			$respuesta = array(
 				'error'   => true,
@@ -373,8 +373,9 @@ class Approvals extends REST_Controller
 			!isset($Data['dms_card_code']) or
 			!isset($Data['dms_card_code']) or
 			!isset($Data['dms_card_code']) or
-			!isset($Data['pap_origen'])
-		) { // SOLICITANTE
+			!isset($Data['pap_origen']) or
+			!isset($Data['business']) or
+			!isset($Data['branch']) ) { // SOLICITANTE
 
 			$respuesta = array(
 				'error' => true,
