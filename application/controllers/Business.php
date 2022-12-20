@@ -317,10 +317,10 @@ class Business extends REST_Controller
       return;
     }
 
-    $sqlSelect = "SELECT DISTINCT pgem.* FROM rbbu
-    LEFT JOIN pgem
-    ON rbbu.bbu_business = pgem.pge_id
-    WHERE rbbu.bbu_user = :id_user";
+    $sqlSelect = "SELECT DISTINCT pge_id,pge_small_name,pge_name_soc,pge_useigtf,pge_client_default FROM rbbu
+                  INNER JOIN pgem
+                  ON rbbu.bbu_business = pgem.pge_id
+                  WHERE rbbu.bbu_user = :id_user";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array(':id_user' => $Data['id_user']));
 

@@ -28,7 +28,11 @@ class SalesDel extends REST_Controller
 
 	//CREAR NUEVA Entrega de Ventas
 	public function createSalesDel_post()
-	{
+	{	
+
+		$Data = $this->post();
+
+
 		if (!isset($Data['business']) OR
 				!isset($Data['branch'])) {
 
@@ -45,7 +49,7 @@ class SalesDel extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$Data = $this->post();
+		
 		$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 		$DetalleAsientoIva = new stdClass();
 		$DetalleCostoInventario = new stdClass();
@@ -85,11 +89,11 @@ class SalesDel extends REST_Controller
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, business, branch)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line, :business, :branch)";
 
 
 
@@ -459,7 +463,6 @@ class SalesDel extends REST_Controller
 			':vem_guia' => isset($Data['vem_guia']) ? $Data['vem_guia'] : NULL,
 			':vem_opl' => isset($Data['vem_opl']) ? $Data['vem_opl'] : NULL,
 			':vem_placa' => isset($Data['vem_placa']) ? $Data['vem_placa'] : NULL,
-
 			':vem_precinto' => isset($Data['vem_precinto']) ? $Data['vem_precinto'] : NULL,
 			':vem_placav' => isset($Data['vem_placav']) ? $Data['vem_placav'] : NULL,
 			':vem_modelv' => isset($Data['vem_modelv']) ? $Data['vem_modelv'] : NULL,
@@ -799,8 +802,8 @@ class SalesDel extends REST_Controller
 
 					if ($AgregarAsiento) {
 
-						$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
-																					 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+						$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
+										 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
 
 
 						$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
@@ -831,7 +834,9 @@ class SalesDel extends REST_Controller
 							':mac_create_date' => $this->validateDate($Data['vem_createat']) ? $Data['vem_createat'] : NULL,
 							':mac_made_usuer' => isset($Data['vem_createby']) ? $Data['vem_createby'] : NULL,
 							':mac_update_date' => date("Y-m-d"),
-							':mac_update_user' => isset($Data['vem_createby']) ? $Data['vem_createby'] : NULL
+							':mac_update_user' => isset($Data['vem_createby']) ? $Data['vem_createby'] : NULL,
+							':business'	  => $Data['business'],
+							':branch' 	  => $Data['branch']
 						));
 
 
@@ -1350,7 +1355,9 @@ class SalesDel extends REST_Controller
 					':ac1_mmcode' => 0,
 					':ac1_legal_num' => isset($Data['vem_cardcode']) ? $Data['vem_cardcode'] : NULL,
 					':ac1_codref' => 1,
-					':ac1_line'   => $AC1LINE
+					':ac1_line'   => $AC1LINE,
+					':business'	  => $Data['business'],
+					':branch' 	  => $Data['branch']
 				));
 
 				if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1513,7 +1520,9 @@ class SalesDel extends REST_Controller
 					':ac1_mmcode' => 0,
 					':ac1_legal_num' => isset($Data['vem_cardcode']) ? $Data['vem_cardcode'] : NULL,
 					':ac1_codref' => 1,
-					':ac1_line'   => $AC1LINE
+					':ac1_line'   => $AC1LINE,
+					':business'	  => $Data['business'],
+					':branch' 	  => $Data['branch']
 				));
 
 				if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1933,10 +1942,24 @@ class SalesDel extends REST_Controller
 	//OBTENER Entrega de VentasES
 	public function getSalesDel_get()
 	{
+		$Data = $this->get();
+
+		if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvem', 'vem', '', '', $DECI_MALES);
+		$sqlSelect = self::getColumn('dvem', 'vem', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -2051,7 +2074,8 @@ class SalesDel extends REST_Controller
 						coalesce(SUM(t5.fv1_quantity),0) facturado,
 						(((t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0))) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
 						t1.em1_whscode,
-						dmar.dma_series_code
+						dmar.dma_series_code,
+						t1.em1_ubication
 						from dvem t0
 						left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
 						left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
@@ -2083,9 +2107,8 @@ class SalesDel extends REST_Controller
 						t1.em1_vatsum,
 						t1.em1_whscode,
 						t1.em1_quantity,
-						dmar.dma_series_code
-						--having (t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0))) > 0
-						";
+						dmar.dma_series_code,
+						t1.em1_ubication";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
 
@@ -2117,7 +2140,7 @@ class SalesDel extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['dms_card_code'])) {
+		if (!isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -2131,13 +2154,14 @@ class SalesDel extends REST_Controller
 		}
 
 		$sqlSelect = "SELECT
-												t0.*
-											FROM dvem t0
-											left join estado_doc t1 on t0.vem_docentry = t1.entry and t0.vem_doctype = t1.tipo
-											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-											where t2.estado = 'Abierto' and t0.vem_cardcode =:vem_cardcode";
+						t0.*
+					FROM dvem t0
+					left join estado_doc t1 on t0.vem_docentry = t1.entry and t0.vem_doctype = t1.tipo
+					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
+					where t2.estado = 'Abierto' and t0.vem_cardcode =:vem_cardcode
+					AND t0.business = :business AND t0.branch = :branch";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':vem_cardcode' => $Data['dms_card_code']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':vem_cardcode' => $Data['dms_card_code'], ':business' => $Data['business'], ':branch' => $Data['branch']));
 
 		if (isset($resSelect[0])) {
 

@@ -34,7 +34,9 @@ class DocumentNumbering extends REST_Controller {
          !isset($Data['pgs_is_due']) OR
          !isset($Data['pgs_doc_date']) OR
          !isset($Data['pgs_doc_due_date']) OR
-         !isset($Data['pgs_enabled'])){
+         !isset($Data['pgs_enabled']) OR
+         !isset($Data['business']) OR
+         !isset($Data['branch'])){
 
         $respuesta = array(
           'error' => true,
@@ -76,8 +78,8 @@ class DocumentNumbering extends REST_Controller {
           return;
       }
 
-      $sqlInsert = "INSERT INTO pgdn(pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, pgs_is_due, pgs_doc_date,  pgs_doc_due_date, pgs_enabled, pgs_nextnum, pgs_doctype, pgs_mpfn, pgs_mde)
-                    VALUES(:Pgs_IdDocType,  :Pgs_NumName,  :Pgs_FirstNum,  :Pgs_LastNum,  :Pgs_PrefNum,  :Pgs_Cancel,  :Pgs_IsDue,  :Pgs_DocDate,  :Pgs_DocDueDate,  :Pgs_Enabled, :pgs_nextnum, :pgs_doctype, :pgs_mpfn, :pgs_mde)";
+      $sqlInsert = "INSERT INTO pgdn(pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, pgs_is_due, pgs_doc_date,  pgs_doc_due_date, pgs_enabled, pgs_nextnum, pgs_doctype, pgs_mpfn, pgs_mde, business, branch)
+                    VALUES(:Pgs_IdDocType,  :Pgs_NumName,  :Pgs_FirstNum,  :Pgs_LastNum,  :Pgs_PrefNum,  :Pgs_Cancel,  :Pgs_IsDue,  :Pgs_DocDate,  :Pgs_DocDueDate,  :Pgs_Enabled, :pgs_nextnum, :pgs_doctype, :pgs_mpfn, :pgs_mde, :business, :branch)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -95,7 +97,9 @@ class DocumentNumbering extends REST_Controller {
 						':pgs_nextnum'	  => ($Data['pgs_nextnum'] - 1),
 						':pgs_doctype'		=> $Data['pgs_id_doc_type'],
 						':pgs_mpfn'       => $Data['pgs_mpfn'],
-						':pgs_mde'        => $Data['pgs_mde']
+						':pgs_mde'        => $Data['pgs_mde'],
+            ':business'       => $Data['business'],
+            ':branch'         => $Data['branch']
 
       ));
 
@@ -228,11 +232,25 @@ class DocumentNumbering extends REST_Controller {
   // Obtener numeracion de documento
   public function getDocumentNumbering_get(){
 
+        $Data = $this->get();
+
+        if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+
+          $respuesta = array(
+            'error' => true,
+            'data'  => array(),
+            'mensaje' => 'La informacion enviada no es valida'
+          );
+
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          return;
+        }
         // $sqlSelect = " SELECT * FROM pgdn";
         $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel,
-        pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, coalesce((select max(dvc_docnum)+1 ultimo_numero from dvct t0 where t0.dvc_series = pgs_id), pgs_first_num) as ultimo_numero, pgs_mpfn, pgs_mde FROM pgdn";
+        pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, coalesce((SELECT max(dvc_docnum)+1 ultimo_numero FROM dvct t0 WHERE t0.dvc_series = pgs_id), pgs_first_num) AS ultimo_numero, pgs_mpfn, pgs_mde FROM pgdn WHERE business = :business AND branch = :branch";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
 
         if(isset($resSelect[0])){
 

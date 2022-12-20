@@ -303,8 +303,8 @@ class Branch extends REST_Controller {
       return;
     }
 
-    $sqlSelect = "SELECT DISTINCT pges.* FROM rbbu
-                  LEFT JOIN pges
+    $sqlSelect = "SELECT DISTINCT pgs_id, pgs_name_soc, pgs_small_name FROM rbbu
+                  INNER JOIN pges
                   ON rbbu.bbu_branch = pges.pgs_id
                   WHERE pges.pgs_company_id = :bbu_business AND  rbbu.bbu_user = :bbu_user";
 

@@ -2187,10 +2187,24 @@ class PurchaseEc extends REST_Controller
 	//OBTENER orden de compra
 	public function getPurchaseEc_get()
 	{
+		$Data = $this->get();
+
+		if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dcec', 'cec', '', '', $DECI_MALES);
+		$sqlSelect = self::getColumn('dcec', 'cec', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());

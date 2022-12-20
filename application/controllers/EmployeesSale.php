@@ -37,7 +37,9 @@ class EmployeesSale extends REST_Controller {
          !isset($Data['mev_dpj_pj_code']) OR
          !isset($Data['mev_dun_un_code']) OR
          !isset($Data['mev_id_sal_per']) OR
-         !isset($Data['mev_whs_code'])){
+         !isset($Data['mev_whs_code']) OR 
+         !isset($Data['business']) OR
+         !isset($Data['branch'])){
 
         $respuesta = array(
           'error' => true,
@@ -51,8 +53,8 @@ class EmployeesSale extends REST_Controller {
       }
 
         $sqlInsert = "INSERT INTO dmev(mev_names, mev_position, mev_phone, mev_cel_phone, mev_mail, mev_enabled, mev_prc_code,
-                      mev_dpj_pj_code, mev_dun_un_code, mev_id_sal_per, mev_whs_code)VALUES (:mev_names, :mev_position, :mev_phone,
-                      :mev_cel_phone, :mev_mail, :mev_enabled, :mev_prc_code, :mev_dpj_pj_code, :mev_dun_un_code, :mev_id_sal_per, :mev_whs_code)";
+                      mev_dpj_pj_code, mev_dun_un_code, mev_id_sal_per, mev_whs_code, business, branch)VALUES (:mev_names, :mev_position, :mev_phone,
+                      :mev_cel_phone, :mev_mail, :mev_enabled, :mev_prc_code, :mev_dpj_pj_code, :mev_dun_un_code, :mev_id_sal_per, :mev_whs_code, :business, :branch)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -66,7 +68,9 @@ class EmployeesSale extends REST_Controller {
               ':mev_dpj_pj_code' => $Data['mev_dpj_pj_code'],
               ':mev_dun_un_code' => $Data['mev_dun_un_code'],
               ':mev_id_sal_per' => $Data['mev_id_sal_per'],
-              ':mev_whs_code' =>  $Data['mev_whs_code']
+              ':mev_whs_code' =>  $Data['mev_whs_code'],
+              ':business' =>  $Data['business'],
+              ':branch' =>  $Data['branch']
 
         ));
 
@@ -170,9 +174,25 @@ class EmployeesSale extends REST_Controller {
   // OBTENER EMPLEADOS
   public function getEmployeesSale_get(){
 
-        $sqlSelect = " SELECT * FROM dmev";
+        $Data = $this->get();
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+        if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+
+          $respuesta = array(
+            'error' => true,
+            'data'  => array(),
+            'mensaje' => 'La informacion enviada no es valida'
+          );
+
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          return;
+        }
+
+
+        $sqlSelect = " SELECT * FROM dmev WHERE business = :business AND branch =:branch";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
 
         if(isset($resSelect[0])){
 

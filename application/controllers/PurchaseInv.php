@@ -3087,13 +3087,28 @@ class PurchaseInv extends REST_Controller
 	//OBTENER Factura de compras
 	public function getPurchaseInv_get()
 	{
+
+		$Data = $this->get();
+
+		if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 		// CAMPOS DE RETENCIONES
 		$DECI_MALES =  $this->generic->getDecimals();
 
 		$campos = ",CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalret,'999,999,999,999.00'))) {prefix}_totalret,
 		CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalretiva,'999,999,999,999.00'))) {prefix}_totalretiva";
 
-		$sqlSelect = self::getColumn('dcfc', 'cfc', $campos, '', $DECI_MALES);
+		$sqlSelect = self::getColumn('dcfc', 'cfc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

@@ -1,5 +1,5 @@
 <?php
-// Devolución de clientesES
+// Devolución de VENTAS
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 require_once(APPPATH.'/libraries/REST_Controller.php');
@@ -26,6 +26,9 @@ class SalesDv extends REST_Controller {
   //CREAR NUEVA Devolución de clientes
     public function createSalesDv_post()
     {
+
+      $Data = $this->post();
+
       if (!isset($Data['business']) OR
 				!isset($Data['branch'])) {
 
@@ -40,7 +43,7 @@ class SalesDv extends REST_Controller {
 				return;
 			}
 
-      $Data = $this->post();
+   
       $DetalleCuentaPuente = new stdClass();
       $DetalleCuentaInvetario = new stdClass();
       $DetalleConsolidadoCuentaPuente = [];
@@ -67,11 +70,11 @@ class SalesDv extends REST_Controller {
       $sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
                             ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
                             ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-                            ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line)VALUES (:ac1_trans_id, :ac1_account,
+                            ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, business, branch)VALUES (:ac1_trans_id, :ac1_account,
                             :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
                             :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
                             :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-                            :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line)";
+                            :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line, :business, :branch)";
 
 
 
@@ -557,35 +560,34 @@ class SalesDv extends REST_Controller {
 
           $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                               dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp,dv1_ubication)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
+                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp, dv1_ubication)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
                               :dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,
-                              :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp,dv1_ubication)";
+                              :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp, :dv1_ubication)";
 
-          $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-          ':dv1_docentry' => $resInsert,
-          ':dv1_itemcode' => isset($detail['dv1_itemcode'])?$detail['dv1_itemcode']:NULL,
-          ':dv1_itemname' => isset($detail['dv1_itemname'])?$detail['dv1_itemname']:NULL,
-          ':dv1_quantity' => is_numeric($detail['dv1_quantity']) ? $detail['dv1_quantity'] : 0,
-          ':dv1_uom' => isset($detail['dv1_uom'])?$detail['dv1_uom']:NULL,
-          ':dv1_whscode' => isset($detail['dv1_whscode'])?$detail['dv1_whscode']:NULL,
-          ':dv1_price' => is_numeric($detail['dv1_price'])?$detail['dv1_price']:0,
-          ':dv1_vat' => is_numeric($detail['dv1_vat'])?$detail['dv1_vat']:0,
-          ':dv1_vatsum' => is_numeric($detail['dv1_vatsum'])?$detail['dv1_vatsum']:0,
-          ':dv1_discount' => is_numeric($detail['dv1_discount'])?$detail['dv1_discount']:0,
-          ':dv1_linetotal' => is_numeric($detail['dv1_linetotal'])?$detail['dv1_linetotal']:0,
-          ':dv1_costcode' => isset($detail['dv1_costcode'])?$detail['dv1_costcode']:NULL,
-          ':dv1_ubusiness' => isset($detail['dv1_ubusiness'])?$detail['dv1_ubusiness']:NULL,
-          ':dv1_project' => isset($detail['dv1_project'])?$detail['dv1_project']:NULL,
-          ':dv1_acctcode' => is_numeric($detail['dv1_acctcode'])?$detail['dv1_acctcode']:0,
-          ':dv1_basetype' => is_numeric($detail['dv1_basetype'])?$detail['dv1_basetype']:0,
-          ':dv1_doctype' => is_numeric($detail['dv1_doctype'])?$detail['dv1_doctype']:0,
-          ':dv1_avprice' => is_numeric($detail['dv1_avprice'])?$detail['dv1_avprice']:0,
-          ':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL,
-          ':dv1_linenum' => is_numeric($detail['dv1_linenum'])?$detail['dv1_linenum']:0,
-          ':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0,
-          ':dv1_codimp' => isset($detail['dv1_codimp'])?$detail['dv1_codimp']:NULL,
-          ':dv1_ubication' => isset($detail['dv1_ubication'])?$detail['dv1_ubication']:NULL
-
+          $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail,array(
+            ':dv1_docentry' => $resInsert,
+            ':dv1_itemcode' => isset($detail['dv1_itemcode'])?$detail['dv1_itemcode']:NULL,
+            ':dv1_itemname' => isset($detail['dv1_itemname'])?$detail['dv1_itemname']:NULL,
+            ':dv1_quantity' => is_numeric($detail['dv1_quantity']) ? $detail['dv1_quantity'] : 0,
+            ':dv1_uom' => isset($detail['dv1_uom'])?$detail['dv1_uom']:NULL,
+            ':dv1_whscode' => isset($detail['dv1_whscode'])?$detail['dv1_whscode']:NULL,
+            ':dv1_price' => is_numeric($detail['dv1_price'])?$detail['dv1_price']:0,
+            ':dv1_vat' => is_numeric($detail['dv1_vat'])?$detail['dv1_vat']:0,
+            ':dv1_vatsum' => is_numeric($detail['dv1_vatsum'])?$detail['dv1_vatsum']:0,
+            ':dv1_discount' => is_numeric($detail['dv1_discount'])?$detail['dv1_discount']:0,
+            ':dv1_linetotal' => is_numeric($detail['dv1_linetotal'])?$detail['dv1_linetotal']:0,
+            ':dv1_costcode' => isset($detail['dv1_costcode'])?$detail['dv1_costcode']:NULL,
+            ':dv1_ubusiness' => isset($detail['dv1_ubusiness'])?$detail['dv1_ubusiness']:NULL,
+            ':dv1_project' => isset($detail['dv1_project'])?$detail['dv1_project']:NULL,
+            ':dv1_acctcode' => is_numeric($detail['dv1_acctcode'])?$detail['dv1_acctcode']:0,
+            ':dv1_basetype' => is_numeric($detail['dv1_basetype'])?$detail['dv1_basetype']:0,
+            ':dv1_doctype' => is_numeric($detail['dv1_doctype'])?$detail['dv1_doctype']:0,
+            ':dv1_avprice' => is_numeric($detail['dv1_avprice'])?$detail['dv1_avprice']:0,
+            ':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL,
+            ':dv1_linenum' => is_numeric($detail['dv1_linenum'])?$detail['dv1_linenum']:0,
+            ':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0,
+            ':dv1_codimp' => isset($detail['dv1_codimp'])?$detail['dv1_codimp']:NULL,
+            ':dv1_ubication' => isset($detail['dv1_ubication'])?$detail['dv1_ubication']:NULL
           ));
 
           if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -668,14 +670,14 @@ class SalesDv extends REST_Controller {
             $sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
             $resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
 
-                ':dma_item_code' => $detail['vd1_itemcode'],
+                ':dma_item_code' => $detail['dv1_itemcode'],
                 ':dma_series_code'  => 1
             ));
 
             if(isset($resItemSerial[0])){
               $ManejaSerial = 1;
 
-              $AddSerial = $this->generic->addSerial( $detail['serials'], $detail['vd1_itemcode'], $Data['vdv_doctype'], $resInsert, $DocNumVerificado, $Data['vdv_docdate'], 1, $Data['vdv_comment'], $detail['vd1_whscode'], $detail['vd1_quantity'], $Data['vdv_createby'] );
+              $AddSerial = $this->generic->addSerial( $detail['serials'], $detail['dv1_itemcode'], $Data['vdv_doctype'], $resInsert, $DocNumVerificado, $Data['vdv_docdate'], 1, $Data['vdv_comment'], $detail['dv1_whscode'], $detail['dv1_quantity'], $Data['vdv_createby'] );
 
               if( isset($AddSerial['error']) && $AddSerial['error'] == false){
 
@@ -702,8 +704,8 @@ class SalesDv extends REST_Controller {
                 //Se agregan los asientos contables
                 // SI EXISTE AL MENOS UN ITEM INVENTARIABLE
 
-                $sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
-                                    VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+                $sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
+                                    VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
 
 
                 $resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
@@ -734,7 +736,9 @@ class SalesDv extends REST_Controller {
                   ':mac_create_date' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
                   ':mac_made_usuer' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL,
                   ':mac_update_date' => date("Y-m-d"),
-                  ':mac_update_user' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL
+                  ':mac_update_user' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL,
+                  ':business'	  => $Data['business'],
+					        ':branch' 	  => $Data['branch']
                 ));
 
 
@@ -1174,7 +1178,9 @@ class SalesDv extends REST_Controller {
                 ':ac1_mmcode' => 0,
                 ':ac1_legal_num' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
                 ':ac1_codref' => 1,
-                ':ac1_line'   => $AC1LINE
+                ':ac1_line'   => $AC1LINE,
+                ':business' => $Data['business'],
+                ':branch'   => $Data['branch']
                 ));
 
 
@@ -1389,7 +1395,9 @@ class SalesDv extends REST_Controller {
                         ':ac1_mmcode' => 0,
                         ':ac1_legal_num' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
                         ':ac1_codref' => 1,
-                        ':ac1_line'   => $AC1LINE
+                        ':ac1_line'   => $AC1LINE,
+                        ':business' => $Data['business'],
+                        ':branch'   => $Data['branch']
                         ));
 
                         if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
@@ -1755,9 +1763,24 @@ class SalesDv extends REST_Controller {
     //OBTENER Devolución de clientesES
     public function getSalesDv_get(){
 
+      $Data = $this->get();
+
+      if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+  
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' => 'La informacion enviada no es valida'
+        );
+  
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+  
+        return;
+      }
+
       $DECI_MALES =  $this->generic->getDecimals();
 
-      $sqlSelect = self::getColumn('dvdv','vdv','','',$DECI_MALES);
+      $sqlSelect = self::getColumn('dvdv','vdv','','',$DECI_MALES, $Data['business'], $Data['branch']);
 
 
       $resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -1881,7 +1904,7 @@ class SalesDv extends REST_Controller {
 
       $Data = $this->get();
 
-      if(!isset($Data['dms_card_code'])){
+      if(!isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch'])){
 
         $respuesta = array(
           'error' => true,
@@ -1894,9 +1917,17 @@ class SalesDv extends REST_Controller {
         return;
       }
 
-      $sqlSelect = " SELECT * FROM dvdv WHERE vdv_cardcode =:vdv_cardcode";
+      $sqlSelect = "SELECT * 
+                    FROM dvdv 
+                    left join estado_doc t1 
+                    on t0.vdv_docentry = t1.entry and t0.vdv_doctype = t1.tipo
+					          left join responsestatus t2 
+                    on t1.entry = t2.id and t1.tipo = t2.tipo
+					          WHERE t2.estado = 'Abierto' and t0.vdv_cardcode =:vdv_cardcode
+                    AND business = :business 
+                    AND branch = :branch";
 
-      $resSelect = $this->pedeo->queryTable($sqlSelect, array(":vdv_cardcode" => $Data['dms_card_code']));
+      $resSelect = $this->pedeo->queryTable($sqlSelect, array(":vdv_cardcode" => $Data['dms_card_code'], ':business' => $Data['business'], ':branch' => $Data['branch']));
 
       if(isset($resSelect[0])){
 

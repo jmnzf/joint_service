@@ -28,6 +28,7 @@ class Quotation extends REST_Controller
 	//CREAR NUEVA COTIZACION
 	public function createQuotation_post()
 	{
+		$Data = $this->post();
 
 		if (!isset($Data['business']) OR
 				!isset($Data['branch'])) {
@@ -41,9 +42,9 @@ class Quotation extends REST_Controller
 				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 				return;
-			}
+		}
 
-		$Data = $this->post();
+	
 		$DocNumVerificado = 0;
 		$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 
@@ -206,18 +207,18 @@ class Quotation extends REST_Controller
 		if (!isset($resVerificarAprobacion[0])) {
 
 			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
-																	au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
-																	FROM tmau
-																	INNER JOIN mau1
-																	ON mau_docentry =  au1_docentry
-																	INNER JOIN taus
-																	ON mau_docentry  = aus_id_model
-																	INNER JOIN pgus
-																	ON aus_id_usuario = pgu_id_usuario
-																	WHERE mau_doctype = :mau_doctype
-																	AND pgu_code_user = :pgu_code_user
-																	AND mau_status = :mau_status
-																	AND aus_status = :aus_status";
+							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
+							FROM tmau
+							INNER JOIN mau1
+							ON mau_docentry =  au1_docentry
+							INNER JOIN taus
+							ON mau_docentry  = aus_id_model
+							INNER JOIN pgus
+							ON aus_id_usuario = pgu_id_usuario
+							WHERE mau_doctype = :mau_doctype
+							AND pgu_code_user = :pgu_code_user
+							AND mau_status = :mau_status
+							AND aus_status = :aus_status";
 
 			$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
 
@@ -246,11 +247,11 @@ class Quotation extends REST_Controller
 					if ($condicion == ">") {
 
 						$sq = " SELECT mau_quantity,mau_approvers
-																					FROM tmau
-																					INNER JOIN  mau1
-																					on mau_docentry =  au1_docentry
-																					AND :au1_doctotal > au1_doctotal
-																					AND mau_doctype = :mau_doctype";
+								FROM tmau
+								INNER JOIN  mau1
+								on mau_docentry =  au1_docentry
+								AND :au1_doctotal > au1_doctotal
+								AND mau_doctype = :mau_doctype";
 
 						$ressq = $this->pedeo->queryTable($sq, array(
 
@@ -266,11 +267,11 @@ class Quotation extends REST_Controller
 					} else if ($condicion == "BETWEEN") {
 
 						$sq = " SELECT mau_quantity,mau_approvers
-																					FROM tmau
-																					INNER JOIN  mau1
-																					on mau_docentry =  au1_docentry
-																					AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
-																					AND mau_doctype = :mau_doctype";
+								FROM tmau
+								INNER JOIN  mau1
+								on mau_docentry =  au1_docentry
+								AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
+								AND mau_doctype = :mau_doctype";
 
 						$ressq = $this->pedeo->queryTable($sq, array(
 
@@ -334,9 +335,9 @@ class Quotation extends REST_Controller
 		$sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                    dvc_createby,business,branch)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
+                      dvc_createby,business,branch)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
                       :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
-                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype,:dvc_createby)";
+                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype,:dvc_createby,:business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -411,7 +412,7 @@ class Quotation extends REST_Controller
 			//SE INSERTA EL ESTADO DEL DOCUMENTO
 
 			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
@@ -773,10 +774,10 @@ class Quotation extends REST_Controller
 			foreach ($ContenidoDetalle as $key => $detail) {
 
 				$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry, vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
-																			vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
-																			vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_acciva, vc1_linenum, vc1_ubication)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
-																			:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, :vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,
-																			:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory, :vc1_acciva,:vc1_linenum, :vc1_ubication)";
+								vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
+								vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_acciva, vc1_linenum, vc1_ubication)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
+								:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, :vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,
+								:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory, :vc1_acciva,:vc1_linenum, :vc1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':vc1_docentry' => $Data['dvc_docentry'],
@@ -813,7 +814,7 @@ class Quotation extends REST_Controller
 
 					$respuesta = array(
 						'error'   => true,
-						'data' => $resInsert,
+						'data' => $resInsertDetail,
 						'mensaje'	=> 'No se pudo registrar la cotización'
 					);
 
@@ -849,9 +850,25 @@ class Quotation extends REST_Controller
 	//OBTENER COTIZACIONES
 	public function getQuotation_get()
 	{
+		
+		$Data = $this->get();
+
+		if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvct', 'dvc', '', '', $DECI_MALES);
+		$sqlSelect = self::getColumn('dvct', 'dvc', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -971,7 +988,7 @@ class Quotation extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['dms_card_code'])) {
+		if (!isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -985,13 +1002,14 @@ class Quotation extends REST_Controller
 		}
 
 		$sqlSelect = "SELECT
-											t0.*
-											FROM dvct t0
-											left join estado_doc t1 on t0.dvc_docentry = t1.entry and t0.dvc_doctype = t1.tipo
-											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-											where t2.estado = 'Abierto' and t0.dvc_cardcode =:dvc_cardcode";
+					t0.*
+					FROM dvct t0
+					left join estado_doc t1 on t0.dvc_docentry = t1.entry and t0.dvc_doctype = t1.tipo
+					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
+					where t2.estado = 'Abierto' and t0.dvc_cardcode =:dvc_cardcode
+					AND t0.business = :business AND t0.branch = :branch";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_cardcode" => $Data['dms_card_code']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_cardcode" => $Data['dms_card_code'], ':business' => $Data['business'], ':branch' => $Data['branch']));
 
 		if (isset($resSelect[0])) {
 
@@ -1086,9 +1104,9 @@ class Quotation extends REST_Controller
 		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
 									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
 									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
-									pap_attch,pap_createby,pap_origen,pap_qtyrq,pap_qtyap)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
+									pap_createby,pap_origen,pap_qtyrq,pap_qtyap)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
 									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
-									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype, :pap_attch,:pap_createby,:pap_origen,:pap_qtyrq,:pap_qtyap)";
+									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype,:pap_createby,:pap_origen,:pap_qtyrq,:pap_qtyap)";
 
 		// Se Inicia la transaccion,
 		// Todas las consultas de modificacion siguientes
@@ -1125,7 +1143,6 @@ class Quotation extends REST_Controller
 			':pap_adress' => isset($Encabezado[$prefijoe . '_adress']) ? $Encabezado[$prefijoe . '_adress'] : NULL,
 			':pap_paytype' => is_numeric($Encabezado[$prefijoe . '_paytype']) ? $Encabezado[$prefijoe . '_paytype'] : 0,
 			':pap_createby' => isset($Encabezado[$prefijoe . '_createby']) ? $Encabezado[$prefijoe . '_createby'] : NULL,
-			':pap_attch' => $this->getUrl(count(trim(($Encabezado[$prefijoe . '_attch']))) > 0 ? $Encabezado[$prefijoe . '_attch'] : NULL, $Carpeta),
 			':pap_origen' => is_numeric($Encabezado[$prefijoe . '_doctype']) ? $Encabezado[$prefijoe . '_doctype'] : 0,
 			':pap_qtyrq' => $Cantidad,
 			':pap_qtyap' => $CantidadAP

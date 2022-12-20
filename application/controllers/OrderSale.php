@@ -289,7 +289,7 @@ class OrderSale extends REST_Controller {
                                     :vp1_doc_type,:vp1_avprice,:vp1_inventory,:vp1_item_name)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-                        ':vp1_doc_entry' => $resInsert,
+                        ':vp1_doc_entry' => $Data['dvp_docentry'],
                         ':vp1_item_code' => $Data['vp1_item_code'],
                         ':vp1_quantity' => $Data['vp1_quantity'],
                         ':vp1_uom' => $Data['vp1_uom'],

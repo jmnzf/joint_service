@@ -52,7 +52,7 @@ class Currency extends REST_Controller {
 
 					$resValidarPricipal = $this->pedeo->queryTable($sqlValidarPrincipal, array(
 
-										':pgm_principal' => 1
+							':pgm_principal' => 1
 					));
 
 					if(isset($resValidarPricipal[0])){

@@ -50,13 +50,13 @@ class InventoryEntry extends REST_Controller
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, business, branch)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :business, :branch)";
 
-		if (!isset($Data['detail'])) {
+		if (!isset($Data['detail']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -258,11 +258,11 @@ class InventoryEntry extends REST_Controller
 
 		$sqlInsert = "INSERT INTO miei (iei_docnum, iei_docdate, iei_duedate, iei_duedev, iei_pricelist, iei_cardcode, iei_cardname, iei_contacid, iei_slpcode, iei_empid, iei_comment, iei_doctotal,
                       iei_taxtotal, iei_discprofit, iei_discount, iei_createat, iei_baseentry, iei_basetype, iei_doctype, iei_idadd, iei_adress, iei_paytype,
-                      iei_baseamnt, iei_series, iei_createby, iei_currency)
+                      iei_baseamnt, iei_series, iei_createby, iei_currency, business)
                       VALUES
                       (:iei_docnum, :iei_docdate, :iei_duedate, :iei_duedev, :iei_pricelist, :iei_cardcode, :iei_cardname, :iei_contacid, :iei_slpcode, :iei_empid, :iei_comment, :iei_doctotal,
                       :iei_taxtotal, :iei_discprofit, :iei_discount, :iei_createat, :iei_baseentry, :iei_basetype, :iei_doctype, :iei_idadd, :iei_adress, :iei_paytype,
-                      :iei_baseamnt, :iei_series, :iei_createby, :iei_currency)";
+                      :iei_baseamnt, :iei_series, :iei_createby, :iei_currency, :business)";
 
 
 		// Se Inicia la transaccion,
@@ -300,7 +300,8 @@ class InventoryEntry extends REST_Controller
 			':iei_paytype' => is_numeric($Data['iei_paytype']) ? $Data['iei_paytype'] : 0,
 			':iei_series' => is_numeric($Data['iei_series']) ? $Data['iei_series'] : 0,
 			':iei_createby' => isset($Data['iei_createby']) ? $Data['iei_createby'] : NULL,
-			':iei_currency' => isset($Data['iei_currency']) ? $Data['iei_currency'] : NULL
+			':iei_currency' => isset($Data['iei_currency']) ? $Data['iei_currency'] : NULL,
+			':business' => $Data['business']
 
 		));
 
@@ -308,8 +309,8 @@ class InventoryEntry extends REST_Controller
 
 			//Se agregan los asientos contables*/*******
 
-			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
-															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
+								VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
 
 
 			$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
@@ -340,7 +341,9 @@ class InventoryEntry extends REST_Controller
 				':mac_create_date' => $this->validateDate($Data['iei_createat']) ? $Data['iei_createat'] : NULL,
 				':mac_made_usuer' => isset($Data['iei_createby']) ? $Data['iei_createby'] : NULL,
 				':mac_update_date' => date("Y-m-d"),
-				':mac_update_user' => isset($Data['iei_createby']) ? $Data['iei_createby'] : NULL
+				':mac_update_user' => isset($Data['iei_createby']) ? $Data['iei_createby'] : NULL,
+				':business' => $Data['business'],
+				':branch' => $Data['branch']
 			));
 
 
@@ -1379,7 +1382,9 @@ class InventoryEntry extends REST_Controller
 					':ac1_basert' => 0,
 					':ac1_mmcode' => 0,
 					':ac1_legal_num' => isset($Data['iei_cardcode']) ? $Data['iei_cardcode'] : NULL,
-					':ac1_codref' => 1
+					':ac1_codref' => 1,
+					':business' => $Data['business'],
+					':branch' => $Data['branch']
 				));
 
 
@@ -1527,7 +1532,9 @@ class InventoryEntry extends REST_Controller
 					':ac1_basert' => 0,
 					':ac1_mmcode' => 0,
 					':ac1_legal_num' => isset($Data['iei_cardcode']) ? $Data['iei_cardcode'] : NULL,
-					':ac1_codref' => 1
+					':ac1_codref' => 1,
+					':business' => $Data['business'],
+					':branch' => $Data['branch']
 				));
 
 
@@ -1606,22 +1613,39 @@ class InventoryEntry extends REST_Controller
 	public function getInventoryEntry_get()
 	{
 
+		$Data = $this->get();
+
+		if (!isset($Data['business']) OR !isset($Data['branch'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
 		$sqlSelect = "SELECT
 					t0.iei_docentry,
 					t0.iei_currency,
-							t2.mdt_docname,
-							t0.iei_docnum,
-							t0.iei_docdate,
-							t0.iei_cardname,
-							t0.iei_comment,
-							CONCAT(T0.iei_currency,' ',to_char(t0.iei_baseamnt,'999,999,999,999.00')) iei_baseamnt,
-							CONCAT(T0.iei_currency,' ',to_char(t0.iei_doctotal,'999,999,999,999.00')) iei_doctotal,
-							t1.mev_names iei_slpcode
-							FROM miei t0
-							LEFT JOIN dmev t1 on t0.iei_slpcode = t1.mev_id
-							LEFT JOIN dmdt t2 on t0.iei_doctype = t2.mdt_doctype";
+					t2.mdt_docname,
+					t0.iei_docnum,
+					t0.iei_docdate,
+					t0.iei_cardname,
+					t0.iei_comment,
+					CONCAT(T0.iei_currency,' ',to_char(t0.iei_baseamnt,'999,999,999,999.00')) iei_baseamnt,
+					CONCAT(T0.iei_currency,' ',to_char(t0.iei_doctotal,'999,999,999,999.00')) iei_doctotal,
+					t1.mev_names iei_slpcode
+					FROM miei t0
+					LEFT JOIN dmev t1 on t0.iei_slpcode = t1.mev_id
+					LEFT JOIN dmdt t2 on t0.iei_doctype = t2.mdt_doctype
+					WHERE t0.business = :business
+					AND t0.branch = :branch";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
 
 		if (isset($resSelect[0])) {
 
@@ -1736,7 +1760,7 @@ class InventoryEntry extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['dms_card_code'])) {
+		if (!isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -1749,7 +1773,7 @@ class InventoryEntry extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM miei WHERE iei_cardcode =:iei_cardcode";
+		$sqlSelect = " SELECT * FROM miei WHERE iei_cardcode =:iei_cardcode AND business = :business AND branch = :branch";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":iei_cardcode" => $Data['dms_card_code']));
 
@@ -1773,44 +1797,6 @@ class InventoryEntry extends REST_Controller
 	}
 
 
-
-
-
-
-
-
-
-	private function getUrl($data, $caperta)
-	{
-		$url = "";
-
-		if ($data == NULL) {
-
-			return $url;
-		}
-
-		$ruta = '/var/www/html/' . $caperta . '/assets/img/anexos/';
-
-		$milliseconds = round(microtime(true) * 1000);
-
-
-		$nombreArchivo = $milliseconds . ".pdf";
-
-		touch($ruta . $nombreArchivo);
-
-		$file = fopen($ruta . $nombreArchivo, "wb");
-
-		if (!empty($data)) {
-
-			fwrite($file, base64_decode($data));
-
-			fclose($file);
-
-			$url = "assets/img/anexos/" . $nombreArchivo;
-		}
-
-		return $url;
-	}
 
 	private function buscarPosicion($llave, $inArray)
 	{
