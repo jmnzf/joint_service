@@ -78,6 +78,7 @@ class SalesNc extends REST_Controller
 		$SumaCreditosLOC = 0;
 		$SumaDebitoLOC = 0;
 		$ManejaInvetario = 0;
+		$ManejaUbicacion = 0;
 		$ManejaSerial = 0;
 		$IVASINTASAFIJA = 0;
 		$AC1LINE = 1;
@@ -713,6 +714,21 @@ class SalesNc extends REST_Controller
 
 					if (isset($resItemINV[0])) {
 
+						// CONSULTA PARA VERIFICAR SI EL ALMACEN MANEJA UBICACION
+
+						$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code";
+						$resubicacion = $this->pedeo->queryTable($sqlubicacion, array(
+							':dws_ubication' => 1,
+							':dws_code' => $detail['nc1_whscode']
+						));
+
+
+						if ( isset($resubicacion[0]) ){
+							$ManejaUbicacion = 1;
+						}else{
+							$ManejaUbicacion = 0;
+						}
+
 						$ManejaInvetario = 1;
 					} else {
 						$ManejaInvetario = 0;
@@ -764,9 +780,24 @@ class SalesNc extends REST_Controller
 
 							//Se aplica el movimiento de inventario
 							//BUSCANDO COSTO DE ARTICULO PARA RIGISTRARLO EN EL MOVIMIENTO
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
-							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['nc1_whscode'], ':bdi_itemcode' => $detail['nc1_itemcode']));
 
+							$sqlCostoMomentoRegistro = "";
+							$resCostoMomentoRegistro = [];
+		
+		
+							if ( $ManejaUbicacion == 1 ) {
+
+								$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication";
+								$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['nc1_whscode'], ':bdi_itemcode' => $detail['nc1_itemcode'], ':bdi_ubication' => $detail['nc1_ubication']));
+	
+
+							}else{
+
+								$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+								$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['nc1_whscode'], ':bdi_itemcode' => $detail['nc1_itemcode']));
+	
+							}
+						
 
 							if (!isset($resCostoMomentoRegistro[0])) {
 
@@ -783,8 +814,8 @@ class SalesNc extends REST_Controller
 								return;
 							}
 
-							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
-																								 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
+							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_ubication)
+												VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_ubication)";
 
 							$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -801,7 +832,8 @@ class SalesNc extends REST_Controller
 								':bmi_docdate' => $this->validateDate($Data['vnc_docdate']) ? $Data['vnc_docdate'] : NULL,
 								':bmi_duedate' => $this->validateDate($Data['vnc_duedate']) ? $Data['vnc_duedate'] : NULL,
 								':bmi_duedev'  => $this->validateDate($Data['vnc_duedev']) ? $Data['vnc_duedev'] : NULL,
-								':bmi_comment' => isset($Data['vnc_comment']) ? $Data['vnc_comment'] : NULL
+								':bmi_comment' => isset($Data['vnc_comment']) ? $Data['vnc_comment'] : NULL,
+								':bmi_ubication' => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL
 
 
 							));
@@ -830,16 +862,40 @@ class SalesNc extends REST_Controller
 
 							//Se Aplica el movimiento en stock ***************
 							// Buscando item en el stock
-							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-																									FROM tbdi
-																									WHERE bdi_itemcode = :bdi_itemcode
-																									AND bdi_whscode = :bdi_whscode";
+							$sqlCostoCantidad = "";
+							$resCostoCantidad = [];
+		
+							// SI EL ALMACEN MANEJA UBICACION
+		
+							if ( $ManejaUbicacion == 1 ){
 
-							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+								$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+													FROM tbdi
+													WHERE bdi_itemcode = :bdi_itemcode
+													AND bdi_whscode = :bdi_whscode
+													AND bdi_ubication = :bdi_ubication";
 
-								':bdi_itemcode' => $detail['nc1_itemcode'],
-								':bdi_whscode'  => $detail['nc1_whscode']
-							));
+								$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+									':bdi_itemcode' => $detail['nc1_itemcode'],
+									':bdi_whscode'  => $detail['nc1_whscode'],
+									':bdi_ubication'  => $detail['nc1_ubication']
+								));
+
+							}else{
+
+								$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+													FROM tbdi
+													WHERE bdi_itemcode = :bdi_itemcode
+													AND bdi_whscode = :bdi_whscode";
+
+								$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+									':bdi_itemcode' => $detail['nc1_itemcode'],
+									':bdi_whscode'  => $detail['nc1_whscode']
+								));
+
+							}
 
 							if (isset($resCostoCantidad[0])) {
 
@@ -852,8 +908,8 @@ class SalesNc extends REST_Controller
 									$CantidadTotal = ($CantidadActual + $CantidadNueva);
 
 									$sqlUpdateCostoCantidad =  "UPDATE tbdi
-																															 SET bdi_quantity = :bdi_quantity
-																															 WHERE  bdi_id = :bdi_id";
+															SET bdi_quantity = :bdi_quantity
+															WHERE  bdi_id = :bdi_id";
 
 									$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
