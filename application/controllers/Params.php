@@ -46,6 +46,31 @@ class Params extends REST_Controller {
 	   $this->response($respuesta);
 	}
 
+	public function getSiteParams_get(){
+
+		$sqlSelect = "SELECT main_folder, fixrate, coalesce(decimals, 0) as decimals FROM params";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+				if(isset($resSelect[0])){
+					$respuesta = array(
+						'error' => false,
+						'data'  => $resSelect,
+						'mensaje' => '');
+
+				}else{
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => array(),
+							'mensaje'	=> 'busqueda sin resultados'
+						);
+
+				}
+
+		 $this->response($respuesta);
+	}
+
 	public function getDecimals_get(){
 
 		$sqlSelect = "SELECT coalesce(decimals, 0) as decimals FROM params";
