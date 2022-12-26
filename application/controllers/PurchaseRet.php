@@ -46,7 +46,7 @@ class PurchaseRet extends REST_Controller
 		$codigoCuenta = ""; //para saber la naturaleza
 		$ManejaInvetario = 0;
 		$ManejaLote = 0;
-		$ManejaLote = 0;
+		$ManejaUbicacion = 0;
 		$DocNumVerificado = 0;
 
 		$AC1LINE = 1;
@@ -58,13 +58,13 @@ class PurchaseRet extends REST_Controller
 
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
-													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
-													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref,ac1_line)VALUES (:ac1_trans_id, :ac1_account,
-													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
-													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
-													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line)";
+							ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
+							ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
+							ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref,ac1_line)VALUES (:ac1_trans_id, :ac1_account,
+							:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
+							:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
+							:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
+							:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line)";
 
 
 		if (!isset($Data['detail'])) {
@@ -649,23 +649,43 @@ class PurchaseRet extends REST_Controller
 
 					$ManejaInvetario = 1;
 					$ResultadoInv  = 1;
+
+
+					// CONSULTA PARA VERIFICAR SI EL ALMACEN MANEJA UBICACION
+					$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code";
+					$resubicacion = $this->pedeo->queryTable($sqlubicacion, array(
+						':dws_ubication' => 1,
+						':dws_code' => $detail['dc1_whscode']
+					));
+
+
+					if ( isset($resubicacion[0]) ){
+						$ManejaUbicacion = 1;
+					}else{
+						$ManejaUbicacion = 0;
+					}
+
+
+					// SI MANEJA LOTE
+					$sqlLote = "SELECT dma_lotes_code FROM dmar WHERE dma_item_code = :dma_item_code AND dma_lotes_code = :dma_lotes_code";
+					$resLote = $this->pedeo->queryTable($sqlLote, array(
+
+						':dma_item_code' => $detail['dc1_itemcode'],
+						':dma_lotes_code'  => 1
+					));
+
+					if (isset($resLote[0])) {
+						$ManejaLote = 1;
+					} else {
+						$ManejaLote = 0;
+					}
+
 				} else {
 
 					$ManejaInvetario = 0;
 				}
 
-				$sqlLote = "SELECT dma_lotes_code FROM dmar WHERE dma_item_code = :dma_item_code AND dma_lotes_code = :dma_lotes_code";
-				$resLote = $this->pedeo->queryTable($sqlLote, array(
-
-					':dma_item_code' => $detail['dc1_itemcode'],
-					':dma_lotes_code'  => 1
-				));
-
-				if (isset($resLote[0])) {
-					$ManejaLote = 1;
-				} else {
-					$ManejaLote = 0;
-				}
+				
 
 				// FIN PROCESO ITEM MANEJA INVENTARIO
 				// Y LOTE
@@ -701,7 +721,6 @@ class PurchaseRet extends REST_Controller
 					} else {
 						$ManejaSerial = 0;
 					}
-
 					//
 
 
@@ -710,19 +729,43 @@ class PurchaseRet extends REST_Controller
 					$sqlCostoMomentoRegistro = '';
 					$resCostoMomentoRegistro = [];
 
-					//SI MANEJA LOTE
-					if ($ManejaLote == 1) {
 
-						$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
-						$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-							':bdi_whscode' => $detail['dc1_whscode'],
-							':bdi_itemcode' => $detail['dc1_itemcode'],
-							':bdi_lote' => $detail['ote_code']
-						));
-					} else {
-						$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
-						$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['dc1_whscode'], ':bdi_itemcode' => $detail['dc1_itemcode']));
+					// SI MANEJA UBICACION EL ALMACEN
+
+					if ( $ManejaUbicacion == 1 ){
+						if ($ManejaLote == 1) {
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND bdi_ubication = :bdi_ubication";
+							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+								':bdi_whscode' => $detail['dc1_whscode'],
+								':bdi_itemcode' => $detail['dc1_itemcode'],
+								':bdi_lote' => $detail['ote_code'],
+								':bdi_ubication' => $detail['dc1_ubication']
+							));
+						}else{
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode  AND bdi_ubication = :bdi_ubication";
+							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+								':bdi_whscode' => $detail['dc1_whscode'],
+								':bdi_itemcode' => $detail['dc1_itemcode'],
+								':bdi_ubication' => $detail['dc1_ubication']
+							));
+						}
+					}else{
+						//SI MANEJA LOTE
+						if ($ManejaLote == 1) {
+
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
+							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+								':bdi_whscode' => $detail['dc1_whscode'],
+								':bdi_itemcode' => $detail['dc1_itemcode'],
+								':bdi_lote' => $detail['ote_code']
+							));
+						} else {
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['dc1_whscode'], ':bdi_itemcode' => $detail['dc1_itemcode']));
+						}
 					}
+
+				
 
 
 
@@ -750,58 +793,36 @@ class PurchaseRet extends REST_Controller
 						//VALIDANDO CANTIDAD DE ARTICULOS
 						$sqlInserMovimiento = '';
 						$resInserMovimiento = [];
-						//SI EL ARTICULO MANEJA LOTE
-						if ($ManejaLote == 1) {
-							//Se aplica el movimiento de inventario
-							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote)
-																								 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote)";
+						
+						//Se aplica el movimiento de inventario
+						$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote,bmi_ubication)
+							VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote,:bmi_ubication)";
 
-							$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+						$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-								':bmi_itemcode'  => isset($detail['dc1_itemcode']) ? $detail['dc1_itemcode'] : NULL,
-								':bmi_quantity'  => is_numeric($detail['dc1_quantity']) ? (($detail['dc1_quantity'] * $CANTUOMPURCHASE)  * $Data['invtype']) : 0,
-								':bmi_whscode'   => isset($detail['dc1_whscode']) ? $detail['dc1_whscode'] : NULL,
-								':bmi_createat'  => $this->validateDate($Data['cdc_createat']) ? $Data['cdc_createat'] : NULL,
-								':bmi_createby'  => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL,
-								':bmy_doctype'   => is_numeric($Data['cdc_doctype']) ? $Data['cdc_doctype'] : 0,
-								':bmy_baseentry' => $resInsert,
-								':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-								':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-								':bmi_basenum'			=> $DocNumVerificado,
-								':bmi_docdate' => $this->validateDate($Data['cdc_docdate']) ? $Data['cdc_docdate'] : NULL,
-								':bmi_duedate' => $this->validateDate($Data['cdc_duedate']) ? $Data['cdc_duedate'] : NULL,
-								':bmi_duedev'  => $this->validateDate($Data['cdc_duedev']) ? $Data['cdc_duedev'] : NULL,
-								':bmi_comment' => isset($Data['cdc_comment']) ? $Data['cdc_comment'] : NULL,
-								':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
-
-							));
-						} else {
-							//Se aplica el movimiento de inventario
-							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
-																								 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
-
-							$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
-
-								':bmi_itemcode'  => isset($detail['dc1_itemcode']) ? $detail['dc1_itemcode'] : NULL,
-								':bmi_quantity'  => is_numeric($detail['dc1_quantity']) ? (($detail['dc1_quantity'] * $CANTUOMPURCHASE)  * $Data['invtype']) : 0,
-								':bmi_whscode'   => isset($detail['dc1_whscode']) ? $detail['dc1_whscode'] : NULL,
-								':bmi_createat'  => $this->validateDate($Data['cdc_createat']) ? $Data['cdc_createat'] : NULL,
-								':bmi_createby'  => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL,
-								':bmy_doctype'   => is_numeric($Data['cdc_doctype']) ? $Data['cdc_doctype'] : 0,
-								':bmy_baseentry' => $resInsert,
-								':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-								':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-								':bmi_basenum'			=> $DocNumVerificado,
-								':bmi_docdate' => $this->validateDate($Data['cdc_docdate']) ? $Data['cdc_docdate'] : NULL,
-								':bmi_duedate' => $this->validateDate($Data['cdc_duedate']) ? $Data['cdc_duedate'] : NULL,
-								':bmi_duedev'  => $this->validateDate($Data['cdc_duedev']) ? $Data['cdc_duedev'] : NULL,
-								':bmi_comment' => isset($Data['cdc_comment']) ? $Data['cdc_comment'] : NULL
-
-							));
-						}
+							':bmi_itemcode'  => isset($detail['dc1_itemcode']) ? $detail['dc1_itemcode'] : NULL,
+							':bmi_quantity'  => is_numeric($detail['dc1_quantity']) ? (($detail['dc1_quantity'] * $CANTUOMPURCHASE)  * $Data['invtype']) : 0,
+							':bmi_whscode'   => isset($detail['dc1_whscode']) ? $detail['dc1_whscode'] : NULL,
+							':bmi_createat'  => $this->validateDate($Data['cdc_createat']) ? $Data['cdc_createat'] : NULL,
+							':bmi_createby'  => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL,
+							':bmy_doctype'   => is_numeric($Data['cdc_doctype']) ? $Data['cdc_doctype'] : 0,
+							':bmy_baseentry' => $resInsert,
+							':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+							':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+							':bmi_basenum'			=> $DocNumVerificado,
+							':bmi_docdate' => $this->validateDate($Data['cdc_docdate']) ? $Data['cdc_docdate'] : NULL,
+							':bmi_duedate' => $this->validateDate($Data['cdc_duedate']) ? $Data['cdc_duedate'] : NULL,
+							':bmi_duedev'  => $this->validateDate($Data['cdc_duedev']) ? $Data['cdc_duedev'] : NULL,
+							':bmi_comment' => isset($Data['cdc_comment']) ? $Data['cdc_comment'] : NULL,
+							':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+							':bmi_ubication' => isset($detail['dc1_ubication']) ? $detail['dc1_ubication'] : NULL
+						));
+				
+						
+					
 
 
-						if (is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0) {
+						if (is_numeric($resInserMovimiento) && $resInserMovimiento > 0) {
 							// Se verifica que el detalle no de error insertando //
 						} else {
 
@@ -811,7 +832,7 @@ class PurchaseRet extends REST_Controller
 
 							$respuesta = array(
 								'error'   => true,
-								'data' => $sqlInserMovimiento,
+								'data' => $resInserMovimiento,
 								'mensaje'	=> 'No se pudo registrar la devolucion de compras'
 							);
 
@@ -841,32 +862,69 @@ class PurchaseRet extends REST_Controller
 					// Buscando item en el stock
 					$sqlCostoCantidad = '';
 					$resCostoCantidad = [];
-					//SE VALIDA SI EL ARTICULO MANEJA LOTE
-					if ($ManejaLote == 1) {
-						$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-																								FROM tbdi
-																								WHERE bdi_itemcode = :bdi_itemcode
-																								AND bdi_whscode = :bdi_whscode
-																								AND bdi_lote = :bdi_lote";
 
-						$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+					// SE VALIDA SI EL ALMACEN MANEJA UBICACION
+					if ( $ManejaUbicacion == 1 ){
+						//SE VALIDA SI EL ARTICULO MANEJA LOTE
+						if ($ManejaLote == 1) {
+							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+							FROM tbdi
+							WHERE bdi_itemcode = :bdi_itemcode
+							AND bdi_whscode = :bdi_whscode
+							AND bdi_lote = :bdi_lote
+							AND bdi_ubication = :bdi_ubication";
 
-							':bdi_itemcode' => $detail['dc1_itemcode'],
-							':bdi_whscode'  => $detail['dc1_whscode'],
-							':bdi_lote' 		=> $detail['ote_code']
-						));
-					} else {
-						$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-																								FROM tbdi
-																								WHERE bdi_itemcode = :bdi_itemcode
-																								AND bdi_whscode = :bdi_whscode";
+							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
-						$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+								':bdi_itemcode'  => $detail['dc1_itemcode'],
+								':bdi_whscode'   => $detail['dc1_whscode'],
+								':bdi_lote'      => $detail['ote_code'],
+								':bdi_ubication' => $detail['dc1_ubication']
+							));
+						}else{
+							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+							FROM tbdi
+							WHERE bdi_itemcode = :bdi_itemcode
+							AND bdi_whscode = :bdi_whscode
+							AND bdi_ubication = :bdi_ubication";
 
-							':bdi_itemcode' => $detail['dc1_itemcode'],
-							':bdi_whscode'  => $detail['dc1_whscode']
-						));
+							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+								':bdi_itemcode'  => $detail['dc1_itemcode'],
+								':bdi_whscode'   => $detail['dc1_whscode'],
+								':bdi_ubication' => $detail['dc1_ubication']
+							));
+
+						}
+					}else{
+						//SE VALIDA SI EL ARTICULO MANEJA LOTE
+						if ($ManejaLote == 1) {
+							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+											FROM tbdi
+											WHERE bdi_itemcode = :bdi_itemcode
+											AND bdi_whscode = :bdi_whscode
+											AND bdi_lote = :bdi_lote";
+
+							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+								':bdi_itemcode' => $detail['dc1_itemcode'],
+								':bdi_whscode'  => $detail['dc1_whscode'],
+								':bdi_lote' 		=> $detail['ote_code']
+							));
+						} else {
+							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+											FROM tbdi
+											WHERE bdi_itemcode = :bdi_itemcode
+											AND bdi_whscode = :bdi_whscode";
+
+							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+								':bdi_itemcode' => $detail['dc1_itemcode'],
+								':bdi_whscode'  => $detail['dc1_whscode']
+							));
+						}
 					}
+					
 
 
 					if (isset($resCostoCantidad[0])) {
@@ -886,19 +944,10 @@ class PurchaseRet extends REST_Controller
 
 
 
-							//  print_r($CantidadActual."\n");
-							//  print_r($CantidadDevolucion."\n");
-							//  print_r($CostoDevolucion."\n");
-							//  print_r($CostoActual."\n");
-							//  print_r($CantidadTotal."\n");
-							//  print_r($CostoPonderado);
-
-							//  ;exit;die();
-
 							$sqlUpdateCostoCantidad =  "UPDATE tbdi
-																													 SET bdi_quantity = :bdi_quantity,
-																													 bdi_avgprice = :bdi_avgprice
-																													 WHERE  bdi_id = :bdi_id";
+													SET bdi_quantity = :bdi_quantity,
+													bdi_avgprice = :bdi_avgprice
+													WHERE  bdi_id = :bdi_id";
 
 							$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
@@ -952,7 +1001,7 @@ class PurchaseRet extends REST_Controller
 						if (!isset($resFindLote[0])) {
 							// SI NO SE HA CREADO EL LOTE SE INGRESA
 							$sqlInsertLote = "INSERT INTO lote(ote_code, ote_createdate, ote_duedate, ote_createby, ote_date, ote_baseentry, ote_basetype, ote_docnum)
-																								VALUES(:ote_code, :ote_createdate, :ote_duedate, :ote_createby, :ote_date, :ote_baseentry, :ote_basetype, :ote_docnum)";
+														VALUES(:ote_code, :ote_createdate, :ote_duedate, :ote_createby, :ote_date, :ote_baseentry, :ote_basetype, :ote_docnum)";
 							$resInsertLote = $this->pedeo->insertRow($sqlInsertLote, array(
 								':ote_code' => $detail['ote_code'],
 								':ote_createdate' => $detail['ote_createdate'],
@@ -1741,10 +1790,24 @@ class PurchaseRet extends REST_Controller
 	//OBTENER devolucion de compras
 	public function getPurchaseRet_get()
 	{
+		$Data = $this->get();
+
+		if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dcdc', 'cdc', '', '', $DECI_MALES);
+		$sqlSelect = self::getColumn('dcdc', 'cdc', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -1867,7 +1930,7 @@ class PurchaseRet extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['dms_card_code'])) {
+		if ( !isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch']) ) {
 
 			$respuesta = array(
 				'error' => true,
@@ -1880,9 +1943,9 @@ class PurchaseRet extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM dcdc WHERE cdc_cardcode =:cdc_cardcode";
+		$sqlSelect = " SELECT * FROM dcdc WHERE cdc_cardcode =:cdc_cardcode AND business = :business AND branch = :branch";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cdc_cardcode" => $Data['dms_card_code']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cdc_cardcode" => $Data['dms_card_code'],":business" => $Data['business'],":branch" => $Data['branch']));
 
 		if (isset($resSelect[0])) {
 

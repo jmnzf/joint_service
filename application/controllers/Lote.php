@@ -72,14 +72,16 @@ class Lote extends REST_Controller
 					AND bdi_ubication = :ubication
 					AND ote_duedate > current_date
 					AND tbdi.business = :business
-					order by ote_duedate asc";
+					AND bdi_quantity > :bdi_quantity
+					ORDER BY ote_duedate asc";
 
 
 			$array = array(
 				':itemcode' => $Data['itemcode'],
 				':whscode'  => $Data['whscode'],
 				':business' 	=> $Data['business'],
-				':ubication' 	=> $Data['ubication']
+				':ubication' 	=> $Data['ubication'],
+				':bdi_quantity' => 0
 			);
 
 		}else{
@@ -91,12 +93,14 @@ class Lote extends REST_Controller
 				AND bdi_whscode = :whscode
 				AND ote_duedate > current_date
 				AND tbdi.business = :business
-				order by ote_duedate asc";
+				AND bdi_quantity > :bdi_quantity
+				ORDER BY ote_duedate asc";
 
 			$array = array(
 				':itemcode' => $Data['itemcode'],
 				':whscode'  => $Data['whscode'],
-				':business' => $Data['business']
+				':business' => $Data['business'],
+				':bdi_quantity' => 0
 			);	
 		}
 
