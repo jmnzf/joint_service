@@ -4,6 +4,7 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 require_once(APPPATH . '/libraries/REST_Controller.php');
+
 use Restserver\libraries\REST_Controller;
 
 class InventoryRevaluation extends REST_Controller
@@ -22,7 +23,6 @@ class InventoryRevaluation extends REST_Controller
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
-
 	}
 
 	//CREAR NUEVA REVALORIZACION
@@ -49,7 +49,6 @@ class InventoryRevaluation extends REST_Controller
 			);
 
 		}
-
 		$this->response($respuesta);
 	}
 
@@ -123,6 +122,7 @@ class InventoryRevaluation extends REST_Controller
 				)
 				);
 
+
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 					// Se verifica que el detalle no de error insertando //
 				} else {
@@ -135,6 +135,7 @@ class InventoryRevaluation extends REST_Controller
 						'error' => true,
 						'data' => $resInsertDetail,
 						'mensaje' => 'No se pudo registrar la revalorizacion'
+
 					);
 
 					$this->response($respuesta);
@@ -199,3 +200,4 @@ class InventoryRevaluation extends REST_Controller
 	}
 
 }
+

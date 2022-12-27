@@ -381,7 +381,7 @@ class StockTransfer extends REST_Controller
 			// Se actualiza la serie de la numeracion del documento
 
 			$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
-																		 WHERE pgs_id = :pgs_id";
+										 WHERE pgs_id = :pgs_id";
 			$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
 				':pgs_nextnum' => $DocNumVerificado,
 				':pgs_id'      => $Data['ist_series']

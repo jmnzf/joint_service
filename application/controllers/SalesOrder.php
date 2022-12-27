@@ -605,9 +605,9 @@ class SalesOrder extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vov1(ov1_docentry, ov1_itemcode, ov1_itemname, ov1_quantity, ov1_uom, ov1_whscode,
                                     ov1_price, ov1_vat, ov1_vatsum, ov1_discount, ov1_linetotal, ov1_costcode, ov1_ubusiness, ov1_project,
-                                    ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva, ov1_codimp,ov1_ubication)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
+                                    ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva, ov1_codimp,ov1_ubication,ov1_lote)VALUES(:ov1_docentry, :ov1_itemcode, :ov1_itemname, :ov1_quantity,
                                     :ov1_uom, :ov1_whscode,:ov1_price, :ov1_vat, :ov1_vatsum, :ov1_discount, :ov1_linetotal, :ov1_costcode, :ov1_ubusiness, :ov1_project,
-                                    :ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory, :ov1_acciva, :ov1_codimp,:ov1_ubication)";
+                                    :ov1_acctcode, :ov1_basetype, :ov1_doctype, :ov1_avprice, :ov1_inventory, :ov1_acciva, :ov1_codimp,:ov1_ubication,:ov1_lote)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ov1_docentry' => $resInsert,
@@ -631,7 +631,8 @@ class SalesOrder extends REST_Controller
 					':ov1_inventory' => is_numeric($detail['ov1_inventory']) ? $detail['ov1_inventory'] : NULL,
 					':ov1_acciva' => is_numeric($detail['ov1_acciva']) ? $detail['ov1_acciva'] : NULL,
 					':ov1_codimp' => isset($detail['ov1_codimp']) ? $detail['ov1_codimp'] : NULL,
-					':ov1_ubication' => isset($detail['ov1_ubication']) ? $detail['ov1_ubication'] : NULL
+					':ov1_ubication' => isset($detail['ov1_ubication']) ? $detail['ov1_ubication'] : NULL,
+					':ov1_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -660,11 +661,11 @@ class SalesOrder extends REST_Controller
 
 
 				$sqlEstado1 = "SELECT
-																		       count(t1.vc1_itemcode) item,
-																		       sum(t1.vc1_quantity) cantidad
-																		from dvct t0
-																		inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
+								count(t1.vc1_itemcode) item,
+								sum(t1.vc1_quantity) cantidad
+						from dvct t0
+						inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+						where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
 
 				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
@@ -674,13 +675,13 @@ class SalesOrder extends REST_Controller
 				));
 
 				$sqlEstado2 = "SELECT
-																		       coalesce(count(distinct t1.vc1_itemcode),0) item,
-																		       coalesce(sum(t3.ov1_quantity),0) cantidad
-																		from dvct t0
-																		inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-																		left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
-																		left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
-																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
+								coalesce(count(distinct t1.vc1_itemcode),0) item,
+								coalesce(sum(t3.ov1_quantity),0) cantidad
+						from dvct t0
+						inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+						left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry
+						left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
+						where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
 
 				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(

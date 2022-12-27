@@ -102,8 +102,8 @@ class PaymentsReceived extends REST_Controller
 		$VlrDiffP = 0;
 		$DFPC = 0; // diferencia en peso credito
 		$DFPD = 0; // diferencia en peso debito
-		$DFPCS = 0; // del sistema
-		$DFPDS = 0; // del sistema
+		$DFPCS = 0; // del sistema en credito
+		$DFPDS = 0; // del sistema en debito
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 							ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,

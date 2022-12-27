@@ -67,6 +67,7 @@ class PurchaseNc extends REST_Controller
 		$DocNumVerificado = 0;
 		$ManejaInvetario  = 0;
 		$ManejaLote = 0;
+		$ManejaUbicaion = 0;
 		$ManejaSerial = 0;
 		$TasaDocLoc = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL DOCUMENTO
 		$TasaLocSys = 0; // MANTIENE EL VALOR DE LA TASA DE CONVERSION ENTRE LA MONEDA LOCAL Y LA MONEDA DEL SISTEMA
@@ -685,10 +686,10 @@ class PurchaseNc extends REST_Controller
 									':crt_basert'    => $value['crt_basert'],
 									':crt_profitrt'  => $value['crt_profitrt'],
 									':crt_totalrt'   => $value['crt_totalrt'],
-									':crt_base'			 => $value['crt_base'],
-									':crt_type'			 => $value['crt_type'],
+									':crt_base'		 => $value['crt_base'],
+									':crt_type'		 => $value['crt_type'],
 									':crt_linenum'   => $detail['nc1_linenum'],
-									':crt_codret'	   => $value['crt_typert']
+									':crt_codret'	 => $value['crt_typert']
 								));
 
 
@@ -751,23 +752,42 @@ class PurchaseNc extends REST_Controller
 
 				if (isset($resItemINV[0])) {
 
+					
+					// CONSULTA PARA VERIFICAR SI EL ALMACEN MANEJA UBICACION
+					$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code";
+					$resubicacion = $this->pedeo->queryTable($sqlubicacion, array(
+						':dws_ubication' => 1,
+						':dws_code' => $detail['nc1_whscode']
+					));
+
+
+					if ( isset($resubicacion[0]) ){
+						$ManejaUbicacion = 1;
+					}else{
+						$ManejaUbicacion = 0;
+					}
+
+
+					// SI ARTICULO MANEJA LOTE
+					$sqlLote = "SELECT dma_lotes_code FROM dmar WHERE dma_item_code = :dma_item_code AND dma_lotes_code = :dma_lotes_code";
+					$resLote = $this->pedeo->queryTable($sqlLote, array(
+
+						':dma_item_code' => $detail['nc1_itemcode'],
+						':dma_lotes_code'  => 1
+					));
+
+					if (isset($resLote[0])) {
+						$ManejaLote = 1;
+					} else {
+						$ManejaLote = 0;
+					}
+
 					$ManejaInvetario = 1;
 				} else {
 					$ManejaInvetario = 0;
 				}
 
-				$sqlLote = "SELECT dma_lotes_code FROM dmar WHERE dma_item_code = :dma_item_code AND dma_lotes_code = :dma_lotes_code";
-				$resLote = $this->pedeo->queryTable($sqlLote, array(
-
-					':dma_item_code' => $detail['nc1_itemcode'],
-					':dma_lotes_code'  => 1
-				));
-
-				if (isset($resLote[0])) {
-					$ManejaLote = 1;
-				} else {
-					$ManejaLote = 0;
-				}
+				
 
 				// FIN PROCESO ITEM MANEJA INVENTARIO Y LOTE
 
@@ -817,75 +837,77 @@ class PurchaseNc extends REST_Controller
 						$sqlCostoMomentoRegistro = '';
 						$resCostoMomentoRegistro = [];
 
-						//SI MANEJA LOTE
-						if ($ManejaLote == 1) {
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
-							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-								':bdi_whscode' => $detail['nc1_whscode'],
-								':bdi_itemcode' => $detail['nc1_itemcode'],
-								':bdi_lote' => $detail['ote_code']
-							));
-						} else {
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
-							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['nc1_whscode'], ':bdi_itemcode' => $detail['nc1_itemcode']));
+						// SI EL ALMACEN MANEJA UBICACION
+
+						if ( $ManejaUbicacion == 1 ){
+							//SI MANEJA LOTE
+							if ($ManejaLote == 1) {
+								$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND bdi_ubication = :bdi_ubication";
+								$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+									':bdi_whscode' => $detail['nc1_whscode'],
+									':bdi_itemcode' => $detail['nc1_itemcode'],
+									':bdi_lote' => $detail['ote_code'],
+									':bdi_ubication' => $detail['nc1_ubication']
+								));
+							}else{
+								$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode  AND bdi_ubication = :bdi_ubication";
+								$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+									':bdi_whscode' => $detail['nc1_whscode'],
+									':bdi_itemcode' => $detail['nc1_itemcode'],
+									':bdi_ubication' => $detail['nc1_ubication']
+								));
+							}
+						}else{
+
+							//SI MANEJA LOTE
+							if ($ManejaLote == 1) {
+								$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
+								$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+									':bdi_whscode' => $detail['nc1_whscode'],
+									':bdi_itemcode' => $detail['nc1_itemcode'],
+									':bdi_lote' => $detail['ote_code']
+								));
+							} else {
+								$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+								$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['nc1_whscode'], ':bdi_itemcode' => $detail['nc1_itemcode']));
+							}
 						}
+
 
 
 						if (isset($resCostoMomentoRegistro[0])) {
 
 							$sqlInserMovimiento = '';
 							$resInserMovimiento = [];
-							//SI EL ARTICULO MANEJA LOTE
-							if ($ManejaLote == 1) {
-								//Se aplica el movimiento de inventario
-								$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote)
-																											 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote)";
+					
+							
+							//Se aplica el movimiento de inventario
+							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote,bmi_ubication)
+												VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote,:bmi_ubication)";
 
-								$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+							$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-									':bmi_itemcode' => isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL,
-									':bmi_quantity' => is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $Data['invtype']) : 0,
-									':bmi_whscode'  => isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL,
-									':bmi_createat' => $this->validateDate($Data['cnc_createat']) ? $Data['cnc_createat'] : NULL,
-									':bmi_createby' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-									':bmy_doctype'  => is_numeric($Data['cnc_doctype']) ? $Data['cnc_doctype'] : 0,
-									':bmy_baseentry' => $resInsert,
-									':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-									':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-									':bmi_basenum'			=> $DocNumVerificado,
-									':bmi_docdate' => $this->validateDate($Data['cnc_docdate']) ? $Data['cnc_docdate'] : NULL,
-									':bmi_duedate' => $this->validateDate($Data['cnc_duedate']) ? $Data['cnc_duedate'] : NULL,
-									':bmi_duedev'  => $this->validateDate($Data['cnc_duedev']) ? $Data['cnc_duedev'] : NULL,
-									':bmi_comment' => isset($Data['cnc_comment']) ? $Data['cnc_comment'] : NULL,
-									':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
-
-
-								));
-							} else {
-								//Se aplica el movimiento de inventario
-								$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
-																											 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
-
-								$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
-
-									':bmi_itemcode' => isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL,
-									':bmi_quantity' => is_numeric($detail['nc1_quantity']) ? (($detail['nc1_quantity'] * $CANTUOMPURCHASE) * $Data['invtype']) : 0,
-									':bmi_whscode'  => isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL,
-									':bmi_createat' => $this->validateDate($Data['cnc_createat']) ? $Data['cnc_createat'] : NULL,
-									':bmi_createby' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-									':bmy_doctype'  => is_numeric($Data['cnc_doctype']) ? $Data['cnc_doctype'] : 0,
-									':bmy_baseentry' => $resInsert,
-									':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-									':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-									':bmi_basenum'			=> $DocNumVerificado,
-									':bmi_docdate' => $this->validateDate($Data['cnc_docdate']) ? $Data['cnc_docdate'] : NULL,
-									':bmi_duedate' => $this->validateDate($Data['cnc_duedate']) ? $Data['cnc_duedate'] : NULL,
-									':bmi_duedev'  => $this->validateDate($Data['cnc_duedev']) ? $Data['cnc_duedev'] : NULL,
-									':bmi_comment' => isset($Data['cnc_comment']) ? $Data['cnc_comment'] : NULL
+								':bmi_itemcode' => isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL,
+								':bmi_quantity' => is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $Data['invtype']) : 0,
+								':bmi_whscode'  => isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL,
+								':bmi_createat' => $this->validateDate($Data['cnc_createat']) ? $Data['cnc_createat'] : NULL,
+								':bmi_createby' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
+								':bmy_doctype'  => is_numeric($Data['cnc_doctype']) ? $Data['cnc_doctype'] : 0,
+								':bmy_baseentry' => $resInsert,
+								':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+								':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+								':bmi_basenum'			=> $DocNumVerificado,
+								':bmi_docdate' => $this->validateDate($Data['cnc_docdate']) ? $Data['cnc_docdate'] : NULL,
+								':bmi_duedate' => $this->validateDate($Data['cnc_duedate']) ? $Data['cnc_duedate'] : NULL,
+								':bmi_duedev'  => $this->validateDate($Data['cnc_duedev']) ? $Data['cnc_duedev'] : NULL,
+								':bmi_comment' => isset($Data['cnc_comment']) ? $Data['cnc_comment'] : NULL,
+								':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+								':bmi_ubication' => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL
 
 
-								));
-							}
+							));
+							
+							
 
 
 							if (is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0) {
@@ -928,32 +950,69 @@ class PurchaseNc extends REST_Controller
 						// Buscando item en el stock
 						$sqlCostoCantidad = '';
 						$resCostoCantidad = [];
-						//SE VALIDA SI EL ARTICULO MANEJA LOTE
-						if ($ManejaLote == 1) {
-							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-																									FROM tbdi
-																									WHERE bdi_itemcode = :bdi_itemcode
-																									AND bdi_whscode = :bdi_whscode
-																									AND bdi_lote = :bdi_lote";
 
-							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+						// SI EL ALMACEN MANEJA UBICACION
+						if ( $ManejaUbicacion == 1 ){
+							//SE VALIDA SI EL ARTICULO MANEJA LOTE
+							if ($ManejaLote == 1) {
+								$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+												FROM tbdi
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND bdi_lote = :bdi_lote
+												AND bdi_ubication = :bdi_ubication";
 
-								':bdi_itemcode' => $detail['nc1_itemcode'],
-								':bdi_whscode'  => $detail['nc1_whscode'],
-								':bdi_lote' 		=> $detail['ote_code']
-							));
-						} else {
-							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-																									FROM tbdi
-																									WHERE bdi_itemcode = :bdi_itemcode
-																									AND bdi_whscode = :bdi_whscode";
+								$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
-							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+									':bdi_itemcode'  => $detail['nc1_itemcode'],
+									':bdi_whscode'   => $detail['nc1_whscode'],
+									':bdi_lote' 	 => $detail['ote_code'],
+									':bdi_ubication' => $detail['nc1_ubication']
+								));
+							} else {
+								$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+								FROM tbdi
+								WHERE bdi_itemcode = :bdi_itemcode
+								AND bdi_whscode = :bdi_whscode
+								AND bdi_ubication = :bdi_ubication";
 
-								':bdi_itemcode' => $detail['nc1_itemcode'],
-								':bdi_whscode'  => $detail['nc1_whscode']
-							));
+								$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+									':bdi_itemcode'  => $detail['nc1_itemcode'],
+									':bdi_whscode'   => $detail['nc1_whscode'],
+									':bdi_ubication' => $detail['nc1_ubication']
+								));
+							}
+
+						}else{
+							//SE VALIDA SI EL ARTICULO MANEJA LOTE
+							if ($ManejaLote == 1) {
+								$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+												FROM tbdi
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND bdi_lote = :bdi_lote";
+
+								$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+									':bdi_itemcode' => $detail['nc1_itemcode'],
+									':bdi_whscode'  => $detail['nc1_whscode'],
+									':bdi_lote' 		=> $detail['ote_code']
+								));
+							} else {
+								$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+												FROM tbdi
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode";
+
+								$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+
+									':bdi_itemcode' => $detail['nc1_itemcode'],
+									':bdi_whscode'  => $detail['nc1_whscode']
+								));
+							}
 						}
+						
 
 
 						if (isset($resCostoCantidad[0])) {
@@ -2941,7 +3000,7 @@ class PurchaseNc extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['dms_card_code'])) {
+		if (!isset($Data['dms_card_code']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -2954,7 +3013,7 @@ class PurchaseNc extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM dcnc WHERE cnc_cardcode =:cnc_cardcode";
+		$sqlSelect = " SELECT * FROM dcnc WHERE cnc_cardcode =:cnc_cardcode AND business = :business AND branch = :branch ";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cnc_cardcode" => $Data['dms_card_code']));
 
@@ -2983,37 +3042,6 @@ class PurchaseNc extends REST_Controller
 
 
 
-	private function getUrl($data, $caperta)
-	{
-		$url = "";
-
-		if ($data == NULL) {
-
-			return $url;
-		}
-
-		$ruta = '/var/www/html/' . $caperta . '/assets/img/anexos/';
-
-		$milliseconds = round(microtime(true) * 1000);
-
-
-		$nombreArchivo = $milliseconds . ".pdf";
-
-		touch($ruta . $nombreArchivo);
-
-		$file = fopen($ruta . $nombreArchivo, "wb");
-
-		if (!empty($data)) {
-
-			fwrite($file, base64_decode($data));
-
-			fclose($file);
-
-			$url = "assets/img/anexos/" . $nombreArchivo;
-		}
-
-		return $url;
-	}
 
 	private function buscarPosicion($llave, $inArray)
 	{

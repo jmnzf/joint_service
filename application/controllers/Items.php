@@ -481,7 +481,7 @@ class Items extends REST_Controller
 		}
 		//
 
-		$sqlSelect = "SELECT t0.*, t2.mga_name, COALESCE(SUM(t1.bdi_quantity),0) stock,t1.bdi_lote,t3.ote_createdate,t3.ote_duedate FROM dmar t0 LEFT JOIN tbdi t1 on t0.dma_item_code = t1.bdi_itemcode LEFT JOIN dmga t2 on t0.dma_group_code = t2.mga_id left join lote t3 on t1.bdi_lote = t3.ote_code  $variableSql GROUP BY t0.dma_id, t0.dma_item_code, t0.dma_item_name, t0.dma_generic_name, t0.dma_item_purch, t0.dma_item_inv, t0.dma_item_sales, t0.dma_group_code, t0.dma_attach, t0.dma_enabled, t0.dma_firm_code, t0.dma_series_code, t0.dma_sup_set, t0.dma_sku_sup, t0.dma_uom_purch, t0.dma_uom_pqty, t0.dma_uom_pemb, t0.dma_uom_pembqty, t0.dma_tax_purch, t0.dma_price_list,t0.dma_price, t0.dma_uom_sale, t0.dma_uom_sqty, t0.dma_uom_semb, t0.dma_uom_embqty, t0.dma_tax_sales, t0.dma_acct_type, t0.dma_avprice, t0.dma_uom_weight, t0.dma_uom_umvol, t0.dma_uom_vqty, t0.dma_uom_weightn, t0.dma_uom_sizedim,t2.mga_name,t1.bdi_lote,t3.ote_createdate,t3.ote_duedate";
+		$sqlSelect = "SELECT t0.*, t2.mga_name FROM dmar t0 LEFT JOIN dmga t2 on t0.dma_group_code = t2.mga_id $variableSql";
 
 		//
 		$sqlSelect .= " ORDER BY " . $columns[$request['order'][0]['column']] . " " . $request['order'][0]['dir'];
@@ -599,13 +599,21 @@ class Items extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT sum(ei1_quantity) as total, ei1_whscode, dmws.dws_name, ei1_uom
-					from iei1
-					left join dmws on dmws.dws_code = iei1.ei1_whscode
-					where ei1_itemcode = :item_code
-					group by ei1_whscode, dmws.dws_name, ei1_uom";
+		$sqlSelect = "SELECT
+						dmar.dma_item_code,
+						dmum.dmu_nameum,
+						dmws.dws_name,
+						sum(bdi_quantity) total
+					from dmar
+					inner join dmum on dmar.dma_uom_sale = dmum.dmu_id
+					inner join tbdi on dmar.dma_item_code = tbdi.bdi_itemcode
+					inner join dmws on tbdi.bdi_whscode = dmws.dws_code
+					where dmar.dma_item_code = :dma_item_code
+					group by dmar.dma_item_code,dmum.dmu_nameum,dmws.dws_name
+					order by dmar.dma_item_code asc";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':item_code' => $Data['item_code']));
+		
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':dma_item_code' => $Data['item_code']));
 
 		if (isset($resSelect[0])) {
 
