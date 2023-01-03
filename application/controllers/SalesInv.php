@@ -43,7 +43,7 @@ class SalesInv extends REST_Controller
 				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 				return;
-			}
+		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
 		$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
@@ -90,6 +90,8 @@ class SalesInv extends REST_Controller
 		$AgregarAsiento = true;
 		$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 		$DetalleIgtf = 0; // DETALLE DE DIVISAS APLICADAS IGTF
+		$LineCXC = 0; // SE USA CUANDO SE DEBE HACER EL PAGO RECIBIDO DESPUES DE GUARDAR LA FACTURA ( FACTURA DE CONTADO ) LINEA DEL ASIENTO CONTABLE;
+		$AcctLine = // SE USA CUANDO SE DEBE HACER EL PAGO RECIBIDO DESPUES DE GUARDAR LA FACTURA ( FACTURA DE CONTADO ) CUENTA DE LA LINEA CXC;
 
 
 
@@ -376,6 +378,7 @@ class SalesInv extends REST_Controller
 		}
 		//VERIFICAR TASA FIJA DE DESCUENTO
 
+	
 		$sqlInsert = "INSERT INTO dvfv(dvf_series, dvf_docnum, dvf_docdate, dvf_duedate, dvf_duedev, dvf_pricelist, dvf_cardcode,
 						dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
 						dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
@@ -394,9 +397,9 @@ class SalesInv extends REST_Controller
 		// de lo contrario no se aplicaran los cambios y se devolvera
 		// la base de datos a su estado original.
 
-		try {
+		$this->pedeo->trans_begin();
 
-			$this->pedeo->trans_begin();
+		try {
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -426,7 +429,7 @@ class SalesInv extends REST_Controller
 				':dvf_adress' => isset($Data['dvf_adress']) ? $Data['dvf_adress'] : NULL,
 				':dvf_paytype' => is_numeric($Data['dvf_paytype']) ? $Data['dvf_paytype'] : 0,
 				':dvf_createby' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-				':dvf_correl' => is_numeric($Data['dvf_correl']) ? $Data['dvf_correl'] : 0,
+				':dvf_correl' => isset($Data['dvf_correl']) && is_numeric($Data['dvf_correl']) ? $Data['dvf_correl'] : 0,
 				':dvf_transport' => isset($Data['dvf_transport']) ? $Data['dvf_transport'] : NULL,
 				':dvf_sub_transport' => isset($Data['dvf_sub_transport']) ? $Data['dvf_sub_transport'] : NULL,
 				':dvf_ci' => isset($Data['dvf_ci']) ? $Data['dvf_ci'] : NULL,
@@ -884,7 +887,8 @@ class SalesInv extends REST_Controller
 
 
 						// se verifica de donde viene  el documento
-						if ($Data['dvf_basetype'] != 3) {
+	
+						if ( $Data['dvf_basetype'] != 3 ) {
 
 
 							//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
@@ -1194,6 +1198,7 @@ class SalesInv extends REST_Controller
 						} // EN CASO CONTRARIO NO SE MUEVE INVENTARIO
 
 					}
+
 
 					//LLENANDO DETALLE ASIENTO CONTABLES
 					$DetalleAsientoIngreso = new stdClass();
@@ -1724,7 +1729,12 @@ class SalesInv extends REST_Controller
 				}
 				//FIN Procedimiento para llenar Impuestos
 
-				if ($Data['dvf_basetype'] != 3) { // solo si el documento no viene de una entrega
+				if ( $Data['dvf_doctype'] ==  34 ){
+					$DetalleConsolidadoCostoInventario = [];
+				}
+
+				// solo si el documento no viene de una entrega
+				if ( $Data['dvf_basetype'] != 3 ) { 
 					//Procedimiento para llenar costo inventario
 					foreach ($DetalleConsolidadoCostoInventario as $key => $posicion) {
 						$grantotalCostoInventario = 0;
@@ -1925,6 +1935,9 @@ class SalesInv extends REST_Controller
 
 
 				// Procedimiento para llenar costo costo
+				if ( $Data['dvf_doctype'] ==  34 ){
+					$DetalleConsolidadoCostoCosto = [];
+				}
 				foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
 					$grantotalCostoCosto = 0;
 					$grantotalCostoCostoOriginal = 0;
@@ -1935,7 +1948,8 @@ class SalesInv extends REST_Controller
 					$MontoSysCR = 0;
 					foreach ($posicion as $key => $value) {
 
-						if ($Data['dvf_basetype'] != 3) {
+                        // SI NO VIENE DE UNA ENTREGA
+						if ( $Data['dvf_basetype'] != 3 ) {
 
 							$CUENTASINV = $this->account->getAccountItem($value->fv1_itemcode, $value->em1_whscode);
 
@@ -1986,7 +2000,10 @@ class SalesInv extends REST_Controller
 
 								return;
 							}
-						} else if ($Data['dvf_basetype'] == 3) { //Procedimiento cuando sea tipo documento 3 (Entrega)
+
+							//Procedimiento cuando sea tipo documento 3 (Entrega)
+
+						} else if ( $Data['dvf_basetype'] == 3 ) { 
 
 							$sqlArticulo = "SELECT pge_bridge_inv FROM pgem"; // Cuenta costo puente
 							$resArticulo = $this->pedeo->queryTable($sqlArticulo, array()); // Cuenta costo puente
@@ -2117,7 +2134,9 @@ class SalesInv extends REST_Controller
 
 								return;
 							}
-						}
+
+
+						} 
 					}
 
 
@@ -2259,9 +2278,8 @@ class SalesInv extends REST_Controller
 					}
 				}
 
-				//SOLO SI ES CUENTA 3
-
-				if ($Data['dvf_basetype'] == 3) {
+				// SOLO SI ES CUENTA 3 SI VIENE DE UNA ENTRADA
+				if ( $Data['dvf_basetype'] == 3 ) {
 
 					foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
 						$grantotalCostoCosto = 0;
@@ -2273,6 +2291,8 @@ class SalesInv extends REST_Controller
 						$MontoSysCR = 0;
 						foreach ($posicion as $key => $value) {
 
+							
+
 							$CUENTASINV = $this->account->getAccountItem($value->fv1_itemcode, $value->em1_whscode);
 
 
@@ -2282,17 +2302,28 @@ class SalesInv extends REST_Controller
 								$MontoSysDB = 0;
 								$MontoSysCR = 0;
 
-								$sqlCosto = "SELECT
-									CASE
-										WHEN bmi_quantity < 0 THEN bmi_quantity * -1
-										ELSE bmi_quantity
-									END AS cantidad, bmi_cost,bmy_baseentry,bmy_doctype
-								FROM tbmi
-								WHERE bmy_doctype = :bmy_doctype
-								AND bmy_baseentry = :bmy_baseentry
-								AND bmi_itemcode  = :bmi_itemcode";
+								$sqlCosto = "";
+								$resCosto = [];
 
-								$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bmi_itemcode' => $value->fv1_itemcode, ':bmy_doctype' => $Data['dvf_basetype'], ':bmy_baseentry' => $Data['dvf_baseentry']));
+
+								// CASO COPIAR DE ENTREGA
+								if ( $Data['dvf_basetype'] == 3 ) {
+
+									$sqlCosto = "SELECT
+												CASE
+													WHEN bmi_quantity < 0 THEN bmi_quantity * -1
+													ELSE bmi_quantity
+													END AS cantidad, bmi_cost,bmy_baseentry,bmy_doctype
+												FROM tbmi
+												WHERE bmy_doctype = :bmy_doctype
+												AND bmy_baseentry = :bmy_baseentry
+												AND bmi_itemcode  = :bmi_itemcode";
+
+									$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bmi_itemcode' => $value->fv1_itemcode, ':bmy_doctype' => $Data['dvf_basetype'], ':bmy_baseentry' => $Data['dvf_baseentry']));
+								
+							
+								}
+
 
 
 								if (isset($resCosto[0])) {
@@ -2300,7 +2331,7 @@ class SalesInv extends REST_Controller
 									$cuentaCosto = $CUENTASINV['data']['acct_cost'];
 
 
-									$costoArticulo = $resCosto[0]['bmi_cost'];
+									$costoArticulo =  $resCosto[0]['bmi_cost'];
 									$cantidadArticulo = $value->fv1_quantity;
 									$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
 								} else {
@@ -2689,6 +2720,8 @@ class SalesInv extends REST_Controller
 
 					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
 						// Se verifica que el detalle no de error insertando //
+						$LineCXC = $resDetalleAsiento;
+						$AcctLine = $cuentaCxC;
 					} else {
 
 						// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
@@ -3376,24 +3409,28 @@ class SalesInv extends REST_Controller
 
 				if ( $Data['dvf_doctype'] == 5 || $Data['dvf_doctype'] == 34 ){
 
-					$resultPago = $this->generic->createPaymentReceived($Data);
+					if (isset($Data['pay_detail'])){ // SI LA FACTURA ES DE CONTADO
 
-					if ($resultPago['error'] == false){
+						$resultPago = $this->generic->createPaymentReceived($Data, $resInsert, $LineCXC, $AcctLine);
 
-					}else{
 
-						$this->pedeo->trans_rollback();
-
-						$respuesta = array(
-							'error'   => true,
-							'data' 	  => $resultPago,
-							'mensaje' => $resultPago['mensaje'],
-							
-						);
-
-						$this->response($respuesta);
-
-						return;
+						if ($resultPago['error'] == false){
+	
+						}else{
+	
+							$this->pedeo->trans_rollback();
+	
+							$respuesta = array(
+								'error'   => true,
+								'data' 	  => $resultPago['data'],
+								'mensaje' => $resultPago['mensaje'],
+								
+							);
+	
+							$this->response($respuesta);
+	
+							return;
+						}
 					}
 
 				}
@@ -3404,13 +3441,13 @@ class SalesInv extends REST_Controller
 				$this->pedeo->trans_commit();
 				// $this->pedeo->trans_rollback();
 
-
-
 				$respuesta = array(
 					'error' => false,
 					'data' => $resInsert,
 					'mensaje' => 'Factura de ventas registrada con exito'
 				);
+
+
 			} else {
 				// Se devuelven los cambios realizados en la transaccion
 				// si occurre un error  y se muestra devuelve el error.
