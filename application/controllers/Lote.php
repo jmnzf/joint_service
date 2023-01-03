@@ -49,7 +49,7 @@ class Lote extends REST_Controller
 
 		$Data = $this->get();
 
-		if ( !isset($Data['itemcode']) OR !isset($Data['whscode']) OR !isset($Data['business']) OR !isset($Data['itemcode']) ){
+		if (!isset($Data['itemcode']) or !isset($Data['whscode']) or !isset($Data['business']) or !isset($Data['itemcode'])) {
 			$this->response(array(
 				'error'  => true,
 				'data'   => [],
@@ -62,50 +62,56 @@ class Lote extends REST_Controller
 		$sql = "";
 		$array = [];
 
-		if ( isset($Data['ubication']) && !empty($Data['ubication']) ){
+		if ($Data['uselote'] == "0") {
+			$sql = "SELECT tbdi.bdi_lote as ote_duedate ,tbdi.* FROM tbdi
+			WHERE bdi_itemcode = :itemcode
+			AND bdi_whscode = :codewarehouse
+			AND tbdi.business = :business
+			AND bdi_quantity > 0";
+			$array =  array(':codewarehouse' => $Data['whscode'], ':business' => $Data['business'], ':itemcode' => $Data['itemcode']);
+		} else {
 
-			$sql = "SELECT * FROM tbdi 
+			if (isset($Data['ubication']) && !empty($Data['ubication'])) {
+
+				$sql = "SELECT * FROM tbdi 
+						INNER JOIN lote
+						ON ote_code = bdi_lote
+						WHERE bdi_itemcode = :itemcode
+						AND bdi_whscode = :whscode
+						AND bdi_ubication = :ubication
+						AND ote_duedate > current_date
+						AND tbdi.business = :business
+						AND bdi_quantity > :bdi_quantity
+						ORDER BY ote_duedate asc";
+
+
+				$array = array(
+					':itemcode' => $Data['itemcode'],
+					':whscode'  => $Data['whscode'],
+					':business' 	=> $Data['business'],
+					':ubication' 	=> $Data['ubication'],
+					':bdi_quantity' => 0
+				);
+			} else {
+
+				$sql = "SELECT * FROM tbdi 
 					INNER JOIN lote
 					ON ote_code = bdi_lote
 					WHERE bdi_itemcode = :itemcode
 					AND bdi_whscode = :whscode
-					AND bdi_ubication = :ubication
 					AND ote_duedate > current_date
 					AND tbdi.business = :business
 					AND bdi_quantity > :bdi_quantity
 					ORDER BY ote_duedate asc";
 
-
-			$array = array(
-				':itemcode' => $Data['itemcode'],
-				':whscode'  => $Data['whscode'],
-				':business' 	=> $Data['business'],
-				':ubication' 	=> $Data['ubication'],
-				':bdi_quantity' => 0
-			);
-
-		}else{
-			
-			$sql = "SELECT * FROM tbdi 
-				INNER JOIN lote
-				ON ote_code = bdi_lote
-				WHERE bdi_itemcode = :itemcode
-				AND bdi_whscode = :whscode
-				AND ote_duedate > current_date
-				AND tbdi.business = :business
-				AND bdi_quantity > :bdi_quantity
-				ORDER BY ote_duedate asc";
-
-			$array = array(
-				':itemcode' => $Data['itemcode'],
-				':whscode'  => $Data['whscode'],
-				':business' => $Data['business'],
-				':bdi_quantity' => 0
-			);	
+				$array = array(
+					':itemcode' => $Data['itemcode'],
+					':whscode'  => $Data['whscode'],
+					':business' => $Data['business'],
+					':bdi_quantity' => 0
+				);
+			}
 		}
-
-		
-
 		$result = $this->pedeo->queryTable($sql, $array);
 		// VALIDAR RETORNO DE DATOS DE LA CONSULTA.
 		if (isset($result[0])) {
@@ -115,15 +121,13 @@ class Lote extends REST_Controller
 				'data'   => $result,
 				'mensaje' => ''
 			);
-		}else{
-				
+		} else {
 			$response = array(
 				'error'  => true,
 				'data'   => [],
 				'mensaje' => 'Busqueda sin resultados'
 			);
 		}
-	
 		$this->response($response);
 	}
 
