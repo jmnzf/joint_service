@@ -3638,7 +3638,7 @@ class SalesInv extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvfv', 'dvf', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$sqlSelect = self::getColumn('dvfv', 'dvf', '', '', $DECI_MALES, $Data['business'], $Data['branch'], $Data['docnum']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
