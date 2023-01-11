@@ -148,11 +148,11 @@ class DropBox extends REST_Controller
     $this->response($respuesta);
   }
 
-  private function createShareLink_post($path)
+  private function createShareLink($path)
   {
     $curl = curl_init();
     $token = $this->getToken();
-
+    $path = str_replace('_', ' ', $path);
     curl_setopt_array(
       $curl,
       array(
@@ -193,6 +193,7 @@ class DropBox extends REST_Controller
       $url = str_replace("dl=0", "raw=1", $url);
       $resp = ["path_lower" => $response['path_lower'], 'url' => $url];
     }
+    
     return $resp;
   }
 
