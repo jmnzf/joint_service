@@ -735,8 +735,8 @@ class PaymentsReceived extends REST_Controller
 
 
 							$slqUpdateVenDebit = "UPDATE mac1
-																										SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
-																										WHERE ac1_line_num = :ac1_line_num";
+												SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+												WHERE ac1_line_num = :ac1_line_num";
 
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 

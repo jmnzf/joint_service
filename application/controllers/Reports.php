@@ -27,8 +27,26 @@ class Reports extends REST_Controller {
 
       	$request = $this->post();
 
+		  if (!isset($request['business']) or empty($request['business'])){
+
+		  $respuesta = array(
+			  'error' => true,
+			  'data'  => array(),
+			  'mensaje' => 'La informacion enviada no es valida'
+		  );
+
+		  $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+		  return;
+	  }
 		$where = [];
       	$sql = '';
+
+		//EMPRESA
+		if(!empty($request['business'])){
+			$where[':business'] = $request['business'];
+			$sql .= " AND (tbmi.business = :business OR tbdi.business = :business)"; 
+		}
 		// ID ARTICULO.
 		if (!empty($request['fil_acticuloId'])) {
 			//
@@ -62,25 +80,29 @@ class Reports extends REST_Controller {
 
 		}
 
-		$result = $this->pedeo->queryTable("SELECT tbmi.bmi_itemcode AS codigoarticulo,
-																			dmar.dma_item_name AS nombrearticulo,
-																			tbdi.bdi_whscode AS codigoalmacen,
-																			dmws.dws_name AS nombrealmacen,
-																			dmdt.mdt_docname AS docorigen,
-																			tbmi.bmi_basenum docnum,
-																			tbmi.bmi_createat AS fechadocnum,
-																			tbmi.bmi_quantity AS cantidadmovida,
-																			tbmi.bmi_cost AS costo,
-																			tbmi.bmi_currequantity + tbmi.bmi_quantity AS cantidadrestante,
-																			tbmi.bmi_currequantity AS cantidadantesdemovimiento,
-																			(tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)) costoacumulado,
-																			tbmi.bmi_createby AS creadopor,tbmi.bmi_docdate AS fechadoc,tbmi.bmi_comment AS comentario
-																			FROM tbmi
-																			INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
-																			INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
-																			INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
-																			INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code
-																			WHERE 1=1".$sql." ORDER BY tbmi.bmi_createat DESC", $where);
+		$sqlAnalitic = "SELECT 
+							tbmi.bmi_itemcode AS codigoarticulo,
+							dmar.dma_item_name AS nombrearticulo,
+							tbmi.bmi_ubication as ubicacion,
+							tbdi.bdi_whscode AS codigoalmacen,
+							dmws.dws_name AS nombrealmacen,
+							dmdt.mdt_docname AS docorigen,
+							tbmi.bmi_basenum docnum,
+							tbmi.bmi_createat AS fechadocnum,
+							tbmi.bmi_quantity AS cantidadmovida,
+							tbmi.bmi_cost AS costo,
+							tbmi.bmi_currequantity + tbmi.bmi_quantity AS cantidadrestante,
+							tbmi.bmi_currequantity AS cantidadantesdemovimiento,
+							(tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)) costoacumulado,
+							tbmi.bmi_createby AS creadopor,tbmi.bmi_docdate AS fechadoc,tbmi.bmi_comment AS comentario
+						FROM tbmi
+						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
+						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
+						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
+						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code
+						WHERE 1=1 ".$sql." ORDER BY tbmi.bmi_createat DESC";
+		$result = $this->pedeo->queryTable($sqlAnalitic, $where);
+
 		if(isset($result[0])){
 
 			$respuesta = array(
@@ -108,30 +130,44 @@ class Reports extends REST_Controller {
 
 			$Data = $this->post();
 
+			if(!isset($Data['business']) or empty($Data['business'])){
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => [],
+					'mensaje'	=> 'Falta parametro de empresa'
+				);
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+				return;
+			}
+
 			$sql = 'SELECT
-							T3.MDT_DOCNAME "TipoDocumento",
-							T0.DVF_DOCNUM "NumeroFactura",
-							T0.DVF_CARDCODE "CodigoCLiente",
-							T0.DVF_CARDNAME "NombreCliente",
-							T0.DVF_DOCDATE "FechaFactura",
-							T0.DVF_BASEAMNT "BaseFactura",
-							ROUND((T0.DVF_BASEAMNT * 19) / 100) "IvaFactura",
-							COALESCE(T0.DVF_PAYTODAY,0) "ValorRecaudado",
-							T2.MGS_NAME "GrupoCliente"
-						FROM DVFV T0
-						LEFT JOIN DMSN T1 ON T0.DVF_CARDCODE = T1.DMS_CARD_CODE
-						LEFT JOIN DMGS T2 ON T1.DMS_GROUP_NUM = CAST(T2.MGS_ID AS VARCHAR)
-						LEFT JOIN DMDT T3 ON T0.DVF_DOCTYPE = T3.MDT_DOCTYPE
-						LEFT JOIN TBMI T4 ON T0.DVF_DOCTYPE = T4.BMY_DOCTYPE and t0.DVF_DOCENTRY = T4.BMY_BASEENTRY';
+						T3.MDT_DOCNAME "TipoDocumento",
+						T0.DVF_DOCNUM "NumeroFactura",
+						T0.DVF_CARDCODE "CodigoCLiente",
+						T0.DVF_CARDNAME "NombreCliente",
+						T0.DVF_DOCDATE "FechaFactura",
+						T0.DVF_BASEAMNT "BaseFactura",
+						ROUND((T0.DVF_BASEAMNT * 19) / 100) "IvaFactura",
+						COALESCE(T0.DVF_PAYTODAY,0) "ValorRecaudado",
+						T2.MGS_NAME "GrupoCliente"
+					FROM DVFV T0
+					LEFT JOIN DMSN T1 ON T0.DVF_CARDCODE = T1.DMS_CARD_CODE
+					LEFT JOIN DMGS T2 ON T1.DMS_GROUP_NUM = CAST(T2.MGS_ID AS VARCHAR)
+					LEFT JOIN DMDT T3 ON T0.DVF_DOCTYPE = T3.MDT_DOCTYPE
+					LEFT JOIN TBMI T4 ON T0.DVF_DOCTYPE = T4.BMY_DOCTYPE and t0.DVF_DOCENTRY = T4.BMY_BASEENTRY
+					WHERE T0.BUSINESS = :BUSINESS';
 
 
-			$respuesta = $this->pedeo->queryTable($sql, array());
+			$result = $this->pedeo->queryTable($sql, array(
+				':BUSINESS' => $Data['business']
+			));
 
-			if(isset($respuesta[0])){
+			if(isset($result[0])){
 
 				 $respuesta = array(
 						'error'   => false,
-						'data'    => $respuesta,
+						'data'    => $result,
 						'mensaje' =>''
 				 );
 
@@ -139,7 +175,7 @@ class Reports extends REST_Controller {
 
 				$respuesta = array(
 					'error'   => true,
-					'data' => array(),
+					'data' => [],
 					'mensaje'	=> 'busqueda sin resultados'
 				);
 
@@ -154,6 +190,17 @@ class Reports extends REST_Controller {
 
 			$Data = $this->post();
 
+			if(!isset($Data['business']) or empty($Data['business'])){
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => [],
+					'mensaje'	=> 'Falta parametro de empresa'
+				);
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+				return;
+			}
+			
 			$sql = 'SELECT
 								T0.DVF_CARDCODE "CodigoCliente",
 								T0.DVF_CARDNAME "NombreCliente",
@@ -173,16 +220,19 @@ class Reports extends REST_Controller {
 								T1.FV1_AVPRICE "Null"
 							FROM DVFV T0
 							LEFT JOIN VFV1 T1 ON T0.DVF_DOCENTRY = T1.FV1_DOCENTRY
-							LEFT JOIN DMWS T2 ON T1.FV1_WHSCODE = T2.DWS_CODE';
+							LEFT JOIN DMWS T2 ON T1.FV1_WHSCODE = T2.DWS_CODE
+							WHERE T0.BUSINESS = :BUSINESS';
 
 
-			$respuesta = $this->pedeo->queryTable($sql, array());
+			$result = $this->pedeo->queryTable($sql, array(
+				':BUSINESS' => $Data['business']
+			));
 
-			if(isset($respuesta[0])){
+			if(isset($result[0])){
 
 				 $respuesta = array(
 						'error'   => false,
-						'data'    => $respuesta,
+						'data'    => $result,
 						'mensaje' =>''
 				 );
 
@@ -203,6 +253,16 @@ class Reports extends REST_Controller {
 	public function getAnalisisCompra_post(){
 
 			$Data = $this->post();
+			if(!isset($Data['business']) or empty($Data['business'])){
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => [],
+					'mensaje'	=> 'Falta parametro de empresa'
+				);
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+				return;
+			}
 
 			$sql = 'SELECT
 							T3.MDT_DOCNAME "TipoDocumento",
@@ -218,16 +278,19 @@ class Reports extends REST_Controller {
 						LEFT JOIN DMSN T1 ON T0.DPO_CARDCODE = T1.DMS_CARD_CODE
 						LEFT JOIN DMGS T2 ON T1.DMS_GROUP_NUM = CAST(T2.MGS_ID AS VARCHAR)
 						LEFT JOIN DMDT T3 ON T0.DPO_DOCTYPE = T3.MDT_DOCTYPE
-						LEFT JOIN TBMI T4 ON T0.DPO_DOCTYPE = T4.BMY_DOCTYPE and t0.DPO_DOCENTRY = T4.BMY_BASEENTRY';
+						LEFT JOIN TBMI T4 ON T0.DPO_DOCTYPE = T4.BMY_DOCTYPE and t0.DPO_DOCENTRY = T4.BMY_BASEENTRY
+						where t0.business = :business';
 
 
-			$respuesta = $this->pedeo->queryTable($sql, array());
+			$result = $this->pedeo->queryTable($sql, array(
+				':business' => $Data['business']
+			));
 
-			if(isset($respuesta[0])){
+			if(isset($result[0])){
 
 				 $respuesta = array(
 						'error'   => false,
-						'data'    => $respuesta,
+						'data'    => $result,
 						'mensaje' =>''
 				 );
 
@@ -235,7 +298,7 @@ class Reports extends REST_Controller {
 
 				$respuesta = array(
 					'error'   => true,
-					'data' => array(),
+					'data' => [],
 					'mensaje'	=> 'busqueda sin resultados'
 				);
 
@@ -248,6 +311,17 @@ class Reports extends REST_Controller {
 	public function getAnalisisCompraDetallado_post(){
 
 			$Data = $this->post();
+
+			if(!isset($Data['business']) or empty($Data['business'])){
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => [],
+					'mensaje'	=> 'Falta parametro de empresa'
+				);
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+				return;
+			}
 
 			$sql = 'SELECT
 							T0.DVF_CARDCODE "CodigoCliente",
@@ -268,16 +342,19 @@ class Reports extends REST_Controller {
 							T1.PO1_AVPRICE "Costo Ponderado"
 						FROM DCPO T0
 						LEFT JOIN CPO1 T1 ON T0.DVF_DOCENTRY = T1.PO1_DOCENTRY
-						LEFT JOIN DMWS T2 ON T1.PO1_WHSCODE = T2.DWS_CODE';
+						LEFT JOIN DMWS T2 ON T1.PO1_WHSCODE = T2.DWS_CODE
+						where t0.business = :business';
 
 
-			$respuesta = $this->pedeo->queryTable($sql, array());
+			$result = $this->pedeo->queryTable($sql, array(
+				':business' => $Data['business']
+			));
 
-			if(isset($respuesta[0])){
+			if(isset($result[0])){
 
 				 $respuesta = array(
 						'error'   => false,
-						'data'    => $respuesta,
+						'data'    => $result,
 						'mensaje' =>''
 				 );
 
@@ -300,86 +377,82 @@ class Reports extends REST_Controller {
 
 			$Data = $this->post();
 
-			// $sql = "SELECT
-			// 				T0.MAC_DOC_DATE,
-			// 				T0.MAC_SERIE,
-			// 				T0.MAC_DOC_NUM,
-			// 				18 Tipo,
-			// 				t0.MAC_TRANS_ID,
-			// 				CONCAT(T2.PGU_NAME_USER,' ',T2.PGU_LNAME_USER) usuario,
-			// 				T1.AC1_ACCOUNT,
-			// 				T3.ACC_NAME,
-			// 				T1.AC1_DEBIT,
-			// 				T1.AC1_CREDIT,
-			// 				T1.AC1_PRC_CODE,
-			// 				T1.AC1_UNCODE,
-			// 				T1.AC1_PRJ_CODE
-			// 				FROM TMAC T0
-			// 				LEFT JOIN MAC1 T1 ON T0.MAC_TRANS_ID = T1.AC1_TRANS_ID
-			// 				LEFT JOIN PGUS T2 ON T0.MAC_MADE_USUER = T2.PGU_CODE_USER
-			// 				LEFT JOIN DACC T3 ON T1.AC1_ACCOUNT = T3.ACC_CODE";
+			if(!isset($Data['business']) or empty($Data['business'])){
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => [],
+					'mensaje'	=> 'Falta parametro de empresa'
+				);
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+				return;
+			}
+
 			$sql = "SELECT
-															t0.ac1_trans_id docnum,
-															t0.ac1_trans_id numero_transaccion,
-															case
-																	when coalesce(t0.ac1_font_type,0) = 3 then 'Entrega'
-																	when coalesce(t0.ac1_font_type,0) = 4 then 'Devolucion'
-																	when coalesce(t0.ac1_font_type,0) = 5 then 'Factura Cliente'
-																	when coalesce(t0.ac1_font_type,0) = 6 then 'Nota Credito Cliente'
-																	when coalesce(t0.ac1_font_type,0) = 7 then 'Nota Debito Cliente'
-																	when coalesce(t0.ac1_font_type,0) = 8 then 'Salida Mercancia'
-																	when coalesce(t0.ac1_font_type,0) = 9 then 'Entrada Mercancia'
-																	when coalesce(t0.ac1_font_type,0) = 13 then 'Entrada Compras'
-																	when coalesce(t0.ac1_font_type,0) = 14 then 'Devolucion Compra'
-																	when coalesce(t0.ac1_font_type,0) = 15 then 'Factura Proveedores'
-																	when coalesce(t0.ac1_font_type,0) = 16 then 'Nota Credito Compras'
-																	when coalesce(t0.ac1_font_type,0) = 17 then 'Nota Debito Compras'
-																	when coalesce(t0.ac1_font_type,0) = 18 then 'Asiento Manual'
-																	when coalesce(t0.ac1_font_type,0) = 19 then 'Pagos Efectuado'
-																	when coalesce(t0.ac1_font_type,0) = 20 then 'Pagos Recibidos'
-															end origen,
-															case
-																	when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_docnum
-																	when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_docnum
-																	when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_docnum
-																	when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_docnum
-																	when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_docnum
-																	when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_docnum
-																	when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_docnum
-																	when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_docnum
-																	when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_docnum
-																	when coalesce(t0.ac1_font_type,0) = 15 then t14.cnc_docnum
-																	when coalesce(t0.ac1_font_type,0) = 16 then t15.cnd_docnum
-																	when coalesce(t0.ac1_font_type,0) = 17 then t12.cec_docnum
-																	when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
-																	when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
-																	when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
-															end numero_origen,
-															t4.acc_name nombre_cuenta,t0.*
-															from mac1 t0
-															left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
-															left join dvdv t2 on t0.ac1_font_key = t2.vdv_docentry and t0.ac1_font_type = t2.vdv_doctype
-															left join dvfv t3 on t0.ac1_font_key = t3.dvf_docentry and t0.ac1_font_type = t3.dvf_doctype
-															inner join dacc t4 on t0.ac1_account = t4.acc_code
-															left join misi t5 on t0.ac1_font_key = t5.isi_docentry and t0.ac1_font_type = t5.isi_doctype
-															left join miei t6 on t0.ac1_font_key = t6.iei_docentry and t0.ac1_font_type = t6.iei_doctype
-															left join dcfc t7 on t0.ac1_font_key = t7.cfc_docentry and t0.ac1_font_type = t7.cfc_doctype
-															left join gbpe t8 on t0.ac1_font_key = t8.bpe_docentry and t0.ac1_font_type = t8.bpe_doctype
-															left join gbpr t9 on t0.ac1_font_key = t9.bpr_docentry and t0.ac1_font_type = t9.bpr_doctype
-															left join dvnc t10 on t0.ac1_font_key = t10.vnc_docentry and t0.ac1_font_type = t10.vnc_doctype
-															left join dvnd t11 on t0.ac1_font_key = t11.vnd_docentry and t0.ac1_font_type = t11.vnd_doctype
-															left join dcec t12 on t0.ac1_font_key = t12.cec_docentry and t0.ac1_font_type = t12.cec_doctype
-															left join dcdc t13 on t0.ac1_font_key = t13.cdc_docentry and t0.ac1_font_type = t13.cdc_doctype
-															left join dcnc t14 on t0.ac1_font_key = t14.cnc_docentry and t0.ac1_font_type = t14.cnc_doctype
-															left join dcnd t15 on t0.ac1_font_key = t15.cnd_docentry and t0.ac1_font_type = t15.cnd_doctype";
+						t0.ac1_trans_id docnum,
+						t0.ac1_trans_id numero_transaccion,
+						case
+							when coalesce(t0.ac1_font_type,0) = 3 then 'Entrega'
+							when coalesce(t0.ac1_font_type,0) = 4 then 'Devolucion'
+							when coalesce(t0.ac1_font_type,0) = 5 then 'Factura Cliente'
+							when coalesce(t0.ac1_font_type,0) = 6 then 'Nota Credito Cliente'
+							when coalesce(t0.ac1_font_type,0) = 7 then 'Nota Debito Cliente'
+							when coalesce(t0.ac1_font_type,0) = 8 then 'Salida Mercancia'
+							when coalesce(t0.ac1_font_type,0) = 9 then 'Entrada Mercancia'
+							when coalesce(t0.ac1_font_type,0) = 13 then 'Entrada Compras'
+							when coalesce(t0.ac1_font_type,0) = 14 then 'Devolucion Compra'
+							when coalesce(t0.ac1_font_type,0) = 15 then 'Factura Proveedores'
+							when coalesce(t0.ac1_font_type,0) = 16 then 'Nota Credito Compras'
+							when coalesce(t0.ac1_font_type,0) = 17 then 'Nota Debito Compras'
+							when coalesce(t0.ac1_font_type,0) = 18 then 'Asiento Manual'
+							when coalesce(t0.ac1_font_type,0) = 19 then 'Pagos Efectuado'
+							when coalesce(t0.ac1_font_type,0) = 20 then 'Pagos Recibidos'
+						end origen,
+						case
+							when coalesce(t0.ac1_font_type,0) = 3 then t1.vem_docnum
+							when coalesce(t0.ac1_font_type,0) = 4 then t2.vdv_docnum
+							when coalesce(t0.ac1_font_type,0) = 5 then t3.dvf_docnum
+							when coalesce(t0.ac1_font_type,0) = 6 then t10.vnc_docnum
+							when coalesce(t0.ac1_font_type,0) = 6 then t11.vnd_docnum
+							when coalesce(t0.ac1_font_type,0) = 8 then t5.isi_docnum
+							when coalesce(t0.ac1_font_type,0) = 9 then t6.iei_docnum
+							when coalesce(t0.ac1_font_type,0) = 13 then t12.cec_docnum
+							when coalesce(t0.ac1_font_type,0) = 14 then t13.cdc_docnum
+							when coalesce(t0.ac1_font_type,0) = 15 then t14.cnc_docnum
+							when coalesce(t0.ac1_font_type,0) = 16 then t15.cnd_docnum
+							when coalesce(t0.ac1_font_type,0) = 17 then t12.cec_docnum
+							when coalesce(t0.ac1_font_type,0) = 18 then t0.ac1_trans_id
+							when coalesce(t0.ac1_font_type,0) = 19 then t8.bpe_docnum
+							when coalesce(t0.ac1_font_type,0) = 20 then t9.bpr_docnum
+						end numero_origen,
+						t4.acc_name nombre_cuenta,t0.*
+					from mac1 t0
+					left join dvem t1 on t0.ac1_font_key = t1.vem_docentry and t0.ac1_font_type = t1.vem_doctype
+					left join dvdv t2 on t0.ac1_font_key = t2.vdv_docentry and t0.ac1_font_type = t2.vdv_doctype
+					left join dvfv t3 on t0.ac1_font_key = t3.dvf_docentry and t0.ac1_font_type = t3.dvf_doctype
+					inner join dacc t4 on t0.ac1_account = t4.acc_code
+					left join misi t5 on t0.ac1_font_key = t5.isi_docentry and t0.ac1_font_type = t5.isi_doctype
+					left join miei t6 on t0.ac1_font_key = t6.iei_docentry and t0.ac1_font_type = t6.iei_doctype
+					left join dcfc t7 on t0.ac1_font_key = t7.cfc_docentry and t0.ac1_font_type = t7.cfc_doctype
+					left join gbpe t8 on t0.ac1_font_key = t8.bpe_docentry and t0.ac1_font_type = t8.bpe_doctype
+					left join gbpr t9 on t0.ac1_font_key = t9.bpr_docentry and t0.ac1_font_type = t9.bpr_doctype
+					left join dvnc t10 on t0.ac1_font_key = t10.vnc_docentry and t0.ac1_font_type = t10.vnc_doctype
+					left join dvnd t11 on t0.ac1_font_key = t11.vnd_docentry and t0.ac1_font_type = t11.vnd_doctype
+					left join dcec t12 on t0.ac1_font_key = t12.cec_docentry and t0.ac1_font_type = t12.cec_doctype
+					left join dcdc t13 on t0.ac1_font_key = t13.cdc_docentry and t0.ac1_font_type = t13.cdc_doctype
+					left join dcnc t14 on t0.ac1_font_key = t14.cnc_docentry and t0.ac1_font_type = t14.cnc_doctype
+					left join dcnd t15 on t0.ac1_font_key = t15.cnd_docentry and t0.ac1_font_type = t15.cnd_doctype
+					where t0.business = :business";
 
-			$respuesta = $this->pedeo->queryTable($sql, array());
+			$result = $this->pedeo->queryTable($sql, array(
+				':business' => $Data['business']
+			));
 
-			if(isset($respuesta[0])){
+			if(isset($result[0])){
 
 				 $respuesta = array(
 						'error'   => false,
-						'data'    => $respuesta,
+						'data'    => $result,
 						'mensaje' =>''
 				 );
 
@@ -399,12 +472,26 @@ class Reports extends REST_Controller {
 	public function getStatusStock_post(){
 
 		$Data = $this->post();
-
 		$where = '';
 		$array = [];
 
-		if(isset($Data['fil_almacenId']) && !empty($Data['fil_almacenId'])){
+		if(!isset($Data['business']) or empty($Data['business'])){
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => [],
+				'mensaje'	=> 'Falta parametro de empresa'
+			);
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			return;
+		}else {
 			// ADD WHERE QUERY
+			$array[':business'] = $Data['business'];
+			$where .= " and t1.business = :business";
+		}
+
+		if(isset($Data['fil_almacenId']) && !empty($Data['fil_almacenId'])){
+			
 			$where .= ' and T1.bdi_whscode IN ('.$Data['fil_almacenId'].')';
 
 		}if(isset($Data['fil_acticuloId']) && !empty($Data['fil_acticuloId'])){
@@ -432,13 +519,13 @@ class Reports extends REST_Controller {
 				left join dmum t3 on t3.dmu_id =  t2.dma_uom_sale
 				where 1 = 1".$where;
 
-			$respuesta = $this->pedeo->queryTable($sql, $array);
+			$result = $this->pedeo->queryTable($sql, $array);
 
-			if(isset($respuesta[0])){
+			if(isset($result[0])){
 
 				 $respuesta = array(
 						'error'   => false,
-						'data'    => $respuesta,
+						'data'    => $result,
 						'mensaje' =>''
 				 );
 
@@ -459,9 +546,17 @@ class Reports extends REST_Controller {
 	public function getPortfolioStatus_post(){
 
 			$Data = $this->post();
-			// print_r($Data);exit();die();
+			if(!isset($Data['business']) or empty($Data['business'])){
 
-// print_r($where);exit();die();
+				$respuesta = array(
+					'error'   => true,
+					'data' => [],
+					'mensaje'	=> 'Falta parametro de empresa'
+				);
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+				return;
+			}
+
 			$sql = "SELECT
 									 	t0.dvf_cardcode CodigoCliente,
 									 	t0.dvf_cardname NombreCliente,
@@ -495,17 +590,18 @@ class Reports extends REST_Controller {
 									 	END mayor_noventa
 
 									 FROM dvfv t0
-									 WHERE '".$Data['fecha']."' >= t0.dvf_duedate
+									 WHERE '".$Data['fecha']."' >= t0.dvf_duedate and t0.business = :business
 									ORDER BY CodigoCliente asc";
 
-// print_r($sql);exit();
-			$respuesta = $this->pedeo->queryTable($sql, array());
+			$result = $this->pedeo->queryTable($sql, array(
+				':business' => $Data['business']
+			));
 
-			if(isset($respuesta[0])){
+			if(isset($result[0])){
 
 				 $respuesta = array(
 						'error'   => false,
-						'data'    => $respuesta,
+						'data'    => $result,
 						'mensaje' =>''
 				 );
 
@@ -527,6 +623,21 @@ class Reports extends REST_Controller {
 	public function EstadoCuentaCl_post(){
 
 				$Data = $this->post();
+
+				if(!isset($Data['business']) or empty($Data['business']) or
+					!isset($Data['cardcode']) or empty($Data['cardcode']) or 
+					!isset($Data['currency']) or empty($Data['currency']) or
+					!isset($Data['cardtype']) or empty($Data['cardtype'])){
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => [],
+						'mensaje'	=> 'Falta alguno de los siguientes parametros (business,cardcode,currency,cardtype)'
+					);
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+					return;
+				}
+
 				$fecha = "";
 
 				if(isset($Data['cardcode']) && !empty($Data['cardcode']) && isset($Data['cardtype'])){
@@ -590,6 +701,7 @@ class Reports extends REST_Controller {
 						and dvfv.dvf_docentry = mac1.ac1_font_key
 						where mac1.ac1_legal_num = :cardcode
 						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+						and mac1.business = :business
 						--ANTICIPO CLIENTE
 						union all
 						select distinct
@@ -641,6 +753,7 @@ class Reports extends REST_Controller {
 						and gbpr.bpr_docentry = mac1.ac1_font_key
 						where mac1.ac1_legal_num = :cardcode
 						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+						and mac1.business = :business
 						--NOTA CREDITO
 						union all
 						select distinct
@@ -692,6 +805,7 @@ class Reports extends REST_Controller {
 						and dvnc.vnc_docentry = mac1.ac1_font_key
 						where mac1.ac1_legal_num = :cardcode
 						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+						and mac1.business = :business
 						--NOTA DEBITO
 						union all
 						select distinct
@@ -743,6 +857,7 @@ class Reports extends REST_Controller {
 						and dvnd.vnd_docentry = mac1.ac1_font_key
 						where mac1.ac1_legal_num = :cardcode
 						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+						and mac1.business = :business
 						--ASIENTOS MANUALES
 						union all
 						select distinct
@@ -796,7 +911,8 @@ class Reports extends REST_Controller {
 						on mac1.ac1_card_type = dmsn.dms_card_type
 						and mac1.ac1_legal_num = dmsn.dms_card_code
 						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
+						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+						and mac1.business = :business";
 
 					}else if ( $Data['cardtype'] == 2 ){
 
@@ -849,6 +965,7 @@ class Reports extends REST_Controller {
 						and dcfc.cfc_docentry = mac1.ac1_font_key
 						where mac1.ac1_legal_num = :cardcode
 						and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
+						and mac1.business = :business
 						--PAGO EFECTUADO
 						union all
 						select distinct
@@ -900,6 +1017,7 @@ class Reports extends REST_Controller {
 						and gbpe.bpe_docentry = mac1.ac1_font_key
 						where mac1.ac1_legal_num = :cardcode
 						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+						and mac1.business = :business
 						--NOTA CREDITO
 						union all
 						select distinct
@@ -951,6 +1069,7 @@ class Reports extends REST_Controller {
 						and dcnc.cnc_docentry = mac1.ac1_font_key
 						where mac1.ac1_legal_num = :cardcode
 						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+						and mac1.business = :business
 						--NOTA DEBITO
 						union all
 						select distinct
@@ -1002,6 +1121,7 @@ class Reports extends REST_Controller {
 						and dcnd.cnd_docentry = mac1.ac1_font_key
 						where mac1.ac1_legal_num = :cardcode
 						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+						and mac1.business = :business
 						--ASIENTOS MANUALES
 						union all
 						select distinct
@@ -1055,13 +1175,17 @@ class Reports extends REST_Controller {
 						on mac1.ac1_card_type = dmsn.dms_card_type
 						and mac1.ac1_legal_num = dmsn.dms_card_code
 						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
+						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+						and mac1.business = :business";
 					}
-
-					$result = $this->pedeo->queryTable($sql,array(":cardcode" => $Data['cardcode'],
-																  ":fecha" => $fecha,
-																  ":currency" => $Data['currency']));
 					// print_r($sql);exit();die();
+					$result = $this->pedeo->queryTable($sql,array(
+						":cardcode" => $Data['cardcode'],
+						":fecha" => $fecha,
+						":currency" => $Data['currency'],
+						":business" => $Data['business']
+					));
+					
 
 					if(isset($result[0])){
 
@@ -1082,8 +1206,8 @@ class Reports extends REST_Controller {
 					}
 
 					$this->response($respuesta);
-	}
-}
+			}
+		}	
 
 
 	// OBTENER ACIENTO CONTABLE POR ID
@@ -1092,6 +1216,18 @@ class Reports extends REST_Controller {
 				$Data = $this->get();
 				$where = '';
 
+				if(!isset($Data['business']) or empty($Data['business'])){
+					$respuesta = array(
+						'error'   => true,
+						'data' => [],
+						'mensaje'	=> 'Faltan parametro de empresa'
+					);
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+					return;
+				}else {
+					//ADD WHERE QUERY
+					$where = " AND t0.business = ".$Data['business'];
+				}
 
 				if(isset($Data['cardcode']) && !empty($Data['cardcode'])){
 					$where = ' and t0.ac1_legal_num in ('.$Data['cardcode'].')';
@@ -1139,7 +1275,7 @@ class Reports extends REST_Controller {
 					WHERE 1=1 ".$where;
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect,array());
-// print_r($sqlSelect);exit();die();
+
 				if(isset($resSelect[0])){
 					//
 					$newData = [];
@@ -1215,7 +1351,8 @@ class Reports extends REST_Controller {
 
     if( !isset($Data['inicio']) OR
         !isset($Data['fin'])OR
-				!isset($Data['tipo'])
+		!isset($Data['tipo']) or
+		!isset($Data['business'])
       ){
       $this->response(array(
         'error'  => true,
@@ -1281,14 +1418,17 @@ class Reports extends REST_Controller {
 		$Data = $this->post();
 
 		if( !isset($Data['inicio']) OR
-				!isset($Data['fin']) OR
-				!isset($Data['tipo'])
-			){
-			$this->response(array(
+			!isset($Data['fin']) OR
+			!isset($Data['tipo']) or
+			!isset($Data['business'])){
+
+			$respuesta = array(
 				'error'  => true,
 				'data'   => [],
 				'mensaje'=>'La informacion enviada no es valida'
-			), REST_Controller::HTTP_BAD_REQUEST);
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 			return ;
 		}
@@ -1304,6 +1444,7 @@ class Reports extends REST_Controller {
 									inner join dmdt
 									on cfc_doctype = mdt_doctype
 									WHERE  fc.cfc_".$Data['tipo']." between :cfc_docdate and :cfc_duedate
+									and fc.business = :business
 									--NOTAS CREDITO
 									union all
 									SELECT nc.cnc_docentry as docentry, nc.cnc_docdate as docdate, dmdt.mdt_docname as cnc_doctype, nc.cnc_docnum as docnum, 0 as cnc_correl,
@@ -1317,6 +1458,7 @@ class Reports extends REST_Controller {
 									left join dmdt
 									on cnc_doctype = mdt_doctype
 									WHERE  nc.cnc_".$Data['tipo']." between :cfc_docdate and :cfc_duedate
+									and nc.business = :business
 									--NOTAS DEBITO
 									union all
 									SELECT nd.cnd_docentry as docentry, nd.cnd_docdate as docdate, dmdt.mdt_docname as cnd_doctype, nd.cnd_docnum as docnum, 0 as cnd_correl,
@@ -1329,9 +1471,10 @@ class Reports extends REST_Controller {
 									from dcnd nd
 									left join dmdt
 									on cnd_doctype = mdt_doctype
-									WHERE  nd.cnd_".$Data['tipo']." between :cfc_docdate and :cfc_duedate";
+									WHERE  nd.cnd_".$Data['tipo']." between :cfc_docdate and :cfc_duedate
+									and nd.business = :business";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":cfc_docdate" =>$Data['inicio'],":cfc_duedate"=>$Data['fin']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect,array(":cfc_docdate" =>$Data['inicio'],":cfc_duedate"=>$Data['fin'],":business" => $Data['business']));
 		if(isset($resSelect[0])){
 
 			$respuesta = array(
@@ -1356,13 +1499,25 @@ class Reports extends REST_Controller {
 	//DOCUMENTOS PENDIENTES POR COMPENSAR
 	public function  ListDocumentCompensate_post(){
 
+		if( !isset($Data['business'])){
+
+			$respuesta = array(
+				'error'  => true,
+				'data'   => [],
+				'mensaje'=>'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return ;
+		}
 		$Data = $this->post();
 		$sn = "";
 		$ac = "";
 		$sql = "";
 		$fi = "";
 		$ff = "";
-
+		
 		if( isset( $Data['ldc_sn'] )  && !empty($Data['ldc_sn']) ){
 			$sn = $Data['ldc_sn'];
 		}
@@ -1428,7 +1583,7 @@ class Reports extends REST_Controller {
 									inner join dvfv
 									on dvfv.dvf_doctype = mac1.ac1_font_type
 									and dvfv.dvf_docentry = mac1.ac1_font_key
-									where 1 = 1
+									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 									-- ANTCIPOS CLIENTES
@@ -1463,7 +1618,7 @@ class Reports extends REST_Controller {
 									inner join gbpr
 									on gbpr.bpr_doctype = mac1.ac1_font_type
 									and gbpr.bpr_docentry = mac1.ac1_font_key
-									where 1 = 1
+									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 									--NOTA CREDITO
@@ -1498,7 +1653,7 @@ class Reports extends REST_Controller {
 									inner join dvnc
 									on dvnc.vnc_doctype = mac1.ac1_font_type
 									and dvnc.vnc_docentry = mac1.ac1_font_key
-									where 1 = 1
+									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 									--NOTA DEBITO
@@ -1533,7 +1688,7 @@ class Reports extends REST_Controller {
 									inner join dvnd
 									on dvnd.vnd_doctype = mac1.ac1_font_type
 									and dvnd.vnd_docentry = mac1.ac1_font_key
-									where 1 = 1
+									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 
@@ -1570,7 +1725,7 @@ class Reports extends REST_Controller {
 									inner join dcfc
 									on dcfc.cfc_doctype = mac1.ac1_font_type
 									and dcfc.cfc_docentry = mac1.ac1_font_key
-									where 1 = 1
+									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
 									-- PAGO EFECTUADO
@@ -1605,7 +1760,7 @@ class Reports extends REST_Controller {
 									inner join gbpe
 									on gbpe.bpe_doctype = mac1.ac1_font_type
 									and gbpe.bpe_docentry = mac1.ac1_font_key
-									where 1 = 1
+									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 									--NOTA CREDITO
@@ -1640,7 +1795,7 @@ class Reports extends REST_Controller {
 									inner join dcnc
 									on dcnc.cnc_doctype = mac1.ac1_font_type
 									and dcnc.cnc_docentry = mac1.ac1_font_key
-									where 1 = 1
+									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 									--NOTA DEBITO
@@ -1675,7 +1830,7 @@ class Reports extends REST_Controller {
 									inner join dcnd
 									on dcnd.cnd_doctype = mac1.ac1_font_type
 									and dcnd.cnd_docentry = mac1.ac1_font_key
-									where 1 = 1
+									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 									--ASIENTOS MANUALES
@@ -1716,7 +1871,7 @@ class Reports extends REST_Controller {
 									inner join dmsn
 									on mac1.ac1_card_type = dmsn.dms_card_type
 									and mac1.ac1_legal_num = dmsn.dms_card_code
-									where 1 = 1
+									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 // print_r($sqlSelect);exit;

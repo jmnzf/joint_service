@@ -27,10 +27,25 @@ class PurchaseNd extends REST_Controller
 
 	//CREAR NUEVA nota debito DE compras
 	public function createPurchaseNd_post()
-	{
+	{	
+		$Data = $this->post();
+		
+		if (!isset($Data['business']) OR
+			!isset($Data['branch'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
-		$Data = $this->post();
+
 		$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 		$DetalleAsientoIva = new stdClass();
 		$DetalleCostoInventario = new stdClass();
@@ -1127,8 +1142,8 @@ class PurchaseNd extends REST_Controller
 
 				//CUENTA PUENTE DE INVENTARIO
 
-				$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch FROM pgem";
-				$rescuentainventario = $this->pedeo->queryTable($sqlcuentainventario, array());
+				$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch FROM pgem WHERE business = :business ";
+				$rescuentainventario = $this->pedeo->queryTable($sqlcuentainventario, array(':business' => $Data['business']));
 
 				if (isset($rescuentainventario[0]) &&  $rescuentainventario[0]['pge_bridge_inv_purch'] != 0) {
 				} else {

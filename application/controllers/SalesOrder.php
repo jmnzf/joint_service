@@ -1058,10 +1058,108 @@ class SalesOrder extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT vov1.*, dmar.dma_series_code  
-												FROM vov1
-												INNER JOIN dmar	ON vov1.ov1_itemcode = dmar.dma_item_code
-												WHERE ov1_docentry =:ov1_docentry";
+		$sqlSelect = "SELECT
+						t1.ov1_acciva,
+						t1.ov1_acctcode,
+						t1.ov1_avprice,
+						t1.ov1_basetype,
+						t1.ov1_costcode,
+						t1.ov1_discount,
+						t1.ov1_docentry,
+						t1.ov1_doctype,
+						t1.ov1_id,
+						t1.ov1_inventory,
+						t1.ov1_itemcode,
+						t1.ov1_itemname,
+						t1.ov1_linenum,
+						t1.ov1_linetotal line_total_real,
+						(t1.ov1_quantity - (coalesce(SUM(t3.em1_quantity),0))) * t1.ov1_price ov1_linetotal,
+						t1.ov1_price,
+						t1.ov1_project,
+						t1.ov1_quantity - (coalesce(SUM(t3.em1_quantity),0)) ov1_quantity,
+						t1.ov1_ubusiness,
+						t1.ov1_uom,
+						t1.ov1_vat,
+						t1.ov1_vatsum,
+						t1.ov1_quantity cant_real,
+						coalesce(SUM(t3.em1_quantity),0) entregado,
+						(((t1.ov1_quantity - (coalesce(SUM(t3.em1_quantity),0))) * t1.ov1_price) * t1.ov1_vat) / 100 ov1_vatsum,
+						t1.ov1_whscode,
+						dmar.dma_series_code,
+						t1.ov1_ubication
+						from dvov t0
+						left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+						left join dvem t2 on t0.vov_docentry = t2.vem_baseentry and t0.vov_doctype = t2.vem_basetype
+						left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
+						INNER JOIN dmar ON ov1_itemcode = dmar.dma_item_code
+						WHERE t1.ov1_docentry = :ov1_docentry
+						GROUP BY
+						t1.ov1_acciva,
+						t1.ov1_acctcode,
+						t1.ov1_avprice,
+						t1.ov1_basetype,
+						t1.ov1_costcode,
+						t1.ov1_discount,
+						t1.ov1_docentry,
+						t1.ov1_doctype,
+						t1.ov1_id,
+						t1.ov1_inventory,
+						t1.ov1_itemcode,
+						t1.ov1_itemname,
+						t1.ov1_linenum,
+						t1.ov1_linetotal,
+						t1.ov1_price,
+						t1.ov1_project,
+						t1.ov1_ubusiness,
+						t1.ov1_uom,
+						t1.ov1_vat,
+						t1.ov1_vatsum,
+						t1.ov1_whscode,
+						t1.ov1_quantity,
+						dmar.dma_series_code,
+						t1.ov1_ubication
+						HAVING (t1.ov1_quantity - (coalesce(SUM(t3.em1_quantity),0))) <> 0";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ov1_docentry" => $Data['ov1_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function getOrderDetailView_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['vc1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT * FROM vov1 WHERE ov1_docentry =:ov1_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ov1_docentry" => $Data['ov1_docentry']));
 

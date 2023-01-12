@@ -912,10 +912,7 @@ class Quotation extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT dvct.*,dmar.dma_series_code
-												FROM dvct
-												INNER JOIN dmar	ON dvct.dvc_itemcode = dmar.dma_item_code
-												WHERE dvc_docentry =:dvc_docentry";
+		$sqlSelect = "SELECT dvct.*,dmar.dma_series_code FROM dvct INNER JOIN dmar	ON dvct.dvc_itemcode = dmar.dma_item_code WHERE dvc_docentry =:dvc_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_docentry" => $Data['dvc_docentry']));
 
@@ -941,6 +938,107 @@ class Quotation extends REST_Controller
 
 	//OBTENER COTIZACION DETALLE POR ID
 	public function getQuotationDetail_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['vc1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT
+						t1.vc1_acciva,
+						t1.vc1_acctcode,
+						t1.vc1_avprice,
+						t1.vc1_basetype,
+						t1.vc1_costcode,
+						t1.vc1_discount,
+						t1.vc1_docentry,
+						t1.vc1_doctype,
+						t1.vc1_id,
+						t1.vc1_inventory,
+						t1.vc1_itemcode,
+						t1.vc1_itemname,
+						t1.vc1_linenum,
+						t1.vc1_linetotal line_total_real,
+						(t1.vc1_quantity - (coalesce(SUM(t3.ov1_quantity),0))) * t1.vc1_price vc1_linetotal,
+						t1.vc1_price,
+						t1.vc1_project,
+						t1.vc1_quantity - (coalesce(SUM(t3.ov1_quantity),0)) vc1_quantity,
+						t1.vc1_ubusiness,
+						t1.vc1_uom,
+						t1.vc1_vat,
+						t1.vc1_vatsum,
+						t1.vc1_quantity cant_real,
+						coalesce(SUM(t3.ov1_quantity),0) entregado,
+						(((t1.vc1_quantity - (coalesce(SUM(t3.ov1_quantity),0))) * t1.vc1_price) * t1.vc1_vat) / 100 vc1_vatsum,
+						t1.vc1_whscode,
+						dmar.dma_series_code,
+						t1.vc1_ubication
+						from dvct t0
+						left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+						left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry and t0.dvc_doctype = t2.vov_basetype
+						left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
+						INNER JOIN dmar ON vc1_itemcode = dmar.dma_item_code
+						WHERE t1.vc1_docentry = :vc1_docentry
+						GROUP BY
+						t1.vc1_acciva,
+						t1.vc1_acctcode,
+						t1.vc1_avprice,
+						t1.vc1_basetype,
+						t1.vc1_costcode,
+						t1.vc1_discount,
+						t1.vc1_docentry,
+						t1.vc1_doctype,
+						t1.vc1_id,
+						t1.vc1_inventory,
+						t1.vc1_itemcode,
+						t1.vc1_itemname,
+						t1.vc1_linenum,
+						t1.vc1_linetotal,
+						t1.vc1_price,
+						t1.vc1_project,
+						t1.vc1_ubusiness,
+						t1.vc1_uom,
+						t1.vc1_vat,
+						t1.vc1_vatsum,
+						t1.vc1_whscode,
+						t1.vc1_quantity,
+						dmar.dma_series_code,
+						t1.vc1_ubication
+						HAVING (t1.vc1_quantity  - coalesce(SUM(t3.ov1_quantity),0)) <> 0";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vc1_docentry" => $Data['vc1_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function getQuotationDetailView_get()
 	{
 
 		$Data = $this->get();

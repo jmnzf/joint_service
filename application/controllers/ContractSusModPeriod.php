@@ -86,8 +86,8 @@
 			}
 			//
 
-            $sql = "INSERT INTO csmp (smp_description, smp_discountrate,smp_status) 
-                                VALUES (:smp_description,:smp_discountrate, :smp_status)";
+            $sql = "INSERT INTO csmp (smp_description, smp_discountrate,smp_status,smp_day) 
+                                VALUES (:smp_description,:smp_discountrate, :smp_status,:smp_day)";
 			$response = array(
 				'error'   => true,
 				'data'    => [],
@@ -98,6 +98,7 @@
 				array(
 					':smp_description'   => $request['smp_description'],
                     ':smp_discountrate' => $request['smp_discountrate'],
+					':smp_day' => $request['smp_day'],
 					':smp_status'  => 1
 				)
 			);
@@ -136,6 +137,7 @@
             $sql = "UPDATE csmp 
                     SET smp_description=:smp_description,
                     smp_discountrate = :smp_discountrate,
+					smp_day = :smp_day,
                     smp_status=:smp_status
                     WHERE smp_id = :smp_id";
 			$response = array(
@@ -148,6 +150,7 @@
 				array(
 					':smp_description'   => $request['smp_description'],
                     ':smp_discountrate' => $request['smp_discountrate'],
+					':smp_day' => $request['smp_day'],
 					':smp_status'    => $request['smp_status'],
 					':smp_id'        => $request['smp_id']
 				)

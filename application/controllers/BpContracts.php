@@ -332,8 +332,8 @@ class BpContracts extends REST_Controller
 
 
 
-		$sqlInsert = "INSERT INTO tcsn(	csn_docnum, csn_docdate, csn_duedate, csn_duedev, csn_pricelist, csn_cardcode, csn_cardname, csn_contacid, csn_slpcode, csn_empid, csn_comment, csn_doctotal, csn_baseamnt, csn_taxtotal, csn_discprofit, csn_discount, csn_createat, csn_baseentry, csn_basetype, csn_doctype, csn_idadd, csn_adress, csn_paytype, csn_series, csn_createby, csn_currency, csn_origen, csn_ref, csn_canceled, csn_enddate, csn_signaturedate, csn_description, csn_prjcode, business)
-					VALUES (:csn_docnum, :csn_docdate, :csn_duedate, :csn_duedev, :csn_pricelist, :csn_cardcode, :csn_cardname, :csn_contacid, :csn_slpcode, :csn_empid, :csn_comment, :csn_doctotal, :csn_baseamnt, :csn_taxtotal, :csn_discprofit, :csn_discount, :csn_createat, :csn_baseentry, :csn_basetype, :csn_doctype, :csn_idadd, :csn_adress, :csn_paytype, :csn_series, :csn_createby, :csn_currency, :csn_origen, :csn_ref, :csn_canceled, :csn_enddate, :csn_signaturedate, :csn_description, :csn_prjcode, :business)";
+		$sqlInsert = "INSERT INTO tcsn(	csn_docnum, csn_docdate, csn_duedate, csn_duedev, csn_pricelist, csn_cardcode, csn_cardname, csn_contacid, csn_slpcode, csn_empid, csn_comment, csn_doctotal, csn_baseamnt, csn_taxtotal, csn_discprofit, csn_discount, csn_createat, csn_baseentry, csn_basetype, csn_doctype, csn_idadd, csn_adress, csn_paytype, csn_series, csn_createby, csn_currency, csn_origen, csn_ref, csn_canceled, csn_enddate, csn_signaturedate, csn_description, csn_prjcode, business,branch)
+					VALUES (:csn_docnum, :csn_docdate, :csn_duedate, :csn_duedev, :csn_pricelist, :csn_cardcode, :csn_cardname, :csn_contacid, :csn_slpcode, :csn_empid, :csn_comment, :csn_doctotal, :csn_baseamnt, :csn_taxtotal, :csn_discprofit, :csn_discount, :csn_createat, :csn_baseentry, :csn_basetype, :csn_doctype, :csn_idadd, :csn_adress, :csn_paytype, :csn_series, :csn_createby, :csn_currency, :csn_origen, :csn_ref, :csn_canceled, :csn_enddate, :csn_signaturedate, :csn_description, :csn_prjcode, :business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -378,7 +378,8 @@ class BpContracts extends REST_Controller
 			':csn_signaturedate' => $this->validateDate($Data['csn_signaturedate']) ? $Data['csn_signaturedate'] : NULL,
 			':csn_description' => isset($Data['csn_description']) ? $Data['csn_description'] : NULL,
 			':csn_prjcode' => isset($Data['csn_prjcode']) ? $Data['csn_prjcode'] : NULL,
-			':business' => $Data['business']
+			':business' => $Data['business'],
+			':branch' => isset($Data['branch'])
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -963,13 +964,16 @@ class BpContracts extends REST_Controller
 		foreach ($Data as $key => $value) {
 
 
-			$sql = "SELECT ded_smdid, ded_sdeid, sde_description, smd_description, ded_price
-							FROM rded
-							INNER JOIN csmd
-							ON ded_smdid = csmd.smd_id
-							INNER JOIN csde
-							ON ded_sdeid = csde.sde_id
-							WHERE ded_sdeid = :ded_sdeid";
+			$sql = "SELECT ded_smdid, ded_sdeid, sde_description, smd_description, ded_price,
+					dma_item_code,dma_item_name
+					FROM rded
+					INNER JOIN csmd
+					ON ded_smdid = csmd.smd_id
+					INNER JOIN csde
+					ON ded_sdeid = csde.sde_id
+					INNER JOIN dmar
+					ON csde.sde_itemcode = dma_item_code
+					WHERE ded_sdeid = :ded_sdeid";
 			$ressql = $this->pedeo->queryTable($sql, array(
 				':ded_sdeid' => $value
 			));

@@ -29,10 +29,9 @@ class ElectronicBill extends REST_Controller
         $this->load->database();
         $this->pdo = $this->load->database('pdo', true)->conn_id;
         $this->load->library('pedeo', [$this->pdo]);
-
         $this->load->library('DateFormat');
 		$this->load->library('generic');
-        $this->load->library('ftp');
+
     }
 
     //INSERTAR DATOS DE SN EN FE
@@ -311,6 +310,12 @@ class ElectronicBill extends REST_Controller
                 }
 
                 $this->fe->trans_commit();
+            }else {
+                $respuesta = array(
+                    'error'   => true,
+                    'Factura'    => [],
+                    'mensaje'    => 'No se encontraron datos en la busqueda'
+                );
             }
         }
 
@@ -319,22 +324,18 @@ class ElectronicBill extends REST_Controller
     //INSERTAR FACTURAS EN FE
     public function insertInvoices_post()
     {
-
         $Data = $this->post();
         $formatter = new NumeroALetras();
         //DATOS DE EMPRESA FE
         $sqlEmpresa = "SELECT * FROM \"Empresa\"";
         $resEmpresa = $this->fe->queryTable($sqlEmpresa, array());
         //SQL VISTA DE FacturaS
-        $sqlInvoices = "SELECT * FROM Factura_cab";
-
+        $sqlInvoices = "SELECT * FROM factura_cab";
         //RETORNO DE DATOS DE FacturaS
         $resSqlInvoices = $this->pedeo->queryTable($sqlInvoices, array());
-
         //VALIDAR SI HAY DATOS DE Factura
         if (isset($resSqlInvoices[0]) && !empty($resSqlInvoices[0])) {
 
-            $this->fe->trans_begin();
             foreach ($resSqlInvoices as $key => $value) {
                 set_time_limit(300);
 
@@ -343,9 +344,21 @@ class ElectronicBill extends REST_Controller
 
                 $direccion = "SELECT \"Id_DireccionCliente\",\"Direccion\" FROM \"DireccionCliente\" WHERE \"CodigoTercero\" = :CodigoTercero";
                 $resDireccion = $this->fe->queryTable($direccion, array(':CodigoTercero' => $value['codigo_sn1']));
-                // print_r($resDireccion[0]['Direccion']);exit;
-                // print_r(count($resSqlInvoicesFE));exit;
+
                 if (!count($resSqlInvoicesFE) > 0) {
+                    $this->fe->trans_begin();
+                    //VALIDAR MONEDA DIAN
+                    $moneda = "";
+                    if(isset($value['moneda']) && !empty($value['moneda']) && $value['moneda'] == 'BS'){
+                        //BOLIVAR FUERTE DE VENEZUELA
+                        $moneda = 'VEF';
+                    }else if (isset($value['moneda']) && !empty($value['moneda']) && $value['moneda'] == 'USD'){
+                        //DOLAR AMERICANO
+                        $moneda = 'USD';
+                    }else if (isset($value['moneda']) && !empty($value['moneda']) && $value['moneda'] == 'COP $'){
+                        //PESOS COLOMBIANOS
+                        $moneda = 'COP';
+                    }
                     //INICIAR TRANSACCION
                     //INSERTAR DATOS A TABLA DE Factura BD FE
                     $valorLetra = $formatter->toWords($value['total'], 2);
@@ -354,34 +367,34 @@ class ElectronicBill extends REST_Controller
                     \"FechaFactura\",\"CodigoTercero\",\"CodigoDireccionTercero\",\"DireccionEntrega\",\"CodigoFormaPago\",\"CodigoVendedor\",\"NumeroCuota\",
                     \"Descripcion\",\"FechaEntrega\",\"ValorSubTotal\",\"ValorImpuestos\",\"ValorRetencion\",\"ValorTotal\",\"ValorInicial\",
                     \"ValorLetras\",\"CodigoMoneda\",\"TasaCambio\",\"TipoFactura\",\"NumeroFactura\",\"TipoSoporte\",\"NumeroSoporte\",\"TipoRespaldo\",
-                    \"NumeroRespaldo\",\"Usuario\",\"Estado\")
+                    \"NumeroRespaldo\",\"Usuario\",\"Estado\",\"Clase\")
                     VALUES (:CodigoEmpresa,:Sucursal,:CodigoResolucion,:Tipo,:Numero,:FechaFactura,:CodigoTercero,:CodigoDireccionTercero,
                     :DireccionEntrega,:CodigoFormaPago,:CodigoVendedor,:NumeroCuota,:Descripcion,:FechaEntrega,:ValorSubTotal,:ValorImpuestos,:ValorRetencion,
                     :ValorTotal,:ValorInicial,:ValorLetras,:CodigoMoneda,:TasaCambio,:TipoFactura,:NumeroFactura,:TipoSoporte,:NumeroSoporte,
-                    :TipoRespaldo,:NumeroRespaldo,:Usuario,:Estado)";
+                    :TipoRespaldo,:NumeroRespaldo,:Usuario,:Estado,:Clase)";
 
                     $resInsertFactura = $this->fe->insertRow($insertFactura, array(
                         ':CodigoEmpresa' =>  $resEmpresa[0]['CodigoEmpresa'],
                         ':Sucursal' =>  1,
                         ':CodigoResolucion' => '000',
-                        ':Tipo' => 'FV',
+                        ':Tipo' => isset($value['prefijo']) ? $value['prefijo'] : NULL,
                         ':Numero' => isset($value['numero_fac']) ? $value['numero_fac'] : NULL,
                         ':FechaFactura' => isset($value['fecha_contab']) ? $value['fecha_contab'] : NULL,
                         ':CodigoTercero' => isset($value['codigo_sn1']) ? $value['codigo_sn1'] : NULL,
                         ':CodigoDireccionTercero' => isset($resDireccion[0]['Id_DireccionCliente']) ? $resDireccion[0]['Id_DireccionCliente'] : NULL,
                         ':DireccionEntrega' => isset($resDireccion[0]['Direccion']) ? $resDireccion[0]['Direccion'] : NULL,
                         ':CodigoFormaPago' => is_numeric($value['tipo_pago']) ? $value['tipo_pago'] : 0,
-                        ':CodigoVendedor' => is_numeric($value['id_vendedor']) ? $value['id_vendedor'] : 0,
+                        ':CodigoVendedor' => isset($value['id_vendedor']) && $value['id_vendedor'] != '0' ? $value['id_vendedor'] : $resEmpresa[0]['NitEmpresa'],
                         ':NumeroCuota' => '0',
                         ':Descripcion' => isset($value['comentarios']) ? $value['comentarios'] : NULL,
                         ':FechaEntrega' => isset($value['fecha_contab']) ? $value['fecha_contab'] : NULL,
                         ':ValorSubTotal' => is_numeric($value['base']) ? $value['base'] : 0,
                         ':ValorImpuestos' => is_numeric($value['total_iva']) ? $value['total_iva'] : 0,
-                        ':ValorRetencion' => is_numeric($value['retencion']) ? $value['retencion'] : 0,
+                        ':ValorRetencion' => is_numeric($value['valor_ret']) ? $value['valor_ret'] : 0,
                         ':ValorTotal' => is_numeric($value['total']) ? $value['total'] : 0,
                         ':ValorInicial' => 0,
                         ':ValorLetras' => $valorLetra,
-                        ':CodigoMoneda' => isset($value['moneda']) ? $value['moneda'] : NULL,
+                        ':CodigoMoneda' => isset($moneda) ? $moneda : NULL,
                         ':TasaCambio' => 0,
                         ':TipoFactura' => isset($value['prefijo']) ? $value['prefijo'] : NULL,
                         ':NumeroFactura' => isset($value['numero_fac']) ? $value['numero_fac'] : NULL,
@@ -390,30 +403,21 @@ class ElectronicBill extends REST_Controller
                         ':TipoRespaldo' => '',
                         ':NumeroRespaldo' => 0,
                         ':Usuario' => 1,
-                        ':Estado' => 1
+                        ':Estado' => 1,
+                        ':Clase' => isset($value['clase']) ? $value['clase'] : NULL
                     ));
 
                     if (is_numeric($resInsertFactura) && $resInsertFactura > 0) {
 
-                        //INSERTAR INFORMACION TABLA A PROCESAR FacturaCION ELECTRONICA
-                        //GUARDAR PDF DE FACTURA
-                        //CREAR DIRECTORIO DE FACTURA
-                        $dir = $this->createDirFtp($value['codigo_sn1'].'/'.'1'.'/'.'FV'.'/'.date('Y').'/'.date('m').'/'.'FV');
-                        //GUARDAR PD EN LA RUTA TEMP
-                        $this->invoicesPDF($value['doc_entry'],$this->nameFiles('FV',$value['codigo_sn1'],'000',date('Y'),'1','pdf'));
-                        //ENVIAR ARCHIVO A LA RUTA DEL FTP
-                        $this->createFileFtp($dir,$this->nameFiles('FV',$value['codigo_sn1'],'000',date('Y'),'1','pdf'));
-                        //ELIMINAR ARCHIVO DE LA CARPETA TEMPORAL
-                        $this->deleteFileLocal($this->nameFiles('FV',$value['codigo_sn1'],'000',date('Y'),'1','pdf'));
-
+                        //INSERTAR INFORMACION TABLA A PROCESAR FACTURACION ELECTRONICA
                         $insertFE = "INSERT INTO \"FacturaElectronica\" (\"CodigoEmpresa\",\"Sucursal\",\"Tipo\",\"Numero\",\"CodigoTercero\",
-                        \"FechaFactura\",\"TipoSoporte\",\"NumeroSoporte\",\"Usuario\",\"Estado\",\"Clase\",\"RutaPDF\")
+                        \"FechaFactura\",\"TipoSoporte\",\"NumeroSoporte\",\"Usuario\",\"Estado\",\"Clase\")
                         VALUES (:CodigoEmpresa,:Sucursal,:Tipo,:Numero,:CodigoTercero,:FechaFactura,:TipoSoporte,:NumeroSoporte,:Usuario,
-                        :Estado,:Clase,:RutaPDF)";
+                        :Estado,:Clase)";
                         $resInsertFE = $this->fe->insertRow($insertFE, array(
                             ':CodigoEmpresa' => $resEmpresa[0]['CodigoEmpresa'],
                             ':Sucursal' => 1,
-                            ':Tipo' => 'FV',
+                            ':Tipo' => isset($value['prefijo']) ? $value['prefijo'] : NULL,
                             ':Numero' => isset($value['numero_fac']) ? $value['numero_fac'] : NULL,
                             ':CodigoTercero' => isset($value['codigo_sn1']) ? $value['codigo_sn1'] : NULL,
                             ':FechaFactura' => date('Y-m-d'),
@@ -421,33 +425,73 @@ class ElectronicBill extends REST_Controller
                             ':NumeroSoporte' => isset($value['numero_fac']) ? $value['numero_fac'] : NULL,
                             ':Usuario' => 1,
                             ':Estado' => 0,
-                            ':Clase' => 'FV',
-                            ':RutaPDF' => $dir.'/'.$this->nameFiles('FV',$value['codigo_sn1'],'000',date('Y'),'1','pdf')
+                            ':Clase' => isset($value['clase']) ? $value['clase'] : NULL
                         ));
 
                         if (is_numeric($resInsertFE) && $resInsertFE > 0) {
 
                             //INSERTAR TABLA IMPUESTO
+                            $traeIva = 0;
+                            $traeRetencion = 0;
+                            $codigoIva = 0;
 
-                            $insertImpuesto = "INSERT INTO \"FacturaImpuesto\" (\"CodigoEmpresa\",\"Sucursal\",\"TipoFactura\",\"NumeroFactura\",
-                            \"CodigoFactura\",\"ClaseImpuesto\",\"ValorBase\",\"Porcentaje\",\"ValorImpuesto\",\"Usuario\",\"Estado\",\"CodigoImpuesto\")
-                            VALUES (:CodigoEmpresa,:Sucursal,:TipoFactura,:NumeroFactura,:CodigoFactura,:ClaseImpuesto,:ValorBase,:Porcentaje,:ValorImpuesto,
-                            :Usuario,:Estado,:CodigoImpuesto)";
+                            if (is_numeric($value['total_iva']) && $value['total_iva'] >= 0){
+                                $traeIva = 1;
 
-                            $resInsertImpuesto = $this->fe->insertRow($insertImpuesto, array(
-                                ':CodigoEmpresa' => $resEmpresa[0]['CodigoEmpresa'],
-                                ':Sucursal' => 1,
-                                ':TipoFactura' => 'FV',
-                                ':NumeroFactura' => isset($value['numero_fac']) ? $value['numero_fac'] : NULL,
-                                ':CodigoFactura' => is_numeric($resInsertFactura) ? $resInsertFactura : 0,
-                                ':ClaseImpuesto' => 'IVA',
-                                ':ValorBase' => isset($value['base']) ? $value['base'] : NULL,
-                                ':Porcentaje' => isset($value['code_iva']) ? $value['code_iva'] : NULL,
-                                ':ValorImpuesto' => isset($value['total_iva']) ? $value['total_iva'] : NULL,
-                                ':Usuario' => 1,
-                                ':Estado' => 1,
-                                ':CodigoImpuesto' => '01'
-                            ));
+                                if(is_numeric($value['total_iva']) && $value['total_iva'] == 0){
+                                    $codigoIva = 0;
+                                }else {
+                                    $codigoIva = $value['code_iva'];
+                                }
+                                
+                                if(is_numeric($value['valor_ret']) && $value['valor_ret'] > 0){
+                                    $traeRetencion = 1;
+                                }
+                            }
+                            if($traeIva > 0){
+                                $insertImpuesto = "INSERT INTO \"FacturaImpuesto\" (\"CodigoEmpresa\",\"Sucursal\",\"TipoFactura\",\"NumeroFactura\",
+                                \"CodigoFactura\",\"ClaseImpuesto\",\"ValorBase\",\"Porcentaje\",\"ValorImpuesto\",\"Usuario\",\"Estado\",\"CodigoImpuesto\")
+                                VALUES (:CodigoEmpresa,:Sucursal,:TipoFactura,:NumeroFactura,:CodigoFactura,:ClaseImpuesto,:ValorBase,:Porcentaje,:ValorImpuesto,
+                                :Usuario,:Estado,:CodigoImpuesto)";
+
+                                $resInsertImpuesto = $this->fe->insertRow($insertImpuesto, array(
+                                    ':CodigoEmpresa' => $resEmpresa[0]['CodigoEmpresa'],
+                                    ':Sucursal' => 1,
+                                    ':TipoFactura' => $value['prefijo'],
+                                    ':NumeroFactura' => isset($value['numero_fac']) ? $value['numero_fac'] : NULL,
+                                    ':CodigoFactura' => is_numeric($resInsertFactura) ? $resInsertFactura : 0,
+                                    ':ClaseImpuesto' => 'IVA',
+                                    ':ValorBase' => is_numeric($value['base_iva']) ? $value['base_iva'] : 0,
+                                    ':Porcentaje' => is_numeric($codigoIva) ? $codigoIva : 0,
+                                    ':ValorImpuesto' => is_numeric($value['total_iva']) ? $value['total_iva'] : 0,
+                                    ':Usuario' => 1,
+                                    ':Estado' => 1,
+                                    ':CodigoImpuesto' => '01'
+                                ));
+
+                                if($traeRetencion >= 0){
+
+                                    $insertImpuesto = "INSERT INTO \"FacturaImpuesto\" (\"CodigoEmpresa\",\"Sucursal\",\"TipoFactura\",\"NumeroFactura\",
+                                    \"CodigoFactura\",\"ClaseImpuesto\",\"ValorBase\",\"Porcentaje\",\"ValorImpuesto\",\"Usuario\",\"Estado\",\"CodigoImpuesto\")
+                                    VALUES (:CodigoEmpresa,:Sucursal,:TipoFactura,:NumeroFactura,:CodigoFactura,:ClaseImpuesto,:ValorBase,:Porcentaje,:ValorImpuesto,
+                                    :Usuario,:Estado,:CodigoImpuesto)";
+    
+                                    $resInsertImpuesto = $this->fe->insertRow($insertImpuesto, array(
+                                        ':CodigoEmpresa' => $resEmpresa[0]['CodigoEmpresa'],
+                                        ':Sucursal' => 1,
+                                        ':TipoFactura' => $value['prefijo'],
+                                        ':NumeroFactura' => isset($value['numero_fac']) ? $value['numero_fac'] : NULL,
+                                        ':CodigoFactura' => is_numeric($resInsertFactura) ? $resInsertFactura : 0,
+                                        ':ClaseImpuesto' => 'ReteFuente',
+                                        ':ValorBase' => is_numeric($value['base_ret']) ? $value['base_ret'] : 0,
+                                        ':Porcentaje' => is_numeric($value['porcentaje_ret']) ? $value['porcentaje_ret'] : 0,
+                                        ':ValorImpuesto' => is_numeric($value['valor_ret']) ? $value['valor_ret'] : 0,
+                                        ':Usuario' => 1,
+                                        ':Estado' => 1,
+                                        ':CodigoImpuesto' => '02'
+                                    ));
+                                }
+                            }
 
                             if (is_numeric($resInsertImpuesto) && $resInsertImpuesto > 0) {
 
@@ -459,6 +503,17 @@ class ElectronicBill extends REST_Controller
 
                                     if ($value['numero_fac'] == $value1['numero_fac']) {
 
+                                        //INSERTAR TABLA IMPUESTO
+                                        $traeIva = 0;
+                                        $codigoIva = 0;
+
+                                        if (is_numeric($value1['valor_iva']) && $value1['valor_iva'] > 0){
+                                            $traeIva = 1;
+                                        }
+
+                                        if($traeIva > 0){
+                                            $codigoIva = $value['code_iva'];
+                                        }
                                         //INSERTAR DATOS DE DETALLE DE Factura A BD FE
                                         $insertDetalleFactura = "INSERT INTO \"DetalleFactura\" (\"CodigoEmpresa\",\"Sucursal\",\"Tipo\",\"Numero\",\"Conteo\",
                                         \"TipoSoporte\",\"NumeroSoporte\",\"ConteoSoporte\",\"CodigoFactura\",\"CodigoProducto\",\"DescripcionProducto\",
@@ -472,7 +527,7 @@ class ElectronicBill extends REST_Controller
 
                                             ':CodigoEmpresa' => $resEmpresa[0]['CodigoEmpresa'],
                                             ':Sucursal' => 1,
-                                            ':Tipo' => 'FV',
+                                            ':Tipo' => isset($value['prefijo']) ? $value['prefijo'] : NULL,
                                             ':Numero' =>  $value['numero_fac'],
                                             ':Conteo' =>  $key,
                                             ':TipoSoporte' => 0,
@@ -485,10 +540,10 @@ class ElectronicBill extends REST_Controller
                                             ':ValorUnitario' => is_numeric($value1['precio_und']) ? $value1['precio_und'] : 0,
                                             ':Cantidad' => is_numeric($value1['cantidad']) ? $value1['cantidad'] : 0,
                                             ':ValorSubTotal' => is_numeric($value1['precio_und']) ? $value1['precio_und'] * $value1['cantidad'] : 0,
-                                            ':PorcentajeIva' => is_numeric($value1['porcentaje_iva']) ? $value1['porcentaje_iva'] : 0,
+                                            ':PorcentajeIva' => is_numeric($codigoIva) ? $codigoIva : 0,
                                             ':ValorIva' => is_numeric($value1['valor_iva']) ? $value1['valor_iva'] : 0,
-                                            ':PorcentajeRetencion' => is_numeric($value1['retencion']) ? $value1['retencion'] : 0,
-                                            ':ValorRetencion' => is_numeric($value1['retencion']) ? $value1['retencion'] : 0,
+                                            ':PorcentajeRetencion' => is_numeric($value1['porcentaje_ret']) ? $value1['porcentaje_ret'] : 0,
+                                            ':ValorRetencion' => is_numeric($value1['valor_ret']) ? $value1['valor_ret'] : 0,
                                             ':ValorTotal' => is_numeric($value1['total_linea']) ? $value1['total_linea'] : 0,
                                             ':ValorFinanciado' =>  0,
                                             ':Usuario' => 1,
@@ -575,6 +630,67 @@ class ElectronicBill extends REST_Controller
                 }
                 
             }
+
+            
+        }else {
+            $respuesta = array(
+                'error'   => true,
+                'Factura'    => [],
+                'mensaje'    => 'No se encontraron facturas para insertar'
+            );
+
+        }
+
+        $this->response($respuesta);
+    }
+    //INSERTAR CUFE Y RESPUESTA DE LA DIAN EN SERPENT
+    public function responseInvoice_post()
+    {
+        //DECLARAR VARIABLE DE RESPUESTA
+        $respuesta = array(
+            'error' => true,
+            'data' => [],
+            'mensaje' => 'No se encontraron datos en la busqueda'
+        );
+        //INICIO DE CONSULTA EN BD FE
+        $sql = "SELECT * FROM \"FacturaElectronica\"";
+        $resSql = $this->fe->queryTable($sql,array());
+
+        if(isset($resSql[0])){
+            
+            $this->pedeo->trans_begin();
+            foreach ($resSql as $key => $value) {
+                //INICIO DE UPDATE RESPUESTA A SERPENT
+                $update = "UPDATE dvfv SET dvf_cufe = :dvf_cufe, dvf_response_dian = :dvf_response_dian, dvf_send_dian = :dvf_send_dian WHERE dvf_docnum = :dvf_docnum";
+                $resUpdate = $this->pedeo->updateRow($update,array(
+                    ':dvf_cufe' => $value['CUFE'],
+                    ':dvf_response_dian' => $value['Respuesta'],
+                    ':dvf_send_dian' => 1,
+                    ':dvf_docnum' => $value['Numero']
+                ));
+
+                if(is_numeric($resUpdate) && $resUpdate > 0){
+
+                }else{
+
+                    $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                        'error' => true,
+                        'data' => $resUpdate,
+                        'mensaje' => 'No se encontraron datos en la busqueda'
+                    );
+                }
+
+                $respuesta = array(
+                    'error' => false,
+                    'data' => $resUpdate,
+                    'mensaje' => 'Facturas actualizadas'
+                );
+
+            }
+
+            $this->pedeo->trans_commit();
 
             
         }
@@ -1266,7 +1382,7 @@ class ElectronicBill extends REST_Controller
 
     }
     //NOMBRE DE ARCHIVO DE PDF
-    private function nameFiles($prefijo,$nit,$code_dian,$año,$num_envio,$ext)
+    private function nameFiles($prefijo,$nit,$code_dian,$año,$num_envio,$docnum,$ext)
     {
         $name_file = "";
         $cant_ceros = 10 - strlen($nit);
@@ -1283,10 +1399,38 @@ class ElectronicBill extends REST_Controller
             $ceros1 += strlen($num_envio).$ceros1;
         }
 
-        $name_file = $prefijo.$ceros.$nit.$code_dian.$año.$ceros1.$num_envio.'.'.$ext;
+        $name_file = $prefijo.$ceros.$nit.$code_dian.$año.$ceros1.$num_envio.$docnum.'.'.$ext;
         return $name_file;
     }
-    //CREA DIRECCTORIO EN FTP FE
+    //OBTENER DIRECCTORIO EN FTP FE
+    private function getDirFtp($fpath)
+    {
+        
+        $connect = @ftp_connect(FTP_IP);
+        $login = @ftp_login($connect,FTP_USER,FTP_PASSWORD);
+        @ftp_pasv($connect, true);
+        $raiz = "";
+        // print_r(ROUTE_REMOTE.$fpath);exit;
+        if ($login){
+
+            @ftp_chdir($connect,ROUTE_REMOTE);
+
+            $parts = explode('/',$fpath);
+            // print_r(ROUTE_REMOTE.$fpath);exit;
+            foreach ($parts as $key => $value) {
+
+                if(!@ftp_chdir($connect,$value)){
+                    $raiz = @ftp_pwd($connect);
+                    @ftp_chdir($connect,$value);
+                    @ftp_close($connect);
+                }
+            }
+
+        }
+
+        return $raiz;
+    }
+    //CREAR DIRECCTORIO EN FTP FE
     private function createDirFtp($fpath)
     {
         
@@ -1308,6 +1452,7 @@ class ElectronicBill extends REST_Controller
                     $raiz = @ftp_mkdir($connect,$value);
                     @ftp_chdir($connect,$value);
                     @ftp_chmod($connect,0777,$raiz);
+                    @ftp_close($connect);
                 }
             }
 

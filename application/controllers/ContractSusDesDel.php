@@ -46,7 +46,7 @@
 		public function SusDesDel_get() {
 			// RESPUESTA POR DEFECTO.
 
-            $sql = "SELECT sde_id, sde_description FROM csde WHERE sde_status = :sde_status";
+            $sql = "SELECT sde_id, sde_description, sde_itemcode FROM csde WHERE sde_status = :sde_status";
 
 			$response = array(
 				'error'   => true,
@@ -86,8 +86,8 @@
 			}
 			//
 
-            $sql = "INSERT INTO csde (sde_description, sde_status) 
-                                VALUES (:sde_description, :sde_status)";
+            $sql = "INSERT INTO csde (sde_description, sde_status, sde_itemcode) 
+                                VALUES (:sde_description, :sde_status, :sde_itemcode)";
 			$response = array(
 				'error'   => true,
 				'data'    => [],
@@ -97,6 +97,7 @@
 			$insertId = $this->pedeo->insertRow($sql,
 				array(
 					':sde_description'   => $request['sde_description'],
+					':sde_itemcode' => $request['sde_itemcode'],
 					':sde_status'  => 1
 				)
 			);
@@ -134,6 +135,7 @@
 
             $sql = "UPDATE csde 
                     SET sde_description=:sde_description, 
+					sde_itemcode = :sde_itemcode,
                     sde_status=:sde_status
                     WHERE sde_id = :sde_id";
 			$response = array(
@@ -144,9 +146,10 @@
 			//
 			$insertId = $this->pedeo->updateRow($sql,
 				array(
-					':sde_description'   => $request['sde_description'],
-					':sde_status'    => $request['sde_status'],
-					':sde_id'        => $request['sde_id']
+					':sde_description'  => $request['sde_description'],
+					':sde_itemcode' 	=> $request['sde_itemcode'],
+					':sde_status'    	=> $request['sde_status'],
+					':sde_id'        	=> $request['sde_id']
 				)
 			);
 			//
@@ -161,4 +164,32 @@
 	        //
          	$this->response($response);
 		}
+
+		public function getItemSus_get(){
+
+			$sql = "SELECT dma_item_code as id, dma_item_name as text 
+						FROM dmar
+						WHERE dma_item_inv = :dma_item_inv
+						AND dma_item_sales = :dma_item_sales";
+
+			$response = array(
+				'error'   => true,
+				'data'    => [],
+				'mensaje' => 'busqueda sin resultados'
+			);
+
+			$result = $this->pedeo->queryTable($sql, array(':dma_item_inv' => 1, ':dma_item_sales' => 1));
+			// VALIDAR RETORNO DE DATOS DE LA CONSULTA.
+			if(isset($result[0])){
+				//
+				$response = array(
+					'error'  => false,
+					'data'   => $result,
+					'mensaje'=> ''
+				);
+			}
+			//
+			$this->response($response);
+					}
+
 	}

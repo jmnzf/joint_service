@@ -29,9 +29,25 @@ class PurchaseRet extends REST_Controller
 	//CREAR NUEVA DEVOLUCION DE COMPRAS
 	public function createPurchaseRet_post()
 	{
+		$Data = $this->post();
+
+		if (!isset($Data['business']) OR
+			!isset($Data['branch'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
 
 		$DECI_MALES =  $this->generic->getDecimals();
-		$Data = $this->post();
+		
 
 		$DetalleCuentaPuente = new stdClass();
 		$DetalleCuentaInvetario = new stdClass();
@@ -652,10 +668,11 @@ class PurchaseRet extends REST_Controller
 
 
 					// CONSULTA PARA VERIFICAR SI EL ALMACEN MANEJA UBICACION
-					$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code";
+					$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code AND business = :business";
 					$resubicacion = $this->pedeo->queryTable($sqlubicacion, array(
 						':dws_ubication' => 1,
-						':dws_code' => $detail['dc1_whscode']
+						':dws_code' => $detail['dc1_whscode'],
+						':business' => $Data['business']
 					));
 
 
@@ -734,34 +751,37 @@ class PurchaseRet extends REST_Controller
 
 					if ( $ManejaUbicacion == 1 ){
 						if ($ManejaLote == 1) {
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND bdi_ubication = :bdi_ubication";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND bdi_ubication = :bdi_ubication AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 								':bdi_whscode' => $detail['dc1_whscode'],
 								':bdi_itemcode' => $detail['dc1_itemcode'],
 								':bdi_lote' => $detail['ote_code'],
-								':bdi_ubication' => $detail['dc1_ubication']
+								':bdi_ubication' => $detail['dc1_ubication'],
+								':business' => $Data['business']
 							));
 						}else{
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode  AND bdi_ubication = :bdi_ubication";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode  AND bdi_ubication = :bdi_ubication AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 								':bdi_whscode' => $detail['dc1_whscode'],
 								':bdi_itemcode' => $detail['dc1_itemcode'],
-								':bdi_ubication' => $detail['dc1_ubication']
+								':bdi_ubication' => $detail['dc1_ubication'],
+								':business' => $Data['business']
 							));
 						}
 					}else{
 						//SI MANEJA LOTE
 						if ($ManejaLote == 1) {
 
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 								':bdi_whscode' => $detail['dc1_whscode'],
 								':bdi_itemcode' => $detail['dc1_itemcode'],
-								':bdi_lote' => $detail['ote_code']
+								':bdi_lote' => $detail['ote_code'],
+								':business' => $Data['business']
 							));
 						} else {
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
-							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['dc1_whscode'], ':bdi_itemcode' => $detail['dc1_itemcode']));
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND business = :business";
+							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['dc1_whscode'], ':bdi_itemcode' => $detail['dc1_itemcode'], ':business' => $Data['business']));
 						}
 					}
 
@@ -872,27 +892,31 @@ class PurchaseRet extends REST_Controller
 							WHERE bdi_itemcode = :bdi_itemcode
 							AND bdi_whscode = :bdi_whscode
 							AND bdi_lote = :bdi_lote
-							AND bdi_ubication = :bdi_ubication";
+							AND bdi_ubication = :bdi_ubication
+							AND business = :business";
 
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
 								':bdi_itemcode'  => $detail['dc1_itemcode'],
 								':bdi_whscode'   => $detail['dc1_whscode'],
 								':bdi_lote'      => $detail['ote_code'],
-								':bdi_ubication' => $detail['dc1_ubication']
+								':bdi_ubication' => $detail['dc1_ubication'],
+								':business' 	 => $Data['business']
 							));
 						}else{
 							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
 							FROM tbdi
 							WHERE bdi_itemcode = :bdi_itemcode
 							AND bdi_whscode = :bdi_whscode
-							AND bdi_ubication = :bdi_ubication";
+							AND bdi_ubication = :bdi_ubication
+							AND business = :business";
 
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
 								':bdi_itemcode'  => $detail['dc1_itemcode'],
 								':bdi_whscode'   => $detail['dc1_whscode'],
-								':bdi_ubication' => $detail['dc1_ubication']
+								':bdi_ubication' => $detail['dc1_ubication'], 
+								':business' 	 => $Data['business']
 							));
 
 						}
@@ -903,24 +927,28 @@ class PurchaseRet extends REST_Controller
 											FROM tbdi
 											WHERE bdi_itemcode = :bdi_itemcode
 											AND bdi_whscode = :bdi_whscode
-											AND bdi_lote = :bdi_lote";
+											AND bdi_lote = :bdi_lote
+											AND business = :business";
 
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
 								':bdi_itemcode' => $detail['dc1_itemcode'],
 								':bdi_whscode'  => $detail['dc1_whscode'],
-								':bdi_lote' 		=> $detail['ote_code']
+								':bdi_lote' 	=> $detail['ote_code'],
+								':business' 	=> $Data['business']
 							));
 						} else {
 							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
 											FROM tbdi
 											WHERE bdi_itemcode = :bdi_itemcode
-											AND bdi_whscode = :bdi_whscode";
+											AND bdi_whscode = :bdi_whscode
+											AND business = :business";
 
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
 								':bdi_itemcode' => $detail['dc1_itemcode'],
-								':bdi_whscode'  => $detail['dc1_whscode']
+								':bdi_whscode'  => $detail['dc1_whscode'],
+								':business'		=> $Data['business']
 							));
 						}
 					}
@@ -1130,8 +1158,8 @@ class PurchaseRet extends REST_Controller
 
 
 
-					$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem"; // Cuenta  puente inventario
-					$resArticulo = $this->pedeo->queryTable($sqlArticulo, array()); // Cuenta costo puente
+					$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem WHERE business = :business"; // Cuenta  puente inventario
+					$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':business' => $Data['business'])); // Cuenta costo puente
 
 					$centroCosto = $value->dc1_prc_code;
 					$unidadNegocio = $value->dc1_uncode;

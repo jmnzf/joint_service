@@ -28,13 +28,16 @@ class PurchOrder extends REST_Controller
 	//CREAR NUEVA ORDEN DE COMPRA
 	public function createPurchOrder_post()
 	{
-
-		$DECI_MALES =  $this->generic->getDecimals();
 		$Data = $this->post();
+		
+		$DECI_MALES =  $this->generic->getDecimals();
+
 		$DocNumVerificado = 0;
 		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
 
-		if (!isset($Data['detail'])) {
+		if (!isset($Data['detail']) OR 
+			!isset($Data['business']) OR
+			!isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -234,18 +237,18 @@ class PurchOrder extends REST_Controller
 		if (!isset($resVerificarAprobacion[0])) {
 
 			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
-																au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
-																FROM tmau
-																INNER JOIN mau1
-																ON mau_docentry =  au1_docentry
-																INNER JOIN taus
-																ON mau_docentry  = aus_id_model
-																INNER JOIN pgus
-																ON aus_id_usuario = pgu_id_usuario
-																WHERE mau_doctype = :mau_doctype
-																AND pgu_code_user = :pgu_code_user
-																AND mau_status = :mau_status
-																AND aus_status = :aus_status";
+							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
+							FROM tmau
+							INNER JOIN mau1
+							ON mau_docentry =  au1_docentry
+							INNER JOIN taus
+							ON mau_docentry  = aus_id_model
+							INNER JOIN pgus
+							ON aus_id_usuario = pgu_id_usuario
+							WHERE mau_doctype = :mau_doctype
+							AND pgu_code_user = :pgu_code_user
+							AND mau_status = :mau_status
+							AND aus_status = :aus_status";
 
 			$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
 

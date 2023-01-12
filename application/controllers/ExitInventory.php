@@ -33,6 +33,23 @@ class ExitInventory extends REST_Controller
 		$DECI_MALES =  $this->generic->getDecimals();
 
 		$Data = $this->post();
+
+
+
+		if (!isset($Data['business']) OR
+			!isset($Data['branch'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+		
 		$DocNumVerificado = 0;
 		$DetalleCuentaLineaDocumento = new stdClass();
 		$DetalleConsolidadoCuentaLineaDocumento = [];
@@ -452,10 +469,11 @@ class ExitInventory extends REST_Controller
 
 
 					// CONSULTA PARA VERIFICAR SI EL ALMACEN MANEJA UBICACION
-					$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code";
+					$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code AND business = :business";
 					$resubicacion = $this->pedeo->queryTable($sqlubicacion, array(
 						':dws_ubication' => 1,
-						':dws_code' => $detail['si1_whscode']
+						':dws_code' => $detail['si1_whscode'],
+						':business' => $Data['business']
 					));
 
 
@@ -517,7 +535,7 @@ class ExitInventory extends REST_Controller
 							return;
 						}
 
-						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['si1_itemcode'], $Data['isi_doctype'], $resInsert, $DocNumVerificado, $Data['isi_docdate'], 2, $Data['isi_comment'], $detail['si1_whscode'], $detail['si1_quantity'], $Data['isi_createby']);
+						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['si1_itemcode'], $Data['isi_doctype'], $resInsert, $DocNumVerificado, $Data['isi_docdate'], 2, $Data['isi_comment'], $detail['si1_whscode'], $detail['si1_quantity'], $Data['isi_createby'], $Data['business']);
 
 						if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
 						} else {
@@ -547,35 +565,39 @@ class ExitInventory extends REST_Controller
 					if ( $ManejaUbicacion == 1 ){
 						// SI EL ARTICULO MANEJA LOTE
 						if ($ManejaLote == 1) {
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND bdi_ubication = :bdi_ubication";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND bdi_ubication = :bdi_ubication AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 								':bdi_whscode'   => $detail['si1_whscode'],
 								':bdi_itemcode'  => $detail['si1_itemcode'],
 								':bdi_lote'      => $detail['ote_code'],
-								':bdi_ubication' => $detail['si1_ubication']
+								':bdi_ubication' => $detail['si1_ubication'],
+								':business' 	 => $Data['business']
 							));
 						} else {
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 								':bdi_whscode'   => $detail['si1_whscode'],
 								':bdi_itemcode'  => $detail['si1_itemcode'],
-								':bdi_ubication' => $detail['si1_ubication']
+								':bdi_ubication' => $detail['si1_ubication'],
+								':business' 	 => $Data['business']
 							));
 						}
 					}else{
 						// SI EL ARTICULO MANEJA LOTE
 						if ($ManejaLote == 1) {
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-								':bdi_whscode' => $detail['si1_whscode'],
+								':bdi_whscode'  => $detail['si1_whscode'],
 								':bdi_itemcode' => $detail['si1_itemcode'],
-								':bdi_lote' => $detail['ote_code']
+								':bdi_lote' 	=> $detail['ote_code'],
+								':business' 	=> $Data['business']
 							));
 						} else {
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-								':bdi_whscode' => $detail['si1_whscode'],
-								':bdi_itemcode' => $detail['si1_itemcode']
+								':bdi_whscode' 	=> $detail['si1_whscode'],
+								':bdi_itemcode' => $detail['si1_itemcode'],
+								':business' 	=> $Data['business']
 							));
 						}
 					}
@@ -690,27 +712,31 @@ class ExitInventory extends REST_Controller
 											WHERE bdi_itemcode = :bdi_itemcode
 											AND bdi_whscode = :bdi_whscode
 											AND bdi_lote = :bdi_lote
-											AND bdi_ubication = :bdi_ubication";
+											AND bdi_ubication = :bdi_ubication
+											AND business = :business";
 	
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 	
 								':bdi_itemcode'  => $detail['si1_itemcode'],
 								':bdi_whscode'   => $detail['si1_whscode'],
 								':bdi_lote'		 => $detail['ote_code'],
-								':bdi_ubication' => $detail['si1_ubication']
+								':bdi_ubication' => $detail['si1_ubication'],
+								':business' 	 => $Data['business']
 							));
 						} else {
 							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
 							FROM tbdi
 							WHERE bdi_itemcode = :bdi_itemcode
 							AND bdi_whscode = :bdi_whscode
-							AND bdi_ubication = :bdi_ubication";
+							AND bdi_ubication = :bdi_ubication
+							AND business = :business";
 
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 
 								':bdi_itemcode'  => $detail['si1_itemcode'],
 								':bdi_whscode'   => $detail['si1_whscode'],
-								':bdi_ubication' => $detail['si1_ubication']
+								':bdi_ubication' => $detail['si1_ubication'],
+								':business' 	 => $Data['business']
 							));
 						}
 					}else{
@@ -720,24 +746,28 @@ class ExitInventory extends REST_Controller
 											FROM tbdi
 											WHERE bdi_itemcode = :bdi_itemcode
 											AND bdi_whscode = :bdi_whscode
-											AND bdi_lote = :bdi_lote";
+											AND bdi_lote = :bdi_lote
+											AND business = :business";
 	
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 	
 								':bdi_itemcode' => $detail['si1_itemcode'],
 								':bdi_whscode'  => $detail['si1_whscode'],
-								':bdi_lote'			=> $detail['ote_code']
+								':bdi_lote'		=> $detail['ote_code'],
+								':business' 	=> $Data['business']
 							));
 						} else {
 							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
 											FROM tbdi
 											WHERE bdi_itemcode = :bdi_itemcode
-											AND bdi_whscode = :bdi_whscode";
+											AND bdi_whscode = :bdi_whscode
+											AND business = :business";
 	
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 	
 								':bdi_itemcode' => $detail['si1_itemcode'],
-								':bdi_whscode'  => $detail['si1_whscode']
+								':bdi_whscode'  => $detail['si1_whscode'],
+								':business' => $Data['business']
 							));
 						}
 					}
@@ -1346,9 +1376,9 @@ class ExitInventory extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT isi1.*, dmws.dws_name FROM isi1 INNER JOIN dmws ON dmws.dws_code = isi1.si1_whscode WHERE si1_docentry =:si1_docentry";
+		$sqlSelect = " SELECT isi1.*, dmws.dws_name FROM isi1 INNER JOIN dmws ON dmws.dws_code = isi1.si1_whscode WHERE si1_docentry =:si1_docentry AND dmws.business = :business";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":si1_docentry" => $Data['si1_docentry']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":si1_docentry" => $Data['si1_docentry'], ':business' => $Data['business']));
 
 		if (isset($resSelect[0])) {
 

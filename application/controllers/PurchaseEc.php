@@ -29,9 +29,24 @@ class PurchaseEc extends REST_Controller
 	//CREAR ENTRADA COMPRAS
 	public function createPurchaseEc_post()
 	{
+		$Data = $this->post();
+		
+		if (!isset($Data['business']) OR
+			!isset($Data['branch'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
-		$Data = $this->post();
+
 		$DocNumVerificado = 0;
 
 		$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
@@ -672,10 +687,11 @@ class PurchaseEc extends REST_Controller
 					$ResultadoInv  = 1;
 					
 					// CONSULTA PARA VERIFICAR SI EL ALMACEN MANEJA UBICACION
-					$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code";
+					$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code AND business = :business";
 					$resubicacion = $this->pedeo->queryTable($sqlubicacion, array(
 						':dws_ubication' => 1,
-						':dws_code' => $detail['ec1_whscode']
+						':dws_code' => $detail['ec1_whscode'],
+						':business' => $Data['business']
 					));
 
 
@@ -725,7 +741,7 @@ class PurchaseEc extends REST_Controller
 					if (isset($resItemSerial[0])) {
 						$ManejaSerial = 1;
 
-						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['ec1_itemcode'], $Data['cec_doctype'], $resInsert, $DocNumVerificado, $Data['cec_docdate'], 1, $Data['cec_comment'], $detail['ec1_whscode'], $detail['ec1_quantity'], $Data['cec_createby'], $resInsertDetail);
+						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['ec1_itemcode'], $Data['cec_doctype'], $resInsert, $DocNumVerificado, $Data['cec_docdate'], 1, $Data['cec_comment'], $detail['ec1_whscode'], $detail['ec1_quantity'], $Data['cec_createby'], $resInsertDetail, $Data['business']);
 
 						if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
 						} else {
@@ -754,20 +770,22 @@ class PurchaseEc extends REST_Controller
 
 						if ( $ManejaLote == 1 ) {
 
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication AND bdi_lote = :bdi_lote";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication AND bdi_lote = :bdi_lote AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 								':bdi_whscode'   => $detail['ec1_whscode'],
 								':bdi_itemcode'  => $detail['ec1_itemcode'],
 								':bdi_ubication' => $detail['ec1_ubication'],
-								':bdi_lote'      => $detail['ote_code']
+								':bdi_lote'      => $detail['ote_code'],
+								':business' 	 => $Data['business']
 							));
 						} else {
 	
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 								':bdi_whscode' => $detail['ec1_whscode'],
 								':bdi_itemcode' => $detail['ec1_itemcode'],
-								':bdi_ubication' => $detail['ec1_itemcode']
+								':bdi_ubication' => $detail['ec1_itemcode'],
+								':business' => $Data['business']
 							));
 						}
 	
@@ -775,18 +793,20 @@ class PurchaseEc extends REST_Controller
 					}else{
 						if ( $ManejaLote == 1 ) {
 
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 								':bdi_whscode' => $detail['ec1_whscode'],
 								':bdi_itemcode' => $detail['ec1_itemcode'],
-								':bdi_lote' => $detail['ote_code']
+								':bdi_lote' => $detail['ote_code'],
+								':business' => $Data['business']
 							));
 						} else {
 	
-							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
+							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 								':bdi_whscode' => $detail['ec1_whscode'],
-								':bdi_itemcode' => $detail['ec1_itemcode']
+								':bdi_itemcode' => $detail['ec1_itemcode'],
+								':business' => $Data['business']
 							));
 						}
 	
@@ -917,21 +937,24 @@ class PurchaseEc extends REST_Controller
 												WHERE bdi_itemcode = :bdi_itemcode
 												AND bdi_whscode = :bdi_whscode
 												AND bdi_lote = :bdi_lote
-												AND bdi_ubication = :bdi_ubication";
+												AND bdi_ubication = :bdi_ubication
+												AND business = :business";
 	
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 	
 								':bdi_itemcode'  => $detail['ec1_itemcode'],
 								':bdi_whscode'   => $detail['ec1_whscode'],
 								':bdi_lote' 	 => $detail['ote_code'],
-								':bdi_ubication' => $detail['ec1_ubication']
+								':bdi_ubication' => $detail['ec1_ubication'],
+								':business' => $Data['business']
 							));
 	
 							// se busca la cantidad general del articulo agrupando todos los almacenes  lotes y ubicaciones
-							$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode GROUP BY bdi_whscode, bdi_avgprice";
+							$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode AND business = :business GROUP BY bdi_whscode, bdi_avgprice";
 							$resCGA = $this->pedeo->queryTable($sqlCGA, array(
 								':bdi_itemcode' => $detail['ec1_itemcode'],
-								':bdi_whscode'  => $detail['ec1_whscode']
+								':bdi_whscode'  => $detail['ec1_whscode'],
+								':business' => $Data['business']
 							));
 	
 							if (isset($resCGA[0]['bdi_quantity']) && is_numeric($resCGA[0]['bdi_quantity'])) {
@@ -949,21 +972,24 @@ class PurchaseEc extends REST_Controller
 												FROM tbdi
 												WHERE bdi_itemcode = :bdi_itemcode
 												AND bdi_whscode = :bdi_whscode
-												AND bdi_ubication = :bdi_ubication";
+												AND bdi_ubication = :bdi_ubication
+												AND business = :business";
 	
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 	
 								':bdi_itemcode'  => $detail['ec1_itemcode'],
 								':bdi_whscode'   => $detail['ec1_whscode'],
-								':bdi_ubication' => $detail['ec1_ubication']
+								':bdi_ubication' => $detail['ec1_ubication'],
+								':business' => $Data['business']
 							));
 
 
 							// se busca la cantidad general del articulo agrupando todos los almacenes  lotes y ubicaciones
-							$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode GROUP BY bdi_whscode, bdi_avgprice";
+							$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode AND business = :business GROUP BY bdi_whscode, bdi_avgprice";
 							$resCGA = $this->pedeo->queryTable($sqlCGA, array(
 								':bdi_itemcode' => $detail['ec1_itemcode'],
-								':bdi_whscode'  => $detail['ec1_whscode']
+								':bdi_whscode'  => $detail['ec1_whscode'],
+								':business' => $Data['business']
 							));
 	
 							if (isset($resCGA[0]['bdi_quantity']) && is_numeric($resCGA[0]['bdi_quantity'])) {
@@ -986,20 +1012,23 @@ class PurchaseEc extends REST_Controller
 												FROM tbdi
 												WHERE bdi_itemcode = :bdi_itemcode
 												AND bdi_whscode = :bdi_whscode
-												AND bdi_lote = :bdi_lote";
+												AND bdi_lote = :bdi_lote
+												AND business = :business";
 	
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 	
 								':bdi_itemcode'  => $detail['ec1_itemcode'],
 								':bdi_whscode'   => $detail['ec1_whscode'],
-								':bdi_lote' 	 => $detail['ote_code']
+								':bdi_lote' 	 => $detail['ote_code'],
+								':business' => $Data['business']
 							));
 
 							// se busca la cantidad general del articulo agrupando todos los almacenes  lotes y ubicaciones
-							$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode GROUP BY bdi_whscode, bdi_avgprice";
+							$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode AND business = :business GROUP BY bdi_whscode, bdi_avgprice";
 							$resCGA = $this->pedeo->queryTable($sqlCGA, array(
 								':bdi_itemcode' => $detail['ec1_itemcode'],
-								':bdi_whscode'  => $detail['ec1_whscode']
+								':bdi_whscode'  => $detail['ec1_whscode'],
+								':business' => $Data['business']
 							));
 	
 							if (isset($resCGA[0]['bdi_quantity']) && is_numeric($resCGA[0]['bdi_quantity'])) {
@@ -1017,12 +1046,14 @@ class PurchaseEc extends REST_Controller
 							$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
 												FROM tbdi
 												WHERE bdi_itemcode = :bdi_itemcode
-												AND bdi_whscode = :bdi_whscode";
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
 		
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
 	
 								':bdi_itemcode' => $detail['ec1_itemcode'],
-								':bdi_whscode'  => $detail['ec1_whscode']
+								':bdi_whscode'  => $detail['ec1_whscode'],
+								':business' => $Data['business']
 							));
 	
 							$CantidadPorAlmacen = isset($resCostoCantidad[0]['bdi_quantity']) ? $resCostoCantidad[0]['bdi_quantity'] : 0;
@@ -1092,13 +1123,15 @@ class PurchaseEc extends REST_Controller
 								$sqlUpdateCostoCantidad = "UPDATE tbdi
 															SET bdi_avgprice = :bdi_avgprice
 															WHERE bdi_itemcode = :bdi_itemcode
-															AND bdi_whscode = :bdi_whscode";
+															AND bdi_whscode = :bdi_whscode
+															AND business = :business";
 
 								$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
 									':bdi_avgprice' => $NuevoCostoPonderado,
 									':bdi_itemcode' => $detail['ec1_itemcode'],
-									':bdi_whscode'  => $detail['ec1_whscode']
+									':bdi_whscode'  => $detail['ec1_whscode'],
+									':business' 	=> $Data['business']
 								));
 
 								if (is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad > 0) {
@@ -1164,13 +1197,15 @@ class PurchaseEc extends REST_Controller
 								$sqlUpdateCostoCantidad = "UPDATE tbdi
 															SET bdi_avgprice = :bdi_avgprice
 															WHERE bdi_itemcode = :bdi_itemcode
-															AND bdi_whscode = :bdi_whscode";
+															AND bdi_whscode = :bdi_whscode
+															AND business = :business";
 
 								$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
 									':bdi_avgprice' => $CostoNuevo,
 									':bdi_itemcode' => $detail['ec1_itemcode'],
-									':bdi_whscode'  => $detail['ec1_whscode']
+									':bdi_whscode'  => $detail['ec1_whscode'],
+									':business' 	=> $Data['business']
 								));
 
 								if (is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad  > 0) {
@@ -1223,8 +1258,8 @@ class PurchaseEc extends REST_Controller
 							if ( $ManejaUbicacion == 1 ){
 
 								if ($ManejaLote == 1) {
-									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote, bdi_ubication)
-														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote, :bdi_ubication)";
+									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote, bdi_ubication, business)
+														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote, :bdi_ubication, :business)";
 	
 	
 									$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1234,11 +1269,12 @@ class PurchaseEc extends REST_Controller
 										':bdi_quantity' => ($detail['ec1_quantity'] * $CANTUOMPURCHASE),
 										':bdi_avgprice' => $NuevoCostoPonderado,
 										':bdi_lote' 	=> $detail['ote_code'],
-										':bdi_ubication'=> $detail['ec1_ubication']
+										':bdi_ubication'=> $detail['ec1_ubication'],
+										':business' => $Data['business']
 									));
 								} else {
-									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_ubication)
-									VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_ubication)";
+									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_ubication, business)
+									VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_ubication, :business)";
 
 
 									$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1247,14 +1283,15 @@ class PurchaseEc extends REST_Controller
 										':bdi_whscode'  => $detail['ec1_whscode'],
 										':bdi_quantity' => ($detail['ec1_quantity'] * $CANTUOMPURCHASE),
 										':bdi_avgprice' => $NuevoCostoPonderado,
-										':bdi_ubication'=> $detail['ec1_ubication']
+										':bdi_ubication'=> $detail['ec1_ubication'],
+										':business' => $Data['business']
 									));
 								}
 							}else{
 
 								if ($ManejaLote == 1) {
-									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote)
-														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
+									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote, business)
+														 VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote, :business)";
 	
 	
 									$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1263,11 +1300,12 @@ class PurchaseEc extends REST_Controller
 										':bdi_whscode'  => $detail['ec1_whscode'],
 										':bdi_quantity' => ($detail['ec1_quantity'] * $CANTUOMPURCHASE),
 										':bdi_avgprice' => $NuevoCostoPonderado,
-										':bdi_lote' 	=> $detail['ote_code']
+										':bdi_lote' 	=> $detail['ote_code'],
+										':business' 	=> $Data['business']
 									));
 								}else{
-									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
-									VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, business)
+									VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :business)";
 	
 	
 									$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1275,7 +1313,8 @@ class PurchaseEc extends REST_Controller
 									':bdi_itemcode' => $detail['ec1_itemcode'],
 									':bdi_whscode'  => $detail['ec1_whscode'],
 									':bdi_quantity' => ($detail['ec1_quantity'] * $CANTUOMPURCHASE),
-									':bdi_avgprice' => $NuevoCostoPonderado
+									':bdi_avgprice' => $NuevoCostoPonderado,
+									':business' 	=> $Data['business']
 									));
 								}
 							
@@ -1308,13 +1347,15 @@ class PurchaseEc extends REST_Controller
 								$sqlUpdateCostoCantidad = "UPDATE tbdi
 														SET bdi_avgprice = :bdi_avgprice
 														WHERE bdi_itemcode = :bdi_itemcode
-														AND bdi_whscode = :bdi_whscode";
+														AND bdi_whscode = :bdi_whscode
+														AND business = :business";
 
 								$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
 									':bdi_avgprice' => $NuevoCostoPonderado,
 									':bdi_itemcode' => $detail['ec1_itemcode'],
-									':bdi_whscode'  => $detail['ec1_whscode']
+									':bdi_whscode'  => $detail['ec1_whscode'],
+									':business' => $Data['business']
 								));
 
 
@@ -1350,8 +1391,8 @@ class PurchaseEc extends REST_Controller
 
 							if ( $ManejaUbicacion == 1 ){
 								if ($ManejaLote == 1) {
-									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote, bdi_ubication)
-															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote, :bdi_ubication)";
+									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote, bdi_ubication, business)
+															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote, :bdi_ubication, :business)";
 	
 	
 									$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1361,11 +1402,12 @@ class PurchaseEc extends REST_Controller
 										':bdi_quantity'  => $this->generic->getCantInv($detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 										':bdi_avgprice'  => $CostoNuevo,
 										':bdi_lote' 	 => $detail['ote_code'],
-										':bdi_ubication' => $detail['ec1_ubication']
+										':bdi_ubication' => $detail['ec1_ubication'],
+										':business' 	 => $Data['business']
 									));
 								}else{
-									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_ubication)
-									VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_ubication)";
+									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_ubication, business)
+									VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_ubication, :business)";
 
 
 									$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1374,13 +1416,14 @@ class PurchaseEc extends REST_Controller
 										':bdi_whscode'   => $detail['ec1_whscode'],
 										':bdi_quantity'  => $this->generic->getCantInv($detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 										':bdi_avgprice'  => $CostoNuevo,
-										':bdi_ubication' => $detail['ec1_ubication']
+										':bdi_ubication' => $detail['ec1_ubication'],
+										':business' 	=> $Data['business']
 									));
 								}
 							}else{
 								if ($ManejaLote == 1) {
-									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote)
-															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
+									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote, business)
+															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote, :business)";
 	
 	
 									$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1389,12 +1432,13 @@ class PurchaseEc extends REST_Controller
 										':bdi_whscode'  => $detail['ec1_whscode'],
 										':bdi_quantity' => $this->generic->getCantInv($detail['ec1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 										':bdi_avgprice' => $CostoNuevo,
-										':bdi_lote' 	=> $detail['ote_code']
+										':bdi_lote' 	=> $detail['ote_code'],
+										':business' 	=> $Data['business']
 									));
 								} else {
 	
-									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
-															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
+									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, business)
+															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :business)";
 	
 	
 									$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1402,7 +1446,8 @@ class PurchaseEc extends REST_Controller
 										':bdi_itemcode' => $detail['ec1_itemcode'],
 										':bdi_whscode'  => $detail['ec1_whscode'],
 										':bdi_quantity' => ($detail['ec1_quantity'] * $CANTUOMPURCHASE),
-										':bdi_avgprice' => $CostoNuevo
+										':bdi_avgprice' => $CostoNuevo,
+										':business' => $Data['business']
 									));
 								}
 							}
@@ -1435,13 +1480,15 @@ class PurchaseEc extends REST_Controller
 								$sqlUpdateCostoCantidad = "UPDATE tbdi
 															SET bdi_avgprice = :bdi_avgprice
 															WHERE bdi_itemcode = :bdi_itemcode
-															AND bdi_whscode = :bdi_whscode";
+															AND bdi_whscode = :bdi_whscode
+															AND business = :business";
 
 								$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
 									':bdi_avgprice' => $CostoNuevo,
 									':bdi_itemcode' => $detail['ec1_itemcode'],
-									':bdi_whscode'  => $detail['ec1_whscode']
+									':bdi_whscode'  => $detail['ec1_whscode'],
+									':business' 	=> $Data['business']
 								));
 
 
@@ -1851,8 +1898,8 @@ class PurchaseEc extends REST_Controller
 			// Procedimiento para llenar costo costo
 
 			//se busca la cuenta puente de inventario
-			$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem";
-			$resArticulo = $this->pedeo->queryTable($sqlArticulo, array());
+			$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem WHERE business = :business";
+			$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':business' => $Data['business']));
 			$cuentaCosto = "";
 			if (isset($resArticulo[0]) && $resArticulo[0]['pge_bridge_inv_purch'] != 0) {
 

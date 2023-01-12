@@ -43,6 +43,7 @@ class StockTransfer extends REST_Controller
 		$llaveInventario = "";
 		$llaveInventario2 = "";
 		$DocNumVerificado = 0;
+		$ManejaUbicacion = 0;
 
 		if (!isset($Data['detail']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
@@ -624,18 +625,20 @@ class StockTransfer extends REST_Controller
 		$llaveInventario = "";
 		$llaveInventario2 = "";
 		$ManejaSerial = 0;
+		$ManejaUbicacion = 0;
+		$ManejaUbicacion2 = 0;
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
-												ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
-												ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-												ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, business, branch)VALUES (:ac1_trans_id, :ac1_account,
-												:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
-												:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
-												:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-												:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :business, :branch)";
+							ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
+							ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
+							ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, business, branch)VALUES (:ac1_trans_id, :ac1_account,
+							:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
+							:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
+							:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
+							:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :business, :branch)";
 
 		if (!isset($Data['detail'])) {
 
@@ -964,7 +967,7 @@ class StockTransfer extends REST_Controller
 			//SE INSERTA EL ESTADO DEL DOCUMENTO
 
 			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-														VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
@@ -1002,7 +1005,7 @@ class StockTransfer extends REST_Controller
 			if ($Data['its_basetype'] == 23) {
 
 				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+									VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
@@ -1107,7 +1110,7 @@ class StockTransfer extends REST_Controller
 				if (isset($resItemSerial[0])) {
 					$ManejaSerial = 1;
 
-					$AddSerial = $this->generic->addSerial($detail['serials'], $detail['ts1_itemcode'], $Data['its_doctype'], $resInsert, $DocNumVerificado, $Data['its_docdate'], 1, $Data['its_comment'], $detail['ts1_whscode'], $detail['ts1_quantity'], $Data['its_createby']);
+					$AddSerial = $this->generic->addSerial($detail['serials'], $detail['ts1_itemcode'], $Data['its_doctype'], $resInsert, $DocNumVerificado, $Data['its_docdate'], 1, $Data['its_comment'], $detail['ts1_whscode'], $detail['ts1_quantity'], $Data['its_createby'], $Data['business']);
 
 					if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
 					} else {
@@ -1126,6 +1129,38 @@ class StockTransfer extends REST_Controller
 				}
 
 				//
+
+				// CONSULTA PARA VERIFICAR SI EL ALMACEN MANEJA UBICACION
+				$sqlubicacion = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code AND business = :business";
+				$resubicacion = $this->pedeo->queryTable($sqlubicacion, array(
+					':dws_ubication' => 1,
+					':dws_code' => $detail['ts1_whscode'],
+					':business' => $Data['business']
+				));
+
+				$sqlubicacion2 = "SELECT * FROM dmws WHERE dws_ubication = :dws_ubication AND dws_code = :dws_code AND business = :business";
+				$resubicacion2 = $this->pedeo->queryTable($sqlubicacion, array(
+					':dws_ubication' => 1,
+					':dws_code' => $detail['ts1_whscode_dest'],
+					':business' => $Data['business']
+				));
+
+
+
+
+
+				if ( isset($resubicacion[0]) ){
+					$ManejaUbicacion = 1;
+				}else{
+					$ManejaUbicacion = 0;
+				}
+
+
+				if ( isset($resubicacion2[0]) ){
+					$ManejaUbicacion2 = 1;
+				}else{
+					$ManejaUbicacion2 = 0;
+				}
 
 
 				//SE VALIDA EL SI EL ARTICULO MANEJA LOTE
@@ -1147,17 +1182,50 @@ class StockTransfer extends REST_Controller
 				$sqlCostoMomentoRegistro = '';
 				$resCostoMomentoRegistro = [];
 
-				//SI MANEJA LOTE
-				if ($ManejaLote == 1) {
-					$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote";
-					$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-						':bdi_whscode' => $detail['ts1_whscode'],
-						':bdi_itemcode' => $detail['ts1_itemcode'],
-						':bdi_lote' => $detail['ote_code']
-					));
-				} else {
-					$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode";
-					$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['ts1_whscode'], ':bdi_itemcode' => $detail['ts1_itemcode']));
+				// SI MANEJA UBICACION EL ALMACEN ORIGEN
+				if ( $ManejaUbicacion == 1 ){
+					//SI MANEJA LOTE EL ARTICULO
+					if ( $ManejaLote == 1 ) {
+
+						$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND bdi_ubication = :bdi_ubication AND business = :business";
+						$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+							':bdi_whscode'  => $detail['ts1_whscode'],
+							':bdi_itemcode' => $detail['ts1_itemcode'],
+							':bdi_lote' 	=> $detail['ote_code'],
+							':bdi_ubication'=> $detail['bdi_ubication'],
+							':business' 	=> $Data['business']
+						));
+
+					}else{
+						$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication AND business = :business";
+						$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+							':bdi_whscode'  => $detail['ts1_whscode'],
+							':bdi_itemcode' => $detail['ts1_itemcode'],
+							':bdi_ubication'=> $detail['bdi_ubication'],
+							':business' 	=> $Data['business']
+						));
+					}
+
+				}else{
+					//SI MANEJA LOTE EL ARTICULO
+
+					if ( $ManejaLote == 1 ){
+
+						$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND business = :business";
+						$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+							':bdi_whscode'  => $detail['ts1_whscode'],
+							':bdi_itemcode' => $detail['ts1_itemcode'],
+							':bdi_lote' 	=> $detail['ote_code'],
+							':business' 	=> $Data['business']
+						));
+
+					}else{
+
+						$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND business = :business";
+						$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['ts1_whscode'], ':bdi_itemcode' => $detail['ts1_itemcode'], ':business' => $Data['business']));
+						
+					}
+
 				}
 
 
@@ -1186,53 +1254,31 @@ class StockTransfer extends REST_Controller
 				//Se aplica el movimiento de inventario para el almacen destino
 				$sqlInserMovimiento = '';
 				$resInserMovimiento = [];
-				//SI EL ARTICULO MANEJA LOTE
-				if ($ManejaLote == 1) {
-					$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote)
-																			 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote)";
+			
+				$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote,bmi_ubication)
+																			VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote,:bmi_ubication)";
 
-					$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+				$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-						':bmi_itemcode' => isset($detail['ts1_itemcode']) ? $detail['ts1_itemcode'] : NULL,
-						':bmi_quantity' => is_numeric($detail['ts1_quantity']) ? $detail['ts1_quantity'] * 1 : 0,
-						':bmi_whscode'  => isset($detail['ts1_whscode_dest']) ? $detail['ts1_whscode_dest'] : NULL,
-						':bmi_createat' => $this->validateDate($Data['its_createat']) ? $Data['its_createat'] : NULL,
-						':bmi_createby' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
-						':bmy_doctype'  => is_numeric($Data['its_doctype']) ? $Data['its_doctype'] : 0,
-						':bmy_baseentry' => $resInsert,
-						':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-						':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-						':bmi_basenum'			=> $DocNumVerificado,
-						':bmi_docdate' => $this->validateDate($Data['its_docdate']) ? $Data['its_docdate'] : NULL,
-						':bmi_duedate' => $this->validateDate($Data['its_duedate']) ? $Data['its_duedate'] : NULL,
-						':bmi_duedev'  => $this->validateDate($Data['its_duedev']) ? $Data['its_duedev'] : NULL,
-						':bmi_comment' => isset($Data['its_comment']) ? $Data['its_comment'] : NULL,
-						':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
+					':bmi_itemcode' => isset($detail['ts1_itemcode']) ? $detail['ts1_itemcode'] : NULL,
+					':bmi_quantity' => is_numeric($detail['ts1_quantity']) ? $detail['ts1_quantity'] * 1 : 0,
+					':bmi_whscode'  => isset($detail['ts1_whscode_dest']) ? $detail['ts1_whscode_dest'] : NULL,
+					':bmi_createat' => $this->validateDate($Data['its_createat']) ? $Data['its_createat'] : NULL,
+					':bmi_createby' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
+					':bmy_doctype'  => is_numeric($Data['its_doctype']) ? $Data['its_doctype'] : 0,
+					':bmy_baseentry' => $resInsert,
+					':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+					':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+					':bmi_basenum'			=> $DocNumVerificado,
+					':bmi_docdate' => $this->validateDate($Data['its_docdate']) ? $Data['its_docdate'] : NULL,
+					':bmi_duedate' => $this->validateDate($Data['its_duedate']) ? $Data['its_duedate'] : NULL,
+					':bmi_duedev'  => $this->validateDate($Data['its_duedev']) ? $Data['its_duedev'] : NULL,
+					':bmi_comment' => isset($Data['its_comment']) ? $Data['its_comment'] : NULL,
+					':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':bmi_ubication' => isset($detail['its_ubication']) ? $detail['its_ubication'] : NULL
 
-					));
-				} else {
-					$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
-																			 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
-
-					$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
-
-						':bmi_itemcode' => isset($detail['ts1_itemcode']) ? $detail['ts1_itemcode'] : NULL,
-						':bmi_quantity' => is_numeric($detail['ts1_quantity']) ? $detail['ts1_quantity'] * 1 : 0,
-						':bmi_whscode'  => isset($detail['ts1_whscode_dest']) ? $detail['ts1_whscode_dest'] : NULL,
-						':bmi_createat' => $this->validateDate($Data['its_createat']) ? $Data['its_createat'] : NULL,
-						':bmi_createby' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
-						':bmy_doctype'  => is_numeric($Data['its_doctype']) ? $Data['its_doctype'] : 0,
-						':bmy_baseentry' => $resInsert,
-						':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-						':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
-						':bmi_basenum'			=> $DocNumVerificado,
-						':bmi_docdate' => $this->validateDate($Data['its_docdate']) ? $Data['its_docdate'] : NULL,
-						':bmi_duedate' => $this->validateDate($Data['its_duedate']) ? $Data['its_duedate'] : NULL,
-						':bmi_duedev'  => $this->validateDate($Data['its_duedev']) ? $Data['its_duedev'] : NULL,
-						':bmi_comment' => isset($Data['its_comment']) ? $Data['its_comment'] : NULL
-
-					));
-				}
+				));
+				
 
 
 				if (is_numeric($resInserMovimiento) && $resInserMovimiento > 0) {
@@ -1257,53 +1303,31 @@ class StockTransfer extends REST_Controller
 				//Se aplica el movimiento de inventario para el almacen origen
 				$sqlInserMovimiento = '';
 				$resInserMovimiento = [];
-				//SI EL ARTICULO MANEJA LOTE
-				if ($ManejaLote == 1) {
-					$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote)
-										 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote)";
+	
+				$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote,bmi_ubication)
+										VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote,:bmi_ubication)";
 
-					$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+				$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
-						':bmi_itemcode' => isset($detail['ts1_itemcode']) ? $detail['ts1_itemcode'] : NULL,
-						':bmi_quantity' => is_numeric($detail['ts1_quantity']) ? $detail['ts1_quantity'] * -1 : 0,
-						':bmi_whscode'  => isset($detail['ts1_whscode']) ? $detail['ts1_whscode'] : NULL,
-						':bmi_createat' => $this->validateDate($Data['its_createat']) ? $Data['its_createat'] : NULL,
-						':bmi_createby' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
-						':bmy_doctype'  => is_numeric($Data['its_doctype']) ? $Data['its_doctype'] : 0,
-						':bmy_baseentry' => $resInsert,
-						':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-						':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-						':bmi_basenum'			=> $DocNumVerificado,
-						':bmi_docdate' => $this->validateDate($Data['its_docdate']) ? $Data['its_docdate'] : NULL,
-						':bmi_duedate' => $this->validateDate($Data['its_duedate']) ? $Data['its_duedate'] : NULL,
-						':bmi_duedev'  => $this->validateDate($Data['its_duedev']) ? $Data['its_duedev'] : NULL,
-						':bmi_comment' => isset($Data['its_comment']) ? $Data['its_comment'] : NULL,
-						':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
+					':bmi_itemcode' => isset($detail['ts1_itemcode']) ? $detail['ts1_itemcode'] : NULL,
+					':bmi_quantity' => is_numeric($detail['ts1_quantity']) ? $detail['ts1_quantity'] * -1 : 0,
+					':bmi_whscode'  => isset($detail['ts1_whscode']) ? $detail['ts1_whscode'] : NULL,
+					':bmi_createat' => $this->validateDate($Data['its_createat']) ? $Data['its_createat'] : NULL,
+					':bmi_createby' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
+					':bmy_doctype'  => is_numeric($Data['its_doctype']) ? $Data['its_doctype'] : 0,
+					':bmy_baseentry' => $resInsert,
+					':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+					':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+					':bmi_basenum'			=> $DocNumVerificado,
+					':bmi_docdate' => $this->validateDate($Data['its_docdate']) ? $Data['its_docdate'] : NULL,
+					':bmi_duedate' => $this->validateDate($Data['its_duedate']) ? $Data['its_duedate'] : NULL,
+					':bmi_duedev'  => $this->validateDate($Data['its_duedev']) ? $Data['its_duedev'] : NULL,
+					':bmi_comment' => isset($Data['its_comment']) ? $Data['its_comment'] : NULL,
+					':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':bmi_ubication' => isset($detail['its_ubication']) ? $detail['its_ubication'] : NULL
 
-					));
-				} else {
-					$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment)
-																		 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment)";
-
-					$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
-
-						':bmi_itemcode' => isset($detail['ts1_itemcode']) ? $detail['ts1_itemcode'] : NULL,
-						':bmi_quantity' => is_numeric($detail['ts1_quantity']) ? $detail['ts1_quantity'] * -1 : 0,
-						':bmi_whscode'  => isset($detail['ts1_whscode']) ? $detail['ts1_whscode'] : NULL,
-						':bmi_createat' => $this->validateDate($Data['its_createat']) ? $Data['its_createat'] : NULL,
-						':bmi_createby' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
-						':bmy_doctype'  => is_numeric($Data['its_doctype']) ? $Data['its_doctype'] : 0,
-						':bmy_baseentry' => $resInsert,
-						':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-						':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-						':bmi_basenum'			=> $DocNumVerificado,
-						':bmi_docdate' => $this->validateDate($Data['its_docdate']) ? $Data['its_docdate'] : NULL,
-						':bmi_duedate' => $this->validateDate($Data['its_duedate']) ? $Data['its_duedate'] : NULL,
-						':bmi_duedev'  => $this->validateDate($Data['its_duedev']) ? $Data['its_duedev'] : NULL,
-						':bmi_comment' => isset($Data['its_comment']) ? $Data['its_comment'] : NULL
-
-					));
-				}
+				));
+				
 
 
 				if (is_numeric($resInserMovimiento) && $resInserMovimiento > 0) {
@@ -1330,31 +1354,85 @@ class StockTransfer extends REST_Controller
 				$ProductoDestino = '';
 				$ResProductoDestino = '';
 
-				if ($ManejaLote == 1) {
-					$ProductoDestino = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-										FROM tbdi
-										WHERE bdi_itemcode = :bdi_itemcode
-										AND bdi_whscode = :bdi_whscode
-										AND bdi_lote = :bdi_lote";
+				if ( $ManejaUbicacion2 ==  1) {
 
-					$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
+					if ($ManejaLote == 1) {
 
-						':bdi_itemcode' => $detail['ts1_itemcode'],
-						':bdi_whscode'  => $detail['ts1_whscode_dest'],
-						':bdi_lote' 		=> $detail['ote_code']
-					));
+						$ProductoDestino = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+											FROM tbdi
+											WHERE bdi_itemcode = :bdi_itemcode
+											AND bdi_whscode = :bdi_whscode
+											AND bdi_lote = :bdi_lote
+											AND bdi_ubication = :bdi_ubication
+											AND business = :business";
+	
+						$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
+	
+							':bdi_itemcode' => $detail['ts1_itemcode'],
+							':bdi_whscode'  => $detail['ts1_whscode_dest'],
+							':bdi_lote' 	=> $detail['ote_code'],
+							':bdi_ubication'=> $detail['bdi_ubication2'],
+							':business' 	=> $Data['business']
+
+						));
+
+					}else{
+						$ProductoDestino = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+						FROM tbdi
+						WHERE bdi_itemcode = :bdi_itemcode
+						AND bdi_whscode = :bdi_whscode
+						AND bdi_ubication = :bdi_ubication
+						AND business = :business";
+
+						$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
+
+							':bdi_itemcode' => $detail['ts1_itemcode'],
+							':bdi_whscode'  => $detail['ts1_whscode_dest'],
+							':bdi_ubication'=> $detail['bdi_ubication2'],
+							':business' 	=> $Data['business']
+
+						));
+					}
+
 				} else {
-					$ProductoDestino = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-										FROM tbdi
-										WHERE bdi_itemcode = :bdi_itemcode
-										AND bdi_whscode = :bdi_whscode";
 
-					$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
+					if ($ManejaLote == 1) {
 
-						':bdi_itemcode' => $detail['ts1_itemcode'],
-						':bdi_whscode'  => $detail['ts1_whscode_dest']
-					));
+						$ProductoDestino = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+											FROM tbdi
+											WHERE bdi_itemcode = :bdi_itemcode
+											AND bdi_whscode = :bdi_whscode
+											AND bdi_lote = :bdi_lote
+											AND business = :business";
+	
+						$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
+	
+							':bdi_itemcode' => $detail['ts1_itemcode'],
+							':bdi_whscode'  => $detail['ts1_whscode_dest'],
+							':bdi_lote' 	=> $detail['ote_code'],
+							':business' 	=> $Data['business']
+						));
+
+					} else {
+
+						$ProductoDestino = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+											FROM tbdi
+											WHERE bdi_itemcode = :bdi_itemcode
+											AND bdi_whscode = :bdi_whscode
+											AND business = :business";
+	
+						$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
+	
+							':bdi_itemcode' => $detail['ts1_itemcode'],
+							':bdi_whscode'  => $detail['ts1_whscode_dest'],
+							':business' 	=> $Data['business']
+						));
+
+					}
+
 				}
+
+			
 
 
 				// SI EXISTE EN EL STOCK
@@ -1367,7 +1445,7 @@ class StockTransfer extends REST_Controller
 					$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
 
 						':bdi_quantity' =>  $detail['ts1_quantity'],
-						':bdi_id' 			 =>  $ResProductoDestino[0]['bdi_id']
+						':bdi_id' 		=>  $ResProductoDestino[0]['bdi_id']
 					));
 
 					if (is_numeric($resUpdateProductoEnAlmacen) && $resUpdateProductoEnAlmacen == 1) {
@@ -1386,36 +1464,80 @@ class StockTransfer extends REST_Controller
 
 						return;
 					}
-				} else { //SI NO EXISTE EN EL INVENTARIO
-					//SE VALIDA SI EL ARTICULO MANEJA LOTE
-					if ($ManejaLote == 1) {
-						$sqlInsertProductoAlmacenDestino = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote)
-															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote)";
+				} else { 
+
+					$sqlInsertProductoAlmacenDestino = "";
+					$resInsertProductoAlmacenDestino = [];
+					//SI NO EXISTE EN EL INVENTARIO
+					// SI EL ALMACEN DESTINO MANEJA UBICACION
+					if ( $ManejaUbicacion2 == 1 ) {
 
 
-						$resInsertProductoAlmacenDestino	= $this->pedeo->insertRow($sqlInsertProductoAlmacenDestino, array(
+						if ($ManejaLote == 1) {
+
+							$sqlInsertProductoAlmacenDestino = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote, business,bdi_ubication)
+																VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote, :business,:bdi_ubication)";
+	
+	
+							$resInsertProductoAlmacenDestino	= $this->pedeo->insertRow($sqlInsertProductoAlmacenDestino, array(
+	
+								':bdi_itemcode' => $detail['ts1_itemcode'],
+								':bdi_whscode'  => $detail['ts1_whscode_dest'],
+								':bdi_quantity' => $detail['ts1_quantity'],
+								':bdi_avgprice' => $detail['ts1_price'],
+								':bdi_lote' 	=> $detail['ote_code'],
+								':bdi_ubication' => $detail['ts1_ubication2'],
+								':business' 	=> $Data['business']
+							));
+
+						}else{
+
+							$sqlInsertProductoAlmacenDestino = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, business,bdi_ubication)
+							VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :business,:bdi_ubication)";
+
+
+							$resInsertProductoAlmacenDestino	= $this->pedeo->insertRow($sqlInsertProductoAlmacenDestino, array(
 
 							':bdi_itemcode' => $detail['ts1_itemcode'],
 							':bdi_whscode'  => $detail['ts1_whscode_dest'],
 							':bdi_quantity' => $detail['ts1_quantity'],
 							':bdi_avgprice' => $detail['ts1_price'],
-							':bdi_lote' 		=> $detail['ote_code'],
-						));
+							':bdi_ubication' => $detail['ts1_ubication2'],
+							':business' 	=> $Data['business']));
+						}
+
 					} else {
-						$sqlInsertProductoAlmacenDestino = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice)
-															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice)";
 
-
-						$resInsertProductoAlmacenDestino	= $this->pedeo->insertRow($sqlInsertProductoAlmacenDestino, array(
-
-							':bdi_itemcode' => $detail['ts1_itemcode'],
-							':bdi_whscode'  => $detail['ts1_whscode_dest'],
-							':bdi_quantity' => $detail['ts1_quantity'],
-							':bdi_avgprice' => $detail['ts1_price']
-						));
+						if ($ManejaLote == 1) {
+							$sqlInsertProductoAlmacenDestino = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote, business)
+																VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_lote, :business)";
+	
+	
+							$resInsertProductoAlmacenDestino	= $this->pedeo->insertRow($sqlInsertProductoAlmacenDestino, array(
+	
+								':bdi_itemcode' => $detail['ts1_itemcode'],
+								':bdi_whscode'  => $detail['ts1_whscode_dest'],
+								':bdi_quantity' => $detail['ts1_quantity'],
+								':bdi_avgprice' => $detail['ts1_price'],
+								':bdi_lote' 	=> $detail['ote_code'],
+								':business' 	=> $Data['business']
+							));
+						} else {
+							$sqlInsertProductoAlmacenDestino = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, business)
+																VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :business)";
+	
+	
+							$resInsertProductoAlmacenDestino	= $this->pedeo->insertRow($sqlInsertProductoAlmacenDestino, array(
+	
+								':bdi_itemcode' => $detail['ts1_itemcode'],
+								':bdi_whscode'  => $detail['ts1_whscode_dest'],
+								':bdi_quantity' => $detail['ts1_quantity'],
+								':bdi_avgprice' => $detail['ts1_price'],
+								':business' 	=> $Data['business']
+							));
+						}
 					}
-
-
+					
 
 					if (is_numeric($resInsertProductoAlmacenDestino) && $resInsertProductoAlmacenDestino > 0) {
 						// Se verifica que el detalle no de error insertando //
@@ -1439,35 +1561,83 @@ class StockTransfer extends REST_Controller
 				// FIN ENTRADA DE STOCK EN ALMACEN DESTINO
 
 				//SALIDA DE STOCK EN ALMACEN ORIGEN
+				//SI EL ALMACEN DE ORIGEN MANEJA UBICACION
+				$sqlUpdateProductoEnAlmacen = "";
+				$resUpdateProductoEnAlmacen = [];
+				
+				if ( $ManejaUbicacion == 1 ){
 
-				//SE VALIDA SI EL ARTICULO MANEJA LOTE
-				if ($ManejaLote == 1) {
-					$sqlUpdateProductoEnAlmacen = "UPDATE tbdi
-												SET bdi_quantity = bdi_quantity - :bdi_quantity
-												WHERE  bdi_itemcode = :bdi_itemcode
-												AND bdi_whscode = :bdi_whscode
-												AND bdi_lote = :bdi_lote";
+					if ($ManejaLote == 1) {
+						$sqlUpdateProductoEnAlmacen = "UPDATE tbdi
+													SET bdi_quantity = bdi_quantity - :bdi_quantity
+													WHERE  bdi_itemcode = :bdi_itemcode
+													AND bdi_whscode = :bdi_whscode
+													AND bdi_lote = :bdi_lote,
+													AND bdi_ubication = :bdi_ubication,
+													AND business = :business";
 
-					$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
+						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
 
-						':bdi_quantity' =>  $detail['ts1_quantity'],
-						':bdi_itemcode' =>  $detail['ts1_itemcode'],
-						':bdi_whscode'  =>  $detail['ts1_whscode'],
-						':bdi_lote' 		 =>  $detail['ote_code']
-					));
-				} else {
-					$sqlUpdateProductoEnAlmacen = "UPDATE tbdi
-												SET bdi_quantity = bdi_quantity - :bdi_quantity
-												WHERE  bdi_itemcode = :bdi_itemcode
-												AND bdi_whscode = :bdi_whscode ";
+							':bdi_quantity' =>  $detail['ts1_quantity'],
+							':bdi_itemcode' =>  $detail['ts1_itemcode'],
+							':bdi_whscode'  =>  $detail['ts1_whscode'],
+							':bdi_lote' 	=>  $detail['ote_code'],
+							':bdi_ubication' =>  $detail['bdi_ubication'],
+							':business' 	=> $Data['business']
+						));
+					}else{
+						$sqlUpdateProductoEnAlmacen = "UPDATE tbdi
+													SET bdi_quantity = bdi_quantity - :bdi_quantity
+													WHERE  bdi_itemcode = :bdi_itemcode
+													AND bdi_whscode = :bdi_whscode
+													AND bdi_ubication = :bdi_ubication,
+													AND business = :business";
 
-					$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
+						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
 
-						':bdi_quantity' =>  $detail['ts1_quantity'],
-						':bdi_itemcode'  =>  $detail['ts1_itemcode'],
-						':bdi_whscode'  =>  $detail['ts1_whscode']
-					));
+							':bdi_quantity' =>  $detail['ts1_quantity'],
+							':bdi_itemcode' =>  $detail['ts1_itemcode'],
+							':bdi_whscode'  =>  $detail['ts1_whscode'],
+							':bdi_ubication' =>  $detail['bdi_ubication'],
+							':business' 	=> $Data['business']
+						));
+					}
+
+				}else{
+					//SE VALIDA SI EL ARTICULO MANEJA LOTE
+					if ($ManejaLote == 1) {
+						$sqlUpdateProductoEnAlmacen = "UPDATE tbdi
+													SET bdi_quantity = bdi_quantity - :bdi_quantity
+													WHERE  bdi_itemcode = :bdi_itemcode
+													AND bdi_whscode = :bdi_whscode
+													AND bdi_lote = :bdi_lote
+													AND business = :business";
+
+						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
+
+							':bdi_quantity' =>  $detail['ts1_quantity'],
+							':bdi_itemcode' =>  $detail['ts1_itemcode'],
+							':bdi_whscode'  =>  $detail['ts1_whscode'],
+							':bdi_lote' 	=>  $detail['ote_code'],
+							':business' 	=> $Data['business']
+						));
+					} else {
+						$sqlUpdateProductoEnAlmacen = "UPDATE tbdi
+													SET bdi_quantity = bdi_quantity - :bdi_quantity
+													WHERE  bdi_itemcode = :bdi_itemcode
+													AND bdi_whscode = :bdi_whscode
+													AND business = :business";
+
+						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
+
+							':bdi_quantity' =>  $detail['ts1_quantity'],
+							':bdi_itemcode' =>  $detail['ts1_itemcode'],
+							':bdi_whscode'  =>  $detail['ts1_whscode'],
+							':business' 	=>  $Data['business']
+						));
+					}
 				}
+
 
 
 

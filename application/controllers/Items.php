@@ -586,7 +586,8 @@ class Items extends REST_Controller
 
 		$Data = $this->get();
 
-		if (!isset($Data['item_code'])) {
+		if (!isset($Data['item_code']) or
+			!isset($Data['business']) or empty($Data['business'])){
 
 			$respuesta = array(
 				'error' => true,
@@ -608,12 +609,15 @@ class Items extends REST_Controller
 					inner join dmum on dmar.dma_uom_sale = dmum.dmu_id
 					inner join tbdi on dmar.dma_item_code = tbdi.bdi_itemcode
 					inner join dmws on tbdi.bdi_whscode = dmws.dws_code
-					where dmar.dma_item_code = :dma_item_code
+					where dmar.dma_item_code = :dma_item_code and tbdi.business = :business
 					group by dmar.dma_item_code,dmum.dmu_nameum,dmws.dws_name
 					order by dmar.dma_item_code asc";
 
 		
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':dma_item_code' => $Data['item_code']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':dma_item_code' => $Data['item_code'],
+			':business' => $Data['business']
+		));
 
 		if (isset($resSelect[0])) {
 
