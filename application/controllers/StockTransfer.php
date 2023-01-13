@@ -1192,7 +1192,7 @@ class StockTransfer extends REST_Controller
 							':bdi_whscode'  => $detail['ts1_whscode'],
 							':bdi_itemcode' => $detail['ts1_itemcode'],
 							':bdi_lote' 	=> $detail['ote_code'],
-							':bdi_ubication'=> $detail['bdi_ubication'],
+							':bdi_ubication'=> $detail['ts1_ubication'],
 							':business' 	=> $Data['business']
 						));
 
@@ -1201,7 +1201,7 @@ class StockTransfer extends REST_Controller
 						$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
 							':bdi_whscode'  => $detail['ts1_whscode'],
 							':bdi_itemcode' => $detail['ts1_itemcode'],
-							':bdi_ubication'=> $detail['bdi_ubication'],
+							':bdi_ubication'=> $detail['ts1_ubication'],
 							':business' 	=> $Data['business']
 						));
 					}
@@ -1249,6 +1249,19 @@ class StockTransfer extends REST_Controller
 
 						return;
 					}
+				}else{
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data'    => $resCostoMomentoRegistro,
+						'mensaje' => 'No se enctontro el costo del articulo'
+					);
+
+					$this->response($respuesta);
+
+					return;
 				}
 
 				//Se aplica el movimiento de inventario para el almacen destino
@@ -1256,7 +1269,7 @@ class StockTransfer extends REST_Controller
 				$resInserMovimiento = [];
 			
 				$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_lote,bmi_ubication)
-																			VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote,:bmi_ubication)";
+									VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote,:bmi_ubication)";
 
 				$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -1367,13 +1380,11 @@ class StockTransfer extends REST_Controller
 											AND business = :business";
 	
 						$ResProductoDestino = $this->pedeo->queryTable($ProductoDestino, array(
-	
 							':bdi_itemcode' => $detail['ts1_itemcode'],
 							':bdi_whscode'  => $detail['ts1_whscode_dest'],
 							':bdi_lote' 	=> $detail['ote_code'],
-							':bdi_ubication'=> $detail['bdi_ubication2'],
+							':bdi_ubication'=> $detail['ts1_ubication2'],
 							':business' 	=> $Data['business']
-
 						));
 
 					}else{
@@ -1388,7 +1399,7 @@ class StockTransfer extends REST_Controller
 
 							':bdi_itemcode' => $detail['ts1_itemcode'],
 							':bdi_whscode'  => $detail['ts1_whscode_dest'],
-							':bdi_ubication'=> $detail['bdi_ubication2'],
+							':bdi_ubication'=> $detail['ts1_ubication2'],
 							':business' 	=> $Data['business']
 
 						));
@@ -1572,8 +1583,8 @@ class StockTransfer extends REST_Controller
 													SET bdi_quantity = bdi_quantity - :bdi_quantity
 													WHERE  bdi_itemcode = :bdi_itemcode
 													AND bdi_whscode = :bdi_whscode
-													AND bdi_lote = :bdi_lote,
-													AND bdi_ubication = :bdi_ubication,
+													AND bdi_lote = :bdi_lote
+													AND bdi_ubication = :bdi_ubication
 													AND business = :business";
 
 						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
@@ -1582,7 +1593,7 @@ class StockTransfer extends REST_Controller
 							':bdi_itemcode' =>  $detail['ts1_itemcode'],
 							':bdi_whscode'  =>  $detail['ts1_whscode'],
 							':bdi_lote' 	=>  $detail['ote_code'],
-							':bdi_ubication' =>  $detail['bdi_ubication'],
+							':bdi_ubication' =>  $detail['ts1_ubication'],
 							':business' 	=> $Data['business']
 						));
 					}else{
@@ -1590,7 +1601,7 @@ class StockTransfer extends REST_Controller
 													SET bdi_quantity = bdi_quantity - :bdi_quantity
 													WHERE  bdi_itemcode = :bdi_itemcode
 													AND bdi_whscode = :bdi_whscode
-													AND bdi_ubication = :bdi_ubication,
+													AND bdi_ubication = :bdi_ubication
 													AND business = :business";
 
 						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
@@ -1598,7 +1609,7 @@ class StockTransfer extends REST_Controller
 							':bdi_quantity' =>  $detail['ts1_quantity'],
 							':bdi_itemcode' =>  $detail['ts1_itemcode'],
 							':bdi_whscode'  =>  $detail['ts1_whscode'],
-							':bdi_ubication' =>  $detail['bdi_ubication'],
+							':bdi_ubication' =>  $detail['ts1_ubication'],
 							':business' 	=> $Data['business']
 						));
 					}

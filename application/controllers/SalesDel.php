@@ -1717,7 +1717,7 @@ class SalesDel extends REST_Controller
 				// print_r($item_ord);
 				// print_r($cantidad_cot);
 				// print_r($cantidad_ord);exit();die();
-				if ($item_cot == $item_del  &&  $cantidad_cot == $cantidad_del) {
+				if ($item_cot == $item_del  &&   $cantidad_del >= $cantidad_cot) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -2153,6 +2153,145 @@ class SalesDel extends REST_Controller
 
 
 	//OBTENER Entrega de Ventas DETALLE POR ID
+	public function getSalesDelDetailCopy_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['em1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		//VARIABLES DE CANTIDADES DE DOC POSTERIORES PARA EL COPIAR DE
+		$cantDev = 0;
+		$CantFactura = 0;
+
+		//OBTENER CANTIDAD DE PEDIDO DIRECTO
+		$sqlDev = "SELECT 
+						vdv1.dv1_itemcode,
+						sum(vdv1.dv1_quantity) as dv1_quantity
+					FROM dvem
+					INNER JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry
+					LEFT JOIN dvdv ON dvem.vem_docentry = dvdv.vdv_baseentry AND dvem.vem_doctype = dvdv.vdv_basetype
+					LEFT JOIN vdv1 ON dvdv.vdv_docentry = vdv1.dv1_docentry AND vem1.em1_itemcode = vdv1.dv1_itemcode
+					WHERE dvem.vem_docentry = ".$Data['ov1_docentry']."
+					GROUP BY vdv1.dv1_itemcode";
+
+		$resSqlDev = $this->pedeo->queryTable($sqlDev,array());
+
+		$cantDev = isset($resSqlDev[0]['dv1_quantity']) ? $resSqlDev[0]['dv1_quantity'] : $cantDev;
+		
+		//OBTENER CANTIDAD DE ENTREGA DIRECTA
+		$sqlInvoice = "SELECT
+							vfv1.fv1_itemcode,
+							sum(vfv1.fv1_quantity) as fv1_quantity
+						FROM dvem
+						INNER JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry
+						LEFT JOIN dvfv ON dvem.vem_docentry = dvfv.dvf_baseentry AND dvem.vem_doctype = dvfv.dvf_basetype
+						LEFT JOIN vfv1 ON dvfv.dvf_docentry = vfv1.dv1_docentry AND vem1.em1_itemcode = vfv1.fv1_itemcode
+						WHERE dvem.vem_docentry = ".$Data['ov1_docentry']."
+						GROUP BY vfv1.fv1_itemcode";
+
+		$resSqlInvoice = $this->pedeo->queryTable($sqlInvoice,array());
+
+		$CantFactura = isset($resSqlInvoice[0]['fv1_quantity']) ? $resSqlInvoice[0]['fv1_quantity'] : $CantFactura;
+
+		$sqlSelect = " SELECT
+						t1.em1_acciva,
+						t1.em1_acctcode,
+						t1.em1_avprice,
+						t1.em1_basetype,
+						t1.em1_costcode,
+						t1.em1_discount,
+						t1.em1_docentry,
+						t1.em1_doctype,
+						t1.em1_id,
+						t1.em1_inventory,
+						t1.em1_itemcode,
+						t1.em1_itemname,
+						t1.em1_linenum,
+						t1.em1_linetotal line_total_real,
+						(t1.em1_quantity + ".$cantDev." - ".$CantFactura.") * t1.em1_price em1_linetotal,
+						t1.em1_price,
+						t1.em1_project,
+						(t1.em1_quantity + ".$cantDev." - ".$CantFactura.") em1_quantity,
+						t1.em1_ubusiness,
+						t1.em1_uom,
+						t1.em1_vat,
+						t1.em1_vatsum,
+						t1.em1_quantity cant_real,
+						coalesce(SUM(t3.dv1_quantity),0) devolucion,
+						coalesce(SUM(t5.fv1_quantity),0) facturado,
+						(((t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0))) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
+						t1.em1_whscode,
+						dmar.dma_series_code,
+						t1.em1_ubication
+						from dvem t0
+						left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+						left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
+						left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+						left join dvfv t4 on t0.vem_docentry = t4.dvf_baseentry and t0.vem_doctype = t4.dvf_basetype
+						left join vfv1 t5 on t4.dvf_docentry = t5.fv1_docentry and t1.em1_itemcode = t5.fv1_itemcode
+						INNER JOIN dmar ON em1_itemcode = dmar.dma_item_code
+						WHERE t1.em1_docentry = :em1_docentry
+						GROUP BY
+						t1.em1_acciva,
+						t1.em1_acctcode,
+						t1.em1_avprice,
+						t1.em1_basetype,
+						t1.em1_costcode,
+						t1.em1_discount,
+						t1.em1_docentry,
+						t1.em1_doctype,
+						t1.em1_id,
+						t1.em1_inventory,
+						t1.em1_itemcode,
+						t1.em1_itemname,
+						t1.em1_linenum,
+						t1.em1_linetotal,
+						t1.em1_price,
+						t1.em1_project,
+						t1.em1_ubusiness,
+						t1.em1_uom,
+						t1.em1_vat,
+						t1.em1_vatsum,
+						t1.em1_whscode,
+						t1.em1_quantity,
+						dmar.dma_series_code,
+						t1.em1_ubication
+						HAVING (t1.em1_quantity + ".$cantDev." - ".$CantFactura.") <> 0";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	//OBTENER Entrega de Ventas DETALLE POR ID
 	public function getSalesDelDetail_get()
 	{
 
@@ -2186,27 +2325,21 @@ class SalesDel extends REST_Controller
 						t1.em1_itemname,
 						t1.em1_linenum,
 						t1.em1_linetotal line_total_real,
-						(t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0))) * t1.em1_price em1_linetotal,
+						(t1.em1_quantity ) * t1.em1_price em1_linetotal,
 						t1.em1_price,
 						t1.em1_project,
-						t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0)) em1_quantity,
+						(t1.em1_quantity ) em1_quantity,
 						t1.em1_ubusiness,
 						t1.em1_uom,
 						t1.em1_vat,
 						t1.em1_vatsum,
 						t1.em1_quantity cant_real,
-						coalesce(SUM(t3.dv1_quantity),0) devolucion,
-						coalesce(SUM(t5.fv1_quantity),0) facturado,
-						(((t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0))) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
+						(((t1.em1_quantity ) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
 						t1.em1_whscode,
 						dmar.dma_series_code,
 						t1.em1_ubication
 						from dvem t0
 						left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-						left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
-						left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
-						left join dvfv t4 on t0.vem_docentry = t4.dvf_baseentry and t0.vem_doctype = t4.dvf_basetype
-						left join vfv1 t5 on t4.dvf_docentry = t5.fv1_docentry and t1.em1_itemcode = t5.fv1_itemcode
 						INNER JOIN dmar ON em1_itemcode = dmar.dma_item_code
 						WHERE t1.em1_docentry = :em1_docentry
 						GROUP BY
@@ -2306,15 +2439,6 @@ class SalesDel extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
-
-
-
-
-
 
 
 	private function getUrl($data, $caperta)

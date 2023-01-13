@@ -703,7 +703,7 @@ class SalesOrder extends REST_Controller
 				// print_r($cantidad_cot);
 				// print_r($cantidad_ord);exit();die();
 
-				if ($item_cot == $item_ord  &&  $cantidad_cot == $cantidad_ord) {
+				if ($item_cot == $item_ord  &&   $cantidad_ord >= $cantidad_cot) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -1040,7 +1040,7 @@ class SalesOrder extends REST_Controller
 
 
 	//OBTENER DETALLE PEDIDO POR ID
-	public function getSalesOrderDetail_get()
+	public function getSalesOrderDetailCopy_get()
 	{
 
 		$Data = $this->get();
@@ -1058,6 +1058,40 @@ class SalesOrder extends REST_Controller
 			return;
 		}
 
+		//VARIABLES DE CANTIDADES DE DOC POSTERIORES PARA EL COPIAR DE
+		$CantEntrega = 0;
+		$CantFactura = 0;
+
+		//OBTENER CANTIDAD DE PEDIDO DIRECTO
+		$sqlDelivery = "SELECT 
+						vem1.em1_itemcode,
+						sum(vem1.em1_quantity) as em1_quantity
+					FROM dvov
+					INNER JOIN vov1 ON dvov.vov_docentry = vov1.ov1_docentry
+					LEFT JOIN dvem ON dvov.vov_docentry = dvem.vem_baseentry AND dvov.vov_doctype = dvem.vem_basetype
+					LEFT JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry AND vov1.ov1_itemcode = vem1.em1_itemcode
+					WHERE dvov.vov_docentry = ".$Data['ov1_docentry']."
+					GROUP BY vem1.em1_itemcode";
+
+		$resSqlDelivery = $this->pedeo->queryTable($sqlDelivery,array());
+
+		$CantEntrega = isset($resSqlDelivery[0]['em1_quantity']) ? $resSqlDelivery[0]['em1_quantity'] : $CantEntrega;
+		
+		//OBTENER CANTIDAD DE ENTREGA DIRECTA
+		$sqlInvoice = "SELECT
+							vfv1.fv1_itemcode,
+							sum(vfv1.fv1_quantity) as fv1_quantity
+						FROM dvov
+						INNER JOIN vov1 ON dvov.vov_docentry = vov1.ov1_docentry
+						LEFT JOIN dvfv ON dvov.vov_docentry = dvfv.dvf_baseentry AND dvov.vov_doctype = dvfv.dvf_basetype
+						LEFT JOIN vfv1 ON dvem.vem_docentry = vfv1.fv1_docentry AND vov1.ov1_itemcode = vfv1.fv1_itemcode
+						WHERE dvov.vov_docentry = ".$Data['ov1_docentry']."
+						GROUP BY vfv1.fv1_itemcode";
+
+		$resSqlInvoice = $this->pedeo->queryTable($sqlInvoice,array());
+
+		$CantFactura = isset($resSqlInvoice[0]['fv1_quantity']) ? $resSqlInvoice[0]['fv1_quantity'] : $CantFactura;
+
 		$sqlSelect = "SELECT
 						t1.ov1_acciva,
 						t1.ov1_acctcode,
@@ -1073,24 +1107,21 @@ class SalesOrder extends REST_Controller
 						t1.ov1_itemname,
 						t1.ov1_linenum,
 						t1.ov1_linetotal line_total_real,
-						(t1.ov1_quantity - (coalesce(SUM(t3.em1_quantity),0))) * t1.ov1_price ov1_linetotal,
+						(t1.ov1_quantity - ".$CantEntrega." - ".$CantFactura.") * t1.ov1_price ov1_linetotal,
 						t1.ov1_price,
 						t1.ov1_project,
-						t1.ov1_quantity - (coalesce(SUM(t3.em1_quantity),0)) ov1_quantity,
+						t1.ov1_quantity  ov1_quantity,
 						t1.ov1_ubusiness,
 						t1.ov1_uom,
 						t1.ov1_vat,
 						t1.ov1_vatsum,
 						t1.ov1_quantity cant_real,
-						coalesce(SUM(t3.em1_quantity),0) entregado,
-						(((t1.ov1_quantity - (coalesce(SUM(t3.em1_quantity),0))) * t1.ov1_price) * t1.ov1_vat) / 100 ov1_vatsum,
+						(((t1.ov1_quantity - ".$CantEntrega." - ".$CantFactura.") * t1.ov1_price) * t1.ov1_vat) / 100 ov1_vatsum,
 						t1.ov1_whscode,
 						dmar.dma_series_code,
 						t1.ov1_ubication
 						from dvov t0
 						left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-						left join dvem t2 on t0.vov_docentry = t2.vem_baseentry and t0.vov_doctype = t2.vem_basetype
-						left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
 						INNER JOIN dmar ON ov1_itemcode = dmar.dma_item_code
 						WHERE t1.ov1_docentry = :ov1_docentry
 						GROUP BY
@@ -1118,7 +1149,7 @@ class SalesOrder extends REST_Controller
 						t1.ov1_quantity,
 						dmar.dma_series_code,
 						t1.ov1_ubication
-						HAVING (t1.ov1_quantity - (coalesce(SUM(t3.em1_quantity),0))) <> 0";
+						HAVING (t1.ov1_quantity - ".$CantEntrega." - ".$CantFactura.") <> 0";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ov1_docentry" => $Data['ov1_docentry']));
 
@@ -1141,12 +1172,12 @@ class SalesOrder extends REST_Controller
 		$this->response($respuesta);
 	}
 
-	public function getOrderDetailView_get()
+	public function getSalesOrderDetail_get()
 	{
 
 		$Data = $this->get();
 
-		if (!isset($Data['vc1_docentry'])) {
+		if (!isset($Data['ov1_docentry'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -1231,13 +1262,6 @@ class SalesOrder extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
-
-
-
 
 	private function getUrl($data, $caperta)
 	{

@@ -937,7 +937,7 @@ class Quotation extends REST_Controller
 
 
 	//OBTENER COTIZACION DETALLE POR ID
-	public function getQuotationDetail_get()
+	public function getQuotationDetailCopy_get()
 	{
 
 		$Data = $this->get();
@@ -955,67 +955,96 @@ class Quotation extends REST_Controller
 			return;
 		}
 
+		//VARIABLES DE CANTIDADES DE DOC POSTERIORES PARA EL COPIAR DE
+		$cantPedido = 0;
+		$cantEntrega = 0;
+
+		//OBTENER CANTIDAD DE PEDIDO DIRECTO
+		$sqlOrder = "SELECT 
+						vov1.ov1_itemcode,
+						sum(vov1.ov1_quantity) as ov1_quantity
+					FROM dvct
+					INNER JOIN vct1 ON dvct.dvc_docentry = vct1.vc1_docentry
+					LEFT JOIN dvov ON dvct.dvc_docentry = dvov.vov_baseentry AND dvct.dvc_doctype = dvov.vov_basetype
+					LEFT JOIN vov1 ON dvov.vov_docentry = vov1.ov1_docentry AND vct1.vc1_itemcode = vov1.ov1_itemcode
+					WHERE dvct.dvc_docentry = ".$Data['vc1_docentry']."
+					GROUP BY vov1.ov1_itemcode";
+
+		$resSqlOrder = $this->pedeo->queryTable($sqlOrder,array());
+
+		$cantPedido = isset($resSqlOrder[0]['ov1_quantity']) ? $resSqlOrder[0]['ov1_quantity'] : $cantPedido;
+
+		//OBTENER CANTIDAD DE ENTREGA DIRECTA
+		$sqlDelivery = "SELECT
+							vem1.em1_itemcode,
+							sum(vem1.em1_quantity) as em1_quantity
+						FROM dvct
+						LEFT JOIN vct1 ON dvct.dvc_docentry = vct1.vc1_docentry
+						LEFT JOIN dvem ON dvct.dvc_docentry = dvem.vem_baseentry AND dvct.dvc_doctype = dvem.vem_basetype
+						LEFT JOIN vem1 ON dvem.vem_docentry = vem1.ov1_docentry AND vct1.vc1_itemcode = vem1.em1_itemcode
+						WHERE dvct.dvc_docentry = ".$Data['vc1_docentry']."
+						GROUP BY vem1.em1_itemcode";
+
+		$resSqlDelivery = $this->pedeo->queryTable($sqlDelivery,array());
+
+		$cantEntrega = isset($resSqlDelivery[0]['em1_quantity']) ? $resSqlDelivery[0]['em1_quantity'] : $cantEntrega;
+
 		$sqlSelect = "SELECT
-						t1.vc1_acciva,
-						t1.vc1_acctcode,
-						t1.vc1_avprice,
-						t1.vc1_basetype,
-						t1.vc1_costcode,
-						t1.vc1_discount,
-						t1.vc1_docentry,
-						t1.vc1_doctype,
-						t1.vc1_id,
-						t1.vc1_inventory,
-						t1.vc1_itemcode,
-						t1.vc1_itemname,
-						t1.vc1_linenum,
-						t1.vc1_linetotal line_total_real,
-						(t1.vc1_quantity - (coalesce(SUM(t3.ov1_quantity),0))) * t1.vc1_price vc1_linetotal,
-						t1.vc1_price,
-						t1.vc1_project,
-						t1.vc1_quantity - (coalesce(SUM(t3.ov1_quantity),0)) vc1_quantity,
-						t1.vc1_ubusiness,
-						t1.vc1_uom,
-						t1.vc1_vat,
-						t1.vc1_vatsum,
-						t1.vc1_quantity cant_real,
-						coalesce(SUM(t3.ov1_quantity),0) entregado,
-						(((t1.vc1_quantity - (coalesce(SUM(t3.ov1_quantity),0))) * t1.vc1_price) * t1.vc1_vat) / 100 vc1_vatsum,
-						t1.vc1_whscode,
-						dmar.dma_series_code,
-						t1.vc1_ubication
-						from dvct t0
-						left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-						left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry and t0.dvc_doctype = t2.vov_basetype
-						left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode
-						INNER JOIN dmar ON vc1_itemcode = dmar.dma_item_code
-						WHERE t1.vc1_docentry = :vc1_docentry
-						GROUP BY
-						t1.vc1_acciva,
-						t1.vc1_acctcode,
-						t1.vc1_avprice,
-						t1.vc1_basetype,
-						t1.vc1_costcode,
-						t1.vc1_discount,
-						t1.vc1_docentry,
-						t1.vc1_doctype,
-						t1.vc1_id,
-						t1.vc1_inventory,
-						t1.vc1_itemcode,
-						t1.vc1_itemname,
-						t1.vc1_linenum,
-						t1.vc1_linetotal,
-						t1.vc1_price,
-						t1.vc1_project,
-						t1.vc1_ubusiness,
-						t1.vc1_uom,
-						t1.vc1_vat,
-						t1.vc1_vatsum,
-						t1.vc1_whscode,
-						t1.vc1_quantity,
-						dmar.dma_series_code,
-						t1.vc1_ubication
-						HAVING (t1.vc1_quantity  - coalesce(SUM(t3.ov1_quantity),0)) <> 0";
+					t1.vc1_acciva,
+					t1.vc1_acctcode,
+					t1.vc1_avprice,
+					t1.vc1_basetype,
+					t1.vc1_costcode,
+					t1.vc1_discount,
+					t1.vc1_docentry,
+					t1.vc1_doctype,
+					t1.vc1_id,
+					t1.vc1_inventory,
+					t1.vc1_itemcode,
+					t1.vc1_itemname,
+					t1.vc1_linenum,
+					(t1.vc1_quantity) * t1.vc1_price vc1_linetotal ,
+					t1.vc1_price,
+					t1.vc1_project,
+					t1.vc1_quantity - ".$cantPedido." - ".$cantEntrega." as vc1_quantity,
+					t1.vc1_ubusiness,
+					t1.vc1_uom,
+					t1.vc1_vat,
+					t1.vc1_vatsum,
+					(((t1.vc1_quantity ) * t1.vc1_price) * t1.vc1_vat) / 100 vc1_vatsum,
+					t1.vc1_whscode,
+					dmar.dma_series_code,
+					t1.vc1_ubication
+					from dvct t0
+					left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+					INNER JOIN dmar ON vc1_itemcode = dmar.dma_item_code
+					WHERE t1.vc1_docentry = :vc1_docentry
+					GROUP BY
+					t1.vc1_acciva,
+					t1.vc1_acctcode,
+					t1.vc1_avprice,
+					t1.vc1_basetype,
+					t1.vc1_costcode,
+					t1.vc1_discount,
+					t1.vc1_docentry,
+					t1.vc1_doctype,
+					t1.vc1_id,
+					t1.vc1_inventory,
+					t1.vc1_itemcode,
+					t1.vc1_itemname,
+					t1.vc1_linenum,
+					t1.vc1_linetotal,
+					t1.vc1_price,
+					t1.vc1_project,
+					t1.vc1_ubusiness,
+					t1.vc1_uom,
+					t1.vc1_vat,
+					t1.vc1_vatsum,
+					t1.vc1_whscode,
+					t1.vc1_quantity,
+					dmar.dma_series_code,
+					t1.vc1_ubication
+					HAVING (t1.vc1_quantity - ".$cantPedido." - ".$cantEntrega.") <> 0";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vc1_docentry" => $Data['vc1_docentry']));
 
@@ -1034,11 +1063,13 @@ class Quotation extends REST_Controller
 				'mensaje'	=> 'busqueda sin resultados'
 			);
 		}
+		
+		
 
 		$this->response($respuesta);
 	}
 
-	public function getQuotationDetailView_get()
+	public function getQuotationDetail_get()
 	{
 
 		$Data = $this->get();

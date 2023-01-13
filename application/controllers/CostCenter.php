@@ -29,7 +29,8 @@ class CostCenter extends REST_Controller {
       if(!isset($Data['dcc_prc_code']) OR
          !isset($Data['dcc_prc_name']) OR
          !isset($Data['dcc_prc_date_ini']) OR
-         !isset($Data['dcc_prc_end_date'])){
+         !isset($Data['dcc_prc_end_date']) OR
+         !isset($Data['business'])){
 
         $respuesta = array(
           'error' => true,
@@ -42,16 +43,17 @@ class CostCenter extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dmcc(dcc_prc_code, dcc_prc_name, dcc_prc_date_ini, dcc_prc_end_date)
-                      VALUES (:dcc_prc_code, :dcc_prc_name, :dcc_prc_date_ini, :dcc_prc_end_date)";
+        $sqlInsert = "INSERT INTO dmcc(dcc_prc_code, dcc_prc_name, dcc_prc_date_ini, dcc_prc_end_date,business)
+                      VALUES (:dcc_prc_code, :dcc_prc_name, :dcc_prc_date_ini, :dcc_prc_end_date,:business)";
 
 
 				  $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-				 			 ':dcc_prc_code' => $Data['dcc_prc_code'],
-				 			 ':dcc_prc_name' => $Data['dcc_prc_name'],
-				 			 ':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
-				 			 ':dcc_prc_end_date' => $Data['dcc_prc_end_date']
+				 			':dcc_prc_code' => $Data['dcc_prc_code'],
+				 			':dcc_prc_name' => $Data['dcc_prc_name'],
+				 			':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
+				 			':dcc_prc_end_date' => $Data['dcc_prc_end_date'],
+              ':business' => $Data['business']
 				  ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -83,7 +85,8 @@ class CostCenter extends REST_Controller {
          !isset($Data['dcc_prc_name']) OR
          !isset($Data['dcc_prc_date_ini']) OR
          !isset($Data['dcc_prc_end_date']) OR
-         !isset($Data['dcc_id'])){
+         !isset($Data['dcc_id'])OR
+         !isset($Data['business'])){
 
 
         $respuesta = array(
@@ -98,7 +101,7 @@ class CostCenter extends REST_Controller {
       }
 
       $sqlUpdate = "UPDATE dmcc SET dcc_prc_code = :dcc_prc_code, dcc_prc_name = :dcc_prc_name, dcc_prc_date_ini = :dcc_prc_date_ini,
-                    dcc_prc_end_date = :dcc_prc_end_date WHERE dcc_id = :dcc_id";
+                    dcc_prc_end_date = :dcc_prc_end_date,business = :business WHERE dcc_id = :dcc_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -106,7 +109,8 @@ class CostCenter extends REST_Controller {
             ':dcc_prc_name' => $Data['dcc_prc_name'],
             ':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
             ':dcc_prc_end_date' => $Data['dcc_prc_end_date'],
-            ':dcc_id' => $Data['dcc_id']
+            ':dcc_id' => $Data['dcc_id'],
+            ':business' => $Data['business']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -135,9 +139,23 @@ class CostCenter extends REST_Controller {
   // OBTENER CENTRO DE COSTO
   public function getCostCenter_get(){
 
-        $sqlSelect = " SELECT * FROM dmcc";
+          $Data = $this->get();
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+          if(!isset($Data['business'])){
+
+          $respuesta = array(
+            'error' => true,
+            'data'  => array(),
+            'mensaje' =>'La informacion enviada no es valida'
+          );
+
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          return;
+        }
+        $sqlSelect = " SELECT * FROM dmcc WHERE business = :business";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 
         if(isset($resSelect[0])){
 
@@ -164,9 +182,8 @@ class CostCenter extends REST_Controller {
 
         $Data = $this->get();
 
-        if(!isset($Data['dcc_id'])){
-
-
+        if(!isset($Data['dcc_id']) OR
+        !isset($Data['business'])){
           $respuesta = array(
             'error' => true,
             'data'  => array(),
@@ -178,9 +195,9 @@ class CostCenter extends REST_Controller {
           return;
         }
 
-        $sqlSelect = " SELECT * FROM dmcc WHERE dcc_id = :dcc_id ";
+        $sqlSelect = " SELECT * FROM dmcc WHERE dcc_id = :dcc_id AND  business = :business";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dcc_id' => $Data['dcc_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dcc_id' => $Data['dcc_id'], ':business' => $Data['business']));
 
         if(isset($resSelect[0])){
 

@@ -35,9 +35,7 @@ class ExitInventory extends REST_Controller
 		$Data = $this->post();
 
 
-
-		if (!isset($Data['business']) OR
-			!isset($Data['branch'])) {
+		if (!isset($Data['business'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -918,6 +916,7 @@ class ExitInventory extends REST_Controller
 				//****************************-
 
 				$DetalleCuentaGrupo->si1_itemcode = isset($detail['si1_itemcode']) ? $detail['si1_itemcode'] : NULL;
+				$DetalleCuentaGrupo->si1_whscode = isset($detail['si1_whscode']) ? $detail['si1_whscode'] : NULL;
 				$DetalleCuentaGrupo->si1_acctcode = is_numeric($detail['si1_acctcode']) ? $detail['si1_acctcode'] : 0;
 				$DetalleCuentaGrupo->si1_quantity = is_numeric($detail['si1_quantity']) ? $detail['si1_quantity'] : 0;
 				$DetalleCuentaGrupo->si1_price = is_numeric($detail['si1_price']) ? $detail['si1_price'] : 0;
@@ -1042,15 +1041,15 @@ class ExitInventory extends REST_Controller
 					':ac1_accperiod' => 1,
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
-					':ac1_ven_debit' => 1,
-					':ac1_ven_credit' => 1,
+					':ac1_ven_debit' => 0,
+					':ac1_ven_credit' => 0,
 					':ac1_fiscal_acct' => 0,
-					':ac1_taxid' => 1,
+					':ac1_taxid' => 0,
 					':ac1_isrti' => 0,
 					':ac1_basert' => 0,
 					':ac1_mmcode' => 0,
 					':ac1_legal_num' => isset($Data['isi_cardcode']) ? $Data['isi_cardcode'] : NULL,
-					':ac1_codref' => 1,
+					':ac1_codref' => 0,
 					':business' => $Data['business'],
 					':branch' => $Data['branch']
 				));
@@ -1079,6 +1078,7 @@ class ExitInventory extends REST_Controller
 
 
 			// PROCEDIMIENTO PARA LLENAR CUENTA GRUPO
+
 			foreach ($DetalleConsolidadoCuentaGrupo as $key => $posicion) {
 				$grantotalCuentaGrupo = 0;
 				$grantotalCuentaGrupoOriginal = 0;
@@ -1089,7 +1089,7 @@ class ExitInventory extends REST_Controller
 				$MontoSysCR = 0;
 				foreach ($posicion as $key => $value) {
 
-					$CUENTASINV = $this->account->getAccountItem($value->em1_itemcode, $value->em1_whscode);
+					$CUENTASINV = $this->account->getAccountItem($value->si1_itemcode, $value->si1_whscode);
 
 					if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
 
@@ -1262,7 +1262,7 @@ class ExitInventory extends REST_Controller
 
 		$Data = $this->get();
 
-		if ( !isset($Data['business']) OR !isset($Data['branch']) ) {
+		if ( !isset($Data['business']) ) {
 
 			$respuesta = array(
 				'error' => true,
@@ -1289,10 +1289,9 @@ class ExitInventory extends REST_Controller
 					FROM misi t0
 					LEFT JOIN dmev t1 on t0.isi_slpcode = t1.mev_id
 					LEFT JOIN dmdt t2 on t0.isi_doctype = t2.mdt_doctype
-					WHERE t0.business = :business
-					AND t0.branch = :branch";
+					WHERE t0.business = :business";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 
 		if (isset($resSelect[0])) {
 

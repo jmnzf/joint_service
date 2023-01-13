@@ -264,6 +264,7 @@ class DinamicCrud extends REST_Controller {
   }
 
   public function select_get(){
+
     $Data = $this->get();
 
     if (!isset($Data['table']) OR !isset($Data['id']) OR !isset($Data['text']) ){

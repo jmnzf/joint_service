@@ -634,7 +634,7 @@ class BpContracts extends REST_Controller
 
 			// DATOS COMPLEMNETARIO DEL CONTRATOS
 			$sqlInsertDetail2 = "INSERT INTO dcsn(csn_docentry, csn_doctype, csn_typeagreement, csn_paymentcondition, csn_waypay, csn_shippingway, csn_probabilitypercentage, csn_status, csn_renewal, csn_remember)
-															 VALUES (:csn_docentry, :csn_doctype, :csn_typeagreement, :csn_paymentcondition, :csn_waypay, :csn_shippingway, :csn_probabilitypercentage, :csn_status, :csn_renewal, :csn_remember)";
+							 VALUES (:csn_docentry, :csn_doctype, :csn_typeagreement, :csn_paymentcondition, :csn_waypay, :csn_shippingway, :csn_probabilitypercentage, :csn_status, :csn_renewal, :csn_remember)";
 
 			$resInsertDetail2 = $this->pedeo->insertRow($sqlInsertDetail2, array(
 
@@ -677,7 +677,7 @@ class BpContracts extends REST_Controller
 
 				foreach ($DatosCS as $key => $value) {
 					foreach ($value['detalle'] as $key => $item) {
-						$sqlInsertDetail3 = "INSERT INTO csn2(sn2_docentry, sn2_doctype, sn2_itemcode, sn2_itemdescription, sn2_daycode, sn2_period, sn2_price)VALUES(:sn2_docentry, :sn2_doctype, :sn2_itemcode, :sn2_itemdescription, :sn2_daycode, :sn2_period, :sn2_price)";
+						$sqlInsertDetail3 = "INSERT INTO csn2(sn2_docentry, sn2_doctype, sn2_itemcode, sn2_itemdescription, sn2_daycode, sn2_period, sn2_price, sn2_susitemcode)VALUES(:sn2_docentry, :sn2_doctype, :sn2_itemcode, :sn2_itemdescription, :sn2_daycode, :sn2_period, :sn2_price, :sn2_susitemcode)";
 
 						$resInsertDetail3 = $this->pedeo->insertRow($sqlInsertDetail3, array(
 
@@ -687,7 +687,8 @@ class BpContracts extends REST_Controller
 							':sn2_itemdescription' => explode("||", $item)[1],
 							':sn2_daycode' => explode("||", $item)[0],
 							':sn2_period' => explode("||", $value['periodo'])[0],
-							':sn2_price' => explode("||", $item)[2]
+							':sn2_price' => explode("||", $item)[2],
+							':sn2_susitemcode' => explode("||", $item)[5]
 
 						));
 

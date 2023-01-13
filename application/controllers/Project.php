@@ -29,7 +29,8 @@ class Project extends REST_Controller {
       if(!isset($Data['dpj_pj_code']) OR
          !isset($Data['dpj_pj_name']) OR
          !isset($Data['dpj_pj_date_ini']) OR
-         !isset($Data['dpj_pj_end_date'])){
+         !isset($Data['dpj_pj_end_date']) or
+         !isset($Data['business'])){
 
         $respuesta = array(
           'error' => true,
@@ -42,8 +43,8 @@ class Project extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dmpj(dpj_pj_code, dpj_pj_name, dpj_pj_date_ini, dpj_pj_end_date)
-                      VALUES (:dpj_pj_code, :dpj_pj_name, :dpj_pj_date_ini, :dpj_pj_end_date)";
+        $sqlInsert = "INSERT INTO dmpj(dpj_pj_code, dpj_pj_name, dpj_pj_date_ini, dpj_pj_end_date,business)
+                      VALUES (:dpj_pj_code, :dpj_pj_name, :dpj_pj_date_ini, :dpj_pj_end_date,:business)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -51,7 +52,8 @@ class Project extends REST_Controller {
               ':dpj_pj_code' => $Data['dpj_pj_code'],
               ':dpj_pj_name' => $Data['dpj_pj_name'],
               ':dpj_pj_date_ini' => $Data['dpj_pj_date_ini'],
-              ':dpj_pj_end_date' => $Data['dpj_pj_end_date']
+              ':dpj_pj_end_date' => $Data['dpj_pj_end_date'],
+              ':business' => $Data['business']
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -86,7 +88,8 @@ class Project extends REST_Controller {
          !isset($Data['dpj_pj_name']) OR
          !isset($Data['dpj_pj_date_ini']) OR
          !isset($Data['dpj_pj_end_date']) OR
-         !isset($Data['dpj_id'])){
+         !isset($Data['dpj_id']) or
+         !isset($Data['business'])){
 
 
         $respuesta = array(
@@ -101,7 +104,7 @@ class Project extends REST_Controller {
       }
 
       $sqlUpdate = "UPDATE dmpj SET dpj_pj_code = :dpj_pj_code, dpj_pj_name = :dpj_pj_name, dpj_pj_date_ini = :dpj_pj_date_ini,
-                    dpj_pj_end_date = :dpj_pj_end_date WHERE dpj_id = :dpj_id";
+                    dpj_pj_end_date = :dpj_pj_end_date,business = :business WHERE dpj_id = :dpj_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -109,7 +112,8 @@ class Project extends REST_Controller {
           ':dpj_pj_name' => $Data['dpj_pj_name'],
           ':dpj_pj_date_ini' => $Data['dpj_pj_date_ini'],
           ':dpj_pj_end_date' => $Data['dpj_pj_end_date'],
-          ':dpj_id' => $Data['dpj_id']
+          ':dpj_id' => $Data['dpj_id'],
+          ':business' => $Data['business']
 
       ));
 
@@ -139,9 +143,21 @@ class Project extends REST_Controller {
   // OBTENER PROYECTOS
   public function getProject_get(){
 
-        $sqlSelect = " SELECT * FROM dmpj";
+    $Data = $this->get();
+          if(!isset($Data['business'])){
+          $respuesta = array(
+            'error' => true,
+            'data'  => array(),
+            'mensaje' =>'La informacion enviada no es valida'
+          );
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+          return;
+        }
+        $sqlSelect = " SELECT * FROM dmpj where business = :business";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 
         if(isset($resSelect[0])){
 
@@ -168,7 +184,8 @@ class Project extends REST_Controller {
 
         $Data = $this->get();
 
-        if(!isset($Data['dpj_id'])){
+        if(!isset($Data['dpj_id']) or
+          !isset($Data['business'])){
 
 
           $respuesta = array(
@@ -182,9 +199,9 @@ class Project extends REST_Controller {
           return;
         }
 
-        $sqlSelect = " SELECT * FROM dmpj WHERE dpj_id = :dpj_id ";
+        $sqlSelect = " SELECT * FROM dmpj WHERE dpj_id = :dpj_id and business = :business";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dpj_id' => $Data['dpj_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dpj_id' => $Data['dpj_id'], ':business' => $Data['business']));
 
         if(isset($resSelect[0])){
 

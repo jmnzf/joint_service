@@ -511,6 +511,7 @@ class Reports extends REST_Controller {
 					t3.dmu_nameum,
 					t1.bdi_whscode,
 					t1.bdi_quantity,
+					t1.bdi_ubication,
 					cast(t1.bdi_avgprice as decimal(15,2)) bdi_avgprice,
 					cast((t1.bdi_quantity * t1.bdi_avgprice) as decimal(15,2)) as costo
 				from tbdi t1

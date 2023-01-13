@@ -54,8 +54,8 @@ class Warehouse extends REST_Controller {
       }
 
         $sqlInsert = "INSERT INTO dmws(dws_code, dws_name, dws_ubication, dws_acctin, dws_acct_out, dws_acct_stockn, dws_acct_stockp, dws_acct_redu,
-                      dws_acct_amp, dws_acct_cost, dws_enabled, dws_acct_return, dws_acct_inv, business)VALUES (:dws_code, :dws_name, :dws_ubication, :dws_acctin, :dws_acct_out,
-                      :dws_acct_stockn, :dws_acct_stockp, :dws_acct_redu, :dws_acct_amp, :dws_acct_cost, :dws_enabled, :dws_acct_return, :dws_acct_inv, :business)";
+                      dws_acct_amp, dws_acct_cost, dws_enabled, dws_acct_return, dws_acct_inv, business,dws_acct_invproc)VALUES (:dws_code, :dws_name, :dws_ubication, :dws_acctin, :dws_acct_out,
+                      :dws_acct_stockn, :dws_acct_stockp, :dws_acct_redu, :dws_acct_amp, :dws_acct_cost, :dws_enabled, :dws_acct_return, :dws_acct_inv, :business,:dws_acct_invproc)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -73,7 +73,8 @@ class Warehouse extends REST_Controller {
               ':dws_enabled' => $Data['dws_enabled'],
               ':dws_acct_return' => $Data['dws_acct_return'],
               ':business' => $Data['business'],
-              ':dws_acct_inv' => $Data['dws_acct_inv']
+              ':dws_acct_inv' => $Data['dws_acct_inv'],
+              ':dws_acct_invproc' => $Data['dws_acct_invproc']
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -134,7 +135,7 @@ class Warehouse extends REST_Controller {
       $sqlUpdate = "UPDATE dmws SET dws_id =:dws_id, dws_code = :dws_code, dws_name = :dws_name, dws_ubication = :dws_ubication, dws_acctin = :dws_acctin,
                     dws_acct_out = :dws_acct_out, dws_acct_stockn = :dws_acct_stockn, dws_acct_stockp = :dws_acct_stockp,
                     dws_acct_redu = :dws_acct_redu, dws_acct_amp = :dws_acct_amp, dws_acct_cost = :dws_acct_cost, dws_enabled = :dws_enabled,
-                    dws_acct_return = :dws_acct_return, dws_acct_inv = :dws_acct_inv, business = :business WHERE dws_id = :dws_id";
+                    dws_acct_return = :dws_acct_return, dws_acct_inv = :dws_acct_inv, business = :business,dws_acct_invproc = :dws_acct_invproc WHERE dws_id = :dws_id";
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
@@ -152,7 +153,8 @@ class Warehouse extends REST_Controller {
               ':dws_acct_return' => $Data['dws_acct_return'],
               ':dws_acct_inv' => $Data['dws_acct_inv'],
               ':business' => $Data['business'],
-              ':dws_id' => $Data['dws_id']
+              ':dws_id' => $Data['dws_id'],
+              ':dws_acct_invproc' => $Data['dws_acct_invproc']
       ));
       if(is_numeric($resUpdate) && $resUpdate == 1){
 
@@ -296,8 +298,5 @@ class Warehouse extends REST_Controller {
 
          $this->response($respuesta);
   }
-
-
-
 
 }

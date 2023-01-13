@@ -29,7 +29,8 @@ class BusinessUnit extends REST_Controller {
       if(!isset($Data['dun_un_code']) OR
          !isset($Data['dun_un_name']) OR
          !isset($Data['dun_date_ini']) OR
-         !isset($Data['dun_un_end_date'])){
+         !isset($Data['dun_un_end_date']) or
+         !isset($Data['business'])){
 
         $respuesta = array(
           'error' => true,
@@ -42,8 +43,8 @@ class BusinessUnit extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dmun(dun_un_code, dun_un_name, dun_date_ini, dun_un_end_date)
-                      VALUES (:dun_un_code, :dun_un_name, :dun_date_ini, :dun_un_end_date)";
+        $sqlInsert = "INSERT INTO dmun(dun_un_code, dun_un_name, dun_date_ini, dun_un_end_date,business)
+                      VALUES (:dun_un_code, :dun_un_name, :dun_date_ini, :dun_un_end_date,:business)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -51,7 +52,8 @@ class BusinessUnit extends REST_Controller {
               ':dun_un_code' => $Data['dun_un_code'],
               ':dun_un_name' => $Data['dun_un_name'],
               ':dun_date_ini' => $Data['dun_date_ini'],
-              ':dun_un_end_date' => $Data['dun_un_end_date']
+              ':dun_un_end_date' => $Data['dun_un_end_date'],
+              ':business' => $Data['business']
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -85,7 +87,8 @@ class BusinessUnit extends REST_Controller {
          !isset($Data['dun_un_name']) OR
          !isset($Data['dun_date_ini']) OR
          !isset($Data['dun_un_end_date']) OR
-         !isset($Data['dun_id'])){
+         !isset($Data['dun_id']) or
+         !isset($Data['business'])){
 
 
         $respuesta = array(
@@ -100,7 +103,7 @@ class BusinessUnit extends REST_Controller {
       }
 
       $sqlUpdate = "UPDATE dmun SET dun_un_code = :dun_un_code, dun_un_name = :dun_un_name, dun_date_ini = :dun_date_ini,
-                    dun_un_end_date = :dun_un_end_date WHERE dun_id = :dun_id";
+                    dun_un_end_date = :dun_un_end_date,business = :business WHERE dun_id = :dun_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -108,7 +111,8 @@ class BusinessUnit extends REST_Controller {
           ':dun_un_name' => $Data['dun_un_name'],
           ':dun_date_ini' => $Data['dun_date_ini'],
           ':dun_un_end_date' => $Data['dun_un_end_date'],
-          ':dun_id' => $Data['dun_id']
+          ':dun_id' => $Data['dun_id'],
+          ':business' => $Data['business']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -137,9 +141,23 @@ class BusinessUnit extends REST_Controller {
   // OBTENER UNIDAD DE NEGOCIO
   public function getBusinessUnit_get(){
 
-        $sqlSelect = " SELECT * FROM dmun";
+      $Data = $this->get();
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+      if(!isset($Data['business'])){
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' =>'La informacion enviada no es valida'
+        );
+
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+        return;
+      }
+
+        $sqlSelect = " SELECT * FROM dmun where business = :business";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 
         if(isset($resSelect[0])){
 
@@ -166,9 +184,8 @@ class BusinessUnit extends REST_Controller {
 
         $Data = $this->get();
 
-        if(!isset($Data['dun_id'])){
-
-
+        if(!isset($Data['dun_id']) or
+          !isset($Data['business'])){
           $respuesta = array(
             'error' => true,
             'data'  => array(),
@@ -182,7 +199,7 @@ class BusinessUnit extends REST_Controller {
 
         $sqlSelect = " SELECT * FROM dmun WHERE dun_id = :dun_id ";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dun_id' => $Data['dun_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dun_id' => $Data['dun_id'], ':business' => $Data['business']));
 
         if(isset($resSelect[0])){
 

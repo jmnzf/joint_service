@@ -100,11 +100,11 @@ class PurchaseInv extends REST_Controller
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax, ac1_codret)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax, ac1_codret, business, branch)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line, :ac1_base_tax, :ac1_codret)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line, :ac1_base_tax, :business, :branch, :ac1_codret)";
 
 
 		if (!isset($Data['detail'])) {
@@ -704,7 +704,7 @@ class PurchaseInv extends REST_Controller
 								$DetalleRetencion = new stdClass();
 
 								$sqlInsertRetenciones = "INSERT INTO fcrt(crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret)
-																									 VALUES (:crt_baseentry, :crt_basetype, :crt_typert, :crt_basert, :crt_profitrt, :crt_totalrt, :crt_base, :crt_type, :crt_linenum, :crt_codret)";
+														VALUES (:crt_baseentry, :crt_basetype, :crt_typert, :crt_basert, :crt_profitrt, :crt_totalrt, :crt_base, :crt_type, :crt_linenum, :crt_codret)";
 
 								$resInsertRetenciones = $this->pedeo->insertRow($sqlInsertRetenciones, array(
 
@@ -1956,6 +1956,8 @@ class PurchaseInv extends REST_Controller
 					':ac1_codref' => 1,
 					':ac1_line' => $AC1LINE,
 					':ac1_base_tax' => round($LineTotal, $DECI_MALES),
+					':business' => $Data['business'],
+					':branch' 	=> $Data['branch'],
 					':ac1_codret' => 0
 				));
 
@@ -2120,6 +2122,8 @@ class PurchaseInv extends REST_Controller
 							':ac1_codref' => 1,
 							':ac1_line' => $AC1LINE,
 							':ac1_base_tax' => 0,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch'],
 							':ac1_codret' => 0
 						));
 
@@ -2311,6 +2315,8 @@ class PurchaseInv extends REST_Controller
 							':ac1_codref' => 1,
 							":ac1_line" => $AC1LINE,
 							':ac1_base_tax' => 0,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch'],
 							':ac1_codret' => 0
 						));
 
@@ -2424,6 +2430,8 @@ class PurchaseInv extends REST_Controller
 					':ac1_codref' => 1,
 					':ac1_line'   => 	$AC1LINE,
 					':ac1_base_tax' => 0,
+					':business' => $Data['business'],
+					':branch' 	=> $Data['branch'],
 					':ac1_codret' => 0
 				));
 
@@ -2534,6 +2542,8 @@ class PurchaseInv extends REST_Controller
 					':ac1_codref' => 1,
 					":ac1_line" => $AC1LINE,
 					':ac1_base_tax' => 0,
+					':business' => $Data['business'],
+					':branch' 	=> $Data['branch'],
 					':ac1_codret' => 0
 				));
 
@@ -2680,6 +2690,8 @@ class PurchaseInv extends REST_Controller
 					':ac1_codref' => 1,
 					":ac1_line" => $AC1LINE,
 					':ac1_base_tax' => 0,
+					':business' => $Data['business'],
+					':branch' 	=> $Data['branch'],
 					':ac1_codret' => $CodRet
 				));
 
@@ -2775,6 +2787,8 @@ class PurchaseInv extends REST_Controller
 							':ac1_codref' => 1,
 							':ac1_line'   => 	$AC1LINE,
 							':ac1_base_tax' => 0,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch'],
 							':ac1_codret' => 0
 						));
 

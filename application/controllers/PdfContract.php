@@ -161,6 +161,7 @@ class PdfContract extends REST_Controller {
 				}
 
 				$day = [];
+				$dayUnique = [];
 				$totaldetalle = '';
 				//VALIDAR PERIODO DE PAGO
 				$razon = "";
@@ -218,17 +219,22 @@ class PdfContract extends REST_Controller {
 					
 				 }
 
+				 $dayUnique = array_unique($day);
+
+				 
+
 				if($value['itementrega'] == 1){
 					$razon = 'checked="checked"';
-					$valorRazon += $value['valorday'];
+
 				}else if ($value['itementrega'] == 2){
 					$gaceta = 'checked="checked"';
-					$valorGaceta += $value['valorday'];
+
 				}else if ($value['itementrega'] == 3){
 					$otros = 'checked="checked"';
-					$valorOtros += $value['valorday'];
+
 				}
 			}
+
 
 			$td = '<td style="text-align: center;">0</td>
 			<td style="text-align: center;">0</td>
@@ -237,47 +243,48 @@ class PdfContract extends REST_Controller {
 			<td style="text-align: center;">0</td>';
 
 			if($contenidoContrato[0]['periodo'] == 1){
-				$suma = $valorRazon + $valorGaceta + $valorOtros;
-				$td = '<td style="text-align: center;">'.$suma.'</td>
+				$suma = $contenidoContrato[0]['totaldoc'];
+				$td = '<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>
 				<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>';
 			}else if ($contenidoContrato[0]['periodo'] == 2){
-				$suma = $valorRazon + $valorGaceta + $valorOtros;
+				$suma = $contenidoContrato[0]['totaldoc'];
 				$td = '<td style="text-align: center;">0</td>
-				<td style="text-align: center;">'.$suma.'</td>
+				<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>
 				<td style="text-align: center;"></td>
 				<td style="text-align: center;"></td>
 				<td style="text-align: center;"></td>';
 			}
 			else if ($contenidoContrato[0]['periodo'] == 3){
-				$suma = $valorRazon + $valorGaceta + $valorOtros;
+				$suma = $contenidoContrato[0]['totaldoc'];
 				$td = '<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>
-				<td style="text-align: center;">'.$suma.'</td>
+				<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>
 				<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>';
 			}
 			else if ($contenidoContrato[0]['periodo'] == 4){
-				$suma = $valorRazon + $valorGaceta + $valorOtros;
+				$suma = $contenidoContrato[0]['totaldoc'];
 				$td = '<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>
-				<td style="text-align: center;">'.$suma.'</td>
+				<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>
 				<td style="text-align: center;">0</td>';
 			}
 			else if ($contenidoContrato[0]['periodo'] == 5){
-				$suma = $valorRazon + $valorGaceta + $valorOtros;
+				$suma = $contenidoContrato[0]['totaldoc'];
 				$td = '<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>
 				<td style="text-align: center;">0</td>
-				<td style="text-align: center;">'.$suma.'</td>';
+				<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>';
 			}
 
+			
 			$convertArray = "";
-			$convertArray = implode(',',$day);
+			$convertArray = implode(',',$dayUnique);
 				
 
 		$texto = "<p>En caso de suscripciones a m&aacute;s de un ejempiar y que deban ser entregados en domicilios diferentes, el SUSCRIPTOR se compromete a 
@@ -419,7 +426,7 @@ class PdfContract extends REST_Controller {
 				<th style="text-align: center;"><b>TRIMESTRAL</b></th>
 				<th style="text-align: center;"><b>SEMESTRAL</b></th>
 				<th style="text-align: center;"><b>ANUAL</b></th>
-				<th style="text-align: center;"><b>DIANUAL</b></th>
+				<th style="text-align: center;"><b>BIANUAL</b></th>
 			</tr>
 			<tr>
 				<td style="text-align: left;">'.$convertArray.'</span></td>
@@ -428,7 +435,7 @@ class PdfContract extends REST_Controller {
 			<br>
 			<tr>
 				<th style="text-align: left;">EL PRECIO, SEGUN LA MODALIDAD ELEGIDA, SERÁ PAGADO POR ADELANTADO CONTRA ENTREGA DE LA RESPECTIVA NOTA FISCAL.<br>
-				SON '.number_format($suma,$DECI_MALES,',','.').' BOLIVARIANOS</th>
+				SON '.number_format($contenidoContrato[0]['totaldoc'],$DECI_MALES,',','.').' BOLIVARIANOS</th>
 			</tr>
 		</table>
 		<table width="100%" style="vertical-align: bottom; font-family: serif; font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
