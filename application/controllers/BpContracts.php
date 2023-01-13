@@ -31,7 +31,6 @@ class BpContracts extends REST_Controller
 
 		$Data = $this->post();
 		$DocNumVerificado = 0;
-
 		$DatosCS = ""; // DATOS DEL CONTRATO DE SUSCRIPCION
 
 
@@ -479,7 +478,7 @@ class BpContracts extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['csn_doctotal']) ? $Data['csn_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['csn_cardcode']) ? $Data['csn_cardcode'] : NULL,
-						':bmd_cardtype' => 1
+						':bmd_cardtype' => $Data['csn_cardtype']
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -517,7 +516,7 @@ class BpContracts extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['csn_doctotal']) ? $Data['csn_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['csn_cardcode']) ? $Data['csn_cardcode'] : NULL,
-						':bmd_cardtype' => 1
+						':bmd_cardtype' => $Data['csn_cardtype']
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -556,7 +555,7 @@ class BpContracts extends REST_Controller
 					':bmd_docnum' => $DocNumVerificado,
 					':bmd_doctotal' => is_numeric($Data['csn_doctotal']) ? $Data['csn_doctotal'] : 0,
 					':bmd_cardcode' => isset($Data['csn_cardcode']) ? $Data['csn_cardcode'] : NULL,
-					':bmd_cardtype' => 1
+					':bmd_cardtype' => $Data['cns_cardtype']
 				));
 
 				if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -802,7 +801,7 @@ class BpContracts extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('tcsn', 'csn', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$sqlSelect = self::getColumn('tcsn', 'csn', '', 'WHERE t0.csn_doctype = '.$Data['docnum'], $DECI_MALES, $Data['business'], $Data['branch']);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
