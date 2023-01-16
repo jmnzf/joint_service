@@ -810,29 +810,29 @@ class PurchOrder extends REST_Controller
 
 
 				$sqlEstado1 = " SELECT
-											count(t1.sc1_itemcode) item,
-											sum(t1.sc1_quantity) cantidad
-									    from dcsc t0
-										inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-										where t0.csc_docentry = :csc_docentry
-										and t0.csc_doctype = :csc_doctype";
+									count(t1.sc1_itemcode) item,
+									sum(t1.sc1_quantity) cantidad
+								from dcsc t0
+								inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+								where t0.csc_docentry = :csc_docentry
+								and t0.csc_doctype = :csc_doctype";
 
 
 				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
 					':csc_docentry' => $Data['cpo_baseentry'],
 					':csc_doctype' => $Data['cpo_basetype']
-					// ':vc1_itemcode' => $detail['ov1_itemcode']
+
 				));
 
 				$sqlEstado2 = "SELECT
-											coalesce(count(distinct t3.po1_itemcode),0) item,
-											coalesce(sum(t3.po1_quantity),0) cantidad
-										from dcsc t0
-										inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-										left join dcpo t2 on t0.csc_docentry = t2.cpo_baseentry and t0.csc_doctype = t2.cpo_basetype
-										left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
-										where t0.csc_docentry = :csc_docentry
-										and t0.csc_doctype = :csc_doctype";
+									coalesce(count(distinct t3.po1_itemcode),0) item,
+									coalesce(sum(t3.po1_quantity),0) cantidad
+								from dcsc t0
+								inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+								left join dcpo t2 on t0.csc_docentry = t2.cpo_baseentry and t0.csc_doctype = t2.cpo_basetype
+								left join cpo1 t3 on t2.cpo_docentry = t3.po1_docentry and t1.sc1_itemcode = t3.po1_itemcode
+								where t0.csc_docentry = :csc_docentry
+								and t0.csc_doctype = :csc_doctype";
 
 
 				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
@@ -846,18 +846,10 @@ class PurchOrder extends REST_Controller
 				$item_ord = $resEstado2[0]['item'];
 				$cantidad_ord = $resEstado2[0]['cantidad'];
 
-				// print_r($item_sol);
-				// print_r($cantidad_sol);
-				// print_r($item_ord);
-				// print_r($cantidad_ord);
-				// exit();
-				// die();
-
-
 				if ($item_sol == $item_ord  &&  $cantidad_sol == $cantidad_ord) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 

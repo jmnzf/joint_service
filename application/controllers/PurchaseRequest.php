@@ -373,9 +373,9 @@ class PurchaseRequest extends REST_Controller
 		$sqlInsert = "INSERT INTO dcsc(csc_series, csc_docnum, csc_docdate, csc_duedate, csc_duedev, csc_pricelist, csc_cardcode,
                       csc_cardname, csc_currency, csc_contacid, csc_slpcode, csc_empid, csc_comment, csc_doctotal, csc_baseamnt, csc_taxtotal,
                       csc_discprofit, csc_discount, csc_createat, csc_baseentry, csc_basetype, csc_doctype, csc_idadd, csc_adress, csc_paytype,
-                      csc_attch,csc_createby)VALUES(:csc_series, :csc_docnum, :csc_docdate, :csc_duedate, :csc_duedev, :csc_pricelist, :csc_cardcode, :csc_cardname,
+                      csc_attch,csc_createby,business,branch)VALUES(:csc_series, :csc_docnum, :csc_docdate, :csc_duedate, :csc_duedev, :csc_pricelist, :csc_cardcode, :csc_cardname,
                       :csc_currency, :csc_contacid, :csc_slpcode, :csc_empid, :csc_comment, :csc_doctotal, :csc_baseamnt, :csc_taxtotal, :csc_discprofit, :csc_discount,
-                      :csc_createat, :csc_baseentry, :csc_basetype, :csc_doctype, :csc_idadd, :csc_adress, :csc_paytype, :csc_attch,:csc_createby)";
+                      :csc_createat, :csc_baseentry, :csc_basetype, :csc_doctype, :csc_idadd, :csc_adress, :csc_paytype, :csc_attch,:csc_createby,:business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -413,6 +413,8 @@ class PurchaseRequest extends REST_Controller
 			':csc_adress' => isset($Data['csc_adress']) ? $Data['csc_adress'] : NULL,
 			':csc_paytype' => is_numeric($Data['csc_paytype']) ? $Data['csc_paytype'] : 0,
 			':csc_createby' => isset($Data['csc_createby']) ? $Data['csc_createby'] : NULL,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 			':csc_attch' => $this->getUrl(count(trim(($Data['csc_attch']))) > 0 ? $Data['csc_attch'] : NULL, $resMainFolder[0]['main_folder'])
 		));
 
@@ -720,14 +722,16 @@ class PurchaseRequest extends REST_Controller
 					return;
 				}
 
-				$sqlInsertDetail = "INSERT INTO csc1(sc1_docentry, sc1_itemcode, sc1_itemname, sc1_quantity, sc1_uom, sc1_whscode,
+				$sqlInsertDetail = "INSERT INTO csc1(sc1_docentry, sc1_linenum,sc1_itemcode, sc1_itemname, sc1_quantity, sc1_uom, sc1_whscode,
                                     sc1_price, sc1_vat, sc1_vatsum, sc1_discount, sc1_linetotal, sc1_costcode, sc1_ubusiness, sc1_project,
-                                    sc1_acctcode, sc1_basetype, sc1_doctype, sc1_avprice, sc1_inventory, sc1_acciva, sc1_codimp, sc1_ubication)VALUES(:sc1_docentry, :sc1_itemcode, :sc1_itemname, :sc1_quantity,
-                                    :sc1_uom, :sc1_whscode,:sc1_price, :sc1_vat, :sc1_vatsum, :sc1_discount, :sc1_linetotal, :sc1_costcode, :sc1_ubusiness, :sc1_project,
-                                    :sc1_acctcode, :sc1_basetype, :sc1_doctype, :sc1_avprice, :sc1_inventory, :sc1_acciva,:sc1_codimp, :sc1_ubication)";
+                                    sc1_acctcode, sc1_basetype, sc1_doctype, sc1_avprice, sc1_inventory, sc1_acciva, sc1_codimp, sc1_ubication)
+									VALUES(:sc1_docentry, :sc1_linenum,:sc1_itemcode, :sc1_itemname, :sc1_quantity,:sc1_uom, :sc1_whscode,:sc1_price,
+									:sc1_vat, :sc1_vatsum, :sc1_discount, :sc1_linetotal, :sc1_costcode, :sc1_ubusiness, :sc1_project,:sc1_acctcode, 
+									:sc1_basetype, :sc1_doctype, :sc1_avprice, :sc1_inventory, :sc1_acciva,:sc1_codimp, :sc1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sc1_docentry' => $resInsert,
+					':sc1_linenum' => isset($detail['sc1_linenum']) ? $detail['sc1_linenum'] : NULL,
 					':sc1_itemcode' => isset($detail['sc1_itemcode']) ? $detail['sc1_itemcode'] : NULL,
 					':sc1_itemname' => isset($detail['sc1_itemname']) ? $detail['sc1_itemname'] : NULL,
 					':sc1_quantity' => is_numeric($detail['sc1_quantity']) ? $detail['sc1_quantity'] : 0,
@@ -854,7 +858,7 @@ class PurchaseRequest extends REST_Controller
 										csc_empid=:csc_empid, csc_comment=:csc_comment, csc_doctotal=:csc_doctotal, csc_baseamnt=:csc_baseamnt,
 										csc_taxtotal=:csc_taxtotal, csc_discprofit=:csc_discprofit, csc_discount=:csc_discount, csc_createat=:csc_createat,
 										csc_baseentry=:csc_baseentry, csc_basetype=:csc_basetype, csc_doctype=:csc_doctype, csc_idadd=:csc_idadd,
-										csc_adress=:csc_adress, csc_paytype=:csc_paytype, csc_attch=:csc_attch WHERE csc_docentry=:csc_docentry";
+										csc_adress=:csc_adress, csc_paytype=:csc_paytype,business = :business,branch = :branch, csc_attch=:csc_attch WHERE csc_docentry=:csc_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -883,6 +887,8 @@ class PurchaseRequest extends REST_Controller
 			':csc_idadd' => isset($Data['csc_idadd']) ? $Data['csc_idadd'] : NULL,
 			':csc_adress' => isset($Data['csc_adress']) ? $Data['csc_adress'] : NULL,
 			':csc_paytype' => is_numeric($Data['csc_paytype']) ? $Data['csc_paytype'] : 0,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 			':csc_attch' => $this->getUrl(count(trim(($Data['csc_attch']))) > 0 ? $Data['csc_attch'] : NULL, $resMainFolder[0]['main_folder']),
 			':csc_docentry' => $Data['csc_docentry']
 		));
@@ -969,10 +975,11 @@ class PurchaseRequest extends REST_Controller
 	//OBTENER solicitud de compras
 	public function getPurchaseRequest_get()
 	{
-
+		
+		$Data = $this->get();
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dcsc', 'csc', '', '', $DECI_MALES);
+		$sqlSelect = self::getColumn('dcsc', 'csc', '', '', $DECI_MALES,$Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -1084,6 +1091,139 @@ class PurchaseRequest extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	public function getPurchaseRequestDetailCopy_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['sc1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		//VARIABLES DE CANTIDADES DE DOC POSTERIORES PARA EL COPIAR DE
+		$CantOfert = 0;
+		$CantOrder = 0;
+
+		//OBTENER CANTIDAD DE PEDIDO DIRECTO
+		$sqlOfert = "SELECT 
+						coc1.oc1_itemcode,
+						sum(coc1.oc1_quantity) as oc1_quantity
+					FROM dcsc
+					INNER JOIN csc1 ON dcsc.csc_docentry = csc1.sc1_docentry
+					LEFT JOIN dcoc ON dcsc.csc_docentry = dcoc.coc_baseentry AND dcsc.csc_doctype = dcoc.coc_basetype
+					LEFT JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry AND csc1.sc1_itemcode = coc1.oc1_itemcode
+					WHERE dcsc.csc_docentry = ".$Data['sc1_docentry']."
+					GROUP BY coc1.oc1_itemcode";
+
+		$resSqlOfert = $this->pedeo->queryTable($sqlOfert,array());
+		
+		$CantOfert = isset($resSqlOfert[0]['oc1_quantity']) ? $resSqlOfert[0]['oc1_quantity'] : $CantOfert;
+
+		//OBTENER CANTIDAD DE ENTREGA DIRECTA
+		$sqlOrder = "SELECT
+							cpo1.po1_itemcode,
+							sum(cpo1.po1_quantity) as po1_quantity
+						FROM dcsc
+						INNER JOIN csc1 ON dcsc.csc_docentry = csc1.sc1_docentry
+						LEFT JOIN dcpo ON dcsc.csc_docentry = dcpo.cpo_baseentry AND dcsc.csc_doctype = dcpo.cpo_basetype
+						LEFT JOIN cpo1 ON dcpo.cpo_docentry = cpo1.po1_docentry AND csc1.sc1_itemcode = cpo1.po1_itemcode
+						WHERE dcsc.csc_docentry = ".$Data['sc1_docentry']."
+						GROUP BY cpo1.po1_itemcode";
+
+		$resSqlOrder = $this->pedeo->queryTable($sqlOrder,array());
+
+		$CantOrder = isset($resSqlOrder[0]['po1_quantity']) ? $resSqlOrder[0]['po1_quantity'] : $CantOrder;
+
+		$sqlSelect = "SELECT
+						t1.sc1_acciva,
+						t1.sc1_acctcode,
+						t1.sc1_avprice,
+						t1.sc1_basetype,
+						t1.sc1_costcode,
+						t1.sc1_discount,
+						t1.sc1_docentry,
+						t1.sc1_doctype,
+						t1.sc1_id,
+						t1.sc1_inventory,
+						t1.sc1_itemcode,
+						t1.sc1_itemname,
+						t1.sc1_linenum,
+						t1.sc1_linetotal line_total_real,
+						(t1.sc1_quantity - (".$CantOfert." + ".$CantOrder.")) * t1.sc1_price sc1_linetotal,
+						t1.sc1_price,
+						t1.sc1_project,
+						t1.sc1_quantity - (".$CantOfert." + ".$CantOrder.")  sc1_quantity,
+						t1.sc1_ubusiness,
+						t1.sc1_uom,
+						t1.sc1_vat,
+						t1.sc1_vatsum,
+						t1.sc1_quantity cant_real,
+						(((t1.sc1_quantity - ".$CantOfert." + ".$CantOrder.") * t1.sc1_price) * t1.sc1_vat) / 100 sc1_vatsum,
+						t1.sc1_whscode,
+						dmar.dma_series_code,
+						t1.sc1_ubication
+						from dcsc t0
+						left join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+						INNER JOIN dmar ON t1.sc1_itemcode = dmar.dma_item_code
+						WHERE t1.sc1_docentry = :sc1_docentry
+						GROUP BY
+						t1.sc1_acciva,
+						t1.sc1_acctcode,
+						t1.sc1_avprice,
+						t1.sc1_basetype,
+						t1.sc1_costcode,
+						t1.sc1_discount,
+						t1.sc1_docentry,
+						t1.sc1_doctype,
+						t1.sc1_id,
+						t1.sc1_inventory,
+						t1.sc1_itemcode,
+						t1.sc1_itemname,
+						t1.sc1_linenum,
+						t1.sc1_linetotal,
+						t1.sc1_price,
+						t1.sc1_project,
+						t1.sc1_ubusiness,
+						t1.sc1_uom,
+						t1.sc1_vat,
+						t1.sc1_vatsum,
+						t1.sc1_whscode,
+						t1.sc1_quantity,
+						dmar.dma_series_code,
+						t1.sc1_ubication
+						HAVING (t1.sc1_quantity - (".$CantOfert." + ".$CantOrder.")) <> 0";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":sc1_docentry" => $Data['sc1_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
 
 
 

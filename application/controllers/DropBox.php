@@ -4,7 +4,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 require_once(APPPATH . '/libraries/REST_Controller.php');
 require_once(APPPATH . '/asset/vendor/autoload.php');
 use Restserver\libraries\REST_Controller;
-use GuzzleHttp\Client;
+// use GuzzleHttp\Client;
 
 class DropBox extends REST_Controller
 {
@@ -112,39 +112,49 @@ class DropBox extends REST_Controller
       return;
     }
 
-    $table = $Data['table'];
 
-    $url = $this->createShareLink("{$Data['path']}/{$Data['name']}")['url'];
-
-
-    $sqlInsert = "INSERT INTO {$table}( code, attach, description)
-      VALUES (:code, :attach, :description)";
-
-
-    $resInsert = $this->pedeo->insertRow(
-      $sqlInsert,
-      array(
-        ':code' => $Data['code'],
-        ':attach' => $url,
-        ':description' => $Data['description']
-      )
+    $resultSet = $this->createShareLink("{$Data['path']}/{$Data['name']}"); // 
+    
+    $respuesta = array(
+      'error' => true,
+      'data' => [],
+      'mensaje' => 'No se pudo agreagar anexo'
     );
 
+    if (isset($resultSet['url'])) {
+      $table = $Data['table'];
 
-    if (is_numeric($resInsert) && $resInsert > 0) {
-      $respuesta = array(
-        'error' => false,
-        'data' => $resInsert,
-        'mensaje' => 'Anexo agregado'
-      );
-    } else {
+      $sqlInsert = "INSERT INTO {$table}( code, attach, description, type)
+        VALUES (:code, :attach, :description, :type)";
 
-      $respuesta = array(
-        'error' => true,
-        'data' => $resInsert,
-        'mensaje' => 'No se pudo agreagar anexo'
+
+      $resInsert = $this->pedeo->insertRow(
+        $sqlInsert,
+        array(
+          ':code' => $Data['code'],
+          ':attach' => $resultSet['url'],
+          ':description' => $Data['description'],
+          ':type' => $Data['type']
+        )
       );
+
+
+      if (is_numeric($resInsert) && $resInsert > 0) {
+        $respuesta = array(
+          'error' => false,
+          'data' => $resInsert,
+          'mensaje' => 'Anexo agregado'
+        );
+      } else {
+
+        $respuesta = array(
+          'error' => true,
+          'data' => $resInsert,
+          'mensaje' => 'No se pudo agreagar anexo'
+        );
+      }
     }
+
     $this->response($respuesta);
   }
 
@@ -152,7 +162,6 @@ class DropBox extends REST_Controller
   {
     $curl = curl_init();
     $token = $this->getToken();
-    $path = str_replace('_', ' ', $path);
     curl_setopt_array(
       $curl,
       array(
@@ -194,7 +203,7 @@ class DropBox extends REST_Controller
       $resp = ["path_lower" => $response['path_lower'], 'url' => $url];
     }
     
-    return $resp;
+    return $response;
   }
 
   public function index_get()
@@ -207,7 +216,7 @@ class DropBox extends REST_Controller
       'mensaje' => 'No se pudo registrar el token'
     );
     try {
-      $client = new Client();
+      $client = new GuzzleHttp\Client();
       $res = $client->request("POST", "https://{$key}:{$secret}@api.dropbox.com/oauth2/token", [
         'verify' => false,
         'form_params' => [
@@ -223,8 +232,7 @@ class DropBox extends REST_Controller
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
           ':rft_token' => $result['access_token'],
           ':rft_created' => date('Y-m-d')
-        )
-        );
+        ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
 
@@ -279,3 +287,5 @@ class DropBox extends REST_Controller
     $this->response($respuesta);
   }
 }
+
+?>

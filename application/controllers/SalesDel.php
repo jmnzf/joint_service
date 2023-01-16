@@ -1435,6 +1435,7 @@ class SalesDel extends REST_Controller
 					$MontoSysDB = ($dbito / $TasaLocSys);
 				}
 
+
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1599,6 +1600,28 @@ class SalesDel extends REST_Controller
 					$MontoSysDB = ($dbito / $TasaLocSys);
 				}
 
+
+				
+				if ( $Data['vem_basetype'] == 34 ){
+
+					if ( $dbito > 0 ) {
+
+						$dbito = $dbito;
+						$cdito = 0;
+						$MontoSysDB = $MontoSysDB;
+						$MontoSysCR = 0;
+
+					} else if ( $cdito > 0 ) {
+
+						$dbito = $cdito;
+						$cdito = 0;
+						$MontoSysDB = $MontoSysCR;
+						$MontoSysCR = 0;
+					}
+
+			
+				}
+
 				$AC1LINE = $AC1LINE + 1;
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1677,11 +1700,11 @@ class SalesDel extends REST_Controller
 
 
 				$sqlEstado1 = "SELECT
-																					 count(t1.vc1_itemcode) item,
-																					 sum(t1.vc1_quantity) cantidad
-																		from dvct t0
-																		inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
+									count(t1.vc1_itemcode) item,
+									sum(t1.vc1_quantity) cantidad
+								from dvct t0
+								inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+								where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
 
 				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
@@ -1691,13 +1714,13 @@ class SalesDel extends REST_Controller
 				));
 
 				$sqlEstado2 = "SELECT
-																					 coalesce(count(distinct t3.em1_itemcode),0) item,
-																					 coalesce(sum(t3.em1_quantity),0) cantidad
-																		from dvct t0
-																		left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-																		left join dvem t2 on t0.dvc_docentry = t2.vem_baseentry
-																		left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.vc1_itemcode = t3.em1_itemcode
-																		where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
+									coalesce(count(distinct t3.em1_itemcode),0) item,
+									coalesce(sum(t3.em1_quantity),0) cantidad
+								from dvct t0
+								left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
+								left join dvem t2 on t0.dvc_docentry = t2.vem_baseentry
+								left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.vc1_itemcode = t3.em1_itemcode
+								where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
 
 				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
@@ -1711,16 +1734,10 @@ class SalesDel extends REST_Controller
 				$cantidad_cot = $resEstado1[0]['cantidad'];
 				$cantidad_del = $resEstado2[0]['cantidad'];
 
-
-
-				// print_r($item_cot);
-				// print_r($item_ord);
-				// print_r($cantidad_cot);
-				// print_r($cantidad_ord);exit();die();
 				if ($item_cot == $item_del  &&   $cantidad_del >= $cantidad_cot) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
@@ -1787,12 +1804,76 @@ class SalesDel extends REST_Controller
 				$cantidad_ord = $resEstado1[0]['cantidad'];
 				$cantidad_del = $resEstado2[0]['cantidad'];
 
+				if ($item_ord == $item_del  &&  $cantidad_ord == $cantidad_del) {
+
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
 
-				// print_r($item_ord);
-				// print_r($item_del);
-				// print_r($cantidad_ord);
-				// print_r($cantidad_del);exit();die();
+						':bed_docentry' => $Data['vem_baseentry'],
+						':bed_doctype' => $Data['vem_basetype'],
+						':bed_status' => 3, //ESTADO CERRADO
+						':bed_createby' => $Data['vem_createby'],
+						':bed_date' => date('Y-m-d'),
+						':bed_baseentry' => $resInsert,
+						':bed_basetype' => $Data['vem_doctype']
+					));
+
+
+					if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+					} else {
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => $resInsertEstado,
+							'mensaje'	=> 'No se pudo registrar la entrega de venta'
+						);
+
+
+						$this->response($respuesta);
+
+						return;
+					}
+				}
+			}else if ($Data['vem_basetype'] == 34) {
+
+
+				$sqlEstado1 = "SELECT
+							count(t1.fv1_itemcode) item,
+							sum(t1.fv1_quantity) cantidad
+							from dvfv t0
+							inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
+							where t0.dvf_docentry = :dvf_docentry and t0.dvf_doctype = :dvf_doctype";
+
+
+				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+					':dvf_docentry' => $Data['vem_baseentry'],
+					':dvf_doctype' => $Data['vem_basetype']
+				));
+
+
+				$sqlEstado2 = "SELECT
+							coalesce(count(distinct t3.em1_itemcode),0) item,
+							coalesce(sum(t3.em1_quantity),0) cantidad
+							from dvfv t0
+							left join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
+							left join dvem t2 on t0.dvf_docentry = t2.vem_baseentry
+							left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.fv1_itemcode = t3.em1_itemcode
+							where t0.dvf_docentry = :dvf_docentry and t0.dvf_doctype = :dvf_doctype";
+				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
+					':dvf_docentry' => $Data['vem_baseentry'],
+					':dvf_doctype' => $Data['vem_basetype']
+				));
+
+				$item_ord = isset($resEstado1[0]['item']) ? $resEstado1[0]['item'] : 0;
+				$item_del = isset($resEstado2[0]['item']) ? $resEstado2[0]['item'] : 0;
+				$cantidad_ord = isset($resEstado1[0]['cantidad']) ? $resEstado1[0]['cantidad'] : 0;
+				$cantidad_del = isset($resEstado2[0]['cantidad']) ? $resEstado2[0]['cantidad'] : 0;
+
 				if ($item_ord == $item_del  &&  $cantidad_ord == $cantidad_del) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
@@ -2220,27 +2301,21 @@ class SalesDel extends REST_Controller
 						t1.em1_itemname,
 						t1.em1_linenum,
 						t1.em1_linetotal line_total_real,
-						(t1.em1_quantity + ".$cantDev." - ".$CantFactura.") * t1.em1_price em1_linetotal,
+						(t1.em1_quantity + (".$cantDev." + ".$CantFactura.")) * t1.em1_price em1_linetotal,
 						t1.em1_price,
 						t1.em1_project,
-						(t1.em1_quantity + ".$cantDev." - ".$CantFactura.") em1_quantity,
+						(t1.em1_quantity + (".$cantDev." + ".$CantFactura.")) em1_quantity,
 						t1.em1_ubusiness,
 						t1.em1_uom,
 						t1.em1_vat,
 						t1.em1_vatsum,
 						t1.em1_quantity cant_real,
-						coalesce(SUM(t3.dv1_quantity),0) devolucion,
-						coalesce(SUM(t5.fv1_quantity),0) facturado,
-						(((t1.em1_quantity - (coalesce(SUM(t3.dv1_quantity),0) + coalesce(SUM(t5.fv1_quantity),0))) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
+						(((t1.em1_quantity - (".$cantDev." + ".$CantFactura.")) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
 						t1.em1_whscode,
 						dmar.dma_series_code,
 						t1.em1_ubication
 						from dvem t0
 						left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-						left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
-						left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
-						left join dvfv t4 on t0.vem_docentry = t4.dvf_baseentry and t0.vem_doctype = t4.dvf_basetype
-						left join vfv1 t5 on t4.dvf_docentry = t5.fv1_docentry and t1.em1_itemcode = t5.fv1_itemcode
 						INNER JOIN dmar ON em1_itemcode = dmar.dma_item_code
 						WHERE t1.em1_docentry = :em1_docentry
 						GROUP BY
@@ -2268,7 +2343,7 @@ class SalesDel extends REST_Controller
 						t1.em1_quantity,
 						dmar.dma_series_code,
 						t1.em1_ubication
-						HAVING (t1.em1_quantity + ".$cantDev." - ".$CantFactura.") <> 0";
+						HAVING (t1.em1_quantity - (".$cantDev." + ".$CantFactura.")) <> 0";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
 

@@ -108,6 +108,145 @@ class BuyOffert extends REST_Controller
 		$this->response($respuesta);
 	}
 
+	public function getOffertDetailCopy_get()
+	{
+		$Data = $this->get();
+
+		if (!isset($Data['oc1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		//VALIDAR CANTIDADES DOCUMENTOS DE DESTINO DIRECTOS
+		$CantOrder = 0;
+		$CantEntry = 0;
+		$CantInv = 0;
+		//CONSULTA PARA OBTENER CANTIDADES DE PEDIDO DE PROVEEDORES
+		$sqlOrder = "SELECT 
+						 cpo1.po1_itemcode,
+						 sum(cpo1.po1_quantity) as po1_quantity
+					FROM dcoc 
+					INNER JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry 
+					LEFT JOIN dcpo ON dcoc.coc_docentry = dcpo.cpo_baseentry AND dcoc.coc_doctype = dcpo.cpo_basetype
+					LEFT JOIN cpo1 ON dcpo.cpo_docentry = cpo1.po1_docentry AND coc1.oc1_itemcode = cpo1.po1_itemcode
+					WHERE dcoc.coc_docentry = :coc_docentry
+					GROUP BY cpo1.po1_itemcode";
+		$resSqlOrder = $this->pedeo->queryTable($sqlOrder,array(':coc_docentry' => $Data['oc1_docentry']));
+		$CantOrder = isset($resSqlOrder['po1_quantity']) ? $resSqlOrder['po1_quantity'] : $CantOrder;
+		//CONSULTA PARA OBTENER CANTIDADES DE ENTRADA  DE PROVEEDORES
+		$sqlEntry = "SELECT 
+						cec1.ec1_itemcode,
+						sum(cec1.ec1_quantity) as ec1_quantity
+					FROM dcoc 
+					INNER JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry 
+					LEFT JOIN dcec ON dcoc.coc_docentry = dcec.cec_baseentry AND dcoc.cec_doctype = dcec.cec_basetype
+					LEFT JOIN cec1 ON dcec.cec_docentry = cec1.ec1_docentry AND coc1.oc1_itemcode = cec1.ec1_itemcode
+					WHERE dcoc.coc_docentry = :coc_docentry
+					GROUP BY cec1.ec1_itemcode";
+		$resSqlEntry = $this->pedeo->queryTable($sqlEntry,array(':coc_docentry' => $Data['oc1_docentry']));
+		$CantEntry = isset($resSqlEntry['ec1_quantity']) ? $resSqlEntry['ec1_quantity'] : $CantEntry;
+		//CONSULTA PARA OBTENER CANTIDADES DE FACTURA DE PROVEEDORES
+		$sqlInv = "SELECT 
+						cfc1.fc1_itemcode,
+						sum(cfc1.fc1_quantity) as fc1_quantity
+					FROM dcoc 
+					INNER JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry 
+					LEFT JOIN dcfc ON dcoc.coc_docentry = dcfc.cfc_baseentry AND dcoc.cec_doctype = dcfc.cfc_basetype
+					LEFT JOIN cfc1 ON dcfc.cfc_docentry = cfc1.fc1_docentry AND coc1.oc1_itemcode = cfc1.fc1_itemcode
+					WHERE dcoc.coc_docentry = :coc_docentry
+					GROUP BY cfc1.fc1_itemcode";
+		$resSqlInv = $this->pedeo->queryTable($sqlInv,array(':coc_docentry' => $Data['oc1_docentry']));
+		$CantInv = isset($resSqlInv['fc1_quantity']) ? $resSqlInv['fc1_quantity'] : $CantInv;
+
+		//CONSULTA GLOBAL PARA EL COPIAR
+		$sqlSelect = "SELECT
+					t1.oc1_acciva,
+					t1.oc1_acctcode,
+					t1.oc1_avprice,
+					t1.oc1_basetype,
+					t1.oc1_costcode,
+					t1.oc1_discount,
+					t1.oc1_docentry,
+					t1.oc1_doctype,
+					t1.oc1_id,
+					t1.oc1_inventory,
+					t1.oc1_itemcode,
+					t1.oc1_itemname,
+					t1.oc1_linenum,
+					t1.oc1_linetotal line_total_real,
+					(t1.oc1_quantity - ($CantOrder + $CantEntry + $CantInv)) * t1.oc1_price oc1_linetotal,
+					t1.oc1_price,
+					t1.oc1_project,
+					t1.oc1_quantity - ($CantOrder + $CantEntry + $CantInv) as oc1_quantity,
+					t1.oc1_ubusiness,
+					t1.oc1_uom,
+					t1.oc1_vat,
+					t1.oc1_vatsum,
+					t1.oc1_quantity cant_real,
+					(((t1.oc1_quantity - ($CantOrder + $CantEntry + $CantInv)) * t1.oc1_price) * t1.oc1_vat) / 100 oc1_vatsum,
+					t1.oc1_whscode,
+					dmar.dma_series_code
+					from dcoc t0
+					left join coc1 t1 on t0.coc_docentry = t1.oc1_docentry
+					INNER JOIN dmar ON oc1_itemcode = dmar.dma_item_code
+					WHERE t1.oc1_docentry = :oc1_docentry
+					GROUP BY
+					t1.oc1_acciva,
+					t1.oc1_acctcode,
+					t1.oc1_avprice,
+					t1.oc1_basetype,
+					t1.oc1_costcode,
+					t1.oc1_discount,
+					t1.oc1_docentry,
+					t1.oc1_doctype,
+					t1.oc1_id,
+					t1.oc1_inventory,
+					t1.oc1_itemcode,
+					t1.oc1_itemname,
+					t1.oc1_linenum,
+					t1.oc1_linetotal,
+					t1.oc1_price,
+					t1.oc1_project,
+					t1.oc1_ubusiness,
+					t1.oc1_uom,
+					t1.oc1_vat,
+					t1.oc1_vatsum,
+					t1.oc1_whscode,
+					t1.oc1_quantity,
+					dmar.dma_series_code
+					HAVING (t1.oc1_quantity - ($CantOrder + $CantEntry + $CantInv)) <> 0";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":oc1_docentry" => $Data['oc1_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	
+
 
 	public function getOffertDetailBySN_get()
 	{

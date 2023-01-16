@@ -695,13 +695,10 @@ class SalesOrder extends REST_Controller
 				$item_ord = $resEstado2[0]['item'];
 				$cantidad_ord = $resEstado2[0]['cantidad'];
 
-
-
-				//
 				// print_r($item_cot);
-				// print_r($item_ord);
 				// print_r($cantidad_cot);
-				// print_r($cantidad_ord);exit();die();
+				// print_r($item_ord);
+				// print_r($cantidad_ord);exit;die;
 
 				if ($item_cot == $item_ord  &&   $cantidad_ord >= $cantidad_cot) {
 
@@ -1107,16 +1104,16 @@ class SalesOrder extends REST_Controller
 						t1.ov1_itemname,
 						t1.ov1_linenum,
 						t1.ov1_linetotal line_total_real,
-						(t1.ov1_quantity - ".$CantEntrega." - ".$CantFactura.") * t1.ov1_price ov1_linetotal,
+						(t1.ov1_quantity - (".$CantEntrega." + ".$CantFactura.")) * t1.ov1_price ov1_linetotal,
 						t1.ov1_price,
 						t1.ov1_project,
-						t1.ov1_quantity  ov1_quantity,
+						t1.ov1_quantity - (".$CantEntrega." + ".$CantFactura.") ov1_quantity,
 						t1.ov1_ubusiness,
 						t1.ov1_uom,
 						t1.ov1_vat,
 						t1.ov1_vatsum,
 						t1.ov1_quantity cant_real,
-						(((t1.ov1_quantity - ".$CantEntrega." - ".$CantFactura.") * t1.ov1_price) * t1.ov1_vat) / 100 ov1_vatsum,
+						(((t1.ov1_quantity - (".$CantEntrega." + ".$CantFactura.")) * t1.ov1_price) * t1.ov1_vat) / 100 ov1_vatsum,
 						t1.ov1_whscode,
 						dmar.dma_series_code,
 						t1.ov1_ubication
@@ -1149,7 +1146,7 @@ class SalesOrder extends REST_Controller
 						t1.ov1_quantity,
 						dmar.dma_series_code,
 						t1.ov1_ubication
-						HAVING (t1.ov1_quantity - ".$CantEntrega." - ".$CantFactura.") <> 0";
+						HAVING (t1.ov1_quantity - (".$CantEntrega." + ".$CantFactura.")) <> 0";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ov1_docentry" => $Data['ov1_docentry']));
 

@@ -243,9 +243,9 @@ class PurchaseOrder extends REST_Controller {
         $sqlInsert = "INSERT INTO dcpo (dpo_series, dpo_docnum, dpo_docdate, dpo_duedate, dpo_duedev, dpo_pricelist, dpo_cardcode,
                       dpo_cardname, dpo_currency, dpo_contacid, dpo_slpcode, dpo_empid, dpo_comment, dpo_doctotal, dpo_baseamnt, dpo_taxtotal,
                       dpo_discprofit, dpo_discount, dpo_createat, dpo_baseentry, dpo_basetype, dpo_doctype, dpo_idadd, dpo_adress, dpo_paytype,
-                      dpo_attch,dpo_createby)VALUES(:dpo_series, :dpo_docnum, :dpo_docdate, :dpo_duedate, :dpo_duedev, :dpo_pricelist, :dpo_cardcode, :dpo_cardname,
+                      dpo_attch,dpo_createby,business,branch)VALUES(:dpo_series, :dpo_docnum, :dpo_docdate, :dpo_duedate, :dpo_duedev, :dpo_pricelist, :dpo_cardcode, :dpo_cardname,
                       :dpo_currency, :dpo_contacid, :dpo_slpcode, :dpo_empid, :dpo_comment, :dpo_doctotal, :dpo_baseamnt, :dpo_taxtotal, :dpo_discprofit, :dpo_discount,
-                      :dpo_createat, :dpo_baseentry, :dpo_basetype, :dpo_doctype, :dpo_idadd, :dpo_adress, :dpo_paytype, :dpo_attch,:dpo_createby)";
+                      :dpo_createat, :dpo_baseentry, :dpo_basetype, :dpo_doctype, :dpo_idadd, :dpo_adress, :dpo_paytype, :dpo_attch,:dpo_createby,:business,:branch)";
 
 
 				// Se Inicia la transaccion,
@@ -281,8 +281,10 @@ class PurchaseOrder extends REST_Controller {
               ':dpo_doctype' => is_numeric($Data['dpo_doctype'])?$Data['dpo_doctype']:0,
               ':dpo_idadd' => isset($Data['dpo_idadd'])?$Data['dpo_idadd']:NULL,
               ':dpo_adress' => isset($Data['dpo_adress'])?$Data['dpo_adress']:NULL,
+			  ':business' => isset($Data['business'])?$Data['business']:NULL,
+			  ':branch' => isset($Data['branch'])?$Data['branch']:NULL,
               ':dpo_paytype' => is_numeric($Data['dpo_paytype'])?$Data['dpo_paytype']:0,
-							':dpo_createby' => isset($Data['dpo_createby'])?$Data['dpo_createby']:NULL,
+				':dpo_createby' => isset($Data['dpo_createby'])?$Data['dpo_createby']:NULL,
               ':dpo_attch' => $this->getUrl(count(trim(($Data['dpo_attch']))) > 0 ? $Data['dpo_attch']:NULL)
 						));
 

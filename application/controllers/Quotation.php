@@ -542,7 +542,6 @@ class Quotation extends REST_Controller
 														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
 
 				$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
 					':bmd_doctype' => is_numeric($Data['dvc_doctype']) ? $Data['dvc_doctype'] : 0,
 					':bmd_docentry' => $resInsert,
 					':bmd_createat' => $this->validateDate($Data['dvc_createat']) ? $Data['dvc_createat'] : NULL,
@@ -912,7 +911,7 @@ class Quotation extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT dvct.*,dmar.dma_series_code FROM dvct INNER JOIN dmar	ON dvct.dvc_itemcode = dmar.dma_item_code WHERE dvc_docentry =:dvc_docentry";
+		$sqlSelect = "SELECT dvct.*,dmar.dma_series_code FROM dvct INNER JOIN dmar ON dvct.dvc_itemcode = dmar.dma_item_code WHERE dvc_docentry =:dvc_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_docentry" => $Data['dvc_docentry']));
 
@@ -956,39 +955,84 @@ class Quotation extends REST_Controller
 		}
 
 		//VARIABLES DE CANTIDADES DE DOC POSTERIORES PARA EL COPIAR DE
+		$case = "";
 		$cantPedido = 0;
+		$itemPedido = "";
 		$cantEntrega = 0;
+		$itemEntrega = "";
 
 		//OBTENER CANTIDAD DE PEDIDO DIRECTO
 		$sqlOrder = "SELECT 
-						vov1.ov1_itemcode,
+						vov1.ov1_itemcode as item,
 						sum(vov1.ov1_quantity) as ov1_quantity
 					FROM dvct
 					INNER JOIN vct1 ON dvct.dvc_docentry = vct1.vc1_docentry
 					LEFT JOIN dvov ON dvct.dvc_docentry = dvov.vov_baseentry AND dvct.dvc_doctype = dvov.vov_basetype
 					LEFT JOIN vov1 ON dvov.vov_docentry = vov1.ov1_docentry AND vct1.vc1_itemcode = vov1.ov1_itemcode
-					WHERE dvct.dvc_docentry = ".$Data['vc1_docentry']."
+					WHERE dvct.dvc_docentry = :vc1_docentry and coalesce(vov1.ov1_itemcode ,'') != ''
 					GROUP BY vov1.ov1_itemcode";
 
-		$resSqlOrder = $this->pedeo->queryTable($sqlOrder,array());
+		$resSqlOrder = $this->pedeo->queryTable($sqlOrder,array(':vc1_docentry' => $Data['vc1_docentry']));
+		if(isset($resSqlOrder[0])){
+			$converArray = [];
+			$cantArray = [];
+			foreach ($resSqlOrder as $key => $value) {
 
-		$cantPedido = isset($resSqlOrder[0]['ov1_quantity']) ? $resSqlOrder[0]['ov1_quantity'] : $cantPedido;
+				$item = "'".$value['item']."'";
+				array_push($converArray,$item);
+
+				$cant = $value['ov1_quantity'];
+				array_push($cantArray,$cant);
+
+			}
+
+			$itemPedido = implode(",",$converArray);
+			$cantPedido = implode("+",$cantArray);
+			
+		}
 
 		//OBTENER CANTIDAD DE ENTREGA DIRECTA
 		$sqlDelivery = "SELECT
-							vem1.em1_itemcode,
+							vem1.em1_itemcode as item,
 							sum(vem1.em1_quantity) as em1_quantity
 						FROM dvct
 						LEFT JOIN vct1 ON dvct.dvc_docentry = vct1.vc1_docentry
 						LEFT JOIN dvem ON dvct.dvc_docentry = dvem.vem_baseentry AND dvct.dvc_doctype = dvem.vem_basetype
 						LEFT JOIN vem1 ON dvem.vem_docentry = vem1.ov1_docentry AND vct1.vc1_itemcode = vem1.em1_itemcode
-						WHERE dvct.dvc_docentry = ".$Data['vc1_docentry']."
+						WHERE dvct.dvc_docentry = :vc1_docentry and coalesce(vov1.ov1_itemcode ,'') != ''
 						GROUP BY vem1.em1_itemcode";
 
-		$resSqlDelivery = $this->pedeo->queryTable($sqlDelivery,array());
+		$resSqlDelivery = $this->pedeo->queryTable($sqlDelivery,array(':vc1_docentry' => $Data['vc1_docentry']));
 
-		$cantEntrega = isset($resSqlDelivery[0]['em1_quantity']) ? $resSqlDelivery[0]['em1_quantity'] : $cantEntrega;
+		
 
+		if(isset($resSqlDelivery[0])){
+			$converArray = [];
+			$cantArray = [];
+			foreach ($resSqlDelivery as $key => $value) {
+				$item = "'".$value['item']."'";
+				array_push($converArray,$item);
+
+				$cant = $value['em1_quantity'];
+				array_push($cantArray,$cant);
+
+			}
+
+			$itemEntrega = implode(",",$converArray);
+
+			$cantEntrega = implode("+",$cantArray);
+		}
+		
+	
+
+		if(isset($resSqlOrder[0]) && !isset($resSqlDelivery[0])){
+			$case = "(case when t1.vc1_itemcode in (".$itemPedido.") then t1.vc1_quantity - (".$cantPedido.") else t1.vc1_quantity end)";
+		}else if(!isset($resSqlOrder[0]) && isset($resSqlDelivery[0])){
+			$case = "(case when t1.vc1_itemcode in (".$itemEntrega.") then t1.vc1_quantity - (".$cantEntrega.") else t1.vc1_quantity end)";
+		}else{
+			$case = "(case when t1.vc1_itemcode in ('') then t1.vc1_quantity - (".$cantPedido.") else t1.vc1_quantity end)";
+		}
+		
 		$sqlSelect = "SELECT
 					t1.vc1_acciva,
 					t1.vc1_acctcode,
@@ -1003,15 +1047,15 @@ class Quotation extends REST_Controller
 					t1.vc1_itemcode,
 					t1.vc1_itemname,
 					t1.vc1_linenum,
-					(t1.vc1_quantity) * t1.vc1_price vc1_linetotal ,
+					case when coalesce((t1.vc1_quantity - ".$case." * t1.vc1_price),0) < 0 then vc1_linetotal else coalesce((t1.vc1_quantity - ".$case." * t1.vc1_price),0) end as vc1_linetotal ,
 					t1.vc1_price,
 					t1.vc1_project,
-					t1.vc1_quantity - ".$cantPedido." - ".$cantEntrega." as vc1_quantity,
+					".$case." as vc1_quantity,
 					t1.vc1_ubusiness,
 					t1.vc1_uom,
 					t1.vc1_vat,
 					t1.vc1_vatsum,
-					(((t1.vc1_quantity ) * t1.vc1_price) * t1.vc1_vat) / 100 vc1_vatsum,
+					(((t1.vc1_quantity - ".$case.") * t1.vc1_price) * t1.vc1_vat) / 100 vc1_vatsum,
 					t1.vc1_whscode,
 					dmar.dma_series_code,
 					t1.vc1_ubication
@@ -1044,10 +1088,10 @@ class Quotation extends REST_Controller
 					t1.vc1_quantity,
 					dmar.dma_series_code,
 					t1.vc1_ubication
-					HAVING (t1.vc1_quantity - ".$cantPedido." - ".$cantEntrega.") <> 0";
+					HAVING (".$case.") > 0";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vc1_docentry" => $Data['vc1_docentry']));
-
+		
 		if (isset($resSelect[0])) {
 
 			$respuesta = array(

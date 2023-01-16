@@ -801,7 +801,7 @@ class BpContracts extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('tcsn', 'csn', '', 'WHERE t0.csn_doctype = '.$Data['docnum'], $DECI_MALES, $Data['business'], $Data['branch']);
+		$sqlSelect = self::getColumn('tcsn', 'csn', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -973,9 +973,11 @@ class BpContracts extends REST_Controller
 					ON ded_sdeid = csde.sde_id
 					INNER JOIN dmar
 					ON csde.sde_itemcode = dma_item_code
-					WHERE ded_sdeid = :ded_sdeid";
+					WHERE ded_sdeid = :ded_sdeid
+					AND rded.ded_status = :ded_status";
 			$ressql = $this->pedeo->queryTable($sql, array(
-				':ded_sdeid' => $value
+				':ded_sdeid'  => $value,
+				':ded_status' => 1
 			));
 
 			if (isset($ressql[0])) {

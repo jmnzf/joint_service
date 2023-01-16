@@ -180,11 +180,23 @@ class DocumentNumbering extends REST_Controller {
 
           return;
       }
+      if ($Data['pgs_doc_pre'] == 1) {
+        $sqlSelect = "SELECT pgs_id, pgs_doc_pre FROM pgdn WHERE pgs_id_doc_type = :pgs_id_doc_type AND business = :business AND branch = :branch";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgs_id_doc_type' => $Data['pgs_id_doc_type'],':business' => $Data['business'], ':branch' => $Data['branch']));
+        if (isset($resSelect[0])) {
+          foreach ($resSelect as $key => $value) {
+              $sqlUpdatePre = "UPDATE pgdn SET pgs_doc_pre = 0 WHERE pgs_id = :pgs_id";
+              $resUpdate = $this->pedeo->updateRow($sqlUpdatePre, array(
+                ':pgs_id'  => $value['pgs_id'],
+              ));
+          }
+        }
+      }
 
       $sqlUpdate = "UPDATE pgdn SET pgs_id_doc_type = :Pgs_IdDocType, pgs_num_name = :Pgs_NumName, pgs_first_num = :Pgs_FirstNum,
                     pgs_last_num = :Pgs_LastNum, pgs_pref_num = :Pgs_PrefNum, pgs_cancel = :Pgs_Cancel, pgs_is_due = :Pgs_IsDue,
                     pgs_doc_date = :Pgs_DocDate, pgs_doc_due_date = :Pgs_DocDueDate, pgs_enabled = :Pgs_Enabled, pgs_doctype = :pgs_doctype,
-										pgs_mpfn = :pgs_mpfn, pgs_mde = :pgs_mde
+										pgs_mpfn = :pgs_mpfn, pgs_mde = :pgs_mde, pgs_doc_pre = :pgs_doc_pre
                     WHERE pgs_id = :Pgs_Id";
 
 
@@ -203,7 +215,8 @@ class DocumentNumbering extends REST_Controller {
             ':Pgs_Id'         => $Data['pgs_id'],
 						':pgs_doctype'		=> $Data['pgs_id_doc_type'],
 						':pgs_mpfn'       => $Data['pgs_mpfn'],
-						':pgs_mde'        => $Data['pgs_mde']
+						':pgs_doc_pre' => $Data['pgs_doc_pre'],
+						':pgs_mde'        => is_numeric($Data['pgs_mde']) ? $Data['pgs_mde'] : NULL
 
       ));
 
@@ -247,7 +260,7 @@ class DocumentNumbering extends REST_Controller {
           return;
         }
         // $sqlSelect = " SELECT * FROM pgdn";
-        $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel,
+        $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_doc_pre, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel,
         pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, coalesce((SELECT max(dvc_docnum)+1 ultimo_numero FROM dvct t0 WHERE t0.dvc_series = pgs_id), pgs_first_num) AS ultimo_numero, pgs_mpfn, pgs_mde FROM pgdn WHERE business = :business AND branch = :branch";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
@@ -366,7 +379,47 @@ class DocumentNumbering extends REST_Controller {
 
    }
 
+   public function updateUsersDocNum_post(){
+    $Data = $this->post();
+    if(!isset($Data['dnu_docnum_id'])){
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' =>'La informacion enviada no es valida'
+      );
+      $this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+      return;
+    }
+      //ELIMINAR REGISTROS POR NUMERO DE NUMERACION DOCUMENTO
+      $this->pedeo->queryTable('DELETE FROM rdnu WHERE dnu_docnum_id = :dnu_docnum_id', array(':dnu_docnum_id' => $Data['dnu_docnum_id']));
+      $this->pedeo->trans_begin();
+      foreach ($Data['dnu_user'] as $key => $value) {
+        $resInsert = $this->pedeo->insertRow('INSERT INTO rdnu(dnu_docnum_id, dnu_user)VALUES(:dnu_docnum_id, :dnu_user)', array(
+          ':dnu_docnum_id' => $Data['dnu_docnum_id'],
+          ':dnu_user'     => $value
+        ));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+          
+        } else {
+          $this->pedeo->trans_rollback();
+          $respuesta = array(
+            'error'   => true,
+            'data' => $resInsert,
+            'mensaje'  => 'No se pudo registrar los usuarios para la numeracion actual'
+          );
+          $this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+        return;
+        }
+      }
+      $this->pedeo->trans_commit();
+      $respuesta = array(
+        'error'   => false,
+        'data'    => $resInsert,
+        'mensaje' =>'Usuarios actualizada con exito'
+      );
+      $this->response($respuesta);
 
+  }
 
 	 private function validateDate($fecha){
 			 if(strlen($fecha) == 10 OR strlen($fecha) > 10){

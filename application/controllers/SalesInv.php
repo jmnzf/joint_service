@@ -1082,28 +1082,34 @@ class SalesInv extends REST_Controller
 
 							}
 						
-
+							
 							if (isset($resCostoMomentoRegistro[0])) {
 
 								//VALIDANDO CANTIDAD DE ARTICULOS
+								if($Data['dvf_doctype'] == 34){
 
-								$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
-								$CANT_ARTICULOLN = is_numeric($detail['fv1_quantity']) ? ($detail['fv1_quantity'] * $CANTUOMSALE) : 0;
+								}else{
 
-								if (($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0) {
+									$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
+									$CANT_ARTICULOLN = is_numeric($detail['fv1_quantity']) ? ($detail['fv1_quantity'] * $CANTUOMSALE) : 0;
+									
 
-									$this->pedeo->trans_rollback();
+									if (($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0) {
 
-									$respuesta = array(
-										'error'   => true,
-										'data' => [],
-										'mensaje'	=> 'no puede crear el documento porque el articulo ' . $detail['fv1_itemcode'] . ' recae en inventario negativo (' . ($CANT_ARTICULOEX - $CANT_ARTICULOLN) . ')'
-									);
+										$this->pedeo->trans_rollback();
 
-									$this->response($respuesta);
+										$respuesta = array(
+											'error'   => true,
+											'data' => [],
+											'mensaje'	=> 'no puede crear el documento porque el articulo ' . $detail['fv1_itemcode'] . ' recae en inventario negativo (' . ($CANT_ARTICULOEX - $CANT_ARTICULOLN) . ')'
+										);
 
-									return;
+										$this->response($respuesta);
+
+										return;
+									}
 								}
+								
 
 								//VALIDANDO CANTIDAD DE ARTICULOS
 
@@ -4429,12 +4435,82 @@ class SalesInv extends REST_Controller
 
 			return;
 		}
-		$sqlSelect = "SELECT 
-						vfv1.*, 
-						dmar.dma_series_code
-					FROM vfv1
-					INNER JOIN dmar ON vfv1.fv1_itemcode = dmar.dma_item_code
-					WHERE fv1_docentry =:fv1_docentry ";
+
+		$CantEntrega = 0;
+
+		//OBTENER CANTIDAD DE PEDIDO DIRECTO
+		$sqlDelivery = "SELECT 
+							vem1.em1_itemcode,
+							sum(vem1.em1_quantity) as em1_quantity
+						FROM dvfv
+						INNER JOIN vfv1 ON dvfv.dvf_docentry = vfv1.fv1_docentry
+						LEFT JOIN dvem ON dvfv.dvf_docentry = dvem.vem_baseentry AND dvfv.dvf_doctype = dvem.vem_basetype
+						LEFT JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry AND vfv1.fv1_itemcode = vem1.em1_itemcode
+						WHERE dvfv.dvf_doctype = 34 AND dvfv.dvf_docentry = ".$Data['fv1_docentry']."
+						GROUP BY vem1.em1_itemcode";
+
+		$resSqlDelivery = $this->pedeo->queryTable($sqlDelivery,array());
+		
+		$CantEntrega = isset($resSqlDelivery[0]['em1_quantity']) ? $resSqlDelivery[0]['em1_quantity'] : $CantEntrega;
+
+		$sqlSelect = "SELECT
+						t1.fv1_acciva,
+						t1.fv1_acctcode,
+						t1.fv1_avprice,
+						t1.fv1_basetype,
+						t1.fv1_costcode,
+						t1.fv1_discount,
+						t1.fv1_docentry,
+						t1.fv1_doctype,
+						t1.fv1_id,
+						t1.fv1_inventory,
+						t1.fv1_itemcode,
+						t1.fv1_itemname,
+						t1.fv1_linenum,
+						t1.fv1_linetotal line_total_real,
+						(t1.fv1_quantity - ".$CantEntrega.") * t1.fv1_price fv1_linetotal,
+						t1.fv1_price,
+						t1.fv1_project,
+						t1.fv1_quantity - ".$CantEntrega." fv1_quantity,
+						t1.fv1_ubusiness,
+						t1.fv1_uom,
+						t1.fv1_vat,
+						t1.fv1_vatsum,
+						t1.fv1_quantity cant_real,
+						(((t1.fv1_quantity - ".$CantEntrega.") * t1.fv1_price) * t1.fv1_vat) / 100 fv1_vatsum,
+						t1.fv1_whscode,
+						dmar.dma_series_code,
+						t1.fv1_ubication
+						from dvfv t0
+						left join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
+						INNER JOIN dmar ON fv1_itemcode = dmar.dma_item_code
+						WHERE t1.fv1_docentry = :fv1_docentry
+						GROUP BY
+						t1.fv1_acciva,
+						t1.fv1_acctcode,
+						t1.fv1_avprice,
+						t1.fv1_basetype,
+						t1.fv1_costcode,
+						t1.fv1_discount,
+						t1.fv1_docentry,
+						t1.fv1_doctype,
+						t1.fv1_id,
+						t1.fv1_inventory,
+						t1.fv1_itemcode,
+						t1.fv1_itemname,
+						t1.fv1_linenum,
+						t1.fv1_linetotal,
+						t1.fv1_price,
+						t1.fv1_project,
+						t1.fv1_ubusiness,
+						t1.fv1_uom,
+						t1.fv1_vat,
+						t1.fv1_vatsum,
+						t1.fv1_whscode,
+						t1.fv1_quantity,
+						dmar.dma_series_code,
+						t1.fv1_ubication
+						HAVING (t1.fv1_quantity - ".$CantEntrega.") <> 0";
 
 		$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 						FROM dvfv
@@ -4505,14 +4581,17 @@ class SalesInv extends REST_Controller
 
 			return;
 		}
-
+		$where = "";
+		if(isset($Data['doctype']) && !empty($Data['doctype'])){	
+			$where = " AND dvf_doctype = ".$Data['doctype'];
+		}
 		$sqlSelect = "SELECT
 						t0.*
 					FROM dvfv t0
 					left join estado_doc t1 on t0.dvf_docentry = t1.entry and t0.dvf_doctype = t1.tipo
 					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
 					WHERE t2.estado = 'Abierto' and t0.dvf_cardcode =:dvf_cardcode
-					AND t0.business = :business AND t0.branch = :branch";
+					AND t0.business = :business AND t0.branch = :branch".$where;
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvf_cardcode" => $Data['dms_card_code'],':business' => $Data['business'], ':branch' => $Data['branch']));
 
