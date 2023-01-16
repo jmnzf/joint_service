@@ -1245,6 +1245,27 @@ class AccountingAccent extends REST_Controller
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
+											--- REVALORIZACION DE INVERNTARIO
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											diri.iri_docnum as numero_origen,
+											diri.iri_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(diri.iri_currency,diri.iri_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join diri
+											on diri.iri_doctype = mac1.ac1_font_type
+											and diri.iri_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
 											and dacc.acc_enabled = 1";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
@@ -1304,6 +1325,7 @@ class AccountingAccent extends REST_Controller
 		when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_currency
 		when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
 		when coalesce(t0.mac_base_type,0) = 22 then t17.crc_currency
+		when coalesce(t0.mac_base_type,0) = 26 then t18.iri_currency
 		end  as currency
 		from tmac t0
 		LEFT JOIN dvem t1 ON t0.mac_base_entry = t1.vem_docentry AND t0.mac_base_type= t1.vem_doctype
@@ -1323,6 +1345,7 @@ class AccountingAccent extends REST_Controller
 		LEFT JOIN dmdt ON dmdt.mdt_doctype = t0.mac_base_type
 		LEFT JOIN tasa t16 ON mac_doc_date = tsa_date
 		LEFT JOIN dcrc t17 ON t0.mac_base_entry = t17.crc_docentry AND t0.mac_base_type= t17.crc_doctype
+		LEFT JOIN diri t18 ON t0.mac_base_entry = t18.iri_docentry AND t0.mac_base_type= t18.iri_doctype
 		WHERE t0.mac_base_type = :mac_base_type
 		AND t0.mac_base_entry = :mac_base_entry";
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_base_type' => $Data['mac_base_type'], ':mac_base_entry' => $Data['mac_base_entry']));
