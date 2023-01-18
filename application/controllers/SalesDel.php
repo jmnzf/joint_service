@@ -2281,8 +2281,8 @@ class SalesDel extends REST_Controller
 		dmar.dma_series_code,
 		t1.em1_ubication,
 		t1.em1_codimp,
-		get_ubication(t1.em1_whscode) as ubication,
-		get_lote(t1.em1_itemcode) as lote
+		get_ubication(t1.em1_whscode) as fun_ubication,
+		get_lote(t1.em1_itemcode) as fun_lote
 		from dvem t0
 		inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
 		left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
@@ -2318,6 +2318,7 @@ class SalesDel extends REST_Controller
 		t1.em1_ubication,
 		t1.em1_codimp
 		HAVING (t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) - coalesce(sum(t5.fv1_quantity),0))) > 0";
+		// print_r($sqlSelect);exit;
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
 

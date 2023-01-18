@@ -1093,8 +1093,8 @@ class SalesInv extends REST_Controller
 								}else{
 
 									$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
-									$CANT_ARTICULOLN = is_numeric($detail['fv1_quantity']) ? ($detail['fv1_quantity'] * $CANTUOMSALE) : 0;
 									
+									$CANT_ARTICULOLN = is_numeric($detail['fv1_quantity']) ? ($detail['fv1_quantity'] * $CANTUOMSALE) : 0;
 
 									if (($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0) {
 
@@ -1658,7 +1658,6 @@ class SalesInv extends REST_Controller
 
 					$TOTALCXCLOC = ($TOTALCXCLOC + ($debito + $credito));
 					$TOTALCXCSYS = ($TOTALCXCSYS + ($MontoSysDB + $MontoSysCR));
-
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 						':ac1_trans_id' => $resInsertAsiento,
@@ -1987,7 +1986,6 @@ class SalesInv extends REST_Controller
 						}
 
 						$AC1LINE = $AC1LINE + 1;
-
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -2384,7 +2382,6 @@ class SalesInv extends REST_Controller
 							$MontoSysCR = $grantotalCostoCostoOriginal;
 						}
 					}
-
 					$AC1LINE = $AC1LINE + 1;
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2457,9 +2454,11 @@ class SalesInv extends REST_Controller
 
 
 				// SOLO SI ES UNA FACTURA ANTICIPADA
+				
+				$DetalleConsolidadoCostoCostoEntrega = [];
 
 				if ( $Data['dvf_doctype'] == 5 ){
-
+					$DetalleConsolidadoCostoCostoEntrega = $DetalleConsolidadoCostoCosto;
 					$DetalleConsolidadoCostoCosto = [];
 				}
 
@@ -2670,11 +2669,10 @@ class SalesInv extends REST_Controller
 				}
 
 
-
 				// SOLO SI ES CUENTA 3 SI VIENE DE UNA ENTRADA
 				if ( $Data['dvf_basetype'] == 3 ) {
 
-					foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
+					foreach ($DetalleConsolidadoCostoCostoEntrega as $key => $posicion) {
 						$grantotalCostoCosto = 0;
 						$grantotalCostoCostoOriginal = 0;
 						$cuentaCosto = "";
@@ -4521,13 +4519,11 @@ class SalesInv extends REST_Controller
 
 				foreach ($resSelect as $key => $value) {
 
-					$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,
-									dmar.dma_series_code
+					$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
 									FROM vfv1
-									INNER JOIN dmar
-									ON vfv1.fv1_itemcode = dmar.dma_item_code
-									INNER JOIN fcrt fc
-									ON vfv1.fv1_docentry = fc.crt_baseentry
+									INNER JOIN dvfv ON vfv1.fv1_docentry = dvfv.dvf_docentry
+									INNER JOIN dmar ON vfv1.fv1_itemcode = dmar.dma_item_code
+									INNER JOIN fcrt fc ON vfv1.fv1_docentry = fc.crt_baseentry and dvfv.dvf_doctype = fc.crt_basetype
 									AND vfv1.fv1_linenum = fc.crt_linenum
 									WHERE fv1_docentry = :fv1_docentry";
 	
@@ -4650,15 +4646,13 @@ class SalesInv extends REST_Controller
 
 				foreach ($resSelect as $key => $value) {
 
-					$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,
-									dmar.dma_series_code
-									FROM vfv1
-									INNER JOIN dmar
-									ON vfv1.fv1_itemcode = dmar.dma_item_code
-									INNER JOIN fcrt fc
-									ON vfv1.fv1_docentry = fc.crt_baseentry
-									AND vfv1.fv1_linenum = fc.crt_linenum
-									WHERE fv1_docentry = :fv1_docentry";
+					$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
+					FROM vfv1
+					INNER JOIN dvfv ON vfv1.fv1_docentry = dvfv.dvf_docentry
+					INNER JOIN dmar ON vfv1.fv1_itemcode = dmar.dma_item_code
+					INNER JOIN fcrt fc ON vfv1.fv1_docentry = fc.crt_baseentry and dvfv.dvf_doctype = fc.crt_basetype
+					AND vfv1.fv1_linenum = fc.crt_linenum
+					WHERE fv1_docentry = :fv1_docentry";
 	
 					$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':fv1_docentry' => $value['fv1_docentry']));
 

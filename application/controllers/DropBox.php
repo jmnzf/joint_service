@@ -122,21 +122,27 @@ class DropBox extends REST_Controller
 
     if (isset($resultSet['url'])) {
       $table = $Data['table'];
-
-      $sqlInsert = "INSERT INTO {$table}( code, attach, description, type)
-        VALUES (:code, :attach, :description, :type)";
-
-
-      $resInsert = $this->pedeo->insertRow(
-        $sqlInsert,
-        array(
+      // 
+      $fields = "code, attach, description";
+      $values = ":code, :attach, :description";
+      // 
+      $insert = array(
           ':code' => $Data['code'],
           ':attach' => $resultSet['url'],
-          ':description' => $Data['description'],
-          ':type' => isset($Data['type']) ? $Data['type'] : 0
-        )
+          ':description' => $Data['description']
       );
-
+      // 
+      if (!empty($Data['type'])) {
+        // AGREGAR TYPE
+        $fields .= ",type";
+        $values .= ",:type";
+        // 
+        $insert[":type"] = $Data['type'];
+      }
+      // 
+      $sqlInsert = "INSERT INTO {$table} ({$fields}) VALUES ({$values})";
+      // 
+      $resInsert = $this->pedeo->insertRow($sqlInsert, $insert);
 
       if (is_numeric($resInsert) && $resInsert > 0) {
         $respuesta = array(

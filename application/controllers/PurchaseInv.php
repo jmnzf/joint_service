@@ -3672,10 +3672,9 @@ class PurchaseInv extends REST_Controller
 
 				$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
 														FROM cfc1
-														INNER JOIN dmar
-														ON cfc1.fc1_itemcode = dmar.dma_item_code
-														INNER JOIN fcrt fc
-														ON cfc1.fc1_docentry = fc.crt_baseentry
+														INNER JOIN dcfc ON cfc1.fc1_docentry = dcfc.cfc_docentry
+														INNER JOIN dmar ON cfc1.fc1_itemcode = dmar.dma_item_code
+														INNER JOIN fcrt fc ON cfc1.fc1_docentry = fc.crt_baseentry and dcfc.cfc_doctype = fc.crt_basetype
 														AND cfc1.fc1_linenum = fc.crt_linenum
 														WHERE fc1_docentry = :fc1_docentry";
 

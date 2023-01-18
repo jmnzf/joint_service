@@ -73,7 +73,7 @@ class Lote extends REST_Controller
 
 			if (isset($Data['ubication']) && !empty($Data['ubication'])) {
 
-				$sql = "SELECT * FROM tbdi 
+				$sql = "SELECT tbdi.*, lote.ote_code, lote.ote_code as text, lote.ote_createdate, lote.ote_duedate  FROM tbdi 
 						INNER JOIN lote
 						ON ote_code = bdi_lote
 						WHERE bdi_itemcode = :itemcode
@@ -94,7 +94,7 @@ class Lote extends REST_Controller
 				);
 			} else {
 
-				$sql = "SELECT * FROM tbdi 
+				$sql = "SELECT tbdi.*, lote.ote_code, lote.ote_code as text, lote.ote_createdate, lote.ote_duedate  FROM tbdi 
 					INNER JOIN lote
 					ON ote_code = bdi_lote
 					WHERE bdi_itemcode = :itemcode

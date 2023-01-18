@@ -229,7 +229,12 @@ class Panuncios extends REST_Controller
 			CASE
 				WHEN bta_combo = 1 THEN 'SI'
 				ELSE 'NO'
-			END AS bta_combo
+			END AS bta_combo,
+			bta_libre,
+			bta_status,
+			bta_palabras,
+			bta_precio,
+			bta_dias
             FROM tbta
 			WHERE bta_status = :bta_status";
 
@@ -437,4 +442,6 @@ class Panuncios extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	
 }

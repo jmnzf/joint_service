@@ -2079,7 +2079,7 @@ class SalesDv extends REST_Controller {
       $sqlSelect = " SELECT vdv1.*, dma_series_code
                      FROM vdv1
                      INNER JOIN dmar
-                     ON cfc1.fc1_itemcode = dmar.dma_item_code
+                     ON vdv1.dv1_itemcode = dmar.dma_item_code
                      WHERE dv1_docentry =:dv1_docentry";
 
       $resSelect = $this->pedeo->queryTable($sqlSelect, array(":dv1_docentry" => $Data['dv1_docentry']));
