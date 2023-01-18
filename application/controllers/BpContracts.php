@@ -801,7 +801,7 @@ class BpContracts extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('tcsn', 'csn', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$sqlSelect = self::getColumn('tcsn', 'csn', '', 'WHERE t0.csn_doctype = '.$Data['docnum'], $DECI_MALES, $Data['business'], $Data['branch']);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

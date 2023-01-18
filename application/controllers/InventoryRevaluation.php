@@ -30,9 +30,10 @@ class InventoryRevaluation extends REST_Controller
 	//CREAR NUEVA REVALORIZACION
 	public function getinventoryRevaluation_get()
 	{
-		$sqlSelect = " SELECT * FROM diri";
+		$Data = $this->get();
+		$sqlSelect = " SELECT * FROM diri WHERE business = :business";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data["business"]));
 
 		if (isset($resSelect[0])) {
 
