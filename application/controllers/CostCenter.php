@@ -43,35 +43,52 @@ class CostCenter extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dmcc(dcc_prc_code, dcc_prc_name, dcc_prc_date_ini, dcc_prc_end_date,business)
-                      VALUES (:dcc_prc_code, :dcc_prc_name, :dcc_prc_date_ini, :dcc_prc_end_date,:business)";
+      $sqlVerify = "SELECT * FROM dmcc WHERE UPPER(dcc_prc_code) = UPPER(:dcc_prc_code)";
+
+      $resVerify = $this->pedeo->queryTable($sqlVerify, array(
+          ':dcc_prc_code' => $Data['dcc_prc_code']
+      ));
+
+      if ( isset($resVerify[0]) ){
+        
+        $respuesta = array(
+          'error'   => true,
+          'data' 		=> $resVerify,
+          'mensaje'	=> 'Ya existe un centro de costo con codigo '.$Data['dcc_prc_code']
+        );
+
+        return $this->response($respuesta);
+      }
+
+      $sqlInsert = "INSERT INTO dmcc(dcc_prc_code, dcc_prc_name, dcc_prc_date_ini, dcc_prc_end_date,business)
+                    VALUES (:dcc_prc_code, :dcc_prc_name, :dcc_prc_date_ini, :dcc_prc_end_date,:business)";
 
 
-				  $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-				 			':dcc_prc_code' => $Data['dcc_prc_code'],
-				 			':dcc_prc_name' => $Data['dcc_prc_name'],
-				 			':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
-				 			':dcc_prc_end_date' => $Data['dcc_prc_end_date'],
-              ':business' => $Data['business']
-				  ));
+            ':dcc_prc_code' => $Data['dcc_prc_code'],
+            ':dcc_prc_name' => $Data['dcc_prc_name'],
+            ':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
+            ':dcc_prc_end_date' => $Data['dcc_prc_end_date'],
+            ':business' => $Data['business']
+        ));
 
-        if(is_numeric($resInsert) && $resInsert > 0){
+      if(is_numeric($resInsert) && $resInsert > 0){
 
-              $respuesta = array(
-                'error' => false,
-                'data' => $resInsert,
-                'mensaje' =>'Centro de costo registrado con exito'
-              );
-        }else{
+            $respuesta = array(
+              'error' => false,
+              'data' => $resInsert,
+              'mensaje' =>'Centro de costo registrado con exito'
+            );
+      }else{
 
-              $respuesta = array(
-                'error'   => true,
-                'data' 		=> $resInsert,
-                'mensaje'	=> 'No se pudo registrar el centro de costo'
-              );
+            $respuesta = array(
+              'error'   => true,
+              'data' 		=> $resInsert,
+              'mensaje'	=> 'No se pudo registrar el centro de costo'
+            );
 
-        }
+      }
 
          $this->response($respuesta);
 	}
@@ -81,8 +98,7 @@ class CostCenter extends REST_Controller {
 
       $Data = $this->post();
 
-      if(!isset($Data['dcc_prc_code']) OR
-         !isset($Data['dcc_prc_name']) OR
+      if(!isset($Data['dcc_prc_name']) OR
          !isset($Data['dcc_prc_date_ini']) OR
          !isset($Data['dcc_prc_end_date']) OR
          !isset($Data['dcc_id'])OR
@@ -100,12 +116,12 @@ class CostCenter extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE dmcc SET dcc_prc_code = :dcc_prc_code, dcc_prc_name = :dcc_prc_name, dcc_prc_date_ini = :dcc_prc_date_ini,
+      $sqlUpdate = "UPDATE dmcc SET  dcc_prc_name = :dcc_prc_name, dcc_prc_date_ini = :dcc_prc_date_ini,
                     dcc_prc_end_date = :dcc_prc_end_date,business = :business WHERE dcc_id = :dcc_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-            ':dcc_prc_code' => $Data['dcc_prc_code'],
+           
             ':dcc_prc_name' => $Data['dcc_prc_name'],
             ':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
             ':dcc_prc_end_date' => $Data['dcc_prc_end_date'],

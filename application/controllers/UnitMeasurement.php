@@ -43,6 +43,24 @@ class UnitMeasurement extends REST_Controller
       return;
     }
 
+
+    $sqlVerify = "SELECT * FROM dmum WHERE UPPER(dmu_code) = UPPER(:dmu_code)";
+
+    $resVerify = $this->pedeo->queryTable($sqlVerify, array(
+        ':dmu_code' => $Data['dmu_code']
+    ));
+
+    if ( isset($resVerify[0]) ){
+      
+      $respuesta = array(
+        'error'   => true,
+        'data' 		=> $resVerify,
+        'mensaje'	=> 'Ya existe una unidad de medida con codigo '.$Data['dmu_code']
+      );
+
+      return $this->response($respuesta);
+    }
+
     $sqlInsert = "INSERT INTO dmum(dmu_nameum, dmu_code, dmu_type, dmu_status)VALUES(:dmu_nameum, :dmu_code, :dmu_type, :dmu_status)";
 
 
@@ -92,11 +110,10 @@ class UnitMeasurement extends REST_Controller
       return;
     }
 
-    $sqlUpdate = "UPDATE dmum SET dmu_nameum = :dmu_nameum, dmu_code = :dmu_code, dmu_type = :dmu_type, dmu_status = :dmu_status  WHERE dmu_id = :dmu_id";
+    $sqlUpdate = "UPDATE dmum SET dmu_nameum = :dmu_nameum, dmu_type = :dmu_type, dmu_status = :dmu_status  WHERE dmu_id = :dmu_id";
     $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
       ':dmu_nameum' => $Data['dmu_nameum'],
-      ':dmu_code' => $Data['dmu_code'],
       ':dmu_type' => $Data['dmu_type'],
       ':dmu_status' => $Data['dmu_status'],
       ':dmu_id' => $Data['dmu_id']

@@ -555,7 +555,7 @@ class BpContracts extends REST_Controller
 					':bmd_docnum' => $DocNumVerificado,
 					':bmd_doctotal' => is_numeric($Data['csn_doctotal']) ? $Data['csn_doctotal'] : 0,
 					':bmd_cardcode' => isset($Data['csn_cardcode']) ? $Data['csn_cardcode'] : NULL,
-					':bmd_cardtype' => $Data['cns_cardtype']
+					':bmd_cardtype' => $Data['csn_cardtype']
 				));
 
 				if (is_numeric($resInsertMD) && $resInsertMD > 0) {

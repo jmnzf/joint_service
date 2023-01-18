@@ -43,39 +43,56 @@ class Project extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dmpj(dpj_pj_code, dpj_pj_name, dpj_pj_date_ini, dpj_pj_end_date,business)
-                      VALUES (:dpj_pj_code, :dpj_pj_name, :dpj_pj_date_ini, :dpj_pj_end_date,:business)";
+      $sqlVerify = "SELECT * FROM dmpj WHERE UPPER(dpj_pj_code) = UPPER(:dpj_pj_code)";
+
+      $resVerify = $this->pedeo->queryTable($sqlVerify, array(
+          ':dpj_pj_code' => $Data['dpj_pj_code']
+      ));
+
+      if ( isset($resVerify[0]) ){
+        
+        $respuesta = array(
+          'error'   => true,
+          'data' 		=> $resVerify,
+          'mensaje'	=> 'Ya existe un proyecto con codigo '.$Data['dpj_pj_code']
+        );
+
+        return $this->response($respuesta);
+      }
+
+      $sqlInsert = "INSERT INTO dmpj(dpj_pj_code, dpj_pj_name, dpj_pj_date_ini, dpj_pj_end_date,business)
+                    VALUES (:dpj_pj_code, :dpj_pj_name, :dpj_pj_date_ini, :dpj_pj_end_date,:business)";
 
 
-        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+      $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-              ':dpj_pj_code' => $Data['dpj_pj_code'],
-              ':dpj_pj_name' => $Data['dpj_pj_name'],
-              ':dpj_pj_date_ini' => $Data['dpj_pj_date_ini'],
-              ':dpj_pj_end_date' => $Data['dpj_pj_end_date'],
-              ':business' => $Data['business']
-        ));
+            ':dpj_pj_code' => $Data['dpj_pj_code'],
+            ':dpj_pj_name' => $Data['dpj_pj_name'],
+            ':dpj_pj_date_ini' => $Data['dpj_pj_date_ini'],
+            ':dpj_pj_end_date' => $Data['dpj_pj_end_date'],
+            ':business' => $Data['business']
+      ));
 
-        if(is_numeric($resInsert) && $resInsert > 0){
+      if(is_numeric($resInsert) && $resInsert > 0){
 
-              $respuesta = array(
-	              'error'	  => false,
-                'data' 		=> $resInsert,
-                'mensaje' =>'Proyecto registrado con exito'
-              );
+            $respuesta = array(
+              'error'	  => false,
+              'data' 		=> $resInsert,
+              'mensaje' =>'Proyecto registrado con exito'
+            );
 
 
-        }else{
+      }else{
 
-              $respuesta = array(
-                'error'   => true,
-                'data' 		=> $resInsert,
-                'mensaje'	=> 'No se pudo registrar el proyecto'
-              );
+            $respuesta = array(
+              'error'   => true,
+              'data' 		=> $resInsert,
+              'mensaje'	=> 'No se pudo registrar el proyecto'
+            );
 
-        }
+      }
 
-         $this->response($respuesta);
+        $this->response($respuesta);
 	}
 
   //ACTUALIZAR PROYECTO
@@ -84,8 +101,7 @@ class Project extends REST_Controller {
       $Data = $this->post();
 
 
-      if(!isset($Data['dpj_pj_code']) OR
-         !isset($Data['dpj_pj_name']) OR
+      if(!isset($Data['dpj_pj_name']) OR
          !isset($Data['dpj_pj_date_ini']) OR
          !isset($Data['dpj_pj_end_date']) OR
          !isset($Data['dpj_id']) or
@@ -103,12 +119,11 @@ class Project extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE dmpj SET dpj_pj_code = :dpj_pj_code, dpj_pj_name = :dpj_pj_name, dpj_pj_date_ini = :dpj_pj_date_ini,
+      $sqlUpdate = "UPDATE dmpj SET dpj_pj_name = :dpj_pj_name, dpj_pj_date_ini = :dpj_pj_date_ini,
                     dpj_pj_end_date = :dpj_pj_end_date,business = :business WHERE dpj_id = :dpj_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-          ':dpj_pj_code' => $Data['dpj_pj_code'],
           ':dpj_pj_name' => $Data['dpj_pj_name'],
           ':dpj_pj_date_ini' => $Data['dpj_pj_date_ini'],
           ':dpj_pj_end_date' => $Data['dpj_pj_end_date'],

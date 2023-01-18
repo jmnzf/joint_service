@@ -1097,7 +1097,7 @@ class PurchaseEc extends REST_Controller
 
 								':bdi_quantity' => $CantidadTotalItemSolo,
 								':bdi_avgprice' => $NuevoCostoPonderado,
-								':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+								':bdi_id' 		=> $resCostoCantidad[0]['bdi_id']
 							));
 
 							if (is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1) {
@@ -1110,6 +1110,38 @@ class PurchaseEc extends REST_Controller
 									'data'    => $resUpdateCostoCantidad,
 									'mensaje'	=> 'No se pudo crear la Entrada de Compra'
 								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+
+							// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+							// SIN MIRAR LA UBICACION O LOTE
+							$sqlAlmacenMasivo = "UPDATE tbdi
+												SET bdi_avgprice = :bdi_avgprice
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
+							
+							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+								':bdi_avgprice' => $NuevoCostoPonderado,
+								':bdi_itemcode' => $detail['ec1_itemcode'],
+								':bdi_whscode'  => $detail['ec1_whscode'],
+								':business' 	=> $Data['business']
+							));		
+							
+							if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAlmacenMasivo,
+									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								);
+
 
 								$this->response($respuesta);
 
@@ -1183,6 +1215,38 @@ class PurchaseEc extends REST_Controller
 								$respuesta = array(
 									'error'   => true,
 									'data'    => $resUpdateCostoCantidad,
+									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+							}
+
+							// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+							// SIN MIRAR LA UBICACION O LOTE
+							$sqlAlmacenMasivo = "UPDATE tbdi
+												SET bdi_avgprice = :bdi_avgprice
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
+							
+							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+								':bdi_avgprice' => $CostoNuevo,
+								':bdi_itemcode' => $detail['ec1_itemcode'],
+								':bdi_whscode'  => $detail['ec1_whscode'],
+								':business' 	=> $Data['business']
+							));		
+							
+							if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAlmacenMasivo,
 									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
 								);
 
@@ -1376,6 +1440,39 @@ class PurchaseEc extends REST_Controller
 									return;
 								}
 							}
+
+							// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+							// SIN MIRAR LA UBICACION O LOTE
+							$sqlAlmacenMasivo = "UPDATE tbdi
+												SET bdi_avgprice = :bdi_avgprice
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
+							
+							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+								':bdi_avgprice' => $NuevoCostoPonderado,
+								':bdi_itemcode' => $detail['ec1_itemcode'],
+								':bdi_whscode'  => $detail['ec1_whscode'],
+								':business' 	=> $Data['business']
+							));		
+							
+							if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAlmacenMasivo,
+									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+							}
+
 						} else {
 							//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
 							$CostoNuevo = (($detail['ec1_price'] / $CANTUOMPURCHASE) * $CANTUOMSALE);
@@ -1466,6 +1563,39 @@ class PurchaseEc extends REST_Controller
 									'data' 		=> $resInsertCostoCantidad,
 									'mensaje'	=> 'No se pudo registrar la Entrada de Compra'
 								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+
+
+							// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+							// SIN MIRAR LA UBICACION O LOTE
+							$sqlAlmacenMasivo = "UPDATE tbdi
+												SET bdi_avgprice = :bdi_avgprice
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
+							
+							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+								':bdi_avgprice' => $CostoNuevo,
+								':bdi_itemcode' => $detail['ec1_itemcode'],
+								':bdi_whscode'  => $detail['ec1_whscode'],
+								':business' 	=> $Data['business']
+							));		
+							
+							if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAlmacenMasivo,
+									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								);
+
 
 								$this->response($respuesta);
 

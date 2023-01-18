@@ -132,7 +132,7 @@ class Warehouse extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE dmws SET dws_id =:dws_id, dws_code = :dws_code, dws_name = :dws_name, dws_ubication = :dws_ubication, dws_acctin = :dws_acctin,
+      $sqlUpdate = "UPDATE dmws SET dws_id =:dws_id, dws_code = :dws_code, dws_name = :dws_name, dws_acctin = :dws_acctin,
                     dws_acct_out = :dws_acct_out, dws_acct_stockn = :dws_acct_stockn, dws_acct_stockp = :dws_acct_stockp,
                     dws_acct_redu = :dws_acct_redu, dws_acct_amp = :dws_acct_amp, dws_acct_cost = :dws_acct_cost, dws_enabled = :dws_enabled,
                     dws_acct_return = :dws_acct_return, dws_acct_inv = :dws_acct_inv, business = :business,dws_acct_invproc = :dws_acct_invproc WHERE dws_id = :dws_id";
@@ -141,7 +141,6 @@ class Warehouse extends REST_Controller {
 
               ':dws_code' => $Data['dws_code'],
               ':dws_name' => $Data['dws_name'],
-              ':dws_ubication' => isset($Data['dws_ubication'])?$Data['dws_ubication']: 1,
               ':dws_acctin' => $Data['dws_acctin'],
               ':dws_acct_out' => $Data['dws_acct_out'],
               ':dws_acct_stockn' => $Data['dws_acct_stockn'],

@@ -43,8 +43,8 @@ class Items extends REST_Controller
 
 			$respuesta = array(
 				'error' => true,
-				'data'  => array($Data['dms_card_code'], $Data['dms_card_type']),
-				'mensaje' => 'ya existe un artículo con es codigo'
+				'data'  => $resSelect,
+				'mensaje' => 'ya existe un artículo con es codigo'. $Data['dma_item_code']
 			);
 
 			$this->response($respuesta);
@@ -212,31 +212,7 @@ class Items extends REST_Controller
 
 		$Data = $this->post();
 
-		$sqlSelect = "SELECT dma_item_code FROM dmar WHERE dma_item_code = :dma_item_code
-                    AND dma_id != :dma_id";
-
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-
-			':dma_item_code' => $Data['dma_item_code'],
-			':dma_id'        => $Data['dma_id']
-
-		));
-
-
-		if (isset($resSelect[0])) {
-
-			$respuesta = array(
-				'error' => true,
-				'data'  => [],
-				'mensaje' => 'ya existe un artículo con es codigo, no es posible actualizar '
-			);
-
-			$this->response($respuesta);
-
-			return;
-		}
-
-
+	
 		//VALIDACION ITEM MANEJA SERIAL
 		if (isset($Data['dma_series_code']) && $Data['dma_series_code'] == 1) {
 			if ($Data['dma_uom_purch'] == $Data['dma_uom_sale']) {
@@ -272,7 +248,7 @@ class Items extends REST_Controller
 
 		try {
 			$sqlUpdate = "UPDATE dmar
-						SET dma_item_code = :dma_item_code, dma_item_name = :dma_item_name, dma_generic_name = :dma_generic_name,
+						SET dma_item_name = :dma_item_name, dma_generic_name = :dma_generic_name,
 						dma_item_purch = :dma_item_purch, dma_item_inv = :dma_item_inv, dma_item_sales = :dma_item_sales,
 						dma_group_code = :dma_group_code, dma_attach = :dma_attach, dma_enabled = :dma_enabled, dma_firm_code = :dma_firm_code,
 						dma_series_code = :dma_series_code, dma_sup_set = :dma_sup_set, dma_sku_sup = :dma_sku_sup, dma_uom_purch = :dma_uom_purch,
@@ -291,7 +267,6 @@ class Items extends REST_Controller
 
 			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-				':dma_item_code' => isset($Data['dma_item_code']) ? $Data['dma_item_code'] : NULL,
 				':dma_item_name' => isset($Data['dma_item_name']) ? $Data['dma_item_name'] : NULL,
 				':dma_generic_name' => isset($Data['dma_generic_name']) ? $Data['dma_generic_name'] : NULL,
 				':dma_item_purch' => isset($Data['dma_item_purch']) ? $Data['dma_item_purch'] : NULL,
@@ -319,7 +294,7 @@ class Items extends REST_Controller
 				':dma_acct_type' => is_numeric($Data['dma_acct_type']) ? $Data['dma_acct_type'] : 0,
 				':dma_avprice' => is_numeric($Data['dma_avprice']) ? $Data['dma_avprice'] : 0,
 				':dma_uom_weight' => is_numeric($Data['dma_uom_weight']) ? $Data['dma_uom_weight'] : 0,
-				':dma_uom_umvol'    => isset($Data['dma_uom_umvol']) ? $Data['dma_uom_umvol'] : 0,
+				':dma_uom_umvol'    => is_numeric($Data['dma_uom_umvol']) ? $Data['dma_uom_umvol'] : 0,
 				':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty']) ? $Data['dma_uom_vqty'] : 0,
 				':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn']) ? $Data['dma_uom_weightn'] : 0,
 				':dma_uom_sizedim'  => isset($Data['dma_uom_sizedim']) ? $Data['dma_uom_sizedim'] : 0,
@@ -665,7 +640,7 @@ class Items extends REST_Controller
 
 
 		$sqlUpdate = "UPDATE dmar
-                    	SET dma_enabled = :dma_enabled WHERE dma_id = :dma_id";
+                    SET dma_enabled = :dma_enabled WHERE dma_id = :dma_id";
 
 
 		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(

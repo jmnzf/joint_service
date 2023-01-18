@@ -595,10 +595,11 @@ class SalesNd extends REST_Controller
 				foreach ($ContenidoDetalle as $key => $detail) {
 
 					$sqlInsertDetail = "INSERT INTO vnd1(nd1_docentry, nd1_itemcode, nd1_itemname, nd1_quantity, nd1_uom, nd1_whscode,
-																							nd1_price, nd1_vat, nd1_vatsum, nd1_discount, nd1_linetotal, nd1_costcode, nd1_ubusiness, nd1_project,
-																							nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory,nd1_ubication,nd1_lote)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
-																							:nd1_uom, :nd1_whscode,:nd1_price, :nd1_vat, :nd1_vatsum, :nd1_discount, :nd1_linetotal, :nd1_costcode, :nd1_ubusiness, :nd1_project,
-																							:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory,:nd1_ubication,:nd1_lote)";
+										nd1_price, nd1_vat, nd1_vatsum, nd1_discount, nd1_linetotal, nd1_costcode, nd1_ubusiness, nd1_project,
+										nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory,nd1_ubication,nd1_baseline)
+										VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,:nd1_uom, :nd1_whscode,:nd1_price, 
+										:nd1_vat, :nd1_vatsum, :nd1_discount, :nd1_linetotal, :nd1_costcode, :nd1_ubusiness, :nd1_project,
+										:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory,:nd1_ubication,:nd1_baseline)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':nd1_docentry' => $resInsert,
@@ -621,7 +622,7 @@ class SalesNd extends REST_Controller
 						':nd1_avprice' => is_numeric($detail['nd1_avprice']) ? $detail['nd1_avprice'] : 0,
 						':nd1_inventory' => is_numeric($detail['nd1_inventory']) ? $detail['nd1_inventory'] : NULL,
 						':nd1_ubication' => is_numeric($detail['nd1_ubication']) ? $detail['nd1_ubication'] : NULL,
-						':nd1_lote' => is_numeric($detail['ote_code']) ? $detail['ote_code'] : NULL
+						':nd1_baseline' => isset($detail['nd1_baseline']) && is_numeric($detail['nd1_baseline']) ? $detail['nd1_baseline'] : 0
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

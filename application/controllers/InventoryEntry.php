@@ -302,7 +302,7 @@ class InventoryEntry extends REST_Controller
 			':iei_series' => is_numeric($Data['iei_series']) ? $Data['iei_series'] : 0,
 			':iei_createby' => isset($Data['iei_createby']) ? $Data['iei_createby'] : NULL,
 			':iei_currency' => isset($Data['iei_currency']) ? $Data['iei_currency'] : NULL,
-			':business' => $Data['business']
+			':business' => isset($Data['business']) ? $Data['business'] : NULL
 
 		));
 
@@ -398,10 +398,10 @@ class InventoryEntry extends REST_Controller
 			foreach ($ContenidoDetalle as $key => $detail) {
 
 				$sqlInsertDetail = "INSERT INTO iei1 (ei1_docentry, ei1_itemcode, ei1_itemname, ei1_quantity, ei1_uom, ei1_whscode, ei1_price, ei1_vat, ei1_vatsum, ei1_discount, ei1_linetotal,
-																		ei1_costcode, ei1_ubusiness,ei1_project, ei1_acctcode, ei1_basetype, ei1_doctype, ei1_avprice, ei1_inventory,  ei1_linenum, ei1_acciva,ei1_concept, ei1_ubication)
-                                    VALUES
-                                    (:ei1_docentry, :ei1_itemcode, :ei1_itemname, :ei1_quantity, :ei1_uom, :ei1_whscode, :ei1_price, :ei1_vat, :ei1_vatsum, :ei1_discount, :ei1_linetotal,
-																		 :ei1_costcode, :ei1_ubusiness,:ei1_project, :ei1_acctcode, :ei1_basetype, :ei1_doctype, :ei1_avprice, :ei1_inventory, :ei1_linenum, :ei1_acciva,:ei1_concept, :ei1_ubication)";
+									ei1_costcode, ei1_ubusiness,ei1_project, ei1_acctcode, ei1_basetype, ei1_doctype, ei1_avprice, ei1_inventory,  ei1_linenum, ei1_acciva,ei1_concept, ei1_ubication)
+                                    VALUES(:ei1_docentry, :ei1_itemcode, :ei1_itemname, :ei1_quantity, :ei1_uom, :ei1_whscode, :ei1_price, :ei1_vat, :ei1_vatsum, :ei1_discount, :ei1_linetotal,
+									:ei1_costcode, :ei1_ubusiness,:ei1_project, :ei1_acctcode, :ei1_basetype, :ei1_doctype, :ei1_avprice, :ei1_inventory, :ei1_linenum, :ei1_acciva,:ei1_concept, 
+									:ei1_ubication)";
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
 					':ei1_docentry'  => $resInsert,
@@ -875,7 +875,7 @@ class InventoryEntry extends REST_Controller
 
 							$CantidadItem = $resCostoCantidad[0]['bdi_quantity'];
 							$CantidadActual = $CantidadPorAlmacen;
-							$CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
+							$CostoActual = $CostoPorAlmacen;
 
 
 							$CantidadNueva = $detail['ei1_quantity'];
@@ -912,6 +912,38 @@ class InventoryEntry extends REST_Controller
 								$respuesta = array(
 									'error'   => true,
 									'data'    => $resUpdateCostoCantidad,
+									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+							}
+
+							// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+							// SIN MIRAR LA UBICACION O LOTE
+							$sqlAlmacenMasivo = "UPDATE tbdi
+												SET bdi_avgprice = :bdi_avgprice
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
+							
+							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+								':bdi_avgprice' => $NuevoCostoPonderado,
+								':bdi_itemcode' => $detail['ei1_itemcode'],
+								':bdi_whscode'  => $detail['ei1_whscode'],
+								':business' 	=> $Data['business']
+							));		
+							
+							if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAlmacenMasivo,
 									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
 								);
 
@@ -994,6 +1026,38 @@ class InventoryEntry extends REST_Controller
 								return;
 							}
 
+							// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+							// SIN MIRAR LA UBICACION O LOTE
+							$sqlAlmacenMasivo = "UPDATE tbdi
+												SET bdi_avgprice = :bdi_avgprice
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
+							
+							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+								':bdi_avgprice' => $NuevoCostoPonderado,
+								':bdi_itemcode' => $detail['ei1_itemcode'],
+								':bdi_whscode'  => $detail['ei1_whscode'],
+								':business' 	=> $Data['business']
+							));		
+							
+							if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAlmacenMasivo,
+									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+							}
+
 							// SE ACTUALZAN TODOS LOS COSTOS PONDERADOS DE LOS ARTICULOS EN EL ALMACEN
 							if ($ManejaLote == 1) {
 								$sqlUpdateCostoCantidad = "UPDATE tbdi
@@ -1030,7 +1094,9 @@ class InventoryEntry extends REST_Controller
 
 						// En caso de que no exista el item en el stock
 						// Se inserta en el stock con el precio de compra
+
 					} else {
+
 						if ($CantidadPorAlmacen > 0) {
 							$CantidadItem = 0;
 							$CantidadActual = $CantidadPorAlmacen;
@@ -1068,11 +1134,12 @@ class InventoryEntry extends REST_Controller
 										':bdi_quantity'  => $detail['ei1_quantity'],
 										':bdi_avgprice'  => $NuevoCostoPonderado,
 										':bdi_lote' 	 => $detail['ote_code'],
-										':bdi_ubication' => $detail['ei1_ubication']
+										':bdi_ubication' => $detail['ei1_ubication'],
+										':business' 	 => $Data['business']
 									));
 								} else {
-									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_ubication)
-															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_ubication)";
+									$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_ubication, business)
+															VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_ubication, :business)";
 
 
 									$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1087,7 +1154,7 @@ class InventoryEntry extends REST_Controller
 								}
 							}else{
 								// SI EL ALMACEN MANEJA UBICACION 
-								if ( $ManejaUbicacion == 1 ){
+								if ( $ManejaUbicacion == 1 ) {
 									// SI EL ARTICULO MANEJA LOTE
 									if ($ManejaLote == 1) {
 										$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_lote, bdi_ubication, business)
@@ -1105,8 +1172,8 @@ class InventoryEntry extends REST_Controller
 											':business'		 => $Data['business']
 										));
 									} else {
-										$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_ubication)
-										VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_ubication)";
+										$sqlInsertCostoCantidad = "INSERT INTO tbdi(bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice, bdi_ubication, business)
+										VALUES (:bdi_itemcode, :bdi_whscode, :bdi_quantity, :bdi_avgprice, :bdi_ubication, :business)";
 
 
 										$resInsertCostoCantidad	= $this->pedeo->insertRow($sqlInsertCostoCantidad, array(
@@ -1168,6 +1235,38 @@ class InventoryEntry extends REST_Controller
 									'data' 	  => $resInsertCostoCantidad,
 									'mensaje' => 'No se pudo registrar la Entrada por inventario'
 								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+
+							// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+							// SIN MIRAR LA UBICACION O LOTE
+							$sqlAlmacenMasivo = "UPDATE tbdi
+												SET bdi_avgprice = :bdi_avgprice
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
+							
+							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+								':bdi_avgprice' => $NuevoCostoPonderado,
+								':bdi_itemcode' => $detail['ei1_itemcode'],
+								':bdi_whscode'  => $detail['ei1_whscode'],
+								':business' 	=> $Data['business']
+							));		
+							
+							if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAlmacenMasivo,
+									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								);
+
 
 								$this->response($respuesta);
 
@@ -1305,6 +1404,38 @@ class InventoryEntry extends REST_Controller
 									'data' 		=> $resInsertCostoCantidad,
 									'mensaje'	=> 'No se pudo registrar la entrada de inventario'
 								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+
+							// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+							// SIN MIRAR LA UBICACION O LOTE
+							$sqlAlmacenMasivo = "UPDATE tbdi
+												SET bdi_avgprice = :bdi_avgprice
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
+							
+							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+								':bdi_avgprice' => $CostoNuevo,
+								':bdi_itemcode' => $detail['ei1_itemcode'],
+								':bdi_whscode'  => $detail['ei1_whscode'],
+								':business' 	=> $Data['business']
+							));		
+							
+							if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAlmacenMasivo,
+									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								);
+
 
 								$this->response($respuesta);
 
@@ -1778,12 +1909,17 @@ class InventoryEntry extends REST_Controller
 			if (isset($validateCont['error']) && $validateCont['error'] == false) {
 			} else {
 
+				$ressqlmac1 = [];
+				$sqlmac1 = "SELECT acc_name,ac1_account,ac1_debit,ac1_credit FROM  mac1 inner join dacc on ac1_account = acc_code WHERE ac1_trans_id = :ac1_trans_id";
+				$ressqlmac1['contabilidad'] = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+
 				$this->pedeo->trans_rollback();
 
 				$respuesta = array(
 					'error'   => true,
-					'data' 	 => '',
-					'mensaje' => $validateCont['mensaje']
+					'data' 	  => $ressqlmac1,
+					'mensaje' => $validateCont['mensaje'],
+					
 				);
 
 				$this->response($respuesta);

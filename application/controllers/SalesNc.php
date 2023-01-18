@@ -654,10 +654,12 @@ class SalesNc extends REST_Controller
 					}
 
 					$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
-																			nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
-																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_exc_inv,nc1_acciva,nc1_linenum,nc1_codimp,nc1_ubication)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
-																			:nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
-																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_exc_inv, :nc1_acciva,:nc1_linenum,:nc1_codimp,:nc1_ubication)";
+										nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
+										nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_exc_inv,nc1_acciva,nc1_linenum,nc1_codimp,
+										nc1_ubication,nc1_baseline,nc1_lote)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,:nc1_uom, :nc1_whscode,:nc1_price, 
+										:nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,:nc1_acctcode, 
+										:nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_exc_inv, :nc1_acciva,:nc1_linenum,:nc1_codimp,
+										:nc1_ubication,:nc1_baseline)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':nc1_docentry' => $resInsert,
@@ -683,7 +685,9 @@ class SalesNc extends REST_Controller
 						':nc1_acciva' => is_numeric($detail['nc1_acciva']) ? $detail['nc1_acciva'] : 0,
 						':nc1_linenum' => is_numeric($detail['nc1_linenum']) ? $detail['nc1_linenum'] : 0,
 						':nc1_codimp'  => isset($detail['nc1_codimp']) ? $detail['nc1_codimp'] : NULL,
-						':nc1_ubication'  => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL
+						':nc1_ubication'  => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL,
+						':nc1_baseline' => isset($detail['nc1_baseline']) && is_numeric($detail['nc1_baseline']) ? $detail['nc1_baseline'] : 0,
+						':nc1_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -3139,13 +3143,6 @@ class SalesNc extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
-
-
-
 
 	private function getUrl($data)
 	{

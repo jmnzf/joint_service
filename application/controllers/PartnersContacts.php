@@ -240,5 +240,53 @@ class PartnersContacts extends REST_Controller {
          $this->response($respuesta);
   }
 
+  //ACTUALIZAR DIRECCION DE SOCIO DE NEGOCIO
+  //COMO LA PRINCIPAL
+  public function updateContactByPr_post()
+  {
+    $Data = $this->post();
 
+    if (!isset($Data['dmc_card_code']) or !isset($Data['dmc_id'])) {
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'La informacion enviada no es valida'
+      );
+
+      $this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+      return;
+    }
+
+    $resUpdate = NULL;
+
+    $update = $this->pedeo->updateRow('UPDATE dmsc SET dmc_ppal = 0 WHERE dmc_card_code = :dmc_card_code', [':dmc_card_code' => $Data['dmc_card_code']]);
+
+    if (is_numeric($update) && $update > 0) {
+      //
+      $resUpdate = $this->pedeo->updateRow(
+        "UPDATE dmsc SET dmc_ppal = :dmc_ppal WHERE dmc_id = :dmc_id",
+        array(
+          ':dmc_ppal' => 1,
+          ':dmc_id' => $Data['dmc_id']
+        )
+      );
+    }
+
+    $respuesta = array(
+      'error'   => true,
+      'data'    => $update,
+      'mensaje'  => 'No se pudo actualizar el contacto del socio de negocio'
+    );
+
+    if (is_numeric($resUpdate) && $resUpdate == 1) {
+      $respuesta = array(
+        'error'   => false,
+        'data'    => $resUpdate,
+        'mensaje' => 'Se actualizó el contacto del socio de negocio'
+      );
+    }
+
+    $this->response($respuesta);
+  }
 }

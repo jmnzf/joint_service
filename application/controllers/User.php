@@ -58,15 +58,15 @@ class User extends REST_Controller
 			$respuesta = array(
 				'error' => true,
 				'data'  => array(),
-				'mensaje' => 'ya esta en uso el usuario ingresado'
+				'mensaje' => 'El usuario ingresado ya se encuentra registrado.'
 			);
 
 			$this->response($respuesta);
 			return;
 		}
 
-		$sqlInsert = "INSERT INTO pgus(pgu_code_user,pgu_pass,pgu_name_user,pgu_lname_user,pgu_email,pgu_phone,pgu_branch,pgu_role,pgu_curr,pgu_id_vendor)
-										  VALUES(:Pgu_CodeUser,:Pgu_Pass,:Pgu_NameUser,:Pgu_LnameUser,:Pgu_Email,:Pgu_Phone,:Pgu_Branch,:Pgu_Role,:Pgu_Curr,:pgu_id_vendor)";
+		$sqlInsert = "INSERT INTO pgus(pgu_code_user,pgu_pass,pgu_name_user,pgu_lname_user,pgu_email,pgu_phone,pgu_branch,pgu_role,pgu_curr,pgu_id_vendor,pgu_enabled)
+					VALUES(:Pgu_CodeUser,:Pgu_Pass,:Pgu_NameUser,:Pgu_LnameUser,:Pgu_Email,:Pgu_Phone,:Pgu_Branch,:Pgu_Role,:Pgu_Curr,:pgu_id_vendor,:pgu_enabled)";
 
 
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -80,7 +80,8 @@ class User extends REST_Controller
 			':Pgu_Branch' => $DataUser['Pgu_Branch'],
 			':Pgu_Role' => $DataUser['Pgu_Role'],
 			':Pgu_Curr' => $DataUser['Pgu_Curr'],
-			':pgu_id_vendor' => isset($DataUser['pgu_id_vendor']) ? $DataUser['pgu_id_vendor'] : NULL
+			':pgu_id_vendor' => isset($DataUser['pgu_id_vendor']) ? $DataUser['pgu_id_vendor'] : NULL,
+			':pgu_enabled' => 0
 
 		));
 
@@ -124,8 +125,8 @@ class User extends REST_Controller
 		}
 
 		$sqlUpdate = "UPDATE pgus SET pgu_name_user = :Pgu_NameUser,
-				              pgu_lname_user = :Pgu_LnameUser, pgu_email = :Pgu_Email, pgu_phone = :Pgu_Phone, pgu_branch = :Pgu_Branch,
-											pgu_role = :Pgu_Role, pgu_curr = :Pgu_Curr, pgu_id_vendor = :pgu_id_vendor WHERE pgu_id_usuario = :Pgu_IdUsuario";
+				    pgu_lname_user = :Pgu_LnameUser, pgu_email = :Pgu_Email, pgu_phone = :Pgu_Phone, pgu_branch = :Pgu_Branch,
+					pgu_role = :Pgu_Role, pgu_curr = :Pgu_Curr, pgu_id_vendor = :pgu_id_vendor WHERE pgu_id_usuario = :Pgu_IdUsuario";
 
 
 		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -327,6 +328,24 @@ class User extends REST_Controller
 			);
 
 			$this->response($respuesta);
+			return;
+		}
+
+		$sqlEmpresaUser = "SELECT * FROM rbbu WHERE bbu_user = :bbu_user";
+		$resEmpresaUser = $this->pedeo->queryTable($sqlEmpresaUser, array(':bbu_user' => $resExiste[0]['pgu_id_usuario']));
+
+		if (isset($resEmpresaUser[0])){
+
+		} else {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'El usuario no esta asociado a una empresa, se debe agregar una empresa predeterminada antes de poder inicar sesión'
+			);
+
+			$this->response($respuesta);
+
 			return;
 		}
 

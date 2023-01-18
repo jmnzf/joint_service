@@ -1155,6 +1155,38 @@ class PurchaseInv extends REST_Controller
 										);
 									}
 
+									// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+									// SIN MIRAR LA UBICACION O LOTE
+									$sqlAlmacenMasivo = "UPDATE tbdi
+														SET bdi_avgprice = :bdi_avgprice
+														WHERE bdi_itemcode = :bdi_itemcode
+														AND bdi_whscode = :bdi_whscode
+														AND business = :business";
+									
+									$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+										':bdi_avgprice' => $CostoNuevo,
+										':bdi_itemcode' => $detail['fc1_itemcode'],
+										':bdi_whscode'  => $detail['fc1_whscode'],
+										':business' 	=> $Data['business']
+									));		
+									
+									if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+									} else {
+
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'    => $resAlmacenMasivo,
+											'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+										);
+
+
+										$this->response($respuesta);
+
+										return;
+									}
+
 									// SE ACTUALZAN TODOS LOS COSTOS PONDERADOS DE LOS ARTICULOS EN EL ALMACEN
 									if ($ManejaLote == 1) {
 										$sqlUpdateCostoCantidad = "UPDATE tbdi
@@ -1221,6 +1253,38 @@ class PurchaseInv extends REST_Controller
 										$respuesta = array(
 											'error'   => true,
 											'data'    => $resUpdateCostoCantidad,
+											'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+										);
+
+
+										$this->response($respuesta);
+
+										return;
+									}
+
+									// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+									// SIN MIRAR LA UBICACION O LOTE
+									$sqlAlmacenMasivo = "UPDATE tbdi
+														SET bdi_avgprice = :bdi_avgprice
+														WHERE bdi_itemcode = :bdi_itemcode
+														AND bdi_whscode = :bdi_whscode
+														AND business = :business";
+									
+									$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+										':bdi_avgprice' => $CostoNuevo,
+										':bdi_itemcode' => $detail['fc1_itemcode'],
+										':bdi_whscode'  => $detail['fc1_whscode'],
+										':business' 	=> $Data['business']
+									));		
+									
+									if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+									} else {
+
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'    => $resAlmacenMasivo,
 											'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
 										);
 
@@ -1372,8 +1436,41 @@ class PurchaseInv extends REST_Controller
 										$respuesta = array(
 											'error'   => true,
 											'data' 		=> $resInsertCostoCantidad,
-											'mensaje'	=> 'No se pudo registrar la Entrada de Compra'
+											'mensaje'	=> 'No se pudo registrar la Factura de Compra'
 										);
+
+										$this->response($respuesta);
+
+										return;
+									}
+
+
+									// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+									// SIN MIRAR LA UBICACION O LOTE
+									$sqlAlmacenMasivo = "UPDATE tbdi
+														SET bdi_avgprice = :bdi_avgprice
+														WHERE bdi_itemcode = :bdi_itemcode
+														AND bdi_whscode = :bdi_whscode
+														AND business = :business";
+									
+									$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+										':bdi_avgprice' => $CostoNuevo,
+										':bdi_itemcode' => $detail['fc1_itemcode'],
+										':bdi_whscode'  => $detail['fc1_whscode'],
+										':business' 	=> $Data['business']
+									));		
+									
+									if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+									} else {
+
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'    => $resAlmacenMasivo,
+											'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+										);
+
 
 										$this->response($respuesta);
 
@@ -1509,6 +1606,38 @@ class PurchaseInv extends REST_Controller
 											'data' 		=> $resInsertCostoCantidad,
 											'mensaje'	=> 'No se pudo registrar la Factura de Compras'
 										);
+
+										$this->response($respuesta);
+
+										return;
+									}
+
+									// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+									// SIN MIRAR LA UBICACION O LOTE
+									$sqlAlmacenMasivo = "UPDATE tbdi
+														SET bdi_avgprice = :bdi_avgprice
+														WHERE bdi_itemcode = :bdi_itemcode
+														AND bdi_whscode = :bdi_whscode
+														AND business = :business";
+									
+									$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+										':bdi_avgprice' => $CostoNuevo,
+										':bdi_itemcode' => $detail['fc1_itemcode'],
+										':bdi_whscode'  => $detail['fc1_whscode'],
+										':business' 	=> $Data['business']
+									));		
+									
+									if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+									} else {
+
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data'    => $resAlmacenMasivo,
+											'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+										);
+
 
 										$this->response($respuesta);
 
@@ -2156,7 +2285,7 @@ class PurchaseInv extends REST_Controller
 
 				//CUENTA PUENTE DE INVENTARIO
 
-				$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem WHERE business = :business";
+				$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem WHERE pge_id = :business";
 				$rescuentainventario = $this->pedeo->queryTable($sqlcuentainventario, array(':business' => $Data['business']));
 
 				if (isset($rescuentainventario[0]) && $rescuentainventario[0]['pge_bridge_inv_purch'] != 0) {
@@ -2729,7 +2858,7 @@ class PurchaseInv extends REST_Controller
 
 			if ($SumaCreditosSYS > $SumaDebitosSYS || $SumaDebitosSYS > $SumaCreditosSYS) {
 
-				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE business = :business";
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE pge_id = :business";
 				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array(':business' => $Data['business']));
 
 				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
@@ -3409,6 +3538,102 @@ class PurchaseInv extends REST_Controller
 
 	//OBTENER Factura de compras DETALLE POR ID
 	public function getPurchaseInvDetail_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['fc1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT cfc1.*,dc.cfc_cardcode,dc.cfc_docentry
+											FROM cfc1
+											INNER  JOIN dcfc dc ON cfc1.fc1_docentry = dc.cfc_docentry
+											WHERE cfc1.fc1_docentry =:fc1_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fc1_docentry" => $Data['fc1_docentry']));
+
+
+
+		$seriales = "SELECT msn_line, msn_itemcode, string_agg(msn_sn, ',') AS serials FROM tmsn  WHERE msn_baseentry = :msn_baseentry AND msn_basetype = :msn_basetype GROUP BY  msn_itemcode,msn_line";
+
+
+		$resseriales = $this->pedeo->queryTable($seriales, array(":msn_baseentry" => $Data['fc1_docentry'], ":msn_basetype" => 15));
+
+
+		if (isset($resSelect[0]) && isset($resseriales[0])) {
+
+			foreach ($resSelect as $key => $value) {
+
+				$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
+														FROM cfc1
+														INNER JOIN dmar
+														ON cfc1.fc1_itemcode = dmar.dma_item_code
+														INNER JOIN fcrt fc
+														ON cfc1.fc1_docentry = fc.crt_baseentry
+														AND cfc1.fc1_linenum = fc.crt_linenum
+														WHERE fc1_docentry = :fc1_docentry";
+
+				$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':fc1_docentry' => $Data['fc1_docentry']));
+
+				if (isset($resSelect2[0])) {
+					$resSelect[$key]['retenciones'] = $resSelect2;
+				}
+			}
+
+
+
+			$respuesta = array(
+				'error' => false,
+				'data'  =>  array("detalle" => $resSelect, "complemento" => $resseriales),
+				'mensaje' => ''
+			);
+		} else if (isset($resSelect[0])) {
+
+			foreach ($resSelect as $key => $value) {
+
+				$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
+														FROM cfc1
+														INNER JOIN dmar
+														ON cfc1.fc1_itemcode = dmar.dma_item_code
+														INNER JOIN fcrt fc
+														ON cfc1.fc1_docentry = fc.crt_baseentry
+														AND cfc1.fc1_linenum = fc.crt_linenum
+														WHERE fc1_docentry = :fc1_docentry";
+
+				$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':fc1_docentry' => $Data['fc1_docentry']));
+
+				if (isset($resSelect2[0])) {
+					$resSelect[$key]['retenciones'] = $resSelect2;
+				}
+			}
+
+			$respuesta = array(
+				'error'     => false,
+				'data'		=> $resSelect,
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		} else {
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function getPurchaseInvDetailCopy_get()
 	{
 
 		$Data = $this->get();

@@ -346,9 +346,9 @@ class PModular extends REST_Controller {
 
 		if(isset($resSelect[0])){
 
-			$sqlDetalle = "SELECT * FROM ".$resSelect[0]['pgn_table'];
+			$sqlDetalle = "SELECT * FROM ".$resSelect[0]['pgn_table']." WHERE ".$resSelect[0]['pgn_prefix']."_status = :status";
 
-			$resDetalle = $this->pedeo->queryTable($sqlDetalle, array());
+			$resDetalle = $this->pedeo->queryTable($sqlDetalle, array(':status' => 1));
 
 			if(isset($resDetalle[0])){
 

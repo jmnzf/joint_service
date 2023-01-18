@@ -111,8 +111,7 @@ class DropBox extends REST_Controller
 
       return;
     }
-
-
+    
     $resultSet = $this->createShareLink("{$Data['path']}/{$Data['name']}"); // 
     
     $respuesta = array(
@@ -134,7 +133,7 @@ class DropBox extends REST_Controller
           ':code' => $Data['code'],
           ':attach' => $resultSet['url'],
           ':description' => $Data['description'],
-          ':type' => $Data['type']
+          ':type' => isset($Data['type']) ? $Data['type'] : 0
         )
       );
 

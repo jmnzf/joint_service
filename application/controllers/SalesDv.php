@@ -24,8 +24,7 @@ class SalesDv extends REST_Controller {
     }
 
   //CREAR NUEVA Devolución de clientes
-    public function createSalesDv_post()
-    {
+    public function createSalesDv_post(){
 
       $Data = $this->post();
 
@@ -562,9 +561,10 @@ class SalesDv extends REST_Controller {
 
           $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                               dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp, dv1_ubication, dv1_lote)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
-                              :dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,
-                              :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp, :dv1_ubication, :dv1_lote)";
+                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp, dv1_ubication, dv1_lote,dv1_baseline)
+                              VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,:dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, 
+                              :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,:dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, 
+                              :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp, :dv1_ubication, :dv1_lote,:dv1_baseline)";
 
           $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail,array(
             ':dv1_docentry' => $resInsert,
@@ -590,7 +590,8 @@ class SalesDv extends REST_Controller {
             ':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0,
             ':dv1_codimp' => isset($detail['dv1_codimp'])?$detail['dv1_codimp']:NULL,
             ':dv1_ubication' => isset($detail['dv1_ubication'])?$detail['dv1_ubication']:NULL,
-            ':dv1_lote' => isset($detail['ote_code'])?$detail['ote_code']:NULL
+            ':dv1_lote' => isset($detail['ote_code'])?$detail['ote_code']:NULL,
+            ':dv1_baseline' => isset($detail['dv1_baseline']) && is_numeric($detail['dv1_baseline']) ? $detail['dv1_baseline'] : 0
           ));
 
           if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1560,7 +1561,7 @@ class SalesDv extends REST_Controller {
 
 
           $sqlEstado1 = "SELECT
-                              count(t1.em1_itemcode) item,
+                              count(t1.em1_linenum) item,
                               sum(t1.em1_quantity) cantidad
                               from dvem t0
                               inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
@@ -1574,12 +1575,12 @@ class SalesDv extends REST_Controller {
 
 
           $sqlEstado2 = "SELECT
-                              coalesce(count(distinct t3.dv1_itemcode),0) item,
+                              coalesce(count(distinct t3.dv1_baseline),0) item,
                               coalesce(sum(t3.dv1_quantity),0) cantidad
                               from dvem t0
                               left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
                               left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry
-                              left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode
+                              left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode and t1.em1_linenum = t3.dv1_baseline
                               where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
           $resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
                           ':vem_docentry' => $Data['vdv_baseentry'],
@@ -1594,7 +1595,6 @@ class SalesDv extends REST_Controller {
           $cantidad_del = $resEstado1[0]['cantidad'];
           $cantidad_dev = $resEstado2[0]['cantidad'];
 
-// print_r($resta_item);print_r($resta_cantidad);exit();die();
           if($item_del == $item_dev  &&  $cantidad_del == $cantidad_dev){
 
 
@@ -1613,15 +1613,15 @@ class SalesDv extends REST_Controller {
 
               if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
 
-                if(is_numeric($resta_item) && $resta_item == 0
-                  && is_numeric($resta_cantidad) && $resta_cantidad == 0){
+                if(is_numeric($resta_item) && $resta_item <= 0
+                  && is_numeric($resta_cantidad) && $resta_cantidad <= 0){
 
                   $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
                   VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
                       $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-                      ':bed_docentry' => $Data['vdv_baseentry'],
-                      ':bed_doctype' => $Data['vdv_basetype'],
+                      ':bed_docentry' => $resInsert,
+                      ':bed_doctype' => $Data['vdv_doctype'],
                       ':bed_status' => 3, //ESTADO CERRADO
                       ':bed_createby' => $Data['vdv_createby'],
                       ':bed_date' => date('Y-m-d'),
@@ -1647,11 +1647,82 @@ class SalesDv extends REST_Controller {
 
           }
       }
+      //VALIDAR SI LA DEVOLUCION SE REALIZA COMPLETA, CERRAR DOCUMENTO DE DEVOLCION
+      // if($Data['vdv_basetype'] == 3){
+      //   //CONSULTA PARA OBTENER CANIDAD DE ENTREGA
+      //   $item = "";
+      //   $cant = "";
+      //   $item1 = "";
+      //   $cant1 = "";
 
-      	// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
-				// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
-				// print_r(json_encode($ressqlmac1));
-				// exit;
+      //   $sql1 = "SELECT 
+      //             count(vem1.em1_itemcode) item,
+      //             sum(vem1.em1_quantity) cantidad
+      //           FROM dvem
+      //           INNER JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry
+      //           WHERE dvem.vem_docentry = :vem_docentry AND dvem.vem_doctype = :vem_doctype";
+      //   $resSql1 = $this->pedeo->queryTable($sql1,array(
+      //     ':vem_docentry' => $Data['vdv_baseentry'],
+      //     ':vem_doctype' => $Data['vdv_basetype']
+      //   ));
+
+      //   $item = isset($resSql1[0]) ? $resSql1[0]['item'] : $item;
+      //   $cant = isset($resSql1[0]) ? $resSql1[0]['cantidad'] : $cant;
+
+      //   $sql2 = "SELECT 
+      //             coalesce(count(vdv1.dv1_itemcode),0) item,
+      //             coalesce(sum(vdv1.dv1_quantity),0) cantidad
+      //           FROM dvem
+      //           INNER JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry
+      //           LEFT JOIN dvdv ON dvem.vem_docentry = dvdv.vdv_baseentry AND dvem.vem_doctype = dvdv.vdv_basetype
+      //           LEFT JOIN vdv1 ON dvdv.vdv_docentry = vdv1.dv1_docentry AND vem1.em1_itemcode = vdv1.dv1_itemcode
+      //           WHERE dvem.vem_docentry = :vem_docentry AND dvem.vem_doctype = :vem_doctype";
+      //   $resSql2 = $this->pedeo->queryTable($sql2,array(
+      //     ':vem_docentry' => $Data['vdv_baseentry'],
+      //     ':vem_doctype' => $Data['vdv_basetype']
+      //   ));
+
+      //   $item1 = isset($resSql2[0]) ? $resSql2[0]['item'] : $item1;
+      //   $cant1 = isset($resSql2[0]) ? $resSql2[0]['cantidad'] : $cant1;
+
+        
+
+      //   if($item >= $item1 && $cant >= $cant1){
+
+      //     $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+			// 		VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+			// 		$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+			// 			':bed_docentry' => $Data['vdv_docentry'],
+			// 			':bed_doctype' => $Data['vdv_doctype'],
+			// 			':bed_status' => 3, //ESTADO CERRADO
+			// 			':bed_createby' => $Data['vdv_createby'],
+			// 			':bed_date' => date('Y-m-d'),
+			// 			':bed_baseentry' => $resInsert,
+			// 			':bed_basetype' => $Data['vdv_doctype']
+			// 		));
+      //     // print_r($resInsertEstado);exit;die;
+			// 		if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+
+			// 		} else {
+
+			// 			$this->pedeo->trans_rollback();
+
+			// 			$respuesta = array(
+			// 				'error'   => true,
+			// 				'data' => $resInsertEstado,
+			// 				'mensaje'	=> 'No se pudo registrar la devolucion de venta'
+			// 			);
+
+
+			// 			$this->response($respuesta);
+
+			// 			return;
+			// 		}
+      //   }
+        
+      // }
+
 
       //SE VALIDA LA CONTABILIDAD CREADA
       if ($ResultadoInv == 1){
@@ -1681,13 +1752,12 @@ class SalesDv extends REST_Controller {
         }
       }
       //
-
-
-
       // Si todo sale bien despues de insertar el detalle de la Devolución de clientes
       // se confirma la trasaccion  para que los cambios apliquen permanentemente
       // en la base de datos y se confirma la operacion exitosa.
       $this->pedeo->trans_commit();
+
+      
 
       $respuesta = array(
       'error' => false,
@@ -1854,7 +1924,7 @@ class SalesDv extends REST_Controller {
         ));
 
         if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
-                                        // Se verifica que el detalle no de error insertando //
+          
         }else{
 
         // si falla algun insert del detalle de la Devolución de clientes se devuelven los cambios realizados por la transaccion,
@@ -2034,10 +2104,6 @@ class SalesDv extends REST_Controller {
       $this->response($respuesta);
     }
 
-
-
-
-
     //OBTENER DEVOLUCION DE VENTAS POR ID SOCIO DE NEGOCIO
     public function getSalesDvBySN_get(){
 
@@ -2087,11 +2153,6 @@ class SalesDv extends REST_Controller {
 
       $this->response($respuesta);
     }
-
-
-
-
-
 
     private function getUrl($data, $caperta){
       $url = "";

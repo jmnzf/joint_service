@@ -696,9 +696,10 @@ class SalesDel extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
                                     em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp,em1_ubication,em1_lote)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
-                                    :em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
-                                    :em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp,:em1_ubication,:em1_lote)";
+                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp,em1_ubication,em1_lote,em1_baseline)
+									VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,:em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, 
+									:em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,:em1_acctcode, :em1_basetype, :em1_doctype, 
+									:em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp,:em1_ubication,:em1_lote,:em1_baseline)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':em1_docentry' => $resInsert,
@@ -724,7 +725,8 @@ class SalesDel extends REST_Controller
 					':em1_linenum' => is_numeric($detail['em1_linenum']) ? $detail['em1_linenum'] : 0,
 					':em1_codimp' => isset($detail['em1_codimp']) ? $detail['em1_codimp'] : NULL,
 					':em1_ubication' => isset($detail['em1_ubication']) ? $detail['em1_ubication'] : NULL,
-					':em1_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
+					':em1_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':em1_baseline' => isset($detail['em1_baseline']) && is_numeric($detail['em1_baseline']) ? $detail['em1_baseline'] : 0
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1700,7 +1702,7 @@ class SalesDel extends REST_Controller
 
 
 				$sqlEstado1 = "SELECT
-									count(t1.vc1_itemcode) item,
+									count(t1.vc1_linenum) item,
 									sum(t1.vc1_quantity) cantidad
 								from dvct t0
 								inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
@@ -1714,12 +1716,12 @@ class SalesDel extends REST_Controller
 				));
 
 				$sqlEstado2 = "SELECT
-									coalesce(count(distinct t3.em1_itemcode),0) item,
+									coalesce(count(distinct t3.em1_baseline),0) item,
 									coalesce(sum(t3.em1_quantity),0) cantidad
 								from dvct t0
 								left join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
 								left join dvem t2 on t0.dvc_docentry = t2.vem_baseentry
-								left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.vc1_itemcode = t3.em1_itemcode
+								left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.vc1_itemcode = t3.em1_itemcode and t1.vc1_linenum = t3.em1_baseline
 								where t0.dvc_docentry = :dvc_docentry and t0.dvc_doctype = :dvc_doctype";
 
 
@@ -1773,7 +1775,7 @@ class SalesDel extends REST_Controller
 
 
 				$sqlEstado1 = "SELECT
-							count(t1.ov1_itemcode) item,
+							count(t1.ov1_linenum) item,
 							sum(t1.ov1_quantity) cantidad
 							from dvov t0
 							inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
@@ -1787,12 +1789,12 @@ class SalesDel extends REST_Controller
 
 
 				$sqlEstado2 = "SELECT
-							coalesce(count(distinct t3.em1_itemcode),0) item,
+							coalesce(count(distinct t3.em1_baseline),0) item,
 							coalesce(sum(t3.em1_quantity),0) cantidad
 							from dvov t0
 							left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
 							left join dvem t2 on t0.vov_docentry = t2.vem_baseentry
-							left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode
+							left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode and t1.ov1_linenum = t3.em1_baseline
 							where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype";
 				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
 					':vov_docentry' => $Data['vem_baseentry'],
@@ -2252,98 +2254,70 @@ class SalesDel extends REST_Controller
 			return;
 		}
 
-		//VARIABLES DE CANTIDADES DE DOC POSTERIORES PARA EL COPIAR DE
-		$cantDev = 0;
-		$CantFactura = 0;
-
-		//OBTENER CANTIDAD DE PEDIDO DIRECTO
-		$sqlDev = "SELECT 
-						vdv1.dv1_itemcode,
-						sum(vdv1.dv1_quantity) as dv1_quantity
-					FROM dvem
-					INNER JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry
-					LEFT JOIN dvdv ON dvem.vem_docentry = dvdv.vdv_baseentry AND dvem.vem_doctype = dvdv.vdv_basetype
-					LEFT JOIN vdv1 ON dvdv.vdv_docentry = vdv1.dv1_docentry AND vem1.em1_itemcode = vdv1.dv1_itemcode
-					WHERE dvem.vem_docentry = ".$Data['ov1_docentry']."
-					GROUP BY vdv1.dv1_itemcode";
-
-		$resSqlDev = $this->pedeo->queryTable($sqlDev,array());
-
-		$cantDev = isset($resSqlDev[0]['dv1_quantity']) ? $resSqlDev[0]['dv1_quantity'] : $cantDev;
-		
-		//OBTENER CANTIDAD DE ENTREGA DIRECTA
-		$sqlInvoice = "SELECT
-							vfv1.fv1_itemcode,
-							sum(vfv1.fv1_quantity) as fv1_quantity
-						FROM dvem
-						INNER JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry
-						LEFT JOIN dvfv ON dvem.vem_docentry = dvfv.dvf_baseentry AND dvem.vem_doctype = dvfv.dvf_basetype
-						LEFT JOIN vfv1 ON dvfv.dvf_docentry = vfv1.dv1_docentry AND vem1.em1_itemcode = vfv1.fv1_itemcode
-						WHERE dvem.vem_docentry = ".$Data['ov1_docentry']."
-						GROUP BY vfv1.fv1_itemcode";
-
-		$resSqlInvoice = $this->pedeo->queryTable($sqlInvoice,array());
-
-		$CantFactura = isset($resSqlInvoice[0]['fv1_quantity']) ? $resSqlInvoice[0]['fv1_quantity'] : $CantFactura;
-
-		$sqlSelect = " SELECT
-						t1.em1_acciva,
-						t1.em1_acctcode,
-						t1.em1_avprice,
-						t1.em1_basetype,
-						t1.em1_costcode,
-						t1.em1_discount,
-						t1.em1_docentry,
-						t1.em1_doctype,
-						t1.em1_id,
-						t1.em1_inventory,
-						t1.em1_itemcode,
-						t1.em1_itemname,
-						t1.em1_linenum,
-						t1.em1_linetotal line_total_real,
-						(t1.em1_quantity + (".$cantDev." + ".$CantFactura.")) * t1.em1_price em1_linetotal,
-						t1.em1_price,
-						t1.em1_project,
-						(t1.em1_quantity + (".$cantDev." + ".$CantFactura.")) em1_quantity,
-						t1.em1_ubusiness,
-						t1.em1_uom,
-						t1.em1_vat,
-						t1.em1_vatsum,
-						t1.em1_quantity cant_real,
-						(((t1.em1_quantity - (".$cantDev." + ".$CantFactura.")) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
-						t1.em1_whscode,
-						dmar.dma_series_code,
-						t1.em1_ubication
-						from dvem t0
-						left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-						INNER JOIN dmar ON em1_itemcode = dmar.dma_item_code
-						WHERE t1.em1_docentry = :em1_docentry
-						GROUP BY
-						t1.em1_acciva,
-						t1.em1_acctcode,
-						t1.em1_avprice,
-						t1.em1_basetype,
-						t1.em1_costcode,
-						t1.em1_discount,
-						t1.em1_docentry,
-						t1.em1_doctype,
-						t1.em1_id,
-						t1.em1_inventory,
-						t1.em1_itemcode,
-						t1.em1_itemname,
-						t1.em1_linenum,
-						t1.em1_linetotal,
-						t1.em1_price,
-						t1.em1_project,
-						t1.em1_ubusiness,
-						t1.em1_uom,
-						t1.em1_vat,
-						t1.em1_vatsum,
-						t1.em1_whscode,
-						t1.em1_quantity,
-						dmar.dma_series_code,
-						t1.em1_ubication
-						HAVING (t1.em1_quantity - (".$cantDev." + ".$CantFactura.")) <> 0";
+		$sqlSelect = "SELECT
+		t1.em1_linenum,
+		t1.em1_acciva,
+		t1.em1_acctcode,
+		t1.em1_avprice,
+		t1.em1_basetype,
+		t1.em1_costcode,
+		t1.em1_discount,
+		t1.em1_docentry,
+		t1.em1_doctype,
+		t1.em1_id,
+		t1.em1_inventory,
+		t1.em1_itemcode,
+		t1.em1_itemname,
+		(t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) - coalesce(sum(t5.fv1_quantity),0))) * t1.em1_price em1_linetotal,
+		t1.em1_price,
+		t1.em1_project,
+		t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) - coalesce(sum(t5.fv1_quantity),0))as em1_quantity,
+		t1.em1_ubusiness,
+		t1.em1_uom,
+		t1.em1_vat,
+		t1.em1_vatsum vatsum_real,
+		((((t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) - coalesce(sum(t5.fv1_quantity),0)))) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
+		t1.em1_whscode,
+		dmar.dma_series_code,
+		t1.em1_ubication,
+		t1.em1_codimp,
+		get_ubication(t1.em1_whscode) as ubication,
+		get_lote(t1.em1_itemcode) as lote
+		from dvem t0
+		inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
+		left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
+		left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode and t1.em1_linenum = t3.dv1_baseline
+		left join dvfv t4 on t0.vem_docentry = t4.dvf_baseentry and t0.vem_doctype = t4.dvf_basetype
+		left join vfv1 t5 on t4.dvf_docentry = t5.fv1_docentry and t1.em1_itemcode = t5.fv1_itemcode and t1.em1_linenum = t5.fv1_baseline
+		INNER JOIN dmar ON t1.em1_itemcode = dmar.dma_item_code
+		WHERE t1.em1_docentry = :em1_docentry
+		GROUP BY
+		t1.em1_linenum,
+		t1.em1_acciva,
+		t1.em1_acctcode,
+		t1.em1_avprice,
+		t1.em1_basetype,
+		t1.em1_costcode,
+		t1.em1_discount,
+		t1.em1_docentry,
+		t1.em1_doctype,
+		t1.em1_id,
+		t1.em1_inventory,
+		t1.em1_itemcode,
+		t1.em1_itemname,
+		t1.em1_linetotal,
+		t1.em1_price,
+		t1.em1_project,
+		t1.em1_ubusiness,
+		t1.em1_uom,
+		t1.em1_vat,
+		t1.em1_vatsum,
+		t1.em1_whscode,
+		t1.em1_quantity,
+		dmar.dma_series_code,
+		t1.em1_ubication,
+		t1.em1_codimp
+		HAVING (t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) - coalesce(sum(t5.fv1_quantity),0))) > 0";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
 
@@ -2573,9 +2547,6 @@ class SalesDel extends REST_Controller
 			return false;
 		}
 	}
-
-
-
 
 	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod)
 	{

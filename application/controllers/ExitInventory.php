@@ -790,7 +790,7 @@ class ExitInventory extends REST_Controller
 						$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
 							':bdi_quantity' => $CantidadTotal,
-							':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+							':bdi_id' 		=> $resCostoCantidad[0]['bdi_id']
 						));
 
 						if (is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1) {

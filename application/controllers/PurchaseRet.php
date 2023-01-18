@@ -882,6 +882,8 @@ class PurchaseRet extends REST_Controller
 					// Buscando item en el stock
 					$sqlCostoCantidad = '';
 					$resCostoCantidad = [];
+					$CantidadPorAlmacen = 0;
+					$CostoPorAlmacen = 0;
 
 					// SE VALIDA SI EL ALMACEN MANEJA UBICACION
 					if ( $ManejaUbicacion == 1 ){
@@ -952,22 +954,59 @@ class PurchaseRet extends REST_Controller
 							));
 						}
 					}
+
+					// se busca la cantidad general del articulo agrupando todos los almacenes y lotes
+					$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode AND business = :business GROUP BY bdi_whscode, bdi_avgprice";
+					$resCGA = $this->pedeo->queryTable($sqlCGA, array(
+						':bdi_itemcode' => $detail['dc1_itemcode'],
+						':bdi_whscode'  => $detail['dc1_whscode'],
+						':business' 	=> $Data['business']
+					));
+
+					if (isset($resCGA[0]['bdi_quantity']) && is_numeric($resCGA[0]['bdi_quantity'])) {
+
+						$CantidadPorAlmacen = $resCGA[0]['bdi_quantity'];
+						$CostoPorAlmacen = $resCGA[0]['bdi_avgprice'];
+					} else {
+
+						$CantidadPorAlmacen = 0;
+						$CostoPorAlmacen = 0;
+					}
 					
 
 
 					if (isset($resCostoCantidad[0])) {
 
-						if ($resCostoCantidad[0]['bdi_quantity'] > 0) {
+						if ( $resCostoCantidad[0]['bdi_quantity'] > 0 && $CantidadPorAlmacen > 0 ) {
 
-							$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+							$CantidadActual = $CantidadPorAlmacen;
 							$CantidadDevolucion = ($detail['dc1_quantity'] * $CANTUOMPURCHASE);
 							$CostoDevolucion = $detail['dc1_price'];
-							$CostoActual = $resCostoCantidad[0]['bdi_avgprice'];
+							$CostoActual = $CostoPorAlmacen;
 							$CantidadTotal = ($CantidadActual - $CantidadDevolucion);
+							$CantidadArticulo = $resCostoCantidad[0]['bdi_quantity'];
+							$CantidadTotalArticulo = ($CantidadArticulo - $CantidadDevolucion);
+
 							if ($CantidadTotal == 0) {
 								$CostoPonderado = 0;
 							} else if ($CantidadTotal != 0) {
 								$CostoPonderado = (($CostoActual * $CantidadActual) + ($CostoDevolucion * $CantidadDevolucion)) / $CantidadTotal;
+							}
+
+
+							if ( $CantidadTotalArticulo < 0 ){
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' 		=> $resCostoCantidad,
+									'mensaje'	=> 'El item ' . $detail['dc1_itemcode'].' recae en inventario negativo '.$CantidadTotalArticulo
+								);
+
+								$this->response($respuesta);
+
+								return;
 							}
 
 
@@ -979,9 +1018,9 @@ class PurchaseRet extends REST_Controller
 
 							$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
-								':bdi_quantity' => $CantidadTotal,
+								':bdi_quantity' => $CantidadTotalArticulo,
 								':bdi_avgprice' => $CostoPonderado,
-								':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+								':bdi_id' 		=> $resCostoCantidad[0]['bdi_id']
 							));
 
 							if (is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1) {
@@ -994,7 +1033,44 @@ class PurchaseRet extends REST_Controller
 									'data'    => $resUpdateCostoCantidad,
 									'mensaje'	=> 'No se pudo crear la devolucion de compras'
 								);
+
+								$this->response($respuesta);
+
+								return;
 							}
+
+							// SE ACTUALIZA EL COSTO PONDERADO EN EL ALMACEN DEL ARTICULO
+							// SIN MIRAR LA UBICACION O LOTE
+							$sqlAlmacenMasivo = "UPDATE tbdi
+												SET bdi_avgprice = :bdi_avgprice
+												WHERE bdi_itemcode = :bdi_itemcode
+												AND bdi_whscode = :bdi_whscode
+												AND business = :business";
+							
+							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
+								':bdi_avgprice' => $CostoPonderado,
+								':bdi_itemcode' => $detail['dc1_itemcode'],
+								':bdi_whscode'  => $detail['dc1_whscode'],
+								':business' 	=> $Data['business']
+							));		
+							
+							if (is_numeric($resAlmacenMasivo) && $resAlmacenMasivo > 0 || $resAlmacenMasivo == 0) {
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAlmacenMasivo,
+									'mensaje'	=> 'No se pudo registrar el movimiento en el stock'
+								);
+
+
+								$this->response($respuesta);
+
+								return;
+							}
+
 						} else {
 
 							$this->pedeo->trans_rollback();
@@ -1004,6 +1080,10 @@ class PurchaseRet extends REST_Controller
 								'data'    => $resCostoCantidad,
 								'mensaje' => 'No hay existencia para el item: ' . $detail['dc1_itemcode']
 							);
+
+							$this->response($respuesta);
+
+							return;
 						}
 					} else {
 

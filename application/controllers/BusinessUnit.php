@@ -43,6 +43,24 @@ class BusinessUnit extends REST_Controller {
         return;
       }
 
+
+      $sqlVerify = "SELECT * FROM dmun WHERE UPPER(dun_un_code) = UPPER(:dun_un_code)";
+
+      $resVerify = $this->pedeo->queryTable($sqlVerify, array(
+          ':dun_un_code' => $Data['dun_un_code']
+      ));
+  
+      if ( isset($resVerify[0]) ){
+        
+        $respuesta = array(
+          'error'   => true,
+          'data' 		=> $resVerify,
+          'mensaje'	=> 'Ya existe una unidad de negocio con codigo '.$Data['dun_un_code']
+        );
+  
+        return $this->response($respuesta);
+      }
+
         $sqlInsert = "INSERT INTO dmun(dun_un_code, dun_un_name, dun_date_ini, dun_un_end_date,business)
                       VALUES (:dun_un_code, :dun_un_name, :dun_date_ini, :dun_un_end_date,:business)";
 
@@ -83,8 +101,7 @@ class BusinessUnit extends REST_Controller {
 
       $Data = $this->post();
 
-      if(!isset($Data['dun_un_code']) OR
-         !isset($Data['dun_un_name']) OR
+      if(!isset($Data['dun_un_name']) OR
          !isset($Data['dun_date_ini']) OR
          !isset($Data['dun_un_end_date']) OR
          !isset($Data['dun_id']) or
@@ -102,12 +119,11 @@ class BusinessUnit extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE dmun SET dun_un_code = :dun_un_code, dun_un_name = :dun_un_name, dun_date_ini = :dun_date_ini,
+      $sqlUpdate = "UPDATE dmun SET dun_un_name = :dun_un_name, dun_date_ini = :dun_date_ini,
                     dun_un_end_date = :dun_un_end_date,business = :business WHERE dun_id = :dun_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-          ':dun_un_code' => $Data['dun_un_code'],
           ':dun_un_name' => $Data['dun_un_name'],
           ':dun_date_ini' => $Data['dun_date_ini'],
           ':dun_un_end_date' => $Data['dun_un_end_date'],

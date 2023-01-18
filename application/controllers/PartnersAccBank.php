@@ -68,7 +68,7 @@ class PartnersAccBank extends REST_Controller {
              ':dmb_bank' => $Data['dmb_bank'],
              ':dmb_bank_type' => $Data['dmb_bank_type'],
              ':dmb_num_acc' => $Data['dmb_num_acc'],
-             ':dmb_major' => $Data['dmb_major'],
+             ':dmb_major' => 0,
              ':dmb_status' => $Data['dmb_status'],
              ':dmb_card_code' => $Data['dmb_card_code'],
              ':dmb_account' => $Data['dmb_account']
