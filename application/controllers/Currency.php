@@ -46,29 +46,29 @@ class Currency extends REST_Controller {
         return;
       }
 
-			if($DataCurrency['pgm_principal'] == 1){
+		
 
-					$sqlValidarPrincipal = " SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal ";
+		$sqlValidarPrincipal = " SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal ";
 
-					$resValidarPricipal = $this->pedeo->queryTable($sqlValidarPrincipal, array(
+		$resValidarPricipal = $this->pedeo->queryTable($sqlValidarPrincipal, array(
 
-							':pgm_principal' => 1
-					));
+				':pgm_principal' => 1
+		));
 
-					if(isset($resValidarPricipal[0])){
+		if(isset($resValidarPricipal[0])){
 
-							$respuesta = array(
-								'error'   => true,
-								'data' 		=> $resValidarPricipal[0]['pgm_id_moneda'],
-								'mensaje'	=> 'No se puede insertar una moneda como principal si ya existe una.'
-							);
+				$respuesta = array(
+					'error'   => true,
+					'data' 		=> $resValidarPricipal[0]['pgm_id_moneda'],
+					'mensaje'	=> 'No se puede insertar una moneda como principal si ya existe una.'
+				);
 
-							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-							return;
+				return;
 
-					}
-			}
+		}
+			
 
 
       $sqlInsert = "INSERT INTO pgec(pgm_name_moneda,  pgm_symbol,  pgm_enabled, pgm_principal, pgm_system, pgm_iscurrency)

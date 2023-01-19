@@ -30,7 +30,7 @@ class PdfContract extends REST_Controller {
 
 
 	public function PdfContract_post(){
-
+		
         $Data = $this->post();
 		$Data = $Data['CSN_DOCENTRY'];
 
@@ -161,13 +161,16 @@ class PdfContract extends REST_Controller {
 				$razon = "";
 				$gaceta = "";
 				$otros = "";
+				$varios = "";
 				$suma = 0;
 				$ModRazon = "";
 				$ModGaceta = "";
 				$ModOtros = "";
+				$ModVarios = "";
 				$tdRazon = "";
 				$tdGaceta = "";
 				$tdOtros = "";
+				$tdVarios = "";
 
 				foreach ($contenidoContrato as $key => $value) {
 					// code...
@@ -474,6 +477,99 @@ class PdfContract extends REST_Controller {
 							</tr>';
 						}
 	
+					}else if ($value1['itementrega'] == 4 && $value['referencia'] == $value1['item']){
+	
+						switch ($value1['day']){
+							case '1':
+								$dayWeek = $value1['dayname'];
+								array_push($day,$dayWeek);
+								break;
+							case '2':
+								$dayWeek = $value1['dayname'];
+								array_push($day,$dayWeek);
+								break;
+							case '3':
+								$dayWeek = $value1['dayname'];
+								array_push($day,$dayWeek);
+								break;
+							case '4':
+								$dayWeek = $value1['dayname'];
+								array_push($day,$dayWeek);
+								break;
+							case '5':
+								$dayWeek = $value1['dayname'];
+								array_push($day,$dayWeek);
+								break;
+							case '6':
+								$dayWeek = $value1['dayname'];
+								array_push($day,$dayWeek);
+								break;
+							case '7':
+								$dayWeek = $value1['dayname'];
+								array_push($day,$dayWeek);
+								break;
+							default:
+								$dayWeek;
+							
+						}
+	
+						$dayUnique = array_unique($day);
+						$varios = 'checked="checked"';
+						$ModVarios = '<tr>
+						<th style="text-align: left;"><b>MODALIDAD</b></th>
+						<th style="text-align: center;"><b>MENSUAL</b></th>
+						<th style="text-align: center;"><b>TRIMESTRAL</b></th>
+						<th style="text-align: center;"><b>SEMESTRAL</b></th>
+						<th style="text-align: center;"><b>ANUAL</b></th>
+						<th style="text-align: center;"><b>BIANUAL</b></th>
+						</tr>
+						<tr>
+						<td style="text-align: left;"><b>OTROS</b>: '.implode(',',$dayUnique).'</span></td>';
+						if($value1['periodo'] == 1){
+							$suma = $value['total_l'];
+							$tdVarios = '<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							</tr>';
+						}else if ($value1['periodo'] == 2){
+							$suma = $value['total_l'];
+							$tdVarios = '<td style="text-align: center;">0</td>
+							<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>
+							<td style="text-align: center;"></td>
+							<td style="text-align: center;"></td>
+							<td style="text-align: center;"></td>
+							</tr>';
+						}
+						else if ($value1['periodo'] == 3){
+							$suma = $value['total_l'];
+							$tdVarios = '<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							</tr>';
+						}
+						else if ($value1['periodo'] == 4){
+							$suma = $value['total_l'];
+							$tdVarios = '<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>
+							<td style="text-align: center;">0</td>
+							</tr>';
+						}
+						else if ($value1['periodo'] == 5){
+							$suma = $value['total_l'];
+							$tdVarios = '<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">0</td>
+							<td style="text-align: center;">'.number_format($suma,$DECI_MALES,',','.').'</td>
+							</tr>';
+						}
+	
 					}
 				}
 			}
@@ -489,6 +585,10 @@ class PdfContract extends REST_Controller {
 			if (isset($ModOtros)){
 				$ModOtros;
 				$tdOtros;
+			}
+			if (isset($ModVarios)){
+				$ModVarios;
+				$tdVarios;
 			}
 				
 
@@ -529,10 +629,13 @@ class PdfContract extends REST_Controller {
 		//DIFERENCIAS DE DIAS
 		$difDay =  date('d',$dateVen) - date('d',$dateDoc);
 
+		$diassemana = array("Domingo","Lunes","Martes","Miercoles","Jueves","Viernes","Sábado");
+		$meses = array("Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre");
+
 		$footer = '
 		<table  width="100%" font-family: serif>
 			<tr>
-				<th style="text-align: left;"> LA PAZ '.date('d',$dateDoc).' DE '.date('M',$dateDoc).' DE '.date('Y',$dateDoc).'</th>
+				<th style="text-align: left;"> LA PAZ - '.$diassemana[date('w',$dateDoc)].' '.date('d',$dateDoc).' de '.$meses[date('n',$dateDoc)-1]. ' del '.date('Y',$dateDoc).'</th>
 			</tr>
 		</table>
 		<br>
@@ -606,6 +709,8 @@ class PdfContract extends REST_Controller {
 				<th style="text-align: left;">GACETA JURIDICA  <span><input type="checkbox" '.$gaceta.'/></span></th>
 
 				<th style="text-align: left;">OTROS  <span><input type="checkbox" '.$otros.'/></span></th>
+
+				<th style="text-align: left;">VARIOS  <span><input type="checkbox" '.$varios.'/></span></th>
 			</tr>
 		</table>
 		<table width="100%" font-family: serif>
