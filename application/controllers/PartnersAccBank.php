@@ -30,7 +30,6 @@ class PartnersAccBank extends REST_Controller {
       if(!isset($Data['dmb_bank']) OR
          !isset($Data['dmb_bank_type']) OR
          !isset($Data['dmb_num_acc']) OR
-         !isset($Data['dmb_major']) OR
          !isset($Data['dmb_status'])){
 
         $respuesta = array(
