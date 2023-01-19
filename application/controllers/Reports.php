@@ -99,7 +99,7 @@ class Reports extends REST_Controller {
 						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
 						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
 						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
-						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code
+						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code and dmws.business = :business
 						WHERE 1=1 ".$sql." ORDER BY tbmi.bmi_createat DESC";
 		$result = $this->pedeo->queryTable($sqlAnalitic, $where);
 

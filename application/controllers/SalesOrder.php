@@ -1071,15 +1071,15 @@ class SalesOrder extends REST_Controller
 				t1.ov1_inventory,
 				t1.ov1_itemcode,
 				t1.ov1_itemname,
-				(t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0))) * t1.ov1_price ov1_linetotal,
+				abs((t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) * t1.ov1_price ov1_linetotal,
 				t1.ov1_price,
 				t1.ov1_project,
-				t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0))as ov1_quantity,
+				abs(t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))as ov1_quantity,
 				t1.ov1_ubusiness,
 				t1.ov1_uom,
 				t1.ov1_vat,
 				t1.ov1_vatsum vatsum_real,
-				((((t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) * t1.ov1_price) * t1.ov1_vat) / 100 ov1_vatsum,
+				abs(((((t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) * t1.ov1_price) * t1.ov1_vat)) / 100 ov1_vatsum,
 				t1.ov1_whscode,
 				dmar.dma_series_code,
 				t1.ov1_ubication,
@@ -1121,7 +1121,7 @@ class SalesOrder extends REST_Controller
 				t1.ov1_ubication,
 				t1.ov1_codimp,
 				t0.business
-				HAVING (t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0))) > 0";
+				HAVING abs((t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) > 0";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 					":ov1_docentry" => $Data['ov1_docentry']

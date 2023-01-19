@@ -971,15 +971,15 @@ class Quotation extends REST_Controller
 			t1.vc1_inventory,
 			t1.vc1_itemcode,
 			t1.vc1_itemname,
-			(t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0))) * t1.vc1_price vc1_linetotal,
+			abs((t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0)))) * t1.vc1_price vc1_linetotal,
 			t1.vc1_price,
 			t1.vc1_project,
-			t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0))as vc1_quantity,
+			abs(t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0))) as vc1_quantity,
 			t1.vc1_ubusiness,
 			t1.vc1_uom,
 			t1.vc1_vat,
 			t1.vc1_vatsum vatsum_real,
-			((((t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0)))) * t1.vc1_price) * t1.vc1_vat) / 100 vc1_vatsum,
+			abs(((((t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0)))) * t1.vc1_price) * t1.vc1_vat)) / 100 vc1_vatsum,
 			t1.vc1_whscode,
 			dmar.dma_series_code,
 			t1.vc1_ubication,
@@ -1021,7 +1021,7 @@ class Quotation extends REST_Controller
 			t1.vc1_ubication,
 			t1.vc1_codimp,
 			t0.business
-			HAVING (t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0))) > 0";
+			HAVING abs((t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0)))) > 0";
 
 			$resSql = $this->pedeo->queryTable($sql, array(':vc1_docentry' => $Data ['vc1_docentry']));
 
