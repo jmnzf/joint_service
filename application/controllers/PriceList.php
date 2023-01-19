@@ -49,17 +49,14 @@ class PriceList extends REST_Controller
 		}
 		// SE BUSCAN LOS PRODUCTOS
 		// INVENTARIABLES
-		$sqlProductos = "SELECT tbdi.bdi_itemcode, tbdi.bdi_avgprice, dmar.dma_item_name FROM tbdi
-								INNER JOIN dmar
-								ON tbdi.bdi_itemcode = dmar.dma_item_code
-								WHERE dmar.dma_enabled = :dma_enabled
-								AND dma_item_sales = :dma_item_sales
-								AND dma_item_inv = :dma_item_inv
-								AND tbdi.business = :business
-								GROUP BY tbdi.bdi_itemcode,tbdi.bdi_avgprice, dmar.dma_item_name";
+		$sqlProductos = " SELECT dma_item_code, dma_price, dmar.dma_item_name FROM dmar
+							WHERE dmar.dma_enabled = :dma_enabled
+							AND dma_item_sales = :dma_item_sales
+							AND dma_item_inv = :dma_item_inv
+							GROUP BY dma_item_code, dma_price, dmar.dma_item_name";
 
 
-		$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', 'dma_item_inv' => '1',':business' => $Data['business']));
+		$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', 'dma_item_inv' => '1'));
 
 		// NO INVENTARIABLES
 		$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo
@@ -122,7 +119,7 @@ class PriceList extends REST_Controller
 
 						if ($BaseList == "0" || $BaseList == 0) {
 
-							$valor = $prod['bdi_avgprice'];
+							$valor = $prod['dma_price'];
 							$porcent = 0;
 							$subtt = 0;
 
@@ -136,7 +133,7 @@ class PriceList extends REST_Controller
 							$Precio = ($subtt + $valor);
 						} else {
 
-							$res = $this->getPrecio($prod['bdi_itemcode'], $BaseList);
+							$res = $this->getPrecio($prod['dma_item_code'], $BaseList);
 							if (isset($res[0]['pl1_price'])) {
 								$valor = $res[0]['pl1_price'];
 								$porcent = 0;
@@ -158,7 +155,7 @@ class PriceList extends REST_Controller
 						$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
 
 							':pl1_id_price_list' => $resInsert,
-							':pl1_item_code' => $prod['bdi_itemcode'],
+							':pl1_item_code' => $prod['dma_item_code'],
 							':pl1_item_name' => $prod['dma_item_name'],
 							':pl1_profit' => $Data['dmlp_profit'],
 							':pl1_price' => $Precio
@@ -283,26 +280,23 @@ class PriceList extends REST_Controller
 
 		// SE BUSCAN LOS PRODUCTOS
 		// INVENTARIABLES
-		$sqlProductos = "SELECT tbdi.bdi_itemcode, tbdi.bdi_avgprice, dmar.dma_item_name FROM tbdi
-												INNER JOIN dmar
-												ON tbdi.bdi_itemcode = dmar.dma_item_code
-												WHERE dmar.dma_enabled = :dma_enabled
-												AND dma_item_sales = :dma_item_sales
-												AND dma_item_inv = :dma_item_inv
-												AND tbdi.bdi_itemcode NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
-												AND tbdi.business = :business
-												GROUP BY tbdi.bdi_itemcode,tbdi.bdi_avgprice, dmar.dma_item_name";
+		$sqlProductos = "SELECT dma_item_code, dma_price, dmar.dma_item_name FROM dmar
+						WHERE dmar.dma_enabled = :dma_enabled
+						AND dma_item_sales = :dma_item_sales
+						AND dma_item_inv = :dma_item_inv
+						AND dma_item_code NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
+						GROUP BY dma_item_code, dma_price, dmar.dma_item_name";
 
 
-		$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', ':dma_item_inv' => '1', ':pl1_id_price_list' => $Data['dmlp_id'], ':business' => $Data['business']));
+		$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', ':dma_item_inv' => '1', ':pl1_id_price_list' => $Data['dmlp_id']));
 
 		// NO INVENTARIABLES
-		$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo
-													 FROM dmar
-													 WHERE dma_item_sales = :dma_item_sales
-													 AND dma_enabled = :dma_enabled
-													 AND dma_item_code NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
-													 AND dma_item_inv = :dma_item_inv";
+		$sqlProductosNinv = "SELECT DISTINCT SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo
+								FROM dmar
+								WHERE dma_item_sales = :dma_item_sales
+								AND dma_enabled = :dma_enabled
+								AND dma_item_code NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
+								AND dma_item_inv = :dma_item_inv";
 
 		$resProductosNinv = $this->pedeo->queryTable($sqlProductosNinv, array(':dma_item_sales' => '1', ':dma_enabled' => 1, ':dma_item_inv' => '0', ':pl1_id_price_list' => $Data['dmlp_id']));
 
@@ -385,7 +379,7 @@ class PriceList extends REST_Controller
 
 						if ($BaseList == "0" || $BaseList == 0) {
 
-							$valor = $prod['bdi_avgprice'];
+							$valor = $prod['dma_price'];
 							$porcent = 0;
 							$subtt = 0;
 
@@ -399,7 +393,7 @@ class PriceList extends REST_Controller
 							$Precio = ($subtt + $valor);
 						} else {
 
-							$res = $this->getPrecio($prod['bdi_itemcode'], $BaseList);
+							$res = $this->getPrecio($prod['dma_item_code'], $BaseList);
 							if (isset($res[0]['pl1_price'])) {
 								$valor = $res[0]['pl1_price'];
 								$porcent = 0;
@@ -423,7 +417,7 @@ class PriceList extends REST_Controller
 						$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
 
 							':pl1_id_price_list' => $Data['dmlp_id'],
-							':pl1_item_code' => $prod['bdi_itemcode'],
+							':pl1_item_code' => $prod['dma_item_code'],
 							':pl1_item_name' => $prod['dma_item_name'],
 							':pl1_profit' => $Data['dmlp_profit'],
 							':pl1_price' => $Precio
