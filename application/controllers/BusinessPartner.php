@@ -818,27 +818,33 @@ class BusinessPartner extends REST_Controller
       $filtro .= " AND dmsn.dms_enabled = ".$Data['slt_state_num'];
     }
  
-    $sqlSelect = "SELECT concat(dms_card_name, ' ', dms_card_last_name) AS nombreyapellido, * FROM dmsn WHERE 1 = 1 ".$filtro;
+    $sqlSelect = "SELECT concat(dms_card_name, ' ', dms_card_last_name) AS nombreyapellido, dmsn.*, mpf_name, mgs_acct, mgs_acctp, dmlp_name_list, mev_names
+    FROM dmsn
+    LEFT JOIN dmpf on mpf_id::text = dms_pay_type
+    LEFT JOIN dmgs  on mgs_id::text = dms_group_num
+    LEFT JOIN dmpl on dmlp_id = dms_price_list
+    LEFT JOIN dmev on mev_id = dms_sip_code
+    WHERE 1 = 1 ".$filtro;
 
- 
+
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
- 
+
     if (isset($resSelect[0])) {
- 
+
       $respuesta = array(
          'error' => false,
          'data'  => $resSelect,
          'mensaje' => ''
        );
     } else {
- 
+
       $respuesta = array(
          'error'   => true,
          'data' => array(),
          'mensaje'  => 'busqueda sin resultados'
       );
     }
- 
+
      $this->response($respuesta);
    }
 

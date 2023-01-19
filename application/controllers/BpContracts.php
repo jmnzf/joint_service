@@ -802,7 +802,7 @@ class BpContracts extends REST_Controller
 		$DECI_MALES =  $this->generic->getDecimals();
 
 		$sqlSelect = self::getColumn('tcsn', 'csn', '', '', $DECI_MALES, $Data['business'], $Data['branch'], $Data['docnum']);
-		
+
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 		if (isset($resSelect[0])) {
@@ -992,6 +992,47 @@ class BpContracts extends REST_Controller
 			);
 		}
 
+
+		$this->response($respuesta);
+	}
+
+	public function getContractsById_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['csn_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM tcsn WHERE csn_docentry =:csn_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":csn_docentry" => $Data['csn_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
 
 		$this->response($respuesta);
 	}

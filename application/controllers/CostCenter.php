@@ -43,14 +43,15 @@ class CostCenter extends REST_Controller {
         return;
       }
 
-      $sqlVerify = "SELECT * FROM dmcc WHERE UPPER(dcc_prc_code) = UPPER(:dcc_prc_code)";
+      $sqlVerify = "SELECT * FROM dmcc WHERE UPPER(dcc_prc_code) = UPPER(:dcc_prc_code) AND business = :business";
 
       $resVerify = $this->pedeo->queryTable($sqlVerify, array(
-          ':dcc_prc_code' => $Data['dcc_prc_code']
+				':dcc_prc_code' => $Data['dcc_prc_code'],
+        ':business' => $Data['business']
       ));
 
       if ( isset($resVerify[0]) ){
-        
+
         $respuesta = array(
           'error'   => true,
           'data' 		=> $resVerify,
@@ -121,7 +122,7 @@ class CostCenter extends REST_Controller {
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-           
+
             ':dcc_prc_name' => $Data['dcc_prc_name'],
             ':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
             ':dcc_prc_end_date' => $Data['dcc_prc_end_date'],

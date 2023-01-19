@@ -44,20 +44,21 @@ class BusinessUnit extends REST_Controller {
       }
 
 
-      $sqlVerify = "SELECT * FROM dmun WHERE UPPER(dun_un_code) = UPPER(:dun_un_code)";
+      $sqlVerify = "SELECT * FROM dmun WHERE UPPER(dun_un_code) = UPPER(:dun_un_code) AND business = :business";
 
       $resVerify = $this->pedeo->queryTable($sqlVerify, array(
-          ':dun_un_code' => $Data['dun_un_code']
+          ':dun_un_code' => $Data['dun_un_code'],
+					':business' => $Data['business']
       ));
-  
+
       if ( isset($resVerify[0]) ){
-        
+
         $respuesta = array(
           'error'   => true,
           'data' 		=> $resVerify,
           'mensaje'	=> 'Ya existe una unidad de negocio con codigo '.$Data['dun_un_code']
         );
-  
+
         return $this->response($respuesta);
       }
 
