@@ -1504,4 +1504,45 @@ class BuyOffert extends REST_Controller
 			return;
 		}
 	}
+
+	public function getBuyOffertById_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['coc_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM dcoc WHERE coc_docentry =:coc_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":coc_docentry" => $Data['coc_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }
