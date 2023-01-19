@@ -1343,7 +1343,7 @@ class AccountingAccent extends REST_Controller
 		LEFT JOIN dcnc t14 ON t0.mac_base_entry = t14.cnc_docentry AND t0.mac_base_type= t14.cnc_doctype
 		LEFT JOIN dcnd t15 ON t0.mac_base_entry = t15.cnd_docentry AND t0.mac_base_type= t15.cnd_doctype
 		LEFT JOIN dmdt ON dmdt.mdt_doctype = t0.mac_base_type
-		LEFT JOIN tasa t16 ON mac_doc_date = tsa_date
+		LEFT JOIN tasa t16 ON t0.mac_doc_date = t16.tsa_date and t0.mac_currency = t16.tsa_currd
 		LEFT JOIN dcrc t17 ON t0.mac_base_entry = t17.crc_docentry AND t0.mac_base_type= t17.crc_doctype
 		LEFT JOIN diri t18 ON t0.mac_base_entry = t18.iri_docentry AND t0.mac_base_type= t18.iri_doctype
 		WHERE t0.mac_base_type = :mac_base_type
