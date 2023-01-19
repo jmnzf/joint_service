@@ -984,7 +984,7 @@ class Quotation extends REST_Controller
 			dmar.dma_series_code,
 			t1.vc1_ubication,
 			t1.vc1_codimp,
-			get_ubication(t1.vc1_whscode) as fun_ubication,
+			get_ubication(t1.vc1_whscode, t0.business) as fun_ubication,
 			get_lote(t1.vc1_itemcode) as fun_lote
 			from dvct t0
 			inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
@@ -1019,7 +1019,8 @@ class Quotation extends REST_Controller
 			t1.vc1_quantity,
 			dmar.dma_series_code,
 			t1.vc1_ubication,
-			t1.vc1_codimp
+			t1.vc1_codimp,
+			t0.business
 			HAVING (t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0))) > 0";
 
 			$resSql = $this->pedeo->queryTable($sql, array(':vc1_docentry' => $Data ['vc1_docentry']));

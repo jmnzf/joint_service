@@ -4468,7 +4468,7 @@ class SalesInv extends REST_Controller
 							dmar.dma_series_code,
 							t1.fv1_ubication,
 							t1.fv1_codimp,
-							get_ubication(t1.fv1_whscode) as fun_ubication,
+							get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
 							get_lote(t1.fv1_itemcode) as fun_lote,
 							t1.fv1_fixrate
 							from dvfv t0
@@ -4503,7 +4503,8 @@ class SalesInv extends REST_Controller
 							dmar.dma_series_code,
 							t1.fv1_ubication,
 							t1.fv1_codimp,
-							t1.fv1_fixrate
+							t1.fv1_fixrate,
+							t0.business
 							HAVING (t1.fv1_quantity - (coalesce(sum(t3.em1_quantity),0))) > 0";
 
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
@@ -4594,7 +4595,7 @@ class SalesInv extends REST_Controller
 							dmar.dma_series_code,
 							t1.fv1_ubication,
 							t1.fv1_codimp,
-							get_ubication(t1.fv1_whscode) as fun_ubication,
+							get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
 							get_lote(t1.fv1_itemcode) as fun_lote,
 							t1.fv1_fixrate
 							from dvfv t0
@@ -4631,7 +4632,8 @@ class SalesInv extends REST_Controller
 							dmar.dma_series_code,
 							t1.fv1_ubication,
 							t1.fv1_codimp,
-							t1.fv1_fixrate
+							t1.fv1_fixrate,
+							t0.business
 							HAVING (t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0))) > 0";
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv

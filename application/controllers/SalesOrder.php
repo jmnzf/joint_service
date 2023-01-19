@@ -1084,7 +1084,7 @@ class SalesOrder extends REST_Controller
 				dmar.dma_series_code,
 				t1.ov1_ubication,
 				t1.ov1_codimp,
-				get_ubication(t1.ov1_whscode) as fun_ubication,
+				get_ubication(t1.ov1_whscode, t0.business) as fun_ubication,
 				get_lote(t1.ov1_itemcode) as fun_lote
 				from dvov t0
 				inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
@@ -1119,12 +1119,9 @@ class SalesOrder extends REST_Controller
 				t1.ov1_quantity,
 				dmar.dma_series_code,
 				t1.ov1_ubication,
-				t1.ov1_codimp
-				HAVING (t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0))) > 0
-
-
-
-";
+				t1.ov1_codimp,
+				t0.business
+				HAVING (t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0))) > 0";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 					":ov1_docentry" => $Data['ov1_docentry']

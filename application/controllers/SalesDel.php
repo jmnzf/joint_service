@@ -2281,7 +2281,7 @@ class SalesDel extends REST_Controller
 		dmar.dma_series_code,
 		t1.em1_ubication,
 		t1.em1_codimp,
-		get_ubication(t1.em1_whscode) as fun_ubication,
+		get_ubication(t1.em1_whscode, t0.business) as fun_ubication,
 		get_lote(t1.em1_itemcode) as fun_lote
 		from dvem t0
 		inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
@@ -2316,7 +2316,8 @@ class SalesDel extends REST_Controller
 		t1.em1_quantity,
 		dmar.dma_series_code,
 		t1.em1_ubication,
-		t1.em1_codimp
+		t1.em1_codimp,
+		t0.business
 		HAVING (t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) - coalesce(sum(t5.fv1_quantity),0))) > 0";
 		// print_r($sqlSelect);exit;
 
