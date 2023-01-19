@@ -1038,44 +1038,6 @@ class BpContracts extends REST_Controller
 	}
 
 
-		$Data = $this->get();
-
-		if (!isset($Data['csn_docentry'])) {
-
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'La informacion enviada no es valida'
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-		}
-
-		$sqlSelect = " SELECT * FROM tcsn WHERE csn_docentry =:csn_docentry";
-
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":csn_docentry" => $Data['csn_docentry']));
-
-		if (isset($resSelect[0])) {
-
-			$respuesta = array(
-				'error' => false,
-				'data'  => $resSelect,
-				'mensaje' => ''
-			);
-		} else {
-
-			$respuesta = array(
-				'error'   => true,
-				'data' => array(),
-				'mensaje'	=> 'busqueda sin resultados'
-			);
-		}
-
-		$this->response($respuesta);
-	}
-
 	private function getUrl($data, $caperta)
 	{
 		$url = "";
