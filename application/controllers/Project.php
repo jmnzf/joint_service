@@ -43,14 +43,15 @@ class Project extends REST_Controller {
         return;
       }
 
-      $sqlVerify = "SELECT * FROM dmpj WHERE UPPER(dpj_pj_code) = UPPER(:dpj_pj_code)";
+      $sqlVerify = "SELECT * FROM dmpj WHERE UPPER(dpj_pj_code) = UPPER(:dpj_pj_code) AND business = :business";
 
       $resVerify = $this->pedeo->queryTable($sqlVerify, array(
-          ':dpj_pj_code' => $Data['dpj_pj_code']
+          ':dpj_pj_code' => $Data['dpj_pj_code'],
+					':business' => $Data['business']
       ));
 
       if ( isset($resVerify[0]) ){
-        
+
         $respuesta = array(
           'error'   => true,
           'data' 		=> $resVerify,
