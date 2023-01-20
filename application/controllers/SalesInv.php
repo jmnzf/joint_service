@@ -4582,15 +4582,15 @@ class SalesInv extends REST_Controller
 							t1.fv1_inventory,
 							t1.fv1_itemcode,
 							t1.fv1_itemname,
-							(t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0))) * t1.fv1_price fv1_linetotal,
+							abs((t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0)))) * t1.fv1_price fv1_linetotal,
 							t1.fv1_price,
 							t1.fv1_project,
-							t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0))as fv1_quantity,
+							abs(t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0))) as fv1_quantity,
 							t1.fv1_ubusiness,
 							t1.fv1_uom,
 							t1.fv1_vat,
 							t1.fv1_vatsum vatsum_real,
-							((((t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0)))) * t1.fv1_price) * t1.fv1_vat) / 100 fv1_vatsum,
+							abs(((((t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
 							t1.fv1_whscode,
 							dmar.dma_series_code,
 							t1.fv1_ubication,
@@ -4634,7 +4634,7 @@ class SalesInv extends REST_Controller
 							t1.fv1_codimp,
 							t1.fv1_fixrate,
 							t0.business
-							HAVING (t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0))) > 0";
+							abs(HAVING (t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0)))) > 0";
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
 								LEFT JOIN igtf
