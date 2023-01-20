@@ -599,6 +599,36 @@ class SalesDv extends REST_Controller {
 
             //VALIDACION DE CANTIDAD A DEVOLVER NO SEA MAYOR A LA ENTREGADA
             if($Data['vdv_basetype'] == 3 ){
+
+              //OBTENER NUMERO DOCUMENTO ORIGEN
+              $DOC = "SELECT vem_docnum FROM dvem WHERE vem_doctype = :vem_doctype AND vem_docentry = :vem_docentry";
+              $RESULT_DOC = $this->pedeo->queryTable($DOC,array(':vem_docentry' =>$Data['vdv_baseentry'],':vem_doctype' => $Data['vdv_basetype']));
+              foreach ($ContenidoDetalle as $key => $value) {
+                # code...
+                $sql = "SELECT dvem.vem_docnum,vem1.em1_itemcode FROM dvem INNER JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry 
+                WHERE dvem.vem_docentry = :vem_docentry AND dvem.vem_doctype = :vem_doctype AND vem1.em1_itemcode = :em1_itemcode";
+                $resSql = $this->pedeo->queryTable($sql,array(
+                  ':vem_docentry' =>$Data['vdv_baseentry'],
+                  ':vem_doctype' => $Data['vdv_basetype'],
+                  ':em1_itemcode' => $value['dv1_itemcode']
+                ));
+                
+                  if(isset($resSql[0])){
+                  
+                  }else {
+                    $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                      'error'   => true,
+                      'data' => $value['dv1_itemcode'],
+                      'mensaje'	=> 'El Item '.$value['dv1_itemcode'].' no existe en el documento origen (Entrega #'.$RESULT_DOC[0]['vem_docnum'].')'
+                    );
+
+                    $this->response($respuesta);
+
+                    return;
+                  }
+                }
                 $sqlValidationQty = "SELECT coalesce(t1.dv1_quantity,0) qty_dev,coalesce(t3.em1_quantity,0) qty_entr,
                                         case
                                             when COALESCE(t1.dv1_quantity,0) > COALESCE(t3.em1_quantity,0)
@@ -609,9 +639,9 @@ class SalesDv extends REST_Controller {
                                     left join vdv1 t1 on t0.vdv_docentry = t1.dv1_docentry
                                     left join dvem t2 on t0.vdv_baseentry = t2.vem_docentry
                                     left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.dv1_itemcode = t3.em1_itemcode
-                                    where t0.vdv_docentry = :vdv_docentry ";
+                                    where t0.vdv_docentry = :vdv_docentry";
                 $resSqlValidationQty = $this->pedeo->queryTable($sqlValidationQty,array(':vdv_docentry' => $resInsert));
-
+                print_r($resSqlValidationQty[0]['estado']);exit;
                 if(is_numeric($resSqlValidationQty[0]['estado'])  &&  $resSqlValidationQty[0]['estado'] == 0){
 
                 }else{

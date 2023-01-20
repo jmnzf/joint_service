@@ -794,18 +794,44 @@ class SalesInv extends REST_Controller
 						// Se verifica que el detalle no de error insertando //
 						//validar que lo facturado no se mayor a lo entregado menos devuelto
 						//VALIDAR SI LOS ITEMS SON IGUALES A LOS DEL DOCUMENTO DE ORIGEN
-						if($Data['vem_basetype'] == 2){
+						if($Data['dvf_basetype'] == 2){
+							$sqlDev = "SELECT
+												t1.ov1_itemcode,
+												t1.ov1_quantity  cantidad
+										from dvov t0
+										left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
+										where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype 
+										and t1.ov1_itemcode = :ov1_itemcode
+										group by t1.ov1_itemcode";
+							$resSqlDev = $this->pedeo->queryTable($sqlDev, array(
+								':vov_docentry' => $Data['dvf_baseentry'],
+								':vov_doctype' => $Data['dvf_basetype'],
+								':ov1_itemcode' => $detail['fv1_itemcode']
+							));
+
+							if (isset($resSqlDev[0]['cantidad']) && ($detail['fv1_quantity']) > $resSqlDev[0]['cantidad']) {
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resSqlDev,
+									'mensaje'	=> 'La cantidad a facturar no puede ser mayor a la del pedido'
+								);
+								$this->response($respuesta);
+
+								return;
+							}
 							//OBTENER NUMERO DOCUMENTO ORIGEN
 							$DOC = "SELECT vov_docnum FROM dvov WHERE vov_doctype = :vov_doctype AND vov_docentry = :vov_docentry";
-							$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':vov_docentry' =>$Data['vem_baseentry'],':vov_doctype' => $Data['vem_basetype']));
+							$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':vov_docentry' =>$Data['dvf_baseentry'],':vov_doctype' => $Data['dvf_basetype']));
 							foreach ($ContenidoDetalle as $key => $value) {
 								# code...
 								$sql = "SELECT dvov.vov_docnum,vov1.ov1_itemcode FROM dvov INNER JOIN vov1 ON dvov.vov_docentry = vov1.ov1_docentry 
 								WHERE dvov.vov_docentry = :vov_docentry AND dvov.vov_doctype = :vov_doctype AND vov1.ov1_itemcode = :ov1_itemcode";
 								$resSql = $this->pedeo->queryTable($sql,array(
-									':vov_docentry' =>$Data['vem_baseentry'],
-									':vov_doctype' => $Data['vem_basetype'],
-									':ov1_itemcode' => $value['em1_itemcode']
+									':vov_docentry' =>$Data['dvf_baseentry'],
+									':vov_doctype' => $Data['dvf_basetype'],
+									':ov1_itemcode' => $value['fv1_itemcode']
 								));
 								
 									if(isset($resSql[0])){
@@ -815,8 +841,8 @@ class SalesInv extends REST_Controller
 
 										$respuesta = array(
 											'error'   => true,
-											'data' => $value['em1_itemcode'],
-											'mensaje'	=> 'El Item '.$value['em1_itemcode'].' no existe en el documento origen (Pedido #'.$RESULT_DOC[0]['vov_docnum'].')'
+											'data' => $value['fv1_itemcode'],
+											'mensaje'	=> 'El Item '.$value['fv1_itemcode'].' no existe en el documento origen (Pedido #'.$RESULT_DOC[0]['vov_docnum'].')'
 										);
 
 										$this->response($respuesta);
@@ -841,7 +867,7 @@ class SalesInv extends REST_Controller
 								':em1_itemcode' => $detail['fv1_itemcode']
 							));
 
-							if (($detail['fv1_quantity']) > $resSqlDev[0]['cantidad']) {
+							if (isset($resSqlDev[0]['cantidad']) && ($detail['fv1_quantity']) > $resSqlDev[0]['cantidad']) {
 								$this->pedeo->trans_rollback();
 
 								$respuesta = array(
@@ -853,6 +879,36 @@ class SalesInv extends REST_Controller
 
 								return;
 							}
+
+							//OBTENER NUMERO DOCUMENTO ORIGEN
+							$DOC = "SELECT vem_docnum FROM dvem WHERE vem_doctype = :vem_doctype AND vem_docentry = :vem_docentry";
+							$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':vem_docentry' =>$Data['dvf_baseentry'],':vem_doctype' => $Data['dvf_basetype']));
+							foreach ($ContenidoDetalle as $key => $value) {
+								# code...
+								$sql = "SELECT vem1.em1_itemcode FROM dvem INNER JOIN vem1 ON dvem.vem_docentry = vem1.em1_docentry 
+								WHERE dvem.vem_docentry = :vem_docentry AND dvem.vem_doctype = :vem_doctype AND vem1.em1_itemcode = :em1_itemcode";
+								$resSql = $this->pedeo->queryTable($sql,array(
+									':vem_docentry' =>$Data['dvf_baseentry'],
+									':vem_doctype' => $Data['dvf_basetype'],
+									':em1_itemcode' => $value['fv1_itemcode']
+								));
+								
+									if(isset($resSql[0])){
+									
+									}else {
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data' => $value['fv1_itemcode'],
+											'mensaje'	=> 'El Item '.$value['fv1_itemcode'].' no existe en el documento origen (Entrega #'.$RESULT_DOC[0]['vem_docnum'].')'
+										);
+
+										$this->response($respuesta);
+
+										return;
+									}
+								}
 						}
 					} else {
 

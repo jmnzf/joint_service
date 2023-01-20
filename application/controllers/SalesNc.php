@@ -692,6 +692,37 @@ class SalesNc extends REST_Controller
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 						// Se verifica que el detalle no de error insertando //
+						if($Data['vnc_basetype'] == 5){
+							//OBTENER NUMERO DOCUMENTO ORIGEN
+							$DOC = "SELECT dvf_docnum FROM dvfv WHERE dvf_doctype = :dvf_doctype AND dvf_docentry = :dvf_docentry";
+							$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':dvf_docentry' =>$Data['vnc_baseentry'],':dvf_doctype' => $Data['vnc_basetype']));
+							foreach ($ContenidoDetalle as $key => $value) {
+							# code...
+							$sql = "SELECT dvfv.dvf_docnum,vfv1.em1_itemcode FROM dvfv INNER JOIN vfv1 ON dvfv.dvf_docentry = vfv1.em1_docentry 
+							WHERE dvfv.dvf_docentry = :dvf_docentry AND dvfv.dvf_doctype = :dvf_doctype AND vfv1.em1_itemcode = :fv1_itemcode";
+							$resSql = $this->pedeo->queryTable($sql,array(
+								':dvf_docentry' =>$Data['vnc_baseentry'],
+								':dvf_doctype' => $Data['vnc_basetype'],
+								':fv1_itemcode' => $value['nc1_itemcode']
+							));
+							
+								if(isset($resSql[0])){
+								
+								}else {
+								$this->pedeo->trans_rollback();
+			
+								$respuesta = array(
+									'error'   => true,
+									'data' => $value['nc1_itemcode'],
+									'mensaje'	=> 'El Item '.$value['nc1_itemcode'].' no existe en el documento origen (Factura #'.$RESULT_DOC[0]['dvf_docnum'].')'
+								);
+			
+								$this->response($respuesta);
+			
+								return;
+								}
+							}
+						}
 					} else {
 
 						// si falla algun insert del detalle de la Nota crédito de clientes se devuelven los cambios realizados por la transaccion,

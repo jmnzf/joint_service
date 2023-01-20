@@ -524,7 +524,7 @@ class InventoryEntry extends REST_Controller
 							return;
 						}
 
-						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['ei1_itemcode'], $Data['iei_doctype'], $resInsert, $DocNumVerificado, $Data['iei_docdate'], 1, $Data['iei_comment'], $detail['ei1_whscode'], $detail['ei1_quantity'], $Data['iei_createby'], $Data['business']);
+						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['ei1_itemcode'], $Data['iei_doctype'], $resInsert, $DocNumVerificado, $Data['iei_docdate'], 1, $Data['iei_comment'], $detail['ei1_whscode'], $detail['ei1_quantity'], $Data['iei_createby'], $resInsertDetail, $Data['business']);
 
 						if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
 						} else {
