@@ -731,15 +731,38 @@ class SalesDel extends REST_Controller
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 					// Se verifica que el detalle no de error insertando //
+					//VALIDAR SI LOS ITEMS SON IGUALES A LOS DEL DOCUMENTO DE ORIGEN
 					if($Data['vem_basetype'] == 2){
-
-						$ITEM_ORIGEN = [];
-						$ITEM_DESTINO = [];
-						foreach ($detail as $key => $value) {
+						//OBTENER NUMERO DOCUMENTO ORIGEN
+						$DOC = "SELECT vov_docnum FROM dvov WHERE vov_doctype = :vov_doctype AND vov_docentry = :vov_docentry";
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':vov_docentry' =>$Data['vem_baseentry'],':vov_doctype' => $Data['vem_basetype']));
+						foreach ($ContenidoDetalle as $key => $value) {
 							# code...
-							array_push($ITEM_DESTINO,$value['em1_itemcode']);
-						}
-						print_r($ITEM_DESTINO);exit;
+							$sql = "SELECT dvov.vov_docnum,vov1.ov1_itemcode FROM dvov INNER JOIN vov1 ON dvov.vov_docentry = vov1.ov1_docentry 
+							WHERE dvov.vov_docentry = :vov_docentry AND dvov.vov_doctype = :vov_doctype AND vov1.ov1_itemcode = :ov1_itemcode";
+							$resSql = $this->pedeo->queryTable($sql,array(
+								':vov_docentry' =>$Data['vem_baseentry'],
+								':vov_doctype' => $Data['vem_basetype'],
+								':ov1_itemcode' => $value['em1_itemcode']
+							));
+							
+								if(isset($resSql[0])){
+								
+								}else {
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $value['em1_itemcode'],
+										'mensaje'	=> 'El Item '.$value['em1_itemcode'].' no existe en el documento origen (Pedido #'.$RESULT_DOC[0]['vov_docnum'].')'
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+
 					}
 					
 				} else {
@@ -821,7 +844,7 @@ class SalesDel extends REST_Controller
 					if (isset($resItemSerial[0])) {
 						$ManejaSerial = 1;
 
-						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['em1_itemcode'], $Data['vem_doctype'], $resInsert, $DocNumVerificado, $Data['vem_docdate'], 2, $Data['vem_comment'], $detail['em1_whscode'], $detail['em1_quantity'], $Data['vem_createby']);
+						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['em1_itemcode'], $Data['vem_doctype'], $resInsert, $DocNumVerificado, $Data['vem_docdate'], 2, $Data['vem_comment'], $detail['em1_whscode'], $detail['em1_quantity'], $Data['vem_createby'],$resInsertDetail,$Data['business']);
 
 						if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
 						} else {
@@ -2279,15 +2302,15 @@ class SalesDel extends REST_Controller
 		t1.em1_inventory,
 		t1.em1_itemcode,
 		t1.em1_itemname,
-		abs(t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry),0))) * t1.em1_price em1_linetotal,
+		abs(t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode),0))) * t1.em1_price em1_linetotal,
 		t1.em1_price,
 		t1.em1_project,
-		abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry),0)))) as em1_quantity,
+		abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode),0)))) as em1_quantity,
 		t1.em1_ubusiness,
 		t1.em1_uom,
 		t1.em1_vat,
 		t1.em1_vatsum vatsum_real,
-		abs(((((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry),0)))) * t1.em1_price) * t1.em1_vat)) / 100 em1_vatsum,
+		abs(((((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode),0)))) * t1.em1_price) * t1.em1_vat)) / 100 em1_vatsum,
 		t1.em1_whscode,
 		dmar.dma_series_code,
 		t1.em1_ubication,
@@ -2327,7 +2350,7 @@ class SalesDel extends REST_Controller
 		t1.em1_ubication,
 		t1.em1_codimp,
 		t0.business,t0.vem_docentry,t0.vem_doctype,dmar.dma_advertisement,dmar.dma_modular
-        HAVING abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry),0)))) > 0";
+        HAVING abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode),0)))) > 0";
 		// print_r($sqlSelect);exit;
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));

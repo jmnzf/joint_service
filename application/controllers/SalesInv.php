@@ -793,8 +793,39 @@ class SalesInv extends REST_Controller
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 						// Se verifica que el detalle no de error insertando //
 						//validar que lo facturado no se mayor a lo entregado menos devuelto
+						//VALIDAR SI LOS ITEMS SON IGUALES A LOS DEL DOCUMENTO DE ORIGEN
+						if($Data['vem_basetype'] == 2){
+							//OBTENER NUMERO DOCUMENTO ORIGEN
+							$DOC = "SELECT vov_docnum FROM dvov WHERE vov_doctype = :vov_doctype AND vov_docentry = :vov_docentry";
+							$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':vov_docentry' =>$Data['vem_baseentry'],':vov_doctype' => $Data['vem_basetype']));
+							foreach ($ContenidoDetalle as $key => $value) {
+								# code...
+								$sql = "SELECT dvov.vov_docnum,vov1.ov1_itemcode FROM dvov INNER JOIN vov1 ON dvov.vov_docentry = vov1.ov1_docentry 
+								WHERE dvov.vov_docentry = :vov_docentry AND dvov.vov_doctype = :vov_doctype AND vov1.ov1_itemcode = :ov1_itemcode";
+								$resSql = $this->pedeo->queryTable($sql,array(
+									':vov_docentry' =>$Data['vem_baseentry'],
+									':vov_doctype' => $Data['vem_basetype'],
+									':ov1_itemcode' => $value['em1_itemcode']
+								));
+								
+									if(isset($resSql[0])){
+									
+									}else {
+										$this->pedeo->trans_rollback();
 
-						if ($Data['dvf_basetype'] == 3) {
+										$respuesta = array(
+											'error'   => true,
+											'data' => $value['em1_itemcode'],
+											'mensaje'	=> 'El Item '.$value['em1_itemcode'].' no existe en el documento origen (Pedido #'.$RESULT_DOC[0]['vov_docnum'].')'
+										);
+
+										$this->response($respuesta);
+
+										return;
+									}
+								}
+
+						}else if ($Data['dvf_basetype'] == 3) {
 							$sqlDev = "SELECT
 											t1.em1_itemcode,
 											t1.em1_quantity - COALESCE(sum(t3.dv1_quantity),0) cantidad
@@ -4436,71 +4467,70 @@ class SalesInv extends REST_Controller
 		if(isset($resCopyBy[0])){
 			if($resCopyBy[0]['dvf_doctype'] == 34){
 				$sqlSelect = "SELECT
-							t1.fv1_linenum,
-							t1.fv1_acciva,
-							t1.fv1_acctcode,
-							t1.fv1_avprice,
-							t1.fv1_basetype,
-							t1.fv1_costcode,
-							t1.fv1_discount,
-							t1.fv1_docentry,
-							t1.fv1_doctype,
-							t1.fv1_id,
-							t1.fv1_inventory,
-							t1.fv1_itemcode,
-							t1.fv1_itemname,
-							abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry)))) * t1.fv1_price fv1_linetotal,
-							t1.fv1_price,
-							t1.fv1_project,
-							abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry)))as fv1_quantity,
-							t1.fv1_ubusiness,
-							t1.fv1_uom,
-							t1.fv1_vat,
-							t1.fv1_vatsum vatsum_real,
-							(((abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry))))) * t1.fv1_price) * t1.fv1_vat) / 100 fv1_vatsum,
-							t1.fv1_whscode,
-							dmar.dma_series_code,
-							t1.fv1_ubication,
-							t1.fv1_codimp,
-							get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
-							get_lote(t1.fv1_itemcode) as fun_lote,
-							t1.fv1_fixrate,
-							case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
-							case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
-							from dvfv t0
-							inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
-							INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
-							WHERE t1.fv1_docentry = :fv1_docentry
-							GROUP BY
-							t1.fv1_linenum,
-							t1.fv1_acciva,
-							t1.fv1_acctcode,
-							t1.fv1_avprice,
-							t1.fv1_basetype,
-							t1.fv1_costcode,
-							t1.fv1_discount,
-							t1.fv1_docentry,
-							t1.fv1_doctype,
-							t1.fv1_id,
-							t1.fv1_inventory,
-							t1.fv1_itemcode,
-							t1.fv1_itemname,
-							t1.fv1_linetotal,
-							t1.fv1_price,
-							t1.fv1_project,
-							t1.fv1_ubusiness,
-							t1.fv1_uom,
-							t1.fv1_vat,
-							t1.fv1_vatsum,
-							t1.fv1_whscode,
-							t1.fv1_quantity,
-							dmar.dma_series_code,
-							t1.fv1_ubication,
-							t1.fv1_codimp,
-							t1.fv1_fixrate,
-							t0.business,
-							t0.dvf_doctype,t0.dvf_docentry,dmar.dma_advertisement,dmar.dma_modular
-							HAVING abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry)))) > 0";
+				t1.fv1_linenum,
+				t1.fv1_acciva,
+				t1.fv1_acctcode,
+				t1.fv1_avprice,
+				t1.fv1_basetype,
+				t1.fv1_costcode,
+				t1.fv1_discount,
+				t1.fv1_docentry,
+				t1.fv1_doctype,
+				t1.fv1_id,
+				t1.fv1_inventory,
+				t1.fv1_itemcode,
+				t1.fv1_itemname,
+				abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode)))) * t1.fv1_price fv1_linetotal,
+				t1.fv1_price,
+				t1.fv1_project,
+				abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode))) as fv1_quantity,
+				t1.fv1_ubusiness,
+				t1.fv1_uom,
+				t1.fv1_vat,
+				t1.fv1_vatsum vatsum_real,
+				abs(((((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
+				t1.fv1_whscode,
+				dmar.dma_series_code,
+				t1.fv1_ubication,
+				t1.fv1_codimp,
+				get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
+				get_lote(t1.fv1_itemcode) as fun_lote,
+				t1.fv1_fixrate,
+				case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
+				case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
+				from dvfv t0
+				inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
+				INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
+				WHERE t1.fv1_docentry = :fv1_docentry
+				GROUP BY
+				t1.fv1_linenum,
+				t1.fv1_acciva,
+				t1.fv1_acctcode,
+				t1.fv1_avprice,
+				t1.fv1_basetype,
+				t1.fv1_costcode,
+				t1.fv1_discount,
+				t1.fv1_docentry,
+				t1.fv1_doctype,
+				t1.fv1_id,
+				t1.fv1_inventory,
+				t1.fv1_itemcode,
+				t1.fv1_itemname,
+				t1.fv1_linetotal,
+				t1.fv1_price,
+				t1.fv1_project,
+				t1.fv1_ubusiness,
+				t1.fv1_uom,
+				t1.fv1_vat,
+				t1.fv1_vatsum,
+				t1.fv1_whscode,
+				t1.fv1_quantity,
+				dmar.dma_series_code,
+				t1.fv1_ubication,
+				t1.fv1_codimp,
+				t1.fv1_fixrate,t0.dvf_doctype,t0.dvf_docentry,
+				t0.business,dmar.dma_advertisement,dmar.dma_modular
+				HAVING abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode))) > 0";
 
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
@@ -4564,74 +4594,70 @@ class SalesInv extends REST_Controller
 
 			}else if($resCopyBy[0]['dvf_doctype'] == 5){
 				$sqlSelect = "SELECT
-							t1.fv1_linenum,
-							t1.fv1_acciva,
-							t1.fv1_acctcode,
-							t1.fv1_avprice,
-							t1.fv1_basetype,
-							t1.fv1_costcode,
-							t1.fv1_discount,
-							t1.fv1_docentry,
-							t1.fv1_doctype,
-							t1.fv1_id,
-							t1.fv1_inventory,
-							t1.fv1_itemcode,
-							t1.fv1_itemname,
-							abs((t1.fv1_quantity - (coalesce(sum(distinct t3.nc1_quantity),0) + coalesce(sum(distinct t5.nd1_quantity),0)))) * t1.fv1_price fv1_linetotal,
-							t1.fv1_price,
-							t1.fv1_project,
-							abs(t1.fv1_quantity - (coalesce(sum(distinct t3.nc1_quantity),0) + coalesce(sum(distinct t5.nd1_quantity),0))) as fv1_quantity,
-							t1.fv1_ubusiness,
-							t1.fv1_uom,
-							t1.fv1_vat,
-							t1.fv1_vatsum vatsum_real,
-							abs(((((t1.fv1_quantity - (coalesce(sum(distinct t3.nc1_quantity),0) + coalesce(sum(distinct t5.nd1_quantity),0)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
-							t1.fv1_whscode,
-							dmar.dma_series_code,
-							t1.fv1_ubication,
-							t1.fv1_codimp,
-							get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
-							get_lote(t1.fv1_itemcode) as fun_lote,
-							t1.fv1_fixrate,
-							case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
-							case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
-							from dvfv t0
-							inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
-							left join dvnc t2 on t0.dvf_docentry = t2.vnc_baseentry and t0.dvf_doctype = t2.vnc_basetype
-							left join vnc1 t3 on t2.vnc_docentry = t3.nc1_docentry and t1.fv1_itemcode = t3.nc1_itemcode and t1.fv1_linenum = t3.nc1_baseline
-							left join dvnd t4 on t0.dvf_docentry = t4.vnd_baseentry and t0.dvf_doctype = t4.vnd_basetype
-							left join vnd1 t5 on t2.vnc_docentry = t5.nd1_docentry and t1.fv1_itemcode = t5.nd1_itemcode and t1.fv1_linenum = t5.nd1_baseline
-							INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
-							WHERE t1.fv1_docentry = :fv1_docentry
-							GROUP BY
-							t1.fv1_linenum,
-							t1.fv1_acciva,
-							t1.fv1_acctcode,
-							t1.fv1_avprice,
-							t1.fv1_basetype,
-							t1.fv1_costcode,
-							t1.fv1_discount,
-							t1.fv1_docentry,
-							t1.fv1_doctype,
-							t1.fv1_id,
-							t1.fv1_inventory,
-							t1.fv1_itemcode,
-							t1.fv1_itemname,
-							t1.fv1_linetotal,
-							t1.fv1_price,
-							t1.fv1_project,
-							t1.fv1_ubusiness,
-							t1.fv1_uom,
-							t1.fv1_vat,
-							t1.fv1_vatsum,
-							t1.fv1_whscode,
-							t1.fv1_quantity,
-							dmar.dma_series_code,
-							t1.fv1_ubication,
-							t1.fv1_codimp,
-							t1.fv1_fixrate,
-							t0.business,dmar.dma_advertisement,dmar.dma_modular
-							abs(HAVING (t1.fv1_quantity - (coalesce(sum(distinct t3.nc1_quantity),0) + coalesce(sum(distinct t5.nd1_quantity),0)))) > 0";
+				t1.fv1_linenum,
+				t1.fv1_acciva,
+				t1.fv1_acctcode,
+				t1.fv1_avprice,
+				t1.fv1_basetype,
+				t1.fv1_costcode,
+				t1.fv1_discount,
+				t1.fv1_docentry,
+				t1.fv1_doctype,
+				t1.fv1_id,
+				t1.fv1_inventory,
+				t1.fv1_itemcode,
+				t1.fv1_itemname,
+				abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode)))) * t1.fv1_price fv1_linetotal,
+				t1.fv1_price,
+				t1.fv1_project,
+				abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode))) as fv1_quantity,
+				t1.fv1_ubusiness,
+				t1.fv1_uom,
+				t1.fv1_vat,
+				t1.fv1_vatsum vatsum_real,
+				abs(((((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
+				t1.fv1_whscode,
+				dmar.dma_series_code,
+				t1.fv1_ubication,
+				t1.fv1_codimp,
+				get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
+				get_lote(t1.fv1_itemcode) as fun_lote,
+				t1.fv1_fixrate,
+				case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
+				case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
+				from dvfv t0
+				inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
+				INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
+				WHERE t1.fv1_docentry = :fv1_docentry
+				GROUP BY
+				t1.fv1_linenum,
+				t1.fv1_acciva,
+				t1.fv1_acctcode,
+				t1.fv1_avprice,
+				t1.fv1_basetype,
+				t1.fv1_costcode,
+				t1.fv1_discount,
+				t1.fv1_docentry,
+				t1.fv1_doctype,
+				t1.fv1_id,
+				t1.fv1_inventory,
+				t1.fv1_itemcode,
+				t1.fv1_itemname,
+				t1.fv1_linetotal,
+				t1.fv1_price,
+				t1.fv1_project,
+				t1.fv1_ubusiness,
+				t1.fv1_uom,
+				t1.fv1_vat,
+				t1.fv1_vatsum,
+				t1.fv1_whscode,
+				t1.fv1_quantity,
+				dmar.dma_series_code,
+				t1.fv1_ubication,
+				t1.fv1_codimp,
+				t1.fv1_fixrate,t0.dvf_doctype,t0.dvf_docentry,
+				t0.business,dmar.dma_advertisement,dmar.dma_modular
+				HAVING abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode))) > 0";
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
 								LEFT JOIN igtf

@@ -971,15 +971,15 @@ class Quotation extends REST_Controller
 			t1.vc1_inventory,
 			t1.vc1_itemcode,
 			t1.vc1_itemname,
-			abs((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry)))) * t1.vc1_price as vc1_linetotal,
+			abs((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry,t1.vc1_itemcode)))) * t1.vc1_price as vc1_linetotal,
 			t1.vc1_price,
 			t1.vc1_project,
-			abs(t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry))) as vc1_quantity,
+			abs(t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry,t1.vc1_itemcode))) as vc1_quantity,
 			t1.vc1_ubusiness,
 			t1.vc1_uom,
 			t1.vc1_vat,
 			t1.vc1_vatsum vatsum_real,
-			abs(((((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry)))) * t1.vc1_price) * t1.vc1_vat)) / 100 as vc1_vatsum,
+			abs(((((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry,t1.vc1_itemcode)))) * t1.vc1_price) * t1.vc1_vat)) / 100 as vc1_vatsum,
 			t1.vc1_whscode,
 			dmar.dma_series_code,
 			t1.vc1_ubication,
@@ -1019,8 +1019,8 @@ class Quotation extends REST_Controller
 			t1.vc1_ubication,
 			t1.vc1_codimp,
 			t0.business,
-			t0.dvc_doctype,t0.dvc_docentry,dmar.dma_advertisement,dmar.dma_modula
-			HAVING abs((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry)))) > 0";
+			t0.dvc_doctype,t0.dvc_docentry,dmar.dma_advertisement,dmar.dma_modular
+			HAVING abs((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry,t1.vc1_itemcode)))) > 0";
 
 			$resSql = $this->pedeo->queryTable($sql, array(':vc1_docentry' => $Data ['vc1_docentry']));
 
