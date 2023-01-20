@@ -731,6 +731,17 @@ class SalesDel extends REST_Controller
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 					// Se verifica que el detalle no de error insertando //
+					if($Data['vem_basetype'] == 2){
+
+						$ITEM_ORIGEN = [];
+						$ITEM_DESTINO = [];
+						foreach ($detail['em1_itemcode'] as $key => $value) {
+							# code...
+							array_push($ITEM_DESTINO,$value);
+						}
+						print_r($ITEM_DESTINO);exit;
+					}
+					
 				} else {
 
 					// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
@@ -1736,7 +1747,7 @@ class SalesDel extends REST_Controller
 				$cantidad_cot = $resEstado1[0]['cantidad'];
 				$cantidad_del = $resEstado2[0]['cantidad'];
 
-				if ($item_cot == $item_del  &&   $cantidad_del >= $cantidad_cot) {
+				if ($item_del >= $item_cot &&   $cantidad_del >= $cantidad_cot) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -2282,7 +2293,9 @@ class SalesDel extends REST_Controller
 		t1.em1_ubication,
 		t1.em1_codimp,
 		get_ubication(t1.em1_whscode, t0.business) as fun_ubication,
-		get_lote(t1.em1_itemcode) as fun_lote
+		get_lote(t1.em1_itemcode) as fun_lote,
+		case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
+		case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
 		from dvem t0
 		inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
 		INNER JOIN dmar ON t1.em1_itemcode = dmar.dma_item_code
@@ -2313,7 +2326,7 @@ class SalesDel extends REST_Controller
 		dmar.dma_series_code,
 		t1.em1_ubication,
 		t1.em1_codimp,
-		t0.business,t0.vem_docentry,t0.vem_doctype
+		t0.business,t0.vem_docentry,t0.vem_doctype,dmar.dma_advertisement,dmar.dma_modular
         HAVING abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry),0)))) > 0";
 		// print_r($sqlSelect);exit;
 

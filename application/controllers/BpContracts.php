@@ -938,6 +938,74 @@ class BpContracts extends REST_Controller
 		$this->response($respuesta);
 	}
 
+	public function getContractsDetailCopy_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['sn1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM csn1 WHERE sn1_docentry =:sn1_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":sn1_docentry" => $Data['sn1_docentry']));
+
+
+		$sqlSelect2 = "SELECT tcsn.csn_comment,
+												tcsn.csn_enddate,
+												tcsn.csn_signaturedate,
+												tcsn.csn_description,
+												tcsn.csn_prjcode,
+												ctpa.tpa_description AS csn_typeagreement,
+												ccdp.cdp_description AS csn_paymentcondition,
+												dmpf.mpf_name AS csn_waypay,
+												cfev.fev_description AS csn_shippingway,
+												cesc.esc_description AS csn_status,
+												dcsn.csn_probabilitypercentage,
+												dcsn.csn_renewal,
+												dcsn.csn_remember
+												FROM tcsn
+												INNER JOIN dcsn ON tcsn.csn_docentry = dcsn.csn_docentry
+												INNER JOIN ctpa ON ctpa.tpa_id = dcsn.csn_typeagreement
+												INNER JOIN ccdp ON ccdp.cdp_id = dcsn.csn_paymentcondition
+												INNER JOIN dmpf ON dmpf.mpf_id = dcsn.csn_waypay
+												INNER JOIN cfev ON cfev.fev_id = dcsn.csn_shippingway
+												INNER JOIN cesc ON cesc.esc_id = dcsn.csn_status
+												WHERE  tcsn.csn_docentry = :csn_docentry";
+		$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(
+			':csn_docentry' => $Data['sn1_docentry']
+		));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'detallec' => $resSelect2,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
 	public function getDaysPrice_post()
 	{
 		$Data = $this->post();

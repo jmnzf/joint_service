@@ -3675,7 +3675,7 @@ class SalesInv extends REST_Controller
 					$cantidad_cot = $resEstado1[0]['cantidad'];
 					$cantidad_ord = $resEstado2[0]['cantidad'];
 
-					if ($item_cot == $item_ord  &&   $cantidad_ord >= $cantidad_cot) {
+					if ($item_ord >= $item_cot &&   $cantidad_ord >= $cantidad_cot) {
 
 						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 											VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -4464,7 +4464,9 @@ class SalesInv extends REST_Controller
 							t1.fv1_codimp,
 							get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
 							get_lote(t1.fv1_itemcode) as fun_lote,
-							t1.fv1_fixrate
+							t1.fv1_fixrate,
+							case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
+							case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
 							from dvfv t0
 							inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
 							INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
@@ -4497,7 +4499,7 @@ class SalesInv extends REST_Controller
 							t1.fv1_codimp,
 							t1.fv1_fixrate,
 							t0.business,
-							t0.dvf_doctype,t0.dvf_docentry
+							t0.dvf_doctype,t0.dvf_docentry,dmar.dma_advertisement,dmar.dma_modular
 							HAVING abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry)))) > 0";
 
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
@@ -4590,7 +4592,9 @@ class SalesInv extends REST_Controller
 							t1.fv1_codimp,
 							get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
 							get_lote(t1.fv1_itemcode) as fun_lote,
-							t1.fv1_fixrate
+							t1.fv1_fixrate,
+							case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
+							case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
 							from dvfv t0
 							inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
 							left join dvnc t2 on t0.dvf_docentry = t2.vnc_baseentry and t0.dvf_doctype = t2.vnc_basetype
@@ -4626,7 +4630,7 @@ class SalesInv extends REST_Controller
 							t1.fv1_ubication,
 							t1.fv1_codimp,
 							t1.fv1_fixrate,
-							t0.business
+							t0.business,dmar.dma_advertisement,dmar.dma_modular
 							abs(HAVING (t1.fv1_quantity - (coalesce(sum(distinct t3.nc1_quantity),0) + coalesce(sum(distinct t5.nd1_quantity),0)))) > 0";
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv

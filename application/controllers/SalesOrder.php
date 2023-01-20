@@ -700,7 +700,7 @@ class SalesOrder extends REST_Controller
 
 				
 
-				if ($item_cot == $item_ord  &&   $cantidad_ord >= $cantidad_cot) {
+				if ($item_ord >= $item_cot &&   $cantidad_ord >= $cantidad_cot) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -1085,7 +1085,9 @@ class SalesOrder extends REST_Controller
 				t1.ov1_ubication,
 				t1.ov1_codimp,
 				get_ubication(t1.ov1_whscode, t0.business) as fun_ubication,
-				get_lote(t1.ov1_itemcode) as fun_lote
+				get_lote(t1.ov1_itemcode) as fun_lote,
+				case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
+				case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
 				from dvov t0
 				inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
 				INNER JOIN dmar ON t1.ov1_itemcode = dmar.dma_item_code
@@ -1118,7 +1120,7 @@ class SalesOrder extends REST_Controller
 				t1.ov1_codimp,
 				t0.business,
 				t0.vov_doctype,
-				t0.vov_docentry
+				t0.vov_docentry,dmar.dma_advertisement,dmar.dma_modular
 				HAVING abs((t1.ov1_quantity - (get_quantity(t0.vov_doctype,t0.vov_docentry)))) > 0";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
