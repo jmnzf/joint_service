@@ -3783,7 +3783,7 @@ class SalesInv extends REST_Controller
 				} else if ($Data['dvf_basetype'] == 3) {
 
 					$sqlEstado1 = 'SELECT
-								count(t1.em1_itemcode) item,
+								count(t1.em1_linenum) item,
 								coalesce(sum(t1.em1_quantity),0) cantidad
 								from dvem t0
 								inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
@@ -3825,18 +3825,14 @@ class SalesInv extends REST_Controller
 					));
 
 					if (is_numeric($resta_item) && $resta_item == 0) {
-						$item_del = $resEstado1[0]['item'];
+						$item_del = abs($resEstado1[0]['item']);
 					} else {
-						$item_del = $resta_item;
+						$item_del = abs($resta_item);
 					}
 
-					// $item_del = $resEstado1[0]['item'];
-					$item_fact = $resEstado2[0]['item'];
-					$cantidad_del = $resta_cantidad;
-					$cantidad_fact = $resEstado2[0]['cantidad'];
-
-
-
+					$item_fact = abs($resEstado2[0]['item']);
+					$cantidad_del = abs($resta_cantidad);
+					$cantidad_fact = abs($resEstado2[0]['cantidad']);
 
 					if ($item_del == $item_fact && $cantidad_del == $cantidad_fact) {
 
@@ -3915,17 +3911,15 @@ class SalesInv extends REST_Controller
 								));
 
 								if (is_numeric($resta_item1) && $resta_item1 == 0) {
-									$item_del1 = $resEstado1[0]['item'];
+									$item_del1 = abs($resEstado1[0]['item']);
 								} else {
-									$item_del1 = $resta_item1;
+									$item_del1 = abs($resta_item1);
 								}
 
 								//  $item_del1 = $resEstado1[0]['item'];
-								$item_fact1 = $resEstado2[0]['item'];
-								$cantidad_del1 = $resta_cantidad1;
-								$cantidad_fact1 = $resEstado2[0]['cantidad'];
-
-
+								$item_fact1 = abs($resEstado2[0]['item']);
+								$cantidad_del1 = abs($resta_cantidad1);
+								$cantidad_fact1 = abs($resEstado2[0]['cantidad']);
 
 
 								if ($item_del1 == $item_fact1  &&  $cantidad_del1 ==  $cantidad_fact1) {
@@ -4455,15 +4449,15 @@ class SalesInv extends REST_Controller
 							t1.fv1_inventory,
 							t1.fv1_itemcode,
 							t1.fv1_itemname,
-							(t1.fv1_quantity - (coalesce(sum(t3.em1_quantity),0)) * t1.fv1_price fv1_linetotal,
+							abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry)))) * t1.fv1_price fv1_linetotal,
 							t1.fv1_price,
 							t1.fv1_project,
-							t1.fv1_quantity - (coalesce(sum(t3.em1_quantity),0) )as fv1_quantity,
+							abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry)))as fv1_quantity,
 							t1.fv1_ubusiness,
 							t1.fv1_uom,
 							t1.fv1_vat,
 							t1.fv1_vatsum vatsum_real,
-							((((t1.fv1_quantity - (coalesce(sum(t3.em1_quantity),0)))) * t1.fv1_price) * t1.fv1_vat) / 100 fv1_vatsum,
+							(((abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry))))) * t1.fv1_price) * t1.fv1_vat) / 100 fv1_vatsum,
 							t1.fv1_whscode,
 							dmar.dma_series_code,
 							t1.fv1_ubication,
@@ -4473,8 +4467,6 @@ class SalesInv extends REST_Controller
 							t1.fv1_fixrate
 							from dvfv t0
 							inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
-							left join dvem t2 on t0.dvf_docentry = t2.vem_baseentry and t0.dvf_doctype = t2.vem_basetype
-							left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.fv1_itemcode = t3.em1_itemcode and t1.fv1_linenum = t3.em1_baseline
 							INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
 							WHERE t1.fv1_docentry = :fv1_docentry
 							GROUP BY
@@ -4504,8 +4496,9 @@ class SalesInv extends REST_Controller
 							t1.fv1_ubication,
 							t1.fv1_codimp,
 							t1.fv1_fixrate,
-							t0.business
-							HAVING (t1.fv1_quantity - (coalesce(sum(t3.em1_quantity),0))) > 0";
+							t0.business,
+							t0.dvf_doctype,t0.dvf_docentry
+							HAVING abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry)))) > 0";
 
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
@@ -4582,15 +4575,15 @@ class SalesInv extends REST_Controller
 							t1.fv1_inventory,
 							t1.fv1_itemcode,
 							t1.fv1_itemname,
-							abs((t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0)))) * t1.fv1_price fv1_linetotal,
+							abs((t1.fv1_quantity - (coalesce(sum(distinct t3.nc1_quantity),0) + coalesce(sum(distinct t5.nd1_quantity),0)))) * t1.fv1_price fv1_linetotal,
 							t1.fv1_price,
 							t1.fv1_project,
-							abs(t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0))) as fv1_quantity,
+							abs(t1.fv1_quantity - (coalesce(sum(distinct t3.nc1_quantity),0) + coalesce(sum(distinct t5.nd1_quantity),0))) as fv1_quantity,
 							t1.fv1_ubusiness,
 							t1.fv1_uom,
 							t1.fv1_vat,
 							t1.fv1_vatsum vatsum_real,
-							abs(((((t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
+							abs(((((t1.fv1_quantity - (coalesce(sum(distinct t3.nc1_quantity),0) + coalesce(sum(distinct t5.nd1_quantity),0)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
 							t1.fv1_whscode,
 							dmar.dma_series_code,
 							t1.fv1_ubication,
@@ -4634,7 +4627,7 @@ class SalesInv extends REST_Controller
 							t1.fv1_codimp,
 							t1.fv1_fixrate,
 							t0.business
-							abs(HAVING (t1.fv1_quantity - (coalesce(sum(t3.nc1_quantity),0) + coalesce(sum(t5.nd1_quantity),0)))) > 0";
+							abs(HAVING (t1.fv1_quantity - (coalesce(sum(distinct t3.nc1_quantity),0) + coalesce(sum(distinct t5.nd1_quantity),0)))) > 0";
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
 								LEFT JOIN igtf

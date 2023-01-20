@@ -1071,15 +1071,15 @@ class SalesOrder extends REST_Controller
 				t1.ov1_inventory,
 				t1.ov1_itemcode,
 				t1.ov1_itemname,
-				abs((t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) * t1.ov1_price ov1_linetotal,
+				abs((t1.ov1_quantity - (get_quantity(t0.vov_doctype,t0.vov_docentry)))) * t1.ov1_price ov1_linetotal,
 				t1.ov1_price,
 				t1.ov1_project,
-				abs(t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))as ov1_quantity,
+				abs(t1.ov1_quantity - (get_quantity(t0.vov_doctype,t0.vov_docentry)))as ov1_quantity,
 				t1.ov1_ubusiness,
 				t1.ov1_uom,
 				t1.ov1_vat,
 				t1.ov1_vatsum vatsum_real,
-				abs(((((t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) * t1.ov1_price) * t1.ov1_vat)) / 100 ov1_vatsum,
+				abs(((((t1.ov1_quantity - (get_quantity(t0.vov_doctype,t0.vov_docentry)))) * t1.ov1_price) * t1.ov1_vat)) / 100 ov1_vatsum,
 				t1.ov1_whscode,
 				dmar.dma_series_code,
 				t1.ov1_ubication,
@@ -1088,10 +1088,6 @@ class SalesOrder extends REST_Controller
 				get_lote(t1.ov1_itemcode) as fun_lote
 				from dvov t0
 				inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-				left join dvem t2 on t0.vov_docentry = t2.vem_baseentry and t0.vov_doctype = t2.vem_basetype
-				left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.ov1_itemcode = t3.em1_itemcode and t1.ov1_linenum = t3.em1_baseline
-				left join dvfv t4 on t0.vov_docentry = t4.dvf_baseentry and t0.vov_doctype = t4.dvf_basetype
-				left join vfv1 t5 on t4.dvf_docentry = t5.fv1_docentry and t1.ov1_itemcode = t5.fv1_itemcode and t1.ov1_linenum = t5.fv1_baseline
 				INNER JOIN dmar ON t1.ov1_itemcode = dmar.dma_item_code
 				WHERE t1.ov1_docentry = :ov1_docentry
 				GROUP BY
@@ -1120,8 +1116,10 @@ class SalesOrder extends REST_Controller
 				dmar.dma_series_code,
 				t1.ov1_ubication,
 				t1.ov1_codimp,
-				t0.business
-				HAVING abs((t1.ov1_quantity - (coalesce(sum(t3.em1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) > 0";
+				t0.business,
+				t0.vov_doctype,
+				t0.vov_docentry
+				HAVING abs((t1.ov1_quantity - (get_quantity(t0.vov_doctype,t0.vov_docentry)))) > 0";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 					":ov1_docentry" => $Data['ov1_docentry']
