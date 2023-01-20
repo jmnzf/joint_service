@@ -50,17 +50,10 @@ class PriceList extends REST_Controller
 		// SE BUSCAN LOS PRODUCTOS
 		// INVENTARIABLES
 		$sqlProductos = " SELECT dma_item_code, dma_price, dmar.dma_item_name FROM dmar
-<<<<<<< HEAD
-							WHERE dmar.dma_enabled = :dma_enabled
-							AND dma_item_sales = :dma_item_sales
-							AND dma_item_inv = :dma_item_inv
-							GROUP BY dma_item_code, dma_price, dmar.dma_item_name";
-=======
 											WHERE dmar.dma_enabled = :dma_enabled
 											AND dma_item_sales = :dma_item_sales
 											AND dma_item_inv = :dma_item_inv
 											GROUP BY dma_item_code, dma_price, dmar.dma_item_name";
->>>>>>> 9480b855f2576bf285357292e320f99c8cca2412
 
 
 		$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', 'dma_item_inv' => '1'));
@@ -288,19 +281,11 @@ class PriceList extends REST_Controller
 		// SE BUSCAN LOS PRODUCTOS
 		// INVENTARIABLES
 		$sqlProductos = "SELECT dma_item_code, dma_price, dmar.dma_item_name FROM dmar
-<<<<<<< HEAD
-						WHERE dmar.dma_enabled = :dma_enabled
-						AND dma_item_sales = :dma_item_sales
-						AND dma_item_inv = :dma_item_inv
-						AND dma_item_code NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
-						GROUP BY dma_item_code, dma_price, dmar.dma_item_name";
-=======
 											WHERE dmar.dma_enabled = :dma_enabled
 											AND dma_item_sales = :dma_item_sales
 											AND dma_item_inv = :dma_item_inv
 											AND dma_item_code NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
 											GROUP BY dma_item_code, dma_price, dmar.dma_item_name";
->>>>>>> 9480b855f2576bf285357292e320f99c8cca2412
 
 
 		$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', ':dma_item_inv' => '1', ':pl1_id_price_list' => $Data['dmlp_id']));
