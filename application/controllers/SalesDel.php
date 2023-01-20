@@ -2268,17 +2268,15 @@ class SalesDel extends REST_Controller
 		t1.em1_inventory,
 		t1.em1_itemcode,
 		t1.em1_itemname,
-		abs((t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) * t1.em1_price em1_linetotal,
+		abs(t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry),0))) * t1.em1_price em1_linetotal,
 		t1.em1_price,
 		t1.em1_project,
-		abs(t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) + coalesce(sum(t5.fv1_quantity),0))) as em1_quantity,
-		coalesce(sum(t3.dv1_quantity),0) devolucion,
-		coalesce(sum(t5.fv1_quantity),0) facturada,
+		abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry),0)))) as em1_quantity,
 		t1.em1_ubusiness,
 		t1.em1_uom,
 		t1.em1_vat,
 		t1.em1_vatsum vatsum_real,
-		abs(((((t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) * t1.em1_price) * t1.em1_vat)) / 100 em1_vatsum,
+		abs(((((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry),0)))) * t1.em1_price) * t1.em1_vat)) / 100 em1_vatsum,
 		t1.em1_whscode,
 		dmar.dma_series_code,
 		t1.em1_ubication,
@@ -2287,12 +2285,8 @@ class SalesDel extends REST_Controller
 		get_lote(t1.em1_itemcode) as fun_lote
 		from dvem t0
 		inner join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-		left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
-		left join vdv1 t3 on t2.vdv_docentry = t3.dv1_docentry and t1.em1_itemcode = t3.dv1_itemcode and t1.em1_linenum = t3.dv1_baseline
-		left join dvfv t4 on t0.vem_docentry = t4.dvf_baseentry and t0.vem_doctype = t4.dvf_basetype
-		left join vfv1 t5 on t4.dvf_docentry = t5.fv1_docentry and t1.em1_itemcode = t5.fv1_itemcode and t1.em1_linenum = t5.fv1_baseline
 		INNER JOIN dmar ON t1.em1_itemcode = dmar.dma_item_code
-		WHERE t1.em1_docentry = :em1_docentry
+		WHERE t1.em1_docentry = :em1_docentry --and t0.business = :business
 		GROUP BY
 		t1.em1_linenum,
 		t1.em1_acciva,
@@ -2319,8 +2313,8 @@ class SalesDel extends REST_Controller
 		dmar.dma_series_code,
 		t1.em1_ubication,
 		t1.em1_codimp,
-		t0.business
-		HAVING abs((t1.em1_quantity - (coalesce(sum(t3.dv1_quantity),0) + coalesce(sum(t5.fv1_quantity),0)))) > 0";
+		t0.business,t0.vem_docentry,t0.vem_doctype
+        HAVING abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry),0)))) > 0";
 		// print_r($sqlSelect);exit;
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));

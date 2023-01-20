@@ -971,15 +971,15 @@ class Quotation extends REST_Controller
 			t1.vc1_inventory,
 			t1.vc1_itemcode,
 			t1.vc1_itemname,
-			abs((t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0)))) * t1.vc1_price vc1_linetotal,
+			abs((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry)))) * t1.vc1_price as vc1_linetotal,
 			t1.vc1_price,
 			t1.vc1_project,
-			abs(t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0))) as vc1_quantity,
+			abs(t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry))) as vc1_quantity,
 			t1.vc1_ubusiness,
 			t1.vc1_uom,
 			t1.vc1_vat,
 			t1.vc1_vatsum vatsum_real,
-			abs(((((t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0)))) * t1.vc1_price) * t1.vc1_vat)) / 100 vc1_vatsum,
+			abs(((((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry)))) * t1.vc1_price) * t1.vc1_vat)) / 100 as vc1_vatsum,
 			t1.vc1_whscode,
 			dmar.dma_series_code,
 			t1.vc1_ubication,
@@ -988,10 +988,6 @@ class Quotation extends REST_Controller
 			get_lote(t1.vc1_itemcode) as fun_lote
 			from dvct t0
 			inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-			left join dvov t2 on t0.dvc_docentry = t2.vov_baseentry and t0.dvc_doctype = t2.vov_basetype
-			left join vov1 t3 on t2.vov_docentry = t3.ov1_docentry and t1.vc1_itemcode = t3.ov1_itemcode and t1.vc1_linenum = t3.ov1_baseline
-			left join dvem t4 on t0.dvc_docentry = t4.vem_baseentry and t0.dvc_doctype = t4.vem_basetype
-			left join vem1 t5 on t4.vem_docentry = t5.em1_docentry and t1.vc1_itemcode = t5.em1_itemcode and t1.vc1_linenum = t5.em1_baseline
 			INNER JOIN dmar ON vc1_itemcode = dmar.dma_item_code
 			WHERE t1.vc1_docentry = :vc1_docentry
 			GROUP BY
@@ -1020,8 +1016,9 @@ class Quotation extends REST_Controller
 			dmar.dma_series_code,
 			t1.vc1_ubication,
 			t1.vc1_codimp,
-			t0.business
-			HAVING abs((t1.vc1_quantity - (coalesce(sum(t3.ov1_quantity),0) + coalesce(sum(t5.em1_quantity),0)))) > 0";
+			t0.business,
+			t0.dvc_doctype,t0.dvc_docentry
+			HAVING abs((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry)))) > 0";
 
 			$resSql = $this->pedeo->queryTable($sql, array(':vc1_docentry' => $Data ['vc1_docentry']));
 
