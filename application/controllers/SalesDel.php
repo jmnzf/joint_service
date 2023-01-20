@@ -735,9 +735,9 @@ class SalesDel extends REST_Controller
 
 						$ITEM_ORIGEN = [];
 						$ITEM_DESTINO = [];
-						foreach ($detail['em1_itemcode'] as $key => $value) {
+						foreach ($detail as $key => $value) {
 							# code...
-							array_push($ITEM_DESTINO,$value);
+							array_push($ITEM_DESTINO,$value['em1_itemcode']);
 						}
 						print_r($ITEM_DESTINO);exit;
 					}
