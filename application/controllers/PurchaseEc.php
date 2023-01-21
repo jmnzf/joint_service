@@ -24,6 +24,7 @@ class PurchaseEc extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('account');
+		$this->load->library('DocumentCopy');
 	}
 
 	//CREAR ENTRADA COMPRAS
@@ -619,14 +620,16 @@ class PurchaseEc extends REST_Controller
 					return;
 				}
 
-				$sqlInsertDetail = "INSERT INTO cec1(ec1_docentry, ec1_itemcode, ec1_itemname, ec1_quantity, ec1_uom, ec1_whscode,
+				$sqlInsertDetail = "INSERT INTO cec1(ec1_docentry, ec1_linenum,ec1_itemcode, ec1_itemname, ec1_quantity, ec1_uom, ec1_whscode,
                                     ec1_price, ec1_vat, ec1_vatsum, ec1_discount, ec1_linetotal, ec1_costcode, ec1_ubusiness, ec1_project,
-                                    ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_linenum, ec1_acciva, ec1_codimp, ec1_ubication)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
+                                    ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_linenum, ec1_acciva, ec1_codimp, ec1_ubication,ec1_baseline)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
                                     :ec1_uom, :ec1_whscode,:ec1_price, :ec1_vat, :ec1_vatsum, :ec1_discount, :ec1_linetotal, :ec1_costcode, :ec1_ubusiness, :ec1_project,
-                                    :ec1_acctcode, :ec1_basetype, :ec1_doctype, :ec1_avprice, :ec1_inventory,:ec1_linenum,:ec1_acciva,:ec1_codimp, :ec1_ubication)";
+                                    :ec1_acctcode, :ec1_basetype, :ec1_doctype, :ec1_avprice, :ec1_inventory,:ec1_linenum,:ec1_acciva,:ec1_codimp, 
+									:ec1_ubication,:ec1_baseline)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ec1_docentry' => $resInsert,
+					':ec1_linenum' => is_numeric($detail['ec1_linenum']) ? $detail['ec1_linenum'] : 0,
 					':ec1_itemcode' => isset($detail['ec1_itemcode']) ? $detail['ec1_itemcode'] : NULL,
 					':ec1_itemname' => isset($detail['ec1_itemname']) ? $detail['ec1_itemname'] : NULL,
 					':ec1_quantity' => is_numeric($detail['ec1_quantity']) ? $detail['ec1_quantity'] : 0,
@@ -648,7 +651,8 @@ class PurchaseEc extends REST_Controller
 					':ec1_linenum' => is_numeric($detail['ec1_linenum']) ? $detail['ec1_linenum'] : NULL,
 					':ec1_acciva' => is_numeric($detail['ec1_acciva']) ? $detail['ec1_acciva'] : NULL,
 					':ec1_codimp' => isset($detail['ec1_codimp']) ? $detail['ec1_codimp'] : NULL,
-					':ec1_ubication' => isset($detail['ec1_ubication']) ? $detail['ec1_ubication'] : NULL
+					':ec1_ubication' => isset($detail['ec1_ubication']) ? $detail['ec1_ubication'] : NULL,
+					':ec1_baseline' => is_numeric($detail['ec1_baseline']) ? $detail['ec1_baseline'] : 0,
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -2028,7 +2032,7 @@ class PurchaseEc extends REST_Controller
 			// Procedimiento para llenar costo costo
 
 			//se busca la cuenta puente de inventario
-			$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem WHERE business = :business";
+			$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem WHERE pge_id = :business";
 			$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':business' => $Data['business']));
 			$cuentaCosto = "";
 			if (isset($resArticulo[0]) && $resArticulo[0]['pge_bridge_inv_purch'] != 0) {
@@ -2689,6 +2693,63 @@ class PurchaseEc extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data'  => array("detalle" => $resSelect),
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' 	  =>  array(),
+				'mensaje' => 'busqueda sin resultados'
+			);
+		}
+
+
+
+		$this->response($respuesta);
+	}
+
+	//OBTENER orden de compra DETALLE POR ID
+	public function getPurchaseEcDetailCopy_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['ec1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$copy = $this->documentcopy->Copy($Data['ec1_docentry'],'dcec','cec1','cec','ec1');
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ec1_docentry" => $Data['ec1_docentry']));
+
+		$seriales = "SELECT msn_line, msn_itemcode, string_agg(msn_sn, ',') AS serials FROM tmsn  WHERE msn_baseentry = :msn_baseentry AND msn_basetype = :msn_basetype GROUP BY  msn_itemcode,msn_line";
+
+
+		$resseriales = $this->pedeo->queryTable($seriales, array(":msn_baseentry" => $Data['ec1_docentry'], ":msn_basetype" => 13));
+
+
+		if (isset($resseriales[0]) && isset($copy[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => array("detalle" => $copy, "complemento" => $resseriales),
+				'mensaje' => ''
+			);
+		} else if (isset($copy[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => array("detalle" => $copy),
 				'mensaje' => ''
 			);
 		} else {
