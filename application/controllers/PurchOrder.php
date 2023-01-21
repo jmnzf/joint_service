@@ -23,6 +23,7 @@ class PurchOrder extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('DocumentCopy');
 	}
 
 	//CREAR NUEVA ORDEN DE COMPRA
@@ -332,9 +333,10 @@ class PurchOrder extends REST_Controller
 		$sqlInsert = "INSERT INTO dcpo(cpo_series, cpo_docnum, cpo_docdate, cpo_duedate, cpo_duedev, cpo_pricelist, cpo_cardcode,
                       cpo_cardname, cpo_currency, cpo_contacid, cpo_slpcode, cpo_empid, cpo_comment, cpo_doctotal, cpo_baseamnt, cpo_taxtotal,
                       cpo_discprofit, cpo_discount, cpo_createat, cpo_baseentry, cpo_basetype, cpo_doctype, cpo_idadd, cpo_adress, cpo_paytype,
-                      cpo_createby,cpo_correl, cpo_date_inv, cpo_date_del, cpo_place_del)VALUES(:cpo_series, :cpo_docnum, :cpo_docdate, :cpo_duedate, :cpo_duedev, :cpo_pricelist, :cpo_cardcode, :cpo_cardname,
+                      cpo_createby,cpo_correl, cpo_date_inv, cpo_date_del, cpo_place_del,business,branch)VALUES(:cpo_series, :cpo_docnum, :cpo_docdate, :cpo_duedate, :cpo_duedev, :cpo_pricelist, :cpo_cardcode, :cpo_cardname,
                       :cpo_currency, :cpo_contacid, :cpo_slpcode, :cpo_empid, :cpo_comment, :cpo_doctotal, :cpo_baseamnt, :cpo_taxtotal, :cpo_discprofit, :cpo_discount,
-                      :cpo_createat, :cpo_baseentry, :cpo_basetype, :cpo_doctype, :cpo_idadd, :cpo_adress, :cpo_paytype,:cpo_createby,:cpo_correl, :cpo_date_inv, :cpo_date_del, :cpo_place_del)";
+                      :cpo_createat, :cpo_baseentry, :cpo_basetype, :cpo_doctype, :cpo_idadd, :cpo_adress, :cpo_paytype,:cpo_createby,:cpo_correl, 
+					  :cpo_date_inv, :cpo_date_del, :cpo_place_del,:business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -375,7 +377,9 @@ class PurchOrder extends REST_Controller
 			'cpo_correl' => isset($Data['cpo_correl']) ? $Data['cpo_correl'] : NULL,
 			'cpo_date_inv' => $this->validateDate($Data['cpo_date_inv']) ? $Data['cpo_date_inv'] : NULL,
 			'cpo_date_del' => $this->validateDate($Data['cpo_date_del']) ? $Data['cpo_date_del'] : NULL,
-			'cpo_place_del' => isset($Data['cpo_place_del']) ? $Data['cpo_place_del'] : NULL
+			'cpo_place_del' => isset($Data['cpo_place_del']) ? $Data['cpo_place_del'] : NULL,
+			'business' => isset($Data['business']) ? $Data['business'] : NULL,
+			'branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 
 		));
 
@@ -410,7 +414,7 @@ class PurchOrder extends REST_Controller
 			//SE INSERTA EL ESTADO DEL DOCUMENTO
 
 			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
@@ -754,10 +758,11 @@ class PurchOrder extends REST_Controller
 				}
 
 				$sqlInsertDetail = "INSERT INTO cpo1(po1_docentry, po1_itemcode, po1_itemname, po1_quantity, po1_uom, po1_whscode,
-                                    po1_price, po1_vat, po1_vatsum, po1_discount, po1_linetotal, po1_costcode, po1_ubusiness, po1_project,
-                                    po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_linenum, po1_acciva, po1_codimp, po1_ubication)VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,
-                                    :po1_uom, :po1_whscode,:po1_price, :po1_vat, :po1_vatsum, :po1_discount, :po1_linetotal, :po1_costcode, :po1_ubusiness, :po1_project,
-                                    :po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, :po1_inventory,:po1_linenum,:po1_acciva, :po1_codimp, :po1_ubication)";
+                po1_price, po1_vat, po1_vatsum, po1_discount, po1_linetotal, po1_costcode, po1_ubusiness, po1_project,
+                po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_linenum, po1_acciva, po1_codimp, po1_ubication,po1_baseline)
+				VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,:po1_uom, :po1_whscode,:po1_price, :po1_vat, :po1_vatsum, 
+				:po1_discount, :po1_linetotal, :po1_costcode, :po1_ubusiness, :po1_project,:po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, 
+				:po1_inventory,:po1_linenum,:po1_acciva, :po1_codimp, :po1_ubication,:po1_baseline)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':po1_docentry' => $resInsert,
@@ -782,11 +787,47 @@ class PurchOrder extends REST_Controller
 					':po1_linenum' => is_numeric($detail['po1_linenum']) ? $detail['po1_linenum'] : NULL,
 					':po1_acciva' => is_numeric($detail['po1_acciva']) ? $detail['po1_acciva'] : NULL,
 					':po1_codimp' => isset($detail['po1_codimp']) ? $detail['po1_codimp'] : NULL,
-					':po1_ubication' => isset($detail['po1_ubication']) ? $detail['po1_ubication'] : NULL
+					':po1_ubication' => isset($detail['po1_ubication']) ? $detail['po1_ubication'] : NULL,
+					':po1_baseline' => is_numeric($detail['po1_baseline']) ? $detail['po1_baseline'] : 0
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 					// Se verifica que el detalle no de error insertando //
+					//VALIDAR SI LOS ITEMS SON IGUALES A LOS DEL DOCUMENTO DE ORIGEN SIEMPRE QUE VENGA DE UN COPIAR DE
+					if($Data['cpo_basetype'] == 11){
+						//OBTENER NUMERO DOCUMENTO ORIGEN
+						$DOC = "SELECT coc_docnum FROM dcoc WHERE coc_doctype = :coc_doctype AND coc_docentry = :coc_docentry";
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':coc_docentry' =>$Data['cpo_baseentry'],':coc_doctype' => $Data['cpo_basetype']));
+						foreach ($ContenidoDetalle as $key => $value) {
+							# code...
+							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
+							$sql = "SELECT dcoc.coc_docnum,coc1.oc1_itemcode FROM dcoc INNER JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry 
+							WHERE dcoc.coc_docentry = :coc_docentry AND dcoc.coc_doctype = :coc_doctype AND coc1.oc1_itemcode = :oc1_itemcode";
+							$resSql = $this->pedeo->queryTable($sql,array(
+								':coc_docentry' =>$Data['cpo_baseentry'],
+								':coc_doctype' => $Data['cpo_basetype'],
+								':oc1_itemcode' => $value['po1_itemcode']
+							));
+							
+								if(isset($resSql[0])){
+									//EL ARTICULO EXISTE EN EL DOCUMENTO DE ORIGEN
+								}else {
+									//EL ARTICULO NO EXISTE EN EL DOCUEMENTO DE ORIGEN
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $value['em1_itemcode'],
+										'mensaje'	=> 'El Item '.$value['em1_itemcode'].' no existe en el documento origen (Oferta #'.$RESULT_DOC[0]['coc_docnum'].')'
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+
+					}
 				} else {
 
 					// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
@@ -912,18 +953,11 @@ class PurchOrder extends REST_Controller
 					':coc_doctype' => $Data['cpo_basetype']
 				));
 
-				$item_oc = $resEstado1[0]['item'];
-				$cantidad_oc = $resEstado1[0]['cantidad'];
-				$item_ord = $resEstado2[0]['item'];
-				$cantidad_ord = $resEstado2[0]['cantidad'];
+				$item_oc = abs($resEstado1[0]['item']);
+				$cantidad_oc = abs($resEstado1[0]['cantidad']);
+				$item_ord = abs($resEstado2[0]['item']);
+				$cantidad_ord = abs($resEstado2[0]['cantidad']);
 
-
-
-
-				// print_r($item_sol);
-				// print_r($item_ord);
-				// print_r($cantidad_sol);
-				// print_r($cantidad_ord);exit();die();
 
 				if ($item_oc == $item_ord  &&  $cantidad_oc == $cantidad_ord) {
 
@@ -1177,7 +1211,6 @@ class PurchOrder extends REST_Controller
 
 		$sqlSelect = self::getColumn('dcpo', 'cpo', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
-
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 		if (isset($resSelect[0])) {
@@ -1274,6 +1307,46 @@ class PurchOrder extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	//OBTENER orden de compra DETALLE POR ID
+	public function getPurchOrderDetailCopy_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['po1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$copy = $this->documentcopy->Copy($Data['po1_docentry'],'dcpo','cpo1','cpo','po1');
+
+		if (isset($copy[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $copy,
 				'mensaje' => ''
 			);
 		} else {

@@ -23,6 +23,7 @@ class BuyOffert extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('DocumentCopy');
 	}
 
 	public function getOffert_get()
@@ -125,112 +126,13 @@ class BuyOffert extends REST_Controller
 			return;
 		}
 
-		//VALIDAR CANTIDADES DOCUMENTOS DE DESTINO DIRECTOS
-		$CantOrder = 0;
-		$CantEntry = 0;
-		$CantInv = 0;
-		//CONSULTA PARA OBTENER CANTIDADES DE PEDIDO DE PROVEEDORES
-		$sqlOrder = "SELECT 
-						 cpo1.po1_itemcode,
-						 sum(cpo1.po1_quantity) as po1_quantity
-					FROM dcoc 
-					INNER JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry 
-					LEFT JOIN dcpo ON dcoc.coc_docentry = dcpo.cpo_baseentry AND dcoc.coc_doctype = dcpo.cpo_basetype
-					LEFT JOIN cpo1 ON dcpo.cpo_docentry = cpo1.po1_docentry AND coc1.oc1_itemcode = cpo1.po1_itemcode
-					WHERE dcoc.coc_docentry = :coc_docentry
-					GROUP BY cpo1.po1_itemcode";
-		$resSqlOrder = $this->pedeo->queryTable($sqlOrder,array(':coc_docentry' => $Data['oc1_docentry']));
-		$CantOrder = isset($resSqlOrder['po1_quantity']) ? $resSqlOrder['po1_quantity'] : $CantOrder;
-		//CONSULTA PARA OBTENER CANTIDADES DE ENTRADA  DE PROVEEDORES
-		$sqlEntry = "SELECT 
-						cec1.ec1_itemcode,
-						sum(cec1.ec1_quantity) as ec1_quantity
-					FROM dcoc 
-					INNER JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry 
-					LEFT JOIN dcec ON dcoc.coc_docentry = dcec.cec_baseentry AND dcoc.cec_doctype = dcec.cec_basetype
-					LEFT JOIN cec1 ON dcec.cec_docentry = cec1.ec1_docentry AND coc1.oc1_itemcode = cec1.ec1_itemcode
-					WHERE dcoc.coc_docentry = :coc_docentry
-					GROUP BY cec1.ec1_itemcode";
-		$resSqlEntry = $this->pedeo->queryTable($sqlEntry,array(':coc_docentry' => $Data['oc1_docentry']));
-		$CantEntry = isset($resSqlEntry['ec1_quantity']) ? $resSqlEntry['ec1_quantity'] : $CantEntry;
-		//CONSULTA PARA OBTENER CANTIDADES DE FACTURA DE PROVEEDORES
-		$sqlInv = "SELECT 
-						cfc1.fc1_itemcode,
-						sum(cfc1.fc1_quantity) as fc1_quantity
-					FROM dcoc 
-					INNER JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry 
-					LEFT JOIN dcfc ON dcoc.coc_docentry = dcfc.cfc_baseentry AND dcoc.cec_doctype = dcfc.cfc_basetype
-					LEFT JOIN cfc1 ON dcfc.cfc_docentry = cfc1.fc1_docentry AND coc1.oc1_itemcode = cfc1.fc1_itemcode
-					WHERE dcoc.coc_docentry = :coc_docentry
-					GROUP BY cfc1.fc1_itemcode";
-		$resSqlInv = $this->pedeo->queryTable($sqlInv,array(':coc_docentry' => $Data['oc1_docentry']));
-		$CantInv = isset($resSqlInv['fc1_quantity']) ? $resSqlInv['fc1_quantity'] : $CantInv;
+		$copy = $this->documentcopy->Copy($Data['oc1_docentry'],'dcoc','coc1','coc','oc1');
 
-		//CONSULTA GLOBAL PARA EL COPIAR
-		$sqlSelect = "SELECT
-					t1.oc1_acciva,
-					t1.oc1_acctcode,
-					t1.oc1_avprice,
-					t1.oc1_basetype,
-					t1.oc1_costcode,
-					t1.oc1_discount,
-					t1.oc1_docentry,
-					t1.oc1_doctype,
-					t1.oc1_id,
-					t1.oc1_inventory,
-					t1.oc1_itemcode,
-					t1.oc1_itemname,
-					t1.oc1_linenum,
-					t1.oc1_linetotal line_total_real,
-					(t1.oc1_quantity - ($CantOrder + $CantEntry + $CantInv)) * t1.oc1_price oc1_linetotal,
-					t1.oc1_price,
-					t1.oc1_project,
-					t1.oc1_quantity - ($CantOrder + $CantEntry + $CantInv) as oc1_quantity,
-					t1.oc1_ubusiness,
-					t1.oc1_uom,
-					t1.oc1_vat,
-					t1.oc1_vatsum,
-					t1.oc1_quantity cant_real,
-					(((t1.oc1_quantity - ($CantOrder + $CantEntry + $CantInv)) * t1.oc1_price) * t1.oc1_vat) / 100 oc1_vatsum,
-					t1.oc1_whscode,
-					dmar.dma_series_code
-					from dcoc t0
-					left join coc1 t1 on t0.coc_docentry = t1.oc1_docentry
-					INNER JOIN dmar ON oc1_itemcode = dmar.dma_item_code
-					WHERE t1.oc1_docentry = :oc1_docentry
-					GROUP BY
-					t1.oc1_acciva,
-					t1.oc1_acctcode,
-					t1.oc1_avprice,
-					t1.oc1_basetype,
-					t1.oc1_costcode,
-					t1.oc1_discount,
-					t1.oc1_docentry,
-					t1.oc1_doctype,
-					t1.oc1_id,
-					t1.oc1_inventory,
-					t1.oc1_itemcode,
-					t1.oc1_itemname,
-					t1.oc1_linenum,
-					t1.oc1_linetotal,
-					t1.oc1_price,
-					t1.oc1_project,
-					t1.oc1_ubusiness,
-					t1.oc1_uom,
-					t1.oc1_vat,
-					t1.oc1_vatsum,
-					t1.oc1_whscode,
-					t1.oc1_quantity,
-					dmar.dma_series_code
-					HAVING (t1.oc1_quantity - ($CantOrder + $CantEntry + $CantInv)) <> 0";
-
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":oc1_docentry" => $Data['oc1_docentry']));
-
-		if (isset($resSelect[0])) {
+		if (isset($copy[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copy,
 				'mensaje' => ''
 			);
 		} else {
@@ -244,9 +146,6 @@ class BuyOffert extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-	
-
 
 	public function getOffertDetailBySN_get()
 	{
@@ -1063,14 +962,16 @@ class BuyOffert extends REST_Controller
 				}
 
 
-				$sqlInsertDetail = "INSERT INTO coc1(oc1_docentry, oc1_itemcode, oc1_itemname, oc1_quantity, oc1_uom, oc1_whscode,
-																		oc1_price, oc1_vat, oc1_vatsum, oc1_discount, oc1_linetotal, oc1_costcode, oc1_ubusiness, oc1_project,
-																		oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva, oc1_codimp)VALUES(:oc1_docentry, :oc1_itemcode, :oc1_itemname, :oc1_quantity,
-																		:oc1_uom, :oc1_whscode,:oc1_price, :oc1_vat, :oc1_vatsum, :oc1_discount, :oc1_linetotal, :oc1_costcode, :oc1_ubusiness, :oc1_project,
-																		:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva, :oc1_codimp)";
+				$sqlInsertDetail = "INSERT INTO coc1(oc1_docentry, oc1_linenum,oc1_itemcode, oc1_itemname, oc1_quantity, oc1_uom, oc1_whscode,
+									oc1_price, oc1_vat, oc1_vatsum, oc1_discount, oc1_linetotal, oc1_costcode, oc1_ubusiness, oc1_project,
+									oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva, oc1_codimp,oc1_baseline)
+									VALUES(:oc1_docentry, :oc1_linenum,:oc1_itemcode, :oc1_itemname, :oc1_quantity,
+									:oc1_uom, :oc1_whscode,:oc1_price, :oc1_vat, :oc1_vatsum, :oc1_discount, :oc1_linetotal, :oc1_costcode, :oc1_ubusiness, :oc1_project,
+									:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva, :oc1_codimp,:oc1_baseline)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':oc1_docentry' => $resInsert,
+					':oc1_linenum'  => is_numeric($detail['oc1_linenum']) ? $detail['oc1_linenum'] : NULL,
 					':oc1_itemcode' => isset($detail['oc1_itemcode']) ? $detail['oc1_itemcode'] : NULL,
 					':oc1_itemname' => isset($detail['oc1_itemname']) ? $detail['oc1_itemname'] : NULL,
 					':oc1_quantity' => is_numeric($detail['oc1_quantity']) ? $detail['oc1_quantity'] : 0,
@@ -1090,7 +991,8 @@ class BuyOffert extends REST_Controller
 					':oc1_avprice' => is_numeric($detail['oc1_avprice']) ? $detail['oc1_avprice'] : 0,
 					':oc1_inventory' => is_numeric($detail['oc1_inventory']) ? $detail['oc1_inventory'] : NULL,
 					':oc1_acciva'  => is_numeric($detail['oc1_cuentaIva']) ? $detail['oc1_cuentaIva'] : 0,
-					':oc1_codimp'  => isset($detail['oc1_codimp']) ? $detail['oc1_codimp'] : NULL
+					':oc1_codimp'  => isset($detail['oc1_codimp']) ? $detail['oc1_codimp'] : NULL,
+					':oc1_baseline'  => is_numeric($detail['oc1_baseline']) ? $detail['oc1_baseline'] : 0
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1118,11 +1020,11 @@ class BuyOffert extends REST_Controller
 
 
 				$sqlEstado1 = "SELECT
-											count(t1.sc1_itemcode) item,
-											sum(t1.sc1_quantity) cantidad
-										from dcsc t0
-										inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-										where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype";
+									count(t1.sc1_linenum) item,
+									sum(t1.sc1_quantity) cantidad
+								from dcsc t0
+								inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+								where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype";
 
 
 				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
@@ -1132,13 +1034,13 @@ class BuyOffert extends REST_Controller
 				));
 
 				$sqlEstado2 = "SELECT
-											coalesce(count(distinct t3.oc1_itemcode),0) item,
-											coalesce(sum(t3.oc1_quantity),0) cantidad
-										from dcsc t0
-										inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-										left join dcoc t2 on t0.csc_docentry = t2.coc_baseentry and t0.csc_doctype = t2.coc_basetype
-										left join coc1 t3 on t2.coc_docentry = t3.oc1_docentry and t1.sc1_itemcode = t3.oc1_itemcode
-										where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype";
+									coalesce(count(distinct t3.oc1_baseline),0) item,
+									coalesce(sum(t3.oc1_quantity),0) cantidad
+								from dcsc t0
+								inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
+								left join dcoc t2 on t0.csc_docentry = t2.coc_baseentry and t0.csc_doctype = t2.coc_basetype
+								left join coc1 t3 on t2.coc_docentry = t3.oc1_docentry and t1.sc1_itemcode = t3.oc1_itemcode and t1.sc1_linenum = t3.oc1_baseline
+								where t0.csc_docentry = :csc_docentry and t0.csc_doctype = :csc_doctype";
 
 
 				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
@@ -1146,22 +1048,16 @@ class BuyOffert extends REST_Controller
 					':csc_doctype' => $Data['coc_basetype']
 
 				));
+				// print_r($resEstado2);exit;
+				$item_cot =  abs($resEstado1[0]['item']);
+				$cantidad_cot =  abs($resEstado1[0]['cantidad']) ;
+				$item_ord =  abs($resEstado2[0]['item']) ;
+				$cantidad_ord = abs($resEstado2[0]['cantidad']);
 
-				$item_cot = $resEstado1[0]['item'];
-				$cantidad_cot = $resEstado1[0]['cantidad'];
-				$item_ord = $resEstado2[0]['item'];
-				$cantidad_ord = $resEstado2[0]['cantidad'];
-
-				// print_r($item_cot);
-				// print_r($item_ord);
-				// print_r($cantidad_cot);
-				// print_r($cantidad_ord);exit();die();
-
-
-				if ($item_cot == $item_ord  &&  $cantidad_cot == $cantidad_ord) {
+				if ($item_ord >= $item_cot  &&  $cantidad_ord >= $cantidad_cot) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 

@@ -23,6 +23,7 @@ class PurchaseRequest extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('DocumentCopy');
 	}
 
 	//CREAR NUEVA solicitud DE compras
@@ -392,7 +393,7 @@ class PurchaseRequest extends REST_Controller
 			':csc_docdate' => $this->validateDate($Data['csc_docdate']) ? $Data['csc_docdate'] : NULL,
 			':csc_duedate' => $this->validateDate($Data['csc_duedate']) ? $Data['csc_duedate'] : NULL,
 			':csc_duedev' => $this->validateDate($Data['csc_duedev']) ? $Data['csc_duedev'] : NULL,
-			':csc_pricelist' => 12,
+			':csc_pricelist' => 1,
 			':csc_cardcode' => isset($Data['csc_cardcode']) ? $Data['csc_cardcode'] : NULL,
 			':csc_cardname' => isset($Data['csc_cardname']) ? $Data['csc_cardname'] : NULL,
 			':csc_currency' => isset($Data['csc_currency']) ? $Data['csc_currency'] : NULL,
@@ -1110,106 +1111,13 @@ class PurchaseRequest extends REST_Controller
 			return;
 		}
 
-		//VARIABLES DE CANTIDADES DE DOC POSTERIORES PARA EL COPIAR DE
-		$CantOfert = 0;
-		$CantOrder = 0;
+		$copy = $this->documentcopy->Copy($Data['sc1_docentry'],'dcsc','csc1','csc','sc1');
 
-		//OBTENER CANTIDAD DE PEDIDO DIRECTO
-		$sqlOfert = "SELECT 
-						coc1.oc1_itemcode,
-						sum(coc1.oc1_quantity) as oc1_quantity
-					FROM dcsc
-					INNER JOIN csc1 ON dcsc.csc_docentry = csc1.sc1_docentry
-					LEFT JOIN dcoc ON dcsc.csc_docentry = dcoc.coc_baseentry AND dcsc.csc_doctype = dcoc.coc_basetype
-					LEFT JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry AND csc1.sc1_itemcode = coc1.oc1_itemcode
-					WHERE dcsc.csc_docentry = ".$Data['sc1_docentry']."
-					GROUP BY coc1.oc1_itemcode";
-
-		$resSqlOfert = $this->pedeo->queryTable($sqlOfert,array());
-		
-		$CantOfert = isset($resSqlOfert[0]['oc1_quantity']) ? $resSqlOfert[0]['oc1_quantity'] : $CantOfert;
-
-		//OBTENER CANTIDAD DE ENTREGA DIRECTA
-		$sqlOrder = "SELECT
-							cpo1.po1_itemcode,
-							sum(cpo1.po1_quantity) as po1_quantity
-						FROM dcsc
-						INNER JOIN csc1 ON dcsc.csc_docentry = csc1.sc1_docentry
-						LEFT JOIN dcpo ON dcsc.csc_docentry = dcpo.cpo_baseentry AND dcsc.csc_doctype = dcpo.cpo_basetype
-						LEFT JOIN cpo1 ON dcpo.cpo_docentry = cpo1.po1_docentry AND csc1.sc1_itemcode = cpo1.po1_itemcode
-						WHERE dcsc.csc_docentry = ".$Data['sc1_docentry']."
-						GROUP BY cpo1.po1_itemcode";
-
-		$resSqlOrder = $this->pedeo->queryTable($sqlOrder,array());
-
-		$CantOrder = isset($resSqlOrder[0]['po1_quantity']) ? $resSqlOrder[0]['po1_quantity'] : $CantOrder;
-
-		$sqlSelect = "SELECT
-						t1.sc1_acciva,
-						t1.sc1_acctcode,
-						t1.sc1_avprice,
-						t1.sc1_basetype,
-						t1.sc1_costcode,
-						t1.sc1_discount,
-						t1.sc1_docentry,
-						t1.sc1_doctype,
-						t1.sc1_id,
-						t1.sc1_inventory,
-						t1.sc1_itemcode,
-						t1.sc1_itemname,
-						t1.sc1_linenum,
-						t1.sc1_linetotal line_total_real,
-						(t1.sc1_quantity - (".$CantOfert." + ".$CantOrder.")) * t1.sc1_price sc1_linetotal,
-						t1.sc1_price,
-						t1.sc1_project,
-						t1.sc1_quantity - (".$CantOfert." + ".$CantOrder.")  sc1_quantity,
-						t1.sc1_ubusiness,
-						t1.sc1_uom,
-						t1.sc1_vat,
-						t1.sc1_vatsum,
-						t1.sc1_quantity cant_real,
-						(((t1.sc1_quantity - ".$CantOfert." + ".$CantOrder.") * t1.sc1_price) * t1.sc1_vat) / 100 sc1_vatsum,
-						t1.sc1_whscode,
-						dmar.dma_series_code,
-						t1.sc1_ubication
-						from dcsc t0
-						left join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-						INNER JOIN dmar ON t1.sc1_itemcode = dmar.dma_item_code
-						WHERE t1.sc1_docentry = :sc1_docentry
-						GROUP BY
-						t1.sc1_acciva,
-						t1.sc1_acctcode,
-						t1.sc1_avprice,
-						t1.sc1_basetype,
-						t1.sc1_costcode,
-						t1.sc1_discount,
-						t1.sc1_docentry,
-						t1.sc1_doctype,
-						t1.sc1_id,
-						t1.sc1_inventory,
-						t1.sc1_itemcode,
-						t1.sc1_itemname,
-						t1.sc1_linenum,
-						t1.sc1_linetotal,
-						t1.sc1_price,
-						t1.sc1_project,
-						t1.sc1_ubusiness,
-						t1.sc1_uom,
-						t1.sc1_vat,
-						t1.sc1_vatsum,
-						t1.sc1_whscode,
-						t1.sc1_quantity,
-						dmar.dma_series_code,
-						t1.sc1_ubication
-						HAVING (t1.sc1_quantity - (".$CantOfert." + ".$CantOrder.")) <> 0";
-
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":sc1_docentry" => $Data['sc1_docentry']));
-
-		if (isset($resSelect[0])) {
+		if (isset($copy[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copy,
 				'mensaje' => ''
 			);
 		} else {
@@ -1276,12 +1184,6 @@ class PurchaseRequest extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
-
-
 
 	private function getUrl($data, $caperta)
 	{

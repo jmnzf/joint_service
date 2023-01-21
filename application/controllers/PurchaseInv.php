@@ -24,6 +24,7 @@ class PurchaseInv extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('account');
+		$this->load->library('DocumentCopy');
 	}
 
 	//CREAR NUEVA FACTURA DE compras
@@ -635,11 +636,13 @@ class PurchaseInv extends REST_Controller
 					return;
 				}
 
-				$sqlInsertDetail = "INSERT INTO cfc1(fc1_docentry, fc1_itemcode, fc1_itemname, fc1_quantity, fc1_uom, fc1_whscode,
+				$sqlInsertDetail = "INSERT INTO cfc1(fc1_docentry,fc1_itemcode, fc1_itemname, fc1_quantity, fc1_uom, fc1_whscode,
                                     fc1_price, fc1_vat, fc1_vatsum, fc1_discount, fc1_linetotal, fc1_costcode, fc1_ubusiness, fc1_project,
-                                    fc1_acctcode, fc1_basetype, fc1_doctype, fc1_avprice, fc1_inventory, fc1_acciva, fc1_linenum, fc1_codimp, fc1_ubication)VALUES(:fc1_docentry, :fc1_itemcode, :fc1_itemname, :fc1_quantity,
+                                    fc1_acctcode, fc1_basetype, fc1_doctype, fc1_avprice, fc1_inventory, fc1_acciva, fc1_linenum, fc1_codimp, 
+									fc1_ubication,fc1_baseline)VALUES(:fc1_docentry,:fc1_itemcode, :fc1_itemname, :fc1_quantity,
                                     :fc1_uom, :fc1_whscode,:fc1_price, :fc1_vat, :fc1_vatsum, :fc1_discount, :fc1_linetotal, :fc1_costcode, :fc1_ubusiness, :fc1_project,
-                                    :fc1_acctcode, :fc1_basetype, :fc1_doctype, :fc1_avprice, :fc1_inventory, :fc1_acciva, :fc1_linenum,:fc1_codimp, :fc1_ubication)";
+                                    :fc1_acctcode, :fc1_basetype, :fc1_doctype, :fc1_avprice, :fc1_inventory, :fc1_acciva, :fc1_linenum,:fc1_codimp, 
+									:fc1_ubication,:fc1_baseline)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':fc1_docentry' => $resInsert,
@@ -664,11 +667,80 @@ class PurchaseInv extends REST_Controller
 					':fc1_acciva'  => is_numeric($detail['fc1_cuentaIva']) ? $detail['fc1_cuentaIva'] : 0,
 					':fc1_linenum'  => is_numeric($detail['fc1_linenum']) ? $detail['fc1_linenum'] : 0,
 					':fc1_codimp'  => isset($detail['fc1_codimp']) ? $detail['fc1_codimp'] : NULL,
-					':fc1_ubication'  => isset($detail['fc1_ubication']) ? $detail['fc1_ubication'] : NULL
+					':fc1_ubication'  => isset($detail['fc1_ubication']) ? $detail['fc1_ubication'] : NULL,
+					':fc1_baseline' => is_numeric($detail['fc1_baseline']) ? $detail['fc1_baseline'] : 0,
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 					// Se verifica que el detalle no de error insertando //
+					//VALIDAR SI LOS ITEMS SON IGUALES A LOS DEL DOCUMENTO DE ORIGEN SIEMPRE QUE VENGA DE UN COPIAR DE
+					if($Data['cfc_basetype'] == 12){
+						//OBTENER NUMERO DOCUMENTO ORIGEN
+						$DOC = "SELECT cpo_docnum FROM dcpo WHERE cpo_doctype = :cpo_doctype AND cpo_docentry = :cpo_docentry";
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cpo_docentry' =>$Data['cpo_baseentry'],':cpo_doctype' => $Data['cpo_basetype']));
+						foreach ($ContenidoDetalle as $key => $value) {
+							# code...
+							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
+							$sql = "SELECT dcpo.cpo_docnum,cpo1.po1_itemcode FROM dcpo INNER JOIN cpo1 ON dcpo.cpo_docentry = cpo1.po1_docentry 
+							WHERE dcpo.cpo_docentry = :cpo_docentry AND dcpo.cpo_doctype = :cpo_doctype AND cpo1.po1_itemcode = :po1_itemcode";
+							$resSql = $this->pedeo->queryTable($sql,array(
+								':cpo_docentry' =>$Data['cpo_baseentry'],
+								':cpo_doctype' => $Data['cpo_basetype'],
+								':po1_itemcode' => $value['fc1_itemcode']
+							));
+							
+								if(isset($resSql[0])){
+									//EL ARTICULO EXISTE EN EL DOCUMENTO DE ORIGEN
+								}else {
+									//EL ARTICULO NO EXISTE EN EL DOCUEMENTO DE ORIGEN
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $value['fc1_itemcode'],
+										'mensaje'	=> 'El Item '.$value['fc1_itemcode'].' no existe en el documento origen (Orden #'.$RESULT_DOC[0]['cpo_docnum'].')'
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+
+					}else if($Data['cfc_basetype'] == 13){
+						//OBTENER NUMERO DOCUMENTO ORIGEN
+						$DOC = "SELECT cec_docnum FROM dcec WHERE cec_doctype = :cec_doctype AND cec_docentry = :cec_docentry";
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cec_docentry' =>$Data['cec_baseentry'],':cec_doctype' => $Data['cec_basetype']));
+						foreach ($ContenidoDetalle as $key => $value) {
+							# code...
+							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
+							$sql = "SELECT dcec.cec_docnum,cec1.ec1_itemcode FROM dcec INNER JOIN cec1 ON dcec.cec_docentry = cec1.ec1_docentry 
+							WHERE dcec.cec_docentry = :cec_docentry AND dcec.cec_doctype = :cec_doctype AND cec1.ec1_itemcode = :ec1_itemcode";
+							$resSql = $this->pedeo->queryTable($sql,array(
+								':cec_docentry' =>$Data['cfc_baseentry'],
+								':cec_doctype' => $Data['cfc_basetype'],
+								':ec1_itemcode' => $value['fc1_itemcode']
+							));
+							
+								if(isset($resSql[0])){
+									//EL ARTICULO EXISTE EN EL DOCUMENTO DE ORIGEN
+								}else {
+									//EL ARTICULO NO EXISTE EN EL DOCUEMENTO DE ORIGEN
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $value['fc1_itemcode'],
+										'mensaje'	=> 'El Item '.$value['fc1_itemcode'].' no existe en el documento origen (Entrada #'.$RESULT_DOC[0]['cec_docnum'].')'
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+
+					}
 				} else {
 
 					// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
@@ -3651,10 +3723,7 @@ class PurchaseInv extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT cfc1.*,dc.cfc_cardcode,dc.cfc_docentry
-											FROM cfc1
-											INNER  JOIN dcfc dc ON cfc1.fc1_docentry = dc.cfc_docentry
-											WHERE cfc1.fc1_docentry =:fc1_docentry";
+		$copy = $this->documentcopy->Copy($Data['fc1_docentry'],'dcfc','cfc1','cfc','fc1');
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fc1_docentry" => $Data['fc1_docentry']));
 

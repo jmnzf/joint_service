@@ -297,9 +297,10 @@ class PurchaseEc extends REST_Controller
 		$sqlInsert = "INSERT INTO dcec(cec_series, cec_docnum, cec_docdate, cec_duedate, cec_duedev, cec_pricelist, cec_cardcode,
                       cec_cardname, cec_currency, cec_contacid, cec_slpcode, cec_empid, cec_comment, cec_doctotal, cec_baseamnt, cec_taxtotal,
                       cec_discprofit, cec_discount, cec_createat, cec_baseentry, cec_basetype, cec_doctype, cec_idadd, cec_adress, cec_paytype,
-                      cec_createby,cec_correl,cec_api)VALUES(:cec_series, :cec_docnum, :cec_docdate, :cec_duedate, :cec_duedev, :cec_pricelist, :cec_cardcode, :cec_cardname,
+                      cec_createby,cec_correl,cec_api,business,branch)VALUES(:cec_series, :cec_docnum, :cec_docdate, :cec_duedate, :cec_duedev, :cec_pricelist, :cec_cardcode, :cec_cardname,
                       :cec_currency, :cec_contacid, :cec_slpcode, :cec_empid, :cec_comment, :cec_doctotal, :cec_baseamnt, :cec_taxtotal, :cec_discprofit, :cec_discount,
-                      :cec_createat, :cec_baseentry, :cec_basetype, :cec_doctype, :cec_idadd, :cec_adress, :cec_paytype,:cec_createby,:cec_correl,:cec_api)";
+                      :cec_createat, :cec_baseentry, :cec_basetype, :cec_doctype, :cec_idadd, :cec_adress, :cec_paytype,:cec_createby,:cec_correl,
+					  :cec_api,:business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -338,7 +339,9 @@ class PurchaseEc extends REST_Controller
 			':cec_paytype' => is_numeric($Data['cec_paytype']) ? $Data['cec_paytype'] : 0,
 			':cec_createby' => isset($Data['cec_createby']) ? $Data['cec_createby'] : NULL,
 			':cec_correl' => isset($Data['cec_correl']) ? $Data['cec_correl'] : NULL,
-			':cec_api' => isset($Data['cec_api']) ? $Data['cec_api'] : 0
+			':cec_api' => isset($Data['cec_api']) ? $Data['cec_api'] : 0,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 
 		));
 
@@ -620,7 +623,7 @@ class PurchaseEc extends REST_Controller
 					return;
 				}
 
-				$sqlInsertDetail = "INSERT INTO cec1(ec1_docentry, ec1_linenum,ec1_itemcode, ec1_itemname, ec1_quantity, ec1_uom, ec1_whscode,
+				$sqlInsertDetail = "INSERT INTO cec1(ec1_docentry,ec1_itemcode, ec1_itemname, ec1_quantity, ec1_uom, ec1_whscode,
                                     ec1_price, ec1_vat, ec1_vatsum, ec1_discount, ec1_linetotal, ec1_costcode, ec1_ubusiness, ec1_project,
                                     ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_linenum, ec1_acciva, ec1_codimp, ec1_ubication,ec1_baseline)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
                                     :ec1_uom, :ec1_whscode,:ec1_price, :ec1_vat, :ec1_vatsum, :ec1_discount, :ec1_linetotal, :ec1_costcode, :ec1_ubusiness, :ec1_project,
@@ -629,7 +632,6 @@ class PurchaseEc extends REST_Controller
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ec1_docentry' => $resInsert,
-					':ec1_linenum' => is_numeric($detail['ec1_linenum']) ? $detail['ec1_linenum'] : 0,
 					':ec1_itemcode' => isset($detail['ec1_itemcode']) ? $detail['ec1_itemcode'] : NULL,
 					':ec1_itemname' => isset($detail['ec1_itemname']) ? $detail['ec1_itemname'] : NULL,
 					':ec1_quantity' => is_numeric($detail['ec1_quantity']) ? $detail['ec1_quantity'] : 0,
@@ -657,6 +659,41 @@ class PurchaseEc extends REST_Controller
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 					// Se verifica que el detalle no de error insertando //
+					//VALIDAR SI LOS ITEMS SON IGUALES A LOS DEL DOCUMENTO DE ORIGEN SIEMPRE QUE VENGA DE UN COPIAR DE
+					if($Data['cfc_basetype'] == 12){
+						//OBTENER NUMERO DOCUMENTO ORIGEN
+						$DOC = "SELECT cpo_docnum FROM dcpo WHERE cpo_doctype = :cpo_doctype AND cpo_docentry = :cpo_docentry";
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cpo_docentry' =>$Data['cpo_baseentry'],':cpo_doctype' => $Data['cpo_basetype']));
+						foreach ($ContenidoDetalle as $key => $value) {
+							# code...
+							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
+							$sql = "SELECT dcpo.cpo_docnum,cpo1.po1_itemcode FROM dcpo INNER JOIN cpo1 ON dcpo.cpo_docentry = cpo1.po1_docentry 
+							WHERE dcpo.cpo_docentry = :cpo_docentry AND dcpo.cpo_doctype = :cpo_doctype AND cpo1.po1_itemcode = :po1_itemcode";
+							$resSql = $this->pedeo->queryTable($sql,array(
+								':cpo_docentry' =>$Data['cec_baseentry'],
+								':cpo_doctype' => $Data['cec_basetype'],
+								':po1_itemcode' => $value['ec1_itemcode']
+							));
+							
+								if(isset($resSql[0])){
+									//EL ARTICULO EXISTE EN EL DOCUMENTO DE ORIGEN
+								}else {
+									//EL ARTICULO NO EXISTE EN EL DOCUEMENTO DE ORIGEN
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $value['ec1_itemcode'],
+										'mensaje'	=> 'El Item '.$value['ec1_itemcode'].' no existe en el documento origen (Orden #'.$RESULT_DOC[0]['cpo_docnum'].')'
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+
+					}
 				} else {
 
 					// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
@@ -2526,7 +2563,6 @@ class PurchaseEc extends REST_Controller
 
 		$sqlSelect = self::getColumn('dcec', 'cec', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
-
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 		if (isset($resSelect[0])) {
@@ -2729,8 +2765,6 @@ class PurchaseEc extends REST_Controller
 		}
 
 		$copy = $this->documentcopy->Copy($Data['ec1_docentry'],'dcec','cec1','cec','ec1');
-
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ec1_docentry" => $Data['ec1_docentry']));
 
 		$seriales = "SELECT msn_line, msn_itemcode, string_agg(msn_sn, ',') AS serials FROM tmsn  WHERE msn_baseentry = :msn_baseentry AND msn_basetype = :msn_basetype GROUP BY  msn_itemcode,msn_line";
 

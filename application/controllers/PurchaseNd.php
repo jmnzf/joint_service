@@ -586,14 +586,17 @@ class PurchaseNd extends REST_Controller
 
 			foreach ($ContenidoDetalle as $key => $detail) {
 
-				$sqlInsertDetail = "INSERT INTO cnd1(nd1_docentry, nd1_itemcode, nd1_itemname, nd1_quantity, nd1_uom, nd1_whscode,
+				$sqlInsertDetail = "INSERT INTO cnd1(nd1_docentry, nd1_linenum,nd1_itemcode, nd1_itemname, nd1_quantity, nd1_uom, nd1_whscode,
 		                                    nd1_price, nd1_vat, nd1_vatsum, nd1_discount, nd1_linetotal, nd1_costcode, nd1_ubusiness, nd1_project,
-		                                    nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory, nd1_acciva, nd1_codimp, nd1_ubication)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
+		                                    nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory, nd1_acciva, nd1_codimp, nd1_ubication,
+											nd1_baseline)
+											VALUES(:nd1_docentry, :nd1_linenum,:nd1_itemcode, :nd1_itemname, :nd1_quantity,
 		                                    :nd1_uom, :nd1_whscode,:nd1_price, :nd1_vat, :nd1_vatsum, :nd1_discount, :nd1_linetotal, :nd1_costcode, :nd1_ubusiness, :nd1_project,
-		                                    :nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory, :nd1_acciva, :nd1_codimp, :nd1_ubication)";
+		                                    :nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory, :nd1_acciva, :nd1_codimp, :nd1_ubication,:nd1_baseline)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':nd1_docentry' => $resInsert,
+					':nd1_linenum' => is_numeric($detail['nd1_linenum']) ? $detail['nd1_linenum'] : 0,
 					':nd1_itemcode' => isset($detail['nd1_itemcode']) ? $detail['nd1_itemcode'] : NULL,
 					':nd1_itemname' => isset($detail['nd1_itemname']) ? $detail['nd1_itemname'] : NULL,
 					':nd1_quantity' => is_numeric($detail['nd1_quantity']) ? $detail['nd1_quantity'] : 0,
@@ -614,7 +617,8 @@ class PurchaseNd extends REST_Controller
 					':nd1_inventory' => is_numeric($detail['nd1_inventory']) ? $detail['nd1_inventory'] : NULL,
 					':nd1_acciva'  => is_numeric($detail['nd1_cuentaIva']) ? $detail['nd1_cuentaIva'] : 0,
 					':nd1_codimp'  => isset($detail['nd1_codimp']) ? $detail['nd1_codimp'] : NULL,
-					':nd1_ubication'  => isset($detail['nd1_ubication']) ? $detail['nd1_ubication'] : NULL
+					':nd1_ubication'  => isset($detail['nd1_ubication']) ? $detail['nd1_ubication'] : NULL,
+					':nd1_baseline' => is_numeric($detail['nd1_baseline']) ? $detail['nd1_baseline'] : 0
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

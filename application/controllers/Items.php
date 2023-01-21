@@ -294,7 +294,7 @@ class Items extends REST_Controller
 				':dma_acct_type' => is_numeric($Data['dma_acct_type']) ? $Data['dma_acct_type'] : 0,
 				':dma_avprice' => is_numeric($Data['dma_avprice']) ? $Data['dma_avprice'] : 0,
 				':dma_uom_weight' => is_numeric($Data['dma_uom_weight']) ? $Data['dma_uom_weight'] : 0,
-				':dma_uom_umvol'    => is_numeric($Data['dma_uom_umvol']) ? $Data['dma_uom_umvol'] : 0,
+				':dma_uom_umvol'    => isset($Data['dma_uom_umvol']) ? $Data['dma_uom_umvol'] : 0,
 				':dma_uom_vqty'     => is_numeric($Data['dma_uom_vqty']) ? $Data['dma_uom_vqty'] : 0,
 				':dma_uom_weightn'  => is_numeric($Data['dma_uom_weightn']) ? $Data['dma_uom_weightn'] : 0,
 				':dma_uom_sizedim'  => isset($Data['dma_uom_sizedim']) ? $Data['dma_uom_sizedim'] : 0,
@@ -449,25 +449,21 @@ class Items extends REST_Controller
 		$columns = array(
 			'cast(t0.dma_id as varchar)',
 			't0.dma_item_code',
-			't0.dma_item_name',
+			'UPPER(t0.dma_item_name)',
 			't2.mga_name',
 			'cast(t0.dma_enabled as varchar)'
 		);
 		//
 		if (!empty($request['search']['value'])) {
 			// OBTENER CONDICIONALES.
-			$variableSql .= " AND  " . self::get_Filter($columns, $request['search']['value']);
+			$variableSql .= " AND  " . self::get_Filter($columns, strtoupper($request['search']['value']));
 		}
 		//
-
 		$sqlSelect = "SELECT t0.*, t2.mga_name FROM dmar t0 LEFT JOIN dmga t2 on t0.dma_group_code = t2.mga_id $variableSql";
-
 		//
-		$sqlSelect .= " ORDER BY " . $columns[$request['order'][0]['column']] . " " . $request['order'][0]['dir'];
-		if ($request['length'] != '0') {
-			$sqlSelect .= " LIMIT " . $request['length'] . " OFFSET " . $request['start'];
-		}
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$sqlSelect .=" ORDER BY ".$columns[$request['order'][0]['column']]." ".$request['order'][0]['dir']." LIMIT ".$request['length']." OFFSET ".$request['start'];
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 
 		$respuesta = array(

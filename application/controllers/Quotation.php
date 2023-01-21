@@ -23,6 +23,7 @@ class Quotation extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('DocumentCopy');
 	}
 
 	//CREAR NUEVA COTIZACION
@@ -956,79 +957,13 @@ class Quotation extends REST_Controller
 			return;
 		}
 
+			$copy = $this->documentcopy->Copy($Data['vc1_docentry'],'dvct','vct1','dvc','vc1');
 
-			$sql = "SELECT
-			t1.vc1_linenum,
-			t1.vc1_acciva,
-			t1.vc1_acctcode,
-			t1.vc1_avprice,
-			t1.vc1_basetype,
-			t1.vc1_costcode,
-			t1.vc1_discount,
-			t1.vc1_docentry,
-			t1.vc1_doctype,
-			t1.vc1_id,
-			t1.vc1_inventory,
-			t1.vc1_itemcode,
-			t1.vc1_itemname,
-			abs((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry,t1.vc1_itemcode)))) * t1.vc1_price as vc1_linetotal,
-			t1.vc1_price,
-			t1.vc1_project,
-			abs(t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry,t1.vc1_itemcode))) as vc1_quantity,
-			t1.vc1_ubusiness,
-			t1.vc1_uom,
-			t1.vc1_vat,
-			t1.vc1_vatsum vatsum_real,
-			abs(((((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry,t1.vc1_itemcode)))) * t1.vc1_price) * t1.vc1_vat)) / 100 as vc1_vatsum,
-			t1.vc1_whscode,
-			dmar.dma_series_code,
-			t1.vc1_ubication,
-			t1.vc1_codimp,
-			get_ubication(t1.vc1_whscode, t0.business) as fun_ubication,
-			get_lote(t1.vc1_itemcode) as fun_lote,
-			case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
-			case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
-			from dvct t0
-			inner join vct1 t1 on t0.dvc_docentry = t1.vc1_docentry
-			INNER JOIN dmar ON vc1_itemcode = dmar.dma_item_code
-			WHERE t1.vc1_docentry = :vc1_docentry
-			GROUP BY
-			t1.vc1_linenum,
-			t1.vc1_acciva,
-			t1.vc1_acctcode,
-			t1.vc1_avprice,
-			t1.vc1_basetype,
-			t1.vc1_costcode,
-			t1.vc1_discount,
-			t1.vc1_docentry,
-			t1.vc1_doctype,
-			t1.vc1_id,
-			t1.vc1_inventory,
-			t1.vc1_itemcode,
-			t1.vc1_itemname,
-			t1.vc1_linetotal,
-			t1.vc1_price,
-			t1.vc1_project,
-			t1.vc1_ubusiness,
-			t1.vc1_uom,
-			t1.vc1_vat,
-			t1.vc1_vatsum,
-			t1.vc1_whscode,
-			t1.vc1_quantity,
-			dmar.dma_series_code,
-			t1.vc1_ubication,
-			t1.vc1_codimp,
-			t0.business,
-			t0.dvc_doctype,t0.dvc_docentry,dmar.dma_advertisement,dmar.dma_modular
-			HAVING abs((t1.vc1_quantity - (get_quantity(t0.dvc_doctype,t0.dvc_docentry,t1.vc1_itemcode)))) > 0";
-
-			$resSql = $this->pedeo->queryTable($sql, array(':vc1_docentry' => $Data ['vc1_docentry']));
-
-			if (isset($resSql[0])) {
+			if (isset($copy[0])) {
 
 				$respuesta = array(
 					'error' => false,
-					'data'  => $resSql,
+					'data'  => $copy,
 					'mensaje' => ''
 				);
 			} else {
@@ -1039,7 +974,6 @@ class Quotation extends REST_Controller
 					'mensaje'	=> 'busqueda sin resultados'
 				);
 			}
-		
 		
 		
 

@@ -1770,6 +1770,8 @@ class SalesDel extends REST_Controller
 				$cantidad_cot = $resEstado1[0]['cantidad'];
 				$cantidad_del = $resEstado2[0]['cantidad'];
 
+				
+
 				if ($item_del >= $item_cot &&   $cantidad_del >= $cantidad_cot) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)

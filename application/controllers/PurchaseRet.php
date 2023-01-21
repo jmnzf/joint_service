@@ -284,9 +284,9 @@ class PurchaseRet extends REST_Controller
 		$sqlInsert = "INSERT INTO dcdc(cdc_series, cdc_docnum, cdc_docdate, cdc_duedate, cdc_duedev, cdc_pricelist, cdc_cardcode,
                       cdc_cardname, cdc_currency, cdc_contacid, cdc_slpcode, cdc_empid, cdc_comment, cdc_doctotal, cdc_baseamnt, cdc_taxtotal,
                       cdc_discprofit, cdc_discount, cdc_createat, cdc_baseentry, cdc_basetype, cdc_doctype, cdc_idadd, cdc_adress, cdc_paytype,
-                      cdc_createby)VALUES(:cdc_series, :cdc_docnum, :cdc_docdate, :cdc_duedate, :cdc_duedev, :cdc_pricelist, :cdc_cardcode, :cdc_cardname,
+                      cdc_createby,business,branch)VALUES(:cdc_series, :cdc_docnum, :cdc_docdate, :cdc_duedate, :cdc_duedev, :cdc_pricelist, :cdc_cardcode, :cdc_cardname,
                       :cdc_currency, :cdc_contacid, :cdc_slpcode, :cdc_empid, :cdc_comment, :cdc_doctotal, :cdc_baseamnt, :cdc_taxtotal, :cdc_discprofit, :cdc_discount,
-                      :cdc_createat, :cdc_baseentry, :cdc_basetype, :cdc_doctype, :cdc_idadd, :cdc_adress, :cdc_paytype, :cdc_createby)";
+                      :cdc_createat, :cdc_baseentry, :cdc_basetype, :cdc_doctype, :cdc_idadd, :cdc_adress, :cdc_paytype, :cdc_createby,:business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -323,7 +323,8 @@ class PurchaseRet extends REST_Controller
 			':cdc_idadd' => isset($Data['cdc_idadd']) ? $Data['cdc_idadd'] : NULL,
 			':cdc_adress' => isset($Data['cdc_adress']) ? $Data['cdc_adress'] : NULL,
 			':cdc_paytype' => is_numeric($Data['cdc_paytype']) ? $Data['cdc_paytype'] : 0,
-			':cdc_createby' => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -601,11 +602,12 @@ class PurchaseRet extends REST_Controller
 					return;
 				}
 
-				$sqlInsertDetail = "INSERT INTO cdc1(dc1_docentry, dc1_itemcode, dc1_itemname, dc1_quantity, dc1_uom, dc1_whscode,
+				$sqlInsertDetail = "INSERT INTO cdc1(dc1_docentry,dc1_itemcode, dc1_itemname, dc1_quantity, dc1_uom, dc1_whscode,
                                     dc1_price, dc1_vat, dc1_vatsum, dc1_discount, dc1_linetotal, dc1_costcode, dc1_ubusiness, dc1_project,
-                                    dc1_acctcode, dc1_basetype, dc1_doctype, dc1_avprice, dc1_inventory, dc1_acciva, dc1_linenum, dc1_codimp)VALUES(:dc1_docentry, :dc1_itemcode, :dc1_itemname, :dc1_quantity,
-                                    :dc1_uom, :dc1_whscode,:dc1_price, :dc1_vat, :dc1_vatsum, :dc1_discount, :dc1_linetotal, :dc1_costcode, :dc1_ubusiness, :dc1_project,
-                                    :dc1_acctcode, :dc1_basetype, :dc1_doctype, :dc1_avprice, :dc1_inventory, :dc1_acciva, :dc1_linenum, :dc1_codimp)";
+                                    dc1_acctcode, dc1_basetype, dc1_doctype, dc1_avprice, dc1_inventory, dc1_acciva, dc1_linenum, dc1_codimp,dc1_baseline)
+									VALUES(:dc1_docentry,:dc1_itemcode, :dc1_itemname, :dc1_quantity,:dc1_uom, :dc1_whscode,:dc1_price, :dc1_vat, 
+									:dc1_vatsum, :dc1_discount, :dc1_linetotal, :dc1_costcode, :dc1_ubusiness, :dc1_project,:dc1_acctcode, 
+									:dc1_basetype, :dc1_doctype, :dc1_avprice, :dc1_inventory, :dc1_acciva, :dc1_linenum, :dc1_codimp,:dc1_baseline)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':dc1_docentry' => $resInsert,
@@ -629,11 +631,47 @@ class PurchaseRet extends REST_Controller
 					':dc1_inventory' => is_numeric($detail['dc1_inventory']) ? $detail['dc1_inventory'] : NULL,
 					':dc1_acciva'  => is_numeric($detail['dc1_cuentaIva']) ? $detail['dc1_cuentaIva'] : 0,
 					':dc1_linenum' => is_numeric($detail['dc1_linenum']) ? $detail['dc1_linenum'] : 0,
-					':dc1_codimp' => isset($detail['dc1_codimp']) ? $detail['dc1_codimp'] : NULL
+					':dc1_codimp' => isset($detail['dc1_codimp']) ? $detail['dc1_codimp'] : NULL,
+					':dc1_baseline' => is_numeric($detail['dc1_baseline']) ? $detail['dc1_baseline'] : 0,
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 					// Se verifica que el detalle no de error insertando //
+					//VALIDAR SI LOS ITEMS SON IGUALES A LOS DEL DOCUMENTO DE ORIGEN SIEMPRE QUE VENGA DE UN COPIAR DE
+					if($Data['cdc_basetype'] == 13){
+						//OBTENER NUMERO DOCUMENTO ORIGEN
+						$DOC = "SELECT cec_docnum FROM dcec WHERE cec_doctype = :cec_doctype AND cec_docentry = :cec_docentry";
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cec_docentry' =>$Data['cec_baseentry'],':cec_doctype' => $Data['cec_basetype']));
+						foreach ($ContenidoDetalle as $key => $value) {
+							# code...
+							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
+							$sql = "SELECT dcec.cec_docnum,cec1.ec1_itemcode FROM dcec INNER JOIN cec1 ON dcec.cec_docentry = cec1.ec1_docentry 
+							WHERE dcec.cec_docentry = :cec_docentry AND dcec.cec_doctype = :cec_doctype AND cec1.ec1_itemcode = :ec1_itemcode";
+							$resSql = $this->pedeo->queryTable($sql,array(
+								':cec_docentry' =>$Data['cdc_baseentry'],
+								':cec_doctype' => $Data['cdc_basetype'],
+								':ec1_itemcode' => $value['dc1_itemcode']
+							));
+							
+								if(isset($resSql[0])){
+									//EL ARTICULO EXISTE EN EL DOCUMENTO DE ORIGEN
+								}else {
+									//EL ARTICULO NO EXISTE EN EL DOCUEMENTO DE ORIGEN
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $value['dc1_itemcode'],
+										'mensaje'	=> 'El Item '.$value['dc1_itemcode'].' no existe en el documento origen (Orden #'.$RESULT_DOC[0]['cec_docnum'].')'
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+
+					}
 				} else {
 
 					// si falla algun insert del detalle de la devolucion de compras se devuelven los cambios realizados por la transaccion,
@@ -1238,7 +1276,7 @@ class PurchaseRet extends REST_Controller
 
 
 
-					$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem WHERE business = :business"; // Cuenta  puente inventario
+					$sqlArticulo = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem WHERE pge_id = :business"; // Cuenta  puente inventario
 					$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':business' => $Data['business'])); // Cuenta costo puente
 
 					$centroCosto = $value->dc1_prc_code;
@@ -1823,12 +1861,6 @@ class PurchaseRet extends REST_Controller
 				$cantidad_ec = $resEstado1[0]['cantidad'];
 				$cantidad_dev = $resEstado2[0]['cantidad'];
 
-
-				//
-				// print_r($item_del);
-				// print_r($item_dev);
-				// print_r($cantidad_del);
-				// print_r($cantidad_dev);exit();die();
 				if ($item_ec == $item_dev  &&  $cantidad_ec == $cantidad_dev) {
 
 
