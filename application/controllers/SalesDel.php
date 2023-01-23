@@ -2304,15 +2304,15 @@ class SalesDel extends REST_Controller
 		t1.em1_inventory,
 		t1.em1_itemcode,
 		t1.em1_itemname,
-		abs(t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode),0))) * t1.em1_price em1_linetotal,
+		abs(t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode,t1.em1_linenum),0))) * t1.em1_price em1_linetotal,
 		t1.em1_price,
 		t1.em1_project,
-		abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode),0)))) as em1_quantity,
+		abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode,t1.em1_linenum),0)))) as em1_quantity,
 		t1.em1_ubusiness,
 		t1.em1_uom,
 		t1.em1_vat,
 		t1.em1_vatsum vatsum_real,
-		abs(((((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode),0)))) * t1.em1_price) * t1.em1_vat)) / 100 em1_vatsum,
+		abs(((((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode,t1.em1_linenum),0)))) * t1.em1_price) * t1.em1_vat)) / 100 em1_vatsum,
 		t1.em1_whscode,
 		dmar.dma_series_code,
 		t1.em1_ubication,
@@ -2352,7 +2352,7 @@ class SalesDel extends REST_Controller
 		t1.em1_ubication,
 		t1.em1_codimp,
 		t0.business,t0.vem_docentry,t0.vem_doctype,dmar.dma_advertisement,dmar.dma_modular
-        HAVING abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode),0)))) > 0";
+        HAVING abs((t1.em1_quantity - (coalesce(get_quantity(t0.vem_doctype,t0.vem_docentry,t1.em1_itemcode,t1.em1_linenum),0)))) > 0";
 		// print_r($sqlSelect);exit;
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
