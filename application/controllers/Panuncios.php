@@ -235,7 +235,8 @@ class Panuncios extends REST_Controller
 			bta_palabras,
 			bta_precio,
 			bta_dias,
-			bta_cantidad
+			bta_cantidad,
+			bta_dias_cons
             FROM tbta
 			WHERE bta_status = :bta_status";
 

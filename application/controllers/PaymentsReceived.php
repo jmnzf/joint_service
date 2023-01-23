@@ -594,9 +594,9 @@ class PaymentsReceived extends REST_Controller
 								if (isset($resDocInicio[0])) {
 
 									$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-																										bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																										bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 																										VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-																										:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+																										:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 									$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -610,7 +610,8 @@ class PaymentsReceived extends REST_Controller
 										':bmd_docnum' => $DocNumVerificado,
 										':bmd_doctotal' => $VlrTotalOpc,
 										':bmd_cardcode' => isset($detail['pr1_tercero']) ? $detail['pr1_tercero'] : NULL,
-										':bmd_cardtype' => 1
+										':bmd_cardtype' => 1,
+										':bmd_currency' => isset($Data['bpr_currency'])?$Data['bpr_currency']:NULL,
 									));
 
 									if (is_numeric($resInsertMD) && $resInsertMD > 0) {
