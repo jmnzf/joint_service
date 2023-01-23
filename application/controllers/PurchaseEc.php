@@ -663,7 +663,7 @@ class PurchaseEc extends REST_Controller
 					if($Data['cec_basetype'] == 12){
 						//OBTENER NUMERO DOCUMENTO ORIGEN
 						$DOC = "SELECT cpo_docnum FROM dcpo WHERE cpo_doctype = :cpo_doctype AND cpo_docentry = :cpo_docentry";
-						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cpo_docentry' =>$Data['cpo_baseentry'],':cpo_doctype' => $Data['cpo_basetype']));
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cpo_docentry' =>$Data['cec_baseentry'],':cpo_doctype' => $Data['cec_basetype']));
 						foreach ($ContenidoDetalle as $key => $value) {
 							# code...
 							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
