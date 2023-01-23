@@ -641,7 +641,6 @@ class SalesDv extends REST_Controller {
                                     left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.dv1_itemcode = t3.em1_itemcode
                                     where t0.vdv_docentry = :vdv_docentry";
                 $resSqlValidationQty = $this->pedeo->queryTable($sqlValidationQty,array(':vdv_docentry' => $resInsert));
-                print_r($resSqlValidationQty[0]['estado']);exit;
                 if(is_numeric($resSqlValidationQty[0]['estado'])  &&  $resSqlValidationQty[0]['estado'] == 0){
 
                 }else{

@@ -368,7 +368,7 @@ class PurchaseRet extends REST_Controller
 
 				':bed_docentry' => $resInsert,
 				':bed_doctype' => $Data['cdc_doctype'],
-				':bed_status' => 1, //ESTADO CERRADO
+				':bed_status' => 3, //ESTADO CERRADO
 				':bed_createby' => $Data['cdc_createby'],
 				':bed_date' => date('Y-m-d'),
 				':bed_baseentry' => NULL,
@@ -434,6 +434,7 @@ class PurchaseRet extends REST_Controller
 
 			if (is_numeric($resInsertAsiento) && $resInsertAsiento > 0) {
 				// Se verifica que el detalle no de error insertando //
+				
 			} else {
 
 				// si falla algun insert del detalle de la devolucion de compras se devuelven los cambios realizados por la transaccion,
@@ -564,6 +565,7 @@ class PurchaseRet extends REST_Controller
 				));
 
 				if (is_numeric($resInsertMD) && $resInsertMD > 0) {
+
 				} else {
 
 					$this->pedeo->trans_rollback();
@@ -1652,10 +1654,82 @@ class PurchaseRet extends REST_Controller
 				}
 			}
 			//
+			if ($Data['cdc_basetype'] == 13) {
+
+
+				$sqlEstado1 = "SELECT
+									count(t1.ec1_linenum) item,
+									sum(t1.ec1_quantity) cantidad
+									from dcec t0
+									inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+									where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+	  
+	  
+				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+								':cec_docentry' => $Data['cdc_baseentry'],
+								':cec_doctype' => $Data['cdc_basetype']
+				));
+	  
+	  
+				$sqlEstado2 = "SELECT
+									coalesce(count(distinct t3.dc1_baseline),0) item,
+									coalesce(sum(t3.dc1_quantity),0) cantidad
+									from dcec t0
+									left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+									left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry
+									left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode and t1.ec1_linenum = t3.dc1_baseline
+									where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+				$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+								':cec_docentry' => $Data['cdc_baseentry'],
+								':cec_doctype' => $Data['cdc_basetype']
+				));
+
+				$resta_item = $resEstado1[0]['item'] - $resEstado2[0]['item'];
+				$resta_cantidad = $resEstado1[0]['cantidad'] - $resEstado2[0]['cantidad'];
+	  
+				$item_del = $resEstado1[0]['item'];
+				$item_dev = $resEstado2[0]['item'];
+				$cantidad_del = $resEstado1[0]['cantidad'];
+				$cantidad_dev = $resEstado2[0]['cantidad'];
+	  
+				if($item_del == $item_dev  &&  $cantidad_del == $cantidad_dev){
+	  
+	  
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+	  
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+					':bed_docentry' => $Data['vdv_baseentry'],
+					':bed_doctype' => $Data['vdv_basetype'],
+					':bed_status' => 3, //ESTADO CERRADO
+					':bed_createby' => $Data['vdv_createby'],
+					':bed_date' => date('Y-m-d'),
+					':bed_baseentry' => $resInsert,
+					':bed_basetype' => $Data['vdv_doctype']
+					));
+	  
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+	  
+					}else{
+	  
+	  
+					$this->pedeo->trans_rollback();
+	  
+					$respuesta = array(
+					  'error'   => true,
+					  'data'    => $resInsertEstado,
+					  'mensaje' => 'No se pudo registrar la devolucion de compra'
+					  );
+					$this->response($respuesta);
+	  
+					return;
+				  }
+	  
+				}
+			}
 
 
 			//FIN DE OPERACIONES VITALES
-
 			// Si todo sale bien despues de insertar el detalle de la devolucion de compras
 			// se confirma la trasaccion  para que los cambios apliquen permanentemente
 			// en la base de datos y se confirma la operacion exitosa.
