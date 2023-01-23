@@ -44,6 +44,8 @@ class Analysis extends REST_Controller {
       return ;
     }
 
+    // print_r($Data);exit;
+
     $main_currency = $Data['main_currency'];
 
     $original  = $Data['original'];
@@ -52,7 +54,7 @@ class Analysis extends REST_Controller {
 
     $options = array_keys($Data);
 
-    // print_r($original);exit;
+
 
 
 		//LISTA DE TABLAS POR DOCTYPE
@@ -82,8 +84,8 @@ class Analysis extends REST_Controller {
     $conditions = '';
     $campos = [];
   //   $campos = array(
-  //     ':dvf_docdate' => $Data['dvf_docdate'],
-  //     ':dvf_duedate'=>$Data['dvf_duedate']
+  //     ':business' => $Data['business'],
+  //     ':branch' => $Data['branch']
   // );
 
   $req = array('dvf_doctype','dvf_docdate','dvf_duedate','date_filter');
@@ -91,7 +93,7 @@ class Analysis extends REST_Controller {
 
     foreach ($diff as $key => $value) {
       if($Data[$value]!='' and $Data[$value]!=null){
-          $conditions .='AND '.str_replace("dvf",$prefix,$value).' = :'.$value.' ';
+          $conditions .='AND '.$table.'.'.str_replace("dvf",$prefix,$value).' = :'.$value.' ';
           $campos[':'.$value] = $Data[$value];
       }
     }
@@ -161,7 +163,7 @@ class Analysis extends REST_Controller {
         join dmdt on {$prefix}_doctype = mdt_doctype
         full join tbdc  on dms_classtype = bdc_clasify
         left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
-        where ({$prefix}_{$Data['date_filter']} BETWEEN '".$Data['dvf_docdate']."' and  '".$Data['dvf_duedate']."') ".$conditions."
+        where  ({$prefix}_{$Data['date_filter']} BETWEEN '".$Data['dvf_docdate']."' and  '".$Data['dvf_duedate']."') ".$conditions."
         GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum, mdt_docname, bdc_clasify, {$prefix}_comment,dmd_adress,{$prefix}_doctotal,
         {$prefix}_baseamnt,{$prefix}_taxtotal,{$prefix}_doctotal,{$prefix}_docdate,dmd_city,{$prefix}_baseentry,{$prefix}_basetype ".(($table =="dcfc")? ",cfc_totalret, cfc_totalretiva":"").",{$prefix}_currency,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc")?",{$detailPrefix}_exc_inv": "");
         
@@ -185,7 +187,6 @@ class Analysis extends REST_Controller {
 				unset($campos[':dvf_currency']);
         unset($campos[':symbol']);
 
-        // print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
 
 
