@@ -164,14 +164,13 @@ class BuyOffert extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT * from dcoc where coc_cardcode = :dms_card_code and business = :business and branch = :branch";
+		$copy = $this->documentcopy->CopyData('dcoc','coc',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dms_card_code" => $Data['dms_card_code'], ":business" => $Data['business'], ":branch" => $Data['branch']));
-		if (isset($resSelect[0])) {
+		if (isset($copy[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copy,
 				'mensaje' => ''
 			);
 		} else {
