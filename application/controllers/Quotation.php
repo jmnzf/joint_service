@@ -461,9 +461,9 @@ class Quotation extends REST_Controller
 				if (isset($resDocInicio[0])) {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -477,7 +477,8 @@ class Quotation extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['dvc_doctotal']) ? $Data['dvc_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['dvc_cardcode']) ? $Data['dvc_cardcode'] : NULL,
-						':bmd_cardtype' => 1
+						':bmd_cardtype' => 1,
+						':bmd_currency' => isset($Data['dvc_currency'])?$Data['dvc_currency']:NULL,
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -499,12 +500,11 @@ class Quotation extends REST_Controller
 				} else {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
 						':bmd_doctype' => is_numeric($Data['dvc_doctype']) ? $Data['dvc_doctype'] : 0,
 						':bmd_docentry' => $resInsert,
 						':bmd_createat' => $this->validateDate($Data['dvc_createat']) ? $Data['dvc_createat'] : NULL,
@@ -515,7 +515,8 @@ class Quotation extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['dvc_doctotal']) ? $Data['dvc_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['dvc_cardcode']) ? $Data['dvc_cardcode'] : NULL,
-						':bmd_cardtype' => 1
+						':bmd_cardtype' => 1,
+						':bmd_currency' => isset($Data['dvc_currency'])?$Data['dvc_currency']:NULL,
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -538,9 +539,9 @@ class Quotation extends REST_Controller
 			} else {
 
 				$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 				$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 					':bmd_doctype' => is_numeric($Data['dvc_doctype']) ? $Data['dvc_doctype'] : 0,
@@ -553,7 +554,8 @@ class Quotation extends REST_Controller
 					':bmd_docnum' => $DocNumVerificado,
 					':bmd_doctotal' => is_numeric($Data['dvc_doctotal']) ? $Data['dvc_doctotal'] : 0,
 					':bmd_cardcode' => isset($Data['dvc_cardcode']) ? $Data['dvc_cardcode'] : NULL,
-					':bmd_cardtype' => 1
+					':bmd_cardtype' => 1,
+					':bmd_currency' => isset($Data['dvc_currency'])?$Data['dvc_currency']:NULL,
 				));
 
 				if (is_numeric($resInsertMD) && $resInsertMD > 0) {

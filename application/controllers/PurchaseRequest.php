@@ -24,6 +24,7 @@ class PurchaseRequest extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('DocumentCopy');
+		$this->load->library('Aprobacion');
 	}
 
 	//CREAR NUEVA solicitud DE compras
@@ -272,18 +273,18 @@ class PurchaseRequest extends REST_Controller
 		if (!isset($resVerificarAprobacion[0])) {
 
 			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
-																au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
-																FROM tmau
-																INNER JOIN mau1
-																ON mau_docentry =  au1_docentry
-																INNER JOIN taus
-																ON mau_docentry  = aus_id_model
-																INNER JOIN pgus
-																ON aus_id_usuario = pgu_id_usuario
-																WHERE mau_doctype = :mau_doctype
-																AND pgu_code_user = :pgu_code_user
-																AND mau_status = :mau_status
-																AND aus_status = :aus_status";
+							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
+							FROM tmau
+							INNER JOIN mau1
+							ON mau_docentry =  au1_docentry
+							INNER JOIN taus
+							ON mau_docentry  = aus_id_model
+							INNER JOIN pgus
+							ON aus_id_usuario = pgu_id_usuario
+							WHERE mau_doctype = :mau_doctype
+							AND pgu_code_user = :pgu_code_user
+							AND mau_status = :mau_status
+							AND aus_status = :aus_status";
 
 			$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
 
@@ -321,12 +322,12 @@ class PurchaseRequest extends REST_Controller
 					if ($condicion == ">") {
 
 						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
-																				FROM tmau
-																				INNER JOIN  mau1
-																				on mau_docentry =  au1_docentry
-																				AND :au1_doctotal > au1_doctotal
-																				AND mau_doctype = :mau_doctype
-																				AND mau_docentry = :mau_docentry";
+								FROM tmau
+								INNER JOIN  mau1
+								on mau_docentry =  au1_docentry
+								AND :au1_doctotal > au1_doctotal
+								AND mau_doctype = :mau_doctype
+								AND mau_docentry = :mau_docentry";
 
 						$ressq = $this->pedeo->queryTable($sq, array(
 
@@ -336,17 +337,42 @@ class PurchaseRequest extends REST_Controller
 						));
 
 						if (isset($ressq[0])) {
-							$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'csc', 'sc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
+							
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'csc', 'sc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
+							
+							if ($resAprobacion['error'] == false){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => [],
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAprobacion,
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}
 						}
 					} else if ($condicion == "BETWEEN") {
 
 						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
-																				FROM tmau
-																				INNER JOIN  mau1
-																				on mau_docentry =  au1_docentry
-																				AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
-																				AND mau_doctype = :mau_doctype
-																				AND mau_docentry = :mau_docentry";
+								FROM tmau
+								INNER JOIN  mau1
+								on mau_docentry =  au1_docentry
+								AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
+								AND mau_doctype = :mau_doctype
+								AND mau_docentry = :mau_docentry";
 
 						$ressq = $this->pedeo->queryTable($sq, array(
 
@@ -356,7 +382,32 @@ class PurchaseRequest extends REST_Controller
 						));
 
 						if (isset($ressq[0])) {
-							$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'csc', 'sc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
+							
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'csc', 'sc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
+				
+							if ($resAprobacion['error'] == false){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => [],
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAprobacion,
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}
 						}
 					}
 					//VERIFICAR MODELO DE PROBACION
@@ -366,10 +417,6 @@ class PurchaseRequest extends REST_Controller
 
 
 		// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
-
-
-
-
 
 		$sqlInsert = "INSERT INTO dcsc(csc_series, csc_docnum, csc_docdate, csc_duedate, csc_duedev, csc_pricelist, csc_cardcode,
                       csc_cardname, csc_currency, csc_contacid, csc_slpcode, csc_empid, csc_comment, csc_doctotal, csc_baseamnt, csc_taxtotal,
@@ -537,9 +584,9 @@ class PurchaseRequest extends REST_Controller
 					//BUSCANDO EL DOCUMENTO APROBADO
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -553,7 +600,8 @@ class PurchaseRequest extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['csc_doctotal']) ? $Data['csc_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['csc_cardcode']) ? $Data['csc_cardcode'] : NULL,
-						':bmd_cardtype' => 2
+						':bmd_cardtype' => 2,
+						':bmd_currency' => isset($Data['csc_currency'])?$Data['csc_currency']:NULL,
 					));
 
 
@@ -587,9 +635,9 @@ class PurchaseRequest extends REST_Controller
 					if (isset($resDocInicio[0])) {
 
 						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -603,7 +651,8 @@ class PurchaseRequest extends REST_Controller
 							':bmd_docnum' => $DocNumVerificado,
 							':bmd_doctotal' => is_numeric($Data['csc_doctotal']) ? $Data['csc_doctotal'] : 0,
 							':bmd_cardcode' => isset($Data['csc_cardcode']) ? $Data['csc_cardcode'] : NULL,
-							':bmd_cardtype' => 2
+							':bmd_cardtype' => 2,
+							':bmd_currency' => isset($Data['csc_currency'])?$Data['csc_currency']:NULL,
 						));
 
 						if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -625,9 +674,9 @@ class PurchaseRequest extends REST_Controller
 					} else {
 
 						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+																bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 																VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+																:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -641,7 +690,8 @@ class PurchaseRequest extends REST_Controller
 							':bmd_docnum' => $DocNumVerificado,
 							':bmd_doctotal' => is_numeric($Data['csc_doctotal']) ? $Data['csc_doctotal'] : 0,
 							':bmd_cardcode' => isset($Data['csc_cardcode']) ? $Data['csc_cardcode'] : NULL,
-							':bmd_cardtype' => 2
+							':bmd_cardtype' => 2,
+							':bmd_currency' => isset($Data['csc_currency'])?$Data['csc_currency']:NULL,
 						));
 
 						if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -665,9 +715,9 @@ class PurchaseRequest extends REST_Controller
 			} else {
 
 				$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 				$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -681,7 +731,8 @@ class PurchaseRequest extends REST_Controller
 					':bmd_docnum' => $DocNumVerificado,
 					':bmd_doctotal' => is_numeric($Data['csc_doctotal']) ? $Data['csc_doctotal'] : 0,
 					':bmd_cardcode' => isset($Data['csc_cardcode']) ? $Data['csc_cardcode'] : NULL,
-					':bmd_cardtype' => 2
+					':bmd_cardtype' => 2,
+					':bmd_currency' => isset($Data['csc_currency'])?$Data['csc_currency']:NULL,
 				));
 
 				if (is_numeric($resInsertMD) && $resInsertMD > 0) {

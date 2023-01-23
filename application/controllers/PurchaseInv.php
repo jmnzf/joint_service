@@ -498,9 +498,9 @@ class PurchaseInv extends REST_Controller
 				if (isset($resDocInicio[0])) {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -514,7 +514,8 @@ class PurchaseInv extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['cfc_doctotal']) ? $Data['cfc_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['cfc_cardcode']) ? $Data['cfc_cardcode'] : NULL,
-						':bmd_cardtype' => 2
+						':bmd_cardtype' => 2,
+						':bmd_currency' => isset($Data['cfc_currency'])?$Data['cfc_currency']:NULL,
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -536,9 +537,9 @@ class PurchaseInv extends REST_Controller
 				} else {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-								bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+								bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 								VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-								:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+								:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -552,7 +553,8 @@ class PurchaseInv extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['cfc_doctotal']) ? $Data['cfc_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['cfc_cardcode']) ? $Data['cfc_cardcode'] : NULL,
-						':bmd_cardtype' => 2
+						':bmd_cardtype' => 2,
+						':bmd_currency' => isset($Data['cfc_currency'])?$Data['cfc_currency']:NULL,
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -575,9 +577,9 @@ class PurchaseInv extends REST_Controller
 			} else {
 
 				$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 				$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -591,7 +593,8 @@ class PurchaseInv extends REST_Controller
 					':bmd_docnum' => $DocNumVerificado,
 					':bmd_doctotal' => is_numeric($Data['cfc_doctotal']) ? $Data['cfc_doctotal'] : 0,
 					':bmd_cardcode' => isset($Data['cfc_cardcode']) ? $Data['cfc_cardcode'] : NULL,
-					':bmd_cardtype' => 2
+					':bmd_cardtype' => 2,
+					':bmd_currency' => isset($Data['cfc_currency'])?$Data['cfc_currency']:NULL,
 				));
 
 				if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -710,7 +713,7 @@ class PurchaseInv extends REST_Controller
 					}else if($Data['cfc_basetype'] == 13){
 						//OBTENER NUMERO DOCUMENTO ORIGEN
 						$DOC = "SELECT cec_docnum FROM dcec WHERE cec_doctype = :cec_doctype AND cec_docentry = :cec_docentry";
-						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cec_docentry' =>$Data['cec_baseentry'],':cec_doctype' => $Data['cec_basetype']));
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cec_docentry' =>$Data['cfc_baseentry'],':cec_doctype' => $Data['cfc_basetype']));
 						foreach ($ContenidoDetalle as $key => $value) {
 							# code...
 							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
@@ -3188,134 +3191,37 @@ class PurchaseInv extends REST_Controller
 				$cantidad_del = $resta_cantidad;
 				$cantidad_fact = $resEstado2[0]['cantidad'];
 
-				// print_r($item_del);
-				// print_r($item_fact);
-				// print_r($cantidad_del);
-				// print_r($cantidad_fact);exit();die();
+				
 
 
 				if ($item_del == $item_fact && $cantidad_del == $cantidad_fact) {
 
-					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+											VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
-					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-						':bed_docentry' => $Data['cfc_baseentry'],
-						':bed_doctype' => $Data['cfc_basetype'],
-						':bed_status' => 3, //ESTADO CERRADO
-						':bed_createby' => $Data['cfc_createby'],
-						':bed_date' => date('Y-m-d'),
-						':bed_baseentry' => $resInsert,
-						':bed_basetype' => $Data['cfc_doctype']
-					));
-
-
-					if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
-
-						if ($Data['cfc_basetype'] == 13) {
-							$sqlEstado1 = 'SELECT
-											count(t1.ec1_itemcode) item,
-											coalesce(sum(t1.ec1_quantity),0) cantidad
-										from dcec t0
-										inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-										where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype';
-
-							$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-								':cec_docentry' => $Data['cfc_baseentry'],
-								':cec_doctype' => $Data['cfc_basetype']
-							));
-
-							$sqlDev1 = "SELECT
-										count(t3.dc1_itemcode) item,
-										coalesce(sum(t3.dc1_quantity),0) cantidad
-									from dcec t0
-									left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-									left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
-									left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
-									where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
-
-							$resDev1 = $this->pedeo->queryTable($sqlDev1, array(
-								':cec_docentry' => $Data['cfc_baseentry'],
-								':cec_doctype' => $Data['cfc_basetype']
-							));
-
-							$resta_cantidad1 = $resEstado1[0]['cantidad'] - $resDev1[0]['cantidad'];
-
-							$resta_item1 = $resEstado1[0]['item'] - $resDev1[0]['item'];
-
-							$sqlDev2 = "SELECT DISTINCT
-										t2.*
-									from dcec t0
-									left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-									left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
-									left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
-									where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
-
-							$resDev2 = $this->pedeo->queryTable($sqlDev2, array(
-								':cec_docentry' => $Data['cfc_baseentry'],
-								':cec_doctype' => $Data['cfc_basetype']
-							));
-
-							$sqlEstado2 = "SELECT
-											coalesce(count(distinct t3.fc1_itemcode),0) item,
-											coalesce(sum(t3.fc1_quantity),0) cantidad
-										from dcec t0
-										left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-										left join dcfc t2 on t0.cec_docentry = t2.cfc_baseentry and t0.cec_doctype = t2.cfc_basetype
-										left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.ec1_itemcode = t3.fc1_itemcode
-										where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
-							$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
-								':cec_docentry' => $Data['cfc_baseentry'],
-								':cec_doctype' => $Data['cfc_basetype']
-							));
-
-							if (is_numeric($resta_item1) && $resta_item1 == 0) {
-								$item_del1 = $resEstado1[0]['item'];
-							} else {
-								$item_del1 = $resta_item1;
-							}
-							// $item_del1 = $resta_item1;
-							$item_fact1 = $resEstado2[0]['item'];
-							$cantidad_del1 = $resta_cantidad1;
-							$cantidad_fact1 = $resEstado2[0]['cantidad'];
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+							':bed_docentry' => $Data['cfc_baseentry'],
+							':bed_doctype' => $Data['cfc_basetype'],
+							':bed_status' => 3, //ESTADO CERRADO
+							':bed_createby' => $Data['cfc_createby'],
+							':bed_date' => date('Y-m-d'),
+							':bed_baseentry' => $resInsert,
+							':bed_basetype' => $Data['cfc_doctype']
+						));
 
 
+						if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
 
+					}else {
+						$this->pedeo->trans_rollback();
 
-							if ($item_del1 == $item_fact1  &&  $cantidad_del1 ==  $cantidad_fact1) {
-
-								foreach ($resDev2 as $key => $value) {
-									// code...
-									$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-													VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-									$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-										':bed_docentry' => $value['cdc_docentry'],
-										':bed_doctype' => $value['cdc_doctype'],
-										':bed_status' => 3, //ESTADO CERRADO
-										':bed_createby' => $Data['cfc_createby'],
-										':bed_date' => date('Y-m-d'),
-										':bed_baseentry' => $resInsert,
-										':bed_basetype' => $Data['cfc_doctype']
-									));
-
-									if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
-									} else {
-										$this->pedeo->trans_rollback();
-
-										$respuesta = array(
-											'error'   => true,
-											'data' => $resInsertEstado,
-											'mensaje'	=> 'No se pudo registrar la devolucion de compra'
-										);
-
-										$this->response($respuesta);
-
-										return;
-									}
-								}
-							}
-						}
+						$respuesta = array(
+							'error'   => true,
+							'data' => $resInsertEstado,
+							'mensaje'	=> 'No se pudo registrar la devolucion de compra'
+						);
+						$this->response($respuesta);
+						return;
 					}
 				}
 			}

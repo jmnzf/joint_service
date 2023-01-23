@@ -483,9 +483,9 @@ class PurchaseEc extends REST_Controller
 				if (isset($resDocInicio[0])) {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -499,7 +499,8 @@ class PurchaseEc extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['cec_doctotal']) ? $Data['cec_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['cec_cardcode']) ? $Data['cec_cardcode'] : NULL,
-						':bmd_cardtype' => 2
+						':bmd_cardtype' => 2,
+						':bmd_currency' => isset($Data['cec_currency'])?$Data['cec_currency']:NULL,
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -521,9 +522,9 @@ class PurchaseEc extends REST_Controller
 				} else {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -537,7 +538,8 @@ class PurchaseEc extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['cec_doctotal']) ? $Data['cec_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['cec_cardcode']) ? $Data['cec_cardcode'] : NULL,
-						':bmd_cardtype' => 2
+						':bmd_cardtype' => 2,
+						':bmd_currency' => isset($Data['cec_currency'])?$Data['cec_currency']:NULL,
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -560,9 +562,9 @@ class PurchaseEc extends REST_Controller
 			} else {
 
 				$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 				$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -576,7 +578,8 @@ class PurchaseEc extends REST_Controller
 					':bmd_docnum' => $DocNumVerificado,
 					':bmd_doctotal' => is_numeric($Data['cec_doctotal']) ? $Data['cec_doctotal'] : 0,
 					':bmd_cardcode' => isset($Data['cec_cardcode']) ? $Data['cec_cardcode'] : NULL,
-					':bmd_cardtype' => 2
+					':bmd_cardtype' => 2,
+					':bmd_currency' => isset($Data['cec_currency'])?$Data['cec_currency']:NULL,
 				));
 
 				if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -660,10 +663,10 @@ class PurchaseEc extends REST_Controller
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 					// Se verifica que el detalle no de error insertando //
 					//VALIDAR SI LOS ITEMS SON IGUALES A LOS DEL DOCUMENTO DE ORIGEN SIEMPRE QUE VENGA DE UN COPIAR DE
-					if($Data['cfc_basetype'] == 12){
+					if($Data['cec_basetype'] == 12){
 						//OBTENER NUMERO DOCUMENTO ORIGEN
 						$DOC = "SELECT cpo_docnum FROM dcpo WHERE cpo_doctype = :cpo_doctype AND cpo_docentry = :cpo_docentry";
-						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cpo_docentry' =>$Data['cpo_baseentry'],':cpo_doctype' => $Data['cpo_basetype']));
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cpo_docentry' =>$Data['cec_baseentry'],':cpo_doctype' => $Data['cec_basetype']));
 						foreach ($ContenidoDetalle as $key => $value) {
 							# code...
 							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN

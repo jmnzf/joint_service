@@ -323,6 +323,7 @@ class PurchaseRet extends REST_Controller
 			':cdc_idadd' => isset($Data['cdc_idadd']) ? $Data['cdc_idadd'] : NULL,
 			':cdc_adress' => isset($Data['cdc_adress']) ? $Data['cdc_adress'] : NULL,
 			':cdc_paytype' => is_numeric($Data['cdc_paytype']) ? $Data['cdc_paytype'] : 0,
+			':cdc_createby' => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 		));
@@ -367,7 +368,7 @@ class PurchaseRet extends REST_Controller
 
 				':bed_docentry' => $resInsert,
 				':bed_doctype' => $Data['cdc_doctype'],
-				':bed_status' => 1, //ESTADO CERRADO
+				':bed_status' => 3, //ESTADO CERRADO
 				':bed_createby' => $Data['cdc_createby'],
 				':bed_date' => date('Y-m-d'),
 				':bed_baseentry' => NULL,
@@ -400,9 +401,7 @@ class PurchaseRet extends REST_Controller
 			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
 															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
 
-
 			$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
-
 				':mac_doc_num' => 1,
 				':mac_status' => 1,
 				':mac_base_type' => is_numeric($Data['cdc_doctype']) ? $Data['cdc_doctype'] : 0,
@@ -435,6 +434,7 @@ class PurchaseRet extends REST_Controller
 
 			if (is_numeric($resInsertAsiento) && $resInsertAsiento > 0) {
 				// Se verifica que el detalle no de error insertando //
+				
 			} else {
 
 				// si falla algun insert del detalle de la devolucion de compras se devuelven los cambios realizados por la transaccion,
@@ -466,9 +466,9 @@ class PurchaseRet extends REST_Controller
 				if (isset($resDocInicio[0])) {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -482,7 +482,8 @@ class PurchaseRet extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['cdc_doctotal']) ? $Data['cdc_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['cdc_cardcode']) ? $Data['cdc_cardcode'] : NULL,
-						':bmd_cardtype' => 2
+						':bmd_cardtype' => 2,
+						':bmd_currency' => isset($Data['cdc_currency'])?$Data['cdc_currency']:NULL,
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -504,9 +505,9 @@ class PurchaseRet extends REST_Controller
 				} else {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-															bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-															VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-															:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -520,7 +521,8 @@ class PurchaseRet extends REST_Controller
 						':bmd_docnum' => $DocNumVerificado,
 						':bmd_doctotal' => is_numeric($Data['cdc_doctotal']) ? $Data['cdc_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['cdc_cardcode']) ? $Data['cdc_cardcode'] : NULL,
-						':bmd_cardtype' => 2
+						':bmd_cardtype' => 2,
+						':bmd_currency' => isset($Data['cdc_currency'])?$Data['cdc_currency']:NULL,
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -543,12 +545,11 @@ class PurchaseRet extends REST_Controller
 			} else {
 
 				$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
 				$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
 					':bmd_doctype' => is_numeric($Data['cdc_doctype']) ? $Data['cdc_doctype'] : 0,
 					':bmd_docentry' => $resInsert,
 					':bmd_createat' => $this->validateDate($Data['cdc_createat']) ? $Data['cdc_createat'] : NULL,
@@ -559,10 +560,12 @@ class PurchaseRet extends REST_Controller
 					':bmd_docnum' => $DocNumVerificado,
 					':bmd_doctotal' => is_numeric($Data['cdc_doctotal']) ? $Data['cdc_doctotal'] : 0,
 					':bmd_cardcode' => isset($Data['cdc_cardcode']) ? $Data['cdc_cardcode'] : NULL,
-					':bmd_cardtype' => 2
+					':bmd_cardtype' => 2,
+					':bmd_currency' => isset($Data['cdc_currency'])?$Data['cdc_currency']:NULL,
 				));
 
 				if (is_numeric($resInsertMD) && $resInsertMD > 0) {
+
 				} else {
 
 					$this->pedeo->trans_rollback();
@@ -641,7 +644,7 @@ class PurchaseRet extends REST_Controller
 					if($Data['cdc_basetype'] == 13){
 						//OBTENER NUMERO DOCUMENTO ORIGEN
 						$DOC = "SELECT cec_docnum FROM dcec WHERE cec_doctype = :cec_doctype AND cec_docentry = :cec_docentry";
-						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cec_docentry' =>$Data['cec_baseentry'],':cec_doctype' => $Data['cec_basetype']));
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cec_docentry' =>$Data['cdc_baseentry'],':cec_doctype' => $Data['cdc_basetype']));
 						foreach ($ContenidoDetalle as $key => $value) {
 							# code...
 							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
@@ -1651,10 +1654,82 @@ class PurchaseRet extends REST_Controller
 				}
 			}
 			//
+			if ($Data['cdc_basetype'] == 13) {
+
+
+				$sqlEstado1 = "SELECT
+									count(t1.ec1_linenum) item,
+									sum(t1.ec1_quantity) cantidad
+									from dcec t0
+									inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+									where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+	  
+	  
+				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+								':cec_docentry' => $Data['cdc_baseentry'],
+								':cec_doctype' => $Data['cdc_basetype']
+				));
+	  
+	  
+				$sqlEstado2 = "SELECT
+									coalesce(count(distinct t3.dc1_baseline),0) item,
+									coalesce(sum(t3.dc1_quantity),0) cantidad
+									from dcec t0
+									left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+									left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry
+									left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode and t1.ec1_linenum = t3.dc1_baseline
+									where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+				$resEstado2 = $this->pedeo->queryTable($sqlEstado2,array(
+								':cec_docentry' => $Data['cdc_baseentry'],
+								':cec_doctype' => $Data['cdc_basetype']
+				));
+
+				$resta_item = $resEstado1[0]['item'] - $resEstado2[0]['item'];
+				$resta_cantidad = $resEstado1[0]['cantidad'] - $resEstado2[0]['cantidad'];
+	  
+				$item_del = $resEstado1[0]['item'];
+				$item_dev = $resEstado2[0]['item'];
+				$cantidad_del = $resEstado1[0]['cantidad'];
+				$cantidad_dev = $resEstado2[0]['cantidad'];
+	  
+				if($item_del == $item_dev  &&  $cantidad_del == $cantidad_dev){
+	  
+	  
+					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+	  
+					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+					':bed_docentry' => $Data['vdv_baseentry'],
+					':bed_doctype' => $Data['vdv_basetype'],
+					':bed_status' => 3, //ESTADO CERRADO
+					':bed_createby' => $Data['vdv_createby'],
+					':bed_date' => date('Y-m-d'),
+					':bed_baseentry' => $resInsert,
+					':bed_basetype' => $Data['vdv_doctype']
+					));
+	  
+					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+	  
+					}else{
+	  
+	  
+					$this->pedeo->trans_rollback();
+	  
+					$respuesta = array(
+					  'error'   => true,
+					  'data'    => $resInsertEstado,
+					  'mensaje' => 'No se pudo registrar la devolucion de compra'
+					  );
+					$this->response($respuesta);
+	  
+					return;
+				  }
+	  
+				}
+			}
 
 
 			//FIN DE OPERACIONES VITALES
-
 			// Si todo sale bien despues de insertar el detalle de la devolucion de compras
 			// se confirma la trasaccion  para que los cambios apliquen permanentemente
 			// en la base de datos y se confirma la operacion exitosa.

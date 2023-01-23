@@ -418,23 +418,23 @@ class SalesDv extends REST_Controller {
               if ( isset( $resDocInicio[0] ) ){
 
                   $sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-                                  bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-                                  VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-                                  :bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
                   $resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
-                                  ':bmd_doctype' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
-                                  ':bmd_docentry' => $resInsert,
-                                  ':bmd_createat' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
-                                  ':bmd_doctypeo' => is_numeric($Data['vdv_basetype'])?$Data['vdv_basetype']:0, //ORIGEN
-                                  ':bmd_docentryo' => is_numeric($Data['vdv_baseentry'])?$Data['vdv_baseentry']:0,  //ORIGEN
-                                  ':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
-                                  ':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
-                                  ':bmd_docnum' => $DocNumVerificado,
-                                  ':bmd_doctotal' => is_numeric($Data['vdv_doctotal'])?$Data['vdv_doctotal']:0,
-                                  ':bmd_cardcode' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
-                                  ':bmd_cardtype' => 1
+                    ':bmd_doctype' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
+                    ':bmd_docentry' => $resInsert,
+                    ':bmd_createat' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
+                    ':bmd_doctypeo' => is_numeric($Data['vdv_basetype'])?$Data['vdv_basetype']:0, //ORIGEN
+                    ':bmd_docentryo' => is_numeric($Data['vdv_baseentry'])?$Data['vdv_baseentry']:0,  //ORIGEN
+                    ':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+                    ':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+                    ':bmd_docnum' => $DocNumVerificado,
+                    ':bmd_doctotal' => is_numeric($Data['vdv_doctotal'])?$Data['vdv_doctotal']:0,
+                    ':bmd_cardcode' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
+                    ':bmd_cardtype' => 1,
+					          ':bmd_currency' => isset($Data['vdv_currency'])?$Data['vdv_currency']:NULL,
                   ));
 
                   if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
@@ -458,23 +458,23 @@ class SalesDv extends REST_Controller {
               }else{
 
                   $sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-                                  bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-                                  VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-                                  :bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
                   $resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
-                                  ':bmd_doctype' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
-                                  ':bmd_docentry' => $resInsert,
-                                  ':bmd_createat' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
-                                  ':bmd_doctypeo' => is_numeric($Data['vdv_basetype'])?$Data['vdv_basetype']:0, //ORIGEN
-                                  ':bmd_docentryo' => is_numeric($Data['vdv_baseentry'])?$Data['vdv_baseentry']:0,  //ORIGEN
-                                  ':bmd_tdi' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0, // DOCUMENTO INICIAL
-                                  ':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
-                                  ':bmd_docnum' => $DocNumVerificado,
-                                  ':bmd_doctotal' => is_numeric($Data['vdv_doctotal'])?$Data['vdv_doctotal']:0,
-                                  ':bmd_cardcode' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
-                                  ':bmd_cardtype' => 1
+                    ':bmd_doctype' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
+                    ':bmd_docentry' => $resInsert,
+                    ':bmd_createat' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
+                    ':bmd_doctypeo' => is_numeric($Data['vdv_basetype'])?$Data['vdv_basetype']:0, //ORIGEN
+                    ':bmd_docentryo' => is_numeric($Data['vdv_baseentry'])?$Data['vdv_baseentry']:0,  //ORIGEN
+                    ':bmd_tdi' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0, // DOCUMENTO INICIAL
+                    ':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+                    ':bmd_docnum' => $DocNumVerificado,
+                    ':bmd_doctotal' => is_numeric($Data['vdv_doctotal'])?$Data['vdv_doctotal']:0,
+                    ':bmd_cardcode' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
+                    ':bmd_cardtype' => 1,
+					          ':bmd_currency' => isset($Data['vdv_currency'])?$Data['vdv_currency']:NULL,
                   ));
 
                   if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
@@ -499,23 +499,23 @@ class SalesDv extends REST_Controller {
         }else{
 
           $sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-                          bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype)
-                          VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-                          :bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
 
           $resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
-                          ':bmd_doctype' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
-                          ':bmd_docentry' => $resInsert,
-                          ':bmd_createat' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
-                          ':bmd_doctypeo' => is_numeric($Data['vdv_basetype'])?$Data['vdv_basetype']:0, //ORIGEN
-                          ':bmd_docentryo' => is_numeric($Data['vdv_baseentry'])?$Data['vdv_baseentry']:0,  //ORIGEN
-                          ':bmd_tdi' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0, // DOCUMENTO INICIAL
-                          ':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
-                          ':bmd_docnum' => $DocNumVerificado,
-                          ':bmd_doctotal' => is_numeric($Data['vdv_doctotal'])?$Data['vdv_doctotal']:0,
-                          ':bmd_cardcode' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
-                          ':bmd_cardtype' => 1
+            ':bmd_doctype' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0,
+            ':bmd_docentry' => $resInsert,
+            ':bmd_createat' => $this->validateDate($Data['vdv_createat'])?$Data['vdv_createat']:NULL,
+            ':bmd_doctypeo' => is_numeric($Data['vdv_basetype'])?$Data['vdv_basetype']:0, //ORIGEN
+            ':bmd_docentryo' => is_numeric($Data['vdv_baseentry'])?$Data['vdv_baseentry']:0,  //ORIGEN
+            ':bmd_tdi' => is_numeric($Data['vdv_doctype'])?$Data['vdv_doctype']:0, // DOCUMENTO INICIAL
+            ':bmd_ndi' => $resInsert, // DOCUMENTO INICIAL
+            ':bmd_docnum' => $DocNumVerificado,
+            ':bmd_doctotal' => is_numeric($Data['vdv_doctotal'])?$Data['vdv_doctotal']:0,
+            ':bmd_cardcode' => isset($Data['vdv_cardcode'])?$Data['vdv_cardcode']:NULL,
+            ':bmd_cardtype' => 1,
+					  ':bmd_currency' => isset($Data['vdv_currency'])?$Data['vdv_currency']:NULL,
           ));
 
           if( is_numeric($resInsertMD) && $resInsertMD > 0 ){
@@ -641,7 +641,6 @@ class SalesDv extends REST_Controller {
                                     left join vem1 t3 on t2.vem_docentry = t3.em1_docentry and t1.dv1_itemcode = t3.em1_itemcode
                                     where t0.vdv_docentry = :vdv_docentry";
                 $resSqlValidationQty = $this->pedeo->queryTable($sqlValidationQty,array(':vdv_docentry' => $resInsert));
-                print_r($resSqlValidationQty[0]['estado']);exit;
                 if(is_numeric($resSqlValidationQty[0]['estado'])  &&  $resSqlValidationQty[0]['estado'] == 0){
 
                 }else{
