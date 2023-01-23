@@ -440,8 +440,6 @@ class BuyOffert extends REST_Controller
 				}
 			}
 
-			print_r($resUsuarioEmpleadoVentas);exit;
-
 			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
 							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
 							FROM tmau
@@ -492,12 +490,12 @@ class BuyOffert extends REST_Controller
 					if ($condicion == ">") {
 
 						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
-																				FROM tmau
-																				INNER JOIN  mau1
-																				on mau_docentry =  au1_docentry
-																				AND :au1_doctotal > au1_doctotal
-																				AND mau_doctype = :mau_doctype
-																				AND mau_docentry = :mau_docentry";
+								FROM tmau
+								INNER JOIN  mau1
+								on mau_docentry =  au1_docentry
+								AND :au1_doctotal > au1_doctotal
+								AND mau_doctype = :mau_doctype
+								AND mau_docentry = :mau_docentry";
 
 						$ressq = $this->pedeo->queryTable($sq, array(
 
@@ -508,7 +506,7 @@ class BuyOffert extends REST_Controller
 
 						if (isset($ressq[0])) {
 							
-							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'coc', 'oc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'coc', 'oc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
 							
 							if ($resAprobacion['error'] == false){
 
@@ -553,7 +551,7 @@ class BuyOffert extends REST_Controller
 
 						if (isset($ressq[0])) {
 
-							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'coc', 'oc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'coc', 'oc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
 							
 							if ($resAprobacion['error'] == false){
 
@@ -584,8 +582,7 @@ class BuyOffert extends REST_Controller
 				}
 			}
 		}
-		// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
-exit;
+		// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADOsw
 		$sqlInsert = "INSERT INTO dcoc(coc_series, coc_docnum, coc_docdate, coc_duedate, coc_duedev, coc_pricelist, coc_cardcode,
 					coc_cardname, coc_currency, coc_contacid, coc_slpcode, coc_empid, coc_comment, coc_doctotal, coc_baseamnt, coc_taxtotal,
 					coc_discprofit, coc_discount, coc_createat, coc_baseentry, coc_basetype, coc_doctype, coc_idadd, coc_adress, coc_paytype,

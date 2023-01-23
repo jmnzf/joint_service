@@ -304,11 +304,29 @@ class PurchOrder extends REST_Controller
 
 						if (isset($ressq[0])) {
 
-							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
 
 							if ($resAprobacion['error'] == false){
 
+								$respuesta = array(
+									'error'   => false,
+									'data'    => [],
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
 							}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAprobacion,
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
 
 							}
 
@@ -331,7 +349,32 @@ class PurchOrder extends REST_Controller
 						));
 
 						if (isset($ressq[0])) {
-							$resAprobacion =  $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
+
+							$resAprobacion =  $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
+
+							if ($resAprobacion['error'] == false){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => [],
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAprobacion,
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}
 						}
 					}
 					//VERIFICAR MODELO DE PROBACION
