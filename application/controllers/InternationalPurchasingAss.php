@@ -112,7 +112,9 @@ class InternationalPurchasingAss extends REST_Controller
 					t1.ec1_vatsum,
 					t1.ec1_whscode,
 					t6.dma_uom_weight as peso,
-					t6.dma_uom_vqty as metrocubico
+					t6.dma_uom_vqty as metrocubico,
+					t0.cec_cardcode,
+					t0.cec_cardname
 					from dcec t0
 					left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
 					left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
@@ -145,7 +147,9 @@ class InternationalPurchasingAss extends REST_Controller
 					t1.ec1_whscode,
 					t1.ec1_quantity,
 					t6.dma_uom_weight,
-					t6.dma_uom_vqty";
+					t6.dma_uom_vqty,
+					t0.cec_cardcode,
+					t0.cec_cardname";
 
 		$sqlSelect = str_replace("{entradas}", $Data['ec1_docentry'],$sqlSelect);
 		
