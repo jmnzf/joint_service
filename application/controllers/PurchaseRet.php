@@ -323,6 +323,7 @@ class PurchaseRet extends REST_Controller
 			':cdc_idadd' => isset($Data['cdc_idadd']) ? $Data['cdc_idadd'] : NULL,
 			':cdc_adress' => isset($Data['cdc_adress']) ? $Data['cdc_adress'] : NULL,
 			':cdc_paytype' => is_numeric($Data['cdc_paytype']) ? $Data['cdc_paytype'] : 0,
+			':cdc_createby' => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 		));
@@ -400,9 +401,7 @@ class PurchaseRet extends REST_Controller
 			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
 															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
 
-
 			$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
-
 				':mac_doc_num' => 1,
 				':mac_status' => 1,
 				':mac_base_type' => is_numeric($Data['cdc_doctype']) ? $Data['cdc_doctype'] : 0,
@@ -548,7 +547,6 @@ class PurchaseRet extends REST_Controller
 														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype)";
 
 				$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
-
 					':bmd_doctype' => is_numeric($Data['cdc_doctype']) ? $Data['cdc_doctype'] : 0,
 					':bmd_docentry' => $resInsert,
 					':bmd_createat' => $this->validateDate($Data['cdc_createat']) ? $Data['cdc_createat'] : NULL,

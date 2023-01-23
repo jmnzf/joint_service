@@ -40,11 +40,11 @@ class TipodeAnuncios extends REST_Controller
             return $this->response($respuesta);
         }
 
-        $resInsert = $this->pedeo->insertRow('INSERT INTO tbta(bta_name, bta_combo, bta_libre, bta_dia_cons, bta_dias, bta_precio, bta_palabras, bta_letras, bta_cantidad, bta_status) VALUES(:bta_name, :bta_combo, :bta_libre, :bta_dia_cons, :bta_dias, :bta_precio, :bta_palabras, :bta_letras, bta_cantidad, :bta_status)', array(
+        $resInsert = $this->pedeo->insertRow('INSERT INTO tbta(bta_name, bta_combo, bta_libre, bta_dias_cons, bta_dias, bta_precio, bta_palabras, bta_letras, bta_cantidad, bta_status) VALUES(:bta_name, :bta_combo, :bta_libre, :bta_dias_cons, :bta_dias, :bta_precio, :bta_palabras, :bta_letras, :bta_cantidad, :bta_status)', array(
             ':bta_name' => $Data['bta_name'],
             ':bta_combo' => $Data['bta_combo'],
             ':bta_libre' => $Data['bta_libre'],
-            ':bta_dia_cons' => $Data['bta_dia_cons'],
+            ':bta_dias_cons' => $Data['bta_dias_cons'],
             ':bta_dias' => isset($Data['bta_dias']) ? $Data['bta_dias']: 0,
             ':bta_precio' => isset($Data['bta_precio']) ? $Data['bta_precio']: 0,
             ':bta_palabras' => isset($Data['bta_palabras']) ? $Data['bta_palabras']: 0,
