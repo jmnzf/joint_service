@@ -3631,9 +3631,6 @@ class PurchaseInv extends REST_Controller
 
 		$copy = $this->documentcopy->Copy($Data['fc1_docentry'],'dcfc','cfc1','cfc','fc1');
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fc1_docentry" => $Data['fc1_docentry']));
-
-
 
 		$seriales = "SELECT msn_line, msn_itemcode, string_agg(msn_sn, ',') AS serials FROM tmsn  WHERE msn_baseentry = :msn_baseentry AND msn_basetype = :msn_basetype GROUP BY  msn_itemcode,msn_line";
 
@@ -3641,9 +3638,9 @@ class PurchaseInv extends REST_Controller
 		$resseriales = $this->pedeo->queryTable($seriales, array(":msn_baseentry" => $Data['fc1_docentry'], ":msn_basetype" => 15));
 
 
-		if (isset($resSelect[0]) && isset($resseriales[0])) {
+		if (isset($copy[0]) && isset($resseriales[0])) {
 
-			foreach ($resSelect as $key => $value) {
+			foreach ($copy as $key => $value) {
 
 				$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
 														FROM cfc1
@@ -3656,7 +3653,7 @@ class PurchaseInv extends REST_Controller
 				$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':fc1_docentry' => $Data['fc1_docentry']));
 
 				if (isset($resSelect2[0])) {
-					$resSelect[$key]['retenciones'] = $resSelect2;
+					$copy[$key]['retenciones'] = $resSelect2;
 				}
 			}
 
@@ -3664,12 +3661,12 @@ class PurchaseInv extends REST_Controller
 
 			$respuesta = array(
 				'error' => false,
-				'data'  =>  array("detalle" => $resSelect, "complemento" => $resseriales),
+				'data'  =>  array("detalle" => $copy, "complemento" => $resseriales),
 				'mensaje' => ''
 			);
-		} else if (isset($resSelect[0])) {
+		} else if (isset($copy[0])) {
 
-			foreach ($resSelect as $key => $value) {
+			foreach ($copy as $key => $value) {
 
 				$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
 														FROM cfc1
@@ -3683,13 +3680,13 @@ class PurchaseInv extends REST_Controller
 				$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':fc1_docentry' => $Data['fc1_docentry']));
 
 				if (isset($resSelect2[0])) {
-					$resSelect[$key]['retenciones'] = $resSelect2;
+					$copy[$key]['retenciones'] = $resSelect2;
 				}
 			}
 
 			$respuesta = array(
 				'error'     => false,
-				'data'		=> $resSelect,
+				'data'		=> $copy,
 				'mensaje'	=> 'busqueda sin resultados'
 			);
 		} else {

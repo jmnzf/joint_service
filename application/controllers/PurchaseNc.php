@@ -627,17 +627,16 @@ class PurchaseNc extends REST_Controller
 					return;
 				}
 
-				$sqlInsertDetail = "INSERT INTO cnc1(nc1_docentry, nc1_linenum,nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
+				$sqlInsertDetail = "INSERT INTO cnc1(nc1_docentry,nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
                                     nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
-                                    nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_acciva, nc1_linenum,nc1_codimp, 
-									nc1_ubication,nc1_baseline)VALUES(:nc1_docentry, :nc1_linenum,:nc1_itemcode, :nc1_itemname, :nc1_quantity,
+                                    nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_acciva,nc1_codimp, 
+									nc1_ubication,nc1_baseline)VALUES(:nc1_docentry,:nc1_itemcode, :nc1_itemname, :nc1_quantity,
                                     :nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
                                     :nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_acciva, :nc1_linenum,:nc1_codimp, 
 									:nc1_ubication,:nc1_baseline)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':nc1_docentry' => $resInsert,
-					':nc1_linenum' => is_numeric($detail['nc1_linenum']) ? $detail['nc1_linenum'] : 0,
 					':nc1_itemcode' => isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL,
 					':nc1_itemname' => isset($detail['nc1_itemname']) ? $detail['nc1_itemname'] : NULL,
 					':nc1_quantity' => is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0,
