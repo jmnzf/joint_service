@@ -1072,7 +1072,7 @@ class PurchaseInv extends REST_Controller
 										':business'		 => $Data['business']
 									));
 									// se busca la cantidad general del articulo agrupando todos los almacenes y lotes
-									$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode GROUP BY bdi_whscode, bdi_avgprice AND business = :business";
+									$sqlCGA = "SELECT sum(COALESCE(bdi_quantity, 0)) as bdi_quantity, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode AND business = :business GROUP BY bdi_whscode, bdi_avgprice";
 									$resCGA = $this->pedeo->queryTable($sqlCGA, array(
 										':bdi_itemcode' => $detail['fc1_itemcode'],
 										':bdi_whscode'  => $detail['fc1_whscode'],
