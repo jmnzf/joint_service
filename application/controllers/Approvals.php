@@ -22,6 +22,7 @@ class Approvals extends REST_Controller
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('documentCopy');
 	}
 
 	public function setApprovalModel_post()
@@ -460,6 +461,47 @@ class Approvals extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	public function getApprovalDetailCopy_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['ap1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1');
+
+
+		if (isset($copy[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $copy,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+
 
 
 	public function setApprovalDoc_post()
