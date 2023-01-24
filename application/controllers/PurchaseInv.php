@@ -3164,8 +3164,8 @@ class PurchaseInv extends REST_Controller
 					':cec_doctype' => $Data['cfc_basetype']
 				));
 
-				$resta_cantidad = $resEstado1[0]['cantidad'] - $resDev[0]['cantidad'];
-				$resta_item = $resEstado1[0]['item'] - $resDev[0]['item'];
+				$resta_cantidad = abs($resEstado1[0]['cantidad'] - $resDev[0]['cantidad']);
+				$resta_item = abs($resEstado1[0]['item'] - $resDev[0]['item']);
 
 				$sqlEstado2 = "SELECT
 									coalesce(count(distinct t3.fc1_itemcode),0) item,
@@ -3181,20 +3181,21 @@ class PurchaseInv extends REST_Controller
 				));
 
 				if (is_numeric($resta_item) && $resta_item == 0) {
-					$item_del = $resEstado1[0]['item'];
+					$item_del = abs($resEstado1[0]['item']);
 				} else {
-					$item_del = $resta_item;
+					$item_del = abs($resta_item);
 				}
 				// $item_del = $resta_item;
-				$item_fact = $resEstado2[0]['item'];
+				$item_fact = abs($resEstado2[0]['item']);
 
-				$cantidad_del = $resta_cantidad;
-				$cantidad_fact = $resEstado2[0]['cantidad'];
+				$cantidad_del = abs($resta_cantidad);
+				$cantidad_fact = abs($resEstado2[0]['cantidad']);
 
 				
 
 
 				if ($item_del == $item_fact && $cantidad_del == $cantidad_fact) {
+					
 
 						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 											VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";

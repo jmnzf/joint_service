@@ -762,7 +762,7 @@ class PurchaseRet extends REST_Controller
 					if (isset($resItemSerial[0])) {
 						$ManejaSerial = 1;
 
-						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['dc1_itemcode'], $Data['cdc_doctype'], $resInsert, $DocNumVerificado, $Data['cdc_docdate'], 2, $Data['cdc_comment'], $detail['dc1_whscode'], $detail['dc1_quantity'], $Data['cdc_createby']);
+						$AddSerial = $this->generic->addSerial($detail['serials'], $detail['dc1_itemcode'], $Data['cdc_doctype'], $resInsert, $DocNumVerificado, $Data['cdc_docdate'], 2, $Data['cdc_comment'], $detail['dc1_whscode'], $detail['dc1_quantity'], $Data['cdc_createby'],$resInsertDetail,$Data['business']);
 
 						if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
 						} else {
