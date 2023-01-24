@@ -306,7 +306,7 @@ class PurchOrder extends REST_Controller
 
 						if (isset($ressq[0])) {
 
-							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
 
 							if ($resAprobacion['error'] == false){
 
@@ -352,7 +352,7 @@ class PurchOrder extends REST_Controller
 
 						if (isset($ressq[0])) {
 
-							$resAprobacion =  $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
+							$resAprobacion =  $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
 
 							if ($resAprobacion['error'] == false){
 
