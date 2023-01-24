@@ -513,9 +513,9 @@ class User extends REST_Controller
 					ON taus.aus_id_usuario = pgus.pgu_id_usuario
 					INNER JOIN tmau
 					ON tmau.mau_docentry = taus.aus_id_model
-					WHERE tmau.business = :business AND tmau.branch = :branch";
+					WHERE tmau.business = :business ";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 
 		if (isset($resSelect[0])) {
 

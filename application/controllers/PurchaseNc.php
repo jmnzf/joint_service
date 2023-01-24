@@ -304,9 +304,10 @@ class PurchaseNc extends REST_Controller
 		$sqlInsert = "INSERT INTO dcnc(cnc_series, cnc_docnum, cnc_docdate, cnc_duedate, cnc_duedev, cnc_pricelist, cnc_cardcode,
                       cnc_cardname, cnc_currency, cnc_contacid, cnc_slpcode, cnc_empid, cnc_comment, cnc_doctotal, cnc_baseamnt, cnc_taxtotal,
                       cnc_discprofit, cnc_discount, cnc_createat, cnc_baseentry, cnc_basetype, cnc_doctype, cnc_idadd, cnc_adress, cnc_paytype,
-                      cnc_createby, cnc_totalret, cnc_totalretiva)VALUES(:cnc_series, :cnc_docnum, :cnc_docdate, :cnc_duedate, :cnc_duedev, :cnc_pricelist, :cnc_cardcode, :cnc_cardname,
+                      cnc_createby, cnc_totalret, cnc_totalretiva,business,branch)VALUES(:cnc_series, :cnc_docnum, :cnc_docdate, :cnc_duedate, :cnc_duedev, :cnc_pricelist, :cnc_cardcode, :cnc_cardname,
                       :cnc_currency, :cnc_contacid, :cnc_slpcode, :cnc_empid, :cnc_comment, :cnc_doctotal, :cnc_baseamnt, :cnc_taxtotal, :cnc_discprofit, :cnc_discount,
-                      :cnc_createat, :cnc_baseentry, :cnc_basetype, :cnc_doctype, :cnc_idadd, :cnc_adress, :cnc_paytype,:cnc_createby, :cnc_totalret, :cnc_totalretiva)";
+                      :cnc_createat, :cnc_baseentry, :cnc_basetype, :cnc_doctype, :cnc_idadd, :cnc_adress, :cnc_paytype,:cnc_createby, :cnc_totalret, :cnc_totalretiva,
+					  :business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -345,7 +346,9 @@ class PurchaseNc extends REST_Controller
 			':cnc_paytype' => is_numeric($Data['cnc_paytype']) ? $Data['cnc_paytype'] : 0,
 			':cnc_createby' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
 			':cnc_totalret' => is_numeric($Data['cnc_totalret']) ? $Data['cnc_totalret'] : 0,
-			':cnc_totalretiva' => is_numeric($Data['cnc_totalretiva']) ? $Data['cnc_totalretiva'] : 0
+			':cnc_totalretiva' => is_numeric($Data['cnc_totalretiva']) ? $Data['cnc_totalretiva'] : 0,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
