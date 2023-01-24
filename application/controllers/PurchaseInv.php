@@ -680,15 +680,15 @@ class PurchaseInv extends REST_Controller
 					if($Data['cfc_basetype'] == 12){
 						//OBTENER NUMERO DOCUMENTO ORIGEN
 						$DOC = "SELECT cpo_docnum FROM dcpo WHERE cpo_doctype = :cpo_doctype AND cpo_docentry = :cpo_docentry";
-						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cpo_docentry' =>$Data['cpo_baseentry'],':cpo_doctype' => $Data['cpo_basetype']));
+						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':cpo_docentry' =>$Data['cfc_baseentry'],':cpo_doctype' => $Data['cfc_basetype']));
 						foreach ($ContenidoDetalle as $key => $value) {
 							# code...
 							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
 							$sql = "SELECT dcpo.cpo_docnum,cpo1.po1_itemcode FROM dcpo INNER JOIN cpo1 ON dcpo.cpo_docentry = cpo1.po1_docentry 
 							WHERE dcpo.cpo_docentry = :cpo_docentry AND dcpo.cpo_doctype = :cpo_doctype AND cpo1.po1_itemcode = :po1_itemcode";
 							$resSql = $this->pedeo->queryTable($sql,array(
-								':cpo_docentry' =>$Data['cpo_baseentry'],
-								':cpo_doctype' => $Data['cpo_basetype'],
+								':cpo_docentry' =>$Data['cfc_baseentry'],
+								':cpo_doctype' => $Data['cfc_basetype'],
 								':po1_itemcode' => $value['fc1_itemcode']
 							));
 							
