@@ -45,7 +45,7 @@ class Reports extends REST_Controller {
 		//EMPRESA
 		if(!empty($request['business'])){
 			$where[':business'] = $request['business'];
-			$sql .= " AND (tbmi.business = :business OR tbdi.business = :business)"; 
+			$sql .= " AND (tbmi.business = :business)"; 
 		}
 		// ID ARTICULO.
 		if (!empty($request['fil_acticuloId'])) {
@@ -96,11 +96,13 @@ class Reports extends REST_Controller {
 							(tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)) costoacumulado,
 							tbmi.bmi_createby AS creadopor,tbmi.bmi_docdate AS fechadoc,tbmi.bmi_comment AS comentario
 						FROM tbmi
-						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
+						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode and tbmi.bmi_ubication = tbdi.bdi_ubication
+						and tbmi.business = tbdi.business
 						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
 						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
 						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code and dmws.business = :business
 						WHERE 1=1 ".$sql." ORDER BY tbmi.bmi_createat DESC";
+
 		$result = $this->pedeo->queryTable($sqlAnalitic, $where);
 
 		if(isset($result[0])){

@@ -452,6 +452,7 @@ class BuyOffert extends REST_Controller
 							WHERE mau_doctype = :mau_doctype
 							AND pgu_code_user = :pgu_code_user
 							AND mau_status = :mau_status
+							AND tmau.business = :business
 							AND aus_status = :aus_status";
 
 			$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
@@ -459,7 +460,8 @@ class BuyOffert extends REST_Controller
 				':mau_doctype'   => $Data['coc_doctype'],
 				':pgu_code_user' => $Emmpleado,
 				':mau_status' 	 => 1,
-				':aus_status' 	 => 1
+				':aus_status' 	 => 1,
+				':business'		 => $Data['business']
 
 			));
 

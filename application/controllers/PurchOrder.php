@@ -250,6 +250,7 @@ class PurchOrder extends REST_Controller
 							WHERE mau_doctype = :mau_doctype
 							AND pgu_code_user = :pgu_code_user
 							AND mau_status = :mau_status
+							AND tmau.business = :business
 							AND aus_status = :aus_status";
 
 			$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
@@ -257,7 +258,8 @@ class PurchOrder extends REST_Controller
 				':mau_doctype'   => $Data['cpo_doctype'],
 				':pgu_code_user' => $Data['cpo_createby'],
 				':mau_status' 	 => 1,
-				':aus_status' 	 => 1
+				':aus_status' 	 => 1,
+				':business'		 => $Data['business']
 
 			));
 
@@ -304,7 +306,7 @@ class PurchOrder extends REST_Controller
 
 						if (isset($ressq[0])) {
 
-							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
 
 							if ($resAprobacion['error'] == false){
 
@@ -350,7 +352,7 @@ class PurchOrder extends REST_Controller
 
 						if (isset($ressq[0])) {
 
-							$resAprobacion =  $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry']);
+							$resAprobacion =  $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'cpo', 'po1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
 
 							if ($resAprobacion['error'] == false){
 
