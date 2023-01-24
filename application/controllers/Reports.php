@@ -45,7 +45,7 @@ class Reports extends REST_Controller {
 		//EMPRESA
 		if(!empty($request['business'])){
 			$where[':business'] = $request['business'];
-			$sql .= " AND (tbmi.business = :business OR tbdi.business = :business)"; 
+			$sql .= " AND (tbmi.business = :business)"; 
 		}
 		// ID ARTICULO.
 		if (!empty($request['fil_acticuloId'])) {
@@ -101,6 +101,7 @@ class Reports extends REST_Controller {
 						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
 						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code and dmws.business = :business
 						WHERE 1=1 ".$sql." ORDER BY tbmi.bmi_createat DESC";
+
 		$result = $this->pedeo->queryTable($sqlAnalitic, $where);
 
 		if(isset($result[0])){
