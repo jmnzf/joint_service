@@ -1699,13 +1699,13 @@ class PurchaseRet extends REST_Controller
 					VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 	  
 					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-					':bed_docentry' => $Data['vdv_baseentry'],
-					':bed_doctype' => $Data['vdv_basetype'],
+					':bed_docentry' => $Data['cdc_baseentry'],
+					':bed_doctype' => $Data['cdc_basetype'],
 					':bed_status' => 3, //ESTADO CERRADO
-					':bed_createby' => $Data['vdv_createby'],
+					':bed_createby' => $Data['cdc_createby'],
 					':bed_date' => date('Y-m-d'),
 					':bed_baseentry' => $resInsert,
-					':bed_basetype' => $Data['vdv_doctype']
+					':bed_basetype' => $Data['cdc_doctype']
 					));
 	  
 					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
