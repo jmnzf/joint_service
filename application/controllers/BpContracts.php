@@ -23,6 +23,7 @@ class BpContracts extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('documentCopy');
 	}
 
 	//CREAR NUEVO CONTRATO
@@ -583,14 +584,15 @@ class BpContracts extends REST_Controller
 
 			foreach ($ContenidoDetalle as $key => $detail) {
 
-				$sqlInsertDetail = "INSERT INTO csn1(sn1_docentry, sn1_itemcode, sn1_itemname, sn1_quantity, sn1_uom, sn1_whscode,
+				$sqlInsertDetail = "INSERT INTO csn1(sn1_docentry, sn1_linenum,sn1_itemcode, sn1_itemname, sn1_quantity, sn1_uom, sn1_whscode,
                                     sn1_price, sn1_vat, sn1_vatsum, sn1_discount, sn1_linetotal, sn1_costcode, sn1_ubusiness, sn1_project,
-                                    sn1_acctcode, sn1_basetype, sn1_doctype, sn1_avprice, sn1_inventory, sn1_acciva, sn1_codimp)VALUES(:sn1_docentry, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
+                                    sn1_acctcode, sn1_basetype, sn1_doctype, sn1_avprice, sn1_inventory, sn1_acciva, sn1_codimp)VALUES(:sn1_docentry,:sn1_linenum, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
                                     :sn1_uom, :sn1_whscode,:sn1_price, :sn1_vat, :sn1_vatsum, :sn1_discount, :sn1_linetotal, :sn1_costcode, :sn1_ubusiness, :sn1_project,
                                     :sn1_acctcode, :sn1_basetype, :sn1_doctype, :sn1_avprice, :sn1_inventory, :sn1_acciva, :sn1_codimp)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sn1_docentry' => $resInsert,
+					':sn1_linenum' => isset($detail['sn1_linenum']) ? $detail['sn1_linenum'] : NULL,
 					':sn1_itemcode' => isset($detail['sn1_itemcode']) ? $detail['sn1_itemcode'] : NULL,
 					':sn1_itemname' => isset($detail['sn1_itemname']) ? $detail['sn1_itemname'] : NULL,
 					':sn1_quantity' => is_numeric($detail['sn1_quantity']) ? $detail['sn1_quantity'] : 0,
@@ -847,17 +849,12 @@ class BpContracts extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT DISTINCT dc.* from responsestatus rs
-						join  tcsn dc on dc.csn_doctype = rs.tipo and rs.estado = 'Abierto'
-						where dc.csn_cardcode = :csn_cardcode
-						AND dc.business = :business AND dc.branch = :branch";
+		$copyData = $this->documentcopy->copyData('tcsn','csn',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":csn_cardcode" => $Data['dms_card_code'], ':business' => $Data['business'], ':branch' => $Data['branch']));
-
-		if (isset($resSelect[0])) {
+		if (isset($copyData[0])) {
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copyData,
 				'mensaje' => ''
 			);
 		} else {
@@ -959,10 +956,7 @@ class BpContracts extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM csn1 WHERE sn1_docentry =:sn1_docentry";
-
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":sn1_docentry" => $Data['sn1_docentry']));
-
+		$copy = $this->documentcopy->Copy($Data['sn1_docentry'],'tcsn','csn1','csn','sn1');
 
 		$sqlSelect2 = "SELECT tcsn.csn_comment,
 												tcsn.csn_enddate,
@@ -989,11 +983,11 @@ class BpContracts extends REST_Controller
 			':csn_docentry' => $Data['sn1_docentry']
 		));
 
-		if (isset($resSelect[0])) {
+		if (isset($copy[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copy,
 				'detallec' => $resSelect2,
 				'mensaje' => ''
 			);

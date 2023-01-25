@@ -31,6 +31,7 @@ class Quotation extends REST_Controller
 	public function createQuotation_post()
 	{
 		$Data = $this->post();
+		$DECI_MALES =  $this->generic->getDecimals();
 
 		if (!isset($Data['business']) OR
 				!isset($Data['branch'])) {
