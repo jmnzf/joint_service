@@ -1107,7 +1107,7 @@ class Quotation extends REST_Controller
 			return;
 		}
 
-		$copyData = $this->documentcopy->copyData('dvct','vct',$Data['dms_card_code'],$Data['business'],$Data['branch']);
+		$copyData = $this->documentcopy->copyData('dvct','dvc',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
 		if (isset($copyData[0])) {
 
