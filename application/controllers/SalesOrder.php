@@ -507,6 +507,45 @@ class SalesOrder extends REST_Controller
 				return;
 			}
 
+			// SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
+			// SI EL DOCTYPE = 21
+			if ($Data['vov_basetype'] == 21) {
+
+				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+					':bed_docentry' => $Data['vov_baseentry'],
+					':bed_doctype' => $Data['vov_basetype'],
+					':bed_status' => 3, //ESTADO CERRADO
+					':bed_createby' => $Data['vov_createby'],
+					':bed_date' => date('Y-m-d'),
+					':bed_baseentry' => $resInsert,
+					':bed_basetype' => $Data['vov_doctype']
+				));
+
+
+				if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+				} else {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resInsertEstado,
+						'mensaje'	=> 'No se pudo registrar la orden de compras',
+						'proceso' => 'Insertar estado documento'
+					);
+
+
+					$this->response($respuesta);
+
+					return;
+				}
+			}
+
 			//FIN PROCESO ESTADO DEL DOCUMENTO
 
 
