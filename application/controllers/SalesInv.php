@@ -24,6 +24,7 @@ class SalesInv extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('account');
+		$this->load->library('DocumentCopy');
 	}
 
 	//CREAR NUEVA FACTURA DE VENTAS
@@ -4525,71 +4526,8 @@ class SalesInv extends REST_Controller
 		$resCopyBy = $this->pedeo->queryTable($copyBy,array(':dvf_docentry' => $Data['fv1_docentry']));
 		if(isset($resCopyBy[0])){
 			if($resCopyBy[0]['dvf_doctype'] == 34){
-				$sqlSelect = "SELECT
-				t1.fv1_linenum,
-				t1.fv1_acciva,
-				t1.fv1_acctcode,
-				t1.fv1_avprice,
-				t1.fv1_basetype,
-				t1.fv1_costcode,
-				t1.fv1_discount,
-				t1.fv1_docentry,
-				t1.fv1_doctype,
-				t1.fv1_id,
-				t1.fv1_inventory,
-				t1.fv1_itemcode,
-				t1.fv1_itemname,
-				abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum)))) * t1.fv1_price fv1_linetotal,
-				t1.fv1_price,
-				t1.fv1_project,
-				abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum))) as fv1_quantity,
-				t1.fv1_ubusiness,
-				t1.fv1_uom,
-				t1.fv1_vat,
-				t1.fv1_vatsum vatsum_real,
-				abs(((((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
-				t1.fv1_whscode,
-				dmar.dma_series_code,
-				t1.fv1_ubication,
-				t1.fv1_codimp,
-				get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
-				get_lote(t1.fv1_itemcode) as fun_lote,
-				t1.fv1_fixrate,
-				case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
-				case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
-				from dvfv t0
-				inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
-				INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
-				WHERE t1.fv1_docentry = :fv1_docentry
-				GROUP BY
-				t1.fv1_linenum,
-				t1.fv1_acciva,
-				t1.fv1_acctcode,
-				t1.fv1_avprice,
-				t1.fv1_basetype,
-				t1.fv1_costcode,
-				t1.fv1_discount,
-				t1.fv1_docentry,
-				t1.fv1_doctype,
-				t1.fv1_id,
-				t1.fv1_inventory,
-				t1.fv1_itemcode,
-				t1.fv1_itemname,
-				t1.fv1_linetotal,
-				t1.fv1_price,
-				t1.fv1_project,
-				t1.fv1_ubusiness,
-				t1.fv1_uom,
-				t1.fv1_vat,
-				t1.fv1_vatsum,
-				t1.fv1_whscode,
-				t1.fv1_quantity,
-				dmar.dma_series_code,
-				t1.fv1_ubication,
-				t1.fv1_codimp,
-				t1.fv1_fixrate,t0.dvf_doctype,t0.dvf_docentry,
-				t0.business,dmar.dma_advertisement,dmar.dma_modular
-				HAVING abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum))) > 0";
+				
+				$copy = $this->documentcopy->Copy($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1');
 
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
@@ -4598,11 +4536,10 @@ class SalesInv extends REST_Controller
 								AND dvf_doctype = gtf_doctype
 								WHERE dvf_docentry = :dvf_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fv1_docentry" => $Data['fv1_docentry']));
 
 				$resSelectFv = $this->pedeo->queryTable($sqlSelectFv, array(':dvf_docentry' => $Data['fv1_docentry']));
 
-				foreach ($resSelect as $key => $value) {
+				foreach ($copy as $key => $value) {
 
 					$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
 									FROM vfv1
@@ -4615,17 +4552,17 @@ class SalesInv extends REST_Controller
 					$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':fv1_docentry' => $value['fv1_docentry']));
 
 					if (isset($resSelect2[0])) {
-						$resSelect[$key]['retenciones'] = $resSelect2;
+						$copy[$key]['retenciones'] = $resSelect2;
 					}
 				}
 
-				if (isset($resSelect[0])) {
+				if (isset($copy[0])) {
 
 					if (isset($resSelectFv[0])) {
 
 						$arr = [];
 
-						$arr['detalle'] = $resSelect;
+						$arr['detalle'] = $copy;
 						$arr['complemento'] = $resSelectFv;
 
 						if(empty($arr['complemento'][0]['dvf_igtfcode']));{
@@ -4639,7 +4576,7 @@ class SalesInv extends REST_Controller
 						);
 					} else{
 
-						$arr['detalle'] = $resSelect;
+						$arr['detalle'] = $copy;
 						unset($arr['complemento']);
 					}
 				} else {
@@ -4652,71 +4589,9 @@ class SalesInv extends REST_Controller
 				}
 
 			}else if($resCopyBy[0]['dvf_doctype'] == 5){
-				$sqlSelect = "SELECT
-				t1.fv1_linenum,
-				t1.fv1_acciva,
-				t1.fv1_acctcode,
-				t1.fv1_avprice,
-				t1.fv1_basetype,
-				t1.fv1_costcode,
-				t1.fv1_discount,
-				t1.fv1_docentry,
-				t1.fv1_doctype,
-				t1.fv1_id,
-				t1.fv1_inventory,
-				t1.fv1_itemcode,
-				t1.fv1_itemname,
-				abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum)))) * t1.fv1_price fv1_linetotal,
-				t1.fv1_price,
-				t1.fv1_project,
-				abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum))) as fv1_quantity,
-				t1.fv1_ubusiness,
-				t1.fv1_uom,
-				t1.fv1_vat,
-				t1.fv1_vatsum vatsum_real,
-				abs(((((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
-				t1.fv1_whscode,
-				dmar.dma_series_code,
-				t1.fv1_ubication,
-				t1.fv1_codimp,
-				get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
-				get_lote(t1.fv1_itemcode) as fun_lote,
-				t1.fv1_fixrate,
-				case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
-				case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
-				from dvfv t0
-				inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
-				INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
-				WHERE t1.fv1_docentry = :fv1_docentry
-				GROUP BY
-				t1.fv1_linenum,
-				t1.fv1_acciva,
-				t1.fv1_acctcode,
-				t1.fv1_avprice,
-				t1.fv1_basetype,
-				t1.fv1_costcode,
-				t1.fv1_discount,
-				t1.fv1_docentry,
-				t1.fv1_doctype,
-				t1.fv1_id,
-				t1.fv1_inventory,
-				t1.fv1_itemcode,
-				t1.fv1_itemname,
-				t1.fv1_linetotal,
-				t1.fv1_price,
-				t1.fv1_project,
-				t1.fv1_ubusiness,
-				t1.fv1_uom,
-				t1.fv1_vat,
-				t1.fv1_vatsum,
-				t1.fv1_whscode,
-				t1.fv1_quantity,
-				dmar.dma_series_code,
-				t1.fv1_ubication,
-				t1.fv1_codimp,
-				t1.fv1_fixrate,t0.dvf_doctype,t0.dvf_docentry,
-				t0.business,dmar.dma_advertisement,dmar.dma_modular
-				HAVING abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum))) > 0";
+				
+				$copy = $this->documentcopy->Copy($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1');
+				
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
 								LEFT JOIN igtf
@@ -4724,11 +4599,10 @@ class SalesInv extends REST_Controller
 								AND dvf_doctype = gtf_doctype
 								WHERE dvf_docentry = :dvf_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fv1_docentry" => $Data['fv1_docentry']));
 
 				$resSelectFv = $this->pedeo->queryTable($sqlSelectFv, array(':dvf_docentry' => $Data['fv1_docentry']));
 
-				foreach ($resSelect as $key => $value) {
+				foreach ($copy as $key => $value) {
 
 					$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
 					FROM vfv1
@@ -4741,16 +4615,16 @@ class SalesInv extends REST_Controller
 					$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':fv1_docentry' => $value['fv1_docentry']));
 
 					if (isset($resSelect2[0])) {
-						$resSelect[$key]['retenciones'] = $resSelect2;
+						$copy[$key]['retenciones'] = $resSelect2;
 					}
 				}
 
-				if (isset($resSelect[0])) {
+				if (isset($copy[0])) {
 
 					if (isset($resSelectFv[0])) {
 
 						$arr = [];
-						$arr['detalle'] = $resSelect;
+						$arr['detalle'] = $copy;
 						$arr['complemento'] = $resSelectFv;
 
 						if(empty($arr['complemento'][0]['dvf_igtfcode']));{
@@ -4764,7 +4638,7 @@ class SalesInv extends REST_Controller
 						);
 					} else{
 
-						$arr['detalle'] = $resSelect;
+						$arr['detalle'] = $copy;
 					}
 				} else {
 
@@ -4784,10 +4658,6 @@ class SalesInv extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
-
-
-
 	//OBTENER FACTURA DE VENTA POR ID SOCIO DE NEGOCIO
 	public function getSalesInvoiceBySN_get()
 	{
@@ -4806,25 +4676,14 @@ class SalesInv extends REST_Controller
 
 			return;
 		}
-		$where = "";
-		if(isset($Data['doctype']) && !empty($Data['doctype'])){	
-			$where = " AND dvf_doctype = ".$Data['doctype'];
-		}
-		$sqlSelect = "SELECT
-						t0.*
-					FROM dvfv t0
-					left join estado_doc t1 on t0.dvf_docentry = t1.entry and t0.dvf_doctype = t1.tipo
-					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-					WHERE t2.estado = 'Abierto' and t0.dvf_cardcode =:dvf_cardcode
-					AND t0.business = :business AND t0.branch = :branch".$where;
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvf_cardcode" => $Data['dms_card_code'],':business' => $Data['business'], ':branch' => $Data['branch']));
+		$copyData = $this->documentcopy->copyData('dvfv','dvf',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		if (isset($resSelect[0])) {
+		if (isset($copyData[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copyData,
 				'mensaje' => ''
 			);
 		} else {
@@ -4838,12 +4697,6 @@ class SalesInv extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
-
-
 
 	private function getUrl($data, $caperta)
 	{

@@ -23,6 +23,8 @@ class SalesOrder extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('DocumentCopy');
+		$this->load->library('aprobacion');
 	}
 
 	//CREAR NUEVO PEDIDO
@@ -244,96 +246,149 @@ class SalesOrder extends REST_Controller
 
 		if (!isset($resVerificarAprobacion[0])) {
 
-			//VERIFICAR MODELO DE APROBACION
+			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
+							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
+							FROM tmau
+							INNER JOIN mau1
+							ON mau_docentry =  au1_docentry
+							INNER JOIN taus
+							ON mau_docentry  = aus_id_model
+							INNER JOIN pgus
+							ON aus_id_usuario = pgu_id_usuario
+							WHERE mau_doctype = :mau_doctype
+							AND pgu_code_user = :pgu_code_user
+							AND mau_status = :mau_status
+							AND tmau.business = :business
+							AND aus_status = :aus_status";
 
-			$sqlDocModelo = " SELECT * FROM tmau inner join mau1 on mau_docentry = au1_docentry where mau_doctype = :mau_doctype";
-			$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(':mau_doctype' => $Data['vov_doctype']));
+			$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
+
+				':mau_doctype'   => $Data['vov_doctype'],
+				':pgu_code_user' => $Data['vov_createby'],
+				':mau_status' 	 => 1,
+				':aus_status' 	 => 1,
+				':business'		 => $Data['business']
+
+			));
 
 			if (isset($resDocModelo[0])) {
 
-				$sqlModUser = "SELECT aus_id FROM taus
-																	 INNER JOIN pgus
-																	 ON aus_id_usuario = pgu_id_usuario
-																	 WHERE aus_id_model = :aus_id_model
-																	 AND pgu_code_user = :pgu_code_user";
+				foreach ($resDocModelo as $key => $value) {
 
-				$resModUser = $this->pedeo->queryTable($sqlModUser, array(':aus_id_model' => $resDocModelo[0]['mau_docentry'], ':pgu_code_user' => $Data['vov_createby']));
-
-				if (isset($resModUser[0])) {
-					// VALIDACION DE APROBACION
-
-					$condicion1 = $resDocModelo[0]['au1_c1']; // ESTO ME DICE SI LA CONDICION DEL DOCTOTAL ES 1 MAYOR 2 MENOR
-					$valorDocTotal = $resDocModelo[0]['au1_doctotal'];
-					$valorSociosNegocio = $resDocModelo[0]['au1_sn'];
+					//VERIFICAR MODELO DE APROBACION
+					$condicion = $value['condicion'];
+					$valorDocTotal1 = $value['doctotal'];
+					$valorDocTotal2 = $value['doctotal2'];
 					$TotalDocumento = $Data['vov_doctotal'];
+					$doctype =  $value['doctype'];
+					$modelo = $value['modelo'];
 
-					if (trim($Data['vov_currency']) != $TasaDocLoc) {
-						$TotalDocumento = ($TotalDocumento * $TasaDocLoc);
-					}
+					if (trim($Data['vov_currency']) != $MONEDASYS) {
 
+						if (trim($Data['vov_currency']) != $MONEDALOCAL) {
 
-					if (is_numeric($valorDocTotal) && $valorDocTotal > 0) { //SI HAY UN VALOR Y SI ESTE ES MAYOR A CERO
-
-						if (!empty($valorSociosNegocio)) { // CON EL SOCIO DE NEGOCIO
-
-							if ($condicion1 == 1) {
-
-								if ($TotalDocumento >= $valorDocTotal) {
-
-									if (in_array($Data['vov_cardcode'], explode(",", $valorSociosNegocio))) {
-
-										$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'vov', 'ov1');
-									}
-								}
-							} else if ($condicion1 == 2) {
-
-								if ($TotalDocumento <= $valorDocTotal) {
-									if (in_array($Data['vov_cardcode'], explode(",", $valorSociosNegocio))) {
-
-										$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'vov', 'ov1');
-									}
-								}
-							}
-						} else { // SIN EL SOCIO DE NEGOCIO
-
-
-							if ($condicion1 == 1) {
-								if ($TotalDocumento >= $valorDocTotal) {
-
-									$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'vov', 'ov1');
-								}
-							} else if ($condicion1 == 2) {
-								if ($TotalDocumento <= $valorDocTotal) {
-
-									$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'vov', 'ov1');
-								}
-							}
-						}
-					} else { // SI NO SE COMPARA EL TOTAL DEL DOCUMENTO
-
-						if (!empty($valorSociosNegocio)) {
-
-							if (in_array($Data['vov_cardcode'], explode(",", $valorSociosNegocio))) {
-
-								$respuesta = $this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'vov', 'ov1');
-							}
+							$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
+							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 						} else {
 
-							$respuesta = array(
-								'error' => true,
-								'data'  => array(),
-								'mensaje' => 'No se ha encontraro condiciones en el modelo de aprobacion, favor contactar con su administrador del sistema'
-							);
-
-							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-							return;
+							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
 						}
 					}
+
+					if ($condicion == ">") {
+
+						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
+								FROM tmau
+								INNER JOIN  mau1
+								on mau_docentry =  au1_docentry
+								AND :au1_doctotal > au1_doctotal
+								AND mau_doctype = :mau_doctype
+								AND mau_docentry = :mau_docentry";
+
+						$ressq = $this->pedeo->queryTable($sq, array(
+
+							':au1_doctotal' => $TotalDocumento,
+							':mau_doctype'  => $doctype,
+							':mau_docentry' => $modelo
+						));
+
+						if (isset($ressq[0])) {
+							
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'vov', 'ov1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
+							
+							if ($resAprobacion['error'] == false){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => [],
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAprobacion,
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}
+						}
+					} else if ($condicion == "BETWEEN") {
+
+						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
+								FROM tmau
+								INNER JOIN  mau1
+								on mau_docentry =  au1_docentry
+								AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
+								AND mau_doctype = :mau_doctype
+								AND mau_docentry = :mau_docentry";
+
+						$ressq = $this->pedeo->queryTable($sq, array(
+
+							':doctotal' 	  => $TotalDocumento,
+							':mau_doctype'  => $doctype,
+							':mau_docentry' => $modelo
+						));
+
+						if (isset($ressq[0])) {
+							
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'vov', 'ov1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
+				
+							if ($resAprobacion['error'] == false){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => [],
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAprobacion,
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}
+						}
+					}
+					//VERIFICAR MODELO DE PROBACION
 				}
 			}
-
-			//VERIFICAR MODELO DE PROBACION
 		}
 		// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
 
@@ -1060,92 +1115,23 @@ class SalesOrder extends REST_Controller
 		}
 
 
-				$sqlSelect = "SELECT
-				t1.ov1_linenum,
-				t1.ov1_acciva,
-				t1.ov1_acctcode,
-				t1.ov1_avprice,
-				t1.ov1_basetype,
-				t1.ov1_costcode,
-				t1.ov1_discount,
-				t1.ov1_docentry,
-				t1.ov1_doctype,
-				t1.ov1_id,
-				t1.ov1_inventory,
-				t1.ov1_itemcode,
-				t1.ov1_itemname,
-				abs((t1.ov1_quantity - (get_quantity(t0.vov_doctype,t0.vov_docentry,t1.ov1_itemcode,t1.ov1_linenum)))) * t1.ov1_price ov1_linetotal,
-				t1.ov1_price,
-				t1.ov1_project,
-				abs(t1.ov1_quantity - (get_quantity(t0.vov_doctype,t0.vov_docentry,t1.ov1_itemcode,t1.ov1_linenum)))as ov1_quantity,
-				t1.ov1_ubusiness,
-				t1.ov1_uom,
-				t1.ov1_vat,
-				t1.ov1_vatsum vatsum_real,
-				abs(((((t1.ov1_quantity - (get_quantity(t0.vov_doctype,t0.vov_docentry,t1.ov1_itemcode,t1.ov1_linenum)))) * t1.ov1_price) * t1.ov1_vat)) / 100 ov1_vatsum,
-				t1.ov1_whscode,
-				dmar.dma_series_code,
-				t1.ov1_ubication,
-				t1.ov1_codimp,
-				get_ubication(t1.ov1_whscode, t0.business) as fun_ubication,
-				get_lote(t1.ov1_itemcode) as fun_lote,
-				case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
-				case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
-				from dvov t0
-				inner join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
-				INNER JOIN dmar ON t1.ov1_itemcode = dmar.dma_item_code
-				WHERE t1.ov1_docentry = :ov1_docentry
-				GROUP BY
-				t1.ov1_linenum,
-				t1.ov1_acciva,
-				t1.ov1_acctcode,
-				t1.ov1_avprice,
-				t1.ov1_basetype,
-				t1.ov1_costcode,
-				t1.ov1_discount,
-				t1.ov1_docentry,
-				t1.ov1_doctype,
-				t1.ov1_id,
-				t1.ov1_inventory,
-				t1.ov1_itemcode,
-				t1.ov1_itemname,
-				t1.ov1_linetotal,
-				t1.ov1_price,
-				t1.ov1_project,
-				t1.ov1_ubusiness,
-				t1.ov1_uom,
-				t1.ov1_vat,
-				t1.ov1_vatsum,
-				t1.ov1_whscode,
-				t1.ov1_quantity,
-				dmar.dma_series_code,
-				t1.ov1_ubication,
-				t1.ov1_codimp,
-				t0.business,
-				t0.vov_doctype,
-				t0.vov_docentry,dmar.dma_advertisement,dmar.dma_modular
-				HAVING abs((t1.ov1_quantity - (get_quantity(t0.vov_doctype,t0.vov_docentry,t1.ov1_itemcode,t1.ov1_linenum)))) > 0";
+		$copy = $this->documentcopy->Copy($Data['ov1_docentry'],'dvov','vov1','vov','ov1');
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-					":ov1_docentry" => $Data['ov1_docentry']
-				));
+		
+		if (isset($copy[0])) {
+			$respuesta = array(
+				'error' => false,
+				'data'  => $copy,
+				'mensaje' => ''
+			);
+		} else {
 
-			
-			if (isset($resSelect[0])) {
-
-				$respuesta = array(
-					'error' => false,
-					'data'  => $resSelect,
-					'mensaje' => ''
-				);
-			} else {
-	
-				$respuesta = array(
-					'error'   => true,
-					'data' => array(),
-					'mensaje'	=> 'busqueda sin resultados'
-				);
-			}
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
 
 
 		
@@ -1215,21 +1201,13 @@ class SalesOrder extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT
-						t0.*
-					FROM dvov t0
-					left join estado_doc t1 on t0.vov_docentry = t1.entry and t0.vov_doctype = t1.tipo
-					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-					where t2.estado = 'Abierto' and t0.vov_cardcode =:vov_cardcode
-					AND t0.business = :business AND t0.branch = :branch";
+		$copyData = $this->documentcopy->copyData('dvov','vov',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vov_cardcode" => $Data['dms_card_code'],":business" => $Data['business'],":branch" => $Data['branch']));
-
-		if (isset($resSelect[0])) {
+		if (isset($copyData[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copyData,
 				'mensaje' => ''
 			);
 		} else {

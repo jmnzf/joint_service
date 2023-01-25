@@ -233,6 +233,7 @@ class Panuncios extends REST_Controller
 			bta_libre,
 			bta_status,
 			bta_palabras,
+			bta_letras,
 			bta_precio,
 			bta_dias,
 			bta_cantidad,

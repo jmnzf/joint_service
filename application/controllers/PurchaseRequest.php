@@ -1185,10 +1185,6 @@ class PurchaseRequest extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
-
-
-
 	//OBTENER solicitud DE VENTA POR ID SOCIO DE NEGOCIO
 	public function getPurchaseRequestBySN_get()
 	{
