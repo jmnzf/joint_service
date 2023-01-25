@@ -24,10 +24,6 @@ class Items extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 	}
 
-	
-dma_advertisement
-dma_modular
-
 	//Crear nuevo articulo
 	public function createItems_post()
 	{

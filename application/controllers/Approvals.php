@@ -372,9 +372,6 @@ class Approvals extends REST_Controller
 
 		if (
 			!isset($Data['dms_card_code']) or
-			!isset($Data['dms_card_code']) or
-			!isset($Data['dms_card_code']) or
-			!isset($Data['pap_origen']) or
 			!isset($Data['business']) or
 			!isset($Data['branch']) ) { // SOLICITANTE
 
@@ -396,7 +393,7 @@ class Approvals extends REST_Controller
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 			":pap_cardcode" => $Data['dms_card_code'],
-			":pap_origen"   => $Data['pap_origen'],
+			":pap_origen"   => 1,
 			":business" 	=> $Data['business'],
 			":branch" 		=> $Data['branch']
 		));

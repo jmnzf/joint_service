@@ -535,7 +535,7 @@ class SalesDel extends REST_Controller
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
-
+			print_r($Data);exit;
 			// Se actualiza la serie de la numeracion del documento
 
 			$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
@@ -612,9 +612,9 @@ class SalesDel extends REST_Controller
 				if (isset($resDocInicio[0])) {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,busines)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -630,6 +630,7 @@ class SalesDel extends REST_Controller
 						':bmd_cardcode' => isset($Data['vem_cardcode']) ? $Data['vem_cardcode'] : NULL,
 						':bmd_cardtype' => 1,
 						':bmd_currency' => isset($Data['vem_currency'])?$Data['vem_currency']:NULL,
+						':business' => isset($Data['business']) ? $Data['business'] : NULL
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
