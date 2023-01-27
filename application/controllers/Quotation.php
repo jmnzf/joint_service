@@ -24,12 +24,14 @@ class Quotation extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('DocumentCopy');
+		$this->load->library('aprobacion');
 	}
 
 	//CREAR NUEVA COTIZACION
 	public function createQuotation_post()
 	{
 		$Data = $this->post();
+		$DECI_MALES =  $this->generic->getDecimals();
 
 		if (!isset($Data['business']) OR
 				!isset($Data['branch'])) {
@@ -203,8 +205,9 @@ class Quotation extends REST_Controller
 			':bed_docentry' => $Data['dvc_baseentry'],
 			':bed_doctype'  => $Data['dvc_basetype'],
 			':bed_status'   => 4 // 4 APROBADO SEGUN MODELO DE APROBACION
-		));
 
+		));
+		
 		if (!isset($resVerificarAprobacion[0])) {
 
 			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
@@ -219,6 +222,7 @@ class Quotation extends REST_Controller
 							WHERE mau_doctype = :mau_doctype
 							AND pgu_code_user = :pgu_code_user
 							AND mau_status = :mau_status
+							AND tmau.business = :business
 							AND aus_status = :aus_status";
 
 			$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
@@ -226,7 +230,8 @@ class Quotation extends REST_Controller
 				':mau_doctype'   => $Data['dvc_doctype'],
 				':pgu_code_user' => $Data['dvc_createby'],
 				':mau_status' 	 => 1,
-				':aus_status' 	 => 1
+				':aus_status' 	 => 1,
+				':business'		 => $Data['business']
 
 			));
 
@@ -240,50 +245,109 @@ class Quotation extends REST_Controller
 					$valorDocTotal2 = $value['doctotal2'];
 					$TotalDocumento = $Data['dvc_doctotal'];
 					$doctype =  $value['doctype'];
+					$modelo = $value['modelo'];
 
-					if (trim($Data['dvc_currency']) != $TasaDocLoc) {
-						$TotalDocumento = ($TotalDocumento * $TasaDocLoc);
+					if (trim($Data['dvc_currency']) != $MONEDASYS) {
+
+						if (trim($Data['dvc_currency']) != $MONEDALOCAL) {
+
+							$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
+							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
+						} else {
+
+							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
+						}
 					}
 
 					if ($condicion == ">") {
 
-						$sq = " SELECT mau_quantity,mau_approvers
+						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
 								FROM tmau
 								INNER JOIN  mau1
 								on mau_docentry =  au1_docentry
 								AND :au1_doctotal > au1_doctotal
-								AND mau_doctype = :mau_doctype";
+								AND mau_doctype = :mau_doctype
+								AND mau_docentry = :mau_docentry";
 
 						$ressq = $this->pedeo->queryTable($sq, array(
 
 							':au1_doctotal' => $TotalDocumento,
-							':mau_doctype'  => $doctype
+							':mau_doctype'  => $doctype,
+							':mau_docentry' => $modelo
 						));
 
-						if (isset($ressq[0]) && count($ressq) > 1) {
-							break;
-						} else if (isset($ressq[0])) {
-							$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'dvc', 'vc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])));
+						if (isset($ressq[0])) {
+							
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'dvc', 'vc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
+							
+							if ($resAprobacion['error'] == false){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => [],
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAprobacion,
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}
 						}
 					} else if ($condicion == "BETWEEN") {
 
-						$sq = " SELECT mau_quantity,mau_approvers
+						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
 								FROM tmau
 								INNER JOIN  mau1
 								on mau_docentry =  au1_docentry
 								AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
-								AND mau_doctype = :mau_doctype";
+								AND mau_doctype = :mau_doctype
+								AND mau_docentry = :mau_docentry";
 
 						$ressq = $this->pedeo->queryTable($sq, array(
 
-							':doctotal' 	 => $TotalDocumento,
-							':mau_doctype' => $doctype
+							':doctotal' 	  => $TotalDocumento,
+							':mau_doctype'  => $doctype,
+							':mau_docentry' => $modelo
 						));
 
-						if (isset($ressq[0]) && count($ressq) > 1) {
-							break;
-						} else if (isset($ressq[0])) {
-							$this->setAprobacion($Data, $ContenidoDetalle, $resMainFolder[0]['main_folder'], 'dvc', 'vc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])));
+						if (isset($ressq[0])) {
+							
+							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'dvc', 'vc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
+				
+							if ($resAprobacion['error'] == false){
+
+								$respuesta = array(
+									'error'   => false,
+									'data'    => [],
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}else{
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => $resAprobacion,
+									'mensaje' => $resAprobacion['mensaje'],
+									
+								);
+
+								return $this->response($respuesta);
+
+							}
 						}
 					}
 					//VERIFICAR MODELO DE PROBACION
@@ -444,6 +508,44 @@ class Quotation extends REST_Controller
 
 				return;
 			}
+			// SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
+			// SI EL DOCTYPE = 21
+			if ($Data['dvc_basetype'] == 21) {
+
+				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+					':bed_docentry' => $Data['dvc_baseentry'],
+					':bed_doctype' => $Data['dvc_basetype'],
+					':bed_status' => 3, //ESTADO CERRADO
+					':bed_createby' => $Data['dvc_createby'],
+					':bed_date' => date('Y-m-d'),
+					':bed_baseentry' => $resInsert,
+					':bed_basetype' => $Data['dvc_doctype']
+				));
+
+
+				if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+				} else {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resInsertEstado,
+						'mensaje'	=> 'No se pudo registrar la orden de compras',
+						'proceso' => 'Insertar estado documento'
+					);
+
+
+					$this->response($respuesta);
+
+					return;
+				}
+			}
 
 			//FIN PROCESO ESTADO DEL DOCUMENTO
 
@@ -461,9 +563,9 @@ class Quotation extends REST_Controller
 				if (isset($resDocInicio[0])) {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,business)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -479,6 +581,7 @@ class Quotation extends REST_Controller
 						':bmd_cardcode' => isset($Data['dvc_cardcode']) ? $Data['dvc_cardcode'] : NULL,
 						':bmd_cardtype' => 1,
 						':bmd_currency' => isset($Data['dvc_currency'])?$Data['dvc_currency']:NULL,
+						':business' => isset($Data['business'])?$Data['business']:NULL
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -500,9 +603,9 @@ class Quotation extends REST_Controller
 				} else {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,business)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 						':bmd_doctype' => is_numeric($Data['dvc_doctype']) ? $Data['dvc_doctype'] : 0,
@@ -517,6 +620,7 @@ class Quotation extends REST_Controller
 						':bmd_cardcode' => isset($Data['dvc_cardcode']) ? $Data['dvc_cardcode'] : NULL,
 						':bmd_cardtype' => 1,
 						':bmd_currency' => isset($Data['dvc_currency'])?$Data['dvc_currency']:NULL,
+						':business' => isset($Data['business'])?$Data['business']:NULL,
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -539,9 +643,9 @@ class Quotation extends REST_Controller
 			} else {
 
 				$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,business)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 				$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 					':bmd_doctype' => is_numeric($Data['dvc_doctype']) ? $Data['dvc_doctype'] : 0,
@@ -556,6 +660,7 @@ class Quotation extends REST_Controller
 					':bmd_cardcode' => isset($Data['dvc_cardcode']) ? $Data['dvc_cardcode'] : NULL,
 					':bmd_cardtype' => 1,
 					':bmd_currency' => isset($Data['dvc_currency'])?$Data['dvc_currency']:NULL,
+					':business' => isset($Data['business']) ? $Data['business'] : NULL
 				));
 
 				if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -1044,21 +1149,13 @@ class Quotation extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT
-					t0.*
-					FROM dvct t0
-					left join estado_doc t1 on t0.dvc_docentry = t1.entry and t0.dvc_doctype = t1.tipo
-					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-					where t2.estado = 'Abierto' and t0.dvc_cardcode =:dvc_cardcode
-					AND t0.business = :business AND t0.branch = :branch";
+		$copyData = $this->documentcopy->copyData('dvct','dvc',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_cardcode" => $Data['dms_card_code'], ':business' => $Data['business'], ':branch' => $Data['branch']));
-
-		if (isset($resSelect[0])) {
+		if (isset($copyData[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copyData,
 				'mensaje' => ''
 			);
 		} else {
@@ -1072,14 +1169,6 @@ class Quotation extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
-
-
-
-
 
 	private function getUrl($data, $caperta)
 	{

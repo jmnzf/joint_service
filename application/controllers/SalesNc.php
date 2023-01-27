@@ -516,10 +516,10 @@ class SalesNc extends REST_Controller
 
 					if (isset($resDocInicio[0])) {
 
-						 $sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
-														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+						bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,business)
+						VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+						:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 							':bmd_doctype' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
@@ -534,6 +534,7 @@ class SalesNc extends REST_Controller
 							':bmd_cardcode' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 							':bmd_cardtype' => 1,
 							':bmd_currency' => isset($Data['vnc_currency'])?$Data['vnc_currency']:NULL,
+							':business' => isset($Data['business']) ? $Data['business'] : NULL
 						));
 
 						if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -554,10 +555,10 @@ class SalesNc extends REST_Controller
 						}
 					} else {
 
-						 $sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
-														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+						bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,business)
+						VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+						:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 							':bmd_doctype' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
@@ -572,6 +573,7 @@ class SalesNc extends REST_Controller
 							':bmd_cardcode' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 							':bmd_cardtype' => 1,
 							':bmd_currency' => isset($Data['vnc_currency'])?$Data['vnc_currency']:NULL,
+							':business' => isset($Data['business']) ? $Data['business'] : NULL
 						));
 
 						if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -594,9 +596,9 @@ class SalesNc extends REST_Controller
 				} else {
 
 					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
-														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+					bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,business)
+					VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+					:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 						':bmd_doctype' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
@@ -611,6 +613,7 @@ class SalesNc extends REST_Controller
 						':bmd_cardcode' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
 						':bmd_cardtype' => 1,
 						':bmd_currency' => isset($Data['vnc_currency'])?$Data['vnc_currency']:NULL,
+						':business' => isset($Data['business']) ? $Data['business'] : NULL
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -873,8 +876,10 @@ class SalesNc extends REST_Controller
 								return;
 							}
 
-							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_ubication,bmi_lote)
-												VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_ubication,:bmi_lote)";
+							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,
+							bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_ubication,bmi_lote,business)
+							VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,
+							:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_ubication,:bmi_lote,:business)";
 
 							$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -893,9 +898,8 @@ class SalesNc extends REST_Controller
 								':bmi_duedev'  => $this->validateDate($Data['vnc_duedev']) ? $Data['vnc_duedev'] : NULL,
 								':bmi_comment' => isset($Data['vnc_comment']) ? $Data['vnc_comment'] : NULL,
 								':bmi_ubication' => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL,
-								':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
-
-
+								':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+								':business' => isset($Data['business']) ? $Data['business'] : NULL
 							));
 
 							if (is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0) {

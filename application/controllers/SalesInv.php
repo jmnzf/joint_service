@@ -24,6 +24,7 @@ class SalesInv extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('account');
+		$this->load->library('DocumentCopy');
 	}
 
 	//CREAR NUEVA FACTURA DE VENTAS
@@ -603,9 +604,9 @@ class SalesInv extends REST_Controller
 					if (isset($resDocInicio[0])) {
 
 						 $sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,business)
 														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -621,6 +622,7 @@ class SalesInv extends REST_Controller
 							':bmd_cardcode' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 							':bmd_cardtype' => 1,
 					  		':bmd_currency' => isset($Data['dvf_currency'])?$Data['dvf_currency']:NULL,
+							':business' => isset($Data['business']) ? $Data['business'] : NULL
 						));
 
 						if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -641,10 +643,10 @@ class SalesInv extends REST_Controller
 						}
 					} else {
 
-						 $sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
-														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+						$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+						bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,business)
+						VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+						:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 						$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -660,6 +662,7 @@ class SalesInv extends REST_Controller
 							':bmd_cardcode' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 							':bmd_cardtype' => 1,
 					  		':bmd_currency' => isset($Data['dvf_currency'])?$Data['dvf_currency']:NULL,
+							':business' => isset($Data['business']) ? $Data['business'] : NULL
 						));
 
 						if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -681,10 +684,10 @@ class SalesInv extends REST_Controller
 					}
 				} else {
 
-					 $sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
-														bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
-														VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
-														:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+					$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+					bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency,business)
+					VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+					:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency,:business)";
 
 					$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
 
@@ -700,6 +703,7 @@ class SalesInv extends REST_Controller
 						':bmd_cardcode' => isset($Data['dvf_cardcode']) ? $Data['dvf_cardcode'] : NULL,
 						':bmd_cardtype' => 1,
 						':bmd_currency' => isset($Data['dvf_currency'])?$Data['dvf_currency']:NULL,
+						':business' => isset($Data['business']) ? $Data['business'] : NULL
 					));
 
 					if (is_numeric($resInsertMD) && $resInsertMD > 0) {
@@ -1208,8 +1212,10 @@ class SalesInv extends REST_Controller
 
 
 								//Se aplica el movimiento de inventario
-								$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_ubication,bmi_lote)
-													 VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_ubication,:bmi_lote)";
+								$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,
+								bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_ubication,bmi_lote,business)
+								VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,
+								:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_ubication,:bmi_lote,:business)";
 
 								$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -1228,7 +1234,8 @@ class SalesInv extends REST_Controller
 									':bmi_duedev'  => $this->validateDate($Data['dvf_duedev']) ? $Data['dvf_duedev'] : NULL,
 									':bmi_comment' => isset($Data['dvf_comment']) ? $Data['dvf_comment'] : NULL,
 									':bmi_ubication' => isset($detail['fv1_ubication']) ? $detail['fv1_ubication'] : NULL,
-									':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
+									':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+									':business' => isset($Data['business']) ? $Data['business'] : NULL
 
 								));
 
@@ -4525,71 +4532,8 @@ class SalesInv extends REST_Controller
 		$resCopyBy = $this->pedeo->queryTable($copyBy,array(':dvf_docentry' => $Data['fv1_docentry']));
 		if(isset($resCopyBy[0])){
 			if($resCopyBy[0]['dvf_doctype'] == 34){
-				$sqlSelect = "SELECT
-				t1.fv1_linenum,
-				t1.fv1_acciva,
-				t1.fv1_acctcode,
-				t1.fv1_avprice,
-				t1.fv1_basetype,
-				t1.fv1_costcode,
-				t1.fv1_discount,
-				t1.fv1_docentry,
-				t1.fv1_doctype,
-				t1.fv1_id,
-				t1.fv1_inventory,
-				t1.fv1_itemcode,
-				t1.fv1_itemname,
-				abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum)))) * t1.fv1_price fv1_linetotal,
-				t1.fv1_price,
-				t1.fv1_project,
-				abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum))) as fv1_quantity,
-				t1.fv1_ubusiness,
-				t1.fv1_uom,
-				t1.fv1_vat,
-				t1.fv1_vatsum vatsum_real,
-				abs(((((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
-				t1.fv1_whscode,
-				dmar.dma_series_code,
-				t1.fv1_ubication,
-				t1.fv1_codimp,
-				get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
-				get_lote(t1.fv1_itemcode) as fun_lote,
-				t1.fv1_fixrate,
-				case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
-				case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
-				from dvfv t0
-				inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
-				INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
-				WHERE t1.fv1_docentry = :fv1_docentry
-				GROUP BY
-				t1.fv1_linenum,
-				t1.fv1_acciva,
-				t1.fv1_acctcode,
-				t1.fv1_avprice,
-				t1.fv1_basetype,
-				t1.fv1_costcode,
-				t1.fv1_discount,
-				t1.fv1_docentry,
-				t1.fv1_doctype,
-				t1.fv1_id,
-				t1.fv1_inventory,
-				t1.fv1_itemcode,
-				t1.fv1_itemname,
-				t1.fv1_linetotal,
-				t1.fv1_price,
-				t1.fv1_project,
-				t1.fv1_ubusiness,
-				t1.fv1_uom,
-				t1.fv1_vat,
-				t1.fv1_vatsum,
-				t1.fv1_whscode,
-				t1.fv1_quantity,
-				dmar.dma_series_code,
-				t1.fv1_ubication,
-				t1.fv1_codimp,
-				t1.fv1_fixrate,t0.dvf_doctype,t0.dvf_docentry,
-				t0.business,dmar.dma_advertisement,dmar.dma_modular
-				HAVING abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum))) > 0";
+				
+				$copy = $this->documentcopy->Copy($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1');
 
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
@@ -4598,11 +4542,10 @@ class SalesInv extends REST_Controller
 								AND dvf_doctype = gtf_doctype
 								WHERE dvf_docentry = :dvf_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fv1_docentry" => $Data['fv1_docentry']));
 
 				$resSelectFv = $this->pedeo->queryTable($sqlSelectFv, array(':dvf_docentry' => $Data['fv1_docentry']));
 
-				foreach ($resSelect as $key => $value) {
+				foreach ($copy as $key => $value) {
 
 					$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
 									FROM vfv1
@@ -4615,17 +4558,17 @@ class SalesInv extends REST_Controller
 					$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':fv1_docentry' => $value['fv1_docentry']));
 
 					if (isset($resSelect2[0])) {
-						$resSelect[$key]['retenciones'] = $resSelect2;
+						$copy[$key]['retenciones'] = $resSelect2;
 					}
 				}
 
-				if (isset($resSelect[0])) {
+				if (isset($copy[0])) {
 
 					if (isset($resSelectFv[0])) {
 
 						$arr = [];
 
-						$arr['detalle'] = $resSelect;
+						$arr['detalle'] = $copy;
 						$arr['complemento'] = $resSelectFv;
 
 						if(empty($arr['complemento'][0]['dvf_igtfcode']));{
@@ -4639,7 +4582,7 @@ class SalesInv extends REST_Controller
 						);
 					} else{
 
-						$arr['detalle'] = $resSelect;
+						$arr['detalle'] = $copy;
 						unset($arr['complemento']);
 					}
 				} else {
@@ -4652,71 +4595,9 @@ class SalesInv extends REST_Controller
 				}
 
 			}else if($resCopyBy[0]['dvf_doctype'] == 5){
-				$sqlSelect = "SELECT
-				t1.fv1_linenum,
-				t1.fv1_acciva,
-				t1.fv1_acctcode,
-				t1.fv1_avprice,
-				t1.fv1_basetype,
-				t1.fv1_costcode,
-				t1.fv1_discount,
-				t1.fv1_docentry,
-				t1.fv1_doctype,
-				t1.fv1_id,
-				t1.fv1_inventory,
-				t1.fv1_itemcode,
-				t1.fv1_itemname,
-				abs((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum)))) * t1.fv1_price fv1_linetotal,
-				t1.fv1_price,
-				t1.fv1_project,
-				abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum))) as fv1_quantity,
-				t1.fv1_ubusiness,
-				t1.fv1_uom,
-				t1.fv1_vat,
-				t1.fv1_vatsum vatsum_real,
-				abs(((((t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum)))) * t1.fv1_price) * t1.fv1_vat)) / 100 fv1_vatsum,
-				t1.fv1_whscode,
-				dmar.dma_series_code,
-				t1.fv1_ubication,
-				t1.fv1_codimp,
-				get_ubication(t1.fv1_whscode, t0.business) as fun_ubication,
-				get_lote(t1.fv1_itemcode) as fun_lote,
-				t1.fv1_fixrate,
-				case when coalesce(dmar.dma_advertisement,0) = 0 then 0 else 1 end as dma_advertisement,
-				case when coalesce(dmar.dma_modular,0) = 0 then 0 else 1 end as dma_modular
-				from dvfv t0
-				inner join vfv1 t1 on t0.dvf_docentry = t1.fv1_docentry
-				INNER JOIN dmar ON t1.fv1_itemcode = dmar.dma_item_code
-				WHERE t1.fv1_docentry = :fv1_docentry
-				GROUP BY
-				t1.fv1_linenum,
-				t1.fv1_acciva,
-				t1.fv1_acctcode,
-				t1.fv1_avprice,
-				t1.fv1_basetype,
-				t1.fv1_costcode,
-				t1.fv1_discount,
-				t1.fv1_docentry,
-				t1.fv1_doctype,
-				t1.fv1_id,
-				t1.fv1_inventory,
-				t1.fv1_itemcode,
-				t1.fv1_itemname,
-				t1.fv1_linetotal,
-				t1.fv1_price,
-				t1.fv1_project,
-				t1.fv1_ubusiness,
-				t1.fv1_uom,
-				t1.fv1_vat,
-				t1.fv1_vatsum,
-				t1.fv1_whscode,
-				t1.fv1_quantity,
-				dmar.dma_series_code,
-				t1.fv1_ubication,
-				t1.fv1_codimp,
-				t1.fv1_fixrate,t0.dvf_doctype,t0.dvf_docentry,
-				t0.business,dmar.dma_advertisement,dmar.dma_modular
-				HAVING abs(t1.fv1_quantity - (get_quantity(t0.dvf_doctype,t0.dvf_docentry,t1.fv1_itemcode,t1.fv1_linenum))) > 0";
+				
+				$copy = $this->documentcopy->Copy($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1');
+				
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
 								LEFT JOIN igtf
@@ -4724,11 +4605,10 @@ class SalesInv extends REST_Controller
 								AND dvf_doctype = gtf_doctype
 								WHERE dvf_docentry = :dvf_docentry";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fv1_docentry" => $Data['fv1_docentry']));
 
 				$resSelectFv = $this->pedeo->queryTable($sqlSelectFv, array(':dvf_docentry' => $Data['fv1_docentry']));
 
-				foreach ($resSelect as $key => $value) {
+				foreach ($copy as $key => $value) {
 
 					$sqlSelect2 = "SELECT fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,fc.crt_totalrt,fc.crt_base,fc.crt_linenum,dmar.dma_series_code
 					FROM vfv1
@@ -4741,16 +4621,16 @@ class SalesInv extends REST_Controller
 					$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(':fv1_docentry' => $value['fv1_docentry']));
 
 					if (isset($resSelect2[0])) {
-						$resSelect[$key]['retenciones'] = $resSelect2;
+						$copy[$key]['retenciones'] = $resSelect2;
 					}
 				}
 
-				if (isset($resSelect[0])) {
+				if (isset($copy[0])) {
 
 					if (isset($resSelectFv[0])) {
 
 						$arr = [];
-						$arr['detalle'] = $resSelect;
+						$arr['detalle'] = $copy;
 						$arr['complemento'] = $resSelectFv;
 
 						if(empty($arr['complemento'][0]['dvf_igtfcode']));{
@@ -4764,7 +4644,7 @@ class SalesInv extends REST_Controller
 						);
 					} else{
 
-						$arr['detalle'] = $resSelect;
+						$arr['detalle'] = $copy;
 					}
 				} else {
 
@@ -4784,10 +4664,6 @@ class SalesInv extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
-
-
-
 	//OBTENER FACTURA DE VENTA POR ID SOCIO DE NEGOCIO
 	public function getSalesInvoiceBySN_get()
 	{
@@ -4806,25 +4682,14 @@ class SalesInv extends REST_Controller
 
 			return;
 		}
-		$where = "";
-		if(isset($Data['doctype']) && !empty($Data['doctype'])){	
-			$where = " AND dvf_doctype = ".$Data['doctype'];
-		}
-		$sqlSelect = "SELECT
-						t0.*
-					FROM dvfv t0
-					left join estado_doc t1 on t0.dvf_docentry = t1.entry and t0.dvf_doctype = t1.tipo
-					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-					WHERE t2.estado = 'Abierto' and t0.dvf_cardcode =:dvf_cardcode
-					AND t0.business = :business AND t0.branch = :branch".$where;
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvf_cardcode" => $Data['dms_card_code'],':business' => $Data['business'], ':branch' => $Data['branch']));
+		$copyData = $this->documentcopy->copyData('dvfv','dvf',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		if (isset($resSelect[0])) {
+		if (isset($copyData[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copyData,
 				'mensaje' => ''
 			);
 		} else {
@@ -4838,12 +4703,6 @@ class SalesInv extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
-
-
 
 	private function getUrl($data, $caperta)
 	{
@@ -4904,176 +4763,5 @@ class SalesInv extends REST_Controller
 	}
 
 
-	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod)
-	{
 
-		$sqlInsert = "INSERT INTO dpap(pap_series, pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode,
-									pap_cardname, pap_currency, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal,
-									pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype,
-									pap_createby,pap_origen)VALUES(:pap_series, :pap_docnum, :pap_docdate, :pap_duedate, :pap_duedev, :pap_pricelist, :pap_cardcode, :pap_cardname,
-									:pap_currency, :pap_contacid, :pap_slpcode, :pap_empid, :pap_comment, :pap_doctotal, :pap_baseamnt, :pap_taxtotal, :pap_discprofit, :pap_discount,
-									:pap_createat, :pap_baseentry, :pap_basetype, :pap_doctype, :pap_idadd, :pap_adress, :pap_paytype,:pap_createby,:pap_origen)";
-
-		// Se Inicia la transaccion,
-		// Todas las consultas de modificacion siguientes
-		// aplicaran solo despues que se confirme la transaccion,
-		// de lo contrario no se aplicaran los cambios y se devolvera
-		// la base de datos a su estado original.
-
-		$this->pedeo->trans_begin();
-
-		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
-			':pap_docnum' => 0,
-			':pap_series' => is_numeric($Encabezado[$prefijoe . '_series']) ? $Encabezado[$prefijoe . '_series'] : 0,
-			':pap_docdate' => $this->validateDate($Encabezado[$prefijoe . '_docdate']) ? $Encabezado[$prefijoe . '_docdate'] : NULL,
-			':pap_duedate' => $this->validateDate($Encabezado[$prefijoe . '_duedate']) ? $Encabezado[$prefijoe . '_duedate'] : NULL,
-			':pap_duedev' => $this->validateDate($Encabezado[$prefijoe . '_duedev']) ? $Encabezado[$prefijoe . '_duedev'] : NULL,
-			':pap_pricelist' => is_numeric($Encabezado[$prefijoe . '_pricelist']) ? $Encabezado[$prefijoe . '_pricelist'] : 0,
-			':pap_cardcode' => isset($Encabezado[$prefijoe . '_cardcode']) ? $Encabezado[$prefijoe . '_cardcode'] : NULL,
-			':pap_cardname' => isset($Encabezado[$prefijoe . '_cardname']) ? $Encabezado[$prefijoe . '_cardname'] : NULL,
-			':pap_currency' => isset($Encabezado[$prefijoe . '_currency']) ? $Encabezado[$prefijoe . '_currency'] : NULL,
-			':pap_contacid' => isset($Encabezado[$prefijoe . '_contacid']) ? $Encabezado[$prefijoe . '_contacid'] : NULL,
-			':pap_slpcode' => is_numeric($Encabezado[$prefijoe . '_slpcode']) ? $Encabezado[$prefijoe . '_slpcode'] : 0,
-			':pap_empid' => is_numeric($Encabezado[$prefijoe . '_empid']) ? $Encabezado[$prefijoe . '_empid'] : 0,
-			':pap_comment' => isset($Encabezado[$prefijoe . '_comment']) ? $Encabezado[$prefijoe . '_comment'] : NULL,
-			':pap_doctotal' => is_numeric($Encabezado[$prefijoe . '_doctotal']) ? $Encabezado[$prefijoe . '_doctotal'] : 0,
-			':pap_baseamnt' => is_numeric($Encabezado[$prefijoe . '_baseamnt']) ? $Encabezado[$prefijoe . '_baseamnt'] : 0,
-			':pap_taxtotal' => is_numeric($Encabezado[$prefijoe . '_taxtotal']) ? $Encabezado[$prefijoe . '_taxtotal'] : 0,
-			':pap_discprofit' => is_numeric($Encabezado[$prefijoe . '_discprofit']) ? $Encabezado[$prefijoe . '_discprofit'] : 0,
-			':pap_discount' => is_numeric($Encabezado[$prefijoe . '_discount']) ? $Encabezado[$prefijoe . '_discount'] : 0,
-			':pap_createat' => $this->validateDate($Encabezado[$prefijoe . '_createat']) ? $Encabezado[$prefijoe . '_createat'] : NULL,
-			':pap_baseentry' => is_numeric($Encabezado[$prefijoe . '_baseentry']) ? $Encabezado[$prefijoe . '_baseentry'] : 0,
-			':pap_basetype' => is_numeric($Encabezado[$prefijoe . '_basetype']) ? $Encabezado[$prefijoe . '_basetype'] : 0,
-			':pap_doctype' => 21,
-			':pap_idadd' => isset($Encabezado[$prefijoe . '_idadd']) ? $Encabezado[$prefijoe . '_idadd'] : NULL,
-			':pap_adress' => isset($Encabezado[$prefijoe . '_adress']) ? $Encabezado[$prefijoe . '_adress'] : NULL,
-			':pap_paytype' => is_numeric($Encabezado[$prefijoe . '_paytype']) ? $Encabezado[$prefijoe . '_paytype'] : 0,
-			':pap_createby' => isset($Encabezado[$prefijoe . '_createby']) ? $Encabezado[$prefijoe . '_createby'] : NULL,
-			':pap_origen' => is_numeric($Encabezado[$prefijoe . '_doctype']) ? $Encabezado[$prefijoe . '_doctype'] : 0
-
-		));
-
-
-		if (is_numeric($resInsert) && $resInsert > 0) {
-
-			//SE INSERTA EL ESTADO DEL DOCUMENTO
-
-			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-				':bed_docentry' => $resInsert,
-				':bed_doctype' =>  21,
-				':bed_status' => 5, //ESTADO CERRADO
-				':bed_createby' => $Encabezado[$prefijoe . '_createby'],
-				':bed_date' => date('Y-m-d'),
-				':bed_baseentry' => NULL,
-				':bed_basetype' => NULL
-			));
-
-
-			if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
-			} else {
-
-				$this->pedeo->trans_rollback();
-
-				$respuesta = array(
-					'error'   => true,
-					'data' => $resInsertEstado,
-					'mensaje'	=> 'No se pudo registrar la factura de ventas'
-				);
-
-
-				$this->response($respuesta);
-
-				return;
-			}
-
-			//FIN PROCESO ESTADO DEL DOCUMENTO
-
-			foreach ($Detalle as $key => $detail) {
-
-				$sqlInsertDetail = "INSERT INTO pap1(ap1_docentry, ap1_itemcode, ap1_itemname, ap1_quantity, ap1_uom, ap1_whscode,
-																			ap1_price, ap1_vat, ap1_vatsum, ap1_discount, ap1_linetotal, ap1_costcode, ap1_ubusiness, ap1_project,
-																			ap1_acctcode, ap1_basetype, ap1_doctype, ap1_avprice, ap1_inventory, ap1_linenum, ap1_acciva, ap1_codimp)VALUES(:ap1_docentry, :ap1_itemcode, :ap1_itemname, :ap1_quantity,
-																			:ap1_uom, :ap1_whscode,:ap1_price, :ap1_vat, :ap1_vatsum, :ap1_discount, :ap1_linetotal, :ap1_costcode, :ap1_ubusiness, :ap1_project,
-																			:ap1_acctcode, :ap1_basetype, :ap1_doctype, :ap1_avprice, :ap1_inventory,:ap1_linenum,:ap1_acciva,:ap1_codimp)";
-
-				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-					':ap1_docentry' => $resInsert,
-					':ap1_itemcode' => isset($detail[$prefijod . '_itemcode']) ? $detail[$prefijod . '_itemcode'] : NULL,
-					':ap1_itemname' => isset($detail[$prefijod . '_itemname']) ? $detail[$prefijod . '_itemname'] : NULL,
-					':ap1_quantity' => is_numeric($detail[$prefijod . '_quantity']) ? $detail[$prefijod . '_quantity'] : 0,
-					':ap1_uom' => isset($detail[$prefijod . '_uom']) ? $detail[$prefijod . '_uom'] : NULL,
-					':ap1_whscode' => isset($detail[$prefijod . '_whscode']) ? $detail[$prefijod . '_whscode'] : NULL,
-					':ap1_price' => is_numeric($detail[$prefijod . '_price']) ? $detail[$prefijod . '_price'] : 0,
-					':ap1_vat' => is_numeric($detail[$prefijod . '_vat']) ? $detail[$prefijod . '_vat'] : 0,
-					':ap1_vatsum' => is_numeric($detail[$prefijod . '_vatsum']) ? $detail[$prefijod . '_vatsum'] : 0,
-					':ap1_discount' => is_numeric($detail[$prefijod . '_discount']) ? $detail[$prefijod . '_discount'] : 0,
-					':ap1_linetotal' => is_numeric($detail[$prefijod . '_linetotal']) ? $detail[$prefijod . '_linetotal'] : 0,
-					':ap1_costcode' => isset($detail[$prefijod . '_costcode']) ? $detail[$prefijod . '_costcode'] : NULL,
-					':ap1_ubusiness' => isset($detail[$prefijod . '_ubusiness']) ? $detail[$prefijod . '_ubusiness'] : NULL,
-					':ap1_project' => isset($detail[$prefijod . '_project']) ? $detail[$prefijod . '_project'] : NULL,
-					':ap1_acctcode' => is_numeric($detail[$prefijod . '_acctcode']) ? $detail[$prefijod . '_acctcode'] : 0,
-					':ap1_basetype' => is_numeric($detail[$prefijod . '_basetype']) ? $detail[$prefijod . '_basetype'] : 0,
-					':ap1_doctype' => is_numeric($detail[$prefijod . '_doctype']) ? $detail[$prefijod . '_doctype'] : 0,
-					':ap1_avprice' => is_numeric($detail[$prefijod . '_avprice']) ? $detail[$prefijod . '_avprice'] : 0,
-					':ap1_inventory' => is_numeric($detail[$prefijod . '_inventory']) ? $detail[$prefijod . '_inventory'] : 0,
-					':ap1_linenum' => is_numeric($detail[$prefijod . '_linenum']) ? $detail[$prefijod . '_linenum'] : 0,
-					':ap1_acciva' => isset($detail[$prefijod . '_acciva']) ? $detail[$prefijod . '_acciva'] : NULL,
-					':ap1_codimp' => isset($detail[$prefijod . '_codimp']) ? $detail[$prefijod . '_codimp'] : NULL
-				));
-
-				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
-					// Se verifica que el detalle no de error insertando //
-				} else {
-
-					// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
-					// se retorna el error y se detiene la ejecucion del codigo restante.
-					$this->pedeo->trans_rollback();
-
-					$respuesta = array(
-						'error'   => true,
-						'data' => $resInsertDetail,
-						'mensaje'	=> 'No se pudo registrar la factura de ventas'
-					);
-
-					$this->response($respuesta);
-
-					return;
-				}
-			}
-
-
-			// Si todo sale bien despues de insertar el detalle de la cotizacion
-			// se confirma la trasaccion  para que los cambios apliquen permanentemente
-			// en la base de datos y se confirma la operacion exitosa.
-			$this->pedeo->trans_commit();
-
-			$respuesta = array(
-				'error' => false,
-				'data' => $resInsert,
-				'mensaje' => 'El documento fue creado, pero es necesario que sea aprobado'
-			);
-
-			$this->response($respuesta);
-
-			return;
-		} else {
-
-			$this->pedeo->trans_rollback();
-
-			$respuesta = array(
-				'error'   => true,
-				'data'    => $resInsert,
-				'mensaje'	=> 'No se pudo crear la factura de ventas'
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-		}
-	}
 }

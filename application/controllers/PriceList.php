@@ -291,7 +291,7 @@ class PriceList extends REST_Controller
 		$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', ':dma_item_inv' => '1', ':pl1_id_price_list' => $Data['dmlp_id']));
 
 		// NO INVENTARIABLES
-		$sqlProductosNinv = "SELECT DISTINCT SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo
+		$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo
 								FROM dmar
 								WHERE dma_item_sales = :dma_item_sales
 								AND dma_enabled = :dma_enabled

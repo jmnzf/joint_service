@@ -45,8 +45,8 @@ class TaxMasterData extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dmtx(dmi_code, dmi_name_tax, dmi_rate_tax, dmi_type, dmi_enable, dmi_acctcode)
-                      VALUES(:dmi_code, :dmi_name_tax, :dmi_rate_tax, :dmi_type, :dmi_enable, :dmi_acctcode)";
+        $sqlInsert = "INSERT INTO dmtx(dmi_code, dmi_name_tax, dmi_rate_tax, dmi_type, dmi_enable, dmi_acctcode, dmi_use_fc, dmi_rate_fc)
+                      VALUES(:dmi_code, :dmi_name_tax, :dmi_rate_tax, :dmi_type, :dmi_enable, :dmi_acctcode, :dmi_use_fc, :dmi_rate_fc)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -55,6 +55,8 @@ class TaxMasterData extends REST_Controller {
               ':dmi_rate_tax' => $Data['dmi_rate_tax'],
               ':dmi_type' => $Data['dmi_type'],
               ':dmi_enable' => $Data['dmi_enable'],
+              ':dmi_use_fc' => $Data['dmi_use_fc'],
+              ':dmi_rate_fc' => is_numeric($Data['dmi_rate_fc']) ? $Data['dmi_rate_fc'] : 0,
               ':dmi_acctcode' => $Data['dmi_acctcode']
 
         ));
@@ -106,7 +108,7 @@ class TaxMasterData extends REST_Controller {
       }
 
       $sqlUpdate = "UPDATE dmtx SET  dmi_acctcode = :dmi_acctcode, dmi_code = :dmi_code, dmi_name_tax = :dmi_name_tax, dmi_rate_tax = :dmi_rate_tax, dmi_type = :dmi_type,
-                    dmi_enable = :dmi_enable WHERE dmi_id = :dmi_id";
+                    dmi_enable = :dmi_enable, dmi_rate_fc = :dmi_rate_fc, dmi_use_fc = :dmi_use_fc WHERE dmi_id = :dmi_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -116,6 +118,8 @@ class TaxMasterData extends REST_Controller {
             ':dmi_type' => $Data['dmi_type'],
             ':dmi_enable' => $Data['dmi_enable'],
             ':dmi_acctcode' => $Data['dmi_acctcode'],
+            ':dmi_use_fc' => $Data['dmi_use_fc'],
+            ':dmi_rate_fc' => is_numeric($Data['dmi_rate_fc']) ? $Data['dmi_rate_fc'] : 0,
             ':dmi_id' => $Data['dmi_id']
       ));
 
