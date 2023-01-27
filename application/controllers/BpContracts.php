@@ -615,7 +615,8 @@ class BpContracts extends REST_Controller
 					':sn1_avprice' => is_numeric($detail['sn1_avprice']) ? $detail['sn1_avprice'] : 0,
 					':sn1_inventory' => is_numeric($detail['sn1_inventory']) ? $detail['sn1_inventory'] : NULL,
 					':sn1_acciva' => is_numeric($detail['sn1_acciva']) ? $detail['sn1_acciva'] : NULL,
-					':sn1_codimp' => isset($detail['sn1_codimp']) ? $detail['sn1_codimp'] : NULL
+					':sn1_codimp' => isset($detail['sn1_codimp']) ? $detail['sn1_codimp'] : NULL,
+					':sn1_ubication' => isset($detail['sn1_ubication']) ? $detail['sn1_ubication'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
