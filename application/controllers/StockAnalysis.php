@@ -86,17 +86,21 @@ class StockAnalysis extends REST_Controller {
 		// Agrega los datos que envia en el metodo
 	    foreach ($diff as $key => $value) {
 	      if($Data[$value]!='' and $Data[$value]!=null){
-	          $conditions .='AND '.str_replace("dvf",$prefix,$value).' = :'.$value.' ';
+	          $conditions .='AND '.str_replace("dvf",$prefix,$value).' = :'.$value.' ';				
 	          $campos[':'.$value] = $Data[$value];
 	        }
 	      }
 
-
+		
 
 
 						$conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
 						$conditions = str_replace("AND ".$prefix."_currency = :dvf_currency","",$conditions);
 						$conditions = str_replace("AND symbol = :symbol","",$conditions);
+						$conditions = str_replace("AND business","AND {$table}.business",$conditions);
+						$conditions = str_replace("AND branch","AND {$table}.branch",$conditions);
+
+	
 						$sqlSelect = " ";
 						$cardcode = (isset( $Data['dvf_cardcode']) and $Data['dvf_cardcode'] !=null) ?  true: false;
 
@@ -182,7 +186,7 @@ class StockAnalysis extends REST_Controller {
 					$sqlSelect =	str_replace("{MAIN}","'".$main_currency."'",$sqlSelect);
 				}else{
 					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
-					$sqlSelect =	str_replace("{CURR}","'".$MONEDA_LOCAL."'",$sqlSelect);
+					$sqlSelect =	str_replace("{CURR}","'".$MONEDA_LOCAL."   '",$sqlSelect);
 					$sqlSelect =	str_replace("{CURRD}","'".$MONEDA_LOCAL."'",$sqlSelect);
 					$sqlSelect =	str_replace("{MAIN}","'".$main_currency."'",$sqlSelect);
 
@@ -190,8 +194,6 @@ class StockAnalysis extends REST_Controller {
 				unset($campos[':'.$prefix.'_currency']);
 				unset($campos[':dvf_currency']);
 				unset($campos[':symbol']);
-
-			// print_r($sqlSelect);exit;
 
         $resSelect = $this->pedeo->queryTable($sqlSelect,$campos);
 
@@ -304,7 +306,7 @@ class StockAnalysis extends REST_Controller {
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 		  ".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum
 			left join dmrt on mrt_id = crt_type" : "")."
-		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card}
+		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card} AND {$table}.business = :business AND {$table}.branch = :branch 
 		  group by {$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_docentry,fc1_linenum,cfc_doctype,":"").(($table =="dcnc")? "cnc_docentry,nc1_linenum,cnc_doctype,":"").(($table =="dcnd")? "cnd_docentry,nd1_linenum,cnd_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
 		  UNION ALL
 		  ";
