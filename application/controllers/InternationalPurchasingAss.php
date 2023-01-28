@@ -391,10 +391,10 @@ class InternationalPurchasingAss extends REST_Controller
 		$TasaLocSys = $resBusTasa2[0]['tsa_value'];
 
 		$sqlInset = "INSERT INTO dcci (cci_docnum,cci_doctype, cci_series, cci_cardcode, cci_cardname, cci_docdate, cci_duedate, cci_duedev, cci_comment, 
-									   cci_currency, cci_slpcode, cci_empid, business, branch)
+									   cci_currency, cci_slpcode, cci_empid, cci_doctotal, business, branch)
 									   VALUES
 									  (:cci_docnum, :cci_doctype, :cci_series, :cci_cardcode, :cci_cardname, :cci_docdate, :cci_duedate, :cci_duedev, :cci_comment,
-									  :cci_currency, :cci_slpcode, :cci_empid, :business, :branch)";
+									  :cci_currency, :cci_slpcode, :cci_empid, :cci_doctotal, :business, :branch)";
 
 		$this->pedeo->trans_begin();
 
@@ -412,12 +412,39 @@ class InternationalPurchasingAss extends REST_Controller
 			":cci_currency" => $Data['cci_currency'],
 			":cci_slpcode" => isset($Data['cci_slpcode']) ? $Data['cci_slpcode'] : NULL,
 			":cci_empid" => isset($Data['cci_empid']) ? $Data['cci_empid'] : NULL,
+			":cci_doctotal" => isset($Data['cci_doctotal']) ? $Data['cci_doctotal'] : NULL,
 			":business" => $Data['business'],
 			":branch" => $Data['branch']
 			)
 		);
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
+
+			// Se actualiza la serie de la numeracion del documento
+			$sqlActualizarNumeracion = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+				WHERE pgs_id = :pgs_id";
+			$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+				':pgs_nextnum' => $DocNumVerificado,
+				':pgs_id' => $Data['cci_series']
+			)
+			);
+
+
+			if (is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1) {
+			} else {
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error' => true,
+					'data' => $resActualizarNumeracion,
+					'mensaje' => 'No se pudo crear la entrada  '
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+			// Fin de la actualizacion de la numeracion del documento
 
 			foreach ($ContenidoDetalle as $key => $detail) {
 
@@ -472,5 +499,46 @@ class InternationalPurchasingAss extends REST_Controller
 
 			$this->response($respuesta);
 		}
+	}
+
+	public function getInternationalPurchasing_get(){
+		$Data = $this->get();
+		if ( !isset($Data['business']) OR !isset($Data['branch'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT
+				t0.*
+				FROM dcci t0
+				where t0.business = :business and t0.branch = :branch";
+		
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business'],":branch" => $Data['branch']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
 	}
 }
