@@ -590,7 +590,7 @@ class StockTransfer extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dist', 'ist', '', '', $DECI_MALES, $Data['business'], $Data['branch'], $Data['docnum']);
+		$sqlSelect = self::getColumn('dist', 'ist', '', '', $DECI_MALES, $Data['business'], $Data['branch'], 23);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1997,10 +1997,7 @@ class StockTransfer extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dits', 'its', '', '', $DECI_MALES, $Data['business'], $Data['branch'], $Data['docnum']);
-
-		// $sqlSelect = "SELECT * FROM dist";
-
+		$sqlSelect = self::getColumn('dits', 'its', '', '', $DECI_MALES, $Data['business'], $Data['branch'],24);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
