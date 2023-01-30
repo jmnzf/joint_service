@@ -211,7 +211,7 @@ class Quotation extends REST_Controller
 		if (!isset($resVerificarAprobacion[0])) {
 
 			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
-							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
+							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion, mau_currency
 							FROM tmau
 							INNER JOIN mau1
 							ON mau_docentry =  au1_docentry
@@ -247,17 +247,27 @@ class Quotation extends REST_Controller
 					$doctype =  $value['doctype'];
 					$modelo = $value['modelo'];
 
-					if (trim($Data['dvc_currency']) != $MONEDASYS) {
+					$sqlTasaMonedaModelo = "SELECT COALESCE(get_dynamic_conversion(:mau_currency,:doc_currency,:doc_date,:doc_total,get_localcur()), 0) AS monto"; 
+					$resTasaMonedaModelo = $this->pedeo->queryTable($sqlTasaMonedaModelo, array(
+						':mau_currency' => $value['mau_currency'],
+						':doc_currency' => $Data['dvc_currency'],
+						':doc_date' 	=> $Data['dvc_docdate'],
+						':doc_total' 	=> $TotalDocumento
+					));
 
-						if (trim($Data['dvc_currency']) != $MONEDALOCAL) {
-
-							$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
-							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
-						} else {
-
-							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
-						}
+					if ( $resTasaMonedaModelo[0]['monto'] == 0 ){
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' => 'No se encrontro la tasa de cambio para la moneda del modelo :'. $value['mau_currency'].'en la fecha del documento '.$Data['dvc_docdate']
+						);
+			
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			
+						return;
 					}
+
+					$TotalDocumento =  $resTasaMonedaModelo[0]['monto'] == 0;
 
 					if ($condicion == ">") {
 
@@ -705,10 +715,11 @@ class Quotation extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry,vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
                                     vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
-                                    vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_linenum, vc1_acciva, vc1_codimp, vc1_ubication, vc1_lote,vc1_baseline)
+                                    vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_linenum, vc1_acciva, vc1_codimp, vc1_ubication, 
+									ote_code,vc1_baseline)
 									VALUES(:vc1_docentry,:vc1_itemcode, :vc1_itemname, :vc1_quantity,:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, 
 									:vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory,
-									:vc1_linenum,:vc1_acciva,:vc1_codimp, :vc1_ubication, :vc1_lote,:vc1_baseline)";
+									:vc1_linenum,:vc1_acciva,:vc1_codimp, :vc1_ubication, :ote_code,:vc1_baseline)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':vc1_docentry' => $resInsert,
@@ -734,7 +745,7 @@ class Quotation extends REST_Controller
 					':vc1_acciva' => is_numeric($detail['vc1_acciva']) ? $detail['vc1_acciva'] : NULL,
 					':vc1_codimp' => isset($detail['vc1_codimp']) ? $detail['vc1_codimp'] : NULL,
 					':vc1_ubication' => isset($detail['vc1_ubication']) ? $detail['vc1_ubication'] : NULL,
-					':vc1_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':vc1_baseline' => is_numeric($detail['vc1_baseline']) ? $detail['vc1_baseline'] : 0
 				));
 

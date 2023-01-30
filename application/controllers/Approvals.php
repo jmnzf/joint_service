@@ -51,8 +51,8 @@ class Approvals extends REST_Controller
 		$this->pedeo->trans_begin();
 
 
-		$sqlInsert = "INSERT INTO tmau(mau_doctype, mau_quantity, mau_status, mau_approvers, mau_decription, mau_createby, mau_date, mau_emp, business)
-									  VALUES (:mau_doctype, :mau_quantity, :mau_status, :mau_approvers, :mau_decription , :mau_createby, :mau_date, :mau_emp, :business)";
+		$sqlInsert = "INSERT INTO tmau(mau_doctype, mau_quantity, mau_status, mau_approvers, mau_decription, mau_createby, mau_date, mau_emp, business, mau_currency)
+					VALUES (:mau_doctype, :mau_quantity, :mau_status, :mau_approvers, :mau_decription , :mau_createby, :mau_date, :mau_emp, :business, :mau_currency)";
 
 
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -64,7 +64,8 @@ class Approvals extends REST_Controller
 			':mau_createby'   => $Data['user'],
 			':mau_date' 	  => date('Y-m-d'),
 			':mau_emp'		  => $Data['mau_emp'],
-			':business'		  => $Data['business']
+			':business'		  => $Data['business'],
+			':mau_currency'   => $Data['moneda']
 
 		));
 

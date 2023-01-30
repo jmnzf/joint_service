@@ -22,7 +22,7 @@ class EntradaCompra extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 
 	}
@@ -30,12 +30,12 @@ class EntradaCompra extends REST_Controller {
 
 	public function EntradaCompra_post(){
 
-				$DECI_MALES =  $this->generic->getDecimals();
+		$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
-				$Data = $Data['CEC_DOCENTRY'];
+		
 
-				$formatter = new NumeroALetras();
+		$formatter = new NumeroALetras();
 
 
 
@@ -121,7 +121,7 @@ class EntradaCompra extends REST_Controller {
 												LEFT JOIN PGEC T7 ON T0.CEC_CURRENCY = T7.PGM_SYMBOL
 												WHERE T0.CEC_DOCENTRY = :CEC_DOCENTRY";
 
-				$contenidoEC = $this->pedeo->queryTable($sqlcotizacion,array(':CEC_DOCENTRY'=>$Data));
+				$contenidoEC = $this->pedeo->queryTable($sqlcotizacion,array(':CEC_DOCENTRY'=>$Data['CEC_DOCENTRY']));
 
 				if(!isset($contenidoEC[0])){
 						$respuesta = array(
@@ -134,7 +134,73 @@ class EntradaCompra extends REST_Controller {
 
 						return;
 				}
-				// print_r($contenidoEC);exit();die();
+				
+
+				//
+				$detalleSerial = "";
+				$serialAct = "";
+				$detalleS = "";
+				$aver = 0;
+				$sqlSerial = "SELECT msn_itemcode,msn_whscode,msn_sn,msn_quantity FROM tmsn WHERE business = :business AND msn_basetype = :msn_basetype AND msn_baseentry = :msn_baseentry  ORDER BY msn_itemcode ASC";
+				$tablasSerial = "";
+
+				$resSerial = $this->pedeo->queryTable($sqlSerial, array(
+					':business' 	 => $Data['business'],
+					':msn_basetype'  => 13,
+					':msn_baseentry' => $Data['CEC_DOCENTRY']
+				));
+
+				if ( isset($resSerial[0]) ) {
+					
+					foreach( $resSerial as $key => $element){
+					
+						if ($serialAct == "" ) {
+							
+							$serialAct = $element['msn_itemcode'];
+
+							$detalleS = '<td>'.$element['msn_whscode'].'</td>
+											<td>'.$element['msn_sn'].'</td>
+											<td>'.$element['msn_quantity'].'</td>';
+
+							$detalleSerial.= '<tr>'.$detalleS.'</tr>';				
+										
+						} else {
+
+
+							if ( $serialAct == $element['msn_itemcode'] ){
+
+								$detalleS = '<td>'.$element['msn_whscode'].'</td>
+											<td>'.$element['msn_sn'].'</td>
+											<td>'.$element['msn_quantity'].'</td>';
+
+								$detalleSerial.= '<tr>'.$detalleS.'</tr>';
+
+								$aver = 1;
+
+							}else{
+						
+								$tablasSerial.= '<table  width="100%"><tr><th class="fondo">CODIGO ITEM '.$serialAct.'</th></tr></table>';
+								$tablasSerial.= '<table class="borde" width="100%"><tr><th  style="text-align: center;">ALMACEN</th><th  style="text-align: center;">SERIAL</th><th  style="text-align: center;">CANTIDAD</th></tr>'.$detalleSerial.'</table>';
+
+								$detalleS = "";
+
+								$detalleSerial = "";
+
+								$serialAct = $element['msn_itemcode'];
+							}
+
+						} 
+
+					}
+
+					if ($aver == 1 && $tablasSerial == ""){
+						$tablasSerial.= '<table width="100%"><tr><th class="fondo">CODIGO ITEM '.$serialAct.'</th></tr></table>';
+						$tablasSerial.= '<table class="borde" width="100%"><tr><th  style="text-align: center;">ALMACEN</th><th  style="text-align: center;">SERIAL</th><th  style="text-align: center;">CANTIDAD</th></tr>'.$detalleSerial.'</table>';
+					}
+				}
+
+				
+				
 
 				$consecutivo = '';
 
@@ -338,11 +404,17 @@ class EntradaCompra extends REST_Controller {
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
 
-				$filename = 'Doc.pdf';
+	    if ($aver){
+			$mpdf->AddPage();
+			$mpdf->WriteHTML($tablasSerial, \Mpdf\HTMLParserMode::HTML_BODY);
+		}
+		
+
+		$filename = 'Doc.pdf';
         $mpdf->Output('Doc.pdf', 'D');
 
-				header('Content-type: application/force-download');
-				header('Content-Disposition: attachment; filename='.$filename);
+		header('Content-type: application/force-download');
+		header('Content-Disposition: attachment; filename='.$filename);
 
 
 	}

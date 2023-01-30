@@ -273,7 +273,7 @@ class PurchaseRequest extends REST_Controller
 		if (!isset($resVerificarAprobacion[0])) {
 
 			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
-							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
+							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion,mau_currency
 							FROM tmau
 							INNER JOIN mau1
 							ON mau_docentry =  au1_docentry
@@ -309,17 +309,27 @@ class PurchaseRequest extends REST_Controller
 					$doctype =  $value['doctype'];
 					$modelo = $value['modelo'];
 
-					if (trim($Data['csc_currency']) != $MONEDASYS) {
+					$sqlTasaMonedaModelo = "SELECT COALESCE(get_dynamic_conversion(:mau_currency,:doc_currency,:doc_date,:doc_total,get_localcur()), 0) AS monto"; 
+					$resTasaMonedaModelo = $this->pedeo->queryTable($sqlTasaMonedaModelo, array(
+						':mau_currency' => $value['mau_currency'],
+						':doc_currency' => $Data['csc_currency'],
+						':doc_date' 	=> $Data['csc_docdate'],
+						':doc_total' 	=> $TotalDocumento
+					));
 
-						if (trim($Data['csc_currency']) != $MONEDALOCAL) {
-
-							$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
-							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
-						} else {
-
-							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
-						}
+					if ( $resTasaMonedaModelo[0]['monto'] == 0 ){
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' => 'No se encrontro la tasa de cambio para la moneda del modelo :'. $value['mau_currency'].'en la fecha del documento '.$Data['csc_docdate']
+						);
+			
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			
+						return;
 					}
+
+					$TotalDocumento =  $resTasaMonedaModelo[0]['monto'] == 0;
 
 					if ($condicion == ">") {
 
@@ -778,10 +788,10 @@ class PurchaseRequest extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO csc1(sc1_docentry, sc1_linenum,sc1_itemcode, sc1_itemname, sc1_quantity, sc1_uom, sc1_whscode,
                                     sc1_price, sc1_vat, sc1_vatsum, sc1_discount, sc1_linetotal, sc1_costcode, sc1_ubusiness, sc1_project,
-                                    sc1_acctcode, sc1_basetype, sc1_doctype, sc1_avprice, sc1_inventory, sc1_acciva, sc1_codimp, sc1_ubication,sc1_fechaentrega)
+                                    sc1_acctcode, sc1_basetype, sc1_doctype, sc1_avprice, sc1_inventory, sc1_acciva, sc1_codimp, sc1_ubication,sc1_fechaentrega,ote_code)
 									VALUES(:sc1_docentry, :sc1_linenum,:sc1_itemcode, :sc1_itemname, :sc1_quantity,:sc1_uom, :sc1_whscode,:sc1_price,
 									:sc1_vat, :sc1_vatsum, :sc1_discount, :sc1_linetotal, :sc1_costcode, :sc1_ubusiness, :sc1_project,:sc1_acctcode, 
-									:sc1_basetype, :sc1_doctype, :sc1_avprice, :sc1_inventory, :sc1_acciva,:sc1_codimp, :sc1_ubication,:sc1_fechaentrega)";
+									:sc1_basetype, :sc1_doctype, :sc1_avprice, :sc1_inventory, :sc1_acciva,:sc1_codimp, :sc1_ubication,:sc1_fechaentrega,:ote_code)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sc1_docentry' => $resInsert,
@@ -807,7 +817,8 @@ class PurchaseRequest extends REST_Controller
 					':sc1_acciva'  => is_numeric($detail['sc1_cuentaIva']) ? $detail['sc1_cuentaIva'] : 0,
 					':sc1_codimp'  => isset($detail['sc1_codimp']) ? $detail['sc1_codimp'] : NULL,
 					':sc1_ubication'  => isset($detail['sc1_ubication']) ? $detail['sc1_ubication'] : NULL,
-					':sc1_fechaentrega'  => isset($detail['sc1_fechaentrega']) ? $detail['sc1_fechaentrega'] : NULL
+					':sc1_fechaentrega'  => isset($detail['sc1_fechaentrega']) ? $detail['sc1_fechaentrega'] : NULL,
+					':ote_code'  => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

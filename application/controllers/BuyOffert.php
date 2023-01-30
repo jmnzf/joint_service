@@ -441,7 +441,7 @@ class BuyOffert extends REST_Controller
 			}
 
 			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
-							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
+							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion, mau_currency
 							FROM tmau
 							INNER JOIN mau1
 							ON mau_docentry =  au1_docentry
@@ -477,17 +477,28 @@ class BuyOffert extends REST_Controller
 					$doctype =  $value['doctype'];
 					$modelo = $value['modelo'];
 
-					if (trim($Data['coc_currency']) != $MONEDASYS) {
+					$sqlTasaMonedaModelo = "SELECT COALESCE(get_dynamic_conversion(:mau_currency,:doc_currency,:doc_date,:doc_total,get_localcur()), 0) AS monto"; 
+					$resTasaMonedaModelo = $this->pedeo->queryTable($sqlTasaMonedaModelo, array(
+						':mau_currency' => $value['mau_currency'],
+						':doc_currency' => $Data['coc_currency'],
+						':doc_date' 	=> $Data['coc_docdate'],
+						':doc_total' 	=> $TotalDocumento
+					));
 
-						if (trim($Data['coc_currency']) != $MONEDALOCAL) {
-
-							$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
-							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
-						} else {
-
-							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
-						}
+					if ( $resTasaMonedaModelo[0]['monto'] == 0 ){
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' => 'No se encrontro la tasa de cambio para la moneda del modelo :'. $value['mau_currency'].'en la fecha del documento '.$Data['coc_docdate']
+						);
+			
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			
+						return;
 					}
+
+					$TotalDocumento =  $resTasaMonedaModelo[0]['monto'] == 0;
+
 
 					if ($condicion == ">") {
 
@@ -537,12 +548,12 @@ class BuyOffert extends REST_Controller
 					} else if ($condicion == "BETWEEN") {
 
 						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
-																				FROM tmau
-																				INNER JOIN  mau1
-																				on mau_docentry =  au1_docentry
-																				AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
-																				AND mau_doctype = :mau_doctype
-																				AND mau_docentry = :mau_docentry";
+								FROM tmau
+								INNER JOIN  mau1
+								on mau_docentry =  au1_docentry
+								AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
+								AND mau_doctype = :mau_doctype
+								AND mau_docentry = :mau_docentry";
 
 						$ressq = $this->pedeo->queryTable($sq, array(
 
@@ -1020,13 +1031,15 @@ class BuyOffert extends REST_Controller
 					return;
 				}
 
-
 				$sqlInsertDetail = "INSERT INTO coc1(oc1_docentry, oc1_linenum,oc1_itemcode, oc1_itemname, oc1_quantity, oc1_uom, oc1_whscode,
 									oc1_price, oc1_vat, oc1_vatsum, oc1_discount, oc1_linetotal, oc1_costcode, oc1_ubusiness, oc1_project,
-									oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva, oc1_codimp,oc1_baseline,oc1_fechaentrega)
+									oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva, oc1_codimp,oc1_baseline,oc1_fechaentrega,
+									ote_code)
 									VALUES(:oc1_docentry, :oc1_linenum,:oc1_itemcode, :oc1_itemname, :oc1_quantity,
 									:oc1_uom, :oc1_whscode,:oc1_price, :oc1_vat, :oc1_vatsum, :oc1_discount, :oc1_linetotal, :oc1_costcode, :oc1_ubusiness, :oc1_project,
-									:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva, :oc1_codimp,:oc1_baseline,:oc1_fechaentrega)";
+									:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva, :oc1_codimp,:oc1_baseline,
+									:oc1_fechaentrega,:ote_code)";
+
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':oc1_docentry' => $resInsert,
@@ -1052,7 +1065,8 @@ class BuyOffert extends REST_Controller
 					':oc1_acciva'  => is_numeric($detail['oc1_cuentaIva']) ? $detail['oc1_cuentaIva'] : 0,
 					':oc1_codimp'  => isset($detail['oc1_codimp']) ? $detail['oc1_codimp'] : NULL,
 					':oc1_baseline'  => is_numeric($detail['oc1_baseline']) ? $detail['oc1_baseline'] : 0,
-					':oc1_fechaentrega'  => isset($detail['oc1_fechaentrega']) ? $detail['oc1_fechaentrega'] : NULL
+					':oc1_fechaentrega'  => isset($detail['oc1_fechaentrega']) ? $detail['oc1_fechaentrega'] : NULL,
+					':ote_code'  => isset($detail['ote_code']) && !empty($detail['ote_code']) ? $detail['ote_code'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

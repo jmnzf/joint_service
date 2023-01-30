@@ -34,7 +34,6 @@ class FacturaVenta extends REST_Controller {
 				$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
-				$Data = $Data['DVF_DOCENTRY'];
 
 				$formatter = new NumeroALetras();
 
@@ -150,10 +149,13 @@ class FacturaVenta extends REST_Controller {
 								left join dmpf t8 on t2.dms_pay_type = cast(t8.mpf_id as varchar)
 								left join dmar t9 on t1.fv1_itemcode = t9.dma_item_code
 								left join dmum t10 on t9.dma_uom_umweight = t10.dmu_id
-								where T0.dvf_docentry = :DVF_DOCENTRY
+								where T0.dvf_docentry = :DVF_DOCENTRY AND t0.business = :business
 								and t2.dms_card_type = '1'";
 
-				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(':DVF_DOCENTRY'=>$Data));
+				$contenidoFV = $this->pedeo->queryTable($sqlcotizacion,array(
+					':DVF_DOCENTRY'=> $Data['DVF_DOCENTRY'],
+					':business' => $Data['business']
+				));
 
 				if(!isset($contenidoFV[0])){
 						$respuesta = array(
@@ -166,10 +168,69 @@ class FacturaVenta extends REST_Controller {
 
 						return;
 				}
-				// print_r();exit();die
+
+				//
+				$detalleSerial = "";
+				$serialAct = "";
+				$detalleS = "";
+				$aver = 0;
+				$sqlSerial = "SELECT msn_itemcode,msn_whscode,msn_sn,msn_quantity FROM tmsn WHERE business = :business AND msn_basetype = :msn_basetype AND msn_baseentry = :msn_baseentry  ORDER BY msn_itemcode ASC";
+				$tablasSerial = "";
+
+				$resSerial = $this->pedeo->queryTable($sqlSerial, array(
+					':business' 	 => $Data['business'],
+					':msn_basetype'  => 5,
+					':msn_baseentry' => $Data['DVF_DOCENTRY']
+				));
+
+				if ( isset($resSerial[0]) ) {
+					
+					foreach( $resSerial as $key => $element){
+					
+						if ($serialAct == "" ) {
+							
+							$serialAct = $element['msn_itemcode'];
+
+							$detalleS = '<td>'.$element['msn_whscode'].'</td>
+											<td>'.$element['msn_sn'].'</td>
+											<td>'.$element['msn_quantity'].'</td>';
+
+							$detalleSerial.= '<tr>'.$detalleS.'</tr>';				
+							$aver = 1;
+						} else {
 
 
+							if ( $serialAct == $element['msn_itemcode'] ){
 
+								$detalleS = '<td>'.$element['msn_whscode'].'</td>
+											<td>'.$element['msn_sn'].'</td>
+											<td>'.$element['msn_quantity'].'</td>';
+
+								$detalleSerial.= '<tr>'.$detalleS.'</tr>';
+
+								$aver = 1;
+
+							}else{
+						
+								$tablasSerial.= '<table  width="100%"><tr><th class="fondo">CODIGO ITEM '.$serialAct.'</th></tr></table>';
+								$tablasSerial.= '<table class="borde" width="100%"><tr><th  style="text-align: center;">ALMACEN</th><th  style="text-align: center;">SERIAL</th><th  style="text-align: center;">CANTIDAD</th></tr>'.$detalleSerial.'</table>';
+
+								$detalleS = "";
+
+								$detalleSerial = "";
+
+								$serialAct = $element['msn_itemcode'];
+							}
+
+						} 
+
+					}
+
+					if ($aver == 1 && $tablasSerial == ""){
+						$tablasSerial.= '<table width="100%"><tr><th class="fondo">CODIGO ITEM '.$serialAct.'</th></tr></table>';
+						$tablasSerial.= '<table class="borde" width="100%"><tr><th  style="text-align: center;">ALMACEN</th><th  style="text-align: center;">SERIAL</th><th  style="text-align: center;">CANTIDAD</th></tr>'.$detalleSerial.'</table>';
+					}
+				}
 
 				// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 				// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
@@ -272,7 +333,7 @@ class FacturaVenta extends REST_Controller {
 										ON dvov.vov_baseentry = dvct.dvc_docentry
 										WHERE dvfv.dvf_docentry = :DVF_DOCENTRY";
 
-			  $resrelacionsql = $this->pedeo->queryTable($relacionsql, array(':DVF_DOCENTRY' => $Data));
+			  $resrelacionsql = $this->pedeo->queryTable($relacionsql, array(':DVF_DOCENTRY' => $Data['DVF_DOCENTRY']));
 
 				$VieneEntrega = 0;
 				$VienePedido = 0;
@@ -288,12 +349,16 @@ class FacturaVenta extends REST_Controller {
 
 
 				//INFORMACION DE LA DESCRIPCION FINAL DEL FORMATO
-				$CommentFinal = "SELECT t0.*
+				$comentarioFinal = "";
+				$SqlCommentFinal = "SELECT t0.*
 												 FROM cfdm t0
 												 LEFT JOIN dvfv t1 ON t0.cdm_type = CAST(t1.dvf_doctype AS VARCHAR)
 												 WHERE t1.dvf_docentry = :DVF_DOCENTRY";
-				$CommentFinal = $this->pedeo->queryTable($CommentFinal,array(':DVF_DOCENTRY' => $Data));
+				$CommentFinal = $this->pedeo->queryTable($SqlCommentFinal,array(':DVF_DOCENTRY' => $Data['DVF_DOCENTRY']));
 
+				if(isset($CommentFinal[0])){
+					$CommentFinal[0]['cdm_comments'];
+				}
 
 				$totaldetalle = '';
 				$TotalCantidad = 0;
@@ -354,7 +419,7 @@ class FacturaVenta extends REST_Controller {
 				inner join tasa on tsa_date = dvf_docdate and tsa_currd = gtf_currency and tsa_curro = get_localcur()
 				where dvf_docentry = :DVF_DOCENTRY and dvf_doctype =  5 order by gtf_balancer desc";
 
-                $resIgtf = $this->pedeo->queryTable($sqlIgtf,array(':DVF_DOCENTRY' => $Data));
+                $resIgtf = $this->pedeo->queryTable($sqlIgtf,array(':DVF_DOCENTRY' => $Data['DVF_DOCENTRY']));
                 $igtfTable = "<table width='50%' style='vertical-align: bottom;'>
                 <tr style='border-bottom:1px solid #000; text-align: center;'>
                     <th style='border-bottom:1px solid #000; text-align: center;'>Divisa</th>
@@ -422,18 +487,6 @@ class FacturaVenta extends REST_Controller {
 																</tr>
 													 	</table>';
 				}
-
-
-				// $regimen = '';
-
-				// 	$regimen = '<TABLE width="35%" style="vertical-align: bottom;">
-				// 		<TR><TH style="text-align: left;">BASE DIVISA:</TH>
-				// 			<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['base_igtf'], 2, ',', '.').'</TD>
-				// 		<TR><TH  style="text-align: left;">% DE IGTF:</TH>
-				// 			<TD style="text-align: left;">'.$contenidoFV[0]['dvf_taxigtf'].'%</TD>
-				// 		<TR><TH  style="text-align: left;">IMPUESTO DIVISA:</TH>
-				// 			<TD style="text-align: left;">'.$contenidoFV[0]['monedadocumento']." ".number_format($contenidoFV[0]['imp_igtf'], 2, ',', '.').'</TD>
-				// 	</TABLE>';
 
                 $regimen = $igtfTable;
 
@@ -722,7 +775,7 @@ class FacturaVenta extends REST_Controller {
 				<table width="100%" style="vertical-align: bottom;">
 					<tr>
 						<th style="text-align: justify;">
-							<span>'.$CommentFinal[0]['cdm_comments'].'</span>
+							<span>'.$comentarioFinal.'</span>
 						</th>
 					</tr>
 					<br>
@@ -738,11 +791,17 @@ class FacturaVenta extends REST_Controller {
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
 
+		if ($aver){
+
+            $mpdf->AddPage();
+            $mpdf->WriteHTML($tablasSerial, \Mpdf\HTMLParserMode::HTML_BODY);
+        }
+
 
         $mpdf->Output('Doc.pdf', 'D');
 
-				header('Content-type: application/force-download');
-				header('Content-Disposition: attachment; filename='.$filename);
+		header('Content-type: application/force-download');
+		header('Content-Disposition: attachment; filename='.$filename);
 
 
 	}

@@ -240,7 +240,7 @@ class StockTransfer extends REST_Controller
 		if (!isset($resVerificarAprobacion[0])) {
 
 			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
-							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion
+							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion,mau_currency
 							FROM tmau
 							INNER JOIN mau1
 							ON mau_docentry =  au1_docentry
@@ -274,17 +274,27 @@ class StockTransfer extends REST_Controller
 					$doctype =  $value['doctype'];
 					$modelo = $value['modelo'];
 
-					if (trim($Data['ist_currency']) != $MONEDASYS) {
+					$sqlTasaMonedaModelo = "SELECT COALESCE(get_dynamic_conversion(:mau_currency,:doc_currency,:doc_date,:doc_total,get_localcur()), 0) AS monto"; 
+					$resTasaMonedaModelo = $this->pedeo->queryTable($sqlTasaMonedaModelo, array(
+						':mau_currency' => $value['mau_currency'],
+						':doc_currency' => $Data['ist_currency'],
+						':doc_date' 	=> $Data['ist_docdate'],
+						':doc_total' 	=> $TotalDocumento
+					));
 
-						if (trim($Data['ist_currency']) != $MONEDALOCAL) {
-
-							$TotalDocumento = round(($TotalDocumento * $TasaDocLoc), $DECI_MALES);
-							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
-						} else {
-
-							$TotalDocumento = round(($TotalDocumento / $TasaLocSys), $DECI_MALES);
-						}
+					if ( $resTasaMonedaModelo[0]['monto'] == 0 ){
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' => 'No se encrontro la tasa de cambio para la moneda del modelo :'. $value['mau_currency'].'en la fecha del documento '.$Data['ist_docdate']
+						);
+			
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			
+						return;
 					}
+
+					$TotalDocumento =  $resTasaMonedaModelo[0]['monto'] == 0;
 
 					if ($condicion == ">") {
 

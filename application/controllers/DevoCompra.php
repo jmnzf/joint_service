@@ -33,12 +33,8 @@ class DevoCompra extends REST_Controller {
 				$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
-				$Data = $Data['CDC_DOCENTRY'];
 
 				$formatter = new NumeroALetras();
-
-
-
 
         $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);
 
@@ -115,9 +111,12 @@ class DevoCompra extends REST_Controller {
 												LEFT JOIN DMEV T5 ON T0.CDC_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.CDC_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.CDC_SERIES = T6.PGS_ID
 												LEFT JOIN PGEC T7 ON T0.CDC_CURRENCY = T7.PGM_SYMBOL
-												WHERE T0.CDC_DOCENTRY = :CDC_DOCENTRY";
+												WHERE T0.CDC_DOCENTRY = :CDC_DOCENTRY AND t0.business = :business";
 
-				$contenidoDC = $this->pedeo->queryTable($sqlcotizacion,array(':CDC_DOCENTRY'=>$Data));
+				$contenidoDC = $this->pedeo->queryTable($sqlcotizacion,array(
+          ':CDC_DOCENTRY' => $Data['CDC_DOCENTRY'],
+          ':business' => $Data['business']
+        ));
 
 				if(!isset($contenidoDC[0])){
 						$respuesta = array(
@@ -130,7 +129,68 @@ class DevoCompra extends REST_Controller {
 
 						return;
 				}
-				// print_r($contenidoDC);exit();die();
+				//
+				$detalleSerial = "";
+				$serialAct = "";
+				$detalleS = "";
+				$aver = 0;
+				$sqlSerial = "SELECT msn_itemcode,msn_whscode,msn_sn,msn_quantity FROM tmsn WHERE business = :business AND msn_basetype = :msn_basetype AND msn_baseentry = :msn_baseentry  ORDER BY msn_itemcode ASC";
+				$tablasSerial = "";
+
+				$resSerial = $this->pedeo->queryTable($sqlSerial, array(
+					':business' 	 => $Data['business'],
+					':msn_basetype'  => 14,
+					':msn_baseentry' => $Data['CDC_DOCENTRY']
+				));
+
+				if ( isset($resSerial[0]) ) {
+					
+					foreach( $resSerial as $key => $element){
+					
+						if ($serialAct == "" ) {
+							
+							$serialAct = $element['msn_itemcode'];
+
+							$detalleS = '<td>'.$element['msn_whscode'].'</td>
+											<td>'.$element['msn_sn'].'</td>
+											<td>'.$element['msn_quantity'].'</td>';
+
+							$detalleSerial.= '<tr>'.$detalleS.'</tr>';				
+										
+						} else {
+
+
+							if ( $serialAct == $element['msn_itemcode'] ){
+
+								$detalleS = '<td>'.$element['msn_whscode'].'</td>
+											<td>'.$element['msn_sn'].'</td>
+											<td>'.$element['msn_quantity'].'</td>';
+
+								$detalleSerial.= '<tr>'.$detalleS.'</tr>';
+
+								$aver = 1;
+
+							}else{
+						
+								$tablasSerial.= '<table  width="100%"><tr><th class="fondo">CODIGO ITEM '.$serialAct.'</th></tr></table>';
+								$tablasSerial.= '<table class="borde" width="100%"><tr><th  style="text-align: center;">ALMACEN</th><th  style="text-align: center;">SERIAL</th><th  style="text-align: center;">CANTIDAD</th></tr>'.$detalleSerial.'</table>';
+
+								$detalleS = "";
+
+								$detalleSerial = "";
+
+								$serialAct = $element['msn_itemcode'];
+							}
+
+						} 
+
+					}
+
+					if ($aver == 1 && $tablasSerial == ""){
+						$tablasSerial.= '<table width="100%"><tr><th class="fondo">CODIGO ITEM '.$serialAct.'</th></tr></table>';
+						$tablasSerial.= '<table class="borde" width="100%"><tr><th  style="text-align: center;">ALMACEN</th><th  style="text-align: center;">SERIAL</th><th  style="text-align: center;">CANTIDAD</th></tr>'.$detalleSerial.'</table>';
+					}
+				}
 
 				$totaldetalle = '';
 				foreach ($contenidoDC as $key => $value) {
@@ -305,6 +365,11 @@ class DevoCompra extends REST_Controller {
 
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
+
+        if ($aver){
+          $mpdf->AddPage();
+          $mpdf->WriteHTML($tablasSerial, \Mpdf\HTMLParserMode::HTML_BODY);
+        }
 
 				$filename = 'Doc.pdf';
         $mpdf->Output('Doc.pdf', 'D');

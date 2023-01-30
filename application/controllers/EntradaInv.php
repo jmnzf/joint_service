@@ -30,12 +30,11 @@ class EntradaInv extends REST_Controller {
 
 	public function EntradaInv_post(){
 
-				$DECI_MALES =  $this->generic->getDecimals();
+		$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
-				$Data = $Data['IEI_DOCENTRY'];
 
-				$formatter = new NumeroALetras();
+		$formatter = new NumeroALetras();
 
 
 
@@ -75,7 +74,7 @@ class EntradaInv extends REST_Controller {
 	          return;
 				}
 
-				$sqlEntradaInv = "SELECT
+				$sqlEntradaInv = "SELECT distinct
                                       	CONCAT(T0.iei_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
                                       	TRIM('CN' FROM T0.iei_CARDCODE) Nit,
                                       	CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
@@ -112,9 +111,12 @@ class EntradaInv extends REST_Controller {
                                       LEFT JOIN DMEV T5 ON T0.iei_SLPCODE = T5.MEV_ID
                                       LEFT JOIN PGDN T6 ON T0.iei_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.iei_SERIES = T6.PGS_ID
                                       LEFT JOIN PGEC T7 ON CAST(T0.iei_CURRENCY AS VARCHAR) = T7.PGM_SYMBOL
-                                      WHERE T0.iei_DOCENTRY = :IEI_DOCENTRY";
+                                      WHERE T0.iei_DOCENTRY = :IEI_DOCENTRY and t0.business = :business";
 
-				$ContenidoEntradaInv = $this->pedeo->queryTable($sqlEntradaInv,array(':IEI_DOCENTRY'=>$Data));
+				$ContenidoEntradaInv = $this->pedeo->queryTable($sqlEntradaInv,array(
+					':IEI_DOCENTRY'=>$Data['IEI_DOCENTRY'],
+					':business' => $Data['business']
+				));
 
 				if(!isset($ContenidoEntradaInv[0])){
 						$respuesta = array(
@@ -127,7 +129,70 @@ class EntradaInv extends REST_Controller {
 
 						return;
 				}
-				// print_r($ContenidoEntradaInv);exit();die();
+				//
+				$detalleSerial = "";
+				$serialAct = "";
+				$detalleS = "";
+				$aver = 0;
+				$sqlSerial = "SELECT msn_itemcode,msn_whscode,msn_sn,msn_quantity FROM tmsn WHERE business = :business AND msn_basetype = :msn_basetype AND msn_baseentry = :msn_baseentry  ORDER BY msn_itemcode ASC";
+				$tablasSerial = "";
+
+				$resSerial = $this->pedeo->queryTable($sqlSerial, array(
+					':business' 	 => $Data['business'],
+					':msn_basetype'  => 9,
+					':msn_baseentry' => $Data['IEI_DOCENTRY']
+				));
+	
+				if ( isset($resSerial[0]) ) {
+					
+					foreach( $resSerial as $key => $element){
+					
+						if ($serialAct == "" ) {
+							
+							$serialAct = $element['msn_itemcode'];
+
+							$detalleS = '<td>'.$element['msn_whscode'].'</td>
+											<td>'.$element['msn_sn'].'</td>
+											<td>'.$element['msn_quantity'].'</td>';
+
+							$detalleSerial.= '<tr>'.$detalleS.'</tr>';				
+							$aver = 1;
+						} else {
+
+							
+
+							if ( $serialAct == $element['msn_itemcode'] ){
+
+								$detalleS = '<td>'.$element['msn_whscode'].'</td>
+											<td>'.$element['msn_sn'].'</td>
+											<td>'.$element['msn_quantity'].'</td>';
+
+								$detalleSerial.= '<tr>'.$detalleS.'</tr>';
+
+								$aver = 1;
+
+							}else{
+						
+								$tablasSerial.= '<table  width="100%"><tr><th class="fondo">CODIGO ITEM '.$serialAct.'</th></tr></table>';
+								$tablasSerial.= '<table class="borde" width="100%"><tr><th  style="text-align: center;">ALMACEN</th><th  style="text-align: center;">SERIAL</th><th  style="text-align: center;">CANTIDAD</th></tr>'.$detalleSerial.'</table>';
+
+								$detalleS = "";
+
+								$detalleSerial = "";
+
+								$serialAct = $element['msn_itemcode'];
+							}
+
+						} 
+
+					}
+					
+
+					if ($aver == 1 && $tablasSerial == ""){
+						$tablasSerial.= '<table width="100%"><tr><th class="fondo">CODIGO ITEM '.$serialAct.'</th></tr></table>';
+						$tablasSerial.= '<table class="borde" width="100%"><tr><th  style="text-align: center;">ALMACEN</th><th  style="text-align: center;">SERIAL</th><th  style="text-align: center;">CANTIDAD</th></tr>'.$detalleSerial.'</table>';
+					}
+				}
 
 				$totaldetalle = '';
 				foreach ($ContenidoEntradaInv as $key => $value) {
@@ -276,11 +341,16 @@ class EntradaInv extends REST_Controller {
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
 
+		if ($aver){
+
+            $mpdf->AddPage();
+            $mpdf->WriteHTML($tablasSerial, \Mpdf\HTMLParserMode::HTML_BODY);
+        }
 
         $mpdf->Output('Doc.pdf', 'D');
 
-				header('Content-type: application/force-download');
-				header('Content-Disposition: attachment; filename='.$filename);
+		header('Content-type: application/force-download');
+		header('Content-Disposition: attachment; filename='.$filename);
 
 
 	}

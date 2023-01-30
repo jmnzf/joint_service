@@ -564,10 +564,10 @@ class SalesDv extends REST_Controller {
 
           $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                               dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp, dv1_ubication, dv1_lote,dv1_baseline)
+                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp, dv1_ubication, ote_code,dv1_baseline)
                               VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,:dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, 
                               :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,:dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, 
-                              :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp, :dv1_ubication, :dv1_lote,:dv1_baseline)";
+                              :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp, :dv1_ubication, :ote_code,:dv1_baseline)";
 
           $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail,array(
             ':dv1_docentry' => $resInsert,
@@ -593,7 +593,7 @@ class SalesDv extends REST_Controller {
             ':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0,
             ':dv1_codimp' => isset($detail['dv1_codimp'])?$detail['dv1_codimp']:NULL,
             ':dv1_ubication' => isset($detail['dv1_ubication'])?$detail['dv1_ubication']:NULL,
-            ':dv1_lote' => isset($detail['ote_code'])?$detail['ote_code']:NULL,
+            ':ote_code' => isset($detail['ote_code'])?$detail['ote_code']:NULL,
             ':dv1_baseline' => isset($detail['dv1_baseline']) && is_numeric($detail['dv1_baseline']) ? $detail['dv1_baseline'] : 0
           ));
 
@@ -744,7 +744,7 @@ class SalesDv extends REST_Controller {
             if(isset($resItemSerial[0])){
               $ManejaSerial = 1;
 
-              $AddSerial = $this->generic->addSerial( $detail['serials'], $detail['dv1_itemcode'], $Data['vdv_doctype'], $resInsert, $DocNumVerificado, $Data['vdv_docdate'], 1, $Data['vdv_comment'], $detail['dv1_whscode'], $detail['dv1_quantity'], $Data['vdv_createby'] );
+              $AddSerial = $this->generic->addSerial( $detail['serials'], $detail['dv1_itemcode'], $Data['vdv_doctype'], $resInsert, $DocNumVerificado, $Data['vdv_docdate'], 1, $Data['vdv_comment'], $detail['dv1_whscode'], $detail['dv1_quantity'], $Data['vdv_createby'],$resInsertDetail,$Data['business'] );
 
               if( isset($AddSerial['error']) && $AddSerial['error'] == false){
 
