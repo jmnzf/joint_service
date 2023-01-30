@@ -5,7 +5,7 @@ require_once(APPPATH . '/libraries/REST_Controller.php');
 require_once(APPPATH . '/asset/vendor/autoload.php');
 use Restserver\libraries\REST_Controller;
 
-class InternationalPurchasingAss extends REST_Controller
+class IntPurchaseAssistant extends REST_Controller
 {
 
     private $pdo;
