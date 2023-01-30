@@ -590,10 +590,7 @@ class StockTransfer extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dist', 'ist', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
-
-		// $sqlSelect = "SELECT * FROM dist";
-
+		$sqlSelect = self::getColumn('dist', 'ist', '', '', $DECI_MALES, $Data['business'], $Data['branch'], $Data['docnum']);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1266,7 +1263,7 @@ class StockTransfer extends REST_Controller
 					$respuesta = array(
 						'error'   => true,
 						'data'    => $resCostoMomentoRegistro,
-						'mensaje' => 'No se enctontro el costo del articulo'
+						'mensaje' => 'No se encontro el costo del articulo'
 					);
 
 					$this->response($respuesta);
@@ -2000,7 +1997,7 @@ class StockTransfer extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dits', 'its', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$sqlSelect = self::getColumn('dits', 'its', '', '', $DECI_MALES, $Data['business'], $Data['branch'], $Data['docnum']);
 
 		// $sqlSelect = "SELECT * FROM dist";
 

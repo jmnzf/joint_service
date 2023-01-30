@@ -651,111 +651,117 @@ class AccountingAccent extends REST_Controller
 		}
 
 		$sqlSelect = "SELECT	distinct
-			t0.mac_trans_id docnum,
-			t0.mac_trans_id numero_transaccion,
-		case
-			when coalesce(t0.mac_base_type,0) = 3 then 'Entrega'
-			when coalesce(t0.mac_base_type,0) = 4 then 'Devolucion'
-			when coalesce(t0.mac_base_type,0) = 5 then 'Factura Cliente'
-			when coalesce(t0.mac_base_type,0) = 6 then 'Nota Credito Cliente'
-			when coalesce(t0.mac_base_type,0) = 7 then 'Nota Debito Cliente'
-			when coalesce(t0.mac_base_type,0) = 8 then 'Salida Mercancia'
-			when coalesce(t0.mac_base_type,0) = 9 then 'Entrada Mercancia'
-			when coalesce(t0.mac_base_type,0) = 13 then 'Entrada Compras'
-			when coalesce(t0.mac_base_type,0) = 14 then 'Devolucion Compra'
-			when coalesce(t0.mac_base_type,0) = 15 then 'Factura Proveedores'
-			when coalesce(t0.mac_base_type,0) = 16 then 'Nota Credito Compras'
-			when coalesce(t0.mac_base_type,0) = 17 then 'Nota Debito Compras'
-			when coalesce(t0.mac_base_type,0) = 18 then 'Asiento Manual'
-			when coalesce(t0.mac_base_type,0) = 0 then 'Asiento Manual'
-			when coalesce(t0.mac_base_type,0) = 19 then 'Pagos Efectuado'
-			when coalesce(t0.mac_base_type,0) = 20 then 'Pagos Recibidos'
-			when coalesce(t0.mac_base_type,0) = 22 then 'Reconciliación'
-			when coalesce(t0.mac_base_type,0) = 24 then 'Transferencia de Stock'
-			when coalesce(t0.mac_base_type,0) = 31 then 'Conciliación Bancaria'
-		end origen,
-		case
-			when coalesce(t0.mac_base_type,0) = 3 then t1.vem_docnum
-			when coalesce(t0.mac_base_type,0) = 4 then t2.vdv_docnum
-			when coalesce(t0.mac_base_type,0) = 5 then t3.dvf_docnum
-			when coalesce(t0.mac_base_type,0) = 6 then t10.vnc_docnum
-			when coalesce(t0.mac_base_type,0) = 6 then t11.vnd_docnum
-			when coalesce(t0.mac_base_type,0) = 8 then t5.isi_docnum
-			when coalesce(t0.mac_base_type,0) = 9 then t6.iei_docnum
-			when coalesce(t0.mac_base_type,0) = 13 then t12.cec_docnum
-			when coalesce(t0.mac_base_type,0) = 14 then t13.cdc_docnum
-			when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_docnum
-			when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_docnum
-			when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_docnum
-			when coalesce(t0.mac_base_type,0) = 18 then t0.mac_trans_id
-			when coalesce(t0.mac_base_type,0) = 0 then t0.mac_trans_id
-			when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_docnum
-			when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_docnum
-			when coalesce(t0.mac_base_type,0) = 22 then t18.crc_docnum
-			when coalesce(t0.mac_base_type,0) = 24 then t17.its_docnum
-			when coalesce(t0.mac_base_type,0) = 31 then t19.crb_docnum
-		end numero_origen,
-		case
-			when coalesce(t0.mac_base_type,0) = 3 then t1.vem_currency
-			when coalesce(t0.mac_base_type,0) = 4 then t2.vdv_currency
-			when coalesce(t0.mac_base_type,0) = 5 then t3.dvf_currency
-			when coalesce(t0.mac_base_type,0) = 6 then t10.vnc_currency
-			when coalesce(t0.mac_base_type,0) = 6 then t11.vnd_currency
-			when coalesce(t0.mac_base_type,0) = 8 then t5.isi_currency
-			when coalesce(t0.mac_base_type,0) = 9 then t6.iei_currency
-			when coalesce(t0.mac_base_type,0) = 13 then t12.cec_currency
-			when coalesce(t0.mac_base_type,0) = 14 then t13.cdc_currency
-			when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_currency
-			when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_currency
-			when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_currency
-			when coalesce(t0.mac_base_type,0) = 18 then t0.mac_currency
-			when coalesce(t0.mac_base_type,0) = 0 then t0.mac_currency
-			when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_currency
-			when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
-			when coalesce(t0.mac_base_type,0) = 22 then t18.crc_currency
-			when coalesce(t0.mac_base_type,0) = 24 then t17.its_currency
-			when coalesce(t0.mac_base_type,0) = 31 then t19.crb_currency
-		end currency,
-		case
-			when coalesce(t0.mac_base_type,0) = 3 then get_tax_currency(t1.vem_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 4 then get_tax_currency(t2.vdv_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 5 then get_tax_currency(t3.dvf_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 6 then get_tax_currency(t10.vnc_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 6 then get_tax_currency(t11.vnd_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 8 then get_tax_currency(t5.isi_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 9 then get_tax_currency(t6.iei_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 13 then get_tax_currency(t12.cec_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 14 then get_tax_currency(t13.cdc_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 15 then get_tax_currency(t7.cfc_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 16 then get_tax_currency(t14.cnc_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 17 then get_tax_currency(t15.cnd_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 18 or coalesce(t0.mac_base_type,0) = 0 then get_tax_currency(t0.mac_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 19 then get_tax_currency(t8.bpe_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 20 then get_tax_currency(t9.bpr_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 22 then get_tax_currency(t18.crc_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 24 then get_tax_currency(t17.its_currency,mac_doc_date)
-			when coalesce(t0.mac_base_type,0) = 31 then get_tax_currency(t19.crb_currency,t19.crb_startdate)
-		end tsa_value,
-		t0.*
-		from tmac t0
-		left join dvem t1 on t0.mac_base_entry = t1.vem_docentry and t0.mac_base_type= t1.vem_doctype
-		left join dvdv t2 on t0.mac_base_entry = t2.vdv_docentry and t0.mac_base_type= t2.vdv_doctype
-		left join dvfv t3 on t0.mac_base_entry = t3.dvf_docentry and t0.mac_base_type= t3.dvf_doctype
-		left join misi t5 on t0.mac_base_entry = t5.isi_docentry and t0.mac_base_type= t5.isi_doctype
-		left join miei t6 on t0.mac_base_entry = t6.iei_docentry and t0.mac_base_type= t6.iei_doctype
-		left join dcfc t7 on t0.mac_base_entry = t7.cfc_docentry and t0.mac_base_type= t7.cfc_doctype
-		left join gbpe t8 on t0.mac_base_entry = t8.bpe_docentry and t0.mac_base_type= t8.bpe_doctype
-		left join gbpr t9 on t0.mac_base_entry = t9.bpr_docentry and t0.mac_base_type= t9.bpr_doctype
-		left join dvnc t10 on t0.mac_base_entry = t10.vnc_docentry and t0.mac_base_type= t10.vnc_doctype
-		left join dvnd t11 on t0.mac_base_entry = t11.vnd_docentry and t0.mac_base_type= t11.vnd_doctype
-		left join dcec t12 on t0.mac_base_entry = t12.cec_docentry and t0.mac_base_type= t12.cec_doctype
-		left join dcdc t13 on t0.mac_base_entry = t13.cdc_docentry and t0.mac_base_type= t13.cdc_doctype
-		left join dcnc t14 on t0.mac_base_entry = t14.cnc_docentry and t0.mac_base_type= t14.cnc_doctype
-		left join dcnd t15 on t0.mac_base_entry = t15.cnd_docentry and t0.mac_base_type= t15.cnd_doctype
-		left join dits t17 on t0.mac_base_entry = t17.its_docentry  and t0.mac_base_type = t17.its_doctype
-		left join dcrc t18 on t0.mac_base_entry = t18.crc_docentry  and t0.mac_base_type = t18.crc_doctype
-		left join dcrb t19 on t0.mac_base_entry = t19.crb_id and t0.mac_base_type = t19.crb_doctype
-		WHERE t0.business = :business AND t0.branch = :branch";
+						t0.mac_trans_id docnum,
+						t0.mac_trans_id numero_transaccion,
+					case
+						when coalesce(t0.mac_base_type,0) = 3 then 'Entrega'
+						when coalesce(t0.mac_base_type,0) = 4 then 'Devolucion'
+						when coalesce(t0.mac_base_type,0) = 5 then 'Factura Cliente'
+						when coalesce(t0.mac_base_type,0) = 6 then 'Nota Credito Cliente'
+						when coalesce(t0.mac_base_type,0) = 7 then 'Nota Debito Cliente'
+						when coalesce(t0.mac_base_type,0) = 8 then 'Salida Mercancia'
+						when coalesce(t0.mac_base_type,0) = 9 then 'Entrada Mercancia'
+						when coalesce(t0.mac_base_type,0) = 13 then 'Entrada Compras'
+						when coalesce(t0.mac_base_type,0) = 14 then 'Devolucion Compra'
+						when coalesce(t0.mac_base_type,0) = 15 then 'Factura Proveedores'
+						when coalesce(t0.mac_base_type,0) = 16 then 'Nota Credito Compras'
+						when coalesce(t0.mac_base_type,0) = 17 then 'Nota Debito Compras'
+						when coalesce(t0.mac_base_type,0) = 18 then 'Asiento Manual'
+						when coalesce(t0.mac_base_type,0) = 0 then 'Asiento Manual'
+						when coalesce(t0.mac_base_type,0) = 19 then 'Pagos Efectuado'
+						when coalesce(t0.mac_base_type,0) = 20 then 'Pagos Recibidos'
+						when coalesce(t0.mac_base_type,0) = 22 then 'Reconciliación'
+						when coalesce(t0.mac_base_type,0) = 24 then 'Transferencia de Stock'
+						when coalesce(t0.mac_base_type,0) = 31 then 'Conciliación Bancaria'
+						when coalesce(t0.mac_base_type,0) = 26 then 'Revalorizacion de Inventario'
+					end origen,
+					case
+						when coalesce(t0.mac_base_type,0) = 3 then t1.vem_docnum
+						when coalesce(t0.mac_base_type,0) = 4 then t2.vdv_docnum
+						when coalesce(t0.mac_base_type,0) = 5 then t3.dvf_docnum
+						when coalesce(t0.mac_base_type,0) = 6 then t10.vnc_docnum
+						when coalesce(t0.mac_base_type,0) = 6 then t11.vnd_docnum
+						when coalesce(t0.mac_base_type,0) = 8 then t5.isi_docnum
+						when coalesce(t0.mac_base_type,0) = 9 then t6.iei_docnum
+						when coalesce(t0.mac_base_type,0) = 13 then t12.cec_docnum
+						when coalesce(t0.mac_base_type,0) = 14 then t13.cdc_docnum
+						when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_docnum
+						when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_docnum
+						when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_docnum
+						when coalesce(t0.mac_base_type,0) = 18 then t0.mac_trans_id
+						when coalesce(t0.mac_base_type,0) = 0 then t0.mac_trans_id
+						when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_docnum
+						when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_docnum
+						when coalesce(t0.mac_base_type,0) = 22 then t18.crc_docnum
+						when coalesce(t0.mac_base_type,0) = 24 then t17.its_docnum
+						when coalesce(t0.mac_base_type,0) = 31 then t19.crb_docnum
+						when coalesce(t0.mac_base_type,0) = 26 then t20.iri_docnum
+					end numero_origen,
+					case
+						when coalesce(t0.mac_base_type,0) = 3 then t1.vem_currency
+						when coalesce(t0.mac_base_type,0) = 4 then t2.vdv_currency
+						when coalesce(t0.mac_base_type,0) = 5 then t3.dvf_currency
+						when coalesce(t0.mac_base_type,0) = 6 then t10.vnc_currency
+						when coalesce(t0.mac_base_type,0) = 6 then t11.vnd_currency
+						when coalesce(t0.mac_base_type,0) = 8 then t5.isi_currency
+						when coalesce(t0.mac_base_type,0) = 9 then t6.iei_currency
+						when coalesce(t0.mac_base_type,0) = 13 then t12.cec_currency
+						when coalesce(t0.mac_base_type,0) = 14 then t13.cdc_currency
+						when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_currency
+						when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_currency
+						when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_currency
+						when coalesce(t0.mac_base_type,0) = 18 then t0.mac_currency
+						when coalesce(t0.mac_base_type,0) = 0 then t0.mac_currency
+						when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_currency
+						when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
+						when coalesce(t0.mac_base_type,0) = 22 then t18.crc_currency
+						when coalesce(t0.mac_base_type,0) = 24 then t17.its_currency
+						when coalesce(t0.mac_base_type,0) = 31 then t19.crb_currency
+						when coalesce(t0.mac_base_type,0) = 26 then t20.iri_currency
+					end currency,
+					case
+						when coalesce(t0.mac_base_type,0) = 3 then get_tax_currency(t1.vem_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 4 then get_tax_currency(t2.vdv_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 5 then get_tax_currency(t3.dvf_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 6 then get_tax_currency(t10.vnc_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 6 then get_tax_currency(t11.vnd_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 8 then get_tax_currency(t5.isi_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 9 then get_tax_currency(t6.iei_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 13 then get_tax_currency(t12.cec_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 14 then get_tax_currency(t13.cdc_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 15 then get_tax_currency(t7.cfc_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 16 then get_tax_currency(t14.cnc_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 17 then get_tax_currency(t15.cnd_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 18 or coalesce(t0.mac_base_type,0) = 0 then get_tax_currency(t0.mac_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 19 then get_tax_currency(t8.bpe_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 20 then get_tax_currency(t9.bpr_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 22 then get_tax_currency(t18.crc_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 24 then get_tax_currency(t17.its_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 31 then get_tax_currency(t19.crb_currency,t19.crb_startdate)
+						when coalesce(t0.mac_base_type,0) = 26 then get_tax_currency(t20.iri_currency,t20.iri_docdate)
+					end tsa_value,
+					t0.*
+					from tmac t0
+					left join dvem t1 on t0.mac_base_entry = t1.vem_docentry and t0.mac_base_type= t1.vem_doctype
+					left join dvdv t2 on t0.mac_base_entry = t2.vdv_docentry and t0.mac_base_type= t2.vdv_doctype
+					left join dvfv t3 on t0.mac_base_entry = t3.dvf_docentry and t0.mac_base_type= t3.dvf_doctype
+					left join misi t5 on t0.mac_base_entry = t5.isi_docentry and t0.mac_base_type= t5.isi_doctype
+					left join miei t6 on t0.mac_base_entry = t6.iei_docentry and t0.mac_base_type= t6.iei_doctype
+					left join dcfc t7 on t0.mac_base_entry = t7.cfc_docentry and t0.mac_base_type= t7.cfc_doctype
+					left join gbpe t8 on t0.mac_base_entry = t8.bpe_docentry and t0.mac_base_type= t8.bpe_doctype
+					left join gbpr t9 on t0.mac_base_entry = t9.bpr_docentry and t0.mac_base_type= t9.bpr_doctype
+					left join dvnc t10 on t0.mac_base_entry = t10.vnc_docentry and t0.mac_base_type= t10.vnc_doctype
+					left join dvnd t11 on t0.mac_base_entry = t11.vnd_docentry and t0.mac_base_type= t11.vnd_doctype
+					left join dcec t12 on t0.mac_base_entry = t12.cec_docentry and t0.mac_base_type= t12.cec_doctype
+					left join dcdc t13 on t0.mac_base_entry = t13.cdc_docentry and t0.mac_base_type= t13.cdc_doctype
+					left join dcnc t14 on t0.mac_base_entry = t14.cnc_docentry and t0.mac_base_type= t14.cnc_doctype
+					left join dcnd t15 on t0.mac_base_entry = t15.cnd_docentry and t0.mac_base_type= t15.cnd_doctype
+					left join dits t17 on t0.mac_base_entry = t17.its_docentry  and t0.mac_base_type = t17.its_doctype
+					left join dcrc t18 on t0.mac_base_entry = t18.crc_docentry  and t0.mac_base_type = t18.crc_doctype
+					left join dcrb t19 on t0.mac_base_entry = t19.crb_id and t0.mac_base_type = t19.crb_doctype
+					left join diri t20 on t0.mac_base_entry = t20.iri_docentry and t0.mac_base_type = t20.iri_doctype
+					WHERE t0.business = :business AND t0.branch = :branch
+				ORDER BY mac_trans_id ASC";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business'], ":branch" => $Data['branch']));
 

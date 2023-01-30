@@ -121,7 +121,7 @@ class PickingCiego extends REST_Controller {
 													LEFT JOIN PGEC T7 ON T0.VEM_CURRENCY = T7.PGM_SYMBOL
 													LEFT JOIN DMAR T8 ON T1.EM1_ITEMCODE = T8.DMA_ITEM_CODE
 													WHERE T0.VEM_DOCENTRY = :VEM_DOCENTRY
-													and t2.dms_card_type = '1'";
+													and t2.dms_card_type = '1' AND  t0.business = :business";
 
 				$contenidoEV = $this->pedeo->queryTable($sqlPickingCiego,array(
 					':VEM_DOCENTRY'=>$Data['VEM_DOCENTRY'],

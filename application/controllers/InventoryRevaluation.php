@@ -39,6 +39,7 @@ class InventoryRevaluation extends REST_Controller
 		t0.iri_docdate,
 		t0.iri_cardname,
 		t0.iri_comment,
+		t0.iri_doctype,
 		CONCAT(T0.iri_currency,' ',to_char(t0.iri_baseamnt,'999,999,999,999.00')) iri_baseamnt,
 		CONCAT(T0.iri_currency,' ',to_char(t0.iri_doctotal,'999,999,999,999.00')) iri_doctotal,
 		t1.mev_names iri_slpcode
@@ -286,10 +287,10 @@ class InventoryRevaluation extends REST_Controller
 		// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 
 		$sqlInset = "INSERT INTO diri (iri_docnum,iri_doctype, iri_series, iri_cardcode, iri_cardname, iri_docdate, iri_duedate, iri_duedev, iri_comment, 
-									   iri_currency, iri_slpcode, iri_empid, iri_doctotal, iri_baseamnt, business, branch)
+									   iri_currency, iri_slpcode, iri_empid, iri_doctotal, iri_baseamnt, business, branch,iri_createby)
 									   VALUES
 									  (:iri_docnum, :iri_doctype, :iri_series, :iri_cardcode, :iri_cardname, :iri_docdate, :iri_duedate, :iri_duedev, :iri_comment,
-									  :iri_currency, :iri_slpcode, :iri_empid, :iri_doctotal, :iri_baseamnt, :business, :branch)";
+									  :iri_currency, :iri_slpcode, :iri_empid, :iri_doctotal, :iri_baseamnt, :business, :branch, :iri_createby)";
 
 		$this->pedeo->trans_begin();
 
@@ -310,7 +311,8 @@ class InventoryRevaluation extends REST_Controller
 			":iri_doctotal" => $Data['iri_doctotal'],
 			":iri_baseamnt" => $Data['iri_baseamnt'],
 			":business" => $Data['business'],
-			":branch" => $Data['branch']
+			":branch" => $Data['branch'],
+			":iri_createby" => $Data['iri_createby']
 		)
 		);
 
@@ -507,20 +509,20 @@ class InventoryRevaluation extends REST_Controller
 				$MontoSysCR = 0;
 				$cuenta  = "";
 				$cantART = $detail['ri1_quantity'] == 1 ? :$detail['ri1_quantity'];
-				$costACT = $detail['ri1_actualcost'];
-				$cosNEW  = $detail['ri1_newcost'];
-				$costTT = ($cosNEW - $costACT) * $cantART; 
+				$costACT = abs($detail['ri1_actualcost']);
+				$cosNEW  = abs($detail['ri1_newcost']);
+				$costTT = abs(($cosNEW - $costACT) * $cantART); 
 
 				if ( $costTT < 0 ) {
 
 					$cuenta = $detail['ri1_declining_account'];
-					$credito =  $detail['ri1_total'];
-					$MontoSysCR = ( $credito / $TasaLocSys );
+					$credito =  abs($detail['ri1_total']);
+					$MontoSysCR = abs(( $credito / $TasaLocSys ));
 
 				} else {
 					$cuenta = $detail['ri1_increase_account'];
-					$debito =  $detail['ri1_total'];
-					$MontoSysDB = ( $debito / $TasaLocSys );
+					$debito =  abs($detail['ri1_total']);
+					$MontoSysDB = abs(( $debito / $TasaLocSys ));
 				}
 				
 
@@ -601,20 +603,20 @@ class InventoryRevaluation extends REST_Controller
 				$MontoSysCR = 0;
 				$cuenta  = "";
 				$cantART = $detail['ri1_quantity'] == 1 ? :$detail['ri1_quantity'];
-				$costACT = $detail['ri1_actualcost'];
-				$cosNEW  = $detail['ri1_newcost'];
+				$costACT = abs($detail['ri1_actualcost']);
+				$cosNEW  = abs($detail['ri1_newcost']);
 	
 				if ( $costTT < 0 ) {
 
 					$cuenta = $detail['ri1_increase_account'];
-					$debito =  $detail['ri1_total'];
-					$MontoSysDB = ( $debito / $TasaLocSys );
+					$debito =  abs($detail['ri1_total']);
+					$MontoSysDB = abs(( $debito / $TasaLocSys ));
 
 
 				} else {
 					$cuenta = $detail['ri1_declining_account'];
-					$credito = $detail['ri1_total'];
-					$MontoSysCR = ( $credito / $TasaLocSys );
+					$credito = abs($detail['ri1_total']);
+					$MontoSysCR = abs(( $credito / $TasaLocSys ));
 				}
 				
 
