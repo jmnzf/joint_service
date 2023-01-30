@@ -31,7 +31,21 @@ class InventoryRevaluation extends REST_Controller
 	public function getinventoryRevaluation_get()
 	{
 		$Data = $this->get();
-		$sqlSelect = " SELECT * FROM diri WHERE business = :business";
+		$sqlSelect = "SELECT
+		t0.iri_docentry,
+		t0.iri_currency,
+		t2.mdt_docname,
+		t0.iri_docnum,
+		t0.iri_docdate,
+		t0.iri_cardname,
+		t0.iri_comment,
+		CONCAT(T0.iri_currency,' ',to_char(t0.iri_baseamnt,'999,999,999,999.00')) iri_baseamnt,
+		CONCAT(T0.iri_currency,' ',to_char(t0.iri_doctotal,'999,999,999,999.00')) iri_doctotal,
+		t1.mev_names iri_slpcode
+		FROM diri t0
+		LEFT JOIN dmev t1 on t0.iri_slpcode = t1.mev_id
+		LEFT JOIN dmdt t2 on t0.iri_doctype = t2.mdt_doctype
+		WHERE t0.business = :business";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data["business"]));
 
@@ -272,10 +286,10 @@ class InventoryRevaluation extends REST_Controller
 		// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 
 		$sqlInset = "INSERT INTO diri (iri_docnum,iri_doctype, iri_series, iri_cardcode, iri_cardname, iri_docdate, iri_duedate, iri_duedev, iri_comment, 
-									   iri_currency, iri_slpcode, iri_empid, business, branch)
+									   iri_currency, iri_slpcode, iri_empid, iri_doctotal, iri_baseamnt, business, branch)
 									   VALUES
 									  (:iri_docnum, :iri_doctype, :iri_series, :iri_cardcode, :iri_cardname, :iri_docdate, :iri_duedate, :iri_duedev, :iri_comment,
-									  :iri_currency, :iri_slpcode, :iri_empid, :business, :branch)";
+									  :iri_currency, :iri_slpcode, :iri_empid, :iri_doctotal, :iri_baseamnt, :business, :branch)";
 
 		$this->pedeo->trans_begin();
 
@@ -293,6 +307,8 @@ class InventoryRevaluation extends REST_Controller
 			":iri_currency" => $Data['iri_currency'],
 			":iri_slpcode" => $Data['iri_slpcode'],
 			":iri_empid" => $Data['iri_empid'],
+			":iri_doctotal" => $Data['iri_doctotal'],
+			":iri_baseamnt" => $Data['iri_baseamnt'],
 			":business" => $Data['business'],
 			":branch" => $Data['branch']
 		)
