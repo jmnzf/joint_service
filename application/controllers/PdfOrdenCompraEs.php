@@ -22,7 +22,8 @@ class PdfOrdenCompraEs extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 		$this->load->library('DateFormat');
 
 	}
@@ -34,6 +35,7 @@ class PdfOrdenCompraEs extends REST_Controller {
 				$Data = $Data['CPO_DOCENTRY'];
 
 				$formatter = new NumeroALetras();
+				$DECI_MALES =  $this->generic->getDecimals();
 
 				// $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);
         $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','default_font' => 'dejavusans']);
@@ -340,11 +342,11 @@ class PdfOrdenCompraEs extends REST_Controller {
 					$detalle = '<td>'.$value['referencia'].'</td>
 											<td>'.$value['descripcion'].'</td>
 											<td>'.$value['um'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], 2, ',', '.').'</td>
+											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], $DECI_MALES, ',', '.').'</td>
 											<td>'.$value['cantidad'].'</td>
 											<td>'.$value['prcdes'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], 2, ',', '.').'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], 2, ',', '.').'</td>';
+											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], $DECI_MALES, ',', '.').'</td>
+											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 				}
 
@@ -508,19 +510,19 @@ class PdfOrdenCompraEs extends REST_Controller {
         <table width="100%">
 
         <tr>
-            <td style="text-align: right;"><b>Base Documento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['base'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Base Documento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['base'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;"><b>Descuento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['descuento'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Descuento:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['descuento'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 				<tr>
-            <td style="text-align: right;"><b>Sub Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['subtotal'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Sub Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['subtotal'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;"><b>Impuestos:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['iva'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Impuestos:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['iva'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
         <tr>
-            <td style="text-align: right;"><b>Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['totaldoc'], 2, ',', '.').'</span></p></td>
+            <td style="text-align: right;"><b>Total:</b>  <span>'.$contenidoOC[0]['monedadocumento']." ".number_format($contenidoOC[0]['totaldoc'], $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 				</table>
 				<table  width="100%">
@@ -541,7 +543,7 @@ class PdfOrdenCompraEs extends REST_Controller {
             <tr>
                 <th style="text-align: left;" >
 										<p><b>VALOR EN LETRAS:</b></p><br>
-                    <p>'.$formatter->toWords($contenidoOC[0]['totaldoc'],2)." ".$contenidoOC[0]['nombremoneda'].'</p>
+                    <p>'.$formatter->toWords($contenidoOC[0]['totaldoc'],$DECI_MALES)." ".$contenidoOC[0]['nombremoneda'].'</p>
                 </th>
             </tr>
         </table>

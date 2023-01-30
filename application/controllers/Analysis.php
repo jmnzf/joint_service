@@ -121,9 +121,13 @@ class Analysis extends REST_Controller {
     switch ($Data['dvf_doctype']) {
       case '-1':
         $sqlSelect = $this->generalQuery($tables,['15','16','17'],$cardcode,-1,$original) ;
+        $campos[':dvf_docdate'] = $Data['dvf_docdate'];
+        $campos[':dvf_duedate'] = $Data['dvf_duedate'];
       break;
       case '0':
         $sqlSelect = $this->generalQuery($tables,['5','6','7'],$cardcode,0,$original);
+        $campos[':dvf_docdate'] = $Data['dvf_docdate'];
+        $campos[':dvf_duedate'] = $Data['dvf_duedate'];
       break;
 
       default:
@@ -168,7 +172,7 @@ class Analysis extends REST_Controller {
         {$prefix}_baseamnt,{$prefix}_taxtotal,{$prefix}_doctotal,{$prefix}_docdate,dmd_city,{$prefix}_baseentry,{$prefix}_basetype ".(($table =="dcfc")? ",cfc_totalret, cfc_totalretiva":"").",{$prefix}_currency,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc")?",{$detailPrefix}_exc_inv": "");
         
         break;
-    }
+      }
 
 				if( isset( $Data['dvf_currency'] ) && isset($Data['symbol'])){
 					$sqlSelect =	str_replace("{USD}","tsa_value",$sqlSelect);
@@ -186,7 +190,7 @@ class Analysis extends REST_Controller {
 				unset($campos[':'.$prefix.'_currency']);
 				unset($campos[':dvf_currency']);
         unset($campos[':symbol']);
-
+        
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
 
 
@@ -266,9 +270,9 @@ class Analysis extends REST_Controller {
       to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
       to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
       ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,":(($table == 'dvnd') ? "0 cant_docs," : "sum({$detailPrefix}_quantity) cant_docs,") )."
-      ".(($org == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}),2) * {$neg}) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}),2) * {$neg})")." val_factura,
-      ".(($org == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}),2)) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}),2) * {$neg})")."  val_impuesto,
-      ".(($org == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}),2)) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}),2) * {$neg})")."  total_docums,
+      ".(($org == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals() ) * {$neg}) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals() ) * {$neg})")." val_factura,
+      ".(($org == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals() )) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals() ) * {$neg})")."  val_impuesto,
+      ".(($org == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals() )) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals() ) * {$neg})")."  total_docums,
       get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
       {$prefix}_createby createby,
       ".(($table =="dvnc")?"{$detailPrefix}_exc_inv::text": "'' invent").",
@@ -277,8 +281,8 @@ class Analysis extends REST_Controller {
       {$detailPrefix}_uom  unidad
       ".(($table =="dcfc")? "
       ,
-      concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalret,{MAIN}),2)) total_ret,
-      concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalretiva,{MAIN}),2)) totalretiva":",concat({CURR},round(0,2)) total_ret,
+      concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalret,{MAIN}), get_decimals() )) total_ret,
+      concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalretiva,{MAIN}), get_decimals() )) totalretiva":",concat({CURR},round(0, get_decimals() )) total_ret,
       concat({CURR},round(0,2)) totalretiva")."
       from
       {$table}
@@ -288,7 +292,7 @@ class Analysis extends REST_Controller {
       join dmdt on {$prefix}_doctype = mdt_doctype
       left join tbdc on dms_classtype = bdc_clasify
       left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
-      where ({$prefix}_docdate BETWEEN :dvf_docdate and :dvf_duedate) {$card}
+      where ({$prefix}_docdate BETWEEN :dvf_docdate and :dvf_duedate) {$card} AND {$table}.business = :business AND {$table}.branch = :branch
       GROUP BY {$prefix}_cardcode, mgs_name, {$prefix}_cardname,{$prefix}_docnum,
       {$prefix}_docdate,{$prefix}_doctotal,{$prefix}_taxtotal,{$prefix}_baseamnt, mdt_docname, bdc_clasify".(($table =="dcfc")? ",{$prefix}_totalret, {$prefix}_totalretiva":"").", {$prefix}_comment,dmd_adress,{$prefix}_currency, dmd_city,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc")?",{$detailPrefix}_exc_inv": "")."
       UNION ALL
