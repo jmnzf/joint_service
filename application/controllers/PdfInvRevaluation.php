@@ -9,7 +9,7 @@ require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 use Luecano\NumeroALetras\NumeroALetras;
 
-class PdfTranfStock extends REST_Controller {
+class PdfInvRevaluation extends REST_Controller {
 
 	private $pdo;
 
@@ -28,16 +28,13 @@ class PdfTranfStock extends REST_Controller {
 	}
 
 
-	public function PdfTranfStock_post(){
+	public function PdfInvRevaluation_post(){
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
         $Data = $this->post();
 
 		$formatter = new NumeroALetras();
-
-
-
 
         $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);
         //RUTA DE CARPETA EMPRESA
@@ -56,11 +53,11 @@ class PdfTranfStock extends REST_Controller {
 				}
 
         //INFORMACION DE LA EMPRESA
-		$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
-		pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
-		CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
-		pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
-		FROM pgem WHERE pge_id = :pge_id", array(':pge_id' => $Data['business']));
+				$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
+													pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
+													CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
+													pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
+													FROM pgem WHERE pge_id = :pge_id", array(':pge_id' => $Data['business']));
 
 				if(!isset($empresa[0])){
 						$respuesta = array(
@@ -75,43 +72,47 @@ class PdfTranfStock extends REST_Controller {
 				}
 
 				$sqlEntradaInv = "SELECT distinct
-                                    CONCAT(T0.its_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
-                                    TRIM('CN' FROM T0.its_CARDCODE) Nit,
+                                    CONCAT(t0.iri_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
+                                    TRIM('CN' FROM t0.iri_CARDCODE) Nit,
                                     CONCAT(T3.DMD_ADRESS,' ',T3.DMD_CITY) Direccion,
                                     T4.DMC_PHONE1 Telefono,
                                     T4.DMC_EMAIL Email,
-                                    CONCAT(T6.PGS_PREF_NUM,' ',T0.its_DOCNUM) NumeroDocumento,
-                                    T0.its_DOCDATE FechaDocumento,
-                                    coalesce(T0.its_DUEDATE,current_date) FechaVenDocumento,
-                                    trim('COP' FROM CAST(t0.its_CURRENCY AS VARCHAR)) MonedaDocumento,
+                                    CONCAT(T6.PGS_PREF_NUM,' ',t0.iri_DOCNUM) NumeroDocumento,
+                                    t0.iri_DOCDATE FechaDocumento,
+                                    coalesce(t0.iri_DUEDATE,current_date) FechaVenDocumento,
+                                    trim('COP' FROM CAST(t0.iri_CURRENCY AS VARCHAR)) MonedaDocumento,
                                     T7.PGM_NAME_MONEDA NOMBREMONEDA,
                                     T5.MEV_NAMES Vendedor,
                                     '' MedioPago,
                                     '' CondPago,
-                                    T1.ts1_ITEMCODE Referencia,
-                                    T1.ts1_ITEMNAME descripcion,
-                                    T1.ts1_WHSCODE Almacen,
-                                    T1.ts1_UOM UM,
-                                    T1.ts1_QUANTITY Cantidad,
-                                    T1.ts1_PRICE VrUnit,
-                                    T1.ts1_DISCOUNT PrcDes,
-                                    T1.ts1_VATSUM IVAP,
-                                    T1.ts1_LINETOTAL ValorTotalL,
-                                    T0.its_BASEAMNT base,
-                                    T0.its_DISCOUNT Descuento,
-                                    (T0.its_BASEAMNT - T0.its_DISCOUNT) subtotal,
-                                    T0.its_TAXTOTAL Iva,
-                                    T0.its_DOCTOTAL TotalDoc,
-                                    T0.its_COMMENT Comentarios
-                                FROM dits t0
-                                INNER JOIN its1 T1 ON t0.its_docentry = t1.ts1_docentry
-                                LEFT JOIN DMSN T2 ON t0.its_cardcode = t2.dms_card_code
-                                LEFT JOIN DMSD T3 ON T0.its_ADRESS = CAST(T3.DMD_ID AS VARCHAR) AND t3.dmd_ppal = 1
-                                LEFT JOIN DMSC T4 ON T0.its_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
-                                LEFT JOIN DMEV T5 ON T0.its_SLPCODE = T5.MEV_ID
-                                LEFT JOIN PGDN T6 ON T0.its_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.its_SERIES = T6.PGS_ID
-                                LEFT JOIN PGEC T7 ON CAST(T0.its_CURRENCY AS VARCHAR) = T7.PGM_SYMBOL
-                                WHERE T0.its_DOCENTRY = :ITS_DOCENTRY and t0.business = :business";
+                                    t1.ri1_ITEMCODE Referencia,
+                                    t1.ri1_ITEMNAME descripcion,
+                                    t1.ri1_WHSCODE Almacen,
+                                    t1.ri1_UOM UM,
+                                    t1.ri1_QUANTITY Cantidad,
+                                    t1.ri1_PRICE VrUnit,
+                                    t1.ri1_DISCOUNT PrcDes,
+                                    t1.ri1_VATSUM IVAP,
+                                    t1.ri1_LINETOTAL ValorTotalL,
+                                    t0.iri_BASEAMNT base,
+                                    t0.iri_DISCOUNT Descuento,
+                                    (t0.iri_BASEAMNT - t0.iri_DISCOUNT) subtotal,
+                                    t0.iri_TAXTOTAL Iva,
+                                    t0.iri_DOCTOTAL TotalDoc,
+                                    t0.iri_COMMENT Comentarios,
+                                    t1.ri1_actualcost costoactual,
+                                    t1.ri1_newcost costonuevo,
+                                    t1.ri1_increase_account caumento,
+                                    t1.ri1_declining_account cdisminucion
+                                FROM diri t0
+                                INNER JOIN iri1 T1 ON t0.iri_docentry = t1.ri1_docentry
+                                LEFT JOIN DMSN T2 ON t0.iri_cardcode = t2.dms_card_code
+                                LEFT JOIN DMSD T3 ON t0.iri_ADRESS = CAST(T3.DMD_ID AS VARCHAR) AND t3.dmd_ppal = 1
+                                LEFT JOIN DMSC T4 ON t0.iri_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
+                                LEFT JOIN DMEV T5 ON t0.iri_SLPCODE = T5.MEV_ID
+                                LEFT JOIN PGDN T6 ON t0.iri_DOCTYPE = T6.PGS_ID_DOC_TYPE AND t0.iri_SERIES = T6.PGS_ID
+                                LEFT JOIN PGEC T7 ON CAST(t0.iri_CURRENCY AS VARCHAR) = T7.PGM_SYMBOL
+                                WHERE t0.iri_DOCENTRY = :ITS_DOCENTRY and t0.business = :business";
 
 				$ContenidoEntradaInv = $this->pedeo->queryTable($sqlEntradaInv,array(
 					':ITS_DOCENTRY'=>$Data['ITS_DOCENTRY'],
@@ -195,16 +196,18 @@ class PdfTranfStock extends REST_Controller {
 				}
 
 				$totaldetalle = '';
+                $totalCosto = 0;
 				foreach ($ContenidoEntradaInv as $key => $value) {
 					// code...
 					$detalle = '<td>'.$value['referencia'].'</td>
 											<td>'.$value['descripcion'].'</td>
 											<td>'.$value['um'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['vrunit'], $DECI_MALES, ',', '.').'</td>
-											<td>'.$value['cantidad'].'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['ivap'], $DECI_MALES, ',', '.').'</td>
-											<td>'.$value['monedadocumento']." ".number_format($value['valortotall'], $DECI_MALES, ',', '.').'</td>';
-				 $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
+											<td>'.$value['caumento'].'</td>
+                                            <td>'.$value['cdisminucion'].'</td>
+											<td>'.$value['monedadocumento']." ".number_format($value['costoactual'], $DECI_MALES, ',', '.').'</td>
+											<td>'.$value['monedadocumento']." ".number_format($value['costonuevo'], $DECI_MALES, ',', '.').'</td>';
+				    $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
+                    $totalCosto += $value['costonuevo'];
 				}
 
 
@@ -221,7 +224,7 @@ class PdfTranfStock extends REST_Controller {
                 <p>'.$empresa[0]['pge_mail'].'</p>
             </th>
             <th>
-                <p>Entrada Inventario</p>
+                <p>Revalorizacion de Inventario</p>
                 <p class="fondo">'.$ContenidoEntradaInv[0]['numerodocumento'].'</p>
 
             </th>
@@ -287,10 +290,10 @@ class PdfTranfStock extends REST_Controller {
           <th class="fondo">ITEM</th>
           <th class="fondo">REFERENCIA</th>
           <th class="fondo">UNIDAD</th>
-          <th class="fondo">PRECIO</th>
-          <th class="fondo">CANTIDAD</th>
-          <th class="fondo">IVA</th>
-          <th class="fondo">TOTAL</th>
+          <th class="fondo">CUENTA AUMENTO</th>
+          <th class="fondo">CUENTA DISMINUCIÓN</th>
+          <th class="fondo">COSTO ACTUAL</th>
+          <th class="fondo">COSTO NUEVO</th>
         </tr>
       	'.$totaldetalle.'
         </table>
@@ -307,17 +310,7 @@ class PdfTranfStock extends REST_Controller {
         <br>
         <table width="100%">
         <tr>
-            <td style="text-align: right;">Base Documento: <span>'.$ContenidoEntradaInv[0]['monedadocumento']." ".number_format($ContenidoEntradaInv[0]['base'], $DECI_MALES, ',', '.').'</span></p></td>
-        </tr>
-
-				<tr>
-            <td style="text-align: right;">Sub Total: <span>'.$ContenidoEntradaInv[0]['monedadocumento']." ".number_format($ContenidoEntradaInv[0]['subtotal'], $DECI_MALES, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;">Impuestos: <span>'.$ContenidoEntradaInv[0]['monedadocumento']." ".number_format($ContenidoEntradaInv[0]['iva'], $DECI_MALES, ',', '.').'</span></p></td>
-        </tr>
-        <tr>
-            <td style="text-align: right;">Total: <span>'.$ContenidoEntradaInv[0]['monedadocumento']." ".number_format($ContenidoEntradaInv[0]['totaldoc'], $DECI_MALES, ',', '.').'</span></p></td>
+            <td style="text-align: right;">Total Costo: <span>'.$ContenidoEntradaInv[0]['monedadocumento']." ".number_format($totalCosto, $DECI_MALES, ',', '.').'</span></p></td>
         </tr>
 
         </table>
@@ -327,7 +320,7 @@ class PdfTranfStock extends REST_Controller {
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>
                 <th style="text-align: left;" class="fondo">
-                    <p>'.$formatter->toWords($ContenidoEntradaInv[0]['totaldoc'],2)." ".$ContenidoEntradaInv[0]['nombremoneda'].'</p>
+                    <p>'.$formatter->toWords($totalCosto,2)." ".$ContenidoEntradaInv[0]['nombremoneda'].'</p>
                 </th>
             </tr>
         </table>';
@@ -336,7 +329,6 @@ class PdfTranfStock extends REST_Controller {
 
         $mpdf->SetHTMLHeader($header);
         $mpdf->SetHTMLFooter($footer);
-
 
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
