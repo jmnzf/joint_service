@@ -30,7 +30,6 @@ class PickingCiego extends REST_Controller {
 	public function PickingCiego_post(){
 
         $Data = $this->post();
-				$Data = $Data['VEM_DOCENTRY'];
 
 				$formatter = new NumeroALetras();
 
@@ -58,11 +57,11 @@ class PickingCiego extends REST_Controller {
 
         //INFORMACION DE LA EMPRESA
 
-				$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
-																					   pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
-																					   CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
-																					   pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
-																						 FROM pgem", array());
+		$empresa = $this->pedeo->queryTable("SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
+		pge_cou_soc, CONCAT(pge_id_type,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
+		CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
+		pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type
+		FROM pgem WHERE pge_id = :pge_id", array(':pge_id' => $Data['business']));
 
 				if(!isset($empresa[0])){
 						$respuesta = array(
@@ -124,7 +123,10 @@ class PickingCiego extends REST_Controller {
 													WHERE T0.VEM_DOCENTRY = :VEM_DOCENTRY
 													and t2.dms_card_type = '1'";
 
-				$contenidoEV = $this->pedeo->queryTable($sqlPickingCiego,array(':VEM_DOCENTRY'=>$Data));
+				$contenidoEV = $this->pedeo->queryTable($sqlPickingCiego,array(
+					':VEM_DOCENTRY'=>$Data['VEM_DOCENTRY'],
+					':business' => $Data['business']
+				));
 
 				if(!isset($contenidoEV[0])){
 						$respuesta = array(
