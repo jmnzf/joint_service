@@ -817,7 +817,7 @@ class PurchaseRequest extends REST_Controller
 					':sc1_acciva'  => is_numeric($detail['sc1_cuentaIva']) ? $detail['sc1_cuentaIva'] : 0,
 					':sc1_codimp'  => isset($detail['sc1_codimp']) ? $detail['sc1_codimp'] : NULL,
 					':sc1_ubication'  => isset($detail['sc1_ubication']) ? $detail['sc1_ubication'] : NULL,
-					':sc1_fechaentrega'  => isset($detail['sc1_fechaentrega']) ? $detail['sc1_fechaentrega'] : NULL,
+					':sc1_fechaentrega'  => isset($detail['sc1_fechaentrega']) ? $detail['sc1_fechaentrega'] : date('Y-m-d'),
 					':ote_code'  => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
 				));
 

@@ -370,7 +370,6 @@ class Approvals extends REST_Controller
 	{
 
 		$Data = $this->get();
-
 		if (
 			!isset($Data['dms_card_code']) or
 			!isset($Data['business']) or
@@ -391,10 +390,10 @@ class Approvals extends REST_Controller
 							where t0.pap_cardcode  = CAST(:pap_cardcode AS VARCHAR)  and t0.pap_origen = :pap_origen AND t0.business = :business AND t0.branch = :branch AND
 							(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry)  = 'Aprobado' ";
 
-
+		
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 			":pap_cardcode" => $Data['dms_card_code'],
-			":pap_origen"   => 1,
+			":pap_origen"   => $Data['pap_origen'],
 			":business" 	=> $Data['business'],
 			":branch" 		=> $Data['branch']
 		));
