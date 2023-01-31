@@ -91,71 +91,72 @@ class IntPurchaseAssistant extends REST_Controller
 		}
 
 		$sqlSelect = "SELECT
-					t1.ec1_acciva,
-					t1.ec1_acctcode,
-					t1.ec1_avprice,
-					t1.ec1_basetype,
-					t1.ec1_costcode,
-					t1.ec1_discount,
-					t1.ec1_docentry,
-					t1.ec1_doctype,
-					t1.ec1_id,
-					t1.ec1_inventory,
-					t1.ec1_itemcode,
-					t1.ec1_itemname,
-					t1.ec1_linenum,
-					t1.ec1_linetotal,
-					t1.ec1_price,
-					t1.ec1_project,
-					t1.ec1_quantity - (coalesce(SUM(t3.dc1_quantity),0) + coalesce(SUM(t5.fc1_quantity),0)) ec1_quantity,
-					t1.ec1_ubusiness,
-					t1.ec1_uom,
-					t1.ec1_vat,
-					t1.ec1_vatsum,
-					t1.ec1_whscode,
-					t6.dma_uom_weight as peso,
-					t6.dma_uom_vqty as metrocubico,
-					t0.cec_cardcode,
-					t0.cec_cardname
-					from dcec t0
-					left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-					left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
-					left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
-					left join dcfc t4 on t0.cec_docentry = t4.cfc_baseentry and t0.cec_doctype = t4.cfc_basetype
-					left join cfc1 t5 on t4.cfc_docentry = t5.fc1_docentry and t1.ec1_itemcode = t5.fc1_itemcode
-					inner join dmar t6 on t1.ec1_itemcode = t6.dma_item_code
-					WHERE t1.ec1_docentry in ({entradas})
-					GROUP BY
-					t1.ec1_acciva,
-					t1.ec1_acctcode,
-					t1.ec1_avprice,
-					t1.ec1_basetype,
-					t1.ec1_costcode,
-					t1.ec1_discount,
-					t1.ec1_docentry,
-					t1.ec1_doctype,
-					t1.ec1_id,
-					t1.ec1_inventory,
-					t1.ec1_itemcode,
-					t1.ec1_itemname,
-					t1.ec1_linenum,
-					t1.ec1_linetotal,
-					t1.ec1_price,
-					t1.ec1_project,
-					t1.ec1_ubusiness,
-					t1.ec1_uom,
-					t1.ec1_vat,
-					t1.ec1_vatsum,
-					t1.ec1_whscode,
-					t1.ec1_quantity,
-					t6.dma_uom_weight,
-					t6.dma_uom_vqty,
-					t0.cec_cardcode,
-					t0.cec_cardname";
+						t1.ec1_acciva,
+						t1.ec1_acctcode,
+						t1.ec1_avprice,
+						t1.ec1_basetype,
+						t1.ec1_costcode,
+						t1.ec1_discount,
+						t1.ec1_docentry,
+						t1.ec1_doctype,
+						t1.ec1_id,
+						t1.ec1_inventory,
+						t1.ec1_itemcode,
+						t1.ec1_itemname,
+						t1.ec1_linenum,
+						get_dynamic_conversion(:currency, t0.cec_currency, t0.cec_docdate, t1.ec1_linetotal, get_localcur()) as ec1_linetotal,
+						t1.ec1_project,
+						t1.ec1_quantity - (coalesce(SUM(t3.dc1_quantity),0) + coalesce(SUM(t5.fc1_quantity),0)) ec1_quantity,
+						t1.ec1_ubusiness,
+						t1.ec1_uom,
+						t1.ec1_vat,
+						get_dynamic_conversion(:currency, t0.cec_currency, t0.cec_docdate, t1.ec1_vatsum, get_localcur()) as ec1_vatsum ,
+						t1.ec1_whscode,
+						t6.dma_uom_weight as peso,
+						t6.dma_uom_vqty as metrocubico,
+						t0.cec_cardcode,
+						t0.cec_cardname,
+						get_dynamic_conversion(:currency, t0.cec_currency, t0.cec_docdate, t1.ec1_linetotal, get_localcur()) as ec1_price 
+						from dcec t0
+						left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+						left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
+						left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
+						left join dcfc t4 on t0.cec_docentry = t4.cfc_baseentry and t0.cec_doctype = t4.cfc_basetype
+						left join cfc1 t5 on t4.cfc_docentry = t5.fc1_docentry and t1.ec1_itemcode = t5.fc1_itemcode
+						inner join dmar t6 on t1.ec1_itemcode = t6.dma_item_code
+						WHERE t1.ec1_docentry in ({entradas})
+						GROUP BY
+						t1.ec1_acciva,
+						t1.ec1_acctcode,
+						t1.ec1_avprice,
+						t1.ec1_basetype,
+						t1.ec1_costcode,
+						t1.ec1_discount,
+						t1.ec1_docentry,
+						t1.ec1_doctype,
+						t1.ec1_id,
+						t1.ec1_inventory,
+						t1.ec1_itemcode,
+						t1.ec1_itemname,
+						t1.ec1_linenum,
+						t1.ec1_linetotal,
+						t1.ec1_project,
+						t1.ec1_ubusiness,
+						t1.ec1_uom,
+						t1.ec1_vat,
+						t1.ec1_vatsum,
+						t1.ec1_whscode,
+						t1.ec1_quantity,
+						t6.dma_uom_weight,
+						t6.dma_uom_vqty,
+						t0.cec_cardcode,
+						t0.cec_cardname,
+						t0.cec_currency,
+						t0.cec_docdate";
 
 		$sqlSelect = str_replace("{entradas}", $Data['ec1_docentry'],$sqlSelect);
 		
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":currency" => $Data['currency']));
 
 		if (isset($resSelect[0])) {
 
