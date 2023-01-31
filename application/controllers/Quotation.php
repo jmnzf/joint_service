@@ -267,7 +267,7 @@ class Quotation extends REST_Controller
 						return;
 					}
 
-					$TotalDocumento =  $resTasaMonedaModelo[0]['monto'] == 0;
+					$TotalDocumento =  $resTasaMonedaModelo[0]['monto'];
 
 					if ($condicion == ">") {
 
