@@ -509,9 +509,9 @@ class InventoryRevaluation extends REST_Controller
 				$MontoSysCR = 0;
 				$cuenta  = "";
 				$cantART = $detail['ri1_quantity'] == 1 ? :$detail['ri1_quantity'];
-				$costACT = abs($detail['ri1_actualcost']);
-				$cosNEW  = abs($detail['ri1_newcost']);
-				$costTT = abs(($cosNEW - $costACT) * $cantART); 
+				$costACT = ($detail['ri1_actualcost']);
+				$cosNEW  = ($detail['ri1_newcost']);
+				$costTT  = (($cosNEW - $costACT) * $cantART); 
 
 				if ( $costTT < 0 ) {
 
