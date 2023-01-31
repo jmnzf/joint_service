@@ -515,17 +515,18 @@ class InventoryRevaluation extends REST_Controller
 
 				if ( $costTT < 0 ) {
 
-					$cuenta = $detail['ri1_declining_account'];
-					$credito =  abs($detail['ri1_total']);
-					$MontoSysCR = abs(( $credito / $TasaLocSys ));
-
-				} else {
 					$cuenta = $detail['ri1_increase_account'];
 					$debito =  abs($detail['ri1_total']);
 					$MontoSysDB = abs(( $debito / $TasaLocSys ));
+
+				} else {
+
+					$cuenta = $detail['ri1_declining_account'];
+					$credito =  abs($detail['ri1_total']);
+					$MontoSysCR = abs(( $credito / $TasaLocSys ));
+					
 				}
 				
-
 
 				// ASIENTO DE LINEA
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -608,17 +609,15 @@ class InventoryRevaluation extends REST_Controller
 	
 				if ( $costTT < 0 ) {
 
-					$cuenta = $detail['ri1_increase_account'];
-					$debito =  abs($detail['ri1_total']);
-					$MontoSysDB = abs(( $debito / $TasaLocSys ));
+					$credito = abs($detail['ri1_total']);
+					$MontoSysCR = abs(( $credito / $TasaLocSys ));
 
 
 				} else {
-					$cuenta = $detail['ri1_declining_account'];
-					$credito = abs($detail['ri1_total']);
-					$MontoSysCR = abs(( $credito / $TasaLocSys ));
+					
+					$debito =  abs($detail['ri1_total']);
+					$MontoSysDB = abs(( $debito / $TasaLocSys ));
 				}
-				
 
 
 				// ASIENTO DE LINEA

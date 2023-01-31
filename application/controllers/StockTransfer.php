@@ -501,11 +501,11 @@ class StockTransfer extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO ist1(st1_docentry, st1_itemcode, st1_itemname, st1_quantity, st1_uom, st1_whscode,
 													st1_price, st1_vat, st1_vatsum, st1_discount, st1_linetotal, st1_costcode, st1_ubusiness, st1_project,
 													st1_acctcode, st1_basetype, st1_doctype, st1_avprice, st1_inventory, st1_acciva, st1_whscode_dest,ote_code,
-													st1_linenum,st1_ubication2)
+													st1_linenum,st1_ubication2,st1_ubication)
 													VALUES(:st1_docentry, :st1_itemcode, :st1_itemname, :st1_quantity,:st1_uom, :st1_whscode,:st1_price, :st1_vat, 
 													:st1_vatsum, :st1_discount, :st1_linetotal, :st1_costcode, :st1_ubusiness, :st1_project,:st1_acctcode, 
 													:st1_basetype, :st1_doctype, :st1_avprice, :st1_inventory, :st1_acciva, :st1_whscode_dest,:ote_code,
-													:st1_linenum,:st1_ubication2)";
+													:st1_linenum,:st1_ubication2,:st1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':st1_docentry' => $resInsert,
@@ -531,7 +531,8 @@ class StockTransfer extends REST_Controller
 					':st1_whscode_dest' => isset($detail['st1_whscode_dest']) ? $detail['st1_whscode_dest'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':st1_linenum' => is_numeric($detail['st1_linenum']) ? $detail['st1_linenum'] : NULL,
-					':st1_ubication2' => is_numeric($detail['st1_ubication2']) ? $detail['st1_ubication2'] : NULL,
+					':st1_ubication2' => isset($detail['st1_ubication2']) ? $detail['st1_ubication2'] : NULL,
+					':st1_ubication' => isset($detail['st1_ubication']) ? $detail['st1_ubication'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1060,11 +1061,11 @@ class StockTransfer extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO its1(ts1_docentry, ts1_itemcode, ts1_itemname, ts1_quantity, ts1_uom, ts1_whscode,
 							                    ts1_price, ts1_vat, ts1_vatsum, ts1_discount, ts1_linetotal, ts1_costcode, ts1_ubusiness, ts1_project,
 							                    ts1_acctcode, ts1_basetype, ts1_doctype, ts1_avprice, ts1_inventory, ts1_acciva, ts1_whscode_dest,ote_code,
-												ts1_linenum,ts1_baseline,ts1_ubication2)
+												ts1_linenum,ts1_baseline,ts1_ubication2,ts1_ubication)
 												VALUES(:ts1_docentry, :ts1_itemcode, :ts1_itemname, :ts1_quantity,:ts1_uom, :ts1_whscode,:ts1_price, :ts1_vat, 
 												:ts1_vatsum, :ts1_discount, :ts1_linetotal, :ts1_costcode, :ts1_ubusiness, :ts1_project,:ts1_acctcode, 
 												:ts1_basetype, :ts1_doctype, :ts1_avprice, :ts1_inventory, :ts1_acciva, :ts1_whscode_dest,:ote_code,
-												:ts1_linenum,:ts1_baseline,:ts1_ubication2)";
+												:ts1_linenum,:ts1_baseline,:ts1_ubication2,:ts1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ts1_docentry' => $resInsert,
@@ -1091,7 +1092,8 @@ class StockTransfer extends REST_Controller
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':ts1_linenum' => is_numeric($detail['ts1_linenum']) ? $detail['ts1_linenum'] : 0,
 					':ts1_baseline' => is_numeric($detail['ts1_baseline']) ? $detail['ts1_baseline'] : 0,
-					':ts1_ubication2' => isset($detail['ts1_ubication2']) ? $detail['ts1_ubication2'] : NULL
+					':ts1_ubication2' => isset($detail['ts1_ubication2']) ? $detail['ts1_ubication2'] : NULL,
+					':ts1_ubication' => isset($detail['ts1_ubication']) ? $detail['ts1_ubication'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
