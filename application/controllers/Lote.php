@@ -58,7 +58,10 @@ class Lote extends REST_Controller
 
 			return;
 		}
-
+		$sqlFilterDate = ' AND ote_duedate > current_date ';
+		if (isset($Data['filterdate']) && $Data['filterdate']) {
+			$sqlFilterDate = '';
+		}
 		$sql = "";
 		$array = [];
 
@@ -98,9 +101,8 @@ class Lote extends REST_Controller
 					INNER JOIN lote
 					ON ote_code = bdi_lote
 					WHERE bdi_itemcode = :itemcode
-					AND bdi_whscode = :whscode
-					AND ote_duedate > current_date
-					AND tbdi.business = :business
+					AND bdi_whscode = :whscode 
+					" . $sqlFilterDate . " AND tbdi.business = :business
 					AND bdi_quantity > :bdi_quantity
 					ORDER BY ote_duedate asc";
 
