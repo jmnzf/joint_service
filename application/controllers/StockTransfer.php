@@ -24,6 +24,9 @@ class StockTransfer extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('account');
+		$this->load->library('aprobacion');
+		$this->load->library('DocumentCopy');
+		
 	}
 
 	//CREAR NUEVA SOLICITUD TRANSFERENCIA DE STOCKS
@@ -496,10 +499,13 @@ class StockTransfer extends REST_Controller
 			foreach ($ContenidoDetalle as $key => $detail) {
 
 				$sqlInsertDetail = "INSERT INTO ist1(st1_docentry, st1_itemcode, st1_itemname, st1_quantity, st1_uom, st1_whscode,
-															st1_price, st1_vat, st1_vatsum, st1_discount, st1_linetotal, st1_costcode, st1_ubusiness, st1_project,
-															st1_acctcode, st1_basetype, st1_doctype, st1_avprice, st1_inventory, st1_acciva, st1_whscode_dest)VALUES(:st1_docentry, :st1_itemcode, :st1_itemname, :st1_quantity,
-															:st1_uom, :st1_whscode,:st1_price, :st1_vat, :st1_vatsum, :st1_discount, :st1_linetotal, :st1_costcode, :st1_ubusiness, :st1_project,
-															:st1_acctcode, :st1_basetype, :st1_doctype, :st1_avprice, :st1_inventory, :st1_acciva, :st1_whscode_dest)";
+													st1_price, st1_vat, st1_vatsum, st1_discount, st1_linetotal, st1_costcode, st1_ubusiness, st1_project,
+													st1_acctcode, st1_basetype, st1_doctype, st1_avprice, st1_inventory, st1_acciva, st1_whscode_dest,ote_code,
+													st1_linenum,st1_ubication2)
+													VALUES(:st1_docentry, :st1_itemcode, :st1_itemname, :st1_quantity,:st1_uom, :st1_whscode,:st1_price, :st1_vat, 
+													:st1_vatsum, :st1_discount, :st1_linetotal, :st1_costcode, :st1_ubusiness, :st1_project,:st1_acctcode, 
+													:st1_basetype, :st1_doctype, :st1_avprice, :st1_inventory, :st1_acciva, :st1_whscode_dest,:ote_code,
+													:st1_linenum,:st1_ubication2)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':st1_docentry' => $resInsert,
@@ -522,7 +528,10 @@ class StockTransfer extends REST_Controller
 					':st1_avprice' => is_numeric($detail['st1_avprice']) ? $detail['st1_avprice'] : 0,
 					':st1_inventory' => is_numeric($detail['st1_inventory']) ? $detail['st1_inventory'] : NULL,
 					':st1_acciva' => is_numeric($detail['st1_acciva']) ? $detail['st1_acciva'] : NULL,
-					':st1_whscode_dest' => isset($detail['st1_whscode_dest']) ? $detail['st1_whscode_dest'] : NULL
+					':st1_whscode_dest' => isset($detail['st1_whscode_dest']) ? $detail['st1_whscode_dest'] : NULL,
+					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':st1_linenum' => is_numeric($detail['st1_linenum']) ? $detail['st1_linenum'] : NULL,
+					':st1_ubication2' => is_numeric($detail['st1_ubication2']) ? $detail['st1_ubication2'] : NULL,
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -568,7 +577,6 @@ class StockTransfer extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
 	//OBTENER SOLICITUD DE TRASLADO
 	public function getSolStockTransfer_get()
 	{	
@@ -612,8 +620,6 @@ class StockTransfer extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
 
 	//CREAR NUEVA TRANSFERENCIA DE STOCKS
 	public function createStockTransfer_post()
@@ -1053,9 +1059,12 @@ class StockTransfer extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO its1(ts1_docentry, ts1_itemcode, ts1_itemname, ts1_quantity, ts1_uom, ts1_whscode,
 							                    ts1_price, ts1_vat, ts1_vatsum, ts1_discount, ts1_linetotal, ts1_costcode, ts1_ubusiness, ts1_project,
-							                    ts1_acctcode, ts1_basetype, ts1_doctype, ts1_avprice, ts1_inventory, ts1_acciva, ts1_whscode_dest)VALUES(:ts1_docentry, :ts1_itemcode, :ts1_itemname, :ts1_quantity,
-							                    :ts1_uom, :ts1_whscode,:ts1_price, :ts1_vat, :ts1_vatsum, :ts1_discount, :ts1_linetotal, :ts1_costcode, :ts1_ubusiness, :ts1_project,
-							                    :ts1_acctcode, :ts1_basetype, :ts1_doctype, :ts1_avprice, :ts1_inventory, :ts1_acciva, :ts1_whscode_dest)";
+							                    ts1_acctcode, ts1_basetype, ts1_doctype, ts1_avprice, ts1_inventory, ts1_acciva, ts1_whscode_dest,ote_code,
+												ts1_linenum,ts1_baseline,ts1_ubication2)
+												VALUES(:ts1_docentry, :ts1_itemcode, :ts1_itemname, :ts1_quantity,:ts1_uom, :ts1_whscode,:ts1_price, :ts1_vat, 
+												:ts1_vatsum, :ts1_discount, :ts1_linetotal, :ts1_costcode, :ts1_ubusiness, :ts1_project,:ts1_acctcode, 
+												:ts1_basetype, :ts1_doctype, :ts1_avprice, :ts1_inventory, :ts1_acciva, :ts1_whscode_dest,:ote_code,
+												:ts1_linenum,:ts1_baseline,:ts1_ubication2)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ts1_docentry' => $resInsert,
@@ -1078,7 +1087,11 @@ class StockTransfer extends REST_Controller
 					':ts1_avprice' => is_numeric($detail['ts1_avprice']) ? $detail['ts1_avprice'] : 0,
 					':ts1_inventory' => is_numeric($detail['ts1_inventory']) ? $detail['ts1_inventory'] : NULL,
 					':ts1_acciva' => is_numeric($detail['ts1_acciva']) ? $detail['ts1_acciva'] : NULL,
-					':ts1_whscode_dest' => isset($detail['ts1_whscode_dest']) ? $detail['ts1_whscode_dest'] : NULL
+					':ts1_whscode_dest' => isset($detail['ts1_whscode_dest']) ? $detail['ts1_whscode_dest'] : NULL,
+					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':ts1_linenum' => is_numeric($detail['ts1_linenum']) ? $detail['ts1_linenum'] : 0,
+					':ts1_baseline' => is_numeric($detail['ts1_baseline']) ? $detail['ts1_baseline'] : 0,
+					':ts1_ubication2' => isset($detail['ts1_ubication2']) ? $detail['ts1_ubication2'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1974,8 +1987,6 @@ class StockTransfer extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
-
 	//OBTENER  TRASLADO
 	public function getStockTransfer_get()
 	{
@@ -2020,7 +2031,6 @@ class StockTransfer extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
 	//OBTENER SOLICIUD TRASLADO DETALLE POR ID
 	public function getSolStockTransferDetail_get()
 	{
@@ -2049,6 +2059,44 @@ class StockTransfer extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+	public function getSolStockTransferDetailCopy_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['st1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$copy = $this->documentcopy->Copy($Data['st1_docentry'],'dist','ist1','ist','st1');
+		
+		if (isset($copy[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $copy,
 				'mensaje' => ''
 			);
 		} else {
@@ -2105,8 +2153,6 @@ class StockTransfer extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
-
 	//OBTENER SOLICIUD DE TRASLADO
 	public function getSolStockTransferBySN_get()
 	{
@@ -2155,10 +2201,6 @@ class StockTransfer extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
 
 	private function getUrl($data, $caperta)
 	{
