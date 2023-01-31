@@ -449,8 +449,8 @@ class IntPurchaseAssistant extends REST_Controller
 
 			foreach ($ContenidoDetalle as $key => $detail) {
 
-				$sqlDetail = "INSERT INTO cci1(ci1_itemcode,ci1_itemname,ci1_whscode,ci1_quantity,ci1_actualcost,ci1_newcost,ci1_costcode,ci1_ubusiness,ci1_project, ci1_docentry, ci1_ubication, ci1_linetotal) VALUES
-						(:ci1_itemcode,:ci1_itemname,:ci1_whscode,:ci1_quantity,:ci1_actualcost,:ci1_newcost,:ci1_costcode,:ci1_ubusiness,:ci1_project, :ci1_docentry , :ci1_ubication, :ci1_linetotal)";
+				$sqlDetail = "INSERT INTO cci1(ci1_itemcode,ci1_itemname,ci1_whscode,ci1_quantity,ci1_actualcost,ci1_newcost,ci1_costcode,ci1_ubusiness,ci1_project, ci1_docentry, ci1_ubication, ci1_linetotal, ci1_uom) VALUES
+						(:ci1_itemcode,:ci1_itemname,:ci1_whscode,:ci1_quantity,:ci1_actualcost,:ci1_newcost,:ci1_costcode,:ci1_ubusiness,:ci1_project, :ci1_docentry , :ci1_ubication, :ci1_linetotal, :ci1_uom)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
 					":ci1_itemcode" => $detail['ci1_itemcode'],
@@ -464,7 +464,8 @@ class IntPurchaseAssistant extends REST_Controller
 					":ci1_project" => $detail['ci1_project'],
 					":ci1_docentry" => $resInsert,
 					":ci1_ubication" => isset($detail['ci1_ubication']) ? $detail['ci1_ubication'] : NULL,
-					":ci1_linetotal" => $detail['ci1_total']
+					":ci1_linetotal" => $detail['ci1_total'],
+					":ci1_uom" => $detail['ci1_uom']
 				)
 				);
 
@@ -538,6 +539,33 @@ class IntPurchaseAssistant extends REST_Controller
 				'data' => array(),
 				'mensaje'	=> 'busqueda sin resultados'
 			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function getInvPurchaseAssistantDetail_get(){
+		$Data = $this->get();
+		$sqlSelect = " SELECT * FROM cci1 WHERE ci1_docentry = :ci1_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ci1_docentry' => $Data['ci1_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data' => $resSelect,
+				'mensaje' => ''
+			);
+
+		} else {
+
+			$respuesta = array(
+				'error' => true,
+				'data' => array(),
+				'mensaje' => 'busqueda sin resultados'
+			);
+
 		}
 
 		$this->response($respuesta);
