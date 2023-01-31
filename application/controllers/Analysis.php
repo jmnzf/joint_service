@@ -146,9 +146,9 @@ class Analysis extends REST_Controller {
           to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
           to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
           ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,":(($table == 'dvnd') ? "0 cant_docs," : "sum({$detailPrefix}_quantity) cant_docs,") )."
-        ".(($original == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals())) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals()) )")." val_factura,
-        ".(($original == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals())) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals()) )")."  val_impuesto,
-        ".(($original == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals())) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals()) )")."  total_docums,
+        ".(($original == 0) ? "concat({$prefix}_currency, ' ', to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals()), '999,999,999,999.00')) " : "concat({CURR},to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals()), '999,999,999,999.00' ))")." val_factura,
+        ".(($original == 0) ? "concat({$prefix}_currency, ' ', to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals()), '999,999,999,999.00')) " : "concat({CURR},to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals()), '999,999,999,999.00' ))")."  val_impuesto,
+        ".(($original == 0) ? "concat({$prefix}_currency, ' ', to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals()), '999,999,999,999.00')) " : "concat({CURR},to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals()), '999,999,999,999.00' ))")."  total_docums,
           get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
           {$prefix}_createby createby,
           ".(($table =="dvnc")?"{$detailPrefix}_exc_inv invent ,": "'' invent,")."
@@ -156,9 +156,9 @@ class Analysis extends REST_Controller {
           (SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado,
           {$detailPrefix}_uom  unidad
           ".(($table =="dcfc")? "
-      ,concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalret,{MAIN}), get_decimals())) total_ret,
-      concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalretiva,{MAIN}), get_decimals())) totalretiva":",concat({CURR},round(0,2)) total_ret,
-      concat({CURR},round(0,2)) totalretiva")."
+      ,concat({CURR},to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalret,{MAIN}), get_decimals()), '999,999,999,999.00' )) total_ret,
+      concat({CURR},to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalretiva,{MAIN}), get_decimals()), '999,999,999,999.00' )) totalretiva":",concat({CURR},to_char(round(0,2), '999,999,999,999.00')) total_ret,
+      concat({CURR},to_char(round(0,2), '999,999,999,999.00')) totalretiva")."
         from
         {$table}
         join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
@@ -190,7 +190,7 @@ class Analysis extends REST_Controller {
 				unset($campos[':'.$prefix.'_currency']);
 				unset($campos[':dvf_currency']);
         unset($campos[':symbol']);
-        
+    
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
 
 
@@ -270,9 +270,9 @@ class Analysis extends REST_Controller {
       to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
       to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
       ".(($table =="dvnc")?" CASE when({$detailPrefix}_exc_inv =  0 ) then 0 else  (sum({$detailPrefix}_quantity) * {$neg}) end cant_docs,":(($table == 'dvnd') ? "0 cant_docs," : "sum({$detailPrefix}_quantity) cant_docs,") )."
-      ".(($org == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals() ) * {$neg}) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals() ) * {$neg})")." val_factura,
-      ".(($org == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals() )) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals() ) * {$neg})")."  val_impuesto,
-      ".(($org == 0) ? "concat({$prefix}_currency, ' ', round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals() )) " : "concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals() ) * {$neg})")."  total_docums,
+      ".(($org == 0) ? "concat({$prefix}_currency, ' ',  to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals() ) * {$neg} , '999,999,999,999.00')) " : "concat({CURR}, to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_baseamnt,{MAIN}), get_decimals() ) * {$neg}, '999,999,999,999.00'))")." val_factura,
+      ".(($org == 0) ? "concat({$prefix}_currency, ' ',  to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals() ) , '999,999,999,999.00')) " : "concat({CURR}, to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_taxtotal,{MAIN}), get_decimals() ) * {$neg}, '999,999,999,999.00'))")."  val_impuesto,
+      ".(($org == 0) ? "concat({$prefix}_currency, ' ',  to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals() ), '999,999,999,999.00')) " : "concat({CURR}, to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_doctotal,{MAIN}), get_decimals() ) * {$neg}, '999,999,999,999.00'))")."  total_docums,
       get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
       {$prefix}_createby createby,
       ".(($table =="dvnc")?"{$detailPrefix}_exc_inv::text": "'' invent").",
@@ -281,8 +281,8 @@ class Analysis extends REST_Controller {
       {$detailPrefix}_uom  unidad
       ".(($table =="dcfc")? "
       ,
-      concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalret,{MAIN}), get_decimals() )) total_ret,
-      concat({CURR},round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalretiva,{MAIN}), get_decimals() )) totalretiva":",concat({CURR},round(0, get_decimals() )) total_ret,
+      concat({CURR},to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalret,{MAIN}), get_decimals() ), '999,999,999,999.00')) total_ret,
+      concat({CURR},to_char(round(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate,{$prefix}_totalretiva,{MAIN}), get_decimals() ), '999,999,999,999.00')) totalretiva":",concat({CURR},to_char(round(0, get_decimals() ), '999,999,999,999.00')) total_ret,
       concat({CURR},round(0,2)) totalretiva")."
       from
       {$table}

@@ -148,10 +148,10 @@ class StockAnalysis extends REST_Controller {
 									{$prefix}_docnum docnum,
 									{$detailPrefix}_itemname item_name,
 									{$prefix}_cardname cliente_name,
-									concat({CURR}, get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, sum({$detailPrefix}_linetotal * {$neg} ), {MAIN} ) )   val_factura,
-									concat({CURR}, get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, sum({$detailPrefix}_price::numeric * {$neg} ), {MAIN} ) )  price,
-									concat({CURR}, get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, sum({$detailPrefix}_vatsum * {$neg}), {MAIN} ) )   val_impuesto,
-									concat({CURR}, get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, (sum({$detailPrefix}_linetotal) + sum({$detailPrefix}_vatsum) * {$neg} - coalesce(get_retperline({$prefix}_doctype,{$prefix}_docentry,{$detailPrefix}_linenum),0) ),{MAIN} ) )  total_docums,
+									concat({CURR}, to_char(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, sum({$detailPrefix}_linetotal * {$neg} ), {MAIN} ) , '999,999,999,999.00'))   val_factura,
+									concat({CURR}, to_char(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, sum({$detailPrefix}_price::numeric * {$neg} ), {MAIN} ) , '999,999,999,999.00'))  price,
+									concat({CURR}, to_char(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, sum({$detailPrefix}_vatsum * {$neg}), {MAIN} ) , '999,999,999,999.00'))   val_impuesto,
+									concat({CURR}, to_char(get_dynamic_conversion({CURRD},{$prefix}_currency,{$prefix}_docdate, (sum({$detailPrefix}_linetotal) + sum({$detailPrefix}_vatsum) * {$neg} - coalesce(get_retperline({$prefix}_doctype,{$prefix}_docentry,{$detailPrefix}_linenum),0) ),{MAIN} ) , '999,999,999,999.00'))  total_docums,
 									mga_name,
 									get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
 									{$prefix}_createby createby,
@@ -160,7 +160,7 @@ class StockAnalysis extends REST_Controller {
 									(SELECT {$prefix}_docnum FROM {$table} WHERE {$prefix}_docentry  = {$prefix}_baseentry AND {$prefix}_doctype  = {$prefix}_basetype) doc_afectado,
 									{$detailPrefix}_uom  unidad
 									".(($table =="dcfc")? ",get_retnameperline(cfc_doctype,cfc_docentry,fc1_linenum)": ",'N/A'" )." rt_name,
-									".(($table =="dcfc")? "case when get_dynamic_conversion({CURR},cfc_currency,cfc_docdate,get_retperline(cfc_doctype,cfc_docentry,fc1_linenum),{CURR}) > 0 then  concat({CURR},get_dynamic_conversion({CURR},{$prefix}_currency,{$prefix}_docdate,get_retperline(cfc_doctype,cfc_docentry,fc1_linenum),{MAIN})) else '' end ": "concat({CURR},round(0,2))" )." rt_total
+									".(($table =="dcfc")? "case when get_dynamic_conversion({CURR},cfc_currency,cfc_docdate,get_retperline(cfc_doctype,cfc_docentry,fc1_linenum),{CURR}) > 0 then  concat({CURR},get_dynamic_conversion({CURR},{$prefix}_currency,{$prefix}_docdate,get_retperline(cfc_doctype,cfc_docentry,fc1_linenum),{MAIN})) else '' end ": "concat({CURR},to_char(round(0,2), '999,999,999,999.00'))" )." rt_total
 									from {$table}
 									join {$detailTable} on {$prefix}_docentry = {$detailPrefix}_docentry
 									join dmdt on {$prefix}_doctype = mdt_doctype
@@ -181,12 +181,12 @@ class StockAnalysis extends REST_Controller {
 
 				if( isset( $Data['dvf_currency'] ) &&  isset($Data['symbol'])){
 					$sqlSelect =	str_replace("{USD}","tsa_value",$sqlSelect);
-					$sqlSelect =	str_replace("{CURR}","'".$Data['symbol']."   '",$sqlSelect);
+					$sqlSelect =	str_replace("{CURR}","'".$Data['symbol']."'",$sqlSelect);
 					$sqlSelect =	str_replace("{CURRD}","'".$Data['symbol']."'",$sqlSelect);
 					$sqlSelect =	str_replace("{MAIN}","'".$main_currency."'",$sqlSelect);
 				}else{
 					$sqlSelect =	str_replace("{USD}",1,$sqlSelect);
-					$sqlSelect =	str_replace("{CURR}","'".$MONEDA_LOCAL."   '",$sqlSelect);
+					$sqlSelect =	str_replace("{CURR}","'".$MONEDA_LOCAL."'",$sqlSelect);
 					$sqlSelect =	str_replace("{CURRD}","'".$MONEDA_LOCAL."'",$sqlSelect);
 					$sqlSelect =	str_replace("{MAIN}","'".$main_currency."'",$sqlSelect);
 
@@ -196,7 +196,6 @@ class StockAnalysis extends REST_Controller {
 				unset($campos[':symbol']);
 
         $resSelect = $this->pedeo->queryTable($sqlSelect,$campos);
-
       if(isset($resSelect[0])){
 
         $respuesta = array(
@@ -270,7 +269,7 @@ class StockAnalysis extends REST_Controller {
 			$cardType = 2;
 		}
 
-		$convertir = ($org == 0 ) ? "{$prefix}_currency  " : "{CURR}";
+		$convertir = ($org == 0 ) ? "{$prefix}_currency" : "{CURR}";
 		// print_r($convertir);
 		  $all .= "SELECT distinct
 		  mdt_docname tipo_doc_name,
@@ -283,10 +282,10 @@ class StockAnalysis extends REST_Controller {
 		  {$prefix}_docnum docnum,
 		  {$detailPrefix}_itemname item_name,
 		  {$prefix}_cardname cliente_name,
-		  concat({$convertir}, get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, sum( {$detailPrefix}_linetotal * {$neg} ),{MAIN} ) )  val_factura,
-		  concat({$convertir}, get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, sum( {$detailPrefix}_price::numeric * {$neg} ),{MAIN} ))  price,
-		  concat({$convertir}, get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, sum( {$detailPrefix}_vatsum * {$neg} ),{MAIN} ) )  val_impuesto,
-		  concat({$convertir}, get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, ( sum( {$detailPrefix}_linetotal) + sum({$detailPrefix}_vatsum) * {$neg} - coalesce(get_retperline({$prefix}_doctype,{$prefix}_docentry,{$detailPrefix}_linenum),0) ),{MAIN}) ) total_docums,
+		  concat({$convertir},to_char(get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, sum( {$detailPrefix}_linetotal * {$neg} ),{MAIN} ) ,'999,999,999,999.00'))  val_factura,
+		  concat({$convertir},to_char(get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, sum( {$detailPrefix}_price::numeric * {$neg} ),{MAIN} ), '999,999,999,999.00'))  price,
+		  concat({$convertir},to_char(get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, sum( {$detailPrefix}_vatsum * {$neg} ),{MAIN} ),'999,999,999,999.00'))  val_impuesto,
+		  concat({$convertir},to_char(get_dynamic_conversion( {CURRD},{$prefix}_currency,{$prefix}_docdate, ( sum( {$detailPrefix}_linetotal) + sum({$detailPrefix}_vatsum) * {$neg} - coalesce(get_retperline({$prefix}_doctype,{$prefix}_docentry,{$detailPrefix}_linenum),0) ),{MAIN}), '999,999,999,999.00') ) total_docums,
 		  get_tax_currency({CURRD}, {$prefix}_docdate) tasa,
 		  mga_name,
 		  {$prefix}_createby createby,
