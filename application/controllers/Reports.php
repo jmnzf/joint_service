@@ -504,7 +504,7 @@ class Reports extends REST_Controller {
 
 		$sql = "SELECT
 					t2.dma_item_code,
-					trim(t2.dma_item_name) as dma_item_name,,
+					trim(t2.dma_item_name) as dma_item_name,
 					t3.dmu_nameum,
 					t1.bdi_whscode,
 					t1.bdi_quantity,
@@ -517,7 +517,6 @@ class Reports extends REST_Controller {
 				on t1.bdi_itemcode = t2.dma_item_code
 				left join dmum t3 on t3.dmu_id =  t2.dma_uom_sale
 				where 1 = 1".$where;
-			print_r($sql);exit;
 			$result = $this->pedeo->queryTable($sql, $array);
 
 			if(isset($result[0])){
