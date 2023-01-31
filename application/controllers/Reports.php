@@ -75,7 +75,7 @@ class Reports extends REST_Controller {
 
 		}
 
-		$sqlAnalitic = "SELECT 
+		$sqlAnalitic = "SELECT distinct
 							tbmi.bmi_itemcode AS codigoarticulo,
 							dmar.dma_item_name AS nombrearticulo,
 							tbmi.bmi_ubication as ubicacion,
@@ -83,7 +83,7 @@ class Reports extends REST_Controller {
 							dmws.dws_name AS nombrealmacen,
 							dmdt.mdt_docname AS docorigen,
 							tbmi.bmi_basenum docnum,
-							tbmi.bmi_createat AS fechadocnum,
+							cast(tbmi.bmi_createat as date) AS fechadocnum,
 							tbmi.bmi_quantity AS cantidadmovida,
 							tbmi.bmi_cost AS costo,
 							tbmi.bmi_currequantity + tbmi.bmi_quantity AS cantidadrestante,
@@ -95,7 +95,8 @@ class Reports extends REST_Controller {
 						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
 						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
 						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code and dmws.business = tbmi.business
-						WHERE 1=1 AND tbmi.business = :business ".$sql." ORDER BY tbmi.bmi_createat DESC";
+						WHERE 1=1 AND tbmi.business = :business ".$sql." 
+						ORDER BY cast(tbmi.bmi_createat as date) DESC";
 
 		$result = $this->pedeo->queryTable($sqlAnalitic, $where);
 		
