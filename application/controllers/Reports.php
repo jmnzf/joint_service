@@ -91,14 +91,14 @@ class Reports extends REST_Controller {
 							(tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)) costoacumulado,
 							tbmi.bmi_createby AS creadopor,tbmi.bmi_docdate AS fechadoc,tbmi.bmi_comment AS comentario
 						FROM tbmi
-						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
+						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode and tbmi.business = tbdi.business
 						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
 						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
 						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code and dmws.business = tbmi.business
 						WHERE 1=1 AND tbmi.business = :business ".$sql." ORDER BY tbmi.bmi_createat DESC";
 
 		$result = $this->pedeo->queryTable($sqlAnalitic, $where);
-
+		
 		if(isset($result[0])){
 
 			$respuesta = array(

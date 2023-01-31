@@ -633,8 +633,8 @@ class ExitInventory extends REST_Controller
 
 					
 						//Se aplica el movimiento de inventario
-						$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment, bmi_lote, bmi_ubication)
-											VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote, :bmi_ubication)";
+						$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment, bmi_lote, bmi_ubication,business)
+											VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_lote, :bmi_ubication,:business)";
 
 						$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
@@ -653,7 +653,8 @@ class ExitInventory extends REST_Controller
 							':bmi_duedev'  => $this->validateDate($Data['isi_duedev']) ? $Data['isi_duedev'] : NULL,
 							':bmi_comment' => isset($Data['isi_comment']) ? $Data['isi_comment'] : NULL,
 							':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
-							':bmi_ubication' => isset($detail['si1_ubication']) ? $detail['si1_ubication'] : NULL
+							':bmi_ubication' => isset($detail['si1_ubication']) ? $detail['si1_ubication'] : NULL,
+							':business' => isset($Data['business']) ? $Data['business'] : NULL
 						));
 					
 
