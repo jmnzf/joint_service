@@ -37,9 +37,7 @@ class RetFisc extends REST_Controller {
 			!isset($Data['mrt_tasa'])OR
 			!isset($Data['mrt_acctcode'])OR
 			!isset($Data['mrt_mm'])OR
-			!isset($Data['mrt_acctlost'])OR
 			!isset($Data['mrt_minbase'])OR
-			!isset($Data['mrt_rmm'])OR
 			!isset($Data['mrt_selftret'])OR
 			!isset($Data['mrt_pos'])OR
 			!isset($Data['mrt_selfttype'])OR
@@ -76,8 +74,8 @@ class RetFisc extends REST_Controller {
             return;
         }
 
-        $sqlInsert = "INSERT INTO dmrt(mrt_code, mrt_enabled, mrt_name, mrt_type, mrt_action, mrt_dateini, mrt_base, mrt_tipobase, mrt_tasa, mrt_codeof, mrt_acctcode, mrt_mm, mrt_typeret, mrt_acctlost, mrt_minbase, mrt_rmm, mrt_selftret, mrt_pos, mrt_selfttype, mrt_typetax, mrt_sustra)
-	                    VALUES (:mrt_code, :mrt_enabled, :mrt_name, :mrt_type, :mrt_action, :mrt_dateini, :mrt_base, :mrt_tipobase, :mrt_tasa, :mrt_codeof, :mrt_acctcode, :mrt_mm, :mrt_typeret, :mrt_acctlost, :mrt_minbase, :mrt_rmm, :mrt_selftret, :mrt_pos, :mrt_selfttype, :mrt_typetax, :mrt_sustra)";
+        $sqlInsert = "INSERT INTO dmrt(mrt_code, mrt_enabled, mrt_name, mrt_type, mrt_action, mrt_dateini, mrt_base, mrt_tipobase, mrt_tasa, mrt_codeof, mrt_acctcode, mrt_mm, mrt_typeret, mrt_minbase, mrt_selftret, mrt_pos, mrt_selfttype, mrt_typetax, mrt_sustra)
+	                    VALUES (:mrt_code, :mrt_enabled, :mrt_name, :mrt_type, :mrt_action, :mrt_dateini, :mrt_base, :mrt_tipobase, :mrt_tasa, :mrt_codeof, :mrt_acctcode, :mrt_mm, :mrt_typeret, :mrt_minbase, :mrt_selftret, :mrt_pos, :mrt_selfttype, :mrt_typetax, :mrt_sustra)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -94,9 +92,7 @@ class RetFisc extends REST_Controller {
               ':mrt_acctcode' => $Data['mrt_acctcode'],
               ':mrt_mm' => $Data['mrt_mm'],
               ':mrt_typeret' => $Data['mrt_type'],
-              ':mrt_acctlost' => $Data['mrt_acctlost'],
               ':mrt_minbase' => $Data['mrt_minbase'],
-              ':mrt_rmm' => $Data['mrt_rmm'],
               ':mrt_selftret' => $Data['mrt_selftret'],
               ':mrt_pos' => $Data['mrt_pos'],
               ':mrt_selfttype' => $Data['mrt_selfttype'],
@@ -132,10 +128,20 @@ class RetFisc extends REST_Controller {
 	public function getRetFisc_get(){
 
     $sqlSelect = "SELECT DISTINCT dmrt.*,
+									tpdm.pdm_municipality AS municipio,
+									tdar.dar_name AS autoretencion,
+									trmm.rmm_name AS retencionmagnetica,
 									ttrt.trt_description AS mrt_description
 									FROM dmrt
 									INNER JOIN ttrt
-									ON dmrt.mrt_type = ttrt.trt_id";
+									ON dmrt.mrt_type = ttrt.trt_id
+									LEFT JOIN tpdm
+									ON dmrt.mrt_mm = tpdm.pdm_codmunicipality
+									LEFT JOIN tdar
+									ON dmrt.mrt_selfttype = tdar.dar_id
+									LEFT JOIN trmm
+									ON dmrt.mrt_typetax = trmm.rmm_id
+									";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -207,9 +213,7 @@ class RetFisc extends REST_Controller {
 			!isset($Data['mrt_tasa'])OR
 			!isset($Data['mrt_acctcode'])OR
 			!isset($Data['mrt_mm'])OR
-			!isset($Data['mrt_acctlost'])OR
 			!isset($Data['mrt_minbase'])OR
-			!isset($Data['mrt_rmm'])OR
 			!isset($Data['mrt_selftret'])OR
 			!isset($Data['mrt_pos'])OR
 			!isset($Data['mrt_selfttype'])OR
@@ -241,9 +245,7 @@ class RetFisc extends REST_Controller {
 														mrt_acctcode = :mrt_acctcode,
 														mrt_mm = :mrt_mm,
 														mrt_typeret = :mrt_typeret,
-														mrt_acctlost = :mrt_acctlost,
 														mrt_minbase = :mrt_minbase,
-														mrt_rmm = :mrt_rmm,
 														mrt_selftret = :mrt_selftret,
 														mrt_pos = :mrt_pos,
 														mrt_selfttype = :mrt_selfttype,
@@ -265,9 +267,7 @@ class RetFisc extends REST_Controller {
 					':mrt_acctcode' => $Data['mrt_acctcode'],
 					':mrt_mm' => $Data['mrt_mm'],
 					':mrt_typeret' => $Data['mrt_type'],
-					':mrt_acctlost' => $Data['mrt_acctlost'],
 					':mrt_minbase' => $Data['mrt_minbase'],
-					':mrt_rmm' => $Data['mrt_rmm'],
 					':mrt_selftret' => $Data['mrt_selftret'],
 					':mrt_pos' => $Data['mrt_pos'],
 					':mrt_selfttype' => $Data['mrt_selfttype'],
