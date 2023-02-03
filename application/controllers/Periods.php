@@ -25,10 +25,37 @@ class Periods extends REST_Controller {
 	public function createPeriods_post()
   {
     $Data = $this->post();
+    //VALIDAR QUE EL PERIODO YA EXISTA EN LA BD
+    $sqlValidate = "SELECT * FROM tbpc WHERE bpc_code = :bpc_code or (bpc_fip = :bpc_fip or bpc_ffp = :bpc_ffp)";
+      $resSqlValidate = $this->pedeo->queryTable($sqlValidate,array(
+        ':bpc_code' => $Data['bpc_code'],
+        ':bpc_fip' => $Data['bpc_fip'],
+        ':bpc_ffp' => $Data['bpc_ffp']
+      ));
+
+      if(count($resSqlValidate) > 0){
+        $respuesta = array(
+          'error'   => true,
+          'data' 	 => array(),
+          'mensaje' => 'El periodo contable ('.$resSqlValidate[0]['bpc_code'].' <-> '.$resSqlValidate[0]['bpc_fip'].' al '.$resSqlValidate[0]['bpc_ffp'].') ya existe'
+        );
+        return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);;
+
+      }
+
+    $typePeriod = 0;
+    if($Data['bpc_type'] == 1){
+      $typePeriod = 1;
+    }else if($Data['bpc_type'] == 2){
+      $typePeriod = 3;
+    }else if($Data['bpc_type'] == 3){
+      $typePeriod = 12;
+    }
     $sqlInsert = "INSERT INTO tbpc(bpc_code, bpc_name, bpc_type, bpc_period, bpc_fip, bpc_ffp, bpc_fid, bpc_ffd, bpc_fic, bpc_ffc, bpc_fiv, bpc_ffv, bpc_createdby, bpc_createdat)
     VALUES (:bpc_code, :bpc_name, :bpc_type, :bpc_period, :bpc_fip, :bpc_ffp, :bpc_fid, :bpc_ffd, :bpc_fic, :bpc_ffc, :bpc_fiv, :bpc_ffv, :bpc_createdby, :bpc_createdat)";
 
     $this->pedeo->trans_begin();
+
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
       ':bpc_code' => isset($Data['bpc_code'])?$Data['bpc_code']:NULL,
       ':bpc_name' => isset($Data['bpc_name'])?$Data['bpc_name']:NULL,
@@ -49,20 +76,21 @@ class Periods extends REST_Controller {
 
     if(is_numeric($resInsert) && $resInsert > 0){
 
-    $sqlInsertDetail = "INSERT INTO bpc1(pc1_id, pc1_subperiod, pc1_fid, pc1_ffd, pc1_fic, pc1_ffc, pc1_fiv, pc1_ffv, pc1_status)
-    VALUES (:pc1_id, :pc1_subperiod, :pc1_fid, :pc1_ffd, :pc1_fic, :pc1_ffc, :pc1_fiv, :pc1_ffv, :pc1_status)";
+      $sqlInsertDetail = "INSERT INTO bpc1(pc1_id, pc1_subperiod, pc1_fid, pc1_ffd, pc1_fic, pc1_ffc, pc1_fiv, pc1_ffv, pc1_status)
+      VALUES (:pc1_id, :pc1_subperiod, :pc1_fid, :pc1_ffd, :pc1_fic, :pc1_ffc, :pc1_fiv, :pc1_ffv, :pc1_status)";
 
-    for ($i=0; $i <= 12 -1; $i++) {
+    for ($i=0; $i <= $typePeriod - 1; $i++) {
 
+      
       $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
       ':pc1_id' => $resInsert,
       ':pc1_subperiod' => date('Y-m',strtotime($Data['bpc_fid']."+ {$i} month")),
-      ':pc1_fid' => $this->incrementarFecha($Data['bpc_fid'],$Data['bpc_ffd'],$i,true) ,
-      ':pc1_ffd' =>  $this->incrementarFecha($Data['bpc_fid'],$Data['bpc_ffd'],$i,false),
-      ':pc1_fic' => $this->incrementarFecha($Data['bpc_fid'],$Data['bpc_ffd'],$i,true),
-      ':pc1_ffc' => $this->incrementarFecha($Data['bpc_fid'],$Data['bpc_ffd'],$i,false),
-      ':pc1_fiv' => $this->incrementarFecha($Data['bpc_fid'],$Data['bpc_ffd'],$i,true),
-      ':pc1_ffv' => $this->incrementarFecha($Data['bpc_fid'],$Data['bpc_ffd'],$i,false),
+      ':pc1_fid' => $this->incrementarFecha("{$i} month",$Data['bpc_fid'],true) ,
+      ':pc1_ffd' =>  $this->incrementarFecha("{$i} month",$Data['bpc_fid'],false),
+      ':pc1_fic' => $this->incrementarFecha("{$i} month",$Data['bpc_fid'],true),
+      ':pc1_ffc' => $this->incrementarFecha("{$i} month",$Data['bpc_fid'],false),
+      ':pc1_fiv' => $this->incrementarFecha("{$i} month",$Data['bpc_fid'],true),
+      ':pc1_ffv' => $this->incrementarFecha("{$i} month",$Data['bpc_fid'],false),
       ':pc1_status' => 1
 
     ));
@@ -288,21 +316,13 @@ class Periods extends REST_Controller {
       }
   }
 
-  private function incrementarFecha($dateStart,$dateEnd,$months,$bool){
+  private function incrementarFecha($add,$startdate,$bool){
 
-    $dateI = new DateTime(date('Y-m-d',strtotime($dateStart)));
-    $dateF = new DateTime(date('Y-m-d',strtotime($dateEnd)));
-    print_r(date('Y-m-d',strtotime($dateI)));exit;
-    $dateNew = "";
-    $interval = $dateF->diff($dateI);
-    $intervalMonth = $interval->format("%m");
-    $month = $months + 1;
-    if(($intervalMonth + 1) == 12){
-      $dateNew = date('Y',strtotime($dateI))."-".$month."-".($bool) ? date('d',strtotime($dateI)) : date('t',strtotime($dateI));
-    }
-    print_r(date('t',strtotime($dateI)));exit;
-    return $dateNew;
-    
+    $date = !empty($startdate) ? $startdate : date('Y-m-d');
+    $newDate = strtotime($add,strtotime($date)) ;
+    $newDate = ($bool) ? date('Y-m-d',$newDate) : date('Y-m-t',$newDate);
+
+    return $newDate;
   }
 
 
