@@ -22,6 +22,7 @@ class ProductionReceipt extends REST_Controller
         $this->load->database();
         $this->pdo = $this->load->database('pdo', true)->conn_id;
         $this->load->library('pedeo', [$this->pdo]);
+        $this->load->library('DocumentNumbering');
     }
     public function getProductionReceipt_get()
     {
@@ -99,47 +100,15 @@ class ProductionReceipt extends REST_Controller
             return;
         }
 
-        	//BUSCANDO LA NUMERACION DEL DOCUMENTO
-			  $sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
-
-              $resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['brp_serie']));
-
-              if(isset($resNumeracion[0])){
-
-                      $numeroActual = $resNumeracion[0]['pgs_nextnum'];
-                      $numeroFinal  = $resNumeracion[0]['pgs_last_num'];
-                      $numeroSiguiente = ($numeroActual + 1);
-
-                      if( $numeroSiguiente <= $numeroFinal ){
-
-                              $DocNumVerificado = $numeroSiguiente;
-
-                      }	else {
-
-                              $respuesta = array(
-                                  'error' => true,
-                                  'data'  => array(),
-                                  'mensaje' =>'La serie de la numeración esta llena'
-                              );
-
-                              $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-                              return;
-                      }
-
-              }else{
-
-                      $respuesta = array(
-                          'error' => true,
-                          'data'  => array(),
-                          'mensaje' =>'No se encontro la serie de numeración para el documento'
-                      );
-
-                      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-                      return;
-              }
-            //   FIN DE NUMERACION DEL DOCUMENTO
+        // //BUSCANDO LA NUMERACION DEL DOCUMENTO
+			$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['brp_series'],$Data['brp_docdate'],$Data['brp_duedate']);
+		
+	    if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
+	
+		}else if ($DocNumVerificado['error']){
+	
+		    return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);;
+		}
 
         $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref, brp_baseentry, brp_basetype, brp_description, brp_createby) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref, :brp_baseentry, :brp_basetype, :brp_description, :brp_createby)";
 

@@ -24,6 +24,7 @@ class AccountingAccent extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('DocumentNumbering');
 	}
 
 	//CREAR NUEVO ASIENTO CONTABLE
@@ -103,43 +104,14 @@ class AccountingAccent extends REST_Controller
 		//
 
 
-		//BUSCANDO LA NUMERACION DEL DOCUMENTO
-		$sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
-
-		$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['mac_serie']));
-
-		if (isset($resNumeracion[0])) {
-
-			$numeroActual = $resNumeracion[0]['pgs_nextnum'];
-			$numeroFinal  = $resNumeracion[0]['pgs_last_num'];
-			$numeroSiguiente = ($numeroActual + 1);
-
-			if ($numeroSiguiente <= $numeroFinal) {
-
-				$DocNumVerificado = $numeroSiguiente;
-			} else {
-
-				$respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' => 'La serie de la numeración esta llena'
-				);
-
-				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-				return;
-			}
-		} else {
-
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'No se encontro la serie de numeración para el documento'
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
+		// //BUSCANDO LA NUMERACION DEL DOCUMENTO
+        $DocNumVerificado = $this->documentnumbering->NumberDoc($Data['mac_serie'],$Data['mac_doc_date'],$Data['mac_doc_duedate']);
+		
+	    if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
+	
+		}else if ($DocNumVerificado['error']){
+	
+		    return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
 		}
 
 
@@ -348,8 +320,8 @@ class AccountingAccent extends REST_Controller
 					':ac1_legal_num' => isset($detail['ac1_legal_num']) ? $detail['ac1_legal_num'] : NULL,
 					':ac1_codref' => is_numeric($detail['ac1_codref']) ? $detail['ac1_codref'] : 0,
 					':ac1_card_type' => isset($detail['ac1_card_type']) ? $detail['ac1_card_type'] : 0,
-					':business' => $detail['business'],
-					':branch'   => $detail['branch']
+					':business' => $Data['business'],
+					':branch'   => $Data['branch']
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

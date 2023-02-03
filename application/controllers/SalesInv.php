@@ -25,6 +25,7 @@ class SalesInv extends REST_Controller
 		$this->load->library('generic');
 		$this->load->library('account');
 		$this->load->library('DocumentCopy');
+		$this->load->library('DocumentNumbering');
 	}
 
 	//CREAR NUEVA FACTURA DE VENTAS
@@ -209,46 +210,15 @@ class SalesInv extends REST_Controller
 		//PERIODO CONTABLE
 		//
 
-		//BUSCANDO LA NUMERACION DEL DOCUMENTO
-		$sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
-
-		$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['dvf_series']));
-
-		if (isset($resNumeracion[0])) {
-
-			$numeroActual = $resNumeracion[0]['pgs_nextnum'];
-			$numeroFinal  = $resNumeracion[0]['pgs_last_num'];
-			$numeroSiguiente = ($numeroActual + 1);
-
-			if ($numeroSiguiente <= $numeroFinal) {
-
-				$DocNumVerificado = $numeroSiguiente;
-			} else {
-
-				$respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' => 'La serie de la numeración esta llena'
-				);
-
-				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-				return;
-			}
-		} else {
-
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'No se encontro la serie de numeración para el documento'
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
+		// //BUSCANDO LA NUMERACION DEL DOCUMENTO
+		$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['dvf_series'],$Data['dvf_docdate'],$Data['dvf_duedate']);
+      
+		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
+  
+		}else if ($DocNumVerificado['error']){
+  
+		  return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
 		}
-
-
 
 		//Obtener Carpeta Principal del Proyecto
 		$sqlMainFolder = " SELECT * FROM params";

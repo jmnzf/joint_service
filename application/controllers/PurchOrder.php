@@ -25,6 +25,7 @@ class PurchOrder extends REST_Controller
 		$this->load->library('generic');
 		$this->load->library('DocumentCopy');
 		$this->load->library('aprobacion');
+		$this->load->library('DocumentNumbering');
 	}
 
 	//CREAR NUEVA ORDEN DE COMPRA
@@ -79,39 +80,25 @@ class PurchOrder extends REST_Controller
 
 			return;
 		}
-		//
-		//BUSCANDO LA NUMERACION DEL DOCUMENTO
-		$sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+		// //BUSCANDO LA NUMERACION DEL DOCUMENTO
+		$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['cpo_series'],$Data['cpo_docdate'],$Data['cpo_duedate']);
+		
+		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
 
-		$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['cpo_series']));
+		}else if ($DocNumVerificado['error']){
 
-		if (isset($resNumeracion[0])) {
+			return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
+		}
 
-			$numeroActual = $resNumeracion[0]['pgs_nextnum'];
-			$numeroFinal  = $resNumeracion[0]['pgs_last_num'];
-			$numeroSiguiente = ($numeroActual + 1);
+		//Obtener Carpeta Principal del Proyecto
+		$sqlMainFolder = " SELECT * FROM params";
+		$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
 
-			if ($numeroSiguiente <= $numeroFinal) {
-
-				$DocNumVerificado = $numeroSiguiente;
-			} else {
-
-				$respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' => 'La serie de la numeración esta llena'
-				);
-
-				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-				return;
-			}
-		} else {
-
+		if (!isset($resMainFolder[0])) {
 			$respuesta = array(
 				'error' => true,
 				'data'  => array(),
-				'mensaje' => 'No se encontro la serie de numeración para el documento'
+				'mensaje' => 'No se encontro la caperta principal del proyecto'
 			);
 
 			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
