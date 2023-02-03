@@ -38,11 +38,9 @@ class Auth extends REST_Controller {
 			return;
 		}
 
-		$result = $this->pedeo->queryTable("SELECT menu.men_id,menu.men_nombre,menu.men_icon,menu.men_controller,menu.men_action,menu.men_sub_menu,menu.men_id_menu FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_menu = :idmenu AND menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol ORDER BY menu.men_id", array(':idmenu' => 0,':idestado' => 1,':idrol' => $request['Pgu_Role']));
-		//
-		$controller = $this->pedeo->queryTable("SELECT menu.men_id,menu.men_nombre, menu.men_controller, menu.men_action FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol", array(':idestado' => 1, ':idrol' => $request['Pgu_Role']));
-		//
-		$resultSet = array();
+		$result = $this->pedeo->queryTable("SELECT menu.men_id, menu.men_nombre, menu.men_icon, menu.men_controller, menu.men_action, menu.men_sub_menu, menu.men_id_menu FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol ORDER BY menu.men_id", array(':idestado' => 1,':idrol' => $request['Pgu_Role']));
+		// OBTENER PERMISO DEL USUARIO.
+		$resultSet = self::getpermissions($result);
 		// RESPUESTA POR DEFECTO.
 		$respuesta = array(
 			'error'  => true,
@@ -52,36 +50,82 @@ class Auth extends REST_Controller {
 		//
 		if (isset($result[0])) {
 			//
-			foreach ($result as $index => $data) {
-				//
-				$data['SubMenu'] = array();
-				//
-				if ( $data['men_sub_menu'] == 1 && $data['men_id_menu'] == 0 ) {
-					//
-					$data['SubMenu'] = $this->pedeo->queryTable("SELECT menu.men_id,menu.men_nombre,menu.men_icon,menu.men_controller,menu.men_action,menu.men_sub_menu,menu.men_id_menu FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_menu = :idmenu AND menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol ORDER BY menu.men_nombre ASC",array(':idmenu' => $data['men_id'],':idestado' => 1,':idrol' => $request['Pgu_Role']));
-					//
-					foreach ($data['SubMenu'] as $key => $value) {
-
-						if ( $value['men_sub_menu'] == 1 && $value['men_id_menu'] != 0 ) {
-							//
-							$data['SubMenu'][$key]['SubMenu'] = $this->pedeo->queryTable("SELECT menu.men_id,menu.men_nombre,menu.men_icon,menu.men_controller,menu.men_action FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_menu = :idmenu AND menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol ORDER BY menu.men_nombre ASC",array(':idmenu' => $value['men_id'],':idestado' => 1,':idrol' => $request['Pgu_Role']));
-						}
-					}
-				}
-				//
-				$resultSet[$index] = $data;
-			}
-			//
 			$respuesta = array(
 				'error'  => false,
-				'data'   => $resultSet,
-				'ctr'    => $controller,
+				'data'   => $resultSet['permissions'],
+				'ctr'    => $resultSet['ctr'],
 	    		'mensaje'=> ''
 			);
 		}
 
 		$this->response($respuesta);
 	}
+    /**
+     * MÉTODO PARA OBTENER PERMISOS DEL USUARIO.
+     */
+    private static function getpermissions($permissions) {
+        // 
+        $newpermissions = [];
+        $ctr = [];
+        // 
+        foreach ($permissions as $key => $menu) {
+            // VALIDAR SINO ES UN SUBMENU.
+            if ( $menu['men_id_menu'] == 0 && $menu['men_sub_menu'] == 0 ) {
+                // ASIGNAR DATOS DEL ITEM ACTUAL AL NUEVO ARRAY.
+                $newpermissions[] = $menu;
+            };
+            // VALIDAR SI ES UN SUBMNENU.
+            if ( $menu['men_id_menu'] == 0 && $menu['men_sub_menu'] == 1 ) {
+                // FILTRAR SI EL ITEM ACTUAL TIENE SUBMENU.
+                $menu['submenu'] = self::filterCrt($menu, $permissions);
+                // ASIGNAR DATOS DEL ITEM ACTUAL AL NUEVO ARRAY.
+                $newpermissions[] = $menu;
+            }
+            // VALIDAR SI TIENE CONTROLADOR
+            if (!empty($menu['men_controller'])) {
+                // ASIGNAR CONTROLADORES DEL MENU.
+                $ctr[] = $menu;
+            }
+        }
+        // 
+        return [
+            'ctr' => $ctr,
+            'permissions' => $newpermissions
+        ];
+    }
+    /**
+     * 
+     */
+    private static function filterCrt($item, $params) {
+        // VAR NEW RESULT.
+        $result = [];
+        // VAR PARA ALMACENAR PARAMETROS ORIGINALES.
+        $newParams = $params;
+        // 
+        foreach ($params as $key => $menu) {
+            // VALIDAR SI EL MENU ES HIJO DEL ITEM ACTUAL.
+            if ($item['men_id'] == $menu['men_id_menu']) {
+                // ASIGNAR DATOS DEL ITEM ACTUAL AL NUEVO ARRAY.
+                $result[] = $menu;
+                // ELIMINAR ITEM DEL ARRAY.
+                unset($newParams[$key]);
+            };
+        }
+        // 
+        foreach ($result as $key => $_menu) {
+            # code...
+            $newData = [];
+            // VALIDAR SI ES UN SUBMENU.
+            if ( $_menu['men_sub_menu'] == 1 ) {
+                // ASIGNAR DATOS DEL FILTRO.
+                $newData = self::filterCrt($_menu, $newParams);
+            };
+            // ASIGNAR DATOS DEL FILTRO.
+            $result[$key]['submenu'] = $newData;
+        }
+
+        return $result;
+    }
 
 	public function session_post() {
 
