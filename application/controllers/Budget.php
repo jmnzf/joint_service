@@ -23,8 +23,18 @@ class Budget extends REST_Controller {
 	}
 	// METODO PARA OBTENER LOS PRESUPUESTOS
   public function getBudget_get(){
-    $sqlSelect = "SELECT * from tmpc
-		full join mpc1 m on tmpc.mpc_id = m.mpc1_mpc_id";
+    $sqlSelect = "SELECT 
+					mpc_id,
+					mpc_nombre_presupuesto, 
+					mpc_fecha_inicial,
+					mpc_fecha_final,
+					sum(mpc1_saldo) as mpc1_saldo
+				from tmpc
+				inner join mpc1 m on tmpc.mpc_id = m.mpc1_mpc_id
+				group by mpc_id,
+					mpc_nombre_presupuesto, 
+					mpc_fecha_inicial,
+					mpc_fecha_final";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -260,10 +270,10 @@ class Budget extends REST_Controller {
 	// METODO PARA CREAR INSERTAR LOS DATOS EN LOS PERIODOS PRESUPUESTALES
 	public function createBugetPeriod_post(){
 		$Data = $this->post();
-		if($Data['mpp_mpc_id'] OR
-				$Data['mpp_profit'] OR
-				$Data['mpp_fecha_inicial'] OR
-				$Data['mpp_fecha_final']){
+		if(!isset($Data['mpp_mpc_id']) OR
+			!isset($Data['mpp_profit']) OR
+			!isset($Data['mpp_fecha_inicial']) OR
+			!isset($Data['mpp_fecha_final'])){
 					$this->response(array(
 		        'error'  => true,
 		        'data'   => [],
@@ -273,71 +283,80 @@ class Budget extends REST_Controller {
 		      return ;
 		}
 		// BUSCA EL ACUMULADO DEL PRESUPUESTO
-		$sqlSelect = "SELECT case
-									when sum(mpp_profit) is null then 0
-									else sum(mpp_profit)
-									end current_profit from tmpp where mpp_mpc_id = :mpp_mpc_id ";
-
-
+		$sqlSelect = "SELECT COALESCE(sum(mpp_profit), 0) as current_profit from tmpp where mpp_mpc_id = :mpp_mpc_id ";
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mpp_mpc_id'=>$Data['mpp_mpc_id']));
+
 		// VERIFICA QUE LA SUMATORIA DE LOS PROFITS Y EL VALOR INGRESADO NO SEA SUPERIOR AL 100%
-			$budget = self::getBudget($Data['mpp_mpc_id']);
-			$porcent = round((100*$Data['mpp_profit'])/$budget['mpc1_saldo']);
-				if($resSelect[0]['current_profit']+$porcent > 100){
-					// EN CASO DE QUE SE CUMPLA DE
-					$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' => 'El valor excede el limite');
+		$sqlDetailsum = "SELECT sum(mpc1_saldo) as mpc1_saldo from mpc1 where mpc1_mpc_id = :mpp_mpc_id";
+		$resDetailSum = $this->pedeo->queryTable($sqlDetailsum, array(':mpp_mpc_id'=>$Data['mpp_mpc_id']));
 
-						$this->response($respuesta);
-				}
+		//VERIFICA QUE LAS FECHAS SE CUMPLAN
+		$fiPP =  date($Data['mpp_fecha_inicial']);
+		$ffpp =  date($Data['mpp_fecha_final']);
+		$fp =  date($Data['pre_date']);
+		$ff =  date($Data['pre_enddate']);
+		
+		if(!($fiPP >= $fp AND
+		 	$ffpp <= $ff)){
+			
+				$this->response(array(
+					'error'  => true,
+					'data'   => [],
+					'mensaje'=>'Fechas inconsistentes'
+				  ), REST_Controller::HTTP_BAD_REQUEST);
+	
+				  return ;
+		}
 
+		$currentprofit = $resSelect[0]['current_profit'];
+		$porcent = $currentprofit + $Data['mpp_profit'] ;
+		
+		// 
+		if($porcent > 100){
+		$this->response(array(
+			'error'  => true,
+			'data'   => [],
+			'mensaje'=>'El valor excede el limite'
+			), REST_Controller::HTTP_BAD_REQUEST);
 
-				//VERIFICA QUE LAS FECHAS SE CUMPLAN
-				if($Data['mpp_fecha_inicial'] > $budget['mpc_fecha_final']){
-					$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' => 'Fechas inconsistentes');
-						$this->response($respuesta);
-				}
-				// SI TODO ESTA CORRECTO INSERTA EL REGISTRO EN LA TABLA
-			$sqlInsert ="INSERT INTO tmpp (mpp_mpc_id, mpp_profit, mpp_fecha_inicial, mpp_fecha_final)
-										VALUES(:mpp_mpc_id,:mpp_profit,:mpp_fecha_inicial,:mpp_fecha_final)";
+			return ;
+		}	
+			// SI TODO ESTA CORRECTO INSERTA EL REGISTRO EN LA TABLA
+		$sqlInsert ="INSERT INTO tmpp (mpp_mpc_id, mpp_profit, mpp_fecha_inicial, mpp_fecha_final)
+									VALUES(:mpp_mpc_id,:mpp_profit,:mpp_fecha_inicial,:mpp_fecha_final)";
 
-			$resInsert = $this->pedeo->insertRow($sqlInsert,array(
-											':mpp_mpc_id' =>$Data['mpp_mpc_id'],
-											':mpp_profit' =>$porcent,
-											':mpp_fecha_inicial' =>$Data['mpp_fecha_inicial'],
-											':mpp_fecha_final' =>$Data['mpp_fecha_final']
-										));
+		$resInsert = $this->pedeo->insertRow($sqlInsert,array(
+										':mpp_mpc_id' =>$Data['mpp_mpc_id'],
+										':mpp_profit' =>$porcent,
+										':mpp_fecha_inicial' =>$Data['mpp_fecha_inicial'],
+										':mpp_fecha_final' =>$Data['mpp_fecha_final']
+									));
 
-			if(is_numeric($resInsert) && $resInsert > 0){
+		if(is_numeric($resInsert) && $resInsert > 0){
 
-				$respuesta = array(
-					'error' => false,
-					'data'  => $resInsert,
-					'mensaje' => 'Presupuesto creado con exito');
-			}else{
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resInsert,
+				'mensaje' => 'Presupuesto creado con exito');
+		}else{
 
-				$respuesta = array(
-					'error' => true,
-					'data'  => $resInsert,
-					'mensaje' => 'No se pudo crear el detalle de presupuesto');
-			}
+			$respuesta = array(
+				'error' => true,
+				'data'  => $resInsert,
+				'mensaje' => 'No se pudo crear el detalle de presupuesto');
+		}
 
 
 		 $this->response($respuesta);
 	}
 
 	private function getBudget($id){
-		$sqlSelect = "SELECT * from tmpc
-									join mpc1 on mpc_id = mpc1_mpc_id
-									where mpc_id = :mpp_mpc_id ";
+		$sqlSelect = "SELECT COALESCE(sum(mpc1_saldo),0) as mpc1_saldo from tmpc
+					join mpc1 on mpc_id = mpc1_mpc_id
+					where mpc_id = :mpp_mpc_id ";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mpp_mpc_id'=>$id));
-
+		
 		return $resSelect[0];
 	}
 
