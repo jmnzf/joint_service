@@ -397,10 +397,10 @@ class PurchSolAntProv extends REST_Controller
 		$sqlInsert = "INSERT INTO dcsa(csa_series, csa_docnum, csa_docdate, csa_duedate, csa_duedev, csa_pricelist, csa_cardcode,
                       csa_cardname, csa_currency, csa_contacid, csa_slpcode, csa_empid, csa_comment, csa_doctotal, csa_baseamnt, csa_taxtotal,
                       csa_discprofit, csa_discount, csa_createat, csa_baseentry, csa_basetype, csa_doctype, csa_idadd, csa_adress, csa_paytype,
-                      csa_createby,csa_correl, csa_date_inv, csa_date_del, csa_place_del,business,branch, csa_anticipate_total, csa_anticipate_type, csa_anticipate_value)VALUES(:csa_series, :csa_docnum, :csa_docdate, :csa_duedate, :csa_duedev, :csa_pricelist, :csa_cardcode, :csa_cardname,
+                      csa_createby,csa_correl, csa_date_inv, csa_date_del, csa_place_del,business,branch)VALUES(:csa_series, :csa_docnum, :csa_docdate, :csa_duedate, :csa_duedev, :csa_pricelist, :csa_cardcode, :csa_cardname,
                       :csa_currency, :csa_contacid, :csa_slpcode, :csa_empid, :csa_comment, :csa_doctotal, :csa_baseamnt, :csa_taxtotal, :csa_discprofit, :csa_discount,
                       :csa_createat, :csa_baseentry, :csa_basetype, :csa_doctype, :csa_idadd, :csa_adress, :csa_paytype,:csa_createby,:csa_correl, 
-					  :csa_date_inv, :csa_date_del, :csa_place_del,:business,:branch, :csa_anticipate_total, :csa_anticipate_type, :csa_anticipate_value)";
+					  :csa_date_inv, :csa_date_del, :csa_place_del,:business,:branch)";
 
 
 		// Se Inicia la transaccion,
@@ -438,15 +438,12 @@ class PurchSolAntProv extends REST_Controller
 			':csa_adress' => isset($Data['csa_adress']) ? $Data['csa_adress'] : NULL,
 			':csa_paytype' => is_numeric($Data['csa_paytype']) ? $Data['csa_paytype'] : 0,
 			':csa_createby' => isset($Data['csa_createby']) ? $Data['csa_createby'] : NULL,
-			':csa_correl' => isset($Data['csa_correl']) ? $Data['csa_correl'] : NULL,
-			':csa_date_inv' => $this->validateDate($Data['csa_date_inv']) ? $Data['csa_date_inv'] : NULL,
-			':csa_date_del' => $this->validateDate($Data['csa_date_del']) ? $Data['csa_date_del'] : NULL,
-			':csa_place_del' => isset($Data['csa_place_del']) ? $Data['csa_place_del'] : NULL,
-			':business' => isset($Data['business']) ? $Data['business'] : NULL,
-			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
-			':csa_anticipate_total' => is_numeric($Data['csa_anticipate_total']) ? $Data['csa_anticipate_total'] : 0,
-			':csa_anticipate_type' => is_numeric($Data['csa_anticipate_type']) ? $Data['csa_anticipate_type'] : 0,
-			':csa_anticipate_value' => is_numeric($Data['csa_anticipate_value']) ? $Data['csa_anticipate_value'] : 0,
+			'csa_correl' => isset($Data['csa_correl']) ? $Data['csa_correl'] : NULL,
+			'csa_date_inv' => $this->validateDate($Data['csa_date_inv']) ? $Data['csa_date_inv'] : NULL,
+			'csa_date_del' => $this->validateDate($Data['csa_date_del']) ? $Data['csa_date_del'] : NULL,
+			'csa_place_del' => isset($Data['csa_place_del']) ? $Data['csa_place_del'] : NULL,
+			'business' => isset($Data['business']) ? $Data['business'] : NULL,
+			'branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 
 		));
 
@@ -1150,8 +1147,7 @@ class PurchSolAntProv extends REST_Controller
 										csa_empid=:csa_empid, csa_comment=:csa_comment, csa_doctotal=:csa_doctotal, csa_baseamnt=:csa_baseamnt,
 										csa_taxtotal=:csa_taxtotal, csa_discprofit=:csa_discprofit, csa_discount=:csa_discount, csa_createat=:csa_createat,
 										csa_baseentry=:csa_baseentry, csa_basetype=:csa_basetype, csa_doctype=:csa_doctype, csa_idadd=:csa_idadd,
-										csa_adress=:csa_adress, csa_paytype=:csa_paytype, csa_anticipate_type=:csa_ancitipate_type, csa_anticipate_value=:csa_ancitipate_value,
-										csa_anticipate_total=:csa_anticipate_total WHERE csa_docentry=:csa_docentry";
+										csa_adress=:csa_adress, csa_paytype=:csa_paytype WHERE csa_docentry=:csa_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -1179,9 +1175,6 @@ class PurchSolAntProv extends REST_Controller
 			':csa_idadd' => isset($Data['csa_idadd']) ? $Data['csa_idadd'] : NULL,
 			':csa_adress' => isset($Data['csa_adress']) ? $Data['csa_adress'] : NULL,
 			':csa_paytype' => is_numeric($Data['csa_paytype']) ? $Data['csa_paytype'] : 0,
-			':csa_anticipate_total' => is_numeric($Data['csa_anticipate_total']) ? $Data['csa_anticipate_total'] : 0,
-			':csa_anticipate_type' => is_numeric($Data['csa_anticipate_type']) ? $Data['csa_anticipate_type'] : 0,
-			':csa_anticipate_value' => is_numeric($Data['csa_anticipate_value']) ? $Data['csa_anticipate_value'] : 0,
 			':csa_docentry' => $Data['csa_docentry']
 		));
 

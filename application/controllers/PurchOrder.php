@@ -438,12 +438,12 @@ class PurchOrder extends REST_Controller
 			':cpo_adress' => isset($Data['cpo_adress']) ? $Data['cpo_adress'] : NULL,
 			':cpo_paytype' => is_numeric($Data['cpo_paytype']) ? $Data['cpo_paytype'] : 0,
 			':cpo_createby' => isset($Data['cpo_createby']) ? $Data['cpo_createby'] : NULL,
-			':cpo_correl' => isset($Data['cpo_correl']) ? $Data['cpo_correl'] : NULL,
-			':cpo_date_inv' => $this->validateDate($Data['cpo_date_inv']) ? $Data['cpo_date_inv'] : NULL,
-			':cpo_date_del' => $this->validateDate($Data['cpo_date_del']) ? $Data['cpo_date_del'] : NULL,
-			':cpo_place_del' => isset($Data['cpo_place_del']) ? $Data['cpo_place_del'] : NULL,
-			':business' => isset($Data['business']) ? $Data['business'] : NULL,
-			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
+			'cpo_correl' => isset($Data['cpo_correl']) ? $Data['cpo_correl'] : NULL,
+			'cpo_date_inv' => $this->validateDate($Data['cpo_date_inv']) ? $Data['cpo_date_inv'] : NULL,
+			'cpo_date_del' => $this->validateDate($Data['cpo_date_del']) ? $Data['cpo_date_del'] : NULL,
+			'cpo_place_del' => isset($Data['cpo_place_del']) ? $Data['cpo_place_del'] : NULL,
+			'business' => isset($Data['business']) ? $Data['business'] : NULL,
+			'branch' => isset($Data['branch']) ? $Data['branch'] : NULL
 
 		));
 
