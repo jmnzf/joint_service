@@ -19,6 +19,7 @@ class Reports extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     	$this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('generic');
 
 	}
 
@@ -1900,10 +1901,14 @@ class Reports extends REST_Controller {
 	public function AccountBalance_post(){
 
 		$Data = $this->post();
+		$decimalsystem = $this->generic->getDecimals();
+		$decimals = str_pad(0, $decimalsystem, "0", STR_PAD_LEFT);
+		$fields = array();
 
 		$ac = "";
 		$sql = " WHERE 1=1 ";
 	 	$yr  = "";
+		$inner = "";
 
 
 
@@ -1911,36 +1916,49 @@ class Reports extends REST_Controller {
 			$ac = $Data['lac_ac'];
 		}
 
+		if( isset( $Data['lac_sn'] )  && !empty($Data['lac_sn']) ){
+			$sn = $Data['lac_sn'];
+		}
+
 		if( isset( $Data['lac_yr'] )  && !empty($Data['lac_yr']) ){
 			$yr = $Data['lac_yr'];
 		}
 
 		if( is_array($ac) ){
-			$ac = implode($ac,",");
+			$ac = implode(",",$ac);
 			$sql .= ' AND dacc.acc_code IN('.$ac.')';
+		}
+		
+
+		if( isset( $Data['lac_sn'] )  && !empty($Data['lac_sn']) ){
+
+			$inner = "inner join mac1 on ac1_account = acc_code";
+			$sql .= " AND ac1_legal_num in ({$Data['lac_sn']})";
 		}
 
 		$sql .= ' AND dacc.acc_level = 6';
 
 
-		$sqlSelect="SELECT acc_code as codigocuenta,
+		$sqlSelect="SELECT distinct acc_code as codigocuenta,
 				acc_name as nombredecuenta,
-				coalesce(get_saldocuentames(acc_code,1,".$yr."),0) as enero,
-				coalesce(get_saldocuentames(acc_code,2,".$yr."),0) as febrero,
-				coalesce(get_saldocuentames(acc_code,3,".$yr."),0) as marzo,
-				coalesce(get_saldocuentames(acc_code,4,".$yr."),0) as abril,
-				coalesce(get_saldocuentames(acc_code,5,".$yr."),0) as mayo,
-				coalesce(get_saldocuentames(acc_code,6,".$yr."),0) as junio,
-				coalesce(get_saldocuentames(acc_code,7,".$yr."),0) as julio,
-				coalesce(get_saldocuentames(acc_code,8,".$yr."),0) as agosto,
-				coalesce(get_saldocuentames(acc_code,9,".$yr."),0) as septiembre,
-				coalesce(get_saldocuentames(acc_code,10,".$yr."),0) as octubre,
-				coalesce(get_saldocuentames(acc_code,11,".$yr."),0) as noviembre,
-				coalesce(get_saldocuentames(acc_code,12,".$yr."),0) as diciembre,
-				coalesce(get_saldocuentaano(acc_code,".$yr."),0) as saldo
-				from dacc ".$sql;
+				to_char(coalesce(get_saldocuentames(acc_code,1,".$yr."),0), '{format}') as enero,
+				to_char(coalesce(get_saldocuentames(acc_code,2,".$yr."),0), '{format}') as febrero,
+				to_char(coalesce(get_saldocuentames(acc_code,3,".$yr."),0), '{format}') as marzo,
+				to_char(coalesce(get_saldocuentames(acc_code,4,".$yr."),0), '{format}') as abril,
+				to_char(coalesce(get_saldocuentames(acc_code,5,".$yr."),0), '{format}') as mayo,
+				to_char(coalesce(get_saldocuentames(acc_code,6,".$yr."),0), '{format}') as junio,
+				to_char(coalesce(get_saldocuentames(acc_code,7,".$yr."),0), '{format}') as julio,
+				to_char(coalesce(get_saldocuentames(acc_code,8,".$yr."),0), '{format}') as agosto,
+				to_char(coalesce(get_saldocuentames(acc_code,9,".$yr."),0), '{format}') as septiembre,
+				to_char(coalesce(get_saldocuentames(acc_code,10,".$yr."),0), '{format}') as octubre,
+				to_char(coalesce(get_saldocuentames(acc_code,11,".$yr."),0), '{format}') as noviembre,
+				to_char(coalesce(get_saldocuentames(acc_code,12,".$yr."),0), '{format}') as diciembre,
+				to_char(coalesce(get_saldocuentaano(acc_code,".$yr."),0), '{format}') as saldo
+				from dacc {$inner} ".$sql;
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$sqlSelect = str_replace("{format}", "999,999,999,999.".$decimals, $sqlSelect);
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, $fields);
 
 
 		if(isset($resSelect[0])){
