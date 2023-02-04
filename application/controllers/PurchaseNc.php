@@ -2300,7 +2300,7 @@ class PurchaseNc extends REST_Controller
 
 			if ($SumaCreditosSYS > $SumaDebitosSYS || $SumaDebitosSYS > $SumaCreditosSYS) {
 
-				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE business = :business";
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE pge_id = :business";
 				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array(':business' => $Data['business']));
 
 				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {

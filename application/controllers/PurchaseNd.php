@@ -1120,7 +1120,7 @@ class PurchaseNd extends REST_Controller
 
 				//CUENTA PUENTE DE INVENTARIO
 
-				$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch FROM pgem WHERE business = :business ";
+				$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch FROM pgem WHERE pge_id = :business ";
 				$rescuentainventario = $this->pedeo->queryTable($sqlcuentainventario, array(':business' => $Data['business']));
 
 				if (isset($rescuentainventario[0]) &&  $rescuentainventario[0]['pge_bridge_inv_purch'] != 0) {
