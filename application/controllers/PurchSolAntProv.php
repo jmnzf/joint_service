@@ -1285,7 +1285,7 @@ class PurchSolAntProv extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dcsa', 'csa', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$sqlSelect = self::getColumn('dcsa', 'csa', ",CONCAT(T0.csa_CURRENCY,' ',TRIM(TO_CHAR(csa_anticipate_total,'{format}'))) as csa_anticipate_total", '', $DECI_MALES, $Data['business'], $Data['branch'],36);
         // print_r($sqlSelect);exit;
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
