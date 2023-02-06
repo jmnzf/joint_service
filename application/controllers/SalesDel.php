@@ -1023,7 +1023,7 @@ class SalesDel extends REST_Controller
 
 						if( $ManejaLote == 1 ){
 							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication AND bdi_lote = :bdi_lote AND business = :business";
-							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['em1_whscode'], ':bdi_itemcode' => $detail['em1_itemcode'], ':bdi_ubication' => $detail['em1_ubication'], ':bdi_lote' => $detail['ote_code'], $Data['business']));
+							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['em1_whscode'], ':bdi_itemcode' => $detail['em1_itemcode'], ':bdi_ubication' => $detail['em1_ubication'], ':bdi_lote' => $detail['ote_code'], ':business' => $Data['business']));
 						}else{
 							$sqlCostoMomentoRegistro = "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication AND business = :business";
 							$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(':bdi_whscode' => $detail['em1_whscode'], ':bdi_itemcode' => $detail['em1_itemcode'], ':bdi_ubication' => $detail['em1_ubication'], ':business' => $Data['business']));
@@ -1145,7 +1145,7 @@ class SalesDel extends REST_Controller
 							WHERE bdi_itemcode = :bdi_itemcode
 							AND bdi_whscode = :bdi_whscode
 							AND bdi_ubication = :bdi_ubication
-							AND bdi_lote = :bdi_lote,
+							AND bdi_lote = :bdi_lote
 							AND business = :business";
 	
 							$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
@@ -1543,17 +1543,17 @@ class SalesDel extends REST_Controller
 					$cdito = $grantotalCostoInventario;
 					$MontoSysCR = ($cdito / $TasaLocSys);
 				} else if ($codigo3 == 5  || $codigo3 == "5") {
-					$dbito = $grantotalCostoInventario;
-					$MontoSysDB = ($dbito / $TasaLocSys);
+					$cdito = $grantotalCostoInventario;
+					$MontoSysCR = ($cdito / $TasaLocSys);
 				} else if ($codigo3 == 6 || $codigo3 == "6") {
-					$dbito = $grantotalCostoInventario;
-					$MontoSysDB = ($dbito / $TasaLocSys);
+					$cdito = $grantotalCostoInventario;
+					$MontoSysCR = ($cdito / $TasaLocSys);
 				} else if ($codigo3 == 7 || $codigo3 == "7") {
-					$dbito = $grantotalCostoInventario;
-					$MontoSysDB = ($dbito / $TasaLocSys);
+					$cdito = $grantotalCostoInventario;
+					$MontoSysCR = ($cdito / $TasaLocSys);
 				} else if ($codigo3 == 9 || $codigo3 == "9") {
-					$dbito = $grantotalCostoInventario;
-					$MontoSysDB = ($dbito / $TasaLocSys);
+					$cdito = $grantotalCostoInventario;
+					$MontoSysCR = ($cdito / $TasaLocSys);
 				}
 
 
@@ -1699,14 +1699,14 @@ class SalesDel extends REST_Controller
 					$dbito = 	$grantotalCostoCosto;
 					$MontoSysDB = ($dbito / $TasaLocSys);
 				} else if ($codigo3 == 2 || $codigo3 == "2") {
-					$cdito = 	$grantotalCostoCosto;
-					$MontoSysCR = ($cdito / $TasaLocSys);
+					$dbito = 	$grantotalCostoCosto;
+					$MontoSysDB = ($dbito / $TasaLocSys);
 				} else if ($codigo3 == 3 || $codigo3 == "3") {
-					$cdito = 	$grantotalCostoCosto;
-					$MontoSysCR = ($cdito / $TasaLocSys);
+					$dbito = 	$grantotalCostoCosto;
+					$MontoSysDB = ($dbito / $TasaLocSys);
 				} else if ($codigo3 == 4 || $codigo3 == "4") {
-					$cdito = 	$grantotalCostoCosto;
-					$MontoSysCR = ($cdito / $TasaLocSys);
+					$dbito = 	$grantotalCostoCosto;
+					$MontoSysDB = ($dbito / $TasaLocSys);
 				} else if ($codigo3 == 5  || $codigo3 == "5") {
 					$dbito = 	$grantotalCostoCosto;
 					$MontoSysDB = ($dbito / $TasaLocSys);

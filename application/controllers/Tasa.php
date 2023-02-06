@@ -124,17 +124,12 @@ class Tasa extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE tasa	SET tsa_eq=:tsa_eq, tsa_curro=:tsa_curro, tsa_value=:tsa_value, tsa_currd=:tsa_currd, tsa_date=:tsa_date, tsa_createby=:tsa_createby  WHERE tsa_id = :tsa_id";
+      $sqlUpdate = "UPDATE tasa	SET  tsa_value=:tsa_value WHERE tsa_id = :tsa_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-          ':tsa_eq'    => isset($Data['tsa_eq']) ? $Data['tsa_eq'] : 0,
-          ':tsa_curro' => isset($Data['tsa_curro']) ? $Data['tsa_curro'] : NULL,
           ':tsa_value' => isset($Data['tsa_value']) ? $Data['tsa_value'] : 0,
-          ':tsa_currd' => isset($Data['tsa_currd']) ? $Data['tsa_currd'] : NULL,
-          ':tsa_createby' => isset($Data['tsa_createby']) ? $Data['tsa_createby'] : NULL,
-          ':tsa_date'  => isset($Data['tsa_date']) ? $Data['tsa_date']:NULL,
           ':tsa_id' => $Data['tsa_id']
 
       ));
@@ -144,7 +139,7 @@ class Tasa extends REST_Controller {
             $respuesta = array(
               'error' => false,
               'data' => $resUpdate,
-              'mensaje' =>'tasa actualizada con exito'
+              'mensaje' =>'Valor de la tasa actualizado con exito'
             );
 
 

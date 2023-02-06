@@ -866,41 +866,7 @@ class PurchSolAntProv extends REST_Controller
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
 					// Se verifica que el detalle no de error insertando //
-					//VALIDAR SI LOS ITEMS SON IGUALES A LOS DEL DOCUMENTO DE ORIGEN SIEMPRE QUE VENGA DE UN COPIAR DE
-					if($Data['csa_basetype'] == 11){
-						//OBTENER NUMERO DOCUMENTO ORIGEN
-						$DOC = "SELECT coc_docnum FROM dcoc WHERE coc_doctype = :coc_doctype AND coc_docentry = :coc_docentry";
-						$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':coc_docentry' =>$Data['csa_baseentry'],':coc_doctype' => $Data['csa_basetype']));
-						foreach ($ContenidoDetalle as $key => $value) {
-							# code...
-							//VALIDAR SI EL ARTICULO DEL DOCUMENTO ACTUAL EXISTE EN EL DOCUMENTO DE ORIGEN
-							$sql = "SELECT dcoc.coc_docnum,coc1.oc1_itemcode FROM dcoc INNER JOIN coc1 ON dcoc.coc_docentry = coc1.oc1_docentry 
-							WHERE dcoc.coc_docentry = :coc_docentry AND dcoc.coc_doctype = :coc_doctype AND coc1.oc1_itemcode = :oc1_itemcode";
-							$resSql = $this->pedeo->queryTable($sql,array(
-								':coc_docentry' =>$Data['csa_baseentry'],
-								':coc_doctype' => $Data['csa_basetype'],
-								':oc1_itemcode' => $value['sa1_itemcode']
-							));
-							
-								if(isset($resSql[0])){
-									//EL ARTICULO EXISTE EN EL DOCUMENTO DE ORIGEN
-								}else {
-									//EL ARTICULO NO EXISTE EN EL DOCUEMENTO DE ORIGEN
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data' => $value['em1_itemcode'],
-										'mensaje'	=> 'El Item '.$value['em1_itemcode'].' no existe en el documento origen (Oferta #'.$RESULT_DOC[0]['coc_docnum'].')'
-									);
-
-									$this->response($respuesta);
-
-									return;
-								}
-							}
-
-					}
+					
 				} else {
 
 					// si falla algun insert del detalle de la cotizacion se devuelven los cambios realizados por la transaccion,
@@ -924,7 +890,7 @@ class PurchSolAntProv extends REST_Controller
 
 
 				$sqlEstado1 = " SELECT
-									t0.cpo_doctotal as total
+									(t0.cpo_doctotal) as total
 								from dcpo t0
 								where t0.cpo_docentry = :cpo_docentry
 								and t0.cpo_doctype = :cpo_doctype";
@@ -937,7 +903,7 @@ class PurchSolAntProv extends REST_Controller
 				));
 
 				$sqlEstado2 = "SELECT
-									coalesce(sum(t0.csa_anticipated_total - coalesce(t0.csa_paytoday,0)),0) total
+									(coalesce(sum(t0.csa_anticipate_total - coalesce(t0.csa_paytoday,0)),0)) total
 								from dcsa t0
 								where t0.csa_baseentry = :csa_baseentry
 								and t0.csa_basetype = :csa_basetype";
@@ -950,44 +916,23 @@ class PurchSolAntProv extends REST_Controller
 				));
 
 				$total_order = isset($resEstado1[0]) ? $resEstado1[0]['total'] : 0;
-				$total_sa = isset($resEstado2[0]) ? $resEstado2[0]['total'] : 0;
-				// print_r($total_order."-".$total_sa);exit;die;
-				
+				$total_sa = isset($resEstado2[0]) ? $resEstado2[0]['total'] : 0;				
 
-				if (($total_order - $total_sa) == 0) {
+				if (($total_sa > $total_order) ) {
 
-					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-						':bed_docentry' => $Data['csa_baseentry'],
-						':bed_doctype' => $Data['csa_basetype'],
-						':bed_status' => 3, //ESTADO CERRADO
-						':bed_createby' => $Data['csa_createby'],
-						':bed_date' => date('Y-m-d'),
-						':bed_baseentry' => $resInsert,
-						':bed_basetype' => $Data['csa_doctype']
-					));
-
-
-					if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
-					} else {
-
-						$this->pedeo->trans_rollback();
+					$this->pedeo->trans_rollback();
 
 						$respuesta = array(
 							'error'   => true,
-							'data' => $resInsertEstado,
-							'mensaje'	=> 'No se pudo registrar la orden de compra'
+							'data' => $total_order."-".$total_sa,
+							'mensaje'	=> 'La suma de las solicitudes de anticipo no pueden superar al valor total del documento base'
 						);
 
 
 						$this->response($respuesta);
 
 						return;
-					}
+					
 				}
 			}else if ($Data['csa_basetype'] == 21) {
 
@@ -1012,7 +957,7 @@ class PurchSolAntProv extends REST_Controller
 				));
 
 				$sqlEstado2 = "SELECT
-									coalesce(sum(t0.csa_anticipated_total - coalesce(t0.csa_paytoday,0)),0) total
+									coalesce(sum(t0.csa_anticipate_total - coalesce(t0.csa_paytoday,0)),0) total
 								from dcsa t0
 								where t0.csa_baseentry = :csa_baseentry
 								and t0.csa_basetype = :csa_basetype";
@@ -1022,47 +967,26 @@ class PurchSolAntProv extends REST_Controller
 
 				));
 
-				$total_order = abs($resEstado1[0]['total']);
-				$total_sa = abs($resEstado2[0]['total']);
-				print_r($total_order."-".$total_sa);exit;die;
-				
+				$total_order = isset($resEstado1[0]) ? $resEstado1[0]['total'] : 0;
+				$total_sa = isset($resEstado2[0]) ? $resEstado2[0]['total'] : 0;			
 
-				if (($total_order - $total_sa) == 0) {
-
-					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-						':bed_docentry' => $Data['csa_baseentry'],
-						':bed_doctype' => $Data['csa_basetype'],
-						':bed_status' => 3, //ESTADO CERRADO
-						':bed_createby' => $Data['csa_createby'],
-						':bed_date' => date('Y-m-d'),
-						':bed_baseentry' => $resInsert,
-						':bed_basetype' => $Data['csa_doctype']
-					));
-
-
-					if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
-					} else {
+				if (($total_sa > $total_order)) {
 
 						$this->pedeo->trans_rollback();
 
 						$respuesta = array(
 							'error'   => true,
-							'data' => $resInsertEstado,
-							'mensaje'	=> 'No se pudo registrar la orden de compra'
+							'data' => $total_order."-".$total_sa,
+							'mensaje'	=> 'La suma de las solicitudes de anticipo no pueden superar al valor total del documento base'
 						);
 
 
 						$this->response($respuesta);
 
 						return;
-					}
+					
 				}
-			}			
+			}	
 		
 
 
