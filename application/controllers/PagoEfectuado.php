@@ -223,7 +223,34 @@ class PagoEfectuado extends REST_Controller {
 	  on mac1.ac1_card_type = dmsn.dms_card_type
 	  and mac1.ac1_legal_num = dmsn.dms_card_code
 	  where mac1.ac1_legal_num = :cardcode
-	  and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0",array(
+	  and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+	 --SOLICITUD DE ANTICIPO DE COMPRAS
+	 UNION ALL
+	 SELECT  
+        dcsa.csa_docentry as ac1_font_key,
+        dcsa.csa_cardcode as codigo_proveedor,
+        csa1.sa1_acctcode as cuenta,
+        CURRENT_DATE - dcsa.csa_duedate as dias_atrasado,
+        dcsa.csa_comment as bpr_comment,
+        dcsa.csa_currency,
+        csa1.sa1_docentry as dvf_docentry,
+        dcsa.csa_docnum ,
+        dcsa.csa_docdate as fecha_doc,
+        dcsa.csa_duedate as fecha_ven,
+        dcsa.csa_docnum as id_origen,
+        dcsa.csa_doctype as numtype,
+        mdt_docname as tipo,
+        get_dynamic_conversion(:currency,get_localcur(),dcsa.csa_docdate,dcsa.csa_anticipate_total, get_localcur()) as total_doc,
+        get_dynamic_conversion(:currency,get_localcur(),dcsa.csa_docdate,(dcsa.csa_anticipate_total) - (dcsa.csa_paytoday) , get_localcur()) as saldo_venc,
+        '' retencion,
+        get_tax_currency(dcsa.csa_currency,dcsa.csa_docdate) as tasa_dia,
+        sa1_linenum,
+        0 as ac1_cord
+        from dcsa
+        inner join csa1 on dcsa.csa_docentry = csa1.sa1_docentry
+        inner join dmdt on dmdt.mdt_doctype = dcsa.csa_doctype
+		where csa_cardcode = :cardcode
+	  ",array(
 		 ':cardcode' => $request['cardcode'],
 		 ':currency' => $request['currency']));
 
