@@ -397,10 +397,10 @@ class PurchSolAntProv extends REST_Controller
 		$sqlInsert = "INSERT INTO dcsa(csa_series, csa_docnum, csa_docdate, csa_duedate, csa_duedev, csa_pricelist, csa_cardcode,
                       csa_cardname, csa_currency, csa_contacid, csa_slpcode, csa_empid, csa_comment, csa_doctotal, csa_baseamnt, csa_taxtotal,
                       csa_discprofit, csa_discount, csa_createat, csa_baseentry, csa_basetype, csa_doctype, csa_idadd, csa_adress, csa_paytype,
-                      csa_createby,csa_correl, csa_date_inv, csa_date_del, csa_place_del,business,branch, csa_anticipate_total, csa_anticipate_type, csa_anticipate_value)VALUES(:csa_series, :csa_docnum, :csa_docdate, :csa_duedate, :csa_duedev, :csa_pricelist, :csa_cardcode, :csa_cardname,
+                      csa_createby,csa_correl, csa_date_inv, csa_date_del, csa_place_del,business,branch, csa_anticipate_total, csa_anticipate_type, csa_anticipate_value, csa_paytoday)VALUES(:csa_series, :csa_docnum, :csa_docdate, :csa_duedate, :csa_duedev, :csa_pricelist, :csa_cardcode, :csa_cardname,
                       :csa_currency, :csa_contacid, :csa_slpcode, :csa_empid, :csa_comment, :csa_doctotal, :csa_baseamnt, :csa_taxtotal, :csa_discprofit, :csa_discount,
                       :csa_createat, :csa_baseentry, :csa_basetype, :csa_doctype, :csa_idadd, :csa_adress, :csa_paytype,:csa_createby,:csa_correl, 
-					  :csa_date_inv, :csa_date_del, :csa_place_del,:business,:branch, :csa_anticipate_total, :csa_anticipate_type, :csa_anticipate_value)";
+					  :csa_date_inv, :csa_date_del, :csa_place_del,:business,:branch, :csa_anticipate_total, :csa_anticipate_type, :csa_anticipate_value , :csa_paytoday)";
 
 
 		// Se Inicia la transaccion,
@@ -447,6 +447,7 @@ class PurchSolAntProv extends REST_Controller
 			':csa_anticipate_total' => is_numeric($Data['csa_anticipate_total']) ? $Data['csa_anticipate_total'] : 0,
 			':csa_anticipate_type' => is_numeric($Data['csa_anticipate_type']) ? $Data['csa_anticipate_type'] : 0,
 			':csa_anticipate_value' => is_numeric($Data['csa_anticipate_value']) ? $Data['csa_anticipate_value'] : 0,
+			':csa_paytoday' => 0
 
 		));
 

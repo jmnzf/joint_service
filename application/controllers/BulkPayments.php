@@ -278,11 +278,8 @@ class bulkPayments extends REST_Controller
         dcsa.csa_docnum as id_origen,
         csa1.sa1_doctype as numtype,
         mdt_docname as tipo,
-        case
-        when dcsa.csa_doctype = 36 then get_dynamic_conversion('VES',get_localcur(),dcsa.csa_docdate,dcsa.csa_anticipate_total, get_localcur())
-        else get_dynamic_conversion('VES',get_localcur(),dcsa.csa_docdate,dcsa.csa_doctotal, get_localcur())
-        end	 as totalfactura,
-        get_dynamic_conversion('VES',get_localcur(),dcsa.csa_docdate,(dcsa.csa_anticipate_total) - (dcsa.csa_paytoday) , get_localcur()) as saldo,
+        get_dynamic_conversion(:currency,get_localcur(),dcsa.csa_docdate,dcsa.csa_anticipate_total, get_localcur()) as totalfactura,
+        get_dynamic_conversion(:currency,get_localcur(),dcsa.csa_docdate,(dcsa.csa_anticipate_total) - (dcsa.csa_paytoday) , get_localcur()) as saldo,
         '' retencion,
         get_tax_currency(dcsa.csa_currency,dcsa.csa_docdate) as tasa_dia,
         sa1_linenum,
