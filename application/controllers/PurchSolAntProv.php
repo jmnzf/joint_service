@@ -919,47 +919,41 @@ class PurchSolAntProv extends REST_Controller
 			}
 
 			//FIN DETALLE COTIZACION
-			if ($Data['csa_basetype'] == 10) {
+			if ($Data['csa_basetype'] == 12) {
 
 
 				$sqlEstado1 = " SELECT
-									count(t1.sc1_itemcode) item,
-									sum(t1.sc1_quantity) cantidad
-								from dcsc t0
-								inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-								where t0.csc_docentry = :csc_docentry
-								and t0.csc_doctype = :csc_doctype";
+									t0.cpo_doctotal as total
+								from dcpo t0
+								where t0.cpo_docentry = :cpo_docentry
+								and t0.cpo_doctype = :cpo_doctype";
 
 
 				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-					':csc_docentry' => $Data['csa_baseentry'],
-					':csc_doctype' => $Data['csa_basetype']
+					':cpo_docentry' => $Data['csa_baseentry'],
+					':cpo_doctype' => $Data['csa_basetype']
 
 				));
 
 				$sqlEstado2 = "SELECT
-									coalesce(count(distinct t3.sa1_itemcode),0) item,
-									coalesce(sum(t3.sa1_quantity),0) cantidad
-								from dcsc t0
-								inner join csc1 t1 on t0.csc_docentry = t1.sc1_docentry
-								left join dcsa t2 on t0.csc_docentry = t2.csa_baseentry and t0.csc_doctype = t2.csa_basetype
-								left join csa1 t3 on t2.csa_docentry = t3.sa1_docentry and t1.sc1_itemcode = t3.sa1_itemcode
-								where t0.csc_docentry = :csc_docentry
-								and t0.csc_doctype = :csc_doctype";
+									coalesce(sum(t0.csa_anticipated_total - coalesce(t0.csa_paytoday,0)),0) total
+								from dcsa t0
+								where t0.csa_baseentry = :csa_baseentry
+								and t0.csa_basetype = :csa_basetype";
 
-
+				// print_r($sqlEstado2);exit;
 				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
-					':csc_docentry' => $Data['csa_baseentry'],
-					':csc_doctype' => $Data['csa_basetype']
+					':csa_baseentry' => $Data['csa_baseentry'],
+					':csa_basetype' => $Data['csa_basetype']
 
 				));
 
-				$item_sol = $resEstado1[0]['item'];
-				$cantidad_sol = $resEstado1[0]['cantidad'];
-				$item_ord = $resEstado2[0]['item'];
-				$cantidad_ord = $resEstado2[0]['cantidad'];
+				$total_order = isset($resEstado1[0]) ? $resEstado1[0]['total'] : 0;
+				$total_sa = isset($resEstado2[0]) ? $resEstado2[0]['total'] : 0;
+				// print_r($total_order."-".$total_sa);exit;die;
+				
 
-				if ($item_sol == $item_ord  &&  $cantidad_sol == $cantidad_ord) {
+				if (($total_order - $total_sa) == 0) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -994,47 +988,48 @@ class PurchSolAntProv extends REST_Controller
 						return;
 					}
 				}
-			}
-			if ($Data['csa_basetype'] == 11) {
+			}else if ($Data['csa_basetype'] == 21) {
 
+				
+				$sqlAprov = "SELECT * FROM dpap WHERE pap_doctype = :pap_doctype AND pap_docentry = :pap_docentry";
+				$resAprov = $this->pedeo->queryTable($sqlAprov,array(
+					':pap_doctype' => $Data['csa_basetype'],
+					':pap_docentry' => $Data['csa_baseentry']
+				));
 
-				$sqlEstado1 = "SELECT distinct
-													count(t1.oc1_itemcode) item,
-													sum(t1.oc1_quantity) cantidad
-													from dcoc t0
-													inner join coc1 t1 on t0.coc_docentry = t1.oc1_docentry
-													where t0.coc_docentry = :coc_docentry and t0.coc_doctype = :coc_doctype";
+				$sqlEstado1 = " SELECT
+									t0.cpo_doctotal as total
+								from dcpo t0
+								where t0.cpo_docentry = :cpo_docentry
+								and t0.cpo_doctype = :cpo_doctype";
 
 
 				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-					':coc_docentry' => $Data['csa_baseentry'],
-					':coc_doctype' => $Data['csa_basetype']
+					':cpo_docentry' => $resAprov[0]['pap_baseentry'],
+					':cpo_doctype' => $resAprov[0]['pap_basetype']
+
 				));
 
 				$sqlEstado2 = "SELECT
-																			coalesce(count(distinct t3.sa1_itemcode),0) item,
-																			coalesce(sum(t3.sa1_quantity),0) cantidad
-																			FROM dcoc t0
-																			inner join coc1 t1 on t0.coc_docentry = t1.oc1_docentry
-																			left join dcsa t2 on t0.coc_docentry = t2.csa_baseentry and t0.coc_doctype = t2.csa_basetype
-																			left join csa1 t3 on t2.csa_docentry = t3.sa1_docentry and t1.oc1_itemcode = t3.sa1_itemcode
-																			where t0.coc_docentry = :coc_docentry and t0.coc_doctype = :coc_doctype";
-
+									coalesce(sum(t0.csa_anticipated_total - coalesce(t0.csa_paytoday,0)),0) total
+								from dcsa t0
+								where t0.csa_baseentry = :csa_baseentry
+								and t0.csa_basetype = :csa_basetype";
 				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
-					':coc_docentry' => $Data['csa_baseentry'],
-					':coc_doctype' => $Data['csa_basetype']
+					':csa_baseentry' => $Data['csa_baseentry'],
+					':csa_basetype' => $Data['csa_basetype']
+
 				));
 
-				$item_oc = abs($resEstado1[0]['item']);
-				$cantidad_oc = abs($resEstado1[0]['cantidad']);
-				$item_ord = abs($resEstado2[0]['item']);
-				$cantidad_ord = abs($resEstado2[0]['cantidad']);
+				$total_order = abs($resEstado1[0]['total']);
+				$total_sa = abs($resEstado2[0]['total']);
+				print_r($total_order."-".$total_sa);exit;die;
+				
 
-
-				if ($item_oc == $item_ord  &&  $cantidad_oc == $cantidad_ord) {
+				if (($total_order - $total_sa) == 0) {
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
@@ -1048,7 +1043,7 @@ class PurchSolAntProv extends REST_Controller
 						':bed_basetype' => $Data['csa_doctype']
 					));
 
-					// print_r($resInsertEstado);exit();die();
+
 					if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
 					} else {
 
@@ -1057,7 +1052,7 @@ class PurchSolAntProv extends REST_Controller
 						$respuesta = array(
 							'error'   => true,
 							'data' => $resInsertEstado,
-							'mensaje'	=> 'No se pudo registrar la la factura de compra'
+							'mensaje'	=> 'No se pudo registrar la orden de compra'
 						);
 
 
@@ -1066,7 +1061,8 @@ class PurchSolAntProv extends REST_Controller
 						return;
 					}
 				}
-			}
+			}			
+		
 
 
 			// Si todo sale bien despues de insertar el detalle de la cotizacion
@@ -1458,20 +1454,13 @@ class PurchSolAntProv extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT
-												t0.*
-											FROM dcsa t0
-											left join estado_doc t1 on t0.csa_docentry = t1.entry and t0.csa_doctype = t1.tipo
-											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-											where t2.estado = 'Abierto' and t0.csa_cardcode =:csa_cardcode";
+		$copy = $this->documentcopy->CopyData('dcsa','csa',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":csa_cardcode" => $Data['dms_card_code']));
-
-		if (isset($resSelect[0])) {
+		if (isset($copy[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copy,
 				'mensaje' => ''
 			);
 		} else {
@@ -1485,14 +1474,6 @@ class PurchSolAntProv extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
-
-
-
-
 
 	private function getUrl($data, $caperta)
 	{

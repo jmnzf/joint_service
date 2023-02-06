@@ -1438,20 +1438,14 @@ class PurchOrder extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT
-												t0.*
-											FROM dcpo t0
-											left join estado_doc t1 on t0.cpo_docentry = t1.entry and t0.cpo_doctype = t1.tipo
-											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-											where t2.estado = 'Abierto' and t0.cpo_cardcode =:cpo_cardcode";
+		$copy = $this->documentcopy->CopyData('dcpo','cpo',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cpo_cardcode" => $Data['dms_card_code']));
 
-		if (isset($resSelect[0])) {
+		if (isset($copy[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copy,
 				'mensaje' => ''
 			);
 		} else {
