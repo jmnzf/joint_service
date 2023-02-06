@@ -104,6 +104,7 @@ class Reports extends REST_Controller {
 		if(isset($result[0])){
 
 			$respuesta = array(
+
 				'error'   => false,
 				'data'    => $result,
 				'mensaje' =>''
@@ -1497,7 +1498,9 @@ class Reports extends REST_Controller {
 	//LISTA DE PARTIDAS ABIERTAS
 	//DOCUMENTOS PENDIENTES POR COMPENSAR
 	public function  ListDocumentCompensate_post(){
-
+		
+		$Data = $this->post();
+		
 		if( !isset($Data['business'])){
 
 			$respuesta = array(
@@ -1510,7 +1513,7 @@ class Reports extends REST_Controller {
 
 			return ;
 		}
-		$Data = $this->post();
+		
 		$sn = "";
 		$ac = "";
 		$sql = "";
@@ -1545,7 +1548,7 @@ class Reports extends REST_Controller {
 		}
 
 		if( is_array($ac) ){
-			$ac = implode($ac,",");
+			$ac = implode(",",$ac);
 			$sql .= ' AND mac1.ac1_account IN('.$ac.')';
 		}
 
@@ -1874,7 +1877,7 @@ class Reports extends REST_Controller {
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
 // print_r($sqlSelect);exit;
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business']));
 
 
 		if(isset($resSelect[0])){
