@@ -1939,6 +1939,10 @@ class Reports extends REST_Controller {
 			$sql .= " AND ac1_legal_num in ({$Data['lac_sn']})";
 		}
 
+		if(isset( $Data['lac_family']) && !empty($Data['lac_family'])){
+			$sql .= " AND acc_type in ({$Data['lac_family']})";
+		}
+
 		$sql .= ' AND dacc.acc_level = 6';
 
 
