@@ -17,7 +17,7 @@ class Auth extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
 
 	}
 
@@ -37,8 +37,19 @@ class Auth extends REST_Controller {
 
 			return;
 		}
-
-		$result = $this->pedeo->queryTable("SELECT menu.men_id, menu.men_nombre, menu.men_icon, menu.men_controller, menu.men_action, menu.men_sub_menu, menu.men_id_menu FROM menu INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id WHERE menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol ORDER BY menu.men_id", array(':idestado' => 1,':idrol' => $request['Pgu_Role']));
+		$sql = "SELECT
+					menu.men_id,
+					menu.men_nombre,
+					menu.men_icon,
+					menu.men_controller,
+					menu.men_action,
+					menu.men_sub_menu,
+					menu.men_id_menu
+				FROM menu
+				INNER JOIN menu_rol ON menu_rol.mno_id_menu = menu.men_id
+				WHERE menu.men_id_estado = :idestado AND menu_rol.mno_id_rol = :idrol
+				ORDER BY menu.men_id, menu.men_nombre asc";
+		$result = $this->pedeo->queryTable($sql, array(':idestado' => 1,':idrol' => $request['Pgu_Role']));
 		// OBTENER PERMISO DEL USUARIO.
 		$resultSet = self::getpermissions($result);
 		// RESPUESTA POR DEFECTO.

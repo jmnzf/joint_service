@@ -64,8 +64,8 @@ class Tasa extends REST_Controller {
         }
 
 
-        $sqlInsert = "INSERT INTO tasa(tsa_eq, tsa_curro, tsa_value, tsa_currd, tsa_date, tsa_createby)
-          	          VALUES (:tsa_eq, :tsa_curro, :tsa_value, :tsa_currd, :tsa_date, :tsa_createby)";
+        $sqlInsert = "INSERT INTO tasa(tsa_eq, tsa_curro, tsa_value, tsa_currd, tsa_date, tsa_createby,tsa_enabled)
+          	          VALUES (:tsa_eq, :tsa_curro, :tsa_value, :tsa_currd, :tsa_date, :tsa_createby,:tsa_enabled)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -74,7 +74,8 @@ class Tasa extends REST_Controller {
                 ':tsa_value' => isset($Data['tsa_value']) ? $Data['tsa_value'] : 0,
                 ':tsa_currd' => isset($Data['tsa_currd']) ? $Data['tsa_currd'] : NULL,
                 ':tsa_createby' => isset($Data['tsa_createby']) ? $Data['tsa_createby'] : NULL,
-                ':tsa_date'  => isset($Data['tsa_date']) ? $Data['tsa_date']:NULL
+                ':tsa_date'  => isset($Data['tsa_date']) ? $Data['tsa_date']:NULL,
+                'tsa_enabled' => 1
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0 ){
@@ -104,10 +105,9 @@ class Tasa extends REST_Controller {
 
       $Data = $this->post();
 
+      $sqlTasa = "UPDATE tasa SET tsa_enabled = :tsa_enabled WHERE  tsa_id = :tsa_id";
 
-      $sqlTasa = "SELECT * FROM tasa  WHERE tsa_curro = :tsa_curro AND tsa_currd = :tsa_currd AND tsa_id = :tsa_id";
-
-      $resTasa = $this->pedeo->queryTable($sqlTasa, array(':tsa_curro' => $Data['tsa_curro'], ':tsa_currd' => $Data['tsa_currd'], ':tsa_id' => $Data['tsa_id']));
+      $resTasa = $this->pedeo->queryTable($sqlTasa, array( ':tsa_enabled' => isset($Data['tsa_enabled']) ? $Data['tsa_enabled'] : 0, ':tsa_id' => $Data['tsa_id']));
 
 
       if(isset($resTasa[0])){
@@ -165,7 +165,8 @@ class Tasa extends REST_Controller {
 												tsa_curro,
 												tsa_currd,
 												concat(tsa_curro,' ',tsa_value) as tsa_value,
-												tsa_date
+												tsa_date,
+                        tsa_enabled
 											 FROM tasa";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());

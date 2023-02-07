@@ -25,6 +25,7 @@ class PurchaseRet extends REST_Controller
 		$this->load->library('generic');
 		$this->load->library('account');
 		$this->load->library('DocumentNumbering');
+		$this->load->library('Tasa');
 	}
 
 	//CREAR NUEVA DEVOLUCION DE COMPRAS
@@ -48,6 +49,9 @@ class PurchaseRet extends REST_Controller
 
 
 		$DECI_MALES =  $this->generic->getDecimals();
+		
+		$TasaDocLoc = 0;
+		$TasaLocSys = 0;
 		
 
 		$DetalleCuentaPuente = new stdClass();

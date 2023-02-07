@@ -26,6 +26,7 @@ class PurchOrder extends REST_Controller
 		$this->load->library('DocumentCopy');
 		$this->load->library('aprobacion');
 		$this->load->library('DocumentNumbering');
+		$this->load->library('Tasa');
 	}
 
 	//CREAR NUEVA ORDEN DE COMPRA
@@ -34,6 +35,8 @@ class PurchOrder extends REST_Controller
 		$Data = $this->post();
 		
 		$DECI_MALES =  $this->generic->getDecimals();
+		$TasaDocLoc = 0;
+		$TasaLocSys = 0;
 
 		$DocNumVerificado = 0;
 		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
@@ -124,91 +127,21 @@ class PurchOrder extends REST_Controller
 
 		// FIN PROCEDIMIENTO PARA OBTENER CARPETA Principal
 
+		//PROCESO DE TASA
+		$dataTasa = $this->tasa->Tasa($Data['cpo_currency'],$Data['cpo_docdate']);
 
-		// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
-		// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
-		$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
-		$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
+		if(isset($dataTasa['tasaLocal'])){
 
-		if (isset($resMonedaLoc[0])) {
-		} else {
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'No se encontro la moneda local.'
-			);
+			$TasaDocLoc = $dataTasa['tasaLocal'];
+			$TasaLocSys = $dataTasa['tasaSys'];
+			
+		}else if($dataTasa['error'] == true){
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			$this->response($dataTasa, REST_Controller::HTTP_BAD_REQUEST);
 
 			return;
 		}
-
-		$MONEDALOCAL = trim($resMonedaLoc[0]['pgm_symbol']);
-
-		// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
-		$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
-		$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
-
-		if (isset($resMonedaSys[0])) {
-		} else {
-
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'No se encontro la moneda de sistema.'
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-		}
-
-
-		$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
-
-		//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
-		// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
-		$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-		$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['cpo_currency'], ':tsa_date' => $Data['cpo_docdate']));
-
-		if (isset($resBusTasa[0])) {
-		} else {
-
-			if (trim($Data['cpo_currency']) != $MONEDALOCAL) {
-
-				$respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' => 'No se encrontro la tasa de cambio para la moneda: ' . $Data['cpo_currency'] . ' en la actual fecha del documento: ' . $Data['cpo_docdate'] . ' y la moneda local: ' . $resMonedaLoc[0]['pgm_symbol']
-				);
-
-				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-				return;
-			}
-		}
-
-
-		$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-		$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['cpo_docdate']));
-
-		if (isset($resBusTasa2[0])) {
-		} else {
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :' . $Data['cpo_docdate']
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-		}
-
-		$TasaDocLoc = isset($resBusTasa[0]['tsa_value']) ? $resBusTasa[0]['tsa_value'] : 1;
-		$TasaLocSys = $resBusTasa2[0]['tsa_value'];
-
-		// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+		//FIN DE PROCESO DE TASA
 
 
 		// SE VERIFICA SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
@@ -1244,7 +1177,6 @@ class PurchOrder extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
 	//OBTENER orden de compra
 	public function getPurchOrder_get()
 	{
@@ -1288,7 +1220,6 @@ class PurchOrder extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
 	//OBTENER orden de compra POR ID
 	public function getPurchOrderById_get()
 	{
@@ -1330,7 +1261,6 @@ class PurchOrder extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
 
 	//OBTENER orden de compra DETALLE POR ID
 	public function getPurchOrderDetail_get()
@@ -1417,8 +1347,6 @@ class PurchOrder extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
-
 	//OBTENER COTIZACIONES POR SOCIO DE NEGOCIO
 	public function getPurchOrderBySN_get()
 	{
@@ -1459,14 +1387,6 @@ class PurchOrder extends REST_Controller
 
 		$this->response($respuesta);
 	}
-
-
-
-
-
-
-
-
 
 	private function getUrl($data, $caperta)
 	{
