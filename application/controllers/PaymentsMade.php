@@ -629,7 +629,6 @@ class PaymentsMade extends REST_Controller
 							}
 						}
 
-
 						// SE ACTUALIZA EL VALOR DEL CAMPO PAY TODAY EN NOTA CREDITO
 						if ($detail['pe1_doctype'] == 16) { // SOLO CUANDO ES UNA NOTA CREDITO
 
