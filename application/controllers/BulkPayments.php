@@ -21,6 +21,8 @@ class bulkPayments extends REST_Controller
         $this->load->database();
         $this->pdo = $this->load->database('pdo', true)->conn_id;
         $this->load->library('pedeo', [$this->pdo]);
+        $this->load->library('generic');
+        $this->load->library('DocumentNumbering');
 
     }
 
@@ -299,7 +301,7 @@ class bulkPayments extends REST_Controller
                     $where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND ac1_legal_num in({$Data['doc_cardcode']})" : "";
                     $where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
                     break;
-                case 'gbpe':
+                case 'tspm':
                     $dateField = ($Data['doc_filter'] == 1) ? "_docdate" : "_taxdate";
                     $where = "AND {$value['table']}.{$value['prefix']}{$dateField} BETWEEN '{$Data['doc_startdate']}'AND '{$Data['doc_enddate']}'";
                     $where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND {$value['table']}.{$value['prefix']}_cardcode in ({$Data['doc_cardcode']})" : "";
@@ -348,7 +350,2090 @@ class bulkPayments extends REST_Controller
 
     }
 
-    public function createBulkPayments_post(){
-        $Data = $this->post();
-    }
+    public function createBulkPayments_post()
+	{
+
+		$DECI_MALES =  $this->generic->getDecimals();
+		$Data = $this->post();
+		$DocNumVerificado = 0;
+		$DetalleAsientoCuentaTercero = new stdClass();
+		$DetalleConsolidadoAsientoCuentaTercero = [];
+		$llaveAsientoCuentaTercero = "";
+		$posicionAsientoCuentaTercero = 0;
+		$cuentaTercero = 0;
+		$inArrayAsientoCuentaTercero = array();
+		$VlrDiffP = 0;
+		$VlrDiffN = 0;
+		$VlrTotalOpc = 0; // valor total acumulado de la operacion
+		$VlrDiff = 0; // valor diferencia total
+		$VlrPagoEfectuado = 0;
+		$DFPC = 0; // diferencia en peso credito
+		$DFPD = 0; // diferencia en peso debito
+		$DFPCS = 0; // del sistema
+		$DFPDS = 0; // del sistema
+		$TasaOrg = 0;
+
+		// Se globaliza la variable sqlDetalleAsiento
+		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
+													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
+													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, business, branch)VALUES (:ac1_trans_id, :ac1_account,
+													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
+													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
+													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :business, :branch)";
+
+
+
+		if (!isset($Data['detail']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$ContenidoDetalle = json_decode($Data['detail'], true);
+
+
+		if (!is_array($ContenidoDetalle)) {
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se encontro el detalle del pago'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		// SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
+		if (!intval(count($ContenidoDetalle)) > 0) {
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'Documento sin detalle'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+		//
+		//
+		//VALIDANDO PERIODO CONTABLE
+		$periodo = $this->generic->ValidatePeriod($Data['spm_docdate'], $Data['spm_docdate'], $Data['spm_docdate'], 0);
+
+		if (isset($periodo['error']) && $periodo['error'] == false) {
+		} else {
+			$respuesta = array(
+				'error'   => true,
+				'data'    => [],
+				'mensaje' => isset($periodo['mensaje']) ? $periodo['mensaje'] : 'no se pudo validar el periodo contable'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+		//PERIODO CONTABLE
+		//
+		// //BUSCANDO LA NUMERACION DEL DOCUMENTO
+		$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['spm_series'],$Data['spm_docdate'],$Data['spm_duedate']);
+		
+		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
+
+		}else if ($DocNumVerificado['error']){
+
+			return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
+		}
+
+		//Obtener Carpeta Principal del Proyecto
+		$sqlMainFolder = " SELECT * FROM params";
+		$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+		if (!isset($resMainFolder[0])) {
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se encontro la caperta principal del proyecto'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+
+		// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+		// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
+		$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
+		$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
+
+		if (isset($resMonedaLoc[0])) {
+		} else {
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se encontro la moneda local.'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$MONEDALOCAL = trim($resMonedaLoc[0]['pgm_symbol']);
+
+		// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
+		$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
+		$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
+
+		if (isset($resMonedaSys[0])) {
+		} else {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se encontro la moneda de sistema.'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+
+		$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
+
+		//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
+		// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
+		$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+		$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['spm_currency'], ':tsa_date' => $Data['spm_docdate']));
+
+		if (isset($resBusTasa[0])) {
+		} else {
+
+			if (trim($Data['spm_currency']) != $MONEDALOCAL) {
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'No se encrontro la tasa de cambio para la moneda: ' . $Data['spm_currency'] . ' en la actual fecha del documento: ' . $Data['spm_docdate'] . ' y la moneda local: ' . $resMonedaLoc[0]['pgm_symbol']
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+		}
+
+		$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
+		$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['spm_docdate']));
+
+		if (isset($resBusTasa2[0])) {
+		} else {
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :' . $Data['spm_docdate']
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$TasaDocLoc = isset($resBusTasa[0]['tsa_value']) ? $resBusTasa[0]['tsa_value'] : 1;
+		$TasaLocSys = $resBusTasa2[0]['tsa_value'];
+
+		// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+
+		$sqlInsert = "INSERT INTO
+                            	tspm (spm_cardcode,spm_doctype,spm_cardname,spm_address,spm_perscontact,spm_series,spm_docnum,spm_docdate,spm_taxdate,spm_ref,spm_transid,
+                                    spm_comments,spm_memo,spm_acctransfer,spm_datetransfer,spm_reftransfer,spm_doctotal,spm_vlrpaid,spm_project,spm_createby,
+                                    spm_createat,spm_payment,spm_currency, business, branch)
+                      VALUES (:spm_cardcode,:spm_doctype,:spm_cardname,:spm_address,:spm_perscontact,:spm_series,:spm_docnum,:spm_docdate,:spm_taxdate,:spm_ref,:spm_transid,
+                              :spm_comments,:spm_memo,:spm_acctransfer,:spm_datetransfer,:spm_reftransfer,:spm_doctotal,:spm_vlrpaid,:spm_project,:spm_createby,
+                              :spm_createat,:spm_payment,:spm_currency, :business, :branch)";
+
+
+		// Se Inicia la transaccion,
+		// Todas las consultas de modificacion siguientes
+		// aplicaran solo despues que se confirme la transaccion,
+		// de lo contrario no se aplicaran los cambios y se devolvera
+		// la base de datos a su estado original.
+
+		$this->pedeo->trans_begin();
+
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+			':spm_cardcode' => isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL,
+			':spm_doctype' => is_numeric($Data['spm_doctype']) ? $Data['spm_doctype'] : 0,
+			':spm_cardname' => isset($Data['spm_cardname']) ? $Data['spm_cardname'] : NULL,
+			':spm_address' => isset($Data['spm_address']) ? $Data['spm_address'] : NULL,
+			':spm_perscontact' => $Data['spm_perscontact'] ?: 0,
+			':spm_series' => is_numeric($Data['spm_series']) ? $Data['spm_series'] : 0,
+			':spm_docnum' => $DocNumVerificado,
+			':spm_docdate' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+			':spm_taxdate' => $this->validateDate($Data['spm_taxdate']) ? $Data['spm_taxdate'] : NULL,
+			':spm_ref' => isset($Data['spm_ref']) ? $Data['spm_ref'] : NULL,
+			':spm_transid' => is_numeric($Data['spm_transid']) ? $Data['spm_transid'] : 0,
+			':spm_comments' => isset($Data['spm_comments']) ? $Data['spm_comments'] : NULL,
+			':spm_memo' => isset($Data['spm_memo']) ? $Data['spm_memo'] : NULL,
+			':spm_acctransfer' => isset($Data['spm_acctransfer']) ? $Data['spm_acctransfer'] : NULL,
+			':spm_datetransfer' => $this->validateDate($Data['spm_datetransfer']) ? $Data['spm_datetransfer'] : NULL,
+			':spm_reftransfer' => isset($Data['spm_reftransfer']) ? $Data['spm_reftransfer'] : NULL,
+			':spm_doctotal' => is_numeric($Data['spm_doctotal']) ? $Data['spm_doctotal'] : 0,
+			':spm_vlrpaid' => is_numeric($Data['spm_vlrpaid']) ? $Data['spm_vlrpaid'] : 0,
+			':spm_project' => isset($Data['spm_project']) ? $Data['spm_project'] : NULL,
+			':spm_createby' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+			':spm_createat' => $this->validateDate($Data['spm_createat']) ? $Data['spm_createat'] : NULL,
+			':spm_payment' => isset($Data['spm_payment']) ? $Data['spm_payment'] : NULL,
+			':spm_currency' => isset($Data['spm_currency']) ? $Data['spm_currency'] : NULL,
+			':business' => $Data['business'], 
+			':branch' => $Data['branch']
+		));
+
+		if (is_numeric($resInsert) && $resInsert > 0) {
+
+			// Se actualiza la serie de la numeracion del documento
+
+			$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+																			 WHERE pgs_id = :pgs_id";
+			$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+				':pgs_nextnum' => $DocNumVerificado,
+				':pgs_id'      => $Data['spm_series']
+			));
+
+
+			if (is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1) {
+			} else {
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data'    => $resActualizarNumeracion,
+					'mensaje'	=> 'No se pudo crear el pago'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+			}
+
+			// FIN PROCESO PARA ACTUALIZAR NUMERACION
+
+			//Se agregan los asientos contables*/*******
+
+			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
+								VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
+
+
+			$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
+
+				':mac_doc_num' => 1,
+				':mac_status' => 1,
+				':mac_base_type' => is_numeric($Data['spm_doctype']) ? $Data['spm_doctype'] : 0,
+				':mac_base_entry' => $resInsert,
+				':mac_doc_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+				':mac_doc_duedate' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+				':mac_legal_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+				':mac_ref1' => is_numeric($Data['spm_doctype']) ? $Data['spm_doctype'] : 0,
+				':mac_ref2' => "",
+				':mac_ref3' => "",
+				':mac_loc_total' => is_numeric($Data['spm_doctotal']) ? $Data['spm_doctotal'] : 0,
+				':mac_fc_total' => is_numeric($Data['spm_doctotal']) ? $Data['spm_doctotal'] : 0,
+				':mac_sys_total' => is_numeric($Data['spm_doctotal']) ? $Data['spm_doctotal'] : 0,
+				':mac_trans_dode' => 1,
+				':mac_beline_nume' => 1,
+				':mac_vat_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+				':mac_serie' => 1,
+				':mac_number' => 1,
+				':mac_bammntsys' => 0,
+				':mac_bammnt' => 0,
+				':mac_wtsum' => 1,
+				':mac_vatsum' => 0,
+				':mac_comments' => isset($Data['spm_comments']) ? $Data['spm_comments'] : NULL,
+				':mac_create_date' => $this->validateDate($Data['spm_createat']) ? $Data['spm_createat'] : NULL,
+				':mac_made_usuer' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+				':mac_update_date' => date("Y-m-d"),
+				':mac_update_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+				':business' => $Data['business'], 
+				':branch' => $Data['branch']
+			));
+
+
+			if (is_numeric($resInsertAsiento) && $resInsertAsiento > 0) {
+				// Se verifica que el detalle no de error insertando //
+			} else {
+
+				// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
+				// se retorna el error y se detiene la ejecucion del codigo restante.
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data'	  => $resInsertAsiento,
+					'mensaje'	=> 'No se pudo registrar la el pago de ventas'
+				);
+
+				$this->response($respuesta);
+
+				return;
+			}
+
+			// FINALIZA EL PROCESO PARA INSERTAR LA CABECERA DEL ASIENTO
+
+			// INICIA INSERCION DEL DETALLE
+
+			foreach ($ContenidoDetalle as $key => $detail) {
+				$VrlPagoDetalleNormal  = 0;
+				$Equiv = 0;
+				//SE VALIDA SI ES UN ANTICIPO AL proveedor
+				//SE OMITE LA VALIDACION DE LA FACTURA EN CASO DE ANTICIPO
+
+
+				if ($Data['spm_billpayment'] == '0' || $Data['spm_billpayment'] == 0) {
+					//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
+					if ($detail['pm1_doctype'] == 15 || $detail['pm1_doctype'] == 16 || $detail['pm1_doctype'] == 17 || $detail['pm1_doctype'] == 19 || $detail['pm1_doctype'] == 18) {
+
+
+						$pf = "";
+						$tb  = "";
+
+						if ($detail['pm1_doctype'] == 15) {
+							$pf = "cfc";
+							$tb  = "dcfc";
+						} else if ($detail['pm1_doctype'] == 16) {
+							$pf = "cnc";
+							$tb  = "dcnc";
+						} else if ($detail['pm1_doctype'] == 17) {
+						} else if ($detail['pm1_doctype'] == 19) {
+							$pf = "bpe";
+							$tb  = "tspm";
+						}
+
+						$resVlrPay = $this->generic->validateBalance($detail['pm1_docentry'], $detail['pm1_doctype'], $tb, $pf, $detail['pm1_vlrpaid'], $Data['spm_currency'], $Data['spm_docdate'], 2, isset($detail['ac1_line_num']) ? $detail['ac1_line_num'] : 0);
+
+						if (isset($resVlrPay['error'])) {
+
+							if ($resVlrPay['error'] == false) {
+
+
+								$VlrTotalOpc = $resVlrPay['vlrop'];
+								$VlrDiff     = ($VlrDiff + $resVlrPay['vlrdiff']);
+								$TasaOrg     = $resVlrPay['tasadoc'];
+								$Equiv       = $resVlrPay['equiv'];
+
+								$VlrTotalOpc = ($VlrTotalOpc + $Equiv);
+
+
+
+								// echo "\n ".$detail['pm1_docentry']." ".$VlrDiff;
+
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'    => [],
+									'mensaje'	=> $resVlrPay['mensaje']
+								);
+
+								return $this->response($respuesta);
+							}
+						} else {
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'    => [],
+								'mensaje'	=> 'No se pudo validar el saldo actual del documento ' . $detail['pm1_docentry']
+							);
+
+							$this->response($respuesta);
+
+							return;
+						}
+
+						// FIN DE VALIDACION PAGO DE FACTURA
+					}
+				}
+				// FIN VALIDACION ANTICIPO PROVEEDOR
+
+				// SE INICIA INSERCION DEL DETALLE
+
+				$sqlInsertDetail = "INSERT INTO
+                                        	spm1 (pm1_docnum,pm1_docentry,pm1_numref,pm1_docdate,pm1_vlrtotal,pm1_vlrpaid,pm1_comments,pm1_porcdiscount,pm1_doctype,
+                                            pm1_docduedate,pm1_daysbackw,pm1_vlrdiscount,pm1_ocrcode)
+                                    VALUES (:pm1_docnum,:pm1_docentry,:pm1_numref,:pm1_docdate,:pm1_vlrtotal,:pm1_vlrpaid,:pm1_comments,:pm1_porcdiscount,
+                                            :pm1_doctype,:pm1_docduedate,:pm1_daysbackw,:pm1_vlrdiscount,:pm1_ocrcode)";
+
+
+
+				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
+					':pm1_docnum' => $resInsert,
+					':pm1_docentry' => is_numeric($detail['pm1_docentry']) ? $detail['pm1_docentry'] : 0,
+					':pm1_numref' => isset($detail['pm1_numref']) ? $detail['pm1_numref'] : NULL,
+					':pm1_docdate' =>  $this->validateDate($detail['pm1_docdate']) ? $detail['pm1_docdate'] : NULL,
+					':pm1_vlrtotal' => is_numeric($detail['pm1_vlrtotal']) ? $detail['pm1_vlrtotal'] : 0,
+					':pm1_vlrpaid' => is_numeric($detail['pm1_vlrpaid']) ? $detail['pm1_vlrpaid'] : 0,
+					':pm1_comments' => isset($detail['pm1_comments']) ? $detail['pm1_comments'] : NULL,
+					':pm1_porcdiscount' => is_numeric($detail['pm1_porcdiscount']) ? $detail['pm1_porcdiscount'] : 0,
+					':pm1_doctype' => is_numeric($detail['pm1_doctype']) ? $detail['pm1_doctype'] : 0,
+					':pm1_docduedate' => $this->validateDate($detail['pm1_docduedate']) ? $detail['pm1_docduedate'] : NULL,
+					':pm1_daysbackw' => is_numeric($detail['pm1_daysbackw']) ? $detail['pm1_daysbackw'] : 0,
+					':pm1_vlrdiscount' => is_numeric($detail['pm1_vlrdiscount']) ? $detail['pm1_vlrdiscount'] : 0,
+					':pm1_ocrcode' => isset($detail['pm1_ocrcode']) ? $detail['pm1_ocrcode'] : NULL
+					// ':pm1_ocrcode1' => isset($detail['pm1_ocrcode1'])?$detail['pm1_ocrcode1']:NULL
+				));
+
+
+				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
+
+					//SE VALIDA SI ES UN ANTICIPO AL proveedor
+					//SE OMITE LA ACTUALIZACION DE LA FACTURA
+					if ($Data['spm_billpayment'] == '0' || $Data['spm_billpayment'] == 0) {
+
+
+						//MOVIMIENTO DE DOCUMENTOS
+						if ($detail['pm1_doctype'] == 15 || $detail['pm1_doctype'] == 16 || $detail['pm1_doctype'] == 17) {
+							//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+							if (isset($detail['pm1_docentry']) && is_numeric($detail['pm1_docentry']) && isset($detail['pm1_doctype']) && is_numeric($detail['pm1_doctype'])) {
+
+								$sqlDocInicio = "SELECT bmd_tdi, bmd_ndi FROM tbmd WHERE  bmd_doctype = :bmd_doctype AND bmd_docentry = :bmd_docentry";
+								$resDocInicio = $this->pedeo->queryTable($sqlDocInicio, array(
+									':bmd_doctype' => $detail['pm1_doctype'],
+									':bmd_docentry' => $detail['pm1_docentry']
+								));
+
+
+								if (isset($resDocInicio[0])) {
+
+									$sqlInsertMD = "INSERT INTO tbmd(bmd_doctype, bmd_docentry, bmd_createat, bmd_doctypeo,
+													bmd_docentryo, bmd_tdi, bmd_ndi, bmd_docnum, bmd_doctotal, bmd_cardcode, bmd_cardtype, bmd_currency)
+													VALUES (:bmd_doctype, :bmd_docentry, :bmd_createat, :bmd_doctypeo,
+													:bmd_docentryo, :bmd_tdi, :bmd_ndi, :bmd_docnum, :bmd_doctotal, :bmd_cardcode, :bmd_cardtype, :bmd_currency)";
+
+									$resInsertMD = $this->pedeo->insertRow($sqlInsertMD, array(
+
+										':bmd_doctype' => is_numeric($Data['spm_doctype']) ? $Data['spm_doctype'] : 0,
+										':bmd_docentry' => $resInsert,
+										':bmd_createat' => $this->validateDate($Data['spm_createat']) ? $Data['spm_createat'] : NULL,
+										':bmd_doctypeo' => is_numeric($detail['pm1_doctype']) ? $detail['pm1_doctype'] : 0, //ORIGEN
+										':bmd_docentryo' => is_numeric($detail['pm1_docentry']) ? $detail['pm1_docentry'] : 0,  //ORIGEN
+										':bmd_tdi' => $resDocInicio[0]['bmd_tdi'], // DOCUMENTO INICIAL
+										':bmd_ndi' => $resDocInicio[0]['bmd_ndi'], // DOCUMENTO INICIAL
+										':bmd_docnum' => $DocNumVerificado,
+										':bmd_doctotal' => $VlrTotalOpc,
+										':bmd_cardcode' => isset($detail['pm1_tercero']) ? $detail['pm1_tercero'] : NULL,
+										':bmd_cardtype' => 2,
+										':bmd_currency' => isset($Data['spm_currency'])?$Data['spm_currency']:NULL,
+									));
+
+									if (is_numeric($resInsertMD) && $resInsertMD > 0) {
+									} else {
+
+										$this->pedeo->trans_rollback();
+
+										$respuesta = array(
+											'error'   => true,
+											'data' => $resInsertMD,
+											'mensaje'	=> 'No se pudo registrar el movimiento del documento'
+										);
+
+
+										$this->response($respuesta);
+
+										return;
+									}
+								}
+							}
+						}
+
+						//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
+
+
+						//ACTUALIZAR VALOR PAGADO DE LA FACTURA DE COMPRA
+
+						if ($detail['pm1_doctype'] == 15) {
+
+
+
+							$sqlUpdateFactPay = "UPDATE  dcfc  SET cfc_paytoday = COALESCE(cfc_paytoday,0)+:cfc_paytoday WHERE cfc_docentry = :cfc_docentry and cfc_doctype = :cfc_doctype";
+
+							$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay, array(
+
+								':cfc_paytoday' => round($VlrTotalOpc, $DECI_MALES),
+								':cfc_docentry' => $detail['pm1_docentry'],
+								':cfc_doctype' =>  $detail['pm1_doctype']
+
+							));
+
+							if (is_numeric($resUpdateFactPay) && $resUpdateFactPay > 0) {
+							} else {
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resUpdateFactPay,
+									'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura ' . $detail['pm1_docentry']
+								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+						}
+
+
+						// SE ACTUALIZA EL VALOR DEL CAMPO PAY TODAY EN NOTA CREDITO
+						if ($detail['pm1_doctype'] == 16) { // SOLO CUANDO ES UNA NOTA CREDITO
+
+							$sqlUpdateFactPay = "UPDATE  dcnc  SET cnc_paytoday = COALESCE(cnc_paytoday,0)+:cnc_paytoday WHERE cnc_docentry = :cnc_docentry and cnc_doctype = :cnc_doctype";
+
+							$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay, array(
+
+								':cnc_paytoday' => round($VlrTotalOpc, $DECI_MALES),
+								':cnc_docentry' => $detail['pm1_docentry'],
+								':cnc_doctype'  => $detail['pm1_doctype']
+
+
+							));
+
+							if (is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1) {
+							} else {
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resUpdateFactPay,
+									'mensaje'	=> 'No se pudo actualizar el valor del pago en la nota credito ' . $detail['pm1_docentry']
+								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+						}
+
+						// ACTUALIZAR REFERENCIA DE PAGO EN ASIENTO CONTABLE DE LA FACTURA
+						if ($detail['pm1_doctype'] == 15) { // SOLO CUANDO ES UNA FACTURA
+
+							$slqUpdateVenDebit = "UPDATE mac1
+																						SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																						WHERE ac1_legal_num = :ac1_legal_num
+																						AND ac1_font_key = :ac1_font_key
+																						AND ac1_font_type = :ac1_font_type
+																						AND ac1_account = :ac1_account";
+
+							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+								':ac1_ven_debit'  => round($VlrTotalOpc, $DECI_MALES),
+								':ac1_legal_num'  => $detail['pm1_tercero'],
+								':ac1_font_key'   => $detail['pm1_docentry'],
+								':ac1_font_type'  => $detail['pm1_doctype'],
+								':ac1_account'    => $detail['pm1_cuenta']
+
+							));
+
+							if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
+							} else {
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resUpdateVenDebit,
+									'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura ' . $detail['pm1_docentry']
+								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+						}
+
+
+						// SE ACTUALIZA EL VALOR DEL ANTICIPO PARA IR DESCONTANDO LO USADO
+						// O EN SU DEFECTO TAMBIEN LA NOTA CREDITO
+						if ($detail['pm1_doctype'] == 19) {
+
+							$slqUpdateVenDebit = "UPDATE mac1
+																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																						WHERE ac1_legal_num = :ac1_legal_num
+																						AND ac1_font_key = :ac1_font_key
+																						AND ac1_font_type = :ac1_font_type
+																						AND ac1_account = :ac1_account";
+							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+								':ac1_ven_credit' => round($VlrTotalOpc, $DECI_MALES),
+								':ac1_legal_num'  => $detail['pm1_tercero'],
+								':ac1_font_key'   => $detail['pm1_docentry'],
+								':ac1_font_type'  => $detail['pm1_doctype'],
+								':ac1_account'    => $detail['pm1_cuenta']
+
+							));
+
+							if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
+							} else {
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resUpdateVenDebit,
+									'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura ' . $detail['pm1_docentry']
+								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+						}
+
+						if ($detail['pm1_doctype'] == 16) {
+
+							$slqUpdateVenDebit = "UPDATE mac1
+																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																						WHERE ac1_legal_num = :ac1_legal_num
+																						AND ac1_font_key = :ac1_font_key
+																						AND ac1_font_type = :ac1_font_type
+																						AND ac1_account = :ac1_account";
+							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+								':ac1_ven_credit' => round($VlrTotalOpc, $DECI_MALES),
+								':ac1_legal_num'  => $detail['pm1_tercero'],
+								':ac1_font_key'   => $detail['pm1_docentry'],
+								':ac1_font_type'  => $detail['pm1_doctype'],
+								':ac1_account'    => $detail['pm1_cuenta']
+
+							));
+
+							if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
+							} else {
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resUpdateFactPay,
+									'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura ' . $detail['pm1_docentry']
+								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+						}
+
+
+						// validar si se cierra el documento
+						if ($detail['pm1_doctype'] == 15) {
+
+							$resEstado = $this->generic->validateBalanceAndClose($detail['pm1_docentry'], $detail['pm1_doctype'], 'dcfc', 'cfc');
+
+
+							if (isset($resEstado['error']) && $resEstado['error'] == true) {
+
+								$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+								$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+									':bed_docentry' => $detail['pm1_docentry'],
+									':bed_doctype' => $detail['pm1_doctype'],
+									':bed_status' => 3, //ESTADO CERRADO
+									':bed_createby' => $Data['spm_createby'],
+									':bed_date' => date('Y-m-d'),
+									':bed_baseentry' => $resInsert,
+									':bed_basetype' => $Data['spm_doctype']
+								));
+
+
+								if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+								} else {
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar el pago'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+						}
+
+
+						// se valida cerrar la nota credito
+						if ($detail['pm1_doctype'] == 16) {
+
+
+							$resEstado = $this->generic->validateBalanceAndClose($detail['pm1_docentry'], $detail['pm1_doctype'], 'dcnc', 'cnc');
+
+
+							if (isset($resEstado['error']) && $resEstado['error'] == true) {
+								$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																									VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+								$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+									':bed_docentry' => $detail['pm1_docentry'],
+									':bed_doctype' => $detail['pm1_doctype'],
+									':bed_status' => 3, //ESTADO CERRADO
+									':bed_createby' => $Data['spm_createby'],
+									':bed_date' => date('Y-m-d'),
+									':bed_baseentry' => $resInsert,
+									':bed_basetype' => $Data['spm_doctype']
+								));
+
+
+								if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+								} else {
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar el pago'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+						}
+
+						//ASIENTO MANUALES
+						if ($detail['pm1_doctype'] == 18) {
+
+							if ($detail['ac1_cord'] == 1) {
+
+								$slqUpdateVenDebit = "UPDATE mac1
+																							SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+																							WHERE ac1_line_num = :ac1_line_num";
+
+								$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+									':ac1_ven_debit' => round($VlrTotalOpc, $DECI_MALES),
+									':ac1_line_num'  => $detail['ac1_line_num']
+								));
+
+								if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
+								} else {
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resUpdateVenDebit,
+										'mensaje'	=> 'No se pudo actualizar el valor del pago' . $detail['pm1_docentry']
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+							} else if ($detail['ac1_cord'] == 0) {
+								$slqUpdateVenDebit = "UPDATE mac1
+																							SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																							WHERE ac1_line_num = :ac1_line_num";
+
+								$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+									':ac1_ven_credit' => round($VlrTotalOpc, $DECI_MALES),
+									':ac1_line_num'   => $detail['ac1_line_num']
+								));
+
+								if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
+								} else {
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' 		=> $resUpdateVenDebit,
+										'mensaje'	=> 'No se pudo actualizar el valor del pago' . $detail['pm1_docentry']
+									);
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+						}
+						//ASIENTOS MANUALES
+                        //ACTUALIZAR VALOR PAGADO DE LA FACTURA ANTICIPADA DE COMPRA
+
+						if ($detail['pm1_doctype'] == 36) {
+
+
+
+							$sqlUpdateFactPay = "UPDATE  dcsa  SET csa_paytoday = COALESCE(csa_paytoday,0)+:csa_paytoday WHERE csa_docentry = :csa_docentry and csa_doctype = :csa_doctype";
+
+							$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay, array(
+
+								':csa_paytoday' => round($VlrTotalOpc, $DECI_MALES),
+								':csa_docentry' => $detail['pm1_docentry'],
+								':csa_doctype' =>  $detail['pm1_doctype']
+
+							));
+
+							if (is_numeric($resUpdateFactPay) && $resUpdateFactPay > 0) {
+							} else {
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resUpdateFactPay,
+									'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura ' . $detail['pm1_docentry']
+								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+						}
+
+
+					}
+				} else {
+
+					// si falla algun insert del detalle del pago se devuelven los cambios realizados por la transaccion,
+					// se retorna el error y se detiene la ejecucion del codigo restante.
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resInsertDetail,
+						'mensaje'	=> 'No se pudo registrar el pago'
+					);
+
+					$this->response($respuesta);
+
+					return;
+				}
+
+				// FIN PROCESO PARA ACTUALIZAR EL VALOR EN LA FACTURA
+
+
+				// LLENANDO DETALLE ASIENTOS CONTABLES (AGRUPACION)
+
+
+				$DetalleAsientoCuentaTercero = new stdClass();
+
+				$DetalleAsientoCuentaTercero->spm_cardcode     = isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL;
+				$DetalleAsientoCuentaTercero->pm1_doctype      = is_numeric($detail['pm1_doctype']) ? $detail['pm1_doctype'] : 0;
+				$DetalleAsientoCuentaTercero->pm1_docentry     = is_numeric($detail['pm1_docentry']) ? $detail['pm1_docentry'] : 0;
+				$DetalleAsientoCuentaTercero->cuentalinea      = is_numeric($detail['pm1_cuenta']) ? $detail['pm1_cuenta'] : 0;
+				$DetalleAsientoCuentaTercero->cuentalinea      = ($DetalleAsientoCuentaTercero->cuentalinea == 0) ? $detail['pm1_accountid'] : $DetalleAsientoCuentaTercero->cuentalinea;
+				$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($DetalleAsientoCuentaTercero->cuentalinea, 0, 1);
+				$DetalleAsientoCuentaTercero->pm1_vlrpaid      = is_numeric($detail['pm1_vlrpaid']) ? $detail['pm1_vlrpaid'] : 0;
+				$DetalleAsientoCuentaTercero->pm1_docdate	     = $this->validateDate($detail['pm1_docdate']) ? $detail['pm1_docdate'] : NULL;
+				$DetalleAsientoCuentaTercero->cord	           = isset($detail['ac1_cord']) ? $detail['ac1_cord'] : NULL;
+				$DetalleAsientoCuentaTercero->vlrpaiddesc	     = $VlrTotalOpc;
+				$DetalleAsientoCuentaTercero->tasaoriginaldoc  = $TasaOrg;
+
+
+				$llaveAsientoCuentaTercero = $DetalleAsientoCuentaTercero->spm_cardcode . $DetalleAsientoCuentaTercero->pm1_doctype . $DetalleAsientoCuentaTercero->tasaoriginaldoc;
+
+
+				//********************
+				if (in_array($llaveAsientoCuentaTercero, $inArrayAsientoCuentaTercero)) {
+
+					$posicion = $this->buscarPosicion($llaveAsientoCuentaTercero, $inArrayAsientoCuentaTercero);
+				} else {
+
+					array_push($inArrayAsientoCuentaTercero, $llaveAsientoCuentaTercero);
+					$posicionAsientoCuentaTercero = $this->buscarPosicion($llaveAsientoCuentaTercero, $inArrayAsientoCuentaTercero);
+				}
+
+
+				if (isset($DetalleConsolidadoAsientoCuentaTercero[$posicionAsientoCuentaTercero])) {
+
+					if (!is_array($DetalleConsolidadoAsientoCuentaTercero[$posicionAsientoCuentaTercero])) {
+						$DetalleConsolidadoAsientoCuentaTercero[$posicionAsientoCuentaTercero] = array();
+					}
+				} else {
+					$DetalleConsolidadoAsientoCuentaTercero[$posicionAsientoCuentaTercero] = array();
+				}
+
+				array_push($DetalleConsolidadoAsientoCuentaTercero[$posicionAsientoCuentaTercero], $DetalleAsientoCuentaTercero);
+
+				//*******************************************************\\
+
+				//FIN LLENADO DETALLE ASIENTOS CONTABLE (AGRUPACION)
+
+			}
+			//FIN DE ACTUALIZACION DEL VALOR PAGADO EN LA FACTURA
+
+
+			// SE INSERTA ASIENTO INGRESO
+
+
+			$debito = 0;
+			$credito = 0;
+			$MontoSysDB = 0;
+			$MontoSysCR = 0;
+			$cuenta = $Data['spm_acctransfer'];
+			$codigoCuentaIngreso = substr($cuenta, 0, 1);
+			$granTotalIngreso = $Data['spm_vlrpaid'];
+			$granTotalIngresoOriginal = $granTotalIngreso;
+
+			if (trim($Data['spm_currency']) != $MONEDALOCAL) {
+				$granTotalIngreso = ($granTotalIngreso * $TasaDocLoc);
+			}
+
+			switch ($codigoCuentaIngreso) {
+				case 1: // ESTABLECIDO COMO CREDITO
+					$credito = $granTotalIngreso;
+					if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+						$MontoSysCR = ($credito / $TasaLocSys);
+					} else {
+
+						$MontoSysCR = $granTotalIngresoOriginal;
+					}
+					break;
+
+				case 2:
+					$credito = $granTotalIngreso;
+					if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+						$MontoSysCR = ($credito / $TasaLocSys);
+					} else {
+
+						$MontoSysCR = $granTotalIngresoOriginal;
+					}
+					break;
+
+				case 3:
+					$credito = $granTotalIngreso;
+					if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+						$MontoSysCR = ($credito / $TasaLocSys);
+					} else {
+
+						$MontoSysCR = $granTotalIngresoOriginal;
+					}
+					break;
+
+				case 4:
+					$credito = $granTotalIngreso;
+					if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+						$MontoSysCR = ($credito / $TasaLocSys);
+					} else {
+
+						$MontoSysCR = $granTotalIngresoOriginal;
+					}
+					break;
+
+				case 5:
+					$credito = $granTotalIngreso;
+					if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+						$MontoSysCR = ($credito / $TasaLocSys);
+					} else {
+
+						$MontoSysCR = $granTotalIngresoOriginal;
+					}
+					break;
+
+				case 6:
+					$credito = $granTotalIngreso;
+					if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+						$MontoSysCR = ($credito / $TasaLocSys);
+					} else {
+
+						$MontoSysCR = $granTotalIngresoOriginal;
+					}
+					break;
+
+				case 7:
+					$credito = $granTotalIngreso;
+					if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+						$MontoSysCR = ($credito / $TasaLocSys);
+					} else {
+
+						$MontoSysCR = $granTotalIngresoOriginal;
+					}
+					break;
+			}
+
+			$VlrPagoEfectuado = $credito;
+
+			$DFPC  = $DFPC + round($credito, $DECI_MALES);
+			$DFPD  = $DFPD + round($debito, $DECI_MALES);
+			$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
+			$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
+
+
+			$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+				':ac1_trans_id' => $resInsertAsiento,
+				':ac1_account' => $cuenta,
+				':ac1_debit' => round($debito, $DECI_MALES),
+				':ac1_credit' => round($credito, $DECI_MALES),
+				':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+				':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+				':ac1_currex' => 0,
+				':ac1_doc_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+				':ac1_doc_duedate' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+				':ac1_debit_import' => 0,
+				':ac1_credit_import' => 0,
+				':ac1_debit_importsys' => 0,
+				':ac1_credit_importsys' => 0,
+				':ac1_font_key' => $resInsert,
+				':ac1_font_line' => 1,
+				':ac1_font_type' => 19,
+				':ac1_accountvs' => 1,
+				':ac1_doctype' => 18,
+				':ac1_ref1' => "",
+				':ac1_ref2' => "",
+				':ac1_ref3' => "",
+				':ac1_prc_code' => 0,
+				':ac1_uncode' => 0,
+				':ac1_prj_code' => 0,
+				':ac1_rescon_date' => NULL,
+				':ac1_recon_total' => 0,
+				':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+				':ac1_accperiod' => 1,
+				':ac1_close' => 0,
+				':ac1_cord' => 0,
+				':ac1_ven_debit' => 0,
+				':ac1_ven_credit' => 0,
+				':ac1_fiscal_acct' => 0,
+				':ac1_taxid' => 1,
+				':ac1_isrti' => 0,
+				':ac1_basert' => 0,
+				':ac1_mmcode' => 0,
+				':ac1_legal_num' => isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL,
+				':ac1_codref' => 1,
+				':business' => $Data['business'],
+				':branch' => $Data['branch']
+
+			));
+
+
+
+			if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+				// Se verifica que el detalle no de error insertando //
+			} else {
+				// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+				// se retorna el error y se detiene la ejecucion del codigo restante.
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data'	  => $resDetalleAsiento,
+					'mensaje'	=> 'No se pudo registrar el pago realizado, ocurrio un error al ingresar el asiento del ingreso'
+				);
+
+				$this->response($respuesta);
+
+				return;
+			}
+
+			// FIN PROCESO ASIENTO INGRESO
+			//SE VALIDA SI ES UN ANTICIPO AL proveedor
+			if ($Data['spm_billpayment'] == '0' || $Data['spm_billpayment'] == 0) {
+				//Procedimiento para llenar ASIENTO CON CUENTA TERCERO SEGUN GRUPO DE CUENTAS
+
+				foreach ($DetalleConsolidadoAsientoCuentaTercero as $key => $posicion) {
+					$TotalPagoRecibido = 0;
+					$TotalPagoRecibidoOriginal = 0;
+					$TotalDiferencia = 0;
+					$cuenta = 0;
+					$docentry = 0;
+					$cuentaLinea = 0;
+					$doctype = 0;
+					$fechaDocumento = '';
+					$TasaOld = 0;
+					$DireferenciaCambio = 0; // SOLO SE USA PARA SABER SI EXISTE UNA DIFERENCIA DE CAMBIO
+					$CuentaDiferenciaCambio = 0;
+					$ac1cord = null;
+					$tasadoc = 0;
+
+					foreach ($posicion as $key => $value) {
+
+						$TotalPagoRecibido = ($TotalPagoRecibido + $value->vlrpaiddesc);
+
+
+						$docentry = $value->pm1_docentry;
+						$doctype  = $value->pm1_doctype;
+						$cuenta   = $value->cuentaNaturaleza;
+						$cuentaLinea = $value->cuentalinea;
+						$fechaDocumento = $value->pm1_docdate;
+						$ac1cord = $value->cord;
+						$tasadoc = $value->tasaoriginaldoc;
+					}
+
+					$debito = 0;
+					$credito = 0;
+					$MontoSysDB = 0;
+					$MontoSysCR = 0;
+					$TotalPagoRecibidoOriginal = $TotalPagoRecibido;
+
+
+
+
+					if ($doctype == 19 || $doctype == 16) {
+						switch ($cuenta) {
+							case 1:
+								$credito = $TotalPagoRecibido;
+
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysCR = ($credito / $TasaLocSys);
+								} else {
+
+									$MontoSysCR = ($credito / $tasadoc);
+								}
+
+								break;
+
+							case 2:
+								$credito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysCR = ($credito / $TasaLocSys);
+								} else {
+
+									$MontoSysCR = ($credito / $tasadoc);
+								}
+								break;
+
+							case 3:
+								$credito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysCR = ($credito / $TasaLocSys);
+								} else {
+
+									$MontoSysCR = ($credito / $tasadoc);
+								}
+								break;
+
+							case 4:
+								$credito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysCR = ($credito / $TasaLocSys);
+								} else {
+
+									$MontoSysCR = ($credito / $tasadoc);
+								}
+								break;
+
+							case 5:
+								$credito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysCR = ($credito / $TasaLocSys);
+								} else {
+
+									$MontoSysCR = ($credito / $tasadoc);
+								}
+								break;
+
+							case 6:
+								$credito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysCR = ($credito / $TasaLocSys);
+								} else {
+
+									$MontoSysCR = ($credito / $tasadoc);
+								}
+								break;
+
+							case 7:
+								$credito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysCR = ($credito / $TasaLocSys);
+								} else {
+
+									$MontoSysCR = ($credito / $tasadoc);
+								}
+								break;
+						}
+					} else if ($doctype == 18) {
+
+						if ($ac1cord == 0) {
+							$credito = $TotalPagoRecibido;
+
+							if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+								$MontoSysCR = ($credito / $TasaLocSys);
+							} else {
+
+								$MontoSysCR = ($credito / $tasadoc);
+							}
+						} else if ($ac1cord == 1) {
+
+							$debito = $TotalPagoRecibido;
+
+							if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+								$MontoSysDB = ($debito / $TasaLocSys);
+							} else {
+
+								$MontoSysDB = ($debito / $tasadoc);
+							}
+						}
+					} else {
+						switch ($cuenta) {
+							case 1:
+								$debito = $TotalPagoRecibido;
+
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysDB = ($debito / $TasaLocSys);
+								} else {
+
+									$MontoSysDB = ($debito / $tasadoc);
+								}
+
+								break;
+
+							case 2:
+								$debito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysDB = ($debito / $TasaLocSys);
+								} else {
+
+									$MontoSysDB = ($debito / $tasadoc);
+								}
+								break;
+
+							case 3:
+								$debito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysDB = ($debito / $TasaLocSys);
+								} else {
+
+									$MontoSysDB = ($debito / $tasadoc);
+								}
+								break;
+
+							case 4:
+								$debito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysDB = ($debito / $TasaLocSys);
+								} else {
+
+									$MontoSysDB = ($debito / $tasadoc);
+								}
+								break;
+
+							case 5:
+								$debito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysDB = ($debito / $TasaLocSys);
+								} else {
+
+									$MontoSysDB = ($debito / $tasadoc);
+								}
+								break;
+
+							case 6:
+								$debito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysDB = ($debito / $TasaLocSys);
+								} else {
+
+									$MontoSysDB = ($debito / $tasadoc);
+								}
+								break;
+
+							case 7:
+								$debito = $TotalPagoRecibido;
+								if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+									$MontoSysDB = ($debito / $TasaLocSys);
+								} else {
+
+									$MontoSysDB = ($debito / $tasadoc);
+								}
+								break;
+						}
+					}
+
+					$DFPC  = $DFPC + round($credito, $DECI_MALES);
+					$DFPD  = $DFPD + round($debito, $DECI_MALES);
+					$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
+					$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
+
+
+					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+						':ac1_trans_id' => $resInsertAsiento,
+						':ac1_account' => $cuentaLinea,
+						':ac1_debit' => round($debito, $DECI_MALES),
+						':ac1_credit' => round($credito, $DECI_MALES),
+						':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+						':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+						':ac1_currex' => 0,
+						':ac1_doc_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+						':ac1_doc_duedate' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+						':ac1_debit_import' => 0,
+						':ac1_credit_import' => 0,
+						':ac1_debit_importsys' => 0,
+						':ac1_credit_importsys' => 0,
+						':ac1_font_key' => $resInsert,
+						':ac1_font_line' => 1,
+						':ac1_font_type' => 19,
+						':ac1_accountvs' => 1,
+						':ac1_doctype' => 18,
+						':ac1_ref1' => "",
+						':ac1_ref2' => "",
+						':ac1_ref3' => "",
+						':ac1_prc_code' => 0,
+						':ac1_uncode' => 0,
+						':ac1_prj_code' => isset($Data['spm_project']) ? $Data['spm_project'] : NULL,
+						':ac1_rescon_date' => NULL,
+						':ac1_recon_total' => 0,
+						':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+						':ac1_accperiod' => 1,
+						':ac1_close' => 0,
+						':ac1_cord' => 0,
+						':ac1_ven_debit' => round($credito, $DECI_MALES),
+						':ac1_ven_credit' => round($credito, $DECI_MALES),
+						':ac1_fiscal_acct' => 0,
+						':ac1_taxid' => 1,
+						':ac1_isrti' => 0,
+						':ac1_basert' => 0,
+						':ac1_mmcode' => 0,
+						':ac1_legal_num' => isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL,
+						':ac1_codref' => 1,
+						':business' => $Data['business'],
+						':branch' => $Data['branch']
+					));
+
+
+
+					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+						// Se verifica que el detalle no de error insertando //
+					} else {
+						// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+						// se retorna el error y se detiene la ejecucion del codigo restante.
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data'	  => $resDetalleAsiento,
+							'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al insertar el detalle del asiento cuenta tercero'
+						);
+
+						$this->response($respuesta);
+
+						return;
+					}
+				}
+			} else {
+
+				//SE AGREGA ASIENTO A CUENTA DE LA LINEA DE ANTICIPO
+
+				foreach ($DetalleConsolidadoAsientoCuentaTercero as $key => $posicion) {
+					$TotalPagoRecibido = 0;
+					$TotalPagoRecibidoOriginal = 0;
+					$TotalDiferencia = 0;
+					$cuenta = 0;
+					$cuentaLinea = 0;
+					$docentry = 0;
+					$doctype = 0;
+					$fechaDocumento = '';
+					$TasaOld = 0;
+					$DireferenciaCambio = 0; // SOLO SE USA PARA SABER SI EXISTE UNA DIFERENCIA DE CAMBIO
+					$CuentaDiferenciaCambio = 0;
+
+					foreach ($posicion as $key => $value) {
+
+						$TotalPagoRecibido = ($TotalPagoRecibido + $value->pm1_vlrpaid);
+
+
+						$docentry = $value->pm1_docentry;
+						$doctype  = $value->pm1_doctype;
+						$cuenta   = $value->cuentaNaturaleza;
+						$fechaDocumento = $value->pm1_docdate;
+						$cuentaLinea = $value->cuentalinea;
+					}
+
+
+					$debito = 0;
+					$credito = 0;
+					$MontoSysDB = 0;
+					$MontoSysCR = 0;
+
+					$TotalPagoRecibidoOriginal = $TotalPagoRecibido;
+
+					if (trim($Data['spm_currency']) != $MONEDALOCAL) {
+						$TotalPagoRecibido = ($TotalPagoRecibido * $TasaDocLoc);
+					}
+
+					switch ($cuenta) {
+						case 1:
+							$debito = $TotalPagoRecibido;
+
+							if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+								$MontoSysDB = ($debito / $TasaLocSys);
+							} else {
+
+								$MontoSysDB = $TotalPagoRecibidoOriginal;
+							}
+
+							break;
+
+						case 2:
+							$debito = $TotalPagoRecibido;
+							if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+								$MontoSysDB = ($debito / $TasaLocSys);
+							} else {
+
+								$MontoSysDB = $TotalPagoRecibidoOriginal;
+							}
+							break;
+
+						case 3:
+							$debito = $TotalPagoRecibido;
+							if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+								$MontoSysDB = ($debito / $TasaLocSys);
+							} else {
+
+								$MontoSysDB = $TotalPagoRecibidoOriginal;
+							}
+							break;
+
+						case 4:
+							$debito = $TotalPagoRecibido;
+							if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+								$MontoSysDB = ($debito / $TasaLocSys);
+							} else {
+
+								$MontoSysDB = $TotalPagoRecibidoOriginal;
+							}
+							break;
+
+						case 5:
+							$debito = $TotalPagoRecibido;
+							if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+								$MontoSysDB = ($debito / $TasaLocSys);
+							} else {
+
+								$MontoSysDB = $TotalPagoRecibidoOriginal;
+							}
+							break;
+
+						case 6:
+							$debito = $TotalPagoRecibido;
+							if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+								$MontoSysDB = ($debito / $TasaLocSys);
+							} else {
+
+								$MontoSysDB = $TotalPagoRecibidoOriginal;
+							}
+							break;
+
+						case 7:
+							$debito = $TotalPagoRecibido;
+							if (trim($Data['spm_currency']) != $MONEDASYS) {
+
+								$MontoSysDB = ($debito / $TasaLocSys);
+							} else {
+
+								$MontoSysDB = $TotalPagoRecibidoOriginal;
+							}
+							break;
+					}
+
+					$DFPC  = $DFPC + round($credito, $DECI_MALES);
+					$DFPD  = $DFPD + round($debito, $DECI_MALES);
+					$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
+					$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
+
+
+					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+						':ac1_trans_id' => $resInsertAsiento,
+						':ac1_account' => $cuentaLinea,
+						':ac1_debit' => round($debito, $DECI_MALES),
+						':ac1_credit' => round($credito, $DECI_MALES),
+						':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+						':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+						':ac1_currex' => 0,
+						':ac1_doc_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+						':ac1_doc_duedate' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+						':ac1_debit_import' => 0,
+						':ac1_credit_import' => 0,
+						':ac1_debit_importsys' => 0,
+						':ac1_credit_importsys' => 0,
+						':ac1_font_key' => $resInsert,
+						':ac1_font_line' => 1,
+						':ac1_font_type' => 19,
+						':ac1_accountvs' => 1,
+						':ac1_doctype' => 18,
+						':ac1_ref1' => "",
+						':ac1_ref2' => "",
+						':ac1_ref3' => "",
+						':ac1_prc_code' => 0,
+						':ac1_uncode' => 0,
+						':ac1_prj_code' => isset($Data['spm_project']) ? $Data['spm_project'] : NULL,
+						':ac1_rescon_date' => NULL,
+						':ac1_recon_total' => 0,
+						':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+						':ac1_accperiod' => 1,
+						':ac1_close' => 0,
+						':ac1_cord' => 0,
+						':ac1_ven_debit' => round($debito, $DECI_MALES),
+						':ac1_ven_credit' => round($credito, $DECI_MALES),
+						':ac1_fiscal_acct' => 0,
+						':ac1_taxid' => 1,
+						':ac1_isrti' => 0,
+						':ac1_basert' => 0,
+						':ac1_mmcode' => 0,
+						':ac1_legal_num' => isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL,
+						':ac1_codref' => 1,
+						':business' => $Data['business'],
+						':branch' => $Data['branch']
+					));
+
+
+
+					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+						// Se verifica que el detalle no de error insertando //
+					} else {
+						// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+						// se retorna el error y se detiene la ejecucion del codigo restante.
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data'	  => $resDetalleAsiento,
+							'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al insertar el detalle del asiento cuenta tercero'
+						);
+
+						$this->response($respuesta);
+
+						return;
+					}
+				}
+				//FIN DEL PROCESO PARA AGREGAR ASIENTO A CUENTA DE LA LINEA DE ANTICIPO
+			}
+
+
+			if (trim($Data['spm_currency']) != $MONEDALOCAL) {
+
+				if ($Data['spm_billpayment'] == '0' || $Data['spm_billpayment'] == 0) {
+					//se verifica si existe diferencia en cambio
+					$sqlCuentaDiferenciaCambio = "SELECT pge_acc_dcp, pge_acc_dcn FROM pgem";
+					$resCuentaDiferenciaCambio = $this->pedeo->queryTable($sqlCuentaDiferenciaCambio, array());
+
+					$CuentaDiferenciaCambio = [];
+
+					if (isset($resCuentaDiferenciaCambio[0])) {
+
+						$CuentaDiferenciaCambio = $resCuentaDiferenciaCambio[0];
+					} else {
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data'  => array(),
+							'mensaje' => 'No se encontro la cuenta para aplicar la diferencia en cambio'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+					}
+
+
+
+					$VlrDiff = ($VlrDiff + $VlrPagoEfectuado);
+
+
+					if ($VlrDiff  <  0) {
+
+						$VlrDiffP = abs($VlrDiff);
+					} else if ($VlrDiff > 0) {
+
+						$VlrDiffN = abs($VlrDiff);
+					} else if ($VlrDiff  == 0) {
+
+						$VlrDiffN = 0;
+						$VlrDiffP = 0;
+					}
+
+
+					if ($VlrDiffP > 0) {
+
+
+						$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
+						$credito    = $VlrDiffP;
+						$MontoSysCR = ($credito / $TasaLocSys);
+
+						$DFPC  = $DFPC + round($VlrDiffP, $DECI_MALES);
+						$DFPD  = $DFPD + 0;
+						$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
+						$DFPDS = $DFPDS + 0;
+
+
+						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+							':ac1_trans_id' => $resInsertAsiento,
+							':ac1_account' => $cuentaD,
+							':ac1_debit' => 0,
+							':ac1_credit' => round($VlrDiffP, $DECI_MALES),
+							':ac1_debit_sys' => 0,
+							':ac1_credit_sys' => 0,
+							':ac1_currex' => 0,
+							':ac1_doc_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+							':ac1_doc_duedate' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+							':ac1_debit_import' => 0,
+							':ac1_credit_import' => 0,
+							':ac1_debit_importsys' => 0,
+							':ac1_credit_importsys' => 0,
+							':ac1_font_key' => $resInsert,
+							':ac1_font_line' => 1,
+							':ac1_font_type' => 19,
+							':ac1_accountvs' => 1,
+							':ac1_doctype' => 18,
+							':ac1_ref1' => "",
+							':ac1_ref2' => "",
+							':ac1_ref3' => "",
+							':ac1_prc_code' => 0,
+							':ac1_uncode' => 0,
+							':ac1_prj_code' => isset($Data['spm_project']) ? $Data['spm_project'] : NULL,
+							':ac1_rescon_date' => NULL,
+							':ac1_recon_total' => 0,
+							':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+							':ac1_accperiod' => 1,
+							':ac1_close' => 0,
+							':ac1_cord' => 0,
+							':ac1_ven_debit' => 0,
+							':ac1_ven_credit' => 0,
+							':ac1_fiscal_acct' => 0,
+							':ac1_taxid' => 1,
+							':ac1_isrti' => 0,
+							':ac1_basert' => 0,
+							':ac1_mmcode' => 0,
+							':ac1_legal_num' => isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL,
+							':ac1_codref' => 1,
+							':business' => $Data['business'],
+							':branch' => $Data['branch']
+						));
+
+
+
+						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+							// Se verifica que el detalle no de error insertando //
+						} else {
+							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+							// se retorna el error y se detiene la ejecucion del codigo restante.
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resDetalleAsiento,
+								'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al insertar el detalle del asiento diferencia en cambio'
+							);
+
+							$this->response($respuesta);
+
+							return;
+						}
+					}
+
+					if ($VlrDiffN > 0) {
+
+
+						$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcn'];
+						$debito     =  $VlrDiffN;
+						$MontoSysDB = ($debito / $TasaLocSys);
+
+
+						$DFPC  = $DFPC + 0;
+						$DFPD  = $DFPD + round($VlrDiffN, $DECI_MALES);
+						$DFPCS = $DFPCS + 0;
+						$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
+
+
+						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+							':ac1_trans_id' => $resInsertAsiento,
+							':ac1_account' => $cuentaD,
+							':ac1_debit' =>  round($VlrDiffN, $DECI_MALES),
+							':ac1_credit' => 0,
+							':ac1_debit_sys' => 0,
+							':ac1_credit_sys' => 0,
+							':ac1_currex' => 0,
+							':ac1_doc_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+							':ac1_doc_duedate' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+							':ac1_debit_import' => 0,
+							':ac1_credit_import' => 0,
+							':ac1_debit_importsys' => 0,
+							':ac1_credit_importsys' => 0,
+							':ac1_font_key' => $resInsert,
+							':ac1_font_line' => 1,
+							':ac1_font_type' => 19,
+							':ac1_accountvs' => 1,
+							':ac1_doctype' => 18,
+							':ac1_ref1' => "",
+							':ac1_ref2' => "",
+							':ac1_ref3' => "",
+							':ac1_prc_code' => 0,
+							':ac1_uncode' => 0,
+							':ac1_prj_code' => isset($Data['spm_project']) ? $Data['spm_project'] : NULL,
+							':ac1_rescon_date' => NULL,
+							':ac1_recon_total' => 0,
+							':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+							':ac1_accperiod' => 1,
+							':ac1_close' => 0,
+							':ac1_cord' => 0,
+							':ac1_ven_debit' => 0,
+							':ac1_ven_credit' => 0,
+							':ac1_fiscal_acct' => 0,
+							':ac1_taxid' => 1,
+							':ac1_isrti' => 0,
+							':ac1_basert' => 0,
+							':ac1_mmcode' => 0,
+							':ac1_legal_num' => isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL,
+							':ac1_codref' => 1,
+							':business' => $Data['business'],
+							':branch' => $Data['branch']
+						));
+
+
+
+						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+							// Se verifica que el detalle no de error insertando //
+						} else {
+							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+							// se retorna el error y se detiene la ejecucion del codigo restante.
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resDetalleAsiento,
+								'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al insertar el detalle del asiento diferencia en cambio'
+							);
+
+							$this->response($respuesta);
+
+							return;
+						}
+					}
+				}
+				//
+			}
+
+
+
+			//VALIDANDDO DIFERENCIA EN PESO DE MONEDA DE SISTEMA
+
+			$sqlDiffPeso = "SELECT sum(coalesce(ac1_debit_sys,0)) as debito, sum(coalesce(ac1_credit_sys,0)) as credito,
+													sum(coalesce(ac1_debit,0)) as ldebito, sum(coalesce(ac1_credit,0)) as lcredito
+													from mac1
+													where ac1_trans_id = :ac1_trans_id";
+
+			$resDiffPeso = $this->pedeo->queryTable($sqlDiffPeso, array(
+				':ac1_trans_id' => $resInsertAsiento
+			));
+
+			if (isset($resDiffPeso[0]['debito']) && abs(($resDiffPeso[0]['debito'] - $resDiffPeso[0]['credito'])) > 0) {
+
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+
+				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
+				} else {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data'	  => $resCuentaDiferenciaDecimal,
+						'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+					);
+
+					$this->response($respuesta);
+
+					return;
+				}
+
+				$debito  = $resDiffPeso[0]['debito'];
+				$credito = $resDiffPeso[0]['credito'];
+
+				if ($debito > $credito) {
+					$credito = abs(($debito - $credito));
+					$debito = 0;
+				} else {
+					$debito = abs(($credito - $debito));
+					$credito = 0;
+				}
+
+				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+					':ac1_trans_id' => $resInsertAsiento,
+					':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+					':ac1_debit' => 0,
+					':ac1_credit' => 0,
+					':ac1_debit_sys' => round($debito, $DECI_MALES),
+					':ac1_credit_sys' => round($credito, $DECI_MALES),
+					':ac1_currex' => 0,
+					':ac1_doc_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+					':ac1_doc_duedate' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+					':ac1_debit_import' => 0,
+					':ac1_credit_import' => 0,
+					':ac1_debit_importsys' => 0,
+					':ac1_credit_importsys' => 0,
+					':ac1_font_key' => $resInsert,
+					':ac1_font_line' => 1,
+					':ac1_font_type' => 19,
+					':ac1_accountvs' => 1,
+					':ac1_doctype' => 18,
+					':ac1_ref1' => "",
+					':ac1_ref2' => "",
+					':ac1_ref3' => "",
+					':ac1_prc_code' => 0,
+					':ac1_uncode' => 0,
+					':ac1_prj_code' => isset($Data['spm_project']) ? $Data['spm_project'] : NULL,
+					':ac1_rescon_date' => NULL,
+					':ac1_recon_total' => 0,
+					':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+					':ac1_accperiod' => 1,
+					':ac1_close' => 0,
+					':ac1_cord' => 0,
+					':ac1_ven_debit' => 0,
+					':ac1_ven_credit' => 0,
+					':ac1_fiscal_acct' => 0,
+					':ac1_taxid' => 1,
+					':ac1_isrti' => 0,
+					':ac1_basert' => 0,
+					':ac1_mmcode' => 0,
+					':ac1_legal_num' => isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL,
+					':ac1_codref' => 1,
+					':business' => $Data['business'],
+					':branch' => $Data['branch']
+				));
+
+
+
+				if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+					// Se verifica que el detalle no de error insertando //
+				} else {
+					// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+					// se retorna el error y se detiene la ejecucion del codigo restante.
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data'	  => $resDetalleAsiento,
+						'mensaje'	=> 'No se pudo registrar el pago recibido, occurio un error al insertar el detalle del asiento diferencia en cambio'
+					);
+
+					$this->response($respuesta);
+
+					return;
+				}
+			} else if (isset($resDiffPeso[0]['ldebito']) && abs(($resDiffPeso[0]['ldebito'] - $resDiffPeso[0]['lcredito'])) > 0) {
+
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
+				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+
+				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
+				} else {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data'	  => $resCuentaDiferenciaDecimal,
+						'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
+					);
+
+					$this->response($respuesta);
+
+					return;
+				}
+
+				$ldebito  = $resDiffPeso[0]['ldebito'];
+				$lcredito = $resDiffPeso[0]['lcredito'];
+
+				if ($ldebito > $lcredito) {
+					$lcredito = abs(($ldebito - $lcredito));
+					$ldebito = 0;
+				} else {
+					$ldebito = abs(($lcredito - $ldebito));
+					$lcredito = 0;
+				}
+
+				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+					':ac1_trans_id' => $resInsertAsiento,
+					':ac1_account' => $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'],
+					':ac1_debit' => round($ldebito, $DECI_MALES),
+					':ac1_credit' => round($lcredito, $DECI_MALES),
+					':ac1_debit_sys' => 0,
+					':ac1_credit_sys' => 0,
+					':ac1_currex' => 0,
+					':ac1_doc_date' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+					':ac1_doc_duedate' => $this->validateDate($Data['spm_docdate']) ? $Data['spm_docdate'] : NULL,
+					':ac1_debit_import' => 0,
+					':ac1_credit_import' => 0,
+					':ac1_debit_importsys' => 0,
+					':ac1_credit_importsys' => 0,
+					':ac1_font_key' => $resInsert,
+					':ac1_font_line' => 1,
+					':ac1_font_type' => 19,
+					':ac1_accountvs' => 1,
+					':ac1_doctype' => 18,
+					':ac1_ref1' => "",
+					':ac1_ref2' => "",
+					':ac1_ref3' => "",
+					':ac1_prc_code' => 0,
+					':ac1_uncode' => 0,
+					':ac1_prj_code' => isset($Data['spm_project']) ? $Data['spm_project'] : NULL,
+					':ac1_rescon_date' => NULL,
+					':ac1_recon_total' => 0,
+					':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
+					':ac1_accperiod' => 1,
+					':ac1_close' => 0,
+					':ac1_cord' => 0,
+					':ac1_ven_debit' => 0,
+					':ac1_ven_credit' => 0,
+					':ac1_fiscal_acct' => 0,
+					':ac1_taxid' => 1,
+					':ac1_isrti' => 0,
+					':ac1_basert' => 0,
+					':ac1_mmcode' => 0,
+					':ac1_legal_num' => isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL,
+					':ac1_codref' => 1,
+					':business' => $Data['business'],
+					':branch' => $Data['branch']
+				));
+
+
+
+				if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+					// Se verifica que el detalle no de error insertando //
+				} else {
+					// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+					// se retorna el error y se detiene la ejecucion del codigo restante.
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data'	  => $resDetalleAsiento,
+						'mensaje'	=> 'No se pudo registrar el pago recibido, occurio un error al insertar el detalle del asiento diferencia en cambio'
+					);
+
+					$this->response($respuesta);
+
+					return;
+				}
+			}
+		
+
+
+			//SE VALIDA LA CONTABILIDAD CREADA
+			$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+
+
+			if (isset($validateCont['error']) && $validateCont['error'] == false) {
+			} else {
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data' 	 => '',
+					'mensaje' => $validateCont['mensaje']
+				);
+
+				$this->response($respuesta);
+
+				return;
+			}
+			//
+
+			//Esto es para validar el resultado de la contabilidad
+			// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
+			// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
+			// print_r(json_encode($ressqlmac1));
+			// exit;
+
+			$this->pedeo->trans_commit();
+
+			$respuesta = array(
+				'error' => false,
+				'data' => $resInsert,
+				'mensaje' => 'Pago registrado con exito'
+			);
+		} else {
+			// Se devuelven los cambios realizados en la transaccion
+			// si occurre un error  y se muestra devuelve el error.
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => $resInsert,
+				'mensaje'	=> 'No se pudo registrar el pago'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+    private function validateDate($fecha)
+	{
+		if (strlen($fecha) == 10 or strlen($fecha) > 10) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+    private function buscarPosicion($llave, $inArray)
+	{
+		$res = 0;
+		for ($i = 0; $i < count($inArray); $i++) {
+			if ($inArray[$i] == "$llave") {
+				$res =  $i;
+				break;
+			}
+		}
+
+		return $res;
+	}
 }
