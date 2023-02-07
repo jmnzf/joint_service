@@ -37,6 +37,8 @@ class PurchOrder extends REST_Controller
 		$DECI_MALES =  $this->generic->getDecimals();
 		$TasaDocLoc = 0;
 		$TasaLocSys = 0;
+		$MONEDALOCAL = "";
+		$MONEDASYS = "";
 
 		$DocNumVerificado = 0;
 		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
@@ -134,6 +136,8 @@ class PurchOrder extends REST_Controller
 
 			$TasaDocLoc = $dataTasa['tasaLocal'];
 			$TasaLocSys = $dataTasa['tasaSys'];
+			$MONEDALOCAL = $dataTasa['curLocal'];
+			$MONEDASYS = $dataTasa['curSys'];
 			
 		}else if($dataTasa['error'] == true){
 

@@ -36,6 +36,8 @@ class PurchaseRequest extends REST_Controller
 		$DECI_MALES =  $this->generic->getDecimals();
 		$TasaDocLoc = 0;
 		$TasaLocSys = 0;
+		$MONEDALOCAL = "";
+		$MONEDASYS = "";
 		
 		$Data = $this->post();
 
@@ -152,6 +154,8 @@ class PurchaseRequest extends REST_Controller
 
 			$TasaDocLoc = $dataTasa['tasaLocal'];
 			$TasaLocSys = $dataTasa['tasaSys'];
+			$MONEDALOCAL = $dataTasa['curLocal'];
+			$MONEDASYS = $dataTasa['curSys'];
 			
 		}else if($dataTasa['error'] == true){
 
@@ -1121,20 +1125,13 @@ class PurchaseRequest extends REST_Controller
 
 		// $sqlSelect = "SELECT * FROM dcsc WHERE csc_slpcode =:dms_card_code";
 
-		$sqlSelect = "SELECT
-												t0.*
-											FROM dcsc t0
-											left join estado_doc t1 on t0.csc_docentry = t1.entry and t0.csc_doctype = t1.tipo
-											left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-											where t2.estado = 'Abierto' and t0.csc_slpcode =:dms_card_code";
+		$copy = $this->documentcopy->CopyData('dcsc','csc',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dms_card_code" => $Data['dms_card_code']));
-
-		if (isset($resSelect[0])) {
+		if (isset($copy[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copy,
 				'mensaje' => ''
 			);
 		} else {

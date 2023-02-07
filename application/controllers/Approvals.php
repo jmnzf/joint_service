@@ -326,7 +326,7 @@ class Approvals extends REST_Controller
 								end estado,
 								    t2.mev_names as pap_slpcode
 								    FROM dpap t0
-										INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
+									INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
 								    left  join dmev t2 on t0.pap_slpcode = t2.mev_id
 								    left JOIN dmdt t3 on t0.pap_doctype = t3.mdt_doctype
 								    LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
@@ -342,9 +342,14 @@ class Approvals extends REST_Controller
 								    INNER JOIN pgus
 								    ON pgu_code_user = :pap_createby
 								    AND pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[]))
-									and estado not in ('Cerrado','Aprobado','Rechazado')  and  process  = 'ApprovalProcess'";
+									and estado not in ('Cerrado','Aprobado','Rechazado')  and  process  = 'ApprovalProcess'
+									and t0.business = :business and t0.branch = :branch";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pap_createby' => $Data['code_user']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':pap_createby' => $Data['code_user'],
+			':business' => $Data['business'],
+			':branch' => $Data['branch']
+		));
 
 		if (isset($resSelect[0])) {
 

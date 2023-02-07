@@ -32,7 +32,7 @@ class SalidaInv extends REST_Controller {
 
 				$DECI_MALES =  $this->generic->getDecimals();
 
-        $Data = $this->post();
+        		$Data = $this->post();
 				$Data = $Data['ISI_DOCENTRY'];
 
 				$formatter = new NumeroALetras();

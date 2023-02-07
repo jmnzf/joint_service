@@ -436,7 +436,7 @@ class PaymentsMade extends REST_Controller
 
 				if ($Data['bpe_billpayment'] == '0' || $Data['bpe_billpayment'] == 0) {
 					//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
-					if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17 || $detail['pe1_doctype'] == 19 || $detail['pe1_doctype'] == 18) {
+					if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17 || $detail['pe1_doctype'] == 19 || $detail['pe1_doctype'] == 18 || $detail['pe1_doctype'] == 36 ) {
 
 
 						$pf = "";
@@ -452,6 +452,9 @@ class PaymentsMade extends REST_Controller
 						} else if ($detail['pe1_doctype'] == 19) {
 							$pf = "bpe";
 							$tb  = "gbpe";
+						}else if ( $detail['pe1_doctype'] == 36 ){
+							$pf = "csa";
+							$tb  = "dcsa";
 						}
 
 						$resVlrPay = $this->generic->validateBalance($detail['pe1_docentry'], $detail['pe1_doctype'], $tb, $pf, $detail['pe1_vlrpaid'], $Data['bpe_currency'], $Data['bpe_docdate'], 2, isset($detail['ac1_line_num']) ? $detail['ac1_line_num'] : 0);
@@ -540,7 +543,7 @@ class PaymentsMade extends REST_Controller
 
 
 						//MOVIMIENTO DE DOCUMENTOS
-						if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17) {
+						if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17 || $detail['pe1_doctype'] == 36) {
 							//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 							if (isset($detail['pe1_docentry']) && is_numeric($detail['pe1_docentry']) && isset($detail['pe1_doctype']) && is_numeric($detail['pe1_doctype'])) {
 
@@ -659,15 +662,46 @@ class PaymentsMade extends REST_Controller
 							}
 						}
 
+						// SE ACTUALIZA EL VALOR DEL CAMPO PAY TODAY EN LA SOLICITUD DE ANTICIPO PROVEEDOR
+						if ($detail['pe1_doctype'] == 36) { // SOLO CUANDO ES UNA SOLICITUD DE ANTICIPO PROVEEDOR
+
+							$sqlUpdateFactPay = "UPDATE  dcsa  SET csa_paytoday = COALESCE(csa_paytoday,0)+:csa_paytoday WHERE csa_docentry = :csa_docentry and csa_doctype = :csa_doctype";
+
+							$resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay, array(
+
+								':csa_paytoday' => round($VlrTotalOpc, $DECI_MALES),
+								':csa_docentry' => $detail['pe1_docentry'],
+								':csa_doctype'  => $detail['pe1_doctype']
+
+
+							));
+
+							if (is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1) {
+							} else {
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' 	  => $resUpdateFactPay,
+									'mensaje' => 'No se pudo actualizar el valor del pago en la nota credito ' . $detail['pe1_docentry']
+								);
+
+								$this->response($respuesta);
+
+								return;
+							}
+						}
+						//
+
 						// ACTUALIZAR REFERENCIA DE PAGO EN ASIENTO CONTABLE DE LA FACTURA
 						if ($detail['pe1_doctype'] == 15) { // SOLO CUANDO ES UNA FACTURA
 
 							$slqUpdateVenDebit = "UPDATE mac1
-																						SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
-																						WHERE ac1_legal_num = :ac1_legal_num
-																						AND ac1_font_key = :ac1_font_key
-																						AND ac1_font_type = :ac1_font_type
-																						AND ac1_account = :ac1_account";
+												SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+												WHERE ac1_legal_num = :ac1_legal_num
+												AND ac1_font_key = :ac1_font_key
+												AND ac1_font_type = :ac1_font_type
+												AND ac1_account = :ac1_account";
 
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
@@ -701,11 +735,11 @@ class PaymentsMade extends REST_Controller
 						if ($detail['pe1_doctype'] == 19) {
 
 							$slqUpdateVenDebit = "UPDATE mac1
-																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
-																						WHERE ac1_legal_num = :ac1_legal_num
-																						AND ac1_font_key = :ac1_font_key
-																						AND ac1_font_type = :ac1_font_type
-																						AND ac1_account = :ac1_account";
+												SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+												WHERE ac1_legal_num = :ac1_legal_num
+												AND ac1_font_key = :ac1_font_key
+												AND ac1_font_type = :ac1_font_type
+												AND ac1_account = :ac1_account";
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
 								':ac1_ven_credit' => round($VlrTotalOpc, $DECI_MALES),
@@ -735,11 +769,11 @@ class PaymentsMade extends REST_Controller
 						if ($detail['pe1_doctype'] == 16) {
 
 							$slqUpdateVenDebit = "UPDATE mac1
-																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
-																						WHERE ac1_legal_num = :ac1_legal_num
-																						AND ac1_font_key = :ac1_font_key
-																						AND ac1_font_type = :ac1_font_type
-																						AND ac1_account = :ac1_account";
+												SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+												WHERE ac1_legal_num = :ac1_legal_num
+												AND ac1_font_key = :ac1_font_key
+												AND ac1_font_type = :ac1_font_type
+												AND ac1_account = :ac1_account";
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
 								':ac1_ven_credit' => round($VlrTotalOpc, $DECI_MALES),
@@ -854,14 +888,55 @@ class PaymentsMade extends REST_Controller
 							}
 						}
 
+						// SE VALIDA CERRAR LA SOLICITUD DE ANTICIPO PROVEEDOR
+						if ($detail['pe1_doctype'] == 36) {
+
+
+							$resEstado = $this->generic->validateBalanceAndClose($detail['pe1_docentry'], $detail['pe1_doctype'], 'dcsa', 'csa');
+
+							if (isset($resEstado['error']) && $resEstado['error'] == true) {
+								$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+												VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+								$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+									':bed_docentry' => $detail['pe1_docentry'],
+									':bed_doctype' => $detail['pe1_doctype'],
+									':bed_status' => 3, //ESTADO CERRADO
+									':bed_createby' => $Data['bpe_createby'],
+									':bed_date' => date('Y-m-d'),
+									':bed_baseentry' => $resInsert,
+									':bed_basetype' => $Data['bpe_doctype']
+								));
+
+
+								if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+								} else {
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar el pago'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+						}
 						//ASIENTO MANUALES
 						if ($detail['pe1_doctype'] == 18) {
 
 							if ($detail['ac1_cord'] == 1) {
 
 								$slqUpdateVenDebit = "UPDATE mac1
-																							SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
-																							WHERE ac1_line_num = :ac1_line_num";
+													SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+													WHERE ac1_line_num = :ac1_line_num";
 
 								$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
@@ -885,8 +960,8 @@ class PaymentsMade extends REST_Controller
 								}
 							} else if ($detail['ac1_cord'] == 0) {
 								$slqUpdateVenDebit = "UPDATE mac1
-																							SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
-																							WHERE ac1_line_num = :ac1_line_num";
+													SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+													WHERE ac1_line_num = :ac1_line_num";
 
 								$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
@@ -1196,7 +1271,7 @@ class PaymentsMade extends REST_Controller
 
 
 
-					if ($doctype == 19 || $doctype == 16) {
+					if ($doctype == 19 || $doctype == 16 ) {
 						switch ($cuenta) {
 							case 1:
 								$credito = $TotalPagoRecibido;
@@ -2065,7 +2140,13 @@ class PaymentsMade extends REST_Controller
 					return;
 				}
 			}
-		
+			
+
+			
+			// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
+			// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+			// print_r(json_encode($ressqlmac1));
+			// exit;
 
 
 			//SE VALIDA LA CONTABILIDAD CREADA

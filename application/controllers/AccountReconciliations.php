@@ -27,9 +27,9 @@ class AccountReconciliations extends REST_Controller {
 	public function applyAccountReconciliations_post(){
 
 			$DECI_MALES =  $this->generic->getDecimals();
-  		$Data = $this->post();
-      $AC1LINE = 0;
-      $DocNumVerificado = 0;
+  			$Data = $this->post();
+			$AC1LINE = 0;
+			$DocNumVerificado = 0;
 			$DetalleAsiento = new stdClass();
 			$DetalleAsientoConsolidado = [];
 			$llaveDetalleAsiento = "";
@@ -388,7 +388,7 @@ class AccountReconciliations extends REST_Controller {
 									//VERIFICANDO DOCUMENTOS
 									if( $detail['rc1_doctype'] == 15 || $detail['rc1_doctype'] == 16 || $detail['rc1_doctype'] == 17
 											|| $detail['rc1_doctype'] == 19 || $detail['rc1_doctype'] == 18 || $detail['rc1_doctype'] == 20
-											|| $detail['rc1_doctype'] == 5 || $detail['rc1_doctype'] == 6 || $detail['rc1_doctype'] ==  7){
+											|| $detail['rc1_doctype'] == 5 || $detail['rc1_doctype'] == 6 || $detail['rc1_doctype'] ==  7 ){
 
 										$pf = "";
 										$tb  = "";

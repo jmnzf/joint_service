@@ -25,6 +25,8 @@ class PurchSolAntProv extends REST_Controller
 		$this->load->library('generic');
 		$this->load->library('DocumentCopy');
 		$this->load->library('aprobacion');
+		$this->load->library('Tasa');
+		$this->load->library('DocumentNumbering');
 	}
 
 	//CREAR NUEVA ORDEN DE COMPRA
@@ -33,6 +35,11 @@ class PurchSolAntProv extends REST_Controller
 		$Data = $this->post();
 		
 		$DECI_MALES =  $this->generic->getDecimals();
+
+		$TasaDocLoc = 0;
+		$TasaLocSys = 0;
+		$MONEDALOCAL = "";
+		$MONEDASYS = "";
 
 		$DocNumVerificado = 0;
 		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
@@ -80,43 +87,14 @@ class PurchSolAntProv extends REST_Controller
 			return;
 		}
 		//
-		//BUSCANDO LA NUMERACION DEL DOCUMENTO
-		$sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
+		// BUSCANDO LA NUMERACION DEL DOCUMENTO
+		$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['csa_series'],$Data['csa_docdate'],$Data['csa_duedate']);
+		
+		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
 
-		$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['csa_series']));
+		}else if ($DocNumVerificado['error']){
 
-		if (isset($resNumeracion[0])) {
-
-			$numeroActual = $resNumeracion[0]['pgs_nextnum'];
-			$numeroFinal  = $resNumeracion[0]['pgs_last_num'];
-			$numeroSiguiente = ($numeroActual + 1);
-
-			if ($numeroSiguiente <= $numeroFinal) {
-
-				$DocNumVerificado = $numeroSiguiente;
-			} else {
-
-				$respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' => 'La serie de la numeración esta llena'
-				);
-
-				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-				return;
-			}
-		} else {
-
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'No se encontro la serie de numeración para el documento'
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
+			return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
 		}
 
 		//Obtener Carpeta Principal del Proyecto
@@ -137,91 +115,23 @@ class PurchSolAntProv extends REST_Controller
 
 		// FIN PROCEDIMIENTO PARA OBTENER CARPETA Principal
 
+		//PROCESO DE TASA
+		$dataTasa = $this->tasa->Tasa($Data['csa_currency'],$Data['csa_docdate']);
 
-		// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
-		// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
-		$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
-		$resMonedaLoc = $this->pedeo->queryTable($sqlMonedaLoc, array(':pgm_principal' => 1));
+		if(isset($dataTasa['tasaLocal'])){
 
-		if (isset($resMonedaLoc[0])) {
-		} else {
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'No se encontro la moneda local.'
-			);
+			$TasaDocLoc = $dataTasa['tasaLocal'];
+			$TasaLocSys = $dataTasa['tasaSys'];
+			$MONEDALOCAL = $dataTasa['curLocal'];
+			$MONEDASYS = $dataTasa['curSys'];
+			
+		}else if($dataTasa['error'] == true){
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			$this->response($dataTasa, REST_Controller::HTTP_BAD_REQUEST);
 
 			return;
 		}
-
-		$MONEDALOCAL = trim($resMonedaLoc[0]['pgm_symbol']);
-
-		// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
-		$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
-		$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
-
-		if (isset($resMonedaSys[0])) {
-		} else {
-
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'No se encontro la moneda de sistema.'
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-		}
-
-
-		$MONEDASYS = trim($resMonedaSys[0]['pgm_symbol']);
-
-		//SE BUSCA LA TASA DE CAMBIO CON RESPECTO A LA MONEDA QUE TRAE EL DOCUMENTO A CREAR CON LA MONEDA LOCAL
-		// Y EN LA MISMA FECHA QUE TRAE EL DOCUMENTO
-		$sqlBusTasa = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-		$resBusTasa = $this->pedeo->queryTable($sqlBusTasa, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $Data['csa_currency'], ':tsa_date' => $Data['csa_docdate']));
-
-		if (isset($resBusTasa[0])) {
-		} else {
-
-			if (trim($Data['csa_currency']) != $MONEDALOCAL) {
-
-				$respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' => 'No se encrontro la tasa de cambio para la moneda: ' . $Data['csa_currency'] . ' en la actual fecha del documento: ' . $Data['csa_docdate'] . ' y la moneda local: ' . $resMonedaLoc[0]['pgm_symbol']
-				);
-
-				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-				return;
-			}
-		}
-
-
-		$sqlBusTasa2 = "SELECT tsa_value FROM tasa WHERE TRIM(tsa_curro) = TRIM(:tsa_curro) AND tsa_currd = TRIM(:tsa_currd) AND tsa_date = :tsa_date";
-		$resBusTasa2 = $this->pedeo->queryTable($sqlBusTasa2, array(':tsa_curro' => $resMonedaLoc[0]['pgm_symbol'], ':tsa_currd' => $resMonedaSys[0]['pgm_symbol'], ':tsa_date' => $Data['csa_docdate']));
-
-		if (isset($resBusTasa2[0])) {
-		} else {
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'No se encrontro la tasa de cambio para la moneda local contra la moneda del sistema, en la fecha del documento actual :' . $Data['csa_docdate']
-			);
-
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-		}
-
-		$TasaDocLoc = isset($resBusTasa[0]['tsa_value']) ? $resBusTasa[0]['tsa_value'] : 1;
-		$TasaLocSys = $resBusTasa2[0]['tsa_value'];
-
-		// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
+		//FIN DE PROCESO DE TASA
 
 
 		// SE VERIFICA SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO

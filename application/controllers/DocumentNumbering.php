@@ -421,6 +421,46 @@ class DocumentNumbering extends REST_Controller {
 
   }
 
+  public function getListDocumentType_get(){
+
+    $Data = $this->get();
+
+    $sql = "SELECT
+              pgs_id, 
+              pgs_num_name, 
+              (pgs_nextnum + 1) AS ultimo_numero
+            FROM pgdn
+            WHERE pgs_id_doc_type = :doctype AND business = :business AND branch = :branch
+            ORDER BY pgs_num_name ASC";
+
+    $resSql = $this->pedeo->queryTable($sql,array(
+      ':doctype' => $Data['doctype'],
+      ':business' => $Data['business'],
+      ':branch' => $Data['branch']
+    ));
+
+    if(isset($resSql[0])){
+      $respuesta = array(
+        'error' => false,
+        'data' => $resSql,
+        'mensaje' => 'OK'
+      );
+    }else{
+      $respuesta = array(
+        'error' => true,
+        'data' => [],
+        'mensaje' => 'No se encontraron datos en la busqueda'
+      );
+
+      $this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+      return;      
+    }
+
+    return $this->response($respuesta);
+
+    
+  }
+
 	 private function validateDate($fecha){
 			 if(strlen($fecha) == 10 OR strlen($fecha) > 10){
 				 return true;

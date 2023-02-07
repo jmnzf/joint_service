@@ -52,6 +52,8 @@ class PurchaseEc extends REST_Controller
 		
 		$TasaDocLoc = 0;
 		$TasaLocSys = 0;
+		$MONEDALOCAL = "";
+		$MONEDASYS = "";
 
 		$DocNumVerificado = 0;
 
@@ -187,12 +189,14 @@ class PurchaseEc extends REST_Controller
 		}
 
 		//PROCESO DE TASA
-		$dataTasa = $this->tasa->Tasa($Data['cdc_currency'],$Data['cdc_docdate']);
+		$dataTasa = $this->tasa->Tasa($Data['cec_currency'],$Data['cec_docdate']);
 
 		if(isset($dataTasa['tasaLocal'])){
 
 			$TasaDocLoc = $dataTasa['tasaLocal'];
 			$TasaLocSys = $dataTasa['tasaSys'];
+			$MONEDALOCAL = $dataTasa['curLocal'];
+			$MONEDASYS = $dataTasa['curSys'];
 			
 		}else if($dataTasa['error'] == true){
 
@@ -2835,21 +2839,13 @@ class PurchaseEc extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT
-					t0.*
-				FROM dcec t0
-				left join estado_doc t1 on t0.cec_docentry = t1.entry and t0.cec_doctype = t1.tipo
-				left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-				where t2.estado = 'Abierto' and t0.cec_cardcode =:cec_cardcode
-				and t0.business = :business and t0.branch = :branch";
+		$copy = $this->documentcopy->CopyData('dcec','cec',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cec_cardcode" => $Data['dms_card_code'],":business" => $Data['business'],":branch" => $Data['branch']));
-
-		if (isset($resSelect[0])) {
+		if (isset($copy[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copy,
 				'mensaje' => ''
 			);
 		} else {

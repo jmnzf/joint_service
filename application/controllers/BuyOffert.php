@@ -195,6 +195,8 @@ class BuyOffert extends REST_Controller
 		$Data = $this->post();
 		$TasaDocLoc = 0;
 		$TasaLocSys = 0;
+		$MONEDALOCAL = "";
+		$MONEDASYS = "";
 
 		$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 		$DetalleAsientoIva = new stdClass();
@@ -295,6 +297,8 @@ class BuyOffert extends REST_Controller
 
 			$TasaDocLoc = $dataTasa['tasaLocal'];
 			$TasaLocSys = $dataTasa['tasaSys'];
+			$MONEDALOCAL = $dataTasa['curLocal'];
+			$MONEDASYS = $dataTasa['curSys'];
 			
 		}else if($dataTasa['error'] == true){
 
