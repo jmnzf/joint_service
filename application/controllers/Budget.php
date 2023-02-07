@@ -23,20 +23,22 @@ class Budget extends REST_Controller {
 	}
 	// METODO PARA OBTENER LOS PRESUPUESTOS
   public function getBudget_get(){
+		$Data = $this->get();
     $sqlSelect = "SELECT 
 					mpc_id,
 					mpc_nombre_presupuesto, 
 					mpc_fecha_inicial,
 					mpc_fecha_final,
-					sum(mpc1_saldo) as mpc1_saldo
+					COALESCE(sum(mpc1_saldo), 0) as mpc1_saldo
 				from tmpc
-				inner join mpc1 m on tmpc.mpc_id = m.mpc1_mpc_id
+				left join mpc1 m on tmpc.mpc_id = m.mpc1_mpc_id
+				where tmpc.business = :business and tmpc.branch = :branch
 				group by mpc_id,
 					mpc_nombre_presupuesto, 
 					mpc_fecha_inicial,
 					mpc_fecha_final";
 
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business'], ':branch' => $Data['branch']));
 
     if(isset($resSelect[0])){
 
@@ -132,13 +134,15 @@ class Budget extends REST_Controller {
 		}
 
     $sqlInsert = "INSERT INTO tmpc
-    (mpc_fecha_inicial, mpc_fecha_final, mpc_nombre_presupuesto)
-     VALUES (:mpc_fecha_inicial, :mpc_fecha_final, :mpc_nombre_presupuesto)";
+    (mpc_fecha_inicial, mpc_fecha_final, mpc_nombre_presupuesto, business, branch)
+     VALUES (:mpc_fecha_inicial, :mpc_fecha_final, :mpc_nombre_presupuesto, :business, :branch)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert,array(
 		      ':mpc_fecha_inicial'=> $Data['mpc_fecha_inicial'],
 		      ':mpc_fecha_final' =>$Data['mpc_fecha_final'],
-		      ':mpc_nombre_presupuesto' =>$Data['mpc_nombre_presupuesto']
+		      ':mpc_nombre_presupuesto' =>$Data['mpc_nombre_presupuesto'],
+			  ':business' => $Data['business'], 
+			  ':branch' => $Data['branch']
     	));
 
     if(is_numeric($resInsert) && $resInsert > 0){
