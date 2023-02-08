@@ -35,9 +35,9 @@ class AccountingAccounts extends REST_Controller {
          !isset($Data['acc_sup']) OR
          !isset($Data['acc_type']) OR
          !isset($Data['acc_tax_edef']) OR
-         !isset($Data['acc_cost_center']) OR
-         !isset($Data['acc_bus_unit']) OR
-         !isset($Data['acc_project']) OR
+        //  !isset($Data['acc_cost_center']) OR
+        //  !isset($Data['acc_bus_unit']) OR
+        //  !isset($Data['acc_project']) OR
          !isset($Data['acc_block_manual']) OR
          !isset($Data['acc_enabled'])){
 
@@ -52,12 +52,28 @@ class AccountingAccounts extends REST_Controller {
         return;
       }
 
+      //VALIDAR SI LA CUENTA YA ESXISTE EN EL SISTEMA
+
+      $validAccount = "SELECT * FROM dacc WHERE dacc.acc_code = :acc_code";
+      $resValidAccount = $this->pedeo->queryTable($validAccount,array(':acc_code' => $Data['acc_code']));
+
+      if(isset($resValidAccount[0])){
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' =>'La cuenta '.$Data['acc_code'].' ya existe en el sistema'
+        );
+
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+        return;
+      }
+
         $sqlInsert = "INSERT INTO dacc(acc_code, acc_name, acc_level, acc_cash, acc_cash_flow, acc_budget, acc_sup, acc_type, acc_tax_edef, acc_cost_center, acc_bus_unit, acc_project, acc_block_manual, acc_enabled, acc_businessp)
 	                    VALUES (:acc_code, :acc_name, :acc_level, :acc_cash, :acc_cash_flow, :acc_budget, :acc_sup, :acc_type, :acc_tax_edef, :acc_cost_center, :acc_bus_unit, :acc_project, :acc_block_manual, :acc_enabled, :acc_businessp)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-
               ':acc_code' => $Data['acc_code'],
               ':acc_name' => $Data['acc_name'],
               ':acc_level' => $Data['acc_level'],
@@ -80,7 +96,7 @@ class AccountingAccounts extends REST_Controller {
               $respuesta = array(
                 'error' => false,
                 'data' => $resInsert,
-                'mensaje' =>'Almacen registrado con exito'
+                'mensaje' =>'Cuenta registrada con exito'
               );
 
 
@@ -89,7 +105,7 @@ class AccountingAccounts extends REST_Controller {
               $respuesta = array(
                 'error'   => true,
                 'data' => array(),
-                'mensaje'	=> 'No se pudo registrar el almacen'
+                'mensaje'	=> 'No se pudo registrar el la cuenta'
               );
 
         }
@@ -112,9 +128,9 @@ class AccountingAccounts extends REST_Controller {
            !isset($Data['acc_sup']) OR
            !isset($Data['acc_type']) OR
            !isset($Data['acc_tax_edef']) OR
-           !isset($Data['acc_cost_center']) OR
-           !isset($Data['acc_bus_unit']) OR
-           !isset($Data['acc_project']) OR
+          //  !isset($Data['acc_cost_center']) OR
+          //  !isset($Data['acc_bus_unit']) OR
+          //  !isset($Data['acc_project']) OR
            !isset($Data['acc_block_manual']) OR
            !isset($Data['acc_enabled']) OR
            !isset($Data['acc_id'])){
@@ -129,6 +145,20 @@ class AccountingAccounts extends REST_Controller {
         $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
         return;
+      }
+
+      //VALIDAR SI LA CUENTA A EDITAR TIENE MOVIEMIENTOS
+      $sqlValidBalance = "SELECT sum(mac1.ac1_debit + mac1.ac1_credit) as saldo FROM mac1 WHERE mac1.ac1_account = :ac1_account";
+      $resValidBalance = $this->pedeo->queryTable($sqlValidBalance,array(':ac1_account' => $Data['acc_code']));
+
+      if(isset($resValidBalance[0]) && is_numeric($resValidBalance[0]['saldo']) && $resValidBalance[0]['saldo'] <> 0){
+        $respuesta = array(
+          'error' => true,
+          'data' => [],
+          'mensaje' => 'No se puede actualizar la cuenta # '.$Data['acc_code'].', ya que tiene transacciones realizadas'
+        );
+
+        return $this->response($respuesta,REST_Controller::HTTP_BAD_REQUEST);
       }
 
       $sqlUpdate = "UPDATE dacc	SET acc_code=:acc_code, acc_name=:acc_name, acc_level=:acc_level, acc_cash=:acc_cash,

@@ -1370,7 +1370,7 @@ class PurchOrder extends REST_Controller
 			return;
 		}
 
-		$copy = $this->documentcopy->CopyData('dcpo','cpo',$Data['dms_card_code'],$Data['business'],$Data['branch']);
+		$copy = $this->documentcopy->CopyData('dcpo','cpo',$Data['dms_card_code'],$Data['business'],$Data['branch'],36);
 
 
 		if (isset($copy[0])) {

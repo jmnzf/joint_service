@@ -161,6 +161,8 @@ class CloseDoc extends REST_Controller {
         'data'  => [],
         'mensaje' => 'No se puede anular el documento, está relacionado con docuemntos posteriores'
       ), REST_Controller::HTTP_BAD_REQUEST);
+
+      return;
     }
 
     //SE INSERTA EL ESTADO DEL DOCUMENTO

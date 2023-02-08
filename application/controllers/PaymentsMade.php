@@ -107,6 +107,7 @@ class PaymentsMade extends REST_Controller
 		$DFPCS = 0; // del sistema
 		$DFPDS = 0; // del sistema
 		$TasaOrg = 0;
+		$ResAcctBank = 0;
 
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -1020,9 +1021,9 @@ class PaymentsMade extends REST_Controller
 				$DetalleAsientoCuentaTercero->cuentalinea      = ($DetalleAsientoCuentaTercero->cuentalinea == 0) ? $detail['pe1_accountid'] : $DetalleAsientoCuentaTercero->cuentalinea;
 				$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($DetalleAsientoCuentaTercero->cuentalinea, 0, 1);
 				$DetalleAsientoCuentaTercero->pe1_vlrpaid      = is_numeric($detail['pe1_vlrpaid']) ? $detail['pe1_vlrpaid'] : 0;
-				$DetalleAsientoCuentaTercero->pe1_docdate	     = $this->validateDate($detail['pe1_docdate']) ? $detail['pe1_docdate'] : NULL;
+				$DetalleAsientoCuentaTercero->pe1_docdate	   = $this->validateDate($detail['pe1_docdate']) ? $detail['pe1_docdate'] : NULL;
 				$DetalleAsientoCuentaTercero->cord	           = isset($detail['ac1_cord']) ? $detail['ac1_cord'] : NULL;
-				$DetalleAsientoCuentaTercero->vlrpaiddesc	     = $VlrTotalOpc;
+				$DetalleAsientoCuentaTercero->vlrpaiddesc	   = $VlrTotalOpc;
 				$DetalleAsientoCuentaTercero->tasaoriginaldoc  = $TasaOrg;
 
 
@@ -1072,6 +1073,7 @@ class PaymentsMade extends REST_Controller
 			$granTotalIngresoOriginal = $granTotalIngreso;
 
 			if (trim($Data['bpe_currency']) != $MONEDALOCAL) {
+
 				$granTotalIngreso = ($granTotalIngreso * $TasaDocLoc);
 			}
 
@@ -1154,13 +1156,10 @@ class PaymentsMade extends REST_Controller
 					break;
 			}
 
-			$VlrPagoEfectuado = $credito;
-
 			$DFPC  = $DFPC + round($credito, $DECI_MALES);
 			$DFPD  = $DFPD + round($debito, $DECI_MALES);
 			$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
 			$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
-
 
 			$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1212,6 +1211,7 @@ class PaymentsMade extends REST_Controller
 
 			if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
 				// Se verifica que el detalle no de error insertando //
+				$ResAcctBank = $resDetalleAsiento;
 			} else {
 				// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 				// se retorna el error y se detiene la ejecucion del codigo restante.
@@ -1731,8 +1731,8 @@ class PaymentsMade extends REST_Controller
 
 				if ($Data['bpe_billpayment'] == '0' || $Data['bpe_billpayment'] == 0) {
 					//se verifica si existe diferencia en cambio
-					$sqlCuentaDiferenciaCambio = "SELECT pge_acc_dcp, pge_acc_dcn FROM pgem";
-					$resCuentaDiferenciaCambio = $this->pedeo->queryTable($sqlCuentaDiferenciaCambio, array());
+					$sqlCuentaDiferenciaCambio = "SELECT pge_acc_dcp, pge_acc_dcn FROM pgem WHERE pge_id = :business";
+					$resCuentaDiferenciaCambio = $this->pedeo->queryTable($sqlCuentaDiferenciaCambio, array(':business' => $Data['business']));
 
 					$CuentaDiferenciaCambio = [];
 
@@ -1756,15 +1756,15 @@ class PaymentsMade extends REST_Controller
 
 
 
-					$VlrDiff = ($VlrDiff + $VlrPagoEfectuado);
-
-
-					if ($VlrDiff  <  0) {
+			
+					if ($VlrDiff  >  0) {
 
 						$VlrDiffP = abs($VlrDiff);
-					} else if ($VlrDiff > 0) {
 
+					} else if ($VlrDiff < 0) {
+						
 						$VlrDiffN = abs($VlrDiff);
+
 					} else if ($VlrDiff  == 0) {
 
 						$VlrDiffN = 0;
@@ -1772,12 +1772,24 @@ class PaymentsMade extends REST_Controller
 					}
 
 
+
 					if ($VlrDiffP > 0) {
 
 
 						$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
 						$credito    = $VlrDiffP;
-						$MontoSysCR = ($credito / $TasaLocSys);
+
+						
+						if (trim($Data['bpe_currency']) != $MONEDALOCAL) {
+							$credito = $VlrDiffP;
+							$MontoSysCR = ($credito / $TasaLocSys);
+						}else{
+							$credito = ($VlrDiffP * $TasaDocLoc);
+							$MontoSysCR = $VlrDiffP;
+						}
+
+
+						
 
 						$DFPC  = $DFPC + round($VlrDiffP, $DECI_MALES);
 						$DFPD  = $DFPD + 0;
@@ -1790,9 +1802,9 @@ class PaymentsMade extends REST_Controller
 							':ac1_trans_id' => $resInsertAsiento,
 							':ac1_account' => $cuentaD,
 							':ac1_debit' => 0,
-							':ac1_credit' => round($VlrDiffP, $DECI_MALES),
+							':ac1_credit' => round($credito, $DECI_MALES),
 							':ac1_debit_sys' => 0,
-							':ac1_credit_sys' => 0,
+							':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 							':ac1_currex' => 0,
 							':ac1_doc_date' => $this->validateDate($Data['bpe_docdate']) ? $Data['bpe_docdate'] : NULL,
 							':ac1_doc_duedate' => $this->validateDate($Data['bpe_docdate']) ? $Data['bpe_docdate'] : NULL,
@@ -1820,7 +1832,7 @@ class PaymentsMade extends REST_Controller
 							':ac1_ven_debit' => 0,
 							':ac1_ven_credit' => 0,
 							':ac1_fiscal_acct' => 0,
-							':ac1_taxid' => 1,
+							':ac1_taxid' => 0,
 							':ac1_isrti' => 0,
 							':ac1_basert' => 0,
 							':ac1_mmcode' => 0,
@@ -1833,6 +1845,29 @@ class PaymentsMade extends REST_Controller
 
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+
+							$sqlUpdateSys = "UPDATE mac1 set ac1_credit_sys = ac1_credit_sys + :ac1_credit_sys WHERE ac1_line_num = :ac1_line_num";
+							$resUpdateSys = $this->pedeo->updateRow($sqlUpdateSys, array(
+								':ac1_line_num' => $ResAcctBank,
+								':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES)
+							));
+
+							if (is_numeric($resUpdateSys) && $resUpdateSys == 1){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resDetalleAsiento,
+									'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al actualizar el monto del asiento'
+								);
+	
+								$this->response($respuesta);
+	
+								return;
+							}
 							// Se verifica que el detalle no de error insertando //
 						} else {
 							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
@@ -1853,10 +1888,19 @@ class PaymentsMade extends REST_Controller
 
 					if ($VlrDiffN > 0) {
 
-
+				
 						$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcn'];
 						$debito     =  $VlrDiffN;
-						$MontoSysDB = ($debito / $TasaLocSys);
+
+
+						if (trim($Data['bpe_currency']) != $MONEDALOCAL) {
+							$debito = $VlrDiffN;
+							$MontoSysDB = ($debito / $TasaLocSys);
+						}else{
+							$debito = ($VlrDiffN * $TasaDocLoc);
+							$MontoSysDB = $VlrDiffN;
+						}
+
 
 
 						$DFPC  = $DFPC + 0;
@@ -1869,9 +1913,9 @@ class PaymentsMade extends REST_Controller
 
 							':ac1_trans_id' => $resInsertAsiento,
 							':ac1_account' => $cuentaD,
-							':ac1_debit' =>  round($VlrDiffN, $DECI_MALES),
+							':ac1_debit' =>  round($debito, $DECI_MALES),
 							':ac1_credit' => 0,
-							':ac1_debit_sys' => 0,
+							':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 							':ac1_credit_sys' => 0,
 							':ac1_currex' => 0,
 							':ac1_doc_date' => $this->validateDate($Data['bpe_docdate']) ? $Data['bpe_docdate'] : NULL,
@@ -1900,7 +1944,7 @@ class PaymentsMade extends REST_Controller
 							':ac1_ven_debit' => 0,
 							':ac1_ven_credit' => 0,
 							':ac1_fiscal_acct' => 0,
-							':ac1_taxid' => 1,
+							':ac1_taxid' => 0,
 							':ac1_isrti' => 0,
 							':ac1_basert' => 0,
 							':ac1_mmcode' => 0,
@@ -1913,6 +1957,28 @@ class PaymentsMade extends REST_Controller
 
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+							$sqlUpdateSys = "UPDATE mac1 set ac1_credit_sys = ac1_credit_sys + :ac1_credit_sys WHERE ac1_line_num = :ac1_line_num";
+							$resUpdateSys = $this->pedeo->updateRow($sqlUpdateSys, array(
+								':ac1_line_num' => $ResAcctBank,
+								':ac1_credit_sys' => round($MontoSysDB, $DECI_MALES)
+							));
+
+							if (is_numeric($resUpdateSys) && $resUpdateSys == 1){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resDetalleAsiento,
+									'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al actualizar el monto del asiento'
+								);
+	
+								$this->response($respuesta);
+	
+								return;
+							}
 							// Se verifica que el detalle no de error insertando //
 						} else {
 							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
@@ -1939,9 +2005,9 @@ class PaymentsMade extends REST_Controller
 			//VALIDANDDO DIFERENCIA EN PESO DE MONEDA DE SISTEMA
 
 			$sqlDiffPeso = "SELECT sum(coalesce(ac1_debit_sys,0)) as debito, sum(coalesce(ac1_credit_sys,0)) as credito,
-													sum(coalesce(ac1_debit,0)) as ldebito, sum(coalesce(ac1_credit,0)) as lcredito
-													from mac1
-													where ac1_trans_id = :ac1_trans_id";
+							sum(coalesce(ac1_debit,0)) as ldebito, sum(coalesce(ac1_credit,0)) as lcredito
+							from mac1
+							where ac1_trans_id = :ac1_trans_id";
 
 			$resDiffPeso = $this->pedeo->queryTable($sqlDiffPeso, array(
 				':ac1_trans_id' => $resInsertAsiento
@@ -1949,8 +2015,8 @@ class PaymentsMade extends REST_Controller
 
 			if (isset($resDiffPeso[0]['debito']) && abs(($resDiffPeso[0]['debito'] - $resDiffPeso[0]['credito'])) > 0) {
 
-				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
-				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE pge_id = :business";
+				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array(':business' => $Data['business']));
 
 				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
 				} else {
@@ -2045,8 +2111,8 @@ class PaymentsMade extends REST_Controller
 				}
 			} else if (isset($resDiffPeso[0]['ldebito']) && abs(($resDiffPeso[0]['ldebito'] - $resDiffPeso[0]['lcredito'])) > 0) {
 
-				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
-				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE pge_id = :business";
+				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array(':business' => $Data['business']));
 
 				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
 				} else {

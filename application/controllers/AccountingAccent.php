@@ -25,6 +25,7 @@ class AccountingAccent extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('DocumentNumbering');
+
 	}
 
 	//CREAR NUEVO ASIENTO CONTABLE
@@ -1285,7 +1286,7 @@ class AccountingAccent extends REST_Controller
 		}
 
 		$sqlSelect = "SELECT distinct t0.*,
-		dmdt.mdt_docname as origen, tsa_value,
+		dmdt.mdt_docname as origen,
 		case
 		when coalesce(t0.mac_base_type,0) = 3 then t1.vem_currency
 		when coalesce(t0.mac_base_type,0) = 4 then t2.vdv_currency
@@ -1304,7 +1305,26 @@ class AccountingAccent extends REST_Controller
 		when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
 		when coalesce(t0.mac_base_type,0) = 22 then t17.crc_currency
 		when coalesce(t0.mac_base_type,0) = 26 then t18.iri_currency
-		end  as currency
+		end  as currency,
+		case
+		when coalesce(t0.mac_base_type,0) = 3 then get_tax_currency(t1.vem_currency,t1.vem_docdate)
+		when coalesce(t0.mac_base_type,0) = 4 then get_tax_currency(t2.vdv_currency,t2.vdv_docdate)
+		when coalesce(t0.mac_base_type,0) = 5 then get_tax_currency(t3.dvf_currency,t3.dvf_docdate)
+		when coalesce(t0.mac_base_type,0) = 6 then get_tax_currency(t10.vnc_currency,t10.vnc_docdate)
+		when coalesce(t0.mac_base_type,0) = 7 then get_tax_currency(t11.vnd_currency,t11.vnd_docdate)
+		when coalesce(t0.mac_base_type,0) = 8 then get_tax_currency(t5.isi_currency,t5.isi_docdate)
+		when coalesce(t0.mac_base_type,0) = 9 then get_tax_currency(t6.iei_currency,t6.iei_docdate)
+		when coalesce(t0.mac_base_type,0) = 13 then get_tax_currency(t12.cec_currency,t12.cec_docdate)
+		when coalesce(t0.mac_base_type,0) = 14 then get_tax_currency(t13.cdc_currency,t13.cdc_docdate)
+		when coalesce(t0.mac_base_type,0) = 15 then get_tax_currency(t7.cfc_currency,t7.cfc_docdate)
+		when coalesce(t0.mac_base_type,0) = 16 then get_tax_currency(t14.cnc_currency,t14.cnc_docdate)
+		when coalesce(t0.mac_base_type,0) = 17 then get_tax_currency(t15.cnd_currency,t15.cnd_docdate)
+		when coalesce(t0.mac_base_type,0) = 18 then get_tax_currency(get_localcur(),t0.mac_doc_date)
+		when coalesce(t0.mac_base_type,0) = 19 then get_tax_currency(t8.bpe_currency,t8.bpe_docdate)
+		when coalesce(t0.mac_base_type,0) = 20 then get_tax_currency(t9.bpr_currency,t9.bpr_docdate)
+		when coalesce(t0.mac_base_type,0) = 22 then get_tax_currency(t17.crc_currency,t17.crc_docdate)
+		when coalesce(t0.mac_base_type,0) = 26 then get_tax_currency(t18.iri_currency,t18.iri_docdate)
+		end  as tsa_value
 		from tmac t0
 		LEFT JOIN dvem t1 ON t0.mac_base_entry = t1.vem_docentry AND t0.mac_base_type= t1.vem_doctype
 		LEFT JOIN dvdv t2 ON t0.mac_base_entry = t2.vdv_docentry AND t0.mac_base_type= t2.vdv_doctype
@@ -1326,6 +1346,7 @@ class AccountingAccent extends REST_Controller
 		LEFT JOIN diri t18 ON t0.mac_base_entry = t18.iri_docentry AND t0.mac_base_type= t18.iri_doctype
 		WHERE t0.mac_base_type = :mac_base_type
 		AND t0.mac_base_entry = :mac_base_entry";
+
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_base_type' => $Data['mac_base_type'], ':mac_base_entry' => $Data['mac_base_entry']));
 
 		if (isset($resSelect[0])) {
