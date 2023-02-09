@@ -105,7 +105,6 @@ class PaymentsReceived extends REST_Controller
 		$DFPD = 0; // diferencia en peso debito
 		$DFPCS = 0; // del sistema en credito
 		$DFPDS = 0; // del sistema en debito
-		$ResAcctBank = 0;
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 							ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -1093,7 +1092,6 @@ class PaymentsReceived extends REST_Controller
 
 			if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
 				// Se verifica que el detalle no de error insertando //
-				$ResAcctBank = $resDetalleAsiento;
 			} else {
 				// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 				// se retorna el error y se detiene la ejecucion del codigo restante.
@@ -1168,7 +1166,7 @@ class PaymentsReceived extends REST_Controller
 
 									$MontoSysDB = ($debito / $TasaLocSys);
 								} else {
-									$MontoSysDB = ($debito / $tasadoc);
+									$MontoSysDB = ($debito / $TasaLocSys);
 								}
 
 								break;
@@ -1179,7 +1177,7 @@ class PaymentsReceived extends REST_Controller
 
 									$MontoSysDB = ($debito / $TasaLocSys);
 								} else {
-									$MontoSysDB = ($debito / $tasadoc);
+									$MontoSysDB = ($debito / $TasaLocSys);
 								}
 								break;
 
@@ -1190,7 +1188,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysDB = ($debito / $TasaLocSys);
 								} else {
 
-									$MontoSysDB = ($debito / $tasadoc);
+									$MontoSysDB = ($debito / $TasaLocSys);
 								}
 								break;
 
@@ -1201,7 +1199,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysDB = ($debito / $TasaLocSys);
 								} else {
 
-									$MontoSysDB = ($debito / $tasadoc);
+									$MontoSysDB = ($debito / $TasaLocSys);
 								}
 								break;
 
@@ -1212,7 +1210,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysDB = ($debito / $TasaLocSys);
 								} else {
 
-									$MontoSysDB = ($debito / $tasadoc);
+									$MontoSysDB = ($debito / $TasaLocSys);
 								}
 								break;
 
@@ -1223,7 +1221,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysDB = ($debito / $TasaLocSys);
 								} else {
 
-									$MontoSysDB = ($debito / $tasadoc);
+									$MontoSysDB = ($debito / $TasaLocSys);
 								}
 								break;
 
@@ -1234,7 +1232,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysDB = ($debito / $TasaLocSys);
 								} else {
 
-									$MontoSysDB = ($debito / $tasadoc);
+									$MontoSysDB = ($debito / $TasaLocSys);
 								}
 								break;
 						}
@@ -1247,7 +1245,7 @@ class PaymentsReceived extends REST_Controller
 
 								$MontoSysCR = ($credito / $TasaLocSys);
 							} else {
-								$MontoSysCR = ($credito / $tasadoc);
+								$MontoSysCR = ($credito / $TasaLocSys);
 							}
 						} else if ($ac1cord == 1) {
 							$debito = $TotalPagoRecibido;
@@ -1256,7 +1254,7 @@ class PaymentsReceived extends REST_Controller
 
 								$MontoSysDB = ($debito / $TasaLocSys);
 							} else {
-								$MontoSysDB = ($debito / $tasadoc);
+								$MontoSysDB = ($debito / $TasaLocSys);
 							}
 						}
 					} else {
@@ -1269,7 +1267,7 @@ class PaymentsReceived extends REST_Controller
 
 									$MontoSysCR = ($credito / $TasaLocSys);
 								} else {
-									$MontoSysCR = ($credito / $tasadoc);
+									$MontoSysCR = ($credito / $TasaLocSys);
 								}
 
 								break;
@@ -1281,7 +1279,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysCR = ($credito / $TasaLocSys);
 								} else {
 
-									$MontoSysCR = ($credito / $tasadoc);
+									$MontoSysCR = ($credito / $TasaLocSys);
 								}
 								break;
 
@@ -1292,7 +1290,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysCR = ($credito / $TasaLocSys);
 								} else {
 
-									$MontoSysCR = ($credito / $tasadoc);
+									$MontoSysCR = ($credito / $TasaLocSys);
 								}
 								break;
 
@@ -1303,7 +1301,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysCR = ($credito / $TasaLocSys);
 								} else {
 
-									$MontoSysCR = ($credito / $tasadoc);
+									$MontoSysCR = ($credito / $TasaLocSys);
 								}
 								break;
 
@@ -1314,7 +1312,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysCR = ($credito / $TasaLocSys);
 								} else {
 
-									$MontoSysCR = ($credito / $tasadoc);
+									$MontoSysCR = ($credito / $TasaLocSys);
 								}
 								break;
 
@@ -1325,7 +1323,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysCR = ($credito / $TasaLocSys);
 								} else {
 
-									$MontoSysCR = ($credito / $tasadoc);
+									$MontoSysCR = ($credito / $TasaLocSys);
 								}
 								break;
 
@@ -1336,7 +1334,7 @@ class PaymentsReceived extends REST_Controller
 									$MontoSysCR = ($credito / $TasaLocSys);
 								} else {
 
-									$MontoSysCR = ($credito / $tasadoc);
+									$MontoSysCR = ($credito / $TasaLocSys);
 								}
 								break;
 						}
@@ -1730,28 +1728,7 @@ class PaymentsReceived extends REST_Controller
 
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-							$sqlUpdateSys = "UPDATE mac1 set ac1_debit_sys = ac1_debit_sys + :ac1_debit_sys WHERE ac1_line_num = :ac1_line_num";
-							$resUpdateSys = $this->pedeo->updateRow($sqlUpdateSys, array(
-								':ac1_line_num' => $ResAcctBank,
-								':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES)
-							));
-
-							if (is_numeric($resUpdateSys) && $resUpdateSys == 1){
-
-							}else{
-
-								$this->pedeo->trans_rollback();
-
-								$respuesta = array(
-									'error'   => true,
-									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al actualizar el monto del asiento'
-								);
-	
-								$this->response($respuesta);
-	
-								return;
-							}
+							
 						} else {
 							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 							// se retorna el error y se detiene la ejecucion del codigo restante.
@@ -1847,28 +1824,7 @@ class PaymentsReceived extends REST_Controller
 
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-							$sqlUpdateSys = "UPDATE mac1 set ac1_debit_sys = ac1_debit_sys + :ac1_debit_sys WHERE ac1_line_num = :ac1_line_num";
-							$resUpdateSys = $this->pedeo->updateRow($sqlUpdateSys, array(
-								':ac1_line_num' => $ResAcctBank,
-								':ac1_debit_sys' => round($MontoSysCR, $DECI_MALES)
-							));
-
-							if (is_numeric($resUpdateSys) && $resUpdateSys == 1){
-
-							}else{
-
-								$this->pedeo->trans_rollback();
-
-								$respuesta = array(
-									'error'   => true,
-									'data'	  => $resDetalleAsiento,
-									'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al actualizar el monto del asiento'
-								);
-	
-								$this->response($respuesta);
-	
-								return;
-							}
+							
 						} else {
 							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 							// se retorna el error y se detiene la ejecucion del codigo restante.
