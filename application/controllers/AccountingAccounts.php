@@ -237,9 +237,11 @@ class AccountingAccounts extends REST_Controller {
 														    acc_cost_center,
 														    acc_shortb ,
 														    acc_jobcap ,
-                                acc_concept,
+                                tcdc.cdc_name as acc_concept,
 														    acc_exptype from dacc
-														order by cast(acc_code as varchar)";
+                                LEFT JOIN tcdc
+                                ON tcdc.cdc_id = dacc.acc_concept
+														    order by cast(acc_code as varchar)";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

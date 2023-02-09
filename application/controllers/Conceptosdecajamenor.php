@@ -110,7 +110,10 @@ return $this->response($respuesta);
 
 
 public function index_get(){
-$resSelect = $this->pedeo->queryTable("SELECT ccm_name , ccm_description , naop.aop_name AS ccm_contableaccount, ccm_id , CASE  WHEN ccm_status::numeric = 1 THEN 'Activo' WHEN ccm_status::numeric = 0 THEN 'Inactivo' END AS ccm_status FROM tccm LEFT JOIN naop ON tccm.ccm_contableaccount::numeric = naop.aop_id ",array());
+$resSelect = $this->pedeo->queryTable("SELECT ccm_name , ccm_description , concat(dacc.acc_code, ' - ', dacc.acc_name) AS ccm_contableaccount,
+ccm_id , CASE  WHEN ccm_status::numeric = 1
+THEN 'Activo' WHEN ccm_status::numeric = 0 THEN 'Inactivo' END AS ccm_status FROM tccm
+INNER JOIN dacc ON tccm.ccm_contableaccount::numeric = dacc.acc_code",array());
 
 if ( isset($resSelect[0]) ) { 
 

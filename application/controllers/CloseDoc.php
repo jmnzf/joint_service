@@ -159,7 +159,7 @@ class CloseDoc extends REST_Controller {
       $this->response(array(
         'error' => true,
         'data'  => [],
-        'mensaje' => 'No se puede anular el documento, está relacionado con docuemntos posteriores'
+        'mensaje' => 'No se puede anular el documento, está relacionado con documentos posteriores'
       ), REST_Controller::HTTP_BAD_REQUEST);
 
       return;
