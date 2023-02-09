@@ -39,6 +39,7 @@ class AccountingAccounts extends REST_Controller {
         //  !isset($Data['acc_bus_unit']) OR
         //  !isset($Data['acc_project']) OR
          !isset($Data['acc_block_manual']) OR
+         !isset($Data['acc_concept']) OR
          !isset($Data['acc_enabled'])){
 
         $respuesta = array(
@@ -69,8 +70,8 @@ class AccountingAccounts extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dacc(acc_code, acc_name, acc_level, acc_cash, acc_cash_flow, acc_budget, acc_sup, acc_type, acc_tax_edef, acc_cost_center, acc_bus_unit, acc_project, acc_block_manual, acc_enabled, acc_businessp)
-	                    VALUES (:acc_code, :acc_name, :acc_level, :acc_cash, :acc_cash_flow, :acc_budget, :acc_sup, :acc_type, :acc_tax_edef, :acc_cost_center, :acc_bus_unit, :acc_project, :acc_block_manual, :acc_enabled, :acc_businessp)";
+        $sqlInsert = "INSERT INTO dacc(acc_code, acc_name, acc_level, acc_cash, acc_cash_flow, acc_budget, acc_sup, acc_type, acc_tax_edef, acc_cost_center, acc_bus_unit, acc_project, acc_block_manual, acc_enabled, acc_businessp, acc_concept)
+	                    VALUES (:acc_code, :acc_name, :acc_level, :acc_cash, :acc_cash_flow, :acc_budget, :acc_sup, :acc_type, :acc_tax_edef, :acc_cost_center, :acc_bus_unit, :acc_project, :acc_block_manual, :acc_enabled, :acc_businessp, :acc_concept)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -87,6 +88,7 @@ class AccountingAccounts extends REST_Controller {
               ':acc_bus_unit' => $Data['acc_bus_unit'],
               ':acc_project' => $Data['acc_project'],
               ':acc_block_manual' => $Data['acc_block_manual'],
+              ':acc_concept' => $Data['acc_concept'],
               ':acc_enabled' => $Data['acc_enabled'],
 							':acc_businessp' => $Data['acc_businessp']
         ));
@@ -132,6 +134,7 @@ class AccountingAccounts extends REST_Controller {
           //  !isset($Data['acc_bus_unit']) OR
           //  !isset($Data['acc_project']) OR
            !isset($Data['acc_block_manual']) OR
+           !isset($Data['acc_concept']) OR
            !isset($Data['acc_enabled']) OR
            !isset($Data['acc_id'])){
 
@@ -164,7 +167,7 @@ class AccountingAccounts extends REST_Controller {
       $sqlUpdate = "UPDATE dacc	SET acc_code=:acc_code, acc_name=:acc_name, acc_level=:acc_level, acc_cash=:acc_cash,
                     acc_cash_flow=:acc_cash_flow, acc_budget=:acc_budget, acc_sup=:acc_sup, acc_type=:acc_type, acc_tax_edef=:acc_tax_edef,
                     acc_cost_center=:acc_cost_center, acc_bus_unit=:acc_bus_unit, acc_project=:acc_project, acc_block_manual=:acc_block_manual,
-                    acc_enabled=:acc_enabled ,acc_businessp = :acc_businessp WHERE acc_id = :acc_id";
+                    acc_enabled=:acc_enabled ,acc_businessp = :acc_businessp, acc_concept = :acc_concept WHERE acc_id = :acc_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -183,6 +186,7 @@ class AccountingAccounts extends REST_Controller {
               ':acc_project' => $Data['acc_project'],
               ':acc_block_manual' => $Data['acc_block_manual'],
               ':acc_enabled' => $Data['acc_enabled'],
+              ':acc_concept' => $Data['acc_concept'],
               ':acc_id' => $Data['acc_id'],
 							':acc_businessp' => $Data['acc_businessp']
       ));
@@ -233,6 +237,7 @@ class AccountingAccounts extends REST_Controller {
 														    acc_cost_center,
 														    acc_shortb ,
 														    acc_jobcap ,
+                                acc_concept,
 														    acc_exptype from dacc
 														order by cast(acc_code as varchar)";
 
