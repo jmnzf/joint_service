@@ -76,14 +76,11 @@ class Periods extends REST_Controller {
 
     if(is_numeric($resInsert) && $resInsert > 0){
 
-      $sqlInsertDetail = "INSERT INTO bpc1(pc1_id, pc1_subperiod, pc1_fid, pc1_ffd, pc1_fic, pc1_ffc, pc1_fiv, pc1_ffv, pc1_status)
-      VALUES (:pc1_id, :pc1_subperiod, :pc1_fid, :pc1_ffd, :pc1_fic, :pc1_ffc, :pc1_fiv, :pc1_ffv, :pc1_status)";
+      $sqlInsertDetail = "INSERT INTO bpc1(pc1_subperiod, pc1_fid, pc1_ffd, pc1_fic, pc1_ffc, pc1_fiv, pc1_ffv, pc1_status,pc1_period_id)
+      VALUES (:pc1_subperiod, :pc1_fid, :pc1_ffd, :pc1_fic, :pc1_ffc, :pc1_fiv, :pc1_ffv, :pc1_status, :pc1_period_id)";
 
     for ($i=0; $i <= $typePeriod - 1; $i++) {
-
-      
       $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
-      ':pc1_id' => $resInsert,
       ':pc1_subperiod' => date('Y-m',strtotime($Data['bpc_fid']."+ {$i} month")),
       ':pc1_fid' => $this->incrementarFecha("{$i} month",$Data['bpc_fid'],true) ,
       ':pc1_ffd' =>  $this->incrementarFecha("{$i} month",$Data['bpc_fid'],false),
@@ -91,8 +88,8 @@ class Periods extends REST_Controller {
       ':pc1_ffc' => $this->incrementarFecha("{$i} month",$Data['bpc_fid'],false),
       ':pc1_fiv' => $this->incrementarFecha("{$i} month",$Data['bpc_fid'],true),
       ':pc1_ffv' => $this->incrementarFecha("{$i} month",$Data['bpc_fid'],false),
-      ':pc1_status' => 1
-
+      ':pc1_status' => 1,
+      ':pc1_period_id' => $resInsert
     ));
 
     if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -269,6 +266,19 @@ class Periods extends REST_Controller {
   {
     $Data = $this->post();
 
+      if(!isset($Data['pc1_id'])){
+
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' =>'La informacion enviada no es valida'
+        );
+
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+        return;
+      }
+
     $sqlUpdate = "UPDATE bpc1	SET pc1_status = :pc1_status,
                   pc1_fid = :pc1_fid,
                   pc1_ffd = :pc1_ffd,
@@ -276,7 +286,7 @@ class Periods extends REST_Controller {
                   pc1_ffc = :pc1_ffc,
                   pc1_fiv = :pc1_fiv,
                   pc1_ffv = :pc1_ffv
-                  WHERE pc1_id = :pc1_id AND pc1_subperiod = :pc1_subperiod";
+                  WHERE pc1_id = :pc1_id";
 
     $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
                                       ":pc1_fid" => $Data['pc1_fid'],
@@ -284,10 +294,9 @@ class Periods extends REST_Controller {
                                       ":pc1_fic" => $Data['pc1_fic'],
                                       ":pc1_ffc" => $Data['pc1_ffc'],
                                       ":pc1_fiv" => $Data['pc1_fiv'],
-                                      ":pc1_ffv" => $Data['pc1_ffv'],      
-                                      ":pc1_id"  => $Data['pc1_id'],
+                                      ":pc1_ffv" => $Data['pc1_ffv'],
                                       ":pc1_status"  => $Data['pc1_status'],
-                                      ":pc1_subperiod" =>$Data['pc1_subperiod']));
+                                      ":pc1_id" =>$Data['pc1_id']));
 
     if (is_numeric($resUpdate) && $resUpdate == 1) {
 
