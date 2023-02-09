@@ -30,15 +30,15 @@ class LegalExpenses extends REST_Controller {
 
         $Data = $this->post();
 
-        if(!isset($Data['lcm_series']) or
-            !isset($Data['lcm_docnum']) or
-            !isset($Data['lcm_acc']) or
-            !isset($Data['lcm_docdate']) or
-            !isset($Data['lcm_duedate']) or
-            !isset($Data['lcm_duedev']) or
-            !isset($Data['lcm_currency']) or
-            !isset($Data['lcm_cardcode']) or
-            !isset($Data['lcm_cardname']) ){
+        if(!isset($Data['blg_series']) or
+            !isset($Data['blg_docnum']) or
+            !isset($Data['blg_acc']) or
+            !isset($Data['blg_docdate']) or
+            !isset($Data['blg_duedate']) or
+            !isset($Data['blg_duedev']) or
+            !isset($Data['blg_currency']) or
+            !isset($Data['blg_cardcode']) or
+            !isset($Data['blg_cardname']) ){
 
         $respuesta = array(
             'error' => true,
@@ -51,7 +51,7 @@ class LegalExpenses extends REST_Controller {
       }
 
         //VALIDAR NUMERACION DE DOCUMENTO
-        $DocNumVerificado = $this->documentnumbering->NumberDoc($Data['lcm_series'],$Data['lcm_docdate'],$Data['lcm_duedate']);
+        $DocNumVerificado = $this->documentnumbering->NumberDoc($Data['blg_series'],$Data['blg_docdate'],$Data['blg_duedate']);
 		
 		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
 
@@ -60,7 +60,7 @@ class LegalExpenses extends REST_Controller {
 			return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
 		}
         //VALIDAR TASA
-        $dataTasa = $this->tasa->Tasa($Data['lcm_currency'],$Data['lcm_docdate']);
+        $dataTasa = $this->tasa->Tasa($Data['blg_currency'],$Data['blg_docdate']);
 
 		if(isset($dataTasa['tasaLocal'])){
 
@@ -116,36 +116,40 @@ class LegalExpenses extends REST_Controller {
 			return;
 		}
 
-        $sqlInsert = "INSERT INTO tblg(lcm_doctype,lcm_series,lcm_docnum,lcm_acc,lcm_docdate,lcm_duedate,lcm_duedev,lcm_currency,lcm_cardcode,lcm_cardname,
-		business,branch,lcm_status,lcm_comments)
-        VALUES(:lcm_doctype,:lcm_series,:lcm_docnum,:lcm_acc,:lcm_docdate,:lcm_duedate,:lcm_duedev,:lcm_currency,:lcm_cardcode,:lcm_cardname,:business,
-		:branch,:lcm_status,lcm_comments)";
+        $sqlInsert = "INSERT INTO tblg(blg_doctype,blg_series,blg_docnum,blg_acc,blg_docdate,blg_duedate,blg_duedev,blg_currency,blg_cardcode,blg_cardname,
+		business,branch,blg_status,blg_comment, blg_doctotal,blg_taxtotal,blg_baseamnt, blg_createby)
+        VALUES(:blg_doctype,:blg_series,:blg_docnum,:blg_acc,:blg_docdate,:blg_duedate,:blg_duedev,:blg_currency,:blg_cardcode,:blg_cardname,:business,
+		:branch,:blg_status, :blg_comment ,  :blg_doctotal, :blg_taxtotal, :blg_baseamnt, :blg_createby)";
 
         $this->pedeo->trans_begin();
 
         $resInsert = $this->pedeo->insertRow($sqlInsert,array(
-            ':lcm_doctype' => isset($Data['lcm_doctype']) ? $Data['lcm_doctype'] : NULL,
-            ':lcm_series' => isset($Data['lcm_series']) ? $Data['lcm_series'] : NULL,
-            ':lcm_docnum' => isset($DocNumVerificado) ? $DocNumVerificado : 0,
-            ':lcm_acc' => isset($Data['lcm_acc']) ? $Data['lcm_acc'] : NULL,
-            ':lcm_docdate' => isset($Data['lcm_docdate']) ? $Data['lcm_docdate'] : NULL,
-            ':lcm_duedate' => isset($Data['lcm_duedate']) ? $Data['lcm_duedate'] : NULL,
-            ':lcm_duedev' => isset($Data['lcm_duedev']) ? $Data['lcm_duedev'] : NULL,
-            ':lcm_currency' => isset($Data['lcm_currency']) ? $Data['lcm_currency'] : NULL,
-            ':lcm_cardcode' => isset($Data['lcm_cardcode']) ? $Data['lcm_cardcode'] : NULL,
-            ':lcm_cardname' => isset($Data['lcm_cardname']) ? $Data['lcm_cardname'] : NULL,
+            ':blg_doctype' => isset($Data['blg_doctype']) ? $Data['blg_doctype'] : NULL,
+            ':blg_series' => isset($Data['blg_series']) ? $Data['blg_series'] : NULL,
+            ':blg_docnum' => isset($DocNumVerificado) ? $DocNumVerificado : 0,
+            ':blg_acc' => isset($Data['blg_acc']) ? $Data['blg_acc'] : NULL,
+            ':blg_docdate' => isset($Data['blg_docdate']) ? $Data['blg_docdate'] : NULL,
+            ':blg_duedate' => isset($Data['blg_duedate']) ? $Data['blg_duedate'] : NULL,
+            ':blg_duedev' => isset($Data['blg_duedev']) ? $Data['blg_duedev'] : NULL,
+            ':blg_currency' => isset($Data['blg_currency']) ? $Data['blg_currency'] : NULL,
+            ':blg_cardcode' => isset($Data['blg_cardcode']) ? $Data['blg_cardcode'] : NULL,
+            ':blg_cardname' => isset($Data['blg_cardname']) ? $Data['blg_cardname'] : NULL,
             ':business' => isset($Data['business']) ? $Data['business'] : NULL,
             ':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
-            ':lcm_status' => 1,
-			':lcm_comments' => isset($Data['lcm_comment']) ? $Data['lcm_comment'] : NULL,
-        ));
+            ':blg_status' => 1,
+			':blg_comment' => isset($Data['blg_comment']) ? $Data['blg_comment'] : NULL,
+			':blg_doctotal' => $Data['blg_doctotal'],
+			':blg_taxtotal' => $Data['blg_taxtotal'],
+			':blg_baseamnt' => $Data['blg_baseamnt'],
+			':blg_createby' => $Data['blg_createby']
+		));
 
         if(is_numeric($resInsert) && $resInsert > 0){
             //INSERTAR DETALLE
             $sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum WHERE pgs_id = :pgs_id";
 			$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
 				':pgs_nextnum' => $DocNumVerificado,
-				':pgs_id'      => $Data['lcm_series']
+				':pgs_id'      => $Data['blg_series']
 			));
 
 
@@ -164,24 +168,26 @@ class LegalExpenses extends REST_Controller {
 				return;
 			}
             foreach ($ContenidoDetalle as $key => $detail) {
-                $sqlInsertDetail = "INSERT INTO blg1(cm1_docentry,cm1_linenum,cm1_cardcode,cm1_cardname,cm1_docdate,cm1_price,cm1_currency,cm1_account,cm1_ccost,
-                cm1_ubussiness,cm1_proyect,cm1_vatsum,cm1_total)
-                VALUES(:cm1_docentry,:cm1_linenum,:cm1_cardcode,:cm1_cardname,:cm1_docdate,:cm1_price,:cm1_currency,:cm1_account,:cm1_ccost,
-                :cm1_ubussiness,:cm1_proyect,:cm1_vatsum,:cm1_total)";
+                $sqlInsertDetail = "INSERT INTO blg1(lg1_docentry,lg1_linenum,lg1_cardcode,lg1_cardname,lg1_docdate,lg1_price,lg1_currency,lg1_account,lg1_ccost,
+                lg1_ubussiness,lg1_proyect,lg1_vatsum,lg1_total,lg1_concept, lg1_codimp)
+                VALUES(:lg1_docentry,:lg1_linenum,:lg1_cardcode,:lg1_cardname,:lg1_docdate,:lg1_price,:lg1_currency,:lg1_account,:lg1_ccost,
+                :lg1_ubussiness,:lg1_proyect,:lg1_vatsum,:lg1_total, :lg1_concept, :lg1_codimp)";
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail,array(
-                    ':cm1_docentry' => $resInsert,
-                    ':cm1_linenum' => is_numeric($detail['cm1_linenum']) ? $detail['cm1_linenum'] : 0,
-                    ':cm1_cardcode' => isset($detail['cm1_cardcode']) ? $detail['cm1_cardcode'] : NULL,
-                    ':cm1_cardname' => isset($detail['cm1_cardname']) ? $detail['cm1_cardname'] : NULL,
-                    ':cm1_docdate' => isset($detail['cm1_docdate']) ? $detail['cm1_docdate'] : NULL,
-                    ':cm1_price' => is_numeric($detail['cm1_price']) ? $detail['cm1_price'] : 0,
-                    ':cm1_currency' => isset($detail['cm1_currency']) ? $detail['cm1_currency'] : NULL,
-                    ':cm1_account' => isset($detail['cm1_account']) ? $detail['cm1_account'] : NULL,
-                    ':cm1_ccost' => isset($detail['cm1_ccost']) ? $detail['cm1_ccost'] : NULL,
-                    ':cm1_ubussiness' => isset($detail['cm1_ubussiness']) ? $detail['cm1_ubussiness'] : NULL,
-                    ':cm1_proyect' => isset($detail['cm1_proyect']) ? $detail['cm1_proyect'] : NULL,
-                    ':cm1_vatsum' => isset($detail['cm1_vatsum']) ? $detail['cm1_vatsum'] : NULL,
-                    ':cm1_total' => is_numeric($detail['cm1_total']) ? $detail['cm1_total'] : 0
+                    ':lg1_docentry' => $resInsert,
+                    ':lg1_linenum' => is_numeric($detail['lg1_linenum']) ? $detail['lg1_linenum'] : 0,
+                    ':lg1_cardcode' => isset($detail['lg1_cardcode']) ? $detail['lg1_cardcode'] : NULL,
+                    ':lg1_cardname' => isset($detail['lg1_cardname']) ? $detail['lg1_cardname'] : NULL,
+                    ':lg1_docdate' => isset($detail['lg1_docdate']) ? $detail['lg1_docdate'] : NULL,
+                    ':lg1_price' => is_numeric($detail['lg1_price']) ? $detail['lg1_price'] : 0,
+                    ':lg1_currency' => isset($detail['lg1_currency']) ? $detail['lg1_currency'] : NULL,
+                    ':lg1_account' => isset($detail['lg1_account']) ? $detail['lg1_account'] : NULL,
+                    ':lg1_ccost' => isset($detail['lg1_ccost']) ? $detail['lg1_ccost'] : NULL,
+                    ':lg1_ubussiness' => isset($detail['lg1_ubussiness']) ? $detail['lg1_ubussiness'] : NULL,
+                    ':lg1_proyect' => isset($detail['lg1_proyect']) ? $detail['lg1_proyect'] : NULL,
+                    ':lg1_vatsum' => isset($detail['lg1_vatsum']) ? $detail['lg1_vatsum'] : NULL,
+                    ':lg1_total' => is_numeric($detail['lg1_total']) ? $detail['lg1_total'] : 0,
+                    ':lg1_concept' => isset($detail['lg1_concept']) ? $detail['lg1_concept'] : null,
+                    ':lg1_codimp' => isset($detail['lg1_codimp']) ? $detail['lg1_codimp'] : null
                 ));
 
                 if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -272,7 +278,7 @@ class LegalExpenses extends REST_Controller {
     public function getLegalExpenseById_get(){
         $Data = $this->get();
 
-		if (!isset($Data['lcm_docentry']) or !isset($Data['business']) or !isset($Data['branch'])) {
+		if (!isset($Data['blg_docentry']) or !isset($Data['business']) or !isset($Data['branch'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -285,10 +291,10 @@ class LegalExpenses extends REST_Controller {
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM tblg WHERE lcm_docentry = :lcm_docentry AND business = :business AND branch = :branch";
+		$sqlSelect = " SELECT * FROM tblg WHERE blg_docentry = :blg_docentry AND business = :business AND branch = :branch";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-            ":lcm_docentry" => $Data['lcm_docentry'],
+            ":blg_docentry" => $Data['blg_docentry'],
             ":business" => $Data['business'],
             ":branch" => $Data['branch']
         ));
@@ -316,7 +322,7 @@ class LegalExpenses extends REST_Controller {
     public function getLegalExpenseDetail_get(){
         $Data = $this->get();
 
-		if (!isset($Data['cm1_docentry'])) {
+		if (!isset($Data['lg1_docentry'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -329,9 +335,9 @@ class LegalExpenses extends REST_Controller {
 			return;
 		}
 
-		$sqlSelect = "SELECT * FROM blg1 WHERE cm1_docentry = :cm1_docentry";
+		$sqlSelect = "SELECT * FROM blg1 WHERE lg1_docentry = :lg1_docentry";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cm1_docentry" => $Data['cm1_docentry']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":lg1_docentry" => $Data['lg1_docentry']));
 
 		if (isset($resSelect[0])) {
 
