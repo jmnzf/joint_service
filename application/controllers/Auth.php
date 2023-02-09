@@ -76,21 +76,25 @@ class Auth extends REST_Controller {
      */
     private static function getpermissions($permissions) {
         // 
-        $newpermissions = [];
+        $newPermissions = [];
         $ctr = [];
         // 
         foreach ($permissions as $key => $menu) {
             // VALIDAR SINO ES UN SUBMENU.
             if ( $menu['men_id_menu'] == 0 && $menu['men_sub_menu'] == 0 ) {
                 // ASIGNAR DATOS DEL ITEM ACTUAL AL NUEVO ARRAY.
-                $newpermissions[] = $menu;
+                $newPermissions[] = $menu;
             };
             // VALIDAR SI ES UN SUBMNENU.
             if ( $menu['men_id_menu'] == 0 && $menu['men_sub_menu'] == 1 ) {
                 // FILTRAR SI EL ITEM ACTUAL TIENE SUBMENU.
-                $menu['submenu'] = self::filterCrt($menu, $permissions);
+                $newData = self::filterCrt($menu, $permissions);
+				// ORDENAR SUBMENU DEL MENU.
+				array_multisort(array_column($newData, 'men_nombre'), SORT_ASC, $newData);
+				// ASIGNAR VALORES ORDENADOS.
+				$menu['submenu'] = $newData;
                 // ASIGNAR DATOS DEL ITEM ACTUAL AL NUEVO ARRAY.
-                $newpermissions[] = $menu;
+                $newPermissions[] = $menu;
             }
             // VALIDAR SI TIENE CONTROLADOR
             if (!empty($menu['men_controller'])) {
@@ -101,7 +105,7 @@ class Auth extends REST_Controller {
         // 
         return [
             'ctr' => $ctr,
-            'permissions' => $newpermissions
+            'permissions' => $newPermissions
         ];
     }
     /**
@@ -130,6 +134,8 @@ class Auth extends REST_Controller {
             if ( $_menu['men_sub_menu'] == 1 ) {
                 // ASIGNAR DATOS DEL FILTRO.
                 $newData = self::filterCrt($_menu, $newParams);
+				// ORDENAR SUBMENU DEL MENU.
+				array_multisort(array_column($newData, 'men_nombre'), SORT_ASC, $newData);
             };
             // ASIGNAR DATOS DEL FILTRO.
             $result[$key]['submenu'] = $newData;

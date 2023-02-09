@@ -105,6 +105,7 @@ class PaymentsReceived extends REST_Controller
 		$DFPD = 0; // diferencia en peso debito
 		$DFPCS = 0; // del sistema en credito
 		$DFPDS = 0; // del sistema en debito
+		$ResAcctBank = 0;
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 							ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -1092,6 +1093,7 @@ class PaymentsReceived extends REST_Controller
 
 			if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
 				// Se verifica que el detalle no de error insertando //
+				$ResAcctBank = $resDetalleAsiento;
 			} else {
 				// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 				// se retorna el error y se detiene la ejecucion del codigo restante.
@@ -1612,8 +1614,8 @@ class PaymentsReceived extends REST_Controller
 			if (trim($Data['bpr_currency']) != $MONEDALOCAL) {
 				if ($Data['bpr_billpayment'] == '0' || $Data['bpr_billpayment'] == 0) {
 					//se verifica si existe diferencia en cambio
-					$sqlCuentaDiferenciaCambio = "SELECT pge_acc_dcp, pge_acc_dcn FROM pgem";
-					$resCuentaDiferenciaCambio = $this->pedeo->queryTable($sqlCuentaDiferenciaCambio, array());
+					$sqlCuentaDiferenciaCambio = "SELECT pge_acc_dcp, pge_acc_dcn FROM pgem WHERE pge_id = :business";
+					$resCuentaDiferenciaCambio = $this->pedeo->queryTable($sqlCuentaDiferenciaCambio, array(':business' => $Data['business']));
 
 					$CuentaDiferenciaCambio = [];
 
@@ -1636,16 +1638,14 @@ class PaymentsReceived extends REST_Controller
 					}
 
 
-
-					$VlrDiff = ($VlrDiff + ($VlrPagoEfectuado * -1));
-
-
 					if ($VlrDiff  <  0) {
 
 						$VlrDiffN = abs($VlrDiff);
+
 					} else if ($VlrDiff > 0) {
 
 						$VlrDiffP = abs($VlrDiff);
+
 					} else if ($VlrDiff  == 0) {
 
 						$VlrDiffN = 0;
@@ -1665,7 +1665,15 @@ class PaymentsReceived extends REST_Controller
 
 						$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
 						$debito     = $VlrDiffP;
-						$MontoSysDB = ($debito / $TasaLocSys);
+
+						if (trim($Data['bpr_currency']) != $MONEDALOCAL) {
+							$debito = $VlrDiffP;
+							$MontoSysDB = ($debito / $TasaLocSys);
+						}else{
+							$debito = ($VlrDiffP * $TasaDocLoc);
+							$MontoSysDB = $VlrDiffP;
+						}
+
 
 
 						$DFPC  = $DFPC + 0;
@@ -1680,7 +1688,7 @@ class PaymentsReceived extends REST_Controller
 							':ac1_account' => $cuentaD,
 							':ac1_debit' => round($debito, $DECI_MALES),
 							':ac1_credit' => 0,
-							':ac1_debit_sys' => 0,
+							':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 							':ac1_credit_sys' => 0,
 							':ac1_currex' => 0,
 							':ac1_doc_date' => $this->validateDate($Data['bpr_docdate']) ? $Data['bpr_docdate'] : NULL,
@@ -1722,7 +1730,28 @@ class PaymentsReceived extends REST_Controller
 
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-							// Se verifica que el detalle no de error insertando //
+							$sqlUpdateSys = "UPDATE mac1 set ac1_debit_sys = ac1_debit_sys + :ac1_debit_sys WHERE ac1_line_num = :ac1_line_num";
+							$resUpdateSys = $this->pedeo->updateRow($sqlUpdateSys, array(
+								':ac1_line_num' => $ResAcctBank,
+								':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES)
+							));
+
+							if (is_numeric($resUpdateSys) && $resUpdateSys == 1){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resDetalleAsiento,
+									'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al actualizar el monto del asiento'
+								);
+	
+								$this->response($respuesta);
+	
+								return;
+							}
 						} else {
 							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 							// se retorna el error y se detiene la ejecucion del codigo restante.
@@ -1753,7 +1782,15 @@ class PaymentsReceived extends REST_Controller
 
 						$cuentaD    = $CuentaDiferenciaCambio['pge_acc_dcp'];
 						$credito    = $VlrDiffN;
-						$MontoSysCR = ($credito / $TasaLocSys);
+
+						if (trim($Data['bpr_currency']) != $MONEDALOCAL) {
+							$credito = $VlrDiffN;
+							$MontoSysCR = ($credito / $TasaLocSys);
+						}else{
+							$credito = ($VlrDiffN * $TasaDocLoc);
+							$MontoSysCR = $VlrDiffN;
+						}
+
 
 
 						$DFPC  = $DFPC + round($credito, $DECI_MALES);
@@ -1769,7 +1806,7 @@ class PaymentsReceived extends REST_Controller
 							':ac1_debit' => 0,
 							':ac1_credit' => round($credito, $DECI_MALES),
 							':ac1_debit_sys' => 0,
-							':ac1_credit_sys' => 0,
+							':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
 							':ac1_currex' => 0,
 							':ac1_doc_date' => $this->validateDate($Data['bpr_docdate']) ? $Data['bpr_docdate'] : NULL,
 							':ac1_doc_duedate' => $this->validateDate($Data['bpr_docdate']) ? $Data['bpr_docdate'] : NULL,
@@ -1810,7 +1847,28 @@ class PaymentsReceived extends REST_Controller
 
 
 						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-							// Se verifica que el detalle no de error insertando //
+							$sqlUpdateSys = "UPDATE mac1 set ac1_debit_sys = ac1_debit_sys + :ac1_debit_sys WHERE ac1_line_num = :ac1_line_num";
+							$resUpdateSys = $this->pedeo->updateRow($sqlUpdateSys, array(
+								':ac1_line_num' => $ResAcctBank,
+								':ac1_debit_sys' => round($MontoSysCR, $DECI_MALES)
+							));
+
+							if (is_numeric($resUpdateSys) && $resUpdateSys == 1){
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resDetalleAsiento,
+									'mensaje'	=> 'No se pudo registrar el pago realizado, occurio un error al actualizar el monto del asiento'
+								);
+	
+								$this->response($respuesta);
+	
+								return;
+							}
 						} else {
 							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 							// se retorna el error y se detiene la ejecucion del codigo restante.
@@ -1844,8 +1902,8 @@ class PaymentsReceived extends REST_Controller
 
 			if (isset($resDiffPeso[0]['debito']) && abs(($resDiffPeso[0]['debito'] - $resDiffPeso[0]['credito'])) > 0) {
 
-				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
-				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE pge_id = :business";
+				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array(':business' => $Data['business']));
 
 				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
 				} else {
@@ -1940,8 +1998,8 @@ class PaymentsReceived extends REST_Controller
 				}
 			} else if (isset($resDiffPeso[0]['ldebito']) && abs(($resDiffPeso[0]['ldebito'] - $resDiffPeso[0]['lcredito'])) > 0) {
 
-				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem";
-				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array());
+				$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE pge_id = :business";
+				$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array(':business' => $Data['business']));
 
 				if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
 				} else {
@@ -2036,6 +2094,14 @@ class PaymentsReceived extends REST_Controller
 				}
 			}
 
+
+			// Esto es para validar el resultado de la contabilidad
+			// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
+			// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+			// print_r(json_encode($ressqlmac1));
+			// exit;
+		
+
 		
 
 			//SE VALIDA LA CONTABILIDAD CREADA
@@ -2059,12 +2125,7 @@ class PaymentsReceived extends REST_Controller
 			}
 			//
 
-			//Esto es para validar el resultado de la contabilidad
-			// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 8";
-			// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
-			// print_r(json_encode($ressqlmac1));
-			// exit;
-
+	
 
 
 

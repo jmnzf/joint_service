@@ -96,6 +96,8 @@ class SalesNc extends REST_Controller
 		$exc_inv = 0;
 		$CANTUOMSALE = 0; //CANTIDAD DE LA EQUIVALENCIA SEGUN LA UNIDAD DE MEDIDA DEL ITEM PARA VENTA
 		$DetalleIgtf = 0; // DETALLE DE DIVISAS APLICADAS IGTF
+		$DETALLE_GIFT = []; // CONTIENE EL IVA Y EL COSTO DE LOS ARTICULOS CON IMPUESTO 
+		$VALUE_GIFT = 0; // ACUMULA EL VALOR PARA EL GASTO SOLO SI HAY ARTICULOS DE OBSEQUIO
 
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -214,7 +216,7 @@ class SalesNc extends REST_Controller
 		}
 
 		//PROCESO DE TASA
-		$dataTasa = $this->tasa->Tasa($Data['coc_currency'],$Data['coc_docdate']);
+		$dataTasa = $this->tasa->Tasa($Data['vnc_currency'],$Data['vnc_docdate']);
 
 		if(isset($dataTasa['tasaLocal'])){
 
@@ -996,6 +998,7 @@ class SalesNc extends REST_Controller
 					$DetalleAsientoIngreso->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 					$DetalleAsientoIngreso->nc1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
 					$DetalleAsientoIngreso->nc1_fixrate = is_numeric($detail['nc1_fixrate']) ? $detail['nc1_fixrate'] : 0;
+					$DetalleAsientoIngreso->gift = isset($detail['nc1_gift']) && is_numeric($detail['nc1_gift']) ? $detail['nc1_gift'] : 0;
 
 
 
@@ -1013,6 +1016,7 @@ class SalesNc extends REST_Controller
 					$DetalleAsientoIva->nc1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
 					$DetalleAsientoIva->nc1_fixrate = is_numeric($detail['nc1_fixrate']) ? $detail['nc1_fixrate'] : 0;
 					$DetalleAsientoIva->codimp = isset($detail['nc1_codimp']) ? $detail['nc1_codimp'] : NULL;
+					$DetalleAsientoIva->gift = isset($detail['nc1_gift']) && is_numeric($detail['nc1_gift']) ? $detail['nc1_gift'] : 0;
 
 
 
@@ -1045,6 +1049,7 @@ class SalesNc extends REST_Controller
 							$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 							$DetalleCostoCosto->nc1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
 							$DetalleCostoCosto->nc1_fixrate = is_numeric($detail['nc1_fixrate']) ? $detail['nc1_fixrate'] : 0;
+							$DetalleCostoCosto->gift = isset($detail['nc1_gift']) && is_numeric($detail['nc1_gift']) ? $detail['nc1_gift'] : 0;
 						} //ITEM INVENTARIABLE
 					}
 
@@ -1188,13 +1193,24 @@ class SalesNc extends REST_Controller
 					$prc = "";
 					$unidad = "";
 					foreach ($posicion as $key => $value) {
-						$granTotalIngreso = ($granTotalIngreso + $value->nc1_linetotal);
-						$granTotalTasaFija = ($granTotalTasaFija + ($value->nc1_fixrate * $value->nc1_quantity));
-						$codigoCuentaIngreso = $value->codigoCuenta;
-						$prc = $value->ac1_prc_code;
-						$unidad = $value->ac1_uncode;
-						$proyecto = $value->ac1_prj_code;
-						$cuenta = $value->ac1_account;
+
+						if (  $value->gift == 0 ) {
+
+							$granTotalIngreso = ($granTotalIngreso + $value->nc1_linetotal);
+							$granTotalTasaFija = ($granTotalTasaFija + ($value->nc1_fixrate * $value->nc1_quantity));
+							$codigoCuentaIngreso = $value->codigoCuenta;
+							$prc = $value->ac1_prc_code;
+							$unidad = $value->ac1_uncode;
+							$proyecto = $value->ac1_prj_code;
+							$cuenta = $value->ac1_account;
+
+						}else{
+
+
+
+						}
+
+
 					}
 
 
@@ -1303,79 +1319,82 @@ class SalesNc extends REST_Controller
 							break;
 					}
 
-					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
-					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+					if ( $debito > 0 ||  $credito > 0 ) {
 
-
-					$TOTALCXCLOC = ($TOTALCXCLOC + ($debito + $credito));
-					$TOTALCXCSYS = ($TOTALCXCSYS + ($MontoSysDB + $MontoSysCR));
-
-
-					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-						':ac1_trans_id' => $resInsertAsiento,
-						':ac1_account' => $cuenta,
-						':ac1_debit' => round($debito, $DECI_MALES),
-						':ac1_credit' => round($credito, $DECI_MALES),
-						':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
-						':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
-						':ac1_currex' => 0,
-						':ac1_doc_date' => $this->validateDate($Data['vnc_docdate']) ? $Data['vnc_docdate'] : NULL,
-						':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate']) ? $Data['vnc_duedate'] : NULL,
-						':ac1_debit_import' => 0,
-						':ac1_credit_import' => 0,
-						':ac1_debit_importsys' => 0,
-						':ac1_credit_importsys' => 0,
-						':ac1_font_key' => $resInsert,
-						':ac1_font_line' => 1,
-						':ac1_font_type' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
-						':ac1_accountvs' => 1,
-						':ac1_doctype' => 18,
-						':ac1_ref1' => "",
-						':ac1_ref2' => "",
-						':ac1_ref3' => "",
-						':ac1_prc_code' => $prc,
-						':ac1_uncode' => $unidad,
-						':ac1_prj_code' => $proyecto,
-						':ac1_rescon_date' => NULL,
-						':ac1_recon_total' => 0,
-						':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-						':ac1_accperiod' => 1,
-						':ac1_close' => 0,
-						':ac1_cord' => 0,
-						':ac1_ven_debit' => round($debito, $DECI_MALES),
-						':ac1_ven_credit' => round($credito, $DECI_MALES),
-						':ac1_fiscal_acct' => 0,
-						':ac1_taxid' => 0,
-						':ac1_isrti' => 0,
-						':ac1_basert' => 0,
-						':ac1_mmcode' => 0,
-						':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
-						':ac1_codref' => 1,
-						':ac1_line'   => $AC1LINE,
-						':ac1_base_tax' => 0,
-						':business' => $Data['business'],
-						':branch' 	=> $Data['branch']
-					));
-
-
-
-					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-						// Se verifica que el detalle no de error insertando //
-					} else {
-						// si falla algun insert del detalle de la Nota crédito de clientes se devuelven los cambios realizados por la transaccion,
-						// se retorna el error y se detiene la ejecucion del codigo restante.
-						$this->pedeo->trans_rollback();
-
-						$respuesta = array(
-							'error'   => true,
-							'data'	  => $resDetalleAsiento,
-							'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
-						);
-
-						$this->response($respuesta);
-
-						return;
+						$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+						$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+	
+	
+						$TOTALCXCLOC = ($TOTALCXCLOC + ($debito + $credito));
+						$TOTALCXCSYS = ($TOTALCXCSYS + ($MontoSysDB + $MontoSysCR));
+	
+	
+						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+	
+							':ac1_trans_id' => $resInsertAsiento,
+							':ac1_account' => $cuenta,
+							':ac1_debit' => round($debito, $DECI_MALES),
+							':ac1_credit' => round($credito, $DECI_MALES),
+							':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+							':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+							':ac1_currex' => 0,
+							':ac1_doc_date' => $this->validateDate($Data['vnc_docdate']) ? $Data['vnc_docdate'] : NULL,
+							':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate']) ? $Data['vnc_duedate'] : NULL,
+							':ac1_debit_import' => 0,
+							':ac1_credit_import' => 0,
+							':ac1_debit_importsys' => 0,
+							':ac1_credit_importsys' => 0,
+							':ac1_font_key' => $resInsert,
+							':ac1_font_line' => 1,
+							':ac1_font_type' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
+							':ac1_accountvs' => 1,
+							':ac1_doctype' => 18,
+							':ac1_ref1' => "",
+							':ac1_ref2' => "",
+							':ac1_ref3' => "",
+							':ac1_prc_code' => $prc,
+							':ac1_uncode' => $unidad,
+							':ac1_prj_code' => $proyecto,
+							':ac1_rescon_date' => NULL,
+							':ac1_recon_total' => 0,
+							':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
+							':ac1_accperiod' => 1,
+							':ac1_close' => 0,
+							':ac1_cord' => 0,
+							':ac1_ven_debit' => round($debito, $DECI_MALES),
+							':ac1_ven_credit' => round($credito, $DECI_MALES),
+							':ac1_fiscal_acct' => 0,
+							':ac1_taxid' => 0,
+							':ac1_isrti' => 0,
+							':ac1_basert' => 0,
+							':ac1_mmcode' => 0,
+							':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
+							':ac1_codref' => 1,
+							':ac1_line'   => $AC1LINE,
+							':ac1_base_tax' => 0,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch']
+						));
+	
+	
+	
+						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+							// Se verifica que el detalle no de error insertando //
+						} else {
+							// si falla algun insert del detalle de la Nota crédito de clientes se devuelven los cambios realizados por la transaccion,
+							// se retorna el error y se detiene la ejecucion del codigo restante.
+							$this->pedeo->trans_rollback();
+	
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resDetalleAsiento,
+								'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
+							);
+	
+							$this->response($respuesta);
+	
+							return;
+						}
 					}
 				}
 				//FIN Procedimiento para llenar Ingreso
@@ -1403,6 +1422,12 @@ class SalesNc extends REST_Controller
 						$LineTotal = ($LineTotal + $value->nc1_linetotal);
 						$CodigoImp = $value->codimp;
 						$Vat = $value->nc1_vat;
+
+						if ( $value->gift == 1) {
+							array_push($DETALLE_GIFT, array( "monto" => round($value->fv1_vatsum, $DECI_MALES), "item" => $value->nc1_itemcode, "proyecto" =>$value->ac1_prj_code , "centrocosto" =>$value->ac1_prc_code, "unidadnegocio" => $value->ac1_uncode, "whscode" => $value->nc1_whscode ));
+							$VALUE_GIFT =  $granTotalIva;
+							$VALUE_GIFT_IVA =  $granTotalIva;
+						}
 					}
 
 					$granTotalIvaOriginal = $granTotalIva;
@@ -1729,12 +1754,24 @@ class SalesNc extends REST_Controller
 
 							if (isset($resCosto[0])) {
 
-								$cuentaCosto = $CUENTASINV['data']['acct_cost'];
+								if ( $value->gift == 0 ){
+									$cuentaCosto = $CUENTASINV['data']['acct_cost'];
 
 
-								$costoArticulo = $resCosto[0]['bdi_avgprice'];
-								$cantidadArticulo = $value->nc1_quantity;
-								$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
+									$costoArticulo = $resCosto[0]['bdi_avgprice'];
+									$cantidadArticulo = $value->nc1_quantity;
+									$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
+
+								}else{
+									$costoArticulo = $resCosto[0]['bdi_avgprice'];
+									$cantidadArticulo = $value->nc1_quantity;
+
+									$VALUE_GIFT = $VALUE_GIFT + ($costoArticulo * $cantidadArticulo);
+
+									array_push($DETALLE_GIFT, array( "monto" => $costoArticulo * $cantidadArticulo, "item" => $value->nc1_itemcode, "proyecto" =>$value->ac1_prj_code , "centrocosto" =>$value->ac1_prc_code, "unidadnegocio" => $value->ac1_uncode, "whscode" => $value->nc1_whscode ));
+								}
+
+								
 							} else {
 
 								$this->pedeo->trans_rollback();
@@ -1833,72 +1870,75 @@ class SalesNc extends REST_Controller
 						}
 					}
 
-					$AC1LINE = $AC1LINE + 1;
+					if ( $dbito > 0 || $cdito > 0 ){
 
-					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+						$AC1LINE = $AC1LINE + 1;
 
-						':ac1_trans_id' => $resInsertAsiento,
-						':ac1_account' => $cuentaCosto,
-						':ac1_debit' => round($dbito, $DECI_MALES),
-						':ac1_credit' => round($cdito, $DECI_MALES),
-						':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
-						':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
-						':ac1_currex' => 0,
-						':ac1_doc_date' => $this->validateDate($Data['vnc_docdate']) ? $Data['vnc_docdate'] : NULL,
-						':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate']) ? $Data['vnc_duedate'] : NULL,
-						':ac1_debit_import' => 0,
-						':ac1_credit_import' => 0,
-						':ac1_debit_importsys' => 0,
-						':ac1_credit_importsys' => 0,
-						':ac1_font_key' => $resInsert,
-						':ac1_font_line' => 1,
-						':ac1_font_type' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
-						':ac1_accountvs' => 1,
-						':ac1_doctype' => 18,
-						':ac1_ref1' => "",
-						':ac1_ref2' => "",
-						':ac1_ref3' => "",
-						':ac1_prc_code' => $value->ac1_prc_code,
-						':ac1_uncode' => $value->ac1_uncode,
-						':ac1_prj_code' => $value->ac1_prj_code,
-						':ac1_rescon_date' => NULL,
-						':ac1_recon_total' => 0,
-						':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-						':ac1_accperiod' => 1,
-						':ac1_close' => 0,
-						':ac1_cord' => 0,
-						':ac1_ven_debit' => round($dbito, $DECI_MALES),
-						':ac1_ven_credit' => round($cdito, $DECI_MALES),
-						':ac1_fiscal_acct' => 0,
-						':ac1_taxid' => 0,
-						':ac1_isrti' => 0,
-						':ac1_basert' => 0,
-						':ac1_mmcode' => 0,
-						':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
-						':ac1_codref' => 1,
-						':ac1_line'   => $AC1LINE,
-						':ac1_base_tax' => 0,
-						':business' => $Data['business'],
-						':branch' 	=> $Data['branch']
-					));
+						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
-					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-						// Se verifica que el detalle no de error insertando //
-					} else {
+							':ac1_trans_id' => $resInsertAsiento,
+							':ac1_account' => $cuentaCosto,
+							':ac1_debit' => round($dbito, $DECI_MALES),
+							':ac1_credit' => round($cdito, $DECI_MALES),
+							':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+							':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+							':ac1_currex' => 0,
+							':ac1_doc_date' => $this->validateDate($Data['vnc_docdate']) ? $Data['vnc_docdate'] : NULL,
+							':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate']) ? $Data['vnc_duedate'] : NULL,
+							':ac1_debit_import' => 0,
+							':ac1_credit_import' => 0,
+							':ac1_debit_importsys' => 0,
+							':ac1_credit_importsys' => 0,
+							':ac1_font_key' => $resInsert,
+							':ac1_font_line' => 1,
+							':ac1_font_type' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
+							':ac1_accountvs' => 1,
+							':ac1_doctype' => 18,
+							':ac1_ref1' => "",
+							':ac1_ref2' => "",
+							':ac1_ref3' => "",
+							':ac1_prc_code' => $value->ac1_prc_code,
+							':ac1_uncode' => $value->ac1_uncode,
+							':ac1_prj_code' => $value->ac1_prj_code,
+							':ac1_rescon_date' => NULL,
+							':ac1_recon_total' => 0,
+							':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
+							':ac1_accperiod' => 1,
+							':ac1_close' => 0,
+							':ac1_cord' => 0,
+							':ac1_ven_debit' => round($dbito, $DECI_MALES),
+							':ac1_ven_credit' => round($cdito, $DECI_MALES),
+							':ac1_fiscal_acct' => 0,
+							':ac1_taxid' => 0,
+							':ac1_isrti' => 0,
+							':ac1_basert' => 0,
+							':ac1_mmcode' => 0,
+							':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
+							':ac1_codref' => 1,
+							':ac1_line'   => $AC1LINE,
+							':ac1_base_tax' => 0,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch']
+						));
 
-						// si falla algun insert del detalle de la Nota crédito de clientes se devuelven los cambios realizados por la transaccion,
-						// se retorna el error y se detiene la ejecucion del codigo restante.
-						$this->pedeo->trans_rollback();
+						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+							// Se verifica que el detalle no de error insertando //
+						} else {
 
-						$respuesta = array(
-							'error'   => true,
-							'data'	  => $resDetalleAsiento,
-							'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
-						);
+							// si falla algun insert del detalle de la Nota crédito de clientes se devuelven los cambios realizados por la transaccion,
+							// se retorna el error y se detiene la ejecucion del codigo restante.
+							$this->pedeo->trans_rollback();
 
-						$this->response($respuesta);
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resDetalleAsiento,
+								'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
+							);
 
-						return;
+							$this->response($respuesta);
+
+							return;
+						}
 					}
 				}
 				//FIN Procedimiento para llenar costo costo
@@ -2409,6 +2449,155 @@ class SalesNc extends REST_Controller
 					}
 				}
 				//
+
+
+				// ASIENTO PARA MOSTRAR CASO ITEM  OBSEQUIO
+				if ( isset($DETALLE_GIFT[0]) ) {
+
+					$ITEM_PROCESADO = [];
+					foreach ($DETALLE_GIFT as $key => $element) {
+
+						$itemm = $element['item'];
+						$whscode = $element['whscode'];
+
+						if (!in_array($itemm, $ITEM_PROCESADO)){
+
+							$monto = 0;
+							$montosys = 0;
+							$montoorig = 0;
+							$cuenta = "";
+							$unidad = "";
+							$proyecto = "";
+							$ccosto = "";
+	
+							array_push($ITEM_PROCESADO, $itemm);
+	
+							foreach( $DETALLE_GIFT as $key => $item ){
+	
+								if ( $item['item'] == $itemm ){
+	
+									$monto = $monto + $item['monto'];
+									$unidad = $item['unidadnegocio'];
+									$proyecto = $item['proyecto'];
+									$ccosto = $item['centrocosto'];
+	
+								}
+	
+							}
+
+							$CUENTASINV = $this->account->getAccountItem($itemm, $whscode);
+			
+				
+							if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
+
+								$cuenta = $CUENTASINV['data']['acct_out'];
+
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resDetalleAsiento,
+									'mensaje'	=> 'No se encontro la cuenta parametrizada para el artículo '.$item
+								);
+		
+								$this->response($respuesta);
+		
+								return;
+							}
+
+							$montoorig  = $monto;
+
+							if (trim($Data['vnc_currency']) != $MONEDALOCAL) {
+
+								$monto = ($monto * $TasaDocLoc);
+					
+							}
+		
+		
+							if (trim($Data['vnc_currency']) != $MONEDASYS) {
+								$montosys = ($montoorig / $TasaLocSys);
+							} else {
+								$montosys = $montoorig;
+							}
+
+							$AC1LINE = $AC1LINE + 1;
+
+							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+								':ac1_trans_id' => $resInsertAsiento,
+								':ac1_account' => $cuenta,
+								':ac1_debit' => 0,
+								':ac1_credit' => round($monto, $DECI_MALES),
+								':ac1_debit_sys' => 0,
+								':ac1_credit_sys' => round($montosys, $DECI_MALES),
+								':ac1_currex' => 0,
+								':ac1_doc_date' => $this->validateDate($Data['vnc_docdate']) ? $Data['vnc_docdate'] : NULL,
+								':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate']) ? $Data['vnc_duedate'] : NULL,
+								':ac1_debit_import' => 0,
+								':ac1_credit_import' => 0,
+								':ac1_debit_importsys' => 0,
+								':ac1_credit_importsys' => 0,
+								':ac1_font_key' => $resInsert,
+								':ac1_font_line' => 1,
+								':ac1_font_type' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
+								':ac1_accountvs' => 1,
+								':ac1_doctype' => 18,
+								':ac1_ref1' => "",
+								':ac1_ref2' => "",
+								':ac1_ref3' => "",
+								':ac1_prc_code' => $ccosto,
+								':ac1_uncode' => $unidad,
+								':ac1_prj_code' => $proyecto,
+								':ac1_rescon_date' => NULL,
+								':ac1_recon_total' => 0,
+								':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
+								':ac1_accperiod' => 1,
+								':ac1_close' => 0,
+								':ac1_cord' => 0,
+								':ac1_ven_debit' => 0,
+								':ac1_ven_credit' => NULL,
+								':ac1_fiscal_acct' => 0,
+								':ac1_taxid' => 0,
+								':ac1_isrti' => NULL,
+								':ac1_basert' => NULL,
+								':ac1_mmcode' => 0,
+								':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
+								':ac1_codref' => 0,
+								":ac1_line" => $AC1LINE,
+								':ac1_base_tax' => 0,
+								':business' => $Data['business'],
+								':branch' 	=> $Data['branch'],
+								':ac1_codret' => NULL
+							));
+		
+		
+		
+							if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+								// Se verifica que el detalle no de error insertando //
+							} else {
+		
+								// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+								$this->pedeo->trans_rollback();
+		
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $resDetalleAsiento,
+									'mensaje'	=> 'No se pudo registrar la nota credito de ventas'
+								);
+		
+								$this->response($respuesta);
+		
+								return;
+							}
+
+						}
+					}
+
+				}
+				// FIN ASIENTO PARA MOSTRAR CASO ITEM  OBSEQUIO
 
 				// SE VALIDA QUE LA FACTURA BASE NO SEA MENOR QUE LA NOTA CREDITO
 				if ($Data['vnc_basetype'] == 5) {
