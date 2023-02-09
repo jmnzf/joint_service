@@ -405,7 +405,6 @@ class SalesInv extends REST_Controller
 
 
 				$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
-
 					':mac_doc_num' => 1,
 					':mac_status' => 1,
 					':mac_base_type' => is_numeric($Data['dvf_doctype']) ? $Data['dvf_doctype'] : 0,
@@ -456,12 +455,7 @@ class SalesInv extends REST_Controller
 
 					return;
 				} // FINN
-
-
-
-
-
-
+				
 
 				//SE INSERTA EL ESTADO DEL DOCUMENTO
 
@@ -469,8 +463,6 @@ class SalesInv extends REST_Controller
 																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
 					':bed_docentry' => $resInsert,
 					':bed_doctype' => $Data['dvf_doctype'],
 					':bed_status' => 1, //ESTADO CERRADO
@@ -1756,7 +1748,6 @@ class SalesInv extends REST_Controller
 
 
 				//Procedimiento para llenar Impuestos
-				//
 
 				$granTotalIva = 0;
 
@@ -1771,6 +1762,7 @@ class SalesInv extends REST_Controller
 					$CodigoImp = 0;
 					$LineTotal = 0;
 					$Vat = 0;
+					$valueGift = 0;
 
 					foreach ($posicion as $key => $value) {
 
@@ -1788,16 +1780,21 @@ class SalesInv extends REST_Controller
 							array_push($DETALLE_GIFT, array( "monto" => round($value->fv1_vatsum, $DECI_MALES), "item" => $value->fv1_itemcode, "proyecto" =>$value->ac1_prj_code , "centrocosto" =>$value->ac1_prc_code, "unidadnegocio" => $value->ac1_uncode, "whscode" => $value->em1_whscode ));
 							$VALUE_GIFT =  $granTotalIva;
 							$VALUE_GIFT_IVA =  $granTotalIva;
+							$valueGift = 1;
 						}
 					}
 
 					$granTotalIvaOriginal = $granTotalIva;
 
 
-
 					if (trim($Data['dvf_currency']) != $MONEDALOCAL) {
+
 						$granTotalIva = ($granTotalIva * $TasaDocLoc);
-						$VALUE_GIFT_IVA = $granTotalIva;
+
+						if ( $valueGift == 1 ){
+							$VALUE_GIFT_IVA = $granTotalIva;
+						}
+						
 						$LineTotal = ($LineTotal * $TasaDocLoc);
 					}
 
@@ -1806,9 +1803,13 @@ class SalesInv extends REST_Controller
 					$TIva = $granTotalIva2;
 
 					if (trim($Data['dvf_currency']) != $MONEDASYS) {
-						// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
+		
 						$MontoSysCR = ($TIva / $TasaLocSys);
-						$VALUE_GIFT_IVA_SYS = ( $VALUE_GIFT_IVA / $TasaLocSys );
+
+						if ( $valueGift == 1 ){
+							$VALUE_GIFT_IVA_SYS = ( $VALUE_GIFT_IVA / $TasaLocSys );
+						}
+						
 					} else {
 						$MontoSysCR = $granTotalIvaOriginal;
 					}
@@ -1820,6 +1821,7 @@ class SalesInv extends REST_Controller
 
 					$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva) - $VALUE_GIFT_IVA;
 					$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysCR) - $VALUE_GIFT_IVA_SYS;
+
 
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
