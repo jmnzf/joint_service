@@ -481,7 +481,7 @@ class SalesInv extends REST_Controller
 					$respuesta = array(
 						'error'   => true,
 						'data' => $resInsertEstado,
-						'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+						'mensaje'	=> 'No se pudo registrar la Factura de ventas'
 					);
 
 
@@ -1663,7 +1663,7 @@ class SalesInv extends REST_Controller
 							}
 							break;
 					}
-
+					
 					if ( $debito > 0 ||  $credito > 0 ) {
 
 						$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
@@ -1753,6 +1753,7 @@ class SalesInv extends REST_Controller
 
 				$VALUE_GIFT_IVA = 0;
 				$VALUE_GIFT_IVA_SYS = 0;
+				$VALUE_GIFT_IVA_ORG = 0;
 
 				foreach ($DetalleConsolidadoIva as $key => $posicion) {
 					$granTotalIva = 0;
@@ -1762,9 +1763,10 @@ class SalesInv extends REST_Controller
 					$CodigoImp = 0;
 					$LineTotal = 0;
 					$Vat = 0;
-					$valueGift = 0;
+	
 
 					foreach ($posicion as $key => $value) {
+						$valueGift = 0;
 
 						$granTotalIva = round($granTotalIva + $value->fv1_vatsum, $DECI_MALES);
 
@@ -1778,23 +1780,20 @@ class SalesInv extends REST_Controller
 						if ( $value->gift == 1) {
 
 							array_push($DETALLE_GIFT, array( "monto" => round($value->fv1_vatsum, $DECI_MALES), "item" => $value->fv1_itemcode, "proyecto" =>$value->ac1_prj_code , "centrocosto" =>$value->ac1_prc_code, "unidadnegocio" => $value->ac1_uncode, "whscode" => $value->em1_whscode ));
-							$VALUE_GIFT =  $granTotalIva;
-							$VALUE_GIFT_IVA =  $granTotalIva;
-							$valueGift = 1;
+							$VALUE_GIFT_IVA = $VALUE_GIFT_IVA + round($value->fv1_vatsum, $DECI_MALES);
 						}
 					}
 
 					$granTotalIvaOriginal = $granTotalIva;
+					$VALUE_GIFT_IVA_ORG = $VALUE_GIFT_IVA;
 
 
 					if (trim($Data['dvf_currency']) != $MONEDALOCAL) {
 
 						$granTotalIva = ($granTotalIva * $TasaDocLoc);
 
-						if ( $valueGift == 1 ){
-							$VALUE_GIFT_IVA = $granTotalIva;
-						}
-						
+						$VALUE_GIFT_IVA = ($VALUE_GIFT_IVA * $TasaDocLoc) ;
+					
 						$LineTotal = ($LineTotal * $TasaDocLoc);
 					}
 
@@ -1806,12 +1805,13 @@ class SalesInv extends REST_Controller
 		
 						$MontoSysCR = ($TIva / $TasaLocSys);
 
-						if ( $valueGift == 1 ){
-							$VALUE_GIFT_IVA_SYS = ( $VALUE_GIFT_IVA / $TasaLocSys );
-						}
-						
+						$VALUE_GIFT_IVA_SYS = ( $VALUE_GIFT_IVA / $TasaLocSys );
+												
 					} else {
-						$MontoSysCR = $granTotalIvaOriginal;
+						
+						$MontoSysCR = $granTotalIvaOriginal;						
+						$VALUE_GIFT_IVA_SYS = $VALUE_GIFT_IVA_ORG;
+						
 					}
 
 
@@ -1821,7 +1821,7 @@ class SalesInv extends REST_Controller
 
 					$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva) - $VALUE_GIFT_IVA;
 					$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysCR) - $VALUE_GIFT_IVA_SYS;
-
+					
 
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -3042,7 +3042,6 @@ class SalesInv extends REST_Controller
 				}
 
 
-
 				if (isset($rescuentaCxC[0])) {
 
 					$debitoo = 0;
@@ -3325,8 +3324,6 @@ class SalesInv extends REST_Controller
 				// AJUSTE AL PESO
 				// SEGUN SEA EL CASO
 				///
-
-
 
 				$debito  = 0;
 				$credito = 0;
@@ -3876,8 +3873,6 @@ class SalesInv extends REST_Controller
 
 				// FIN DE OPERACIONES VITALES
 
-
-
 				// VALIDANDO ESTADOS DE DOCUMENTOS
 				if ($Data['dvf_basetype'] == 1) {
 
@@ -4273,6 +4268,16 @@ class SalesInv extends REST_Controller
 					}
 
 				}
+				
+				/**
+				 * INSERTAR MOVIMIENTO GLOBAL.
+				 */
+				$this->generic->insertMG([
+					['type' => 'dmsn', 'code' => $Data['dvf_cardcode']],
+					['type' => 'pgdn', 'code' => $Data['dvf_series']],
+					['type' => 'pgec', 'code' => $Data['dvf_currency']],
+					['type' => 'dmpl', 'code' => $Data['dvf_pricelist']],
+				]);
 
 				// Si todo sale bien despues de insertar el detalle de la factura de Ventas
 				// se confirma la trasaccion  para que los cambios apliquen permanentemente

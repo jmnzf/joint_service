@@ -312,9 +312,7 @@ class SalesNc extends REST_Controller
 						'mensaje'	=> 'No se pudo crear la Nota crédito de clientes'
 					);
 
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-					return;
+					return $this->response($respuesta);
 				}
 				// Fin de la actualizacion de la numeracion del documento
 
@@ -348,9 +346,7 @@ class SalesNc extends REST_Controller
 					);
 
 
-					$this->response($respuesta);
-
-					return;
+					return $this->response($respuesta);
 				}
 
 				//FIN PROCESO ESTADO DEL DOCUMENTO
@@ -410,9 +406,7 @@ class SalesNc extends REST_Controller
 						'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
 					);
 
-					$this->response($respuesta);
-
-					return;
+					return $this->response($respuesta);
 				}
 
 				//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
@@ -460,9 +454,7 @@ class SalesNc extends REST_Controller
 							);
 
 
-							$this->response($respuesta);
-
-							return;
+							return $this->response($respuesta);
 						}
 					} else {
 
@@ -499,9 +491,7 @@ class SalesNc extends REST_Controller
 							);
 
 
-							$this->response($respuesta);
-
-							return;
+							return $this->response($respuesta);
 						}
 					}
 				} else {
@@ -539,9 +529,7 @@ class SalesNc extends REST_Controller
 						);
 
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 				}
 				//FIN PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
@@ -562,9 +550,7 @@ class SalesNc extends REST_Controller
 							'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: ' . $detail['nc1_itemcode']
 						);
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 
 					$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
@@ -612,8 +598,8 @@ class SalesNc extends REST_Controller
 							$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':dvf_docentry' =>$Data['vnc_baseentry'],':dvf_doctype' => $Data['vnc_basetype']));
 							foreach ($ContenidoDetalle as $key => $value) {
 							# code...
-							$sql = "SELECT dvfv.dvf_docnum,vfv1.em1_itemcode FROM dvfv INNER JOIN vfv1 ON dvfv.dvf_docentry = vfv1.em1_docentry 
-							WHERE dvfv.dvf_docentry = :dvf_docentry AND dvfv.dvf_doctype = :dvf_doctype AND vfv1.em1_itemcode = :fv1_itemcode";
+							$sql = "SELECT dvfv.dvf_docnum,vfv1.fv1_itemcode FROM dvfv INNER JOIN vfv1 ON dvfv.dvf_docentry = vfv1.fv1_docentry 
+							WHERE dvfv.dvf_docentry = :dvf_docentry AND dvfv.dvf_doctype = :dvf_doctype AND vfv1.fv1_itemcode = :fv1_itemcode";
 							$resSql = $this->pedeo->queryTable($sql,array(
 								':dvf_docentry' =>$Data['vnc_baseentry'],
 								':dvf_doctype' => $Data['vnc_basetype'],
@@ -623,17 +609,15 @@ class SalesNc extends REST_Controller
 								if(isset($resSql[0])){
 								
 								}else {
-								$this->pedeo->trans_rollback();
-			
-								$respuesta = array(
-									'error'   => true,
-									'data' => $value['nc1_itemcode'],
-									'mensaje'	=> 'El Item '.$value['nc1_itemcode'].' no existe en el documento origen (Factura #'.$RESULT_DOC[0]['dvf_docnum'].')'
-								);
-			
-								$this->response($respuesta);
-			
-								return;
+									$this->pedeo->trans_rollback();
+				
+									$respuesta = array(
+										'error'   => true,
+										'data' => $value['nc1_itemcode'],
+										'mensaje'	=> 'El Item '.$value['nc1_itemcode'].' no existe en el documento origen (Factura #'.$RESULT_DOC[0]['dvf_docnum'].')'
+									);
+				
+									return $this->response($respuesta);
 								}
 							}
 						}
@@ -649,9 +633,7 @@ class SalesNc extends REST_Controller
 							'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
 						);
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 
 					// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
@@ -675,6 +657,20 @@ class SalesNc extends REST_Controller
 
 						if ( isset($resubicacion[0]) ){
 							$ManejaUbicacion = 1;
+
+							if ( !strlen(trim($detail['nc1_ubication'])) > 0 ){
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsert,
+									'mensaje'	=> 'Codigo de ubicación no valido para el item '.$detail['nc1_itemcode']
+								);
+
+								return $this->response($respuesta);
+							}
+
 						}else{
 							$ManejaUbicacion = 0;
 						}
@@ -688,8 +684,25 @@ class SalesNc extends REST_Controller
 						));
 
 						if (isset($resLote[0])) {
+
+
 							$ManejaLote = 1;
+
+							if ( !strlen(trim($detail['ote_code'])) > 0 ){
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resInsert,
+									'mensaje'	=> 'Codigo de lote no valido para el item '.$detail['nc1_itemcode']
+								);
+								return $this->response($respuesta);
+							}
+
+
 						} else {
+
 							$ManejaLote = 0;
 						}
 
@@ -733,9 +746,7 @@ class SalesNc extends REST_Controller
 										'mensaje' => $AddSerial['mensaje']
 									);
 
-									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-									return;
+									return $this->response($respuesta);
 								}
 							} else {
 								$ManejaSerial = 0;
@@ -779,12 +790,10 @@ class SalesNc extends REST_Controller
 								$respuesta = array(
 									'error'   => true,
 									'data' => [],
-									'mensaje'	=> 'no se encontro el costo del articulo' . $detail['nc1_itemcode']
+									'mensaje'	=> 'no se encontro el costo del articulo ' . $detail['nc1_itemcode']
 								);
 
-								$this->response($respuesta);
-
-								return;
+								return $this->response($respuesta);
 							}
 
 							$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,bmi_cost,
@@ -827,9 +836,7 @@ class SalesNc extends REST_Controller
 									'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
 								);
 
-								$this->response($respuesta);
-
-								return;
+								return $this->response($respuesta);
 							}
 
 							//FIN aplicacion de movimiento de inventario
@@ -849,7 +856,7 @@ class SalesNc extends REST_Controller
 									WHERE bdi_itemcode = :bdi_itemcode
 									AND bdi_whscode = :bdi_whscode
 									AND bdi_ubication = :bdi_ubication
-									AND bdi_lote = :bdi_lote,
+									AND bdi_lote = :bdi_lote
 									AND business = :business";
 
 									$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
@@ -911,48 +918,38 @@ class SalesNc extends REST_Controller
 								}
 
 							}
-
 							if (isset($resCostoCantidad[0])) {
 
-								if ($resCostoCantidad[0]['bdi_quantity'] > 0) {
-
-									$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-									$CantidadNueva =  ($detail['nc1_quantity'] * $CANTUOMSALE);
+								$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+								$CantidadNueva =  ($detail['nc1_quantity'] * $CANTUOMSALE);
 
 
-									$CantidadTotal = ($CantidadActual + $CantidadNueva);
+								$CantidadTotal = ($CantidadActual + $CantidadNueva);
 
-									$sqlUpdateCostoCantidad =  "UPDATE tbdi
-															SET bdi_quantity = :bdi_quantity
-															WHERE  bdi_id = :bdi_id";
+								$sqlUpdateCostoCantidad =  "UPDATE tbdi
+														SET bdi_quantity = :bdi_quantity
+														WHERE  bdi_id = :bdi_id";
 
-									$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+								$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
-										':bdi_quantity' => $CantidadTotal,
-										':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
-									));
+									':bdi_quantity' => $CantidadTotal,
+									':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+								));
 
-									if (is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1) {
-									} else {
-
-										$this->pedeo->trans_rollback();
-
-										$respuesta = array(
-											'error'   => true,
-											'data'    => $resUpdateCostoCantidad,
-											'mensaje'	=> 'No se pudo crear la Nota crédito de clientes'
-										);
-									}
+								if (is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1) {
 								} else {
 
 									$this->pedeo->trans_rollback();
 
 									$respuesta = array(
 										'error'   => true,
-										'data'    => $resCostoCantidad,
-										'mensaje' => 'No hay existencia para el item: ' . $detail['nc1_itemcode']
+										'data'    => $resUpdateCostoCantidad,
+										'mensaje'	=> 'No se pudo crear la Nota crédito de clientes'
 									);
+
+									return $this->response($respuesta);
 								}
+								
 							} else {
 
 								$this->pedeo->trans_rollback();
@@ -963,9 +960,7 @@ class SalesNc extends REST_Controller
 									'mensaje'	=> 'El item no existe en el stock ' . $detail['nc1_itemcode']
 								);
 
-								$this->response($respuesta);
-
-								return;
+								return $this->response($respuesta);
 							}
 
 							//FIN de  Aplicacion del movimiento en stock
@@ -1203,13 +1198,12 @@ class SalesNc extends REST_Controller
 							$unidad = $value->ac1_uncode;
 							$proyecto = $value->ac1_prj_code;
 							$cuenta = $value->ac1_account;
-
+						
 						}else{
 
 
 
 						}
-
 
 					}
 
@@ -1228,9 +1222,10 @@ class SalesNc extends REST_Controller
 
 
 					$ti = $granTotalIngreso;
-
+					
 					switch ($codigoCuentaIngreso) {
 						case 1:
+							
 							$debito = $granTotalIngreso;
 
 							if (trim($Data['vnc_currency']) != $MONEDASYS) {
@@ -1243,7 +1238,7 @@ class SalesNc extends REST_Controller
 
 						case 2:
 							$debito = $granTotalIngreso;
-
+							
 							if (trim($Data['vnc_currency']) != $MONEDASYS) {
 								$ti = ($ti + $granTotalTasaFija);
 								$MontoSysDB = ($ti / $TasaLocSys);
@@ -1254,7 +1249,7 @@ class SalesNc extends REST_Controller
 
 						case 3:
 							$debito = $granTotalIngreso;
-
+							
 							if (trim($Data['vnc_currency']) != $MONEDASYS) {
 								$ti = ($ti + $granTotalTasaFija);
 								$MontoSysDB = ($ti / $TasaLocSys);
@@ -1265,7 +1260,7 @@ class SalesNc extends REST_Controller
 
 						case 4:
 							$debito = $granTotalIngreso;
-
+							
 							if (trim($Data['vnc_currency']) != $MONEDASYS) {
 								$ti = ($ti + $granTotalTasaFija);
 								$MontoSysDB = ($ti / $TasaLocSys);
@@ -1276,7 +1271,7 @@ class SalesNc extends REST_Controller
 
 						case 5:
 							$debito = $granTotalIngreso;
-
+							
 							if (trim($Data['vnc_currency']) != $MONEDASYS) {
 								$ti = ($ti + $granTotalTasaFija);
 								$MontoSysDB = ($ti / $TasaLocSys);
@@ -1287,7 +1282,7 @@ class SalesNc extends REST_Controller
 
 						case 6:
 							$debito = $granTotalIngreso;
-
+							
 							if (trim($Data['vnc_currency']) != $MONEDASYS) {
 								$ti = ($ti + $granTotalTasaFija);
 								$MontoSysDB = ($ti / $TasaLocSys);
@@ -1298,7 +1293,7 @@ class SalesNc extends REST_Controller
 
 						case 7:
 							$debito = $granTotalIngreso;
-
+							
 							if (trim($Data['vnc_currency']) != $MONEDASYS) {
 								$ti = ($ti + $granTotalTasaFija);
 								$MontoSysDB = ($ti / $TasaLocSys);
@@ -1309,7 +1304,7 @@ class SalesNc extends REST_Controller
 
 						case 9:
 							$debito = $granTotalIngreso;
-
+							
 							if (trim($Data['vnc_currency']) != $MONEDASYS) {
 								$ti = ($ti + $granTotalTasaFija);
 								$MontoSysDB = ($ti / $TasaLocSys);
@@ -1318,7 +1313,7 @@ class SalesNc extends REST_Controller
 							}
 							break;
 					}
-
+			
 					if ( $debito > 0 ||  $credito > 0 ) {
 
 						$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
@@ -1391,9 +1386,7 @@ class SalesNc extends REST_Controller
 								'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
 							);
 	
-							$this->response($respuesta);
-	
-							return;
+							return $this->response($respuesta);
 						}
 					}
 				}
@@ -1404,6 +1397,10 @@ class SalesNc extends REST_Controller
 
 				$granTotalIva = 0;
 
+				$VALUE_GIFT_IVA = 0;
+				$VALUE_GIFT_IVA_SYS = 0;
+				$VALUE_GIFT_IVA_ORG = 0;
+
 				foreach ($DetalleConsolidadoIva as $key => $posicion) {
 					$granTotalIva = 0;
 					$granTotalIva2 = 0;
@@ -1412,8 +1409,9 @@ class SalesNc extends REST_Controller
 					$CodigoImp = 0;
 					$LineTotal = 0;
 					$Vat = 0;
-
+		
 					foreach ($posicion as $key => $value) {
+						$valueGift = 0;
 						$granTotalIva = round($granTotalIva + $value->nc1_vatsum, $DECI_MALES);
 
 						$v1 = ($value->nc1_linetotal + ($value->nc1_quantity * $value->nc1_fixrate));
@@ -1424,39 +1422,55 @@ class SalesNc extends REST_Controller
 						$Vat = $value->nc1_vat;
 
 						if ( $value->gift == 1) {
-							array_push($DETALLE_GIFT, array( "monto" => round($value->fv1_vatsum, $DECI_MALES), "item" => $value->nc1_itemcode, "proyecto" =>$value->ac1_prj_code , "centrocosto" =>$value->ac1_prc_code, "unidadnegocio" => $value->ac1_uncode, "whscode" => $value->nc1_whscode ));
-							$VALUE_GIFT =  $granTotalIva;
-							$VALUE_GIFT_IVA =  $granTotalIva;
+
+							array_push($DETALLE_GIFT, array( "monto" => round($value->nc1_vatsum, $DECI_MALES), "item" => $value->nc1_itemcode, "proyecto" =>$value->ac1_prj_code , "centrocosto" =>$value->ac1_prc_code, "unidadnegocio" => $value->ac1_uncode, "whscode" => $value->nc1_whscode ));
+						
+							$VALUE_GIFT_IVA = $VALUE_GIFT_IVA + round($value->nc1_vatsum, $DECI_MALES);
+							
+
 						}
 					}
 
 					$granTotalIvaOriginal = $granTotalIva;
 
+					$VALUE_GIFT_IVA_ORG = $VALUE_GIFT_IVA;
+
 
 
 					if (trim($Data['vnc_currency']) != $MONEDALOCAL) {
 						$granTotalIva = ($granTotalIva * $TasaDocLoc);
+						
+						$VALUE_GIFT_IVA = ($VALUE_GIFT_IVA * $TasaDocLoc);
+						
 						$LineTotal = ($LineTotal * $TasaDocLoc);
 					}
 
-
+					
 
 					$TIva = $granTotalIva2;
 
 					if (trim($Data['vnc_currency']) != $MONEDASYS) {
 						// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
 						$MontoSysDB = ($TIva / $TasaLocSys);
+
+						
+						$VALUE_GIFT_IVA_SYS = ( $VALUE_GIFT_IVA / $TasaLocSys );
+						
+
 					} else {
 						$MontoSysDB = $granTotalIvaOriginal;
+					
+						$VALUE_GIFT_IVA_SYS =  $VALUE_GIFT_IVA_ORG;
+						
 					}
 
 
-					$SumaDebitosSYS = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+					$SumaDebitosSYS = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES) - round( $VALUE_GIFT_IVA_SYS, $DECI_MALES ));
 					$AC1LINE = $AC1LINE + 1;
 
 
-					$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva);
-					$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysDB);
+					$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva) - $VALUE_GIFT_IVA;
+					$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysDB) - $VALUE_GIFT_IVA_SYS;
 
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1521,9 +1535,7 @@ class SalesNc extends REST_Controller
 							'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
 						);
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 				}
 
@@ -1536,7 +1548,7 @@ class SalesNc extends REST_Controller
 					foreach ($posicion as $key => $value) {
 
 						$CUENTASINV = $this->account->getAccountItem($value->nc1_itemcode, $value->nc1_whscode);
-
+						
 						if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
 							$dbito = 0;
 							$cdito = 0;
@@ -1566,9 +1578,7 @@ class SalesNc extends REST_Controller
 									'mensaje'	=> 'No se encontro el costo para el item: ' . $value->nc1_itemcode
 								);
 
-								$this->response($respuesta);
-
-								return;
+								return $this->response($respuesta);
 							}
 						} else {
 							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
@@ -1581,9 +1591,7 @@ class SalesNc extends REST_Controller
 								'mensaje'	=> 'No se encontro la cuenta de inventario y costo para el item ' . $value->nc1_itemcode
 							);
 
-							$this->response($respuesta);
-
-							return;
+							return $this->response($respuesta);
 						}
 					}
 
@@ -1717,9 +1725,7 @@ class SalesNc extends REST_Controller
 							'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
 						);
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 				}
 
@@ -1729,7 +1735,7 @@ class SalesNc extends REST_Controller
 
 
 				// Procedimiento para llenar costo costo
-
+				
 				foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
 					$grantotalCostoCosto = 0;
 					$grantotalCostoCostoOriginal = 0;
@@ -1741,7 +1747,7 @@ class SalesNc extends REST_Controller
 					foreach ($posicion as $key => $value) {
 
 						$CUENTASINV = $this->account->getAccountItem($value->nc1_itemcode, $value->nc1_whscode);
-
+						// print_r($CUENTASINV);exit;
 						if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
 							$dbito = 0;
 							$cdito = 0;
@@ -1782,9 +1788,7 @@ class SalesNc extends REST_Controller
 									'mensaje'	=> 'No se encontro el costo para el item: ' . $value->nc1_itemcode
 								);
 
-								$this->response($respuesta);
-
-								return;
+								return $this->response($respuesta);
 							}
 						} else {
 							// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
@@ -1797,9 +1801,7 @@ class SalesNc extends REST_Controller
 								'mensaje'	=> 'No se encontro la cuenta para el item ' . $value->nc1_itemcode
 							);
 
-							$this->response($respuesta);
-
-							return;
+							return $this->response($respuesta);
 						}
 					}
 
@@ -1935,258 +1937,253 @@ class SalesNc extends REST_Controller
 								'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
 							);
 
-							$this->response($respuesta);
-
-							return;
+							return $this->response($respuesta);
 						}
 					}
 				}
 				//FIN Procedimiento para llenar costo costo
 
 				//Procedimiento para llenar cuentas por cobrar
-
+				$sqlDetailFv = "SELECT * FROM vfv1 WHERE vfv1.fv1_docentry = :fv1_docentry AND vfv1.fv1_itemcode = :fv1_itemcode AND vfv1.fv1_linenum = :fv1_linenum  AND vfv1.fv1_gift = :fv1_gift";
+				$resDetailFV = $this->pedeo->queryTable($sqlDetailFv,array(':fv1_gift' => 0,':fv1_docentry' => $Data['vnc_baseentry'],':fv1_itemcode' => $detail['nc1_itemcode'],':fv1_linenum' => $detail['nc1_baseline']));
 				$TasaIGTF = 0;
+				if(isset($resDetailFV[0])){
+					$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
+															JOIN dmgs  AS f2
+															ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
+															WHERE  f1.dms_card_code = :dms_card_code
+															AND f1.dms_card_type = '1'"; //1 para clientes";
 
-				$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
-														 JOIN dmgs  AS f2
-														 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-														 WHERE  f1.dms_card_code = :dms_card_code
-														 AND f1.dms_card_type = '1'"; //1 para clientes";
+					$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['vnc_cardcode']));
+					
+					if (isset($Data['dvf_igtf']) && $Data['dvf_igtf'] > 0) {
 
-				$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['vnc_cardcode']));
-
-				if (isset($Data['dvf_igtf']) && $Data['dvf_igtf'] > 0) {
-
-					$sqlTasaIGTF = "SELECT COALESCE( get_tax_currency(:moneda, :fecha), 0) AS tasa";
-					$resTasaIGTF = $this->pedeo->queryTable($sqlTasaIGTF, array(
-
-
-						':moneda' => $Data['vnc_currency'],
-						':fecha'  => $Data['vnc_docdate']
-
-					));
-
-					if (isset($resTasaIGTF[0]) && $resTasaIGTF[0]['tasa'] > 0) {
+						$sqlTasaIGTF = "SELECT COALESCE( get_tax_currency(:moneda, :fecha), 0) AS tasa";
+						$resTasaIGTF = $this->pedeo->queryTable($sqlTasaIGTF, array(
 
 
-						$TasaIGTF = $resTasaIGTF[0]['tasa'];
-					} else {
+							':moneda' => $Data['vnc_currency'],
+							':fecha'  => $Data['vnc_docdate']
+
+						));
+
+						if (isset($resTasaIGTF[0]) && $resTasaIGTF[0]['tasa'] > 0) {
 
 
-						$this->pedeo->trans_rollback();
-
-						$respuesta = array(
-							'error'   => true,
-							'data'	  => $resTasaIGTF,
-							'mensaje'	=> 'No se encontro la tasa para el impuesto IGTF'
-						);
-
-						$this->response($respuesta);
-
-						return;
-					}
-				}
-
-				if (isset($rescuentaCxC[0])) {
-
-					$debitoo = 0;
-					$creditoo = 0;
-					$MontoSysDB = 0;
-					$MontoSysCR = 0;
-					$docTotal = 0;
-					$docTotalOriginal = 0;
-					$MontoIGTF = 0;
-					$MontoIGTFSYS = 0;
-
-					if (isset($Data['dvf_igtf']) && $Data['dvf_igtf']  > 0) {
-
-						$MontoIGTF = $Data['dvf_igtf'];
-						$MontoIGTFSYS  = $Data['dvf_igtf'];
-
-
-						if (trim($Data['vnc_currency']) != $MONEDALOCAL) {
-
-							$MontoIGTF = ($MontoIGTF * $TasaDocLoc);
-							$MontoIGTFSYS = ($MontoIGTF / $TasaLocSys);
-						}
-
-						if (trim($Data['vnc_currency']) != $MONEDASYS) {
-
-							$MontoIGTFSYS = ($MontoIGTF / $TasaLocSys);
+							$TasaIGTF = $resTasaIGTF[0]['tasa'];
 						} else {
 
-							$MontoIGTFSYS = $Data['dvf_igtf'];
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resTasaIGTF,
+								'mensaje'	=> 'No se encontro la tasa para el impuesto IGTF'
+							);
+
+							return $this->response($respuesta);
 						}
 					}
 
-					$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
-					$codigo2 = substr($rescuentaCxC[0]['mgs_acct'], 0, 1);
+					if (isset($rescuentaCxC[0])) {
 
-					$MontoIGTFSYS = round(($MontoIGTF / $TasaLocSys), $DECI_MALES);
+						$debitoo = 0;
+						$creditoo = 0;
+						$MontoSysDB = 0;
+						$MontoSysCR = 0;
+						$docTotal = 0;
+						$docTotalOriginal = 0;
+						$MontoIGTF = 0;
+						$MontoIGTFSYS = 0;
 
+						if (isset($Data['dvf_igtf']) && $Data['dvf_igtf']  > 0) {
 
-					if ($codigo2 == 1 || $codigo2 == "1") {
-
-						$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
-						$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
-
-						$creditoo = ($creditoo + $MontoIGTF);
-						$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
-					} else if ($codigo2 == 2 || $codigo2 == "2") {
-
-						$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
-						$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
-
-						$creditoo = ($creditoo + $MontoIGTF);
-						$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
-					} else if ($codigo2 == 3 || $codigo2 == "3") {
-
-						$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
-						$MontoSysCR = ($TOTALCXCSYS + $TOTALCXCSYSIVA);
-
-						$creditoo = ($creditoo + $MontoIGTF);
-						$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
-					} else if ($codigo2 == 4 || $codigo2 == "4") {
-
-						$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
-						$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
-
-						$creditoo = ($creditoo + $MontoIGTF);
-						$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
-					} else if ($codigo2 == 5  || $codigo2 == "5") {
-
-						$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
-						$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+							$MontoIGTF = $Data['dvf_igtf'];
+							$MontoIGTFSYS  = $Data['dvf_igtf'];
 
 
-						$creditoo = ($creditoo + $MontoIGTF);
-						$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
-					} else if ($codigo2 == 6 || $codigo2 == "6") {
+							if (trim($Data['vnc_currency']) != $MONEDALOCAL) {
 
-						$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
-						$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+								$MontoIGTF = ($MontoIGTF * $TasaDocLoc);
+								$MontoIGTFSYS = ($MontoIGTF / $TasaLocSys);
+							}
+
+							if (trim($Data['vnc_currency']) != $MONEDASYS) {
+
+								$MontoIGTFSYS = ($MontoIGTF / $TasaLocSys);
+							} else {
+
+								$MontoIGTFSYS = $Data['dvf_igtf'];
+							}
+						}
+
+						$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
+						$codigo2 = substr($rescuentaCxC[0]['mgs_acct'], 0, 1);
+
+						$MontoIGTFSYS = round(($MontoIGTF / $TasaLocSys), $DECI_MALES);
 
 
-						$creditoo = ($creditoo + $MontoIGTF);
-						$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
-					} else if ($codigo2 == 7 || $codigo2 == "7") {
+						if ($codigo2 == 1 || $codigo2 == "1") {
 
-						$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
-						$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+							$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+							$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+							$creditoo = ($creditoo + $MontoIGTF);
+							$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+						} else if ($codigo2 == 2 || $codigo2 == "2") {
+
+							$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+							$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+							$creditoo = ($creditoo + $MontoIGTF);
+							$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+						} else if ($codigo2 == 3 || $codigo2 == "3") {
+
+							$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+							$MontoSysCR = ($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+							$creditoo = ($creditoo + $MontoIGTF);
+							$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+						} else if ($codigo2 == 4 || $codigo2 == "4") {
+
+							$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+							$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+							$creditoo = ($creditoo + $MontoIGTF);
+							$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+						} else if ($codigo2 == 5  || $codigo2 == "5") {
+
+							$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+							$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
 
-						$creditoo = ($creditoo + $MontoIGTF);
-						$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
-					} else if ($codigo2 == 9 || $codigo2 == "9") {
+							$creditoo = ($creditoo + $MontoIGTF);
+							$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+						} else if ($codigo2 == 6 || $codigo2 == "6") {
 
-						$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
-						$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+							$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+							$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
 
-						$creditoo = ($creditoo + $MontoIGTF);
-						$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
-					}
 
-					if ($creditoo == 0) {
-						$SumaCreditosSYS = ($SumaCreditosSYS + $MontoIGTFSYS);
+							$creditoo = ($creditoo + $MontoIGTF);
+							$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+						} else if ($codigo2 == 7 || $codigo2 == "7") {
+
+							$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+							$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+
+							$creditoo = ($creditoo + $MontoIGTF);
+							$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+						} else if ($codigo2 == 9 || $codigo2 == "9") {
+
+							$creditoo = ($TOTALCXCLOC + $TOTALCXCLOCIVA);
+							$MontoSysCR =	($TOTALCXCSYS + $TOTALCXCSYSIVA);
+
+							$creditoo = ($creditoo + $MontoIGTF);
+							$MontoSysCR =	($MontoSysCR + $MontoIGTFSYS);
+						}
+
+						if ($creditoo == 0) {
+							$SumaCreditosSYS = ($SumaCreditosSYS + $MontoIGTFSYS);
+						} else {
+							$SumaDebitosSYS = ($SumaDebitosSYS + $MontoIGTFSYS);
+						}
+
+
+
+						$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+						$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+
+						$AC1LINE = $AC1LINE + 1;
+
+						$ValorVenDebito = 0;
+
+						//PARA COMPESAR LA NOTA DE CREDITO CON LA FACTURA
+						//SI VIENE DE UN COPIAR FACTURA
+						if ($Data['vnc_basetype'] == 5) {
+							$ValorVenDebito = $creditoo;
+						}
+
+						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+							':ac1_trans_id' => $resInsertAsiento,
+							':ac1_account' => $cuentaCxC,
+							':ac1_debit' => round($debitoo, $DECI_MALES),
+							':ac1_credit' => round($creditoo, $DECI_MALES),
+							':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
+							':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+							':ac1_currex' => 0,
+							':ac1_doc_date' => $this->validateDate($Data['vnc_docdate']) ? $Data['vnc_docdate'] : NULL,
+							':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate']) ? $Data['vnc_duedate'] : NULL,
+							':ac1_debit_import' => 0,
+							':ac1_credit_import' => 0,
+							':ac1_debit_importsys' => 0,
+							':ac1_credit_importsys' => 0,
+							':ac1_font_key' => $resInsert,
+							':ac1_font_line' => 1,
+							':ac1_font_type' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
+							':ac1_accountvs' => 1,
+							':ac1_doctype' => 18,
+							':ac1_ref1' => "",
+							':ac1_ref2' => "",
+							':ac1_ref3' => "",
+							':ac1_prc_code' => NULL,
+							':ac1_uncode' => NULL,
+							':ac1_prj_code' => NULL,
+							':ac1_rescon_date' => NULL,
+							':ac1_recon_total' => 0,
+							':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
+							':ac1_accperiod' => 1,
+							':ac1_close' => 0,
+							':ac1_cord' => 0,
+							':ac1_ven_debit' => round($ValorVenDebito, $DECI_MALES),
+							':ac1_ven_credit' => round($creditoo, $DECI_MALES),
+							':ac1_fiscal_acct' => 0,
+							':ac1_taxid' => 0,
+							':ac1_isrti' => 0,
+							':ac1_basert' => 0,
+							':ac1_mmcode' => 0,
+							':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
+							':ac1_codref' => 1,
+							':ac1_line'   => $AC1LINE,
+							':ac1_base_tax' => 0,
+							':business' => $Data['business'],
+							':branch' 	=> $Data['branch']
+						));
+
+						if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+							// Se verifica que el detalle no de error insertando //
+						} else {
+
+							// si falla algun insert del detalle de la Nota crédito de clientes se devuelven los cambios realizados por la transaccion,
+							// se retorna el error y se detiene la ejecucion del codigo restante.
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resDetalleAsiento,
+								'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
+							);
+
+							return $this->response($respuesta);
+						}
 					} else {
-						$SumaDebitosSYS = ($SumaDebitosSYS + $MontoIGTFSYS);
-					}
 
-
-
-					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
-					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
-
-					$AC1LINE = $AC1LINE + 1;
-
-					$ValorVenDebito = 0;
-
-					//PARA COMPESAR LA NOTA DE CREDITO CON LA FACTURA
-					//SI VIENE DE UN COPIAR FACTURA
-					if ($Data['vnc_basetype'] == 5) {
-						$ValorVenDebito = $creditoo;
-					}
-
-					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-						':ac1_trans_id' => $resInsertAsiento,
-						':ac1_account' => $cuentaCxC,
-						':ac1_debit' => round($debitoo, $DECI_MALES),
-						':ac1_credit' => round($creditoo, $DECI_MALES),
-						':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
-						':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
-						':ac1_currex' => 0,
-						':ac1_doc_date' => $this->validateDate($Data['vnc_docdate']) ? $Data['vnc_docdate'] : NULL,
-						':ac1_doc_duedate' => $this->validateDate($Data['vnc_duedate']) ? $Data['vnc_duedate'] : NULL,
-						':ac1_debit_import' => 0,
-						':ac1_credit_import' => 0,
-						':ac1_debit_importsys' => 0,
-						':ac1_credit_importsys' => 0,
-						':ac1_font_key' => $resInsert,
-						':ac1_font_line' => 1,
-						':ac1_font_type' => is_numeric($Data['vnc_doctype']) ? $Data['vnc_doctype'] : 0,
-						':ac1_accountvs' => 1,
-						':ac1_doctype' => 18,
-						':ac1_ref1' => "",
-						':ac1_ref2' => "",
-						':ac1_ref3' => "",
-						':ac1_prc_code' => NULL,
-						':ac1_uncode' => NULL,
-						':ac1_prj_code' => NULL,
-						':ac1_rescon_date' => NULL,
-						':ac1_recon_total' => 0,
-						':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-						':ac1_accperiod' => 1,
-						':ac1_close' => 0,
-						':ac1_cord' => 0,
-						':ac1_ven_debit' => round($ValorVenDebito, $DECI_MALES),
-						':ac1_ven_credit' => round($creditoo, $DECI_MALES),
-						':ac1_fiscal_acct' => 0,
-						':ac1_taxid' => 0,
-						':ac1_isrti' => 0,
-						':ac1_basert' => 0,
-						':ac1_mmcode' => 0,
-						':ac1_legal_num' => isset($Data['vnc_cardcode']) ? $Data['vnc_cardcode'] : NULL,
-						':ac1_codref' => 1,
-						':ac1_line'   => $AC1LINE,
-						':ac1_base_tax' => 0,
-						':business' => $Data['business'],
-						':branch' 	=> $Data['branch']
-					));
-
-					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-						// Se verifica que el detalle no de error insertando //
-					} else {
-
-						// si falla algun insert del detalle de la Nota crédito de clientes se devuelven los cambios realizados por la transaccion,
-						// se retorna el error y se detiene la ejecucion del codigo restante.
 						$this->pedeo->trans_rollback();
 
 						$respuesta = array(
 							'error'   => true,
 							'data'	  => $resDetalleAsiento,
-							'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
+							'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes, el tercero no tiene cuenta asociada'
 						);
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
-				} else {
-
-					$this->pedeo->trans_rollback();
-
-					$respuesta = array(
-						'error'   => true,
-						'data'	  => $resDetalleAsiento,
-						'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes, el tercero no tiene cuenta asociada'
-					);
-
-					$this->response($respuesta);
-
-					return;
-				}
 				//FIN Procedimiento para llenar cuentas por cobrar
+				}
+					
 
 
 				// SE VALIDA DIFERENCIA POR DECIMALES
@@ -2197,7 +2194,7 @@ class SalesNc extends REST_Controller
 
 				if ($SumaCreditosSYS > $SumaDebitosSYS || $SumaDebitosSYS > $SumaCreditosSYS) {
 
-					$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE business = :business";
+					$sqlCuentaDiferenciaDecimal = "SELECT pge_acc_ajp FROM pgem WHERE pge_id = :business";
 					$resCuentaDiferenciaDecimal = $this->pedeo->queryTable($sqlCuentaDiferenciaDecimal, array(':business' => $Data['business']));
 
 					if (isset($resCuentaDiferenciaDecimal[0]) && is_numeric($resCuentaDiferenciaDecimal[0]['pge_acc_ajp'])) {
@@ -2273,9 +2270,7 @@ class SalesNc extends REST_Controller
 									'mensaje'	=> 'No se pudo registrar la factura de ventas'
 								);
 
-								$this->response($respuesta);
-
-								return;
+								return $this->response($respuesta);
 							}
 						}
 					} else {
@@ -2288,9 +2283,7 @@ class SalesNc extends REST_Controller
 							'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
 						);
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 				}
 				// FIN VALIDACION DIFERENCIA EN DECIMALES
@@ -2327,9 +2320,7 @@ class SalesNc extends REST_Controller
 								'mensaje' => 'Error al insertar el detalle del IGTF'
 							);
 
-							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-							return;
+							return $this->response($respuesta);
 						}
 					}
 
@@ -2429,9 +2420,7 @@ class SalesNc extends REST_Controller
 								'mensaje'	=> 'No se pudo registrar la factura de ventas'
 							);
 
-							$this->response($respuesta);
-
-							return;
+							return $this->response($respuesta);
 						}
 					} else {
 
@@ -2443,9 +2432,7 @@ class SalesNc extends REST_Controller
 							'mensaje'	=> 'No se encontro la cuenta contable para el impuesto IGTF'
 						);
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 				}
 				//
@@ -2502,9 +2489,7 @@ class SalesNc extends REST_Controller
 									'mensaje'	=> 'No se encontro la cuenta parametrizada para el artículo '.$item
 								);
 		
-								$this->response($respuesta);
-		
-								return;
+								return $this->response($respuesta);
 							}
 
 							$montoorig  = $monto;
@@ -2568,8 +2553,8 @@ class SalesNc extends REST_Controller
 								":ac1_line" => $AC1LINE,
 								':ac1_base_tax' => 0,
 								':business' => $Data['business'],
-								':branch' 	=> $Data['branch'],
-								':ac1_codret' => NULL
+								':branch' 	=> $Data['branch']
+								// ':ac1_codret' => 0
 							));
 		
 		
@@ -2588,9 +2573,7 @@ class SalesNc extends REST_Controller
 									'mensaje'	=> 'No se pudo registrar la nota credito de ventas'
 								);
 		
-								$this->response($respuesta);
-		
-								return;
+								return $this->response($respuesta);
 							}
 
 						}
@@ -2630,9 +2613,7 @@ class SalesNc extends REST_Controller
 								'mensaje'	=> 'La valor total de nota credito es mayor a la factura base'
 							);
 
-							$this->response($respuesta);
-
-							return;
+							return $this->response($respuesta);
 						}
 					} else {
 
@@ -2644,9 +2625,7 @@ class SalesNc extends REST_Controller
 							'mensaje'	=> 'No se encontro la factura base'
 						);
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 				}
 
@@ -2668,9 +2647,11 @@ class SalesNc extends REST_Controller
 						':dvf_doctype'  => $Data['vnc_basetype']
 
 					));
-
+					
 					if (is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1) {
+
 					} else {
+
 						$this->pedeo->trans_rollback();
 
 						$respuesta = array(
@@ -2679,9 +2660,7 @@ class SalesNc extends REST_Controller
 							'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura ' . $Data['vnc_baseentry']
 						);
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 				}
 
@@ -2696,60 +2675,59 @@ class SalesNc extends REST_Controller
 					if (trim($Data['vnc_currency']) != $MONEDALOCAL) {
 						$valorAppl = $Data['vnc_doctotal'] * $TasaDocLoc;
 					}
+					$sqlDetailFv = "SELECT * FROM vfv1 WHERE vfv1.fv1_docentry = :fv1_docentry AND vfv1.fv1_itemcode = :fv1_itemcode AND vfv1.fv1_linenum = :fv1_linenum  AND vfv1.fv1_gift = :fv1_gift";
+					$resDetailFV = $this->pedeo->queryTable($sqlDetailFv,array(':fv1_gift' => 0,':fv1_docentry' => $Data['vnc_baseentry'],':fv1_itemcode' => $detail['nc1_itemcode'],':fv1_linenum' => $detail['nc1_baseline']));
+					if(isset($resDetailFV[0])){
+						$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
+																JOIN dmgs  AS f2
+																ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
+																WHERE  f1.dms_card_code = :dms_card_code
+																AND f1.dms_card_type = '1'"; //1 para clientes";
 
-					$sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
-															 JOIN dmgs  AS f2
-															 ON CAST(f2.mgs_id AS varchar(100)) = f1.dms_group_num
-															 WHERE  f1.dms_card_code = :dms_card_code
-															 AND f1.dms_card_type = '1'"; //1 para clientes";
+						$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['vnc_cardcode']));
 
-					$rescuentaCxC = $this->pedeo->queryTable($sqlcuentaCxC, array(":dms_card_code" => $Data['vnc_cardcode']));
+						if (!isset($rescuentaCxC[0])) {
+							$this->pedeo->trans_rollback();
 
-					if (!isset($rescuentaCxC[0])) {
-						$this->pedeo->trans_rollback();
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $rescuentaCxC,
+								'mensaje'	=> 'No se pudo registrar la factura de ventas, el tercero no tiene cuenta asociada'
+							);
 
-						$respuesta = array(
-							'error'   => true,
-							'data'	  => $rescuentaCxC,
-							'mensaje'	=> 'No se pudo registrar la factura de ventas, el tercero no tiene cuenta asociada'
-						);
+							return $this->response($respuesta);
+						}
 
-						$this->response($respuesta);
+						$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
 
-						return;
-					}
+						$slqUpdateVenDebit = "UPDATE mac1
+																			SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+																			WHERE ac1_legal_num = :ac1_legal_num
+																			AND ac1_font_key = :ac1_font_key
+																			AND ac1_font_type = :ac1_font_type
+																			AND ac1_account = :ac1_account";
+						$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
-					$cuentaCxC = $rescuentaCxC[0]['mgs_acct'];
+							':ac1_ven_credit' => $valorAppl,
+							':ac1_legal_num'  => $Data['vnc_cardcode'],
+							':ac1_font_key'   => $Data['vnc_baseentry'],
+							':ac1_font_type'  => $Data['vnc_basetype'],
+							':ac1_account'    => $cuentaCxC
 
-					$slqUpdateVenDebit = "UPDATE mac1
-																		SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
-																		WHERE ac1_legal_num = :ac1_legal_num
-																		AND ac1_font_key = :ac1_font_key
-																		AND ac1_font_type = :ac1_font_type
-																		AND ac1_account = :ac1_account";
-					$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+						));
+						// print_r($resUpdateVenDebit);exit;
+						if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
+						} else {
+							$this->pedeo->trans_rollback();
 
-						':ac1_ven_credit' => $valorAppl,
-						':ac1_legal_num'  => $Data['vnc_cardcode'],
-						':ac1_font_key'   => $Data['vnc_baseentry'],
-						':ac1_font_type'  => $Data['vnc_basetype'],
-						':ac1_account'    => $cuentaCxC
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resUpdateVenDebit,
+								'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura ' . $Data['vnc_baseentry']
+							);
 
-					));
-
-					if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
-					} else {
-						$this->pedeo->trans_rollback();
-
-						$respuesta = array(
-							'error'   => true,
-							'data' => $resUpdateVenDebit,
-							'mensaje'	=> 'No se pudo actualizar el valor del pago en la factura ' . $Data['vnc_baseentry']
-						);
-
-						$this->response($respuesta);
-
-						return;
+							return $this->response($respuesta);
+						}
 					}
 				}
 				//
@@ -2782,9 +2760,7 @@ class SalesNc extends REST_Controller
 						);
 
 
-						$this->response($respuesta);
-
-						return;
+						return $this->response($respuesta);
 					}
 				}
 
@@ -2823,9 +2799,7 @@ class SalesNc extends REST_Controller
 							);
 
 
-							$this->response($respuesta);
-
-							return;
+							return $this->response($respuesta);
 						}
 					}
 				}
@@ -2841,12 +2815,12 @@ class SalesNc extends REST_Controller
 				//SE VALIDA LA CONTABILIDAD CREADA
 				$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
 
-
+				// print_r($validateCont);exit;
 				if (isset($validateCont['error']) && $validateCont['error'] == false) {
 				} else {
 
 					$ressqlmac1 = [];
-					$sqlmac1 = "SELECT acc_name,ac1_account,ac1_debit,ac1_credit FROM  mac1 inner join dacc on ac1_account = acc_code WHERE ac1_trans_id = :ac1_trans_id";
+					$sqlmac1 = "SELECT acc_name,ac1_account,ac1_debit,ac1_credit,ac1_debit_sys,ac1_credit_sys FROM  mac1 inner join dacc on ac1_account = acc_code WHERE ac1_trans_id = :ac1_trans_id";
 					$ressqlmac1['contabilidad'] = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
 		
 
@@ -2858,9 +2832,7 @@ class SalesNc extends REST_Controller
 						'mensaje' => $validateCont['mensaje']
 					);
 
-					$this->response($respuesta);
-
-					return;
+					return $this->response($respuesta);
 				}
 				//
 
@@ -2884,7 +2856,10 @@ class SalesNc extends REST_Controller
 					'data' => $resInsert,
 					'mensaje'	=> 'No se pudo registrar la Nota crédito de clientes'
 				);
+
+				return $this->response($respuesta);
 			}
+
 		} catch (\Exception $e) {
 
 			$this->pedeo->trans_rollback();

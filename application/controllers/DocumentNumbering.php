@@ -426,12 +426,14 @@ class DocumentNumbering extends REST_Controller {
     $Data = $this->get();
 
     $sql = "SELECT
-              pgs_id, 
-              pgs_num_name, 
-              (pgs_nextnum + 1) AS ultimo_numero
-            FROM pgdn
-            WHERE pgs_id_doc_type = :doctype AND business = :business AND branch = :branch
-            ORDER BY pgs_num_name ASC";
+            pgs_id,
+            pgs_num_name,
+            (pgs_nextnum + 1) AS ultimo_numero,
+            CASE WHEN coalesce(pgs_is_due,0) = 1 THEN 1 ELSE 0 END AS is_due,
+            CASE WHEN coalesce(pgs_doc_due_date,'1999-01-01') > current_date THEN 1 ELSE 0 END AS valid_date
+          FROM pgdn
+          WHERE pgs_id_doc_type = :doctype AND business = :business AND branch = :branch
+          ORDER BY pgs_num_name ASC";
 
     $resSql = $this->pedeo->queryTable($sql,array(
       ':doctype' => $Data['doctype'],
@@ -440,25 +442,49 @@ class DocumentNumbering extends REST_Controller {
     ));
 
     if(isset($resSql[0])){
-      $respuesta = array(
-        'error' => false,
-        'data' => $resSql,
-        'mensaje' => 'OK'
-      );
+      $return_data = [];
+
+      foreach ($resSql as $key => $value) {
+        $isDue = $value['is_due'];
+        $isDate = $value['valid_date'];
+        if($isDue){
+          if($isDate){
+            array_push($return_data,$value);
+          }
+          
+        }else{
+          array_push($return_data,$value);
+        }
+      }
+
+      
+      if(isset($return_data) && !empty($return_data)){
+        $respuesta = array(
+          'error' => false,
+          'data' => $return_data,
+          'mensaje' => 'OK'
+        );
+      }else{
+        $respuesta = array(
+          'error' => true,
+          'data' => [],
+          'mensaje' => 'No se encontraron datos en la busqueda'
+        );
+  
+        $this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
+        return;  
+      }
+      
     }else{
       $respuesta = array(
         'error' => true,
         'data' => [],
         'mensaje' => 'No se encontraron datos en la busqueda'
       );
-
-      $this->response($respuesta,  REST_Controller::HTTP_BAD_REQUEST);
-      return;      
     }
 
-    return $this->response($respuesta);
+    $this->response($respuesta);
 
-    
   }
 
 	 private function validateDate($fecha){

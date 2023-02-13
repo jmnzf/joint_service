@@ -257,7 +257,101 @@ class EmployeesSale extends REST_Controller {
          $this->response($respuesta);
   }
 
+  public function createRelationEmployesUser_post()
+  {
+    $Data = $this->post();
+    $respuesta = [];
+    //validar que vengan los datos
+    if(!isset($Data['employed']) or !isset($Data['user'])){
+      $respuesta = array(
+        'error' => true,
+        'data' => [],
+        'mensaje' => 'Informacion invalida'
+      );
+    }
 
+    //validar si la relacion en la empresa existe
+    $sqlValid = "SELECT * FROM treu WHERE reu_user = :reu_user AND business = :business AND reu_status = 1";
+    $resValid = $this->pedeo->queryTable($sqlValid,array(
+      ':reu_user' => $Data['user'],
+      ':business' => $Data['business']
+    ));
 
+    if(isset($resValid[0])){
+      $this->pedeo->trans_begin();
+      $update = "UPDATE treu SET reu_status = :reu_status WHERE reu_id = :reu_id";
+      $resUpdate = $this->pedeo->updateRow($update,array(
+        ':reu_status' => 0,
+        ':reu_id' => $resValid[0]['reu_id']
+      ));
+
+      if(is_numeric($resUpdate) && $resUpdate > 0){
+        //proceso para insertar el nuevo dato
+        $insert = "INSERT INTO treu(reu_employed,reu_user,reu_status,business) VALUES(:reu_employed,:reu_user,:reu_status,:business)";
+        $resInsert = $this->pedeo->insertRow($insert,array(
+          ':reu_employed' => $Data['employed'],
+          ':reu_user' => $Data['user'],
+          ':reu_status' => 1,
+          ':business' => $Data['business']
+        ));
+
+        if(is_numeric($resInsert) && $resInsert > 0){
+          $respuesta = array(
+            'error' => false,
+            'data' => $resInsert,
+            'mensaje' => 'Empleado de ventas asignado con exito'
+          );
+
+        }else{
+          $this->pedeo->trans_rollback();
+          $respuesta = array(
+            'error' => true,
+            'data' => $resInsert,
+            'mensaje' => 'No se pudo asignar el empleado de venta'
+          );
+          return $this->response($respuesta,REST_Controller::HTTP_BAD_REQUEST);
+        }
+      }else{
+        $this->pedeo->trans_rollback();
+          $respuesta = array(
+            'error' => true,
+            'data' => $resInsert,
+            'mensaje' => 'No se pudo asignar el empleado de venta'
+          );
+          return $this->response($respuesta,REST_Controller::HTTP_BAD_REQUEST);
+      }
+      $this->pedeo->trans_commit();
+    }else{
+        //proceso para insertar el nuevo dato
+        $this->pedeo->trans_begin();
+        $insert = "INSERT INTO treu(reu_employed,reu_user,reu_status,business) VALUES(:reu_employed,:reu_user,:reu_status,:business)";
+        $resInsert = $this->pedeo->insertRow($insert,array(
+          ':reu_employed' => $Data['employed'],
+          ':reu_user' => $Data['user'],
+          ':reu_status' => 1,
+          ':business' => $Data['business']
+        ));
+
+        if(is_numeric($resInsert) && $resInsert > 0){
+          $respuesta = array(
+            'error' => false,
+            'data' => $resInsert,
+            'mensaje' => 'Empleado de ventas asignado con exito'
+          );
+
+        }else{
+          $this->pedeo->trans_rollback();
+          $respuesta = array(
+            'error' => true,
+            'data' => $resInsert,
+            'mensaje' => 'No se pudo asignar el empleado de venta'
+          );
+          return $this->response($respuesta,REST_Controller::HTTP_BAD_REQUEST);
+      }
+      $this->pedeo->trans_commit();
+    }
+
+    $this->response($respuesta);
+  }
 
 }

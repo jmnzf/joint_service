@@ -1245,6 +1245,27 @@ class AccountingAccent extends REST_Controller
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
+											and dacc.acc_enabled = 1
+											--- LEGALIZACION DE GASTO
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											tblg.blg_docnum as numero_origen,
+											tblg.blg_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(tblg.blg_currency,tblg.blg_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join tblg
+											on tblg.blg_doctype = mac1.ac1_font_type
+											and tblg.blg_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
 											and dacc.acc_enabled = 1";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
@@ -1305,6 +1326,7 @@ class AccountingAccent extends REST_Controller
 		when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
 		when coalesce(t0.mac_base_type,0) = 22 then t17.crc_currency
 		when coalesce(t0.mac_base_type,0) = 26 then t18.iri_currency
+		when coalesce(t0.mac_base_type,0) = 37 then t19.blg_currency
 		end  as currency,
 		case
 		when coalesce(t0.mac_base_type,0) = 3 then get_tax_currency(t1.vem_currency,t1.vem_docdate)
@@ -1324,6 +1346,7 @@ class AccountingAccent extends REST_Controller
 		when coalesce(t0.mac_base_type,0) = 20 then get_tax_currency(t9.bpr_currency,t9.bpr_docdate)
 		when coalesce(t0.mac_base_type,0) = 22 then get_tax_currency(t17.crc_currency,t17.crc_docdate)
 		when coalesce(t0.mac_base_type,0) = 26 then get_tax_currency(t18.iri_currency,t18.iri_docdate)
+		when coalesce(t0.mac_base_type,0) = 37 then get_tax_currency(t19.blg_currency,t19.blg_docdate)
 		end  as tsa_value
 		from tmac t0
 		LEFT JOIN dvem t1 ON t0.mac_base_entry = t1.vem_docentry AND t0.mac_base_type= t1.vem_doctype
@@ -1344,6 +1367,7 @@ class AccountingAccent extends REST_Controller
 		LEFT JOIN tasa t16 ON t0.mac_doc_date = t16.tsa_date and t0.mac_currency = t16.tsa_currd
 		LEFT JOIN dcrc t17 ON t0.mac_base_entry = t17.crc_docentry AND t0.mac_base_type= t17.crc_doctype
 		LEFT JOIN diri t18 ON t0.mac_base_entry = t18.iri_docentry AND t0.mac_base_type= t18.iri_doctype
+		LEFT JOIN tblg t19 ON t0.mac_base_entry = t19.blg_docentry AND t0.mac_base_type= t19.blg_doctype
 		WHERE t0.mac_base_type = :mac_base_type
 		AND t0.mac_base_entry = :mac_base_entry";
 

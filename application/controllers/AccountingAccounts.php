@@ -151,16 +151,21 @@ class AccountingAccounts extends REST_Controller {
       }
 
       //VALIDAR SI LA CUENTA A EDITAR TIENE MOVIEMIENTOS
-      $sqlValidBalance = "SELECT sum(mac1.ac1_debit + mac1.ac1_credit) as saldo FROM mac1 WHERE mac1.ac1_account = :ac1_account";
-      $resValidBalance = $this->pedeo->queryTable($sqlValidBalance,array(':ac1_account' => $Data['acc_code']));
-
-      if(isset($resValidBalance[0]) && is_numeric($resValidBalance[0]['saldo']) && $resValidBalance[0]['saldo'] <> 0){
+      $sqlAccount = "SELECT dacc.acc_code as cuenta FROM dacc WHERE dacc.acc_id = :acc_id";//CONSULTAR CODIGO DE CUENTA EN CASO DADO SEA MODIFICADA
+      $resAccount = $this->pedeo->queryTable($sqlAccount,array(':acc_id' => $Data['acc_id']));//OBTENER DATOS DE CONSULTA
+      $cuenta = isset($resAccount[0]) ? $resAccount[0]['cuenta'] : NULL;//ASIGNAR VALOR AL RETORNO DE LA CONSULTA
+      //CONSULTA PARA OBTENER EL SALDO DE LA CUENTA A MODIFICAR
+      $sqlValidBalance = "SELECT abs(sum(mac1.ac1_debit + mac1.ac1_credit)) as saldo FROM mac1 INNER JOIN dacc ON mac1.ac1_account = dacc.acc_code WHERE dacc.acc_id = :acc_id HAVING abs(sum(mac1.ac1_debit + mac1.ac1_credit)) > 0";
+      //OBTENER REGISTROS
+      $resValidBalance = $this->pedeo->queryTable($sqlValidBalance,array(':acc_id' => $Data['acc_id']));
+      //VALIDAR SI LA CONSULTA RETRONA UN DATO
+      if(isset($resValidBalance[0])){
         $respuesta = array(
           'error' => true,
           'data' => [],
-          'mensaje' => 'No se puede actualizar la cuenta # '.$Data['acc_code'].', ya que tiene transacciones realizadas'
+          'mensaje' => 'No se puede actualizar la cuenta # '.$cuenta.', ya que tiene transacciones realizadas'
         );
-
+        //RETORNAR MENSAJE
         return $this->response($respuesta,REST_Controller::HTTP_BAD_REQUEST);
       }
 
