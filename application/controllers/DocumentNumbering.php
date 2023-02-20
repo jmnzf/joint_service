@@ -430,7 +430,8 @@ class DocumentNumbering extends REST_Controller {
             pgs_num_name,
             (pgs_nextnum + 1) AS ultimo_numero,
             CASE WHEN coalesce(pgs_is_due,0) = 1 THEN 1 ELSE 0 END AS is_due,
-            CASE WHEN coalesce(pgs_doc_due_date,'1999-01-01') > current_date THEN 1 ELSE 0 END AS valid_date
+            CASE WHEN coalesce(pgs_doc_due_date,'1999-01-01') > current_date THEN 1 ELSE 0 END AS valid_date,
+            pgs_doc_pre
           FROM pgdn
           WHERE pgs_id_doc_type = :doctype AND business = :business AND branch = :branch
           ORDER BY pgs_num_name ASC";
