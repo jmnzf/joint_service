@@ -9,7 +9,7 @@ class Params extends REST_Controller {
 
 	private $pdo;
 
-  public function __construct(){
+  	public function __construct(){
 
 		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
 		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
@@ -18,11 +18,11 @@ class Params extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
 
 	}
 
-  public function getParams_get(){
+  	public function getParams_get(){
 	  $sqlSelect = "SELECT * FROM params";
 
 	  $resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -97,7 +97,7 @@ class Params extends REST_Controller {
 	}
 
 
-  public function setParams_post(){
+ 	public function setParams_post(){
       $Data = $this->post();
       $cm = 0;
 
@@ -137,7 +137,7 @@ class Params extends REST_Controller {
       }
     }
 
-  public function updateParams_post(){
+  	public function updateParams_post(){
       $Data = $this->post();
       if( !isset($Data['main_folder']) OR !isset($Data['fixrate'])){
 
@@ -181,11 +181,11 @@ class Params extends REST_Controller {
 
       }
 
-     $this->response($respuesta);
+    	 $this->response($respuesta);
 
-  }
+  	}
 
-  public function getMainFolder_get(){
+ 	public function getMainFolder_get(){
 
 		$sqlSelect = "SELECT main_folder FROM params";
 
@@ -208,5 +208,106 @@ class Params extends REST_Controller {
 				}
 
 		 $this->response($respuesta);
+	}
+
+	public function setConfigDt_post() {
+
+		$Data = $this->post();
+
+		if( !isset($Data['cdt_config']) OR !isset($Data['cdt_user']) OR !isset($Data['cdt_modulo']) ){
+
+			$respuesta = array(
+			  'error' => true,
+			  'data'  => array(),
+			  'mensaje' =>'La informacion enviada no es valida'
+			);
+	
+			$this->response($respuesta);
+	
+			return;
+		}
+
+		$this->pedeo->deleteRow('DELETE FROM tcdt WHERE cdt_user = :cdt_user AND cdt_modulo = :cdt_modulo ', array(
+			':cdt_user'   => $Data['cdt_user'], 
+			':cdt_modulo' => $Data['cdt_modulo']
+		));
+
+
+		$sqlInsert = "INSERT INTO tcdt(cdt_config, cdt_user, cdt_modulo)VALUES (:cdt_config, :cdt_user, :cdt_modulo)";
+		
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+			
+			':cdt_config' => $Data['cdt_config'], 
+			':cdt_user'   => $Data['cdt_user'], 
+			':cdt_modulo' => $Data['cdt_modulo']
+		));
+
+
+		if ( is_numeric($resInsert) && $resInsert > 0 ){
+
+			
+			$respuesta = array(
+				'error'   => false,
+				'data'	  => [],
+				'mensaje' => 'Configuración guardada con exito'
+			);
+
+		}else{
+
+			$respuesta = array(
+				'error'   => true,
+				'data'	  => $resInsert,
+				'mensaje' => 'No se pudo guardar la configuración'
+			);
+		}
+
+		$this->response($respuesta);
+
+	}
+
+
+	public function getConfigDt_post(){
+
+		$Data = $this->post();
+
+		if( !isset($Data['cdt_user']) OR !isset($Data['cdt_modulo']) ){
+
+			$respuesta = array(
+			  'error' => true,
+			  'data'  => array(),
+			  'mensaje' =>'La informacion enviada no es valida'
+			);
+	
+			$this->response($respuesta);
+	
+			return;
+		}
+
+		$sqlSelect = "SELECT * FROM tcdt WHERE cdt_user = :cdt_user AND cdt_modulo = :cdt_modulo";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':cdt_user'   => $Data['cdt_user'], 
+			':cdt_modulo' => $Data['cdt_modulo']
+		));
+
+			if(isset($resSelect[0])){
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $resSelect,
+					'mensaje' => ''
+				);
+
+			}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+			}
+
+		$this->response($respuesta);
 	}
 }
