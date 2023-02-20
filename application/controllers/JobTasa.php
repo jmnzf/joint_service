@@ -4,11 +4,11 @@
 // BUSCA TODAS LAS TASAS Y LA INSERTA CON LA FECHA DE ACTUAL
 defined('BASEPATH') OR exit('No direct script access allowed');
 // require_once(APPPATH."/controllers/Lote.php");
-require_once(APPPATH.'/libraries/REST_Controller.php');
-use Restserver\libraries\REST_Controller;
+require_once(APPPATH.'/controllers/Tasa.php');
+// use Restserver\libraries\REST_Controller;
 
 
-class JobTasa extends REST_Controller {
+class JobTasa extends Tasa {
 
 	private $pdo;
 	private $controller;
@@ -23,79 +23,67 @@ class JobTasa extends REST_Controller {
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     	$this->load->library('pedeo', [$this->pdo]);
+		// $this->load->controller('Tasa');
 
 	}
 
-	public function setTasa_put(){
+	public function setTasa_post(){
 
-	    $sql = "SELECT tsa_curro,tsa_value,tsa_currd
-							FROM tasa
-							WHERE tsa_date = CAST(CURRENT_DATE  - CAST('1 days' AS INTERVAL) AS DATE)";
+		// $data = $this->post();
+		$curl = curl_init();
 
-			$resSql = $this->pedeo->queryTable($sql, array());
+		
 
-			if(isset($resSql[0])){
+		curl_setopt_array($curl, array(
+		CURLOPT_URL => 'https://www.superfinanciera.gov.co/SuperfinancieraWebServiceTRM/TCRMServicesWebService/TCRMServicesWebService?wsdl',
+		CURLOPT_RETURNTRANSFER => true,
+		CURLOPT_ENCODING => '',
+		CURLOPT_MAXREDIRS => 10,
+		CURLOPT_TIMEOUT => 0,
+		CURLOPT_FOLLOWLOCATION => true,
+		CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+		CURLOPT_CUSTOMREQUEST => 'POST',
+		CURLOPT_POSTFIELDS =>'<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+		xmlns:act="http://action.trm.services.generic.action.superfinanciera.nexura.sc.com.co/">
+		<soapenv:Header/>
+		<soapenv:Body>
+		<act:queryTCRM>
+		</act:queryTCRM>
+		</soapenv:Body>
+		</soapenv:Envelope>',
+		CURLOPT_HTTPHEADER => array(
+			'Content-Type: text/xml'
+		),
+		));
 
-				$this->pedeo->trans_begin();
+		$response = curl_exec($curl);
 
-				foreach ($resSql as $key => $value) {
+		$xml = preg_replace("/(<\/?)(\w+):([^>]*>)/", '$1$2$3', $response);
+		$xml = simplexml_load_string($xml);
+		$json = json_encode($xml);
+		$responseArray = json_decode($json,true);
 
-							// $sqlInsert = "INSERT INTO tasa(tsa_eq, tsa_curro, tsa_value, tsa_currd, tsa_date, tsa_createby)
-							// 							VALUES (:tsa_eq, :tsa_curro, :tsa_value, :tsa_currd, :tsa_date, :tsa_createby)";
+		curl_close($curl);
 
+		if(isset($responseArray) && !empty($responseArray)){
 
-							// $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-							// 				':tsa_eq'    =>  1,
-							// 				':tsa_curro' => $value['tsa_curro'],
-							// 				':tsa_value' => $value['tsa_value'],
-							// 				':tsa_currd' => $value['tsa_currd'],
-							// 				':tsa_createby' => 'system',
-							// 				':tsa_date'  => date('Y-m-d')
-							// ));
+			foreach ($responseArray as $key => $value) {
 
-							// if(is_numeric($resInsert) && $resInsert > 0 ){
+				$data  = array(
+					'tsa_eq' => 1,
+					'tsa_curro' => 'USD',
+					// 'tsa_currd' => $value['ns2queryTCRMResponse']['return']['unit'],
+					// 'tsa_value' => $value['ns2queryTCRMResponse']['return']['value'],
+					// 'tsa_createby' => 'system',
+					// 'tsa_date' => date('Y-m-d'),
+					// 'tsa_enabled' => 1
+				);
 
+				$_POST['tsa_curro'] = 'USD';
+				self::createTasa_post($_POST);
 
-
-							// }else{
-
-							// 			$this->pedeo->trans_rollback();
-
-							// 			$respuesta = array(
-							// 				'error'   => true,
-							// 				'data' => array(),
-							// 				'mensaje'	=> 'No se pudo registrar la tasa'
-							// 			);
-
-							// 			$this->response($respuesta);
-
-							// 			return;
-
-							// }
-				}
-
-
-
-				$this->pedeo->trans_commit();
-
-				// $respuesta = array(
-				// 'error' => false,
-				// 'data' => $resInsert,
-				// 'mensaje' =>'Proeso finalizado con exito'
-				// );
-
-
-		}else{
-
-			$respuesta = array(
-			'error' => true,
-			'data' => [],
-			'mensaje' =>'no se encontraron tasas anteriores'
-			);
-
+			}
 		}
-
-			$this->response($respuesta);
 	}
 
 	public function getMetodos_post(){
@@ -103,8 +91,6 @@ class JobTasa extends REST_Controller {
 		// $controller = new lote();
 
 		// $respuesta = $controller->validateDate('2022-11-01');
-
-		
 
 		$this->response($respuesta);
 	}

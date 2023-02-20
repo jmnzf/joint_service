@@ -262,7 +262,7 @@ class EmployeesSale extends REST_Controller {
     $Data = $this->post();
     $respuesta = [];
     //validar que vengan los datos
-    if(!isset($Data['employed']) or !isset($Data['user'])){
+    if(!isset($Data['asg_employed']) or !isset($Data['asg_user'])){
       $respuesta = array(
         'error' => true,
         'data' => [],
@@ -273,7 +273,7 @@ class EmployeesSale extends REST_Controller {
     //validar si la relacion en la empresa existe
     $sqlValid = "SELECT * FROM treu WHERE reu_user = :reu_user AND business = :business AND reu_status = 1";
     $resValid = $this->pedeo->queryTable($sqlValid,array(
-      ':reu_user' => $Data['user'],
+      ':reu_user' => $Data['asg_user'],
       ':business' => $Data['business']
     ));
 
@@ -289,8 +289,8 @@ class EmployeesSale extends REST_Controller {
         //proceso para insertar el nuevo dato
         $insert = "INSERT INTO treu(reu_employed,reu_user,reu_status,business) VALUES(:reu_employed,:reu_user,:reu_status,:business)";
         $resInsert = $this->pedeo->insertRow($insert,array(
-          ':reu_employed' => $Data['employed'],
-          ':reu_user' => $Data['user'],
+          ':reu_employed' => $Data['asg_employed'],
+          ':reu_user' => $Data['asg_user'],
           ':reu_status' => 1,
           ':business' => $Data['business']
         ));
@@ -326,8 +326,8 @@ class EmployeesSale extends REST_Controller {
         $this->pedeo->trans_begin();
         $insert = "INSERT INTO treu(reu_employed,reu_user,reu_status,business) VALUES(:reu_employed,:reu_user,:reu_status,:business)";
         $resInsert = $this->pedeo->insertRow($insert,array(
-          ':reu_employed' => $Data['employed'],
-          ':reu_user' => $Data['user'],
+          ':reu_employed' => $Data['asg_employed'],
+          ':reu_user' => $Data['asg_user'],
           ':reu_status' => 1,
           ':business' => $Data['business']
         ));

@@ -121,71 +121,67 @@ class Helpers extends REST_Controller {
     $this->response($respuesta);
 }
 
-  // OBTENER DATOS DE EMPLEADO DE DEPARTAMENTO DE VENTA
-  public function getVendorData_post(){
+ // OBTENER DATOS DE EMPLEADO DE DEPARTAMENTO DE VENTA
+ public function getVendorData_post(){
 
-    $Data = $this->post();
+  $Data = $this->post();
 
-    if(!isset($Data['mev_id']) or
-      !isset($Data['business'])){
+  if(!isset($Data['mev_id']) or
+    !isset($Data['business'])){
+
+    $respuesta = array(
+      'error' => true,
+      'data'  => array(),
+      'mensaje' =>'El empleado del departamento de venta NO EXISTE'
+    );
+
+    $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+    return;
+  }
+
+      $sqlSelect = "SELECT distinct
+                        v.mev_id,
+                        v.mev_prc_code,
+                        v.mev_dpj_pj_code,
+                        v.mev_dun_un_code,
+                        v.mev_whs_code,
+                        w.dws_code,
+                        d.dpj_pj_code,
+                        d2.dun_un_code,
+                        d3.dcc_prc_code
+                    FROM treu u
+                    inner join dmev v on u.reu_employed = v.mev_id and v.business = :business
+                    inner join dmws w on v.mev_whs_code = w.dws_code and w.business = :business
+                    inner join dmpj d on v.mev_dpj_pj_code = d.dpj_pj_code and d.business = :business
+                    inner join dmun d2 on v.mev_dun_un_code = d2.dun_un_code and d2.business = :business
+                    inner join dmcc d3 on v.mev_prc_code = d3.dcc_prc_code and d3.business = :business
+                    where u.reu_user = :iduservendor and u.reu_status = 1";
+                    
+  $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+    ':iduservendor'=> $Data['mev_id'],
+    ':business' => $Data['business']
+  ));
+
+  if(isset($resSelect[0])){
+
+    $respuesta = array(
+      'error' => false,
+      'data'  => $resSelect,
+      'mensaje' => '');
+
+  }else{
 
       $respuesta = array(
-        'error' => true,
-        'data'  => array(),
-        'mensaje' =>'El empleado del departamento de venta NO EXISTE'
+        'error'   => true,
+        'data' => array(),
+        'mensaje'	=> 'busqueda sin resultados'
       );
 
-      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+  }
 
-      return;
-    }
-
-				$sqlSelect = "SELECT
-                          v.mev_id,
-                          v.mev_prc_code,
-                          v.mev_dpj_pj_code,
-                          v.mev_dun_un_code,
-                          v.mev_whs_code,
-                          w.dws_code,
-                          d.dpj_pj_code,
-                          d2.dun_un_code,
-                          d3.dcc_prc_code
-                      FROM pgus u
-                      inner join dmev v on u.pgu_id_vendor = v.mev_id and v.business = :business
-                      inner join dmws w on v.mev_whs_code = w.dws_code and w.business = :business
-                      inner join dmpj d on v.mev_dpj_pj_code = d.dpj_pj_code and d.business = :business
-                      inner join dmun d2 on v.mev_dun_un_code = d2.dun_un_code and d2.business = :business
-                      inner join dmcc d3 on v.mev_prc_code = d3.dcc_prc_code and d3.business = :business
-                      where u.pgu_id_usuario = :iduservendor";
-
-  
-
-
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array(
-      ':iduservendor'=> $Data['mev_id'],
-      ':business' => $Data['business']
-    ));
-
-    if(isset($resSelect[0])){
-
-      $respuesta = array(
-        'error' => false,
-        'data'  => $resSelect,
-        'mensaje' => '');
-
-    }else{
-
-        $respuesta = array(
-          'error'   => true,
-          'data' => array(),
-          'mensaje'	=> 'busqueda sin resultados'
-        );
-
-    }
-
-    $this->response($respuesta);
+  $this->response($respuesta);
 }
-
 // OBTENER SERIE VENDEDOR
 public function getVendorSerie_post(){
 

@@ -521,6 +521,212 @@ class PriceList extends REST_Controller
 		$this->response($respuesta);
 	}
 
+	// ACTUALIZAR MASIVAMENTE LAS LISTA DE PRECIOS
+	//ACTUALIZAR LISTA DE PRECIOS
+	public function updatePriceListMs_post()
+	{
+
+		$Data = $this->post();
+	
+	
+		$sqlPL = " SELECT * FROM  dmpl WHERE business = :business AND branch = :branch";
+		$resPL = $this->pedeo->queryTable($sqlPL, array(
+			':business' => $Data['business'],
+			':branch'   => $Data['branch']
+		));
+		
+		if ( !isset($resPL[0]) ){
+
+			$respuesta = array(
+				'error'     => true,
+				'data' 		=> $resPL,
+				'mensaje'	=> ' El articulo fue creado, pero no hay listas de precio disponibles'
+			);
+
+			$this->response($respuesta);
+
+			return;
+		}
+
+		$this->pedeo->trans_begin();
+
+		try {
+
+			
+			foreach ($resPL as $key => $list) {
+
+				// $this->pedeo->queryTable("DELETE FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list",array(':pl1_id_price_list' => $list['dmlp_id']));
+
+				// SE BUSCAN LOS PRODUCTOS
+				// INVENTARIABLES
+				$sqlProductos = "SELECT dma_item_code, dma_price, dmar.dma_item_name FROM dmar
+									WHERE dmar.dma_enabled = :dma_enabled
+									AND dma_item_sales = :dma_item_sales
+									AND dma_item_inv = :dma_item_inv
+									AND dma_item_code NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
+									GROUP BY dma_item_code, dma_price, dmar.dma_item_name";
+
+
+				$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', ':dma_item_inv' => '1', ':pl1_id_price_list' => $list['dmlp_id']));
+
+				// NO INVENTARIABLES
+				$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo,dma_price
+				FROM dmar
+				WHERE dma_item_sales = :dma_item_sales
+				AND dma_enabled = :dma_enabled
+				AND dma_item_code NOT IN (SELECT pl1_item_code FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list)
+				AND dma_item_inv = :dma_item_inv";
+
+				$resProductosNinv = $this->pedeo->queryTable($sqlProductosNinv, array(':dma_item_sales' => '1', ':dma_enabled' => 1, ':dma_item_inv' => '0', ':pl1_id_price_list' => $list['dmlp_id']));
+
+
+
+				$sqlDetail = "INSERT INTO mpl1(pl1_id_price_list, pl1_item_code, pl1_item_name, pl1_profit, pl1_price)
+						VALUES(:pl1_id_price_list, :pl1_item_code, :pl1_item_name, :pl1_profit, :pl1_price)";
+
+				
+				if (isset($resProductos[0])) {
+
+					$BaseList = isset($list['dmlp_baselist']) ? $list['dmlp_baselist'] : 0;
+					$Precio = 0;
+
+					foreach ($resProductos as $key => $prod) {
+						$Precio = 0;
+
+						if ($BaseList == "0" || $BaseList == 0) {
+
+							$valor = is_numeric($prod['dma_price']) ? $prod['dma_price'] : 0;
+							$porcent = 0;
+							$subtt = 0;
+
+							$valorProfit = isset($list['dmlp_profit']) ? $list['dmlp_profit'] : 0;
+
+							if ($valorProfit > 0) {
+								$porcent = ($valorProfit / 100);
+								$subtt = ($valor * $porcent);
+							}
+
+							$Precio = ($subtt + $valor);
+						} else {
+
+							$res = $this->getPrecio($prod['dma_item_code'], $BaseList);
+							if (isset($res[0]['pl1_price'])) {
+								$valor = $res[0]['pl1_price'];
+								$porcent = 0;
+								$subtt = 0;
+
+								$valorProfit = isset($list['dmlp_profit']) ? $list['dmlp_profit'] : 0;
+
+								if ($valorProfit > 0) {
+									$porcent = ($valorProfit / 100);
+									$subtt = ($valor * $porcent);
+								}
+
+
+								$Precio = ($subtt + $valor);
+							} else {
+
+								$Precio = 0;
+							}
+						}
+
+						$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
+
+							':pl1_id_price_list' => $list['dmlp_id'],
+							':pl1_item_code' => $prod['dma_item_code'],
+							':pl1_item_name' => $prod['dma_item_name'],
+							':pl1_profit' => $list['dmlp_profit'],
+							':pl1_price' => $Precio
+						));
+
+						if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
+						} else {
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' 		=> $resInsertDetail,
+								'mensaje'	=> 'No se pudo actualizar la lista'
+							);
+
+							$this->response($respuesta);
+
+							return;
+						}
+					}
+				}
+
+				if (isset($resProductosNinv[0])) {
+
+					$BaseList = isset($list['dmlp_baselist']) ? $list['dmlp_baselist'] : 0;
+					$Precio = 0;
+
+					foreach ($resProductosNinv as $key => $prod) {
+
+						$Precio = is_numeric($prod['dma_price']) ? $prod['dma_price'] : 0;
+
+						$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
+
+							':pl1_id_price_list' => $list['dmlp_id'],
+							':pl1_item_code' => $prod['dma_item_code'],
+							':pl1_item_name' => $prod['dma_item_name'],
+							':pl1_profit' => $list['dmlp_profit'],
+							':pl1_price' => $Precio
+						));
+
+
+						if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
+						} else {
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' 		=> $resInsertDetail,
+								'mensaje'	=> 'No se pudo registrar la lista'
+							);
+
+							$this->response($respuesta);
+
+							return;
+						}
+					}
+				}
+
+				
+			}
+	
+			
+			$this->pedeo->trans_commit();
+
+			$respuesta = array(
+				'error' => false,
+				'data' => [],
+				'mensaje' => 'El articulo fue creado, y todas las listas de precio fueron actualizadas'
+			);
+			
+
+
+		} catch (\Exception $e) {
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error'   => true,
+				'data'    => $e,
+				'mensaje'	=> 'No se pudo actualizar las listas de precio'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+
+
+		$this->response($respuesta);
+	}
+
 
 	// OBTENER LISTA DE PRECIOS
 	public function getPriceList_get()

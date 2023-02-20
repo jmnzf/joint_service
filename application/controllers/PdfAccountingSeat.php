@@ -30,13 +30,12 @@ class PdfAccountingSeat extends REST_Controller {
 
 
 	public function PdfAccountingSeat_post(){
-				$DECI_MALES =  $this->generic->getDecimals();
+		$DECI_MALES =  $this->generic->getDecimals();
         $Data = $this->post();
-				$Data = $Data['mac_trans_id'];
+		$Data = $Data['mac_trans_id'];
 
-				$formatter = new NumeroALetras();
+		$formatter = new NumeroALetras();
 
-				// $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch']);
         $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','orientation' => 'L']);
 
 				//RUTA DE CARPETA EMPRESA
@@ -75,7 +74,6 @@ class PdfAccountingSeat extends REST_Controller {
 				}
 
 				$sqlcotizacion = "SELECT  DISTINCT
-									--row_number() over (order by t1.ac1_trans_id )   CONTEO,
 									t0.mac_trans_id,
 									t0.mac_doc_num,
 									t0.mac_doc_date,
@@ -166,7 +164,7 @@ class PdfAccountingSeat extends REST_Controller {
 								where t0.mac_trans_id = :mac_trans_id";
 
 				$contenidoOC = $this->pedeo->queryTable($sqlcotizacion,array(':mac_trans_id'=>$Data));
-// print_r($sqlcotizacion);exit();die();
+
 				if(!isset($contenidoOC[0])){
 						$respuesta = array(
 							 'error' => true,
@@ -178,15 +176,15 @@ class PdfAccountingSeat extends REST_Controller {
 
 						return;
 				}
-				// print_r($contenidoOC);exit();die();
+
 
 				$consecutivo = '';
 
-				// if($contenidoOC[0]['pgs_mpfn'] == 1){
+				if($contenidoOC[0]['pgs_mpfn'] == 1){
 					$consecutivo = $contenidoOC[0]['mac_doc_num'];
-				// }else{
+				}else{
 					$consecutivo = $contenidoOC[0]['mac_doc_num'];
-				// }
+				}
 
 
 				$totaldetalle = '';
@@ -248,10 +246,9 @@ class PdfAccountingSeat extends REST_Controller {
             </th>
         </tr>
 
-</table>
-        ';
+	</table>';
 
-				$footer = '
+	$footer = '
         <table width="100%" style="vertical-align: bottom; font-family: serif;
             font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
             <tr>

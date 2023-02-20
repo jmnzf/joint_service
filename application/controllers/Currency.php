@@ -46,13 +46,47 @@ class Currency extends REST_Controller {
         return;
       }
 
+	  $validCur = "SELECT * FROM pgec WHERE pgm_symbol = :pgm_symbol";
+	  $resCur = $this->pedeo->queryTable($validCur,array(
+		':pgm_symbol' => strtoupper($DataCurrency['Pgm_Symbol'])
+	  ));
+
+	  if(isset($resCur[0])){
+		$respuesta = array(
+			'error' => true,
+			'data'  => array(),
+			'mensaje' =>'La moneda '.strtoupper($DataCurrency['Pgm_Symbol']).' ya existe'
+		  );
+  
+		  $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+  
+		  return;
+	  }
+
+	  $validCurSys = "SELECT * FROM pgec WHERE pgm_system = :pgm_system";
+	  $resCurSys = $this->pedeo->queryTable($validCurSys,array(
+		':pgm_system' => strtoupper($DataCurrency['pgm_system'])
+	  ));
+
+	  if(isset($resCurSys[0])){
+		$respuesta = array(
+			'error' => true,
+			'data'  => array(),
+			'mensaje' =>'Ya hay una moneda del sistema existente'
+		  );
+  
+		  $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+  
+		  return;
+	  }
+
 		
 
-		$sqlValidarPrincipal = " SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal ";
+		$sqlValidarPrincipal = "SELECT pgm_id_moneda, pgm_principal FROM pgec WHERE pgm_principal = :pgm_principal ";
 
 		$resValidarPricipal = $this->pedeo->queryTable($sqlValidarPrincipal, array(
 
-				':pgm_principal' => 1
+				':pgm_principal' => ($DataCurrency['pgm_principal']) ? 1 : NULL
 		));
 
 		if(isset($resValidarPricipal[0])){
@@ -77,8 +111,8 @@ class Currency extends REST_Controller {
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-            ':Pgm_NameMoneda' => $DataCurrency['Pgm_NameMoneda'],
-            ':Pgm_Symbol'     => $DataCurrency['Pgm_Symbol'],
+            ':Pgm_NameMoneda' => strtoupper($DataCurrency['Pgm_NameMoneda']),
+            ':Pgm_Symbol'     => strtoupper($DataCurrency['Pgm_Symbol']),
             ':Pgm_Enabled'    => 1,
 			':pgm_principal'  => $DataCurrency['pgm_principal'],
 			':pgm_system'  => $DataCurrency['pgm_system'],
@@ -343,8 +377,8 @@ class Currency extends REST_Controller {
 
    }
 
-	 // CONSULTAR LA TASA SEGUN FECHA
-	 public function getTasaMLS_get(){
+	// CONSULTAR LA TASA SEGUN FECHA
+	public function getTasaMLS_get(){
 
 				 	$Data = $this->get();
 
@@ -414,5 +448,5 @@ class Currency extends REST_Controller {
 					}
 
 					 $this->response($respuesta);
-	 }
+	}
 }

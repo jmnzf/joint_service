@@ -439,6 +439,32 @@ class BusinessPartner extends REST_Controller
 
     $this->response($respuesta);
   }
+  // Obtener Socios de negocio PROVEEDOR
+  public function getBusinessPartnerProvider_get()
+  {
+
+    $sqlSelect = "SELECT concat(dms_card_name, ' ', dms_card_last_name) AS nombreyapellido,* FROM dmsn WHERE dms_card_type = '2'";
+
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+    if (isset($resSelect[0])) {
+
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => ''
+      );
+    } else {
+
+      $respuesta = array(
+        'error'   => true,
+        'data' => array(),
+        'mensaje'  => 'busqueda sin resultados'
+      );
+    }
+
+    $this->response($respuesta);
+  }
 
   // Obtener Socio de negocio por Id
   public function getBusinessPartnerById_get()

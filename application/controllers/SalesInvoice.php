@@ -241,8 +241,8 @@ class SalesInvoice extends REST_Controller {
               ':dvf_id_add' => $Data['dvf_id_add'],
               ':dvf_adress' => $Data['dvf_adress'],
               ':dvf_pay_type' => $Data['dvf_pay_type'],
-              ':dvf_attch' => $this->getUrl($Data['dvf_attch'])
-							':dvf_doc_entry' => $Data['dvf_doc_entry'],
+              ':dvf_attch' => $this->getUrl($Data['dvf_attch']),
+							':dvf_doc_entry' => $Data['dvf_doc_entry']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){

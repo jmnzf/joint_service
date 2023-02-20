@@ -65,7 +65,7 @@ class GeneralImport extends REST_Controller {
 
             $respuesta = array(
             'error' => false,
-            'data' => $resInsert,
+            'data' => [],
             'mensaje' =>'Datos importados con exito'
             );
 

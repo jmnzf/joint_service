@@ -279,8 +279,12 @@ class DinamicCrud extends REST_Controller {
 
           return;
     }
-
-    $sqlSelect = "SELECT ".$Data['id']." AS id, ".$Data['text']." AS text FROM ".$Data['table'];
+    $datawhere = '';
+    if (isset($Data['where'])) {
+      $datawhere = str_replace('|', ' ', $Data['where']);
+      // print_r();exit;
+    }
+    $sqlSelect = "SELECT ".$Data['id']." AS id, ".$Data['text']." AS text FROM ".$Data['table']. " ".$datawhere;
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

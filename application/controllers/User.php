@@ -34,8 +34,7 @@ class User extends REST_Controller
 			!isset($DataUser['Pgu_CodeUser']) or
 			!isset($DataUser['Pgu_Pass']) or
 			!isset($DataUser['Pgu_NameUser']) or
-			!isset($DataUser['Pgu_LnameUser']) or
-			!isset($DataUser['Pgu_Branch'])
+			!isset($DataUser['Pgu_LnameUser'])
 		) {
 
 			$respuesta = array(
@@ -77,7 +76,7 @@ class User extends REST_Controller
 			':Pgu_LnameUser' => $DataUser['Pgu_LnameUser'],
 			':Pgu_Email' => isset($DataUser['Pgu_Email']) ? $DataUser['Pgu_Email'] : "",
 			':Pgu_Phone' => isset($DataUser['Pgu_Phone']) ? $DataUser['Pgu_Phone'] : "",
-			':Pgu_Branch' => $DataUser['Pgu_Branch'],
+			':Pgu_Branch' => isset($DataUser['Pgu_Branch']) ? $DataUser['Pgu_Branch'] : NULL,
 			':Pgu_Role' => $DataUser['Pgu_Role'],
 			':Pgu_Curr' => $DataUser['Pgu_Curr'],
 			':pgu_id_vendor' => isset($DataUser['pgu_id_vendor']) ? $DataUser['pgu_id_vendor'] : NULL,
@@ -210,10 +209,12 @@ class User extends REST_Controller
 	// Obtener lista de usuarios
 	public function getUser_get()
 	{
+		$Data = $this->get();
 
-		$sqlSelect = " SELECT pgus.*, rol.rol_nombre FROM pgus INNER JOIN rol ON rol.rol_id = pgus.pgu_role";
+		$sqlSelect = "SELECT pgus.pgu_id_usuario, pgus.pgu_code_user, pgus.pgu_name_user, pgus.pgu_lname_user, pgus.pgu_email, pgus.pgu_phone,
+                         pgus.pgu_branch, pgus.pgu_role, pgus.pgu_curr, pgus.pgu_enabled, rol.rol_nombre, (select reu_employed from treu where reu_status = 1 and reu_user = pgus.pgu_id_usuario and business = :business) AS pgu_employed FROM pgus INNER JOIN rol ON rol.rol_id = pgus.pgu_role";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 
 		if (isset($resSelect[0])) {
 
