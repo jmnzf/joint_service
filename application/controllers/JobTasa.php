@@ -32,8 +32,6 @@ class JobTasa extends Tasa {
 		// $data = $this->post();
 		$curl = curl_init();
 
-		
-
 		curl_setopt_array($curl, array(
 		CURLOPT_URL => 'https://www.superfinanciera.gov.co/SuperfinancieraWebServiceTRM/TCRMServicesWebService/TCRMServicesWebService?wsdl',
 		CURLOPT_RETURNTRANSFER => true,
@@ -71,16 +69,17 @@ class JobTasa extends Tasa {
 
 				$data  = array(
 					'tsa_eq' => 1,
-					'tsa_curro' => 'USD',
-					// 'tsa_currd' => $value['ns2queryTCRMResponse']['return']['unit'],
-					// 'tsa_value' => $value['ns2queryTCRMResponse']['return']['value'],
-					// 'tsa_createby' => 'system',
-					// 'tsa_date' => date('Y-m-d'),
-					// 'tsa_enabled' => 1
+					'tsa_curro' => $value['ns2queryTCRMResponse']['return']['unit'],
+					'tsa_currd' => 'USD',
+					'tsa_value' => $value['ns2queryTCRMResponse']['return']['value'],
+					'tsa_createby' => 'system',
+					'tsa_date' => date('Y-m-d'),
+					'tsa_enabled' => 1
 				);
 
-				$_POST['tsa_curro'] = 'USD';
-				self::createTasa_post($_POST);
+				$_POST = $data;
+				
+				self::createTasa_post();
 
 			}
 		}

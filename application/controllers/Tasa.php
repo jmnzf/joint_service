@@ -26,6 +26,9 @@ class Tasa extends REST_Controller {
 	public function createTasa_post(){
 
         $Data = $this->post();
+        if(empty($Data)){
+          $Data = $_POST;
+        }
 
         $sqlTasa = "SELECT * FROM tasa WHERE tsa_date = :tsa_date AND tsa_curro = :tsa_curro AND tsa_currd = :tsa_currd";
 
