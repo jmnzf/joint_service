@@ -133,11 +133,11 @@ class User extends REST_Controller
 			':Pgu_LnameUser' => $DataUser['Pgu_LnameUser'],
 			':Pgu_Email' => $DataUser['Pgu_Email'],
 			':Pgu_Phone' => $DataUser['Pgu_Phone'],
-			':Pgu_Branch' => $DataUser['Pgu_Branch'],
+			':Pgu_Branch' => isset($DataUser['Pgu_Branch']) ? $DataUser['Pgu_Branch'] : NULL,
 			':Pgu_Role' => $DataUser['Pgu_Role'],
 			':Pgu_Curr' => $DataUser['Pgu_Curr'],
 			':Pgu_IdUsuario' => $DataUser['Pgu_IdUsuario'],
-			':pgu_id_vendor' => $DataUser['pgu_id_vendor']
+			':pgu_id_vendor' => isset($DataUser['pgu_id_vendor']) ? $DataUser['pgu_id_vendor'] : NULL,
 		));
 
 
