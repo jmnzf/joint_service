@@ -843,12 +843,13 @@ class BusinessPartner extends REST_Controller
       $filtro .= " AND dmsn.dms_enabled = ".$Data['slt_state_num'];
     }
  
-    $sqlSelect = "SELECT concat(dms_card_name, ' ', dms_card_last_name) AS nombreyapellido, dmsn.*, mpf_name, mgs_acct, mgs_acctp, dmlp_name_list, mev_names
+    $sqlSelect = "SELECT concat(dms_card_name, ' ', dms_card_last_name) AS nombreyapellido, dmsn.*, mpf_name, mgs_acct, mgs_acctp, dmlp_name_list, a.mev_names as vendedor, b.mev_names as propietario
     FROM dmsn
     LEFT JOIN dmpf on mpf_id::text = dms_pay_type
     LEFT JOIN dmgs  on mgs_id::text = dms_group_num
     LEFT JOIN dmpl on dmlp_id = dms_price_list
-    LEFT JOIN dmev on mev_id = dms_sip_code
+    LEFT JOIN dmev a on a.mev_id = dms_sip_code
+    LEFT JOIN dmev b on b.mev_id = dms_agent
     WHERE 1 = 1 ".$filtro;
 
 
