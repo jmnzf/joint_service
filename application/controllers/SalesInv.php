@@ -8,7 +8,7 @@ use Restserver\libraries\REST_Controller;
 
 class SalesInv extends REST_Controller
 {
-
+	
 	private $pdo;
 
 	public function __construct()
@@ -33,7 +33,6 @@ class SalesInv extends REST_Controller
 	public function createSalesInv_post()
 	{
 		$Data = $this->post();
-
 		$TasaDocLoc = 0;
 		$TasaLocSys = 0;
 		$MONEDALOCAL = "";
