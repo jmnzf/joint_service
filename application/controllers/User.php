@@ -133,11 +133,11 @@ class User extends REST_Controller
 			':Pgu_LnameUser' => $DataUser['Pgu_LnameUser'],
 			':Pgu_Email' => $DataUser['Pgu_Email'],
 			':Pgu_Phone' => $DataUser['Pgu_Phone'],
-			':Pgu_Branch' => $DataUser['Pgu_Branch'],
+			':Pgu_Branch' => isset($DataUser['Pgu_Branch']) ? $DataUser['Pgu_Branch'] : NULL,
 			':Pgu_Role' => $DataUser['Pgu_Role'],
 			':Pgu_Curr' => $DataUser['Pgu_Curr'],
 			':Pgu_IdUsuario' => $DataUser['Pgu_IdUsuario'],
-			':pgu_id_vendor' => $DataUser['pgu_id_vendor']
+			':pgu_id_vendor' => isset($DataUser['pgu_id_vendor']) ? $DataUser['pgu_id_vendor'] : NULL,
 		));
 
 
@@ -353,8 +353,11 @@ class User extends REST_Controller
 
 		$sqlSelect = "SELECT pgu_code_user, pgu_id_usuario,pgu_name_user,pgu_lname_user,
 											pgu_name_user || ' ' || pgu_lname_user AS NameC ,
-											pgu_email,pgu_role,pgu_pass,pgu_id_vendor, pgu_branch
-											FROM pgus WHERE pgu_code_user = :Pgu_CodeUser AND pgu_enabled = :pgu_enabled";
+											pgu_email,pgu_role,pgu_pass,pgu_id_vendor, pgu_branch,
+											rol.rol_nombre
+											FROM pgus
+											INNER JOIN rol
+											ON rol.rol_id = pgus.pgu_role WHERE pgu_code_user = :Pgu_CodeUser AND pgu_enabled = :pgu_enabled";
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':Pgu_CodeUser' => $DataUser['Pgu_CodeUser'], ':pgu_enabled' => 1));
