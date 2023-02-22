@@ -64,8 +64,8 @@ class User extends REST_Controller
 			return;
 		}
 
-		$sqlInsert = "INSERT INTO pgus(pgu_code_user,pgu_pass,pgu_name_user,pgu_lname_user,pgu_email,pgu_phone,pgu_branch,pgu_role,pgu_curr,pgu_id_vendor,pgu_enabled)
-					VALUES(:Pgu_CodeUser,:Pgu_Pass,:Pgu_NameUser,:Pgu_LnameUser,:Pgu_Email,:Pgu_Phone,:Pgu_Branch,:Pgu_Role,:Pgu_Curr,:pgu_id_vendor,:pgu_enabled)";
+		$sqlInsert = "INSERT INTO pgus(pgu_code_user,pgu_pass,pgu_name_user,pgu_lname_user,pgu_email,pgu_phone,pgu_branch,pgu_role,pgu_curr,pgu_id_vendor,pgu_enabled, pgu_pass_change)
+					VALUES(:Pgu_CodeUser,:Pgu_Pass,:Pgu_NameUser,:Pgu_LnameUser,:Pgu_Email,:Pgu_Phone,:Pgu_Branch,:Pgu_Role,:Pgu_Curr,:pgu_id_vendor,:pgu_enabled, :pgu_pass_change)";
 
 
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -80,7 +80,8 @@ class User extends REST_Controller
 			':Pgu_Role' => $DataUser['Pgu_Role'],
 			':Pgu_Curr' => $DataUser['Pgu_Curr'],
 			':pgu_id_vendor' => isset($DataUser['pgu_id_vendor']) ? $DataUser['pgu_id_vendor'] : NULL,
-			':pgu_enabled' => 0
+			':pgu_enabled' => 0,
+			':pgu_pass_change' => 0
 
 		));
 
@@ -179,11 +180,12 @@ class User extends REST_Controller
 			return;
 		}
 
-		$sqlUpdate = "UPDATE pgus SET pgu_pass = :Pgu_Pass WHERE pgu_id_usuario = :Pgu_IdUsuario";
+		$sqlUpdate = "UPDATE pgus SET pgu_pass = :Pgu_Pass, pgu_pass_change = :pgu_pass_change WHERE pgu_id_usuario = :Pgu_IdUsuario";
 
 		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 			':Pgu_Pass' => password_hash($DataUser['Pgu_Pass'], PASSWORD_DEFAULT),
-			':Pgu_IdUsuario' => $DataUser['Pgu_IdUsuario']
+			':Pgu_IdUsuario' => $DataUser['Pgu_IdUsuario'],
+			':pgu_pass_change' => 1
 
 		));
 
@@ -666,6 +668,31 @@ class User extends REST_Controller
 				'data' 		=> $resInsert,
 				'mensaje'	=> 'No se pudo ingresar el usuario'
 			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function verifyPassword_post(){
+		$Data = $this->post();
+
+		$sqlSelect = 'SELECT pgu_pass_change from pgus where pgu_id_usuario = :pgu_id_usuario';
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgu_id_usuario' => $Data['pgu_id_usuario']));
+
+		if(isset($resSelect[0])){
+				$respuesta = array(
+					'error' => false,
+					'data'  => $resSelect,
+					'mensaje' => 'Debe cambiar la contraseña'
+				);
+			}else{
+				$respuesta = array(
+					'error' => true,
+					'data'  => [],
+					'mensaje' => ''
+				);
+			
 		}
 
 		$this->response($respuesta);
