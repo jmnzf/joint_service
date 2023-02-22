@@ -353,8 +353,11 @@ class User extends REST_Controller
 
 		$sqlSelect = "SELECT pgu_code_user, pgu_id_usuario,pgu_name_user,pgu_lname_user,
 											pgu_name_user || ' ' || pgu_lname_user AS NameC ,
-											pgu_email,pgu_role,pgu_pass,pgu_id_vendor, pgu_branch
-											FROM pgus WHERE pgu_code_user = :Pgu_CodeUser AND pgu_enabled = :pgu_enabled";
+											pgu_email,pgu_role,pgu_pass,pgu_id_vendor, pgu_branch,
+											rol.rol_nombre
+											FROM pgus
+											INNER JOIN rol
+											ON rol.rol_id = pgus.pgu_role WHERE pgu_code_user = :Pgu_CodeUser AND pgu_enabled = :pgu_enabled";
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':Pgu_CodeUser' => $DataUser['Pgu_CodeUser'], ':pgu_enabled' => 1));
