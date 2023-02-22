@@ -33,7 +33,6 @@ class BusinessPartner extends REST_Controller
     if (
       !isset($Data['dms_card_code']) or
       !isset($Data['dms_card_name']) or
-      !isset($Data['dms_card_last_name']) or
       !isset($Data['dms_card_type']) or
       !isset($Data['dms_enabled'])
     ) {
@@ -840,7 +839,7 @@ class BusinessPartner extends REST_Controller
       $filtro .= " AND dmsn.dms_agent = ".$Data['slt_owner_num'];
     }
 
-    if (isset($Data['slt_state_num'])){
+    if (isset($Data['slt_state_num']) && is_numeric($Data['slt_state_num'])){
       $filtro .= " AND dmsn.dms_enabled = ".$Data['slt_state_num'];
     }
  
@@ -883,7 +882,6 @@ class BusinessPartner extends REST_Controller
     if (
       !isset($Data['dms_card_code']) or
       !isset($Data['dms_card_name']) or
-      !isset($Data['dms_card_last_name']) or
       !isset($Data['dms_card_type']) or
       !isset($Data['dms_enabled'])
     ) {
