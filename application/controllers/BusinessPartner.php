@@ -22,6 +22,7 @@ class BusinessPartner extends REST_Controller
     $this->load->database();
     $this->pdo = $this->load->database('pdo', true)->conn_id;
     $this->load->library('pedeo', [$this->pdo]);
+    $this->load->library('Dv');
   }
 
   //Crear nuevo socio de negocio
@@ -70,19 +71,17 @@ class BusinessPartner extends REST_Controller
       return;
     }
 
-
-
     $this->pedeo->trans_begin();
 
 
     $sqlInsert = "INSERT INTO dmsn(dms_card_code, dms_card_name, dms_card_type, dms_short_name, dms_phone1, dms_phone2,
                     dms_cel, dms_email, dms_inv_mail, dms_group_num, dms_web_site, dms_sip_code, dms_agent, dms_pay_type,
                     dms_limit_cred, dms_inter, dms_price_list, dms_acct_sn, dms_acct_asn, dms_card_last_name, dms_enabled,
-										dms_rtype,dms_classtype,dms_tax_regime, dms_reg_merc, dms_id_type)
+										dms_rtype,dms_classtype,dms_tax_regime, dms_reg_merc, dms_id_type,dv)
 	                  VALUES (:dms_card_code, :dms_card_name, :dms_card_type, :dms_short_name, :dms_phone1, :dms_phone2,
                     :dms_cel, :dms_email, :dms_inv_mail, :dms_group_num, :dms_web_site, :dms_sip_code, :dms_agent, :dms_pay_type,
                     :dms_limit_cred, :dms_inter, :dms_price_list, :dms_acct_sn, :dms_acct_asn, :dms_card_last_name, :dms_enabled,
-										:dms_rtype,:dms_classtype,:dms_tax_regime, :dms_reg_merc, :dms_id_type)";
+										:dms_rtype,:dms_classtype,:dms_tax_regime, :dms_reg_merc, :dms_id_type,:dv)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -111,7 +110,8 @@ class BusinessPartner extends REST_Controller
       ':dms_classtype' => isset($Data['dms_classtype']) ? $Data['dms_classtype'] : NULL,
       ':dms_reg_merc' => isset($Data['dms_reg_merc']) ? $Data['dms_reg_merc'] : NULL,
       ':dms_tax_regime' => isset($Data['dms_tax_regime']) ? $Data['dms_tax_regime'] : NULL,
-      ':dms_id_type' => is_numeric($Data['dms_id_type']) ? $Data['dms_id_type'] : 0
+      ':dms_id_type' => is_numeric($Data['dms_id_type']) ? $Data['dms_id_type'] : 0,
+      ':dv' => $this->dv->calcularDigitoV($Data['dms_card_code'])
 
 
 

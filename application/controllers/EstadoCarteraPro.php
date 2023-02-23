@@ -74,6 +74,11 @@ class EstadoCarteraPro extENDs REST_Controller {
 	        return;
 		}
 
+        $grupo = "";
+		if ( isset($Data['groupsn']) && $Data['groupsn'] != 0 ){
+			$grupo = " AND dmsn.dms_group_num::numeric = ".$Data['groupsn']."::numeric";
+		}
+
 		$sqlestadocuenta = "SELECT distinct dmdt.mdt_docname,
                 mac1.ac1_font_key,
                 mac1.ac1_legal_num                                    as codigocliente,
@@ -121,6 +126,7 @@ from mac1
          inner join dcfc on dcfc.cfc_doctype = mac1.ac1_font_type and dcfc.cfc_docentry = mac1.ac1_font_key
          inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
+".$grupo."
 and dcfc.cfc_docdate <= '{$Data['fecha']}'
 GROUP BY dmdt.mdt_docname,
          mac1.ac1_font_key,
@@ -191,6 +197,7 @@ from mac1
                                                                       mac1.ac1_font_key
          inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 where  dmsn.dms_card_type = '2'
+".$grupo."
 and gbpe.bpe_docdate <= '{$Data['fecha']}'
 GROUP BY dmdt.mdt_docname,
          mac1.ac1_font_key,
@@ -259,6 +266,7 @@ from mac1
          inner join dcnc on dcnc.cnc_doctype = mac1.ac1_font_type and dcnc.cnc_docentry = mac1.ac1_font_key
          inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
+".$grupo."
 and dcnc.cnc_docdate <= '{$Data['fecha']}'
 GROUP BY dmdt.mdt_docname,
          mac1.ac1_font_key,
@@ -332,6 +340,7 @@ from mac1
                             dcnd.cnd_docentry = mac1.ac1_font_key
          inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
+".$grupo."
 and dcnd.cnd_docdate <= '{$Data['fecha']}'
 group by dmdt.mdt_docname,
          mac1.ac1_font_key,
@@ -413,6 +422,7 @@ from mac1
          inner join dmsn on mac1.ac1_card_type = dmsn.dms_card_type
     and mac1.ac1_legal_num = dmsn.dms_card_code
 where dmsn.dms_card_type = '2'
+".$grupo."
 and tmac.mac_doc_date <= '{$Data['fecha']}'
 group by dmdt.mdt_docname,
          mac1.ac1_font_key,

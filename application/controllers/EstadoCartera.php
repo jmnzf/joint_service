@@ -22,7 +22,7 @@ class EstadoCartera extENDs REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('DateFormat');
 		$this->load->library('generic');
 
@@ -33,8 +33,8 @@ class EstadoCartera extENDs REST_Controller {
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-    $Data = $this->post();
-		// $Data = $Data['fecha'];
+    	$Data = $this->post();
+	
 		$totalfactura = 0;
 
 		$formatter = new NumeroALetras();
@@ -74,6 +74,11 @@ class EstadoCartera extENDs REST_Controller {
           	$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 	        return;
+		}
+
+		$grupo = "";
+		if ( isset($Data['groupsn']) && $Data['groupsn'] != 0 ){
+			$grupo = " AND dmsn.dms_group_num::numeric = ".$Data['groupsn']."::numeric";
 		}
 
 		$sqlestadocuenta = "SELECT distinct
@@ -126,6 +131,7 @@ class EstadoCartera extENDs REST_Controller {
 		inner join dvfv on dvfv.dvf_doctype = mac1.ac1_font_type and dvfv.dvf_docentry = mac1.ac1_font_key
 		inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '1'
+		".$grupo."
 		and dvf_docdate <= '".$Data['fecha']."'
 
 		union all
@@ -176,6 +182,7 @@ class EstadoCartera extENDs REST_Controller {
 		inner join gbpr on gbpr.bpr_doctype = mac1.ac1_font_type and gbpr.bpr_docentry = mac1.ac1_font_key
 		inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '1'
+		".$grupo."
 		and bpr_docdate <= '".$Data['fecha']."'
 
 		union all
@@ -228,6 +235,7 @@ class EstadoCartera extENDs REST_Controller {
 		mac1.ac1_font_key
 		inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '1'
+		".$grupo."
 		and vnc_docdate <= '".$Data['fecha']."'
 
 		union all
@@ -283,6 +291,7 @@ class EstadoCartera extENDs REST_Controller {
 		inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and
 		dmsn.dms_card_type = '1'
+		".$grupo."
 		and vnd_docdate <= '".$Data['fecha']."'
 
 		union all
@@ -353,6 +362,7 @@ class EstadoCartera extENDs REST_Controller {
 		and mac1.ac1_legal_num = dmsn.dms_card_code
 		where dmsn.dms_card_type = '1'
 		and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+		".$grupo."
 		and mac_doc_date <= '".$Data['fecha']."'
 		order by NombreCliente asc";
 
