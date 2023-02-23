@@ -234,7 +234,9 @@ class Business extends REST_Controller
   public function getCompany_get()
   {
 
-    $sqlSelect = "SELECT pgem.*, tbti.bti_name FROM pgem INNER JOIN tbti ON tbti.bti_id = pgem.pge_id_type";
+    $sqlSelect = "SELECT pgem.*, tbti.bti_name, t1.pdm_states, t1.pdm_municipality  FROM pgem
+    INNER JOIN tbti ON tbti.bti_id = pgem.pge_id_type
+    INNER JOIN tpdm t1 ON t1.pdm_codstates = pgem.pge_state_soc AND t1.pdm_codmunicipality = pgem.pge_city_soc";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
