@@ -22,6 +22,7 @@ class Items extends REST_Controller
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
+		$this->load->library('account');
 	}
 
 	//Crear nuevo articulo
@@ -697,4 +698,31 @@ class Items extends REST_Controller
 		//
 		return $resultSet;
 	}
+
+	// BUSCA CUENTAS CONTABLES DEL ARTICULO SEGUN LA CONFIGURACION
+	// ESTABLECIDA EN SU CREACION:
+	// ARTICULO, GRUPO DE ARTICULO, ALMACEN
+	public function getAcounting_post(){
+
+		$Data = $this->post();
+
+		if (!isset($Data['itemcode']) || !isset($Data['wshcode'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$respuesta = $this->account->getAccountItem($Data['itemcode'], $Data['wshcode']);
+
+		$this->response($respuesta);
+
+	}
+
 }
