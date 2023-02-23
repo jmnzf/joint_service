@@ -86,7 +86,7 @@ class Querys extends REST_Controller {
     }
 
     $sqlInsert = "INSERT INTO csql(sql_description, sql_query, sql_date, sql_createby,sql_query_type, sql_query_model)
-	                 VALUES (:sql_description, :sql_query, :sql_date, :sql_createby,:sql_query_type, :sql_query_model)";
+	VALUES (:sql_description, :sql_query, :sql_date, :sql_createby,:sql_query_type, :sql_query_model)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
       ':sql_description' =>  $Data['sql_description'],
@@ -160,8 +160,8 @@ class Querys extends REST_Controller {
 	public function getQuerys_get(){
 
 		$Data = $this->get();
-		
-		if(!empty($Data)){
+
+		if(!empty($Data["pgu_id_usuario"]) && isset($Data["pgu_id_usuario"])){
 			$sqlSelect = "SELECT csql.*,ruc_user as id FROM
 		csql
 		join truc on ruc_query = sql_id
@@ -169,11 +169,11 @@ class Querys extends REST_Controller {
 		}else{
 		$sqlSelect = "SELECT csql.*, string_agg(truc.ruc_user::text, ',') as id from csql
 		left join truc on ruc_query = sql_id
-		group by sql_id, sql_description, sql_query, sql_date, sql_createby, sql_query_type, sql_query_model";
+		group by sql_id, sql_description, sql_query, sql_date, sql_createby, sql_query_type, sql_query_model,csql.business,csql.branch";
 		}
 		
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect,(!empty($Data))?array(":ruc_user" => $Data['pgu_id_usuario']):array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect,(!empty($Data["pgu_id_usuario"]) && isset($Data["pgu_id_usuario"]))?array(":ruc_user" => $Data['pgu_id_usuario']):array());
 
 		if(isset($resSelect[0])){
 
