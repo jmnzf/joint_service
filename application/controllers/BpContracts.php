@@ -115,7 +115,7 @@ class BpContracts extends REST_Controller
 		}
 
 		//PROCESO DE TASA
-		$dataTasa = $this->tasa->Tasa($Data['coc_currency'],$Data['coc_docdate']);
+		$dataTasa = $this->tasa->Tasa($Data['csn_currency'],$Data['csn_docdate']);
 
 		if(isset($dataTasa['tasaLocal'])){
 
@@ -497,9 +497,9 @@ class BpContracts extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO csn1(sn1_docentry, sn1_linenum,sn1_itemcode, sn1_itemname, sn1_quantity, sn1_uom, sn1_whscode,
                                     sn1_price, sn1_vat, sn1_vatsum, sn1_discount, sn1_linetotal, sn1_costcode, sn1_ubusiness, sn1_project,
-                                    sn1_acctcode, sn1_basetype, sn1_doctype, sn1_avprice, sn1_inventory, sn1_acciva, sn1_codimp)VALUES(:sn1_docentry,:sn1_linenum, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
+                                    sn1_acctcode, sn1_basetype, sn1_doctype, sn1_avprice, sn1_inventory, sn1_acciva, sn1_codimp,sn1_ubication)VALUES(:sn1_docentry,:sn1_linenum, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
                                     :sn1_uom, :sn1_whscode,:sn1_price, :sn1_vat, :sn1_vatsum, :sn1_discount, :sn1_linetotal, :sn1_costcode, :sn1_ubusiness, :sn1_project,
-                                    :sn1_acctcode, :sn1_basetype, :sn1_doctype, :sn1_avprice, :sn1_inventory, :sn1_acciva, :sn1_codimp)";
+                                    :sn1_acctcode, :sn1_basetype, :sn1_doctype, :sn1_avprice, :sn1_inventory, :sn1_acciva, :sn1_codimp,:sn1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sn1_docentry' => $resInsert,
