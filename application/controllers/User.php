@@ -344,7 +344,7 @@ class User extends REST_Controller
 			$respuesta = array(
 				'error' => true,
 				'data'  => array(),
-				'mensaje' => 'El usuario no esta asociado a una empresa, se debe agregar una empresa predeterminada antes de poder inicar sesión'
+				'mensaje' => 'El usuario no esta asociado a una empresa, se debe agregar una empresa predeterminada antes de poder iniciar sesión'
 			);
 
 			$this->response($respuesta);
