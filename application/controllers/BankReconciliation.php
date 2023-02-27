@@ -1364,9 +1364,7 @@ class BankReconciliation extends REST_Controller {
 
 		$sqlSelect = "SELECT *
 									FROM dacc
-									WHERE acc_cash = 0
-									AND acc_digit = 10
-									AND acc_code > 3999999999
+									WHERE acc_cash = 1
 									ORDER BY acc_code ASC";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
