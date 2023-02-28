@@ -388,7 +388,7 @@ class BpContracts extends REST_Controller
 						':bmd_doctotal' => is_numeric($Data['csn_doctotal']) ? $Data['csn_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['csn_cardcode']) ? $Data['csn_cardcode'] : NULL,
 						':bmd_cardtype' => $Data['csn_cardtype'],
-						':bmd_currency' => isset($Data['crc_currency'])?$Data['crc_currency']:NULL,
+						':bmd_currency' => isset($Data['csn_currency'])?$Data['csn_currency']:NULL,
 						':business' => isset($Data['business']) ? $Data['business'] : NULL
 					));
 
@@ -428,7 +428,7 @@ class BpContracts extends REST_Controller
 						':bmd_doctotal' => is_numeric($Data['csn_doctotal']) ? $Data['csn_doctotal'] : 0,
 						':bmd_cardcode' => isset($Data['csn_cardcode']) ? $Data['csn_cardcode'] : NULL,
 						':bmd_cardtype' => $Data['csn_cardtype'],
-						':bmd_currency' => isset($Data['crc_currency'])?$Data['crc_currency']:NULL,
+						':bmd_currency' => isset($Data['csn_currency'])?$Data['csn_currency']:NULL,
 						':business' => isset($Data['business']) ? $Data['business'] : NULL
 					));
 
@@ -469,7 +469,7 @@ class BpContracts extends REST_Controller
 					':bmd_doctotal' => is_numeric($Data['csn_doctotal']) ? $Data['csn_doctotal'] : 0,
 					':bmd_cardcode' => isset($Data['csn_cardcode']) ? $Data['csn_cardcode'] : NULL,
 					':bmd_cardtype' => $Data['csn_cardtype'],
-					':bmd_currency' => isset($Data['crc_currency'])?$Data['crc_currency']:NULL,
+					':bmd_currency' => isset($Data['csn_currency'])?$Data['csn_currency']:NULL,
 					':business' => isset($Data['business'])?$Data['business']:NULL
 				));
 
