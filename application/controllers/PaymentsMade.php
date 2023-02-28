@@ -67,7 +67,7 @@ class PaymentsMade extends REST_Controller
 						bpe_docdate,bpe_taxdate,bpe_ref,bpe_transid,bpe_comments,bpe_memo,bpe_acctransfer,bpe_datetransfer,
 						bpe_reftransfer,bpe_doctotal,bpe_vlrpaid,bpe_project,bpe_createby,bpe_createat,bpe_payment,
 						bpe_doctype,bpe_currency,bpe_paytoday,business,branch
-					FROM gbpe WHERE 1 = 1 " . $filtro;
+					FROM gbpe WHERE 1 = 1 AND business = :business AND branch = :branch" . $filtro;
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array( ':business' => $Data['business'], ':branch' => $Data['branch'] ));
 
