@@ -4278,11 +4278,22 @@ class SalesInv extends REST_Controller
 					['type' => 'dmpl', 'code' => $Data['dvf_pricelist']],
 				]);
 
-				// Si todo sale bien despues de insertar el detalle de la factura de Ventas
-				// se confirma la trasaccion  para que los cambios apliquen permanentemente
-				// en la base de datos y se confirma la operacion exitosa.
-				$this->pedeo->trans_commit();
-				// $this->pedeo->trans_rollback();
+
+				if ( isset($Data['preview']) && $Data['preview'] == 1 ) {
+
+					$respuesta = $this->account->getAcounting($resInsertAsiento);
+
+					$this->pedeo->trans_rollback();
+
+					return $this->response($respuesta);
+
+				} else {
+					// Si todo sale bien despues de insertar el detalle de la factura de Ventas
+					// se confirma la trasaccion  para que los cambios apliquen permanentemente
+					// en la base de datos y se confirma la operacion exitosa.
+					$this->pedeo->trans_commit();
+				}
+				
 
 				$respuesta = array(
 					'error' => false,

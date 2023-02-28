@@ -2005,7 +2005,18 @@ class SalesDel extends REST_Controller
 			//
 
 
-			$this->pedeo->trans_commit();
+			if ( isset($Data['preview']) && $Data['preview'] == 1 ) {
+
+				$respuesta = $this->account->getAcounting($resInsertAsiento);
+
+				$this->pedeo->trans_rollback();
+
+				return $this->response($respuesta);
+
+			} else {
+				
+				$this->pedeo->trans_commit();
+			}
 
 			$respuesta = array(
 				'error' => false,

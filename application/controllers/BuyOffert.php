@@ -130,7 +130,7 @@ class BuyOffert extends REST_Controller
 		}
 
 		$copy = $this->documentcopy->Copy($Data['oc1_docentry'],'dcoc','coc1','coc','oc1');
-
+		
 		if (isset($copy[0])) {
 
 			$respuesta = array(

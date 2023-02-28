@@ -49,6 +49,30 @@ class DocumentNumbering extends REST_Controller {
         return;
       }
 
+      //VALIDAR QUE EL NUMERO INICIAL NO ESTE EN UN RAGO DE NUMERACION YA CREADO
+      $validDoc = "SELECT * FROM pgdn WHERE pgs_id_doc_type = :doctype AND pgs_enabled = :status";
+      $resValidDoc = $this->pedeo->queryTable($validDoc,array(
+        ':status' => 1,
+        ':doctype' => $Data['pgs_id_doc_type']
+      ));
+      if( isset( $resValidDoc[0] ) ){
+
+          foreach ($resValidDoc as $key => $doc) {
+            if( $Data['pgs_first_num'] >= $doc['pgs_first_num'] && $Data['pgs_first_num'] <= $doc['pgs_last_num'] ){
+              $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' =>'Ya existe una numeración para este tipo de documento con este rango'
+              );
+
+              $this->response($respuesta);
+
+              return;
+            }
+          }
+
+          
+      }
 
       if(is_numeric($Data['pgs_first_num']) && is_numeric($Data['pgs_last_num'])){
 
@@ -431,9 +455,13 @@ class DocumentNumbering extends REST_Controller {
             (pgs_nextnum + 1) AS ultimo_numero,
             CASE WHEN coalesce(pgs_is_due,0) = 1 THEN 1 ELSE 0 END AS is_due,
             CASE WHEN coalesce(pgs_doc_due_date,'1999-01-01') > current_date THEN 1 ELSE 0 END AS valid_date,
-            pgs_doc_pre
+            pgs_doc_pre,
+            pgs_doc_date,
+            pgs_doc_due_date
           FROM pgdn
           WHERE pgs_id_doc_type = :doctype AND business = :business AND branch = :branch
+          and (extract(month from pgs_doc_date) <= extract(month from current_date) or extract(month from pgs_doc_due_date) <= extract(month from current_date))
+          and (extract(year from pgs_doc_date) <= extract(year from current_date) or extract(year from pgs_doc_due_date) <= extract(year from current_date))
           ORDER BY pgs_num_name ASC";
 
     $resSql = $this->pedeo->queryTable($sql,array(

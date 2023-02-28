@@ -59,7 +59,13 @@ class PaymentsReceived extends REST_Controller
 		}
 
 
-		$sqlSelect = "SELECT * FROM gbpr WHERE 1 = 1 " . $filtro;
+		$sqlSelect = "SELECT 
+						concat(bpr_currency,' ',trim(to_char(bpr_vlrpaid,'999,999,999.00'))) as bpr_vlrpaid, 
+						bpr_docentry,bpr_cardcode,bpr_cardname,bpr_address,bpr_perscontact,bpr_series,bpr_docnum,
+						bpr_docdate,bpr_taxdate,bpr_ref,bpr_transid,bpr_comments,bpr_memo,bpr_acctransfer,bpr_datetransfer,
+						bpr_reftransfer,bpr_doctotal,bpr_vlrpaid,bpr_project,bpr_createby,bpr_createat,bpr_payment,
+						bpr_doctype,bpr_currency,bpr_paytoday,business,branch
+					FROM gbpr WHERE 1 = 1 " . $filtro;
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

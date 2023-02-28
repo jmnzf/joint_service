@@ -1692,10 +1692,18 @@ class SalesDv extends REST_Controller {
         }
       }
       //
-      // Si todo sale bien despues de insertar el detalle de la Devolución de clientes
-      // se confirma la trasaccion  para que los cambios apliquen permanentemente
-      // en la base de datos y se confirma la operacion exitosa.
-      $this->pedeo->trans_commit();
+      if ( isset($Data['preview']) && $Data['preview'] == 1 ) {
+
+        $respuesta = $this->account->getAcounting($resInsertAsiento);
+
+        $this->pedeo->trans_rollback();
+
+        return $this->response($respuesta);
+
+      } else {
+        
+        $this->pedeo->trans_commit();
+      }
 
       
 
