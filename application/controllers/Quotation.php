@@ -921,6 +921,51 @@ class Quotation extends REST_Controller
 		$this->response($respuesta);
 	}
 
+	//OBTENER COTIZACIONES PAGINADAS
+	public function getPaginatedQuotation_get()
+	{
+		
+		$Data = $this->get();
+
+
+		if ( !isset($Data['business']) OR !isset($Data['branch']) OR !isset($Data['page']) ) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$DECI_MALES =  $this->generic->getDecimals();
+
+		$sqlSelect = self::getColumn('dvct', 'dvc', '', '', $DECI_MALES, $Data['business'], $Data['branch'], 0, $Data['page'], 1);
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
 
 	//OBTENER COTIZACION POR ID
 	public function getQuotationById_get()

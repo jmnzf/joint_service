@@ -62,10 +62,10 @@ class PaymentsMade extends REST_Controller
 
 
 		$sqlSelect = "SELECT 
-						concat(bpe_currency,' ',trim(to_char(bpe_vlrpaid,'999,999,999.00'))) as bpe_vlrpaid, 
+						concat(bpe_currency,' ',trim(to_char(bpe_vlrpaid,'999,999,999.00'))) as bpe_vlrpaid,
 						bpe_docentry,bpe_cardcode,bpe_cardname,bpe_address,bpe_perscontact,bpe_series,bpe_docnum,
 						bpe_docdate,bpe_taxdate,bpe_ref,bpe_transid,bpe_comments,bpe_memo,bpe_acctransfer,bpe_datetransfer,
-						bpe_reftransfer,bpe_doctotal,bpe_vlrpaid,bpe_project,bpe_createby,bpe_createat,bpe_payment,
+						bpe_reftransfer,bpe_doctotal,bpe_project,bpe_createby,bpe_createat,bpe_payment,
 						bpe_doctype,bpe_currency,bpe_paytoday,business,branch
 					FROM gbpe WHERE 1 = 1 AND business = :business AND branch = :branch" . $filtro;
 

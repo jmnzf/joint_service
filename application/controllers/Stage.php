@@ -25,6 +25,7 @@ class Stage extends REST_Controller
         $this->load->database();
         $this->pdo = $this->load->database('pdo', true)->conn_id;
         $this->load->library('pedeo', [$this->pdo]);
+        $this->load->library('returnn');
     }
 
     // LISTAR ETAPAS
@@ -134,4 +135,25 @@ class Stage extends REST_Controller
         }
         $this->response($respuesta);
     }
+
+
+    public function revert_post(){
+
+        $Data = $this->post();
+
+        $this->pedeo->trans_begin();
+
+
+        $res = $this->returnn->Return($Data['doctype'], $Data['docentry'], $Data['business'], $Data['branch'], $Data['isfechadoc'], $Data['createby'] );
+
+
+        $this->pedeo->trans_rollback();
+
+        print_r($res);
+
+        exit;
+    }
+
+
+
 }

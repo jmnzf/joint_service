@@ -157,7 +157,7 @@ class SalesDv extends REST_Controller {
         return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
       }
 
-      //PROCESO DE TASA
+    //PROCESO DE TASA
 		$dataTasa = $this->tasa->Tasa($Data['vdv_currency'],$Data['vdv_docdate']);
 
 		if(isset($dataTasa['tasaLocal'])){

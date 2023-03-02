@@ -243,7 +243,9 @@ class AccountingAccounts extends REST_Controller {
 														    acc_shortb ,
 														    acc_jobcap ,
                                 tcdc.cdc_name as acc_concept,
-														    acc_exptype from dacc
+														    acc_exptype,
+                                acc_concept as acc_concept_id
+                                from dacc
                                 LEFT JOIN tcdc
                                 ON tcdc.cdc_id = dacc.acc_concept
 														    order by cast(acc_code as varchar)";

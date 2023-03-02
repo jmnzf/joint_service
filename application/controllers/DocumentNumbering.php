@@ -50,28 +50,43 @@ class DocumentNumbering extends REST_Controller {
       }
 
       //VALIDAR QUE EL NUMERO INICIAL NO ESTE EN UN RAGO DE NUMERACION YA CREADO
-      $validDoc = "SELECT * FROM pgdn WHERE pgs_id_doc_type = :doctype AND pgs_enabled = :status";
+      $validDoc = "SELECT * FROM pgdn WHERE pgs_id_doc_type = :doctype AND pgs_enabled = :status AND pgs_cancel = :cancel";
       $resValidDoc = $this->pedeo->queryTable($validDoc,array(
         ':status' => 1,
+        ':cancel' => $Data['pgs_cancel'],
         ':doctype' => $Data['pgs_id_doc_type']
       ));
+
       if( isset( $resValidDoc[0] ) ){
 
           foreach ($resValidDoc as $key => $doc) {
-            if( $Data['pgs_first_num'] >= $doc['pgs_first_num'] && $Data['pgs_first_num'] <= $doc['pgs_last_num'] ){
-              $respuesta = array(
-                'error' => true,
-                'data'  => array(),
-                'mensaje' =>'Ya existe una numeración para este tipo de documento con este rango'
-              );
-
-              $this->response($respuesta);
-
-              return;
+            if($doc['pgs_cancel']){
+              if( $Data['pgs_first_num'] >= $doc['pgs_first_num'] && $Data['pgs_first_num'] <= $doc['pgs_last_num'] ){
+                $respuesta = array(
+                  'error' => true,
+                  'data'  => array(),
+                  'mensaje' =>'Ya existe una numeración para este tipo de documento con este rango'
+                );
+  
+                $this->response($respuesta);
+  
+                return;
+              }
+            }else {
+              if( $Data['pgs_first_num'] >= $doc['pgs_first_num'] && $Data['pgs_first_num'] <= $doc['pgs_last_num'] ){
+                $respuesta = array(
+                  'error' => true,
+                  'data'  => array(),
+                  'mensaje' =>'Ya existe una numeración para este tipo de documento con este rango'
+                );
+  
+                $this->response($respuesta);
+  
+                return;
+              }
             }
-          }
-
-          
+            
+          }          
       }
 
       if(is_numeric($Data['pgs_first_num']) && is_numeric($Data['pgs_last_num'])){

@@ -463,18 +463,18 @@ class EstadoCartera extENDs REST_Controller {
 
 
 						$detalle = '
-									<td class="centro">'.$value1['mdt_docname'].'</td>
-									<td style="width: 15%;" class="centro">'.$value1['numerodocumento'].'</td>
-									<td class="centro">'.$this->dateformat->Date($value1['fechadocumento']).'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['totalfactura'], $DECI_MALES, ',', '.').'</td>
-									<td class="centro">'.$this->dateformat->Date($value1['fechavencimiento']).'</td>
-									<td class="centro">'.$this->dateformat->Date($value['fechacorte']).'</td>
-									<td class="centro">'.$value1['comentario_asiento'].'</td>
-									<td class="centro">'.$value1['dias'].'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['uno_treinta'], $DECI_MALES, ',', '.').'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], $DECI_MALES, ',', '.').'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['secenta_uno_noventa'], $DECI_MALES, ',', '.').'</td>
-									<td class="centro">'.$Data['currency']." ".number_format($value1['mayor_noventa'], $DECI_MALES, ',', '.').'</td>';
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$value1['mdt_docname'].'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$value1['numerodocumento'].'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$this->dateformat->Date($value1['fechadocumento']).'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['totalfactura'], $DECI_MALES, ',', '.').'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$this->dateformat->Date($value1['fechavencimiento']).'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$this->dateformat->Date($value['fechacorte']).'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$value1['comentario_asiento'].'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$value1['dias'].'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['uno_treinta'], $DECI_MALES, ',', '.').'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], $DECI_MALES, ',', '.').'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['secenta_uno_noventa'], $DECI_MALES, ',', '.').'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['mayor_noventa'], $DECI_MALES, ',', '.').'</td>';
 
 
 
@@ -528,10 +528,10 @@ class EstadoCartera extENDs REST_Controller {
 					</table>';
 
         $header = '
-        <table width="100%">
+        <table width="100%" style="text-align: left;">
 	        <tr>
-	            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
-	            <th style="text-align: center; margin-left: 600px;">
+	            <th style="text-align: left;" width ="60"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="185" height ="120"></img></th>
+	            <th >
 	                <p><b>INFORME ESTADO DE CUENTA CLIENTE</b></p>
 	            </th>
 				<th>
@@ -541,13 +541,11 @@ class EstadoCartera extENDs REST_Controller {
 	        </tr>
         </table>';
 
-        $footer = '
-		    <table width="100%" style="vertical-align: bottom; font-family: serif;
-		        font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-		        <tr>
-		            <th class="" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
-		        </tr>
-		    </table>';
+        $footer = '<table width="100%" style="vertical-align: bottom; font-family: serif; font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+		<tr>
+			<th  width="33%" style="font-size: 8px;"> Documento generado por <span style="color: orange; font-weight: bolder;"> Joint ERP  </span> para: '.$empresa[0]['pge_small_name'].'. Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+		</tr>
+	</table>';
 
 		$html = ''.$cuerpo.'';
 
@@ -555,7 +553,7 @@ class EstadoCartera extENDs REST_Controller {
 
         $mpdf->SetHTMLHeader($header);
         $mpdf->SetHTMLFooter($footer);
-
+		$mpdf->SetDefaultBodyCSS('background', "url('/var/www/html/".$company[0]['company']."/assets/img/W-background.png')");
 
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);

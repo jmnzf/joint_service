@@ -395,18 +395,18 @@ class EstadoCuentaCl extends REST_Controller {
 
 					// code...
 					$detalle = '
-											<td class="centro">'.$value['mdt_docname'].'</td>
-											<td style="width: 12%;" class="centro">'.$value['numerodocumento'].'</td>
-											<td class="centro">'.$this->dateformat->Date($value['fechadocumento']).'</td>
-											<td class="centro">'.$Data['currency']." ".number_format($value['totalfactura'], $DECI_MALES, ',', '.').'</td>
-											<td class="centro">'.$this->dateformat->Date($value['fechavencimiento']).'</td>
-											<td class="centro">'.$this->dateformat->Date($value['fechacorte']).'</td>
-											<td class="centro">'.$value['referencia'].'</td>
-											<td class="centro">'.$value['dias'].'</td>
-											<td class="centro">'.$Data['currency']." ".number_format($value['uno_treinta'], $DECI_MALES, ',', '.').'</td>
-											<td class="centro">'.$Data['currency']." ".number_format($value['treinta_uno_secenta'], $DECI_MALES, ',', '.').'</td>
-                      <td class="centro">'.$Data['currency']." ".number_format($value['secenta_uno_noventa'], $DECI_MALES, ',', '.').'</td>
-                      <td class="centro">'.$Data['currency']." ".number_format($value['mayor_noventa'], $DECI_MALES, ',', '.').'</td>';
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$value['mdt_docname'].'</td>
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$value['numerodocumento'].'</td>
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$this->dateformat->Date($value['fechadocumento']).'</td>
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value['totalfactura'], $DECI_MALES, ',', '.').'</td>
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$this->dateformat->Date($value['fechavencimiento']).'</td>
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$this->dateformat->Date($value['fechacorte']).'</td>
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$value['referencia'].'</td>
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$value['dias'].'</td>
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value['uno_treinta'], $DECI_MALES, ',', '.').'</td>
+					<td style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value['treinta_uno_secenta'], $DECI_MALES, ',', '.').'</td>
+                    <td style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value['secenta_uno_noventa'], $DECI_MALES, ',', '.').'</td>
+                    <td style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value['mayor_noventa'], $DECI_MALES, ',', '.').'</td>';
 				  $totaldetalle = $totaldetalle.'<tr>'.$detalle.'</tr>';
 
 				  $totalfactura = $totalfactura + ($value['totalfactura']);
@@ -427,6 +427,7 @@ class EstadoCuentaCl extends REST_Controller {
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
 								<th>&nbsp;</th>
+								<th>&nbsp;</th>
 								<th class=""><b>'.$Data['currency'].' '.number_format($detail_0_30, $DECI_MALES, ',', '.').'</b></th>
 								<th class=""><b>'.$Data['currency'].' '.number_format($detail_30_60, $DECI_MALES, ',', '.').'</b></th>
 								<th class=""><b>'.$Data['currency'].' '.number_format($detail_60_90, $DECI_MALES, ',', '.').'</b></th>
@@ -438,9 +439,9 @@ class EstadoCuentaCl extends REST_Controller {
 
 
         $header = '
-        <table width="100%">
+        <table width="100%" style="text-align: left;">
         <tr>
-            <th style="text-align: left;"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="100" height ="40"></img></th>
+            <th style="text-align: left;" width ="60"><img src="/var/www/html/'.$company[0]['company'].'/'.$empresa[0]['pge_logo'].'" width ="185" height ="120"></img></th>
             <th style="text-align: center; margin-left: 600px;">
                 <p><b>INFORME ESTADO DE CUENTA CLIENTE</b></p>
 
@@ -454,14 +455,11 @@ class EstadoCuentaCl extends REST_Controller {
 
         </table>';
 
-        $footer = '
-
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th class="" width="33%">Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
-            </tr>
-        </table>';
+        $footer = '<table width="100%" style="vertical-align: bottom; font-family: serif; font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+        <tr>
+            <th  width="33%" style="font-size: 8px;"> Documento generado por <span style="color: orange; font-weight: bolder;"> Joint ERP  </span> para: '.$empresa[0]['pge_small_name'].'. Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+        </tr>
+    </table>';
 
 
 				$html = '
@@ -539,7 +537,7 @@ class EstadoCuentaCl extends REST_Controller {
 
         $mpdf->SetHTMLHeader($header);
         $mpdf->SetHTMLFooter($footer);
-
+		$mpdf->SetDefaultBodyCSS('background', "url('/var/www/html/".$company[0]['company']."/assets/img/W-background.png')");
 
         $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
@@ -547,8 +545,8 @@ class EstadoCuentaCl extends REST_Controller {
 
         $mpdf->Output('EstadoCuenta_'.$contenidoestadocuenta[0]['codigoproveedor'].'-'.$contenidoestadocuenta[0]['nombreproveedor'].'.pdf', 'D');
 
-				header('Content-type: application/force-download');
-				header('Content-Disposition: attachment; filename='.$filename);
+		header('Content-type: application/force-download');
+		header('Content-Disposition: attachment; filename='.$filename);
 
 
 	}
