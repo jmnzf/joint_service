@@ -28,6 +28,7 @@ class PdfDocument extends REST_Controller {
 		$this->load->library('DocumentMarketing');
 		$this->load->library('DocumentAccSeat');
 		$this->load->library('DocumentPayment');
+		$this->load->library('DocumentContract');
 
 	}
 	
@@ -49,6 +50,13 @@ class PdfDocument extends REST_Controller {
 	{
 		$Data = $this->post();
 		$value = $this->documentpayment->format($Data);
+		return $this->response($value);
+	}
+
+	public function PdfContract_post()
+	{
+		$Data = $this->post();
+		$value = $this->documentcontract->format($Data);
 		return $this->response($value);
 	}
 
