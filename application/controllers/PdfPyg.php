@@ -70,112 +70,144 @@ class PdfPyg extends REST_Controller{
 		}
 
 		//CONSULTA PARA OBTENER NOMBRE DE DOCUMENTO
-		$sql = "SELECT
-                    'adm' AS tipo,
-                    t0.acc_code AS cuenta,
-                    t0.acc_name AS name_cuenta,
-                    COALESCE(ABS(SUM(t1.ac1_debit - t1.ac1_credit)),0) AS total
-                from dacc t0
-                LEFT JOIN mac1 t1 on t0.acc_code = t1.ac1_account
-                WHERE CAST(t0.acc_code AS VARCHAR) LIKE '5105%'
-                GROUP BY t0.acc_code,t0.acc_name
-                union all
-                SELECT
-                    'venta' AS tipo,
-                    t0.acc_code AS cuenta,
-                    t0.acc_name AS name_cuenta,
-                    COALESCE(ABS(SUM(t1.ac1_debit - t1.ac1_credit)),0) AS total
-                from dacc t0
-                LEFT JOIN mac1 t1 on t0.acc_code = t1.ac1_account
-                WHERE CAST(t0.acc_code AS VARCHAR) LIKE '5205%'
-                GROUP BY t0.acc_code,t0.acc_name
-                union all
-                SELECT
-                    'financiero' AS tipo,
-                    t0.acc_code AS cuenta,
-                    t0.acc_name AS name_cuenta,
-                    COALESCE(ABS(SUM(t1.ac1_debit - t1.ac1_credit)),0) AS total
-                from dacc t0
-                LEFT JOIN mac1 t1 on t0.acc_code = t1.ac1_account
-                WHERE CAST(t0.acc_code AS VARCHAR) LIKE '5305%'
-                GROUP BY t0.acc_code,t0.acc_name
-                --INGRESOS
-                union all
-                SELECT
-                    'c_venta' AS tipo,
-                    t0.acc_code AS cuenta,
-                    t0.acc_name AS name_cuenta,
-                    COALESCE(ABS(SUM(t1.ac1_debit - t1.ac1_credit)),0) AS total
-                from dacc t0
-                LEFT JOIN mac1 t1 on t0.acc_code = t1.ac1_account
-                WHERE CAST(t0.acc_code AS VARCHAR) LIKE '1435%'
-                GROUP BY t0.acc_code,t0.acc_name
-                union all
-                SELECT
-                    'i_operativos' AS tipo,
-                    t0.acc_code AS cuenta,
-                    t0.acc_name AS name_cuenta,
-                    COALESCE(ABS(SUM(t1.ac1_debit - t1.ac1_credit)),0) AS total
-                from dacc t0
-                LEFT JOIN mac1 t1 on t0.acc_code = t1.ac1_account
-                WHERE CAST(t0.acc_code AS VARCHAR) LIKE '5305%'
-                GROUP BY t0.acc_code,t0.acc_name
-                union all
-                --OTROS INGRESOS
-                SELECT
-                    'i_no_operativos' AS tipo,
-                    t0.acc_code AS cuenta,
-                    t0.acc_name AS name_cuenta,
-                    COALESCE(ABS(SUM(t1.ac1_debit - t1.ac1_credit)),0) AS total
-                from dacc t0
-                LEFT JOIN mac1 t1 on t0.acc_code = t1.ac1_account
-                WHERE CAST(t0.acc_code AS VARCHAR) LIKE '5305%'
-                GROUP BY t0.acc_code,t0.acc_name";
-
-				$resSql = $this->pedeo->queryTable($sql,array());
-
-				if(!isset($resSql[0])){
-						$respuesta = array(
-							 'error' => true,
-							 'data'  => $resSql,
-							 'mensaje' =>'no se encontro el documento'
-						);
-
-						return $respuesta;
-				}
-
-
-				$mostrar = '';
-				foreach ($resSql as $key => $value) {
-					
-                    if($value['tipo'] == "adm"){
-                        $ingresos = '<table  width="100%" font-family: serif>
-                        <tr>
-                            <th style="text-align: left;"><b>GASTOS DE OPERACION</b><th>
-                        </tr>
-                        <tr>
-                            <th style="text-align: left;"><b>DE ADMINISTRACION</b><th>
-                        </tr>
-                        </table>
-                        <table  width="100%" font-family: serif>
-                        <tr width="60" width="60">
-                            <th style="text-align: center;" ><b>'.$value['cuenta'].'</b><span> </span></p></th>
-                            <th style="text-align: center;"><b>nombre :</b> <span></span></p></th>
-                        </tr>
-                    </table>
-                    <table width="100%" style="vertical-align: bottom; font-family: serif;font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-                        <tr>
-                            <th class="fondo">
-                                <p></p>
-                            </th>
-                        </tr>
-                    </table>
-                    <table class="borde" style="width:100%">				
+               
+				$adm = '';
+                $det_adm = "";
+                $venta =
+                $det_venta = "";
+                $financiero = "";
+                $det_financiero = "";
+                $ingresos = "";
+                $det_ingresos = "";
+                $operativos = "";
+                $det_operativos = "";
+                $otros_ingresos = "";
+                $det_otros_ingresos = "";
+                //MOSTRAR CABECERA
+                    $adm_cab = '<table  width="100%" font-family: serif>
+                    <tr>
+                        <th style="text-align: left;"><b>GASTOS DE OPERACION</b><th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left;"><b>DE ADMINISTRACION</b><th>
+                    </tr>
                     </table>';
+                    $adm = $adm_cab;
+                    $sql_adm = $this->sql("adm");
+                    foreach ($sql_adm as $key => $value) {
+                        $detail = '
+                        <table  width="100%" font-family: serif>
+                            <tr width="60" width="60">
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            </tr>
+                        </table>
+                        ';
+                        $det_adm = $det_adm.$detail;
+                    }
+                    
+
+                    $venta_cab = '<table  width="100%" font-family: serif>
+                    <tr>
+                        <th style="text-align: left;"><b>DE VENTAS</b><th>
+                    </tr>
+                    </table>';
+                    $venta = $venta_cab;
+                    $sql_venta = $this->sql("venta");
+                    foreach ($sql_venta as $key => $value) {
+                        $detail = '
+                        <table  width="100%" font-family: serif>
+                            <tr width="60" width="60">
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            </tr>
+                        </table>
+                        ';
+                        $det_venta = $det_venta.$detail;
                     }
 
-                    $mostrar = $mostrar.$ingresos;
-				}
+                    $financiero_cab = '<table  width="100%" font-family: serif>
+                    <tr>
+                        <th style="text-align: left;"><b>FINANCIERO</b><th>
+                    </tr>
+                    </table>';
+                    $financiero = $financiero_cab;
+                    $sql_financiero = $this->sql("financiero");
+                    foreach ($sql_financiero as $key => $value) {
+                        $detail = '
+                        <table  width="100%" font-family: serif>
+                            <tr width="60" width="60">
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            </tr>
+                        </table>
+                        ';
+                        $det_financiero = $det_financiero.$detail;
+                    }
+
+                    $ingresos_cab = '<table  width="100%" font-family: serif>
+                    <tr>
+                        <th style="text-align: left;"><b>INGRESOS</b><th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left;"><b>COSTO DE VENTAS</b><th>
+                    </tr>
+                    </table>';
+                    $ingresos = $ingresos_cab;
+                    $sql_ingresos = $this->sql("c_venta");
+                    foreach ($sql_ingresos as $key => $value) {
+                        $detail = '
+                        <table  width="100%" font-family: serif>
+                            <tr width="60" width="60">
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            </tr>
+                        </table>
+                        ';
+                        $det_ingresos = $det_ingresos.$detail;
+                    }
+
+                    $operativos_cab = '<table  width="100%" font-family: serif>
+                    <tr>
+                        <th style="text-align: left;"><b>INGRESOS OPERATIVOS</b><th>
+                    </tr>
+                    </table>';
+                    $operativos = $operativos_cab;
+                    $sql_operativos = $this->sql("i_operativos");
+                    foreach ($sql_operativos as $key => $value) {
+                        $detail = '
+                        <table  width="100%" font-family: serif>
+                            <tr width="60" width="60">
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            </tr>
+                        </table>
+                        ';
+                        $det_operativos = $det_operativos.$detail;
+                    }
+
+                    $otros_ingresos_cab = '<table  width="100%" font-family: serif>
+                    <tr>
+                        <th style="text-align: left;"><b>OTROS INGRESOS</b><th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left;"><b>INGRESOS NO OPERATIVOS</b><th>
+                    </tr>
+                    </table>';
+                    $otros_ingresos = $otros_ingresos_cab;
+                    $sql_otros = $this->sql("i_no_operativos");
+                    foreach ($sql_otros as $key => $value) {
+                        $detail = '
+                        <table  width="100%" font-family: serif>
+                            <tr width="60" width="60">
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
+                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            </tr>
+                        </table>
+                        ';
+                        $det_otros_ingresos = $det_otros_ingresos.$detail;
+                    }
+                    
 
 
         $header = '
@@ -190,7 +222,16 @@ class PdfPyg extends REST_Controller{
 							<p><b>'.$empresa[0]['pge_id_type'].'</b></p>
 							<p><b>'.$empresa[0]['pge_add_soc'].'</b></p>
 						</th>
-					/tr>
+					</tr>
+
+				</table>
+                <table width="100%" style="text-align: center;">
+        			<tr>
+            			<th>
+							<p><b>PYG</b></p>
+						</th>
+					</tr>
+
 				</table>';
 
 		$footer = '
@@ -201,7 +242,7 @@ class PdfPyg extends REST_Controller{
         	</table>';
 
 
-        $html = ''.$ingresos.'</html>';
+        $html = ''.$adm.$det_adm.$venta.$det_venta.$financiero.$det_financiero.$ingresos.$det_ingresos.$operativos.$det_operativos.$otros_ingresos.$det_otros_ingresos.'</html>';
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 		$mpdf->SetDefaultBodyCSS('background', "url('/var/www/html/".$company[0]['company']."/assets/img/W-background.png')");
@@ -217,4 +258,21 @@ class PdfPyg extends REST_Controller{
 		header('Content-type: application/force-download');
 		header('Content-Disposition: attachment; filename='.$filename);
 	}
+
+
+    private function sql($type)
+    {
+        $respuesta = "";
+        $sql = "SELECT * FROM pyg WHERE tipo = :tipo";
+
+		$resSql = $this->pedeo->queryTable($sql,array(
+            ':tipo' => $type
+        ));
+
+        if(isset($resSql[0])){
+            $respuesta =  $resSql;
+        }
+        
+        return $respuesta;
+    }
 }
