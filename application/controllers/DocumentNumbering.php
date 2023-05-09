@@ -131,7 +131,7 @@ class DocumentNumbering extends REST_Controller {
             ':Pgs_Cancel'     => $Data['pgs_cancel'],
             ':Pgs_IsDue'      => $Data['pgs_is_due'],
             ':Pgs_DocDate'    => $Data['pgs_doc_date'],
-            ':Pgs_DocDueDate' => $Data['pgs_doc_due_date'],
+            ':Pgs_DocDueDate' => isset($Data['pgs_doc_due_date']) && !empty($Data['pgs_doc_due_date']) ? $Data['pgs_doc_due_date'] : NULL,
             ':Pgs_Enabled'    => $Data['pgs_enabled'],
 						':pgs_nextnum'	  => ($Data['pgs_nextnum'] - 1),
 						':pgs_doctype'		=> $Data['pgs_id_doc_type'],
@@ -249,7 +249,7 @@ class DocumentNumbering extends REST_Controller {
             ':Pgs_Cancel'     => $Data['pgs_cancel'],
             ':Pgs_IsDue'      => $Data['pgs_is_due'],
             ':Pgs_DocDate'    => $Data['pgs_doc_date'],
-            ':Pgs_DocDueDate' => $Data['pgs_doc_due_date'],
+            ':Pgs_DocDueDate' => isset($Data['pgs_doc_due_date']) && !empty($Data['pgs_doc_due_date']) ? $Data['pgs_doc_due_date'] : NULL,
             ':Pgs_Enabled'    => $Data['pgs_enabled'],
             ':Pgs_Id'         => $Data['pgs_id'],
 						':pgs_doctype'		=> $Data['pgs_id_doc_type'],
@@ -299,8 +299,8 @@ class DocumentNumbering extends REST_Controller {
           return;
         }
         // $sqlSelect = " SELECT * FROM pgdn";
-        $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_doc_pre, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel,
-        pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, coalesce((SELECT max(dvc_docnum)+1 ultimo_numero FROM dvct t0 WHERE t0.dvc_series = pgs_id), pgs_first_num) AS ultimo_numero, pgs_mpfn, pgs_mde FROM pgdn WHERE business = :business AND branch = :branch";
+        $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_doc_pre, pgs_num_name, to_char(pgs_first_num, '999G999G999G999G999G999') as pgs_first_num, to_char(pgs_last_num, '999G999G999G999G999G999') as pgs_last_num, pgs_pref_num, pgs_cancel,
+        pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, to_char(pgs_nextnum +1, '999G999G999G999G999G999') as ultimo_numero, pgs_mpfn, pgs_mde FROM pgdn WHERE business = :business AND branch = :branch";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
 

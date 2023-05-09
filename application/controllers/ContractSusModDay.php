@@ -22,7 +22,10 @@
 
 		public function index_get() {
 			// RESPUESTA POR DEFECTO.
-            $sql = "SELECT * FROM csmd";
+            $sql = "SELECT smd_id, smd_description, 
+						get_localcur()||' '||to_char(smd_price, '999G999G999G999G999D'||lpad('9',get_decimals(),'9')) as smd_price, 
+						smd_status, business, branch  
+					FROM csmd";
 			$response = array(
 				'error'   => true,
 				'data'    => [],
@@ -46,7 +49,9 @@
 		public function SusModDay_get() {
 			// RESPUESTA POR DEFECTO.
 
-            $sql = "SELECT * FROM csmd WHERE smd_status = :smd_status";
+            $sql = "SELECT * 
+					FROM csmd
+			 		WHERE smd_status = :smd_status";
 
 			$response = array(
 				'error'   => true,

@@ -71,141 +71,97 @@ class PdfPyg extends REST_Controller{
 
 		//CONSULTA PARA OBTENER NOMBRE DE DOCUMENTO
                
-				$adm = '';
                 $det_adm = "";
-                $venta =
+                $total_det_adm = 0;
                 $det_venta = "";
-                $financiero = "";
+                $total_det_venta = 0;
                 $det_financiero = "";
-                $ingresos = "";
+                $total_det_financiero = 0;
                 $det_ingresos = "";
-                $operativos = "";
+                $total_det_ingresos = 0;
                 $det_operativos = "";
-                $otros_ingresos = "";
+                $total_det_operativos = 0;
                 $det_otros_ingresos = "";
+                $total_det_otros_ingresos = 0;
                 //MOSTRAR CABECERA
-                    $adm_cab = '<table  width="100%" font-family: serif>
-                    <tr>
-                        <th style="text-align: left;"><b>GASTOS DE OPERACION</b><th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left;"><b>DE ADMINISTRACION</b><th>
-                    </tr>
-                    </table>';
-                    $adm = $adm_cab;
                     $sql_adm = $this->sql("adm");
                     foreach ($sql_adm as $key => $value) {
                         $detail = '
-                        <table  width="100%" font-family: serif>
-                            <tr width="60" width="60">
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            <tr >
+                                <td>&nbsp;</td>
+                                <td  style="text-align: center;">'.$value['name_cuenta'].'</td>
+                                <td style="text-align: rigth;">$'.number_format($value['total'],$DECI_MALES,',','.').'</td>
                             </tr>
-                        </table>
                         ';
                         $det_adm = $det_adm.$detail;
+                        $total_det_adm += $value['total'];
                     }
-                    
 
-                    $venta_cab = '<table  width="100%" font-family: serif>
-                    <tr>
-                        <th style="text-align: left;"><b>DE VENTAS</b><th>
-                    </tr>
-                    </table>';
-                    $venta = $venta_cab;
                     $sql_venta = $this->sql("venta");
                     foreach ($sql_venta as $key => $value) {
                         $detail = '
-                        <table  width="100%" font-family: serif>
-                            <tr width="60" width="60">
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            <tr >
+                                <td>&nbsp;</td>
+                                <td style="text-align: center;">'.$value['name_cuenta'].'</td>
+                                <td style="text-align: rigth;">$'.number_format($value['total'],$DECI_MALES,',','.').'</td>
                             </tr>
-                        </table>
                         ';
                         $det_venta = $det_venta.$detail;
+                        $total_det_venta += $value['total'];
                     }
 
-                    $financiero_cab = '<table  width="100%" font-family: serif>
-                    <tr>
-                        <th style="text-align: left;"><b>FINANCIERO</b><th>
-                    </tr>
-                    </table>';
-                    $financiero = $financiero_cab;
                     $sql_financiero = $this->sql("financiero");
                     foreach ($sql_financiero as $key => $value) {
                         $detail = '
-                        <table  width="100%" font-family: serif>
-                            <tr width="60" width="60">
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            <tr >
+                                <td>&nbsp;</td>
+                                <td style="text-align: center;">'.$value['name_cuenta'].'</td>
+                                <td style="text-align: rigth;">$'.number_format($value['total'],$DECI_MALES,',','.').'</td>
                             </tr>
-                        </table>
                         ';
                         $det_financiero = $det_financiero.$detail;
+                        $total_det_financiero += $value['total'];
+                        
                     }
 
-                    $ingresos_cab = '<table  width="100%" font-family: serif>
-                    <tr>
-                        <th style="text-align: left;"><b>INGRESOS</b><th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left;"><b>COSTO DE VENTAS</b><th>
-                    </tr>
-                    </table>';
-                    $ingresos = $ingresos_cab;
                     $sql_ingresos = $this->sql("c_venta");
                     foreach ($sql_ingresos as $key => $value) {
                         $detail = '
-                        <table  width="100%" font-family: serif>
-                            <tr width="60" width="60">
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            <tr >
+                                <td>&nbsp;</td>
+                                <td style="text-align: center;">'.$value['name_cuenta'].'</td>
+                                <td style="text-align: rigth;">$'.number_format($value['total'],$DECI_MALES,',','.').'</td>
                             </tr>
-                        </table>
                         ';
                         $det_ingresos = $det_ingresos.$detail;
+                        $total_det_ingresos += $value['total'];
+                        
                     }
 
-                    $operativos_cab = '<table  width="100%" font-family: serif>
-                    <tr>
-                        <th style="text-align: left;"><b>INGRESOS OPERATIVOS</b><th>
-                    </tr>
-                    </table>';
-                    $operativos = $operativos_cab;
                     $sql_operativos = $this->sql("i_operativos");
                     foreach ($sql_operativos as $key => $value) {
-                        $detail = '
-                        <table  width="100%" font-family: serif>
-                            <tr width="60" width="60">
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                        $detail = ' 
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td style="text-align: center;">'.$value['name_cuenta'].'</td>
+                                <td style="text-align: rigth;">$'.number_format($value['total'],$DECI_MALES,',','.').'</td>
                             </tr>
-                        </table>
                         ';
                         $det_operativos = $det_operativos.$detail;
+                        $total_det_operativos+= $value['total'];
                     }
 
-                    $otros_ingresos_cab = '<table  width="100%" font-family: serif>
-                    <tr>
-                        <th style="text-align: left;"><b>OTROS INGRESOS</b><th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left;"><b>INGRESOS NO OPERATIVOS</b><th>
-                    </tr>
-                    </table>';
-                    $otros_ingresos = $otros_ingresos_cab;
                     $sql_otros = $this->sql("i_no_operativos");
                     foreach ($sql_otros as $key => $value) {
                         $detail = '
-                        <table  width="100%" font-family: serif>
-                            <tr width="60" width="60">
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['cuenta'].'<span>-</span>'.$value['name_cuenta'].'<span></span></p></th>
-                                <th style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">$'.number_format($value['total'],$DECI_MALES,',','.').'</p></th>
+                            <tr>
+                                <td>&nbsp;</td>
+                                <td style="text-align: center;">'.$value['name_cuenta'].'</td>
+                                <td style="text-align: rigth;">$'.number_format($value['total'],$DECI_MALES,',','.').'</td>
                             </tr>
-                        </table>
                         ';
                         $det_otros_ingresos = $det_otros_ingresos.$detail;
+                        $total_det_otros_ingresos += $value['total'];
                     }
                     
 
@@ -242,8 +198,29 @@ class PdfPyg extends REST_Controller{
         	</table>';
 
 
-        $html = ''.$adm.$det_adm.$venta.$det_venta.$financiero.$det_financiero.$ingresos.$det_ingresos.$operativos.$det_operativos.$otros_ingresos.$det_otros_ingresos.'</html>';
+        $html = '<html>
+        <table  width="100%" font-family: serif>
+        <tr>
+            <th style="text-align: left;"><b>GASTOS DE OPERACION</b></th>
+            <th><b>&nbsp;</b></th>
+            <th><b>&nbsp;</b></th>
+        </tr>
+        <tr>
+            <th style="text-align: left;"><b>DE ADMINISTRACION</b></th>
+            <th><b>&nbsp;</b></th>
+            <th><b>&nbsp;</b></th>
+        </tr>
+        '.$det_adm.'
+        <tr>
+            <th><b>&nbsp;</b></th>
+            <th><b>&nbsp;</b></th>
+            <th style="text-align: rigth;"><b>'.$total_det_adm.'</b></th>
+        </tr>
+        </table>
 
+        
+        </html>';
+        print_r($html);exit;
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 		$mpdf->SetDefaultBodyCSS('background', "url('/var/www/html/".$company[0]['company']."/assets/img/W-background.png')");
         $mpdf->SetHTMLHeader($header);

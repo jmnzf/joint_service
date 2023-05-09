@@ -77,20 +77,20 @@ class Reports extends REST_Controller {
 		}
 
 		$sqlAnalitic = "SELECT distinct
-							tbmi.bmi_itemcode AS codigoarticulo,
-							dmar.dma_item_name AS nombrearticulo,
-							tbmi.bmi_ubication as ubicacion,
-							tbdi.bdi_whscode AS codigoalmacen,
-							dmws.dws_name AS nombrealmacen,
-							dmdt.mdt_docname AS docorigen,
-							tbmi.bmi_basenum docnum,
-							cast(tbmi.bmi_createat as date) AS fechadocnum,
-							tbmi.bmi_quantity AS cantidadmovida,
-							tbmi.bmi_cost AS costo,
-							tbmi.bmi_currequantity + tbmi.bmi_quantity AS cantidadrestante,
-							tbmi.bmi_currequantity AS cantidadantesdemovimiento,
-							(tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)) costoacumulado,
-							tbmi.bmi_createby AS creadopor,tbmi.bmi_docdate AS fechadoc,tbmi.bmi_comment AS comentario
+						tbmi.bmi_itemcode AS codigoarticulo,
+						dmar.dma_item_name AS nombrearticulo,
+						tbmi.bmi_ubication as ubicacion,
+						tbdi.bdi_whscode AS codigoalmacen,
+						dmws.dws_name AS nombrealmacen,
+						dmdt.mdt_docname AS docorigen,
+						tbmi.bmi_basenum docnum,
+						cast(tbmi.bmi_createat as date) AS fechadocnum,
+						trim(to_char(tbmi.bmi_quantity, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) AS cantidadmovida,
+						get_localcur()||' '||trim(to_char( tbmi.bmi_cost,'999G999G999G999G999D'||lpad('9',get_decimals(),'9') )) AS costo,
+						trim(to_char(tbmi.bmi_currequantity + tbmi.bmi_quantity,'999G999G999G999G999D'||lpad('9',get_decimals(),'9') )) AS cantidadrestante,
+						trim(to_char(tbmi.bmi_currequantity, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) AS cantidadantesdemovimiento,
+						get_localcur()||' '||trim(to_char( (tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)), '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) costoacumulado,
+						tbmi.bmi_createby AS creadopor,tbmi.bmi_docdate AS fechadoc,tbmi.bmi_comment AS comentario
 						FROM tbmi
 						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode and tbmi.business = tbdi.business
 						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
@@ -509,11 +509,11 @@ class Reports extends REST_Controller {
 					trim(t2.dma_item_name) as dma_item_name,
 					t3.dmu_nameum,
 					t1.bdi_whscode,
-					t1.bdi_quantity,
+					trim(to_char(t1.bdi_quantity, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as bdi_quantity,
 					t1.bdi_ubication,
 					t1.bdi_lote,
-					cast(t1.bdi_avgprice as decimal(15,2)) bdi_avgprice,
-					cast((t1.bdi_quantity * t1.bdi_avgprice) as decimal(15,2)) as costo
+					get_localcur()||' '||trim(to_char(t1.bdi_avgprice, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as bdi_avgprice,
+					get_localcur()||' '||trim(to_char(t1.bdi_quantity * t1.bdi_avgprice, '999G999G999G999G999D'||lpad('9',get_decimals(),'9')))  as costo
 				from tbdi t1
 				join dmar t2
 				on t1.bdi_itemcode = t2.dma_item_code

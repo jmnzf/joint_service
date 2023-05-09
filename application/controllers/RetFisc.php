@@ -127,21 +127,32 @@ class RetFisc extends REST_Controller {
 	//OBTENER RETENCIONES
 	public function getRetFisc_get(){
 
-    $sqlSelect = "SELECT DISTINCT dmrt.*,
-									tpdm.pdm_municipality AS municipio,
-									tdar.dar_name AS autoretencion,
-									trmm.rmm_name AS retencionmagnetica,
-									ttrt.trt_description AS mrt_description
-									FROM dmrt
-									INNER JOIN ttrt
-									ON dmrt.mrt_type = ttrt.trt_id
-									LEFT JOIN tpdm
-									ON dmrt.mrt_mm = tpdm.pdm_codmunicipality
-									LEFT JOIN tdar
-									ON dmrt.mrt_selfttype = tdar.dar_id
-									LEFT JOIN trmm
-									ON dmrt.mrt_typetax = trmm.rmm_id
-									";
+    $sqlSelect = "SELECT DISTINCT mrt_id, 
+					mrt_code, mrt_enabled, 
+					mrt_name, mrt_action, 
+					mrt_dateini, mrt_base, 
+					mrt_tasa, mrt_codeof, 
+					mrt_acctcode, mrt_mm, mrt_typeret, 
+					mrt_acctlost, 
+					get_localcur()||' '||trim(to_char(mrt_minbase, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as mrt_minbase, 
+					mrt_rmm, mrt_selftret, 
+					mrt_pos, mrt_selfttype, 
+					mrt_typetax, mrt_sustra, 
+					mrt_tipobase, mrt_type, 
+					dmrt.business, dmrt.branch,
+					tpdm.pdm_municipality AS municipio,
+					tdar.dar_name AS autoretencion,
+					trmm.rmm_name AS retencionmagnetica,
+					ttrt.trt_description AS mrt_description
+					FROM dmrt
+					INNER JOIN ttrt
+					ON dmrt.mrt_type = ttrt.trt_id
+					LEFT JOIN tpdm
+					ON dmrt.mrt_mm = tpdm.pdm_codmunicipality
+					LEFT JOIN tdar
+					ON dmrt.mrt_selfttype = tdar.dar_id
+					LEFT JOIN trmm
+					ON dmrt.mrt_typetax = trmm.rmm_id";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

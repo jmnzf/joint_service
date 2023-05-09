@@ -18,7 +18,7 @@ class RDelivery extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+        $this->load->library('pedeo', [$this->pdo]);
 
 	}
 
@@ -163,7 +163,9 @@ class RDelivery extends REST_Controller {
         }
 
         $sqlSelect = "SELECT
-                        rded.*,
+                        ded_id, ded_smdid, ded_sdeid, 
+                        get_localcur()||' '||to_char(ded_price, '999G999G999G999G999D'||lpad('9',get_decimals(),'9')) as ded_price, 
+                        rded.business, rded.branch, ded_status, ded_user, ded_date,
                         csmd.smd_description AS name_dia,
                         csde.sde_description AS name_descp
                     FROM rded

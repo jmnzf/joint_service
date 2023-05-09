@@ -725,4 +725,55 @@ class Items extends REST_Controller
 
 	}
 
+	// BUSCA LAS CANTIDADES MAXIMAS Y MINIMAS PARA UN ITEM DENTRO DE UN ALMACEN 
+	public function getStockMM_post() {
+
+		$Data = $this->post();
+
+		if (!isset($Data['business']) || !isset($Data['itemcode'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT dws_id, dws_code, concat(dws_code,' - ',dws_name) as dws_name,
+						coalesce(smm_min, 0) as smm_min, coalesce(smm_max, 0) as smm_max
+						FROM dmws 
+						LEFT JOIN tsmm
+						ON dmws.dws_code = tsmm.smm_store
+						AND tsmm.smm_itemcode = :smm_itemcode
+						WHERE dmws.business = :business
+						ORDER BY dws_name asc";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':smm_itemcode' => $Data['itemcode'],
+			':business' 	=> $Data['business']
+		));				
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
 }

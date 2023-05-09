@@ -113,7 +113,9 @@ class Precioportipodeaviso extends REST_Controller
 
     public function index_get()
     {
-        $resSelect = $this->pedeo->queryTable("SELECT ttav.tav_name AS pta_tipoaviso, pta_precio , pta_id , CASE  WHEN pta_status::numeric = 1 THEN 'Activo' WHEN pta_status::numeric = 0 THEN 'Inactivo' END AS pta_status FROM tpta LEFT JOIN ttav ON tpta.pta_tipoaviso::numeric = ttav.tav_id ", array());
+        $resSelect = $this->pedeo->queryTable("SELECT ttav.tav_name AS pta_tipoaviso, get_localcur()||' '||to_char(pta_precio, '999G999G999G999G999D'||lpad('9',get_decimals(),'9')) as pta_precio, pta_id ,
+                                                CASE  WHEN pta_status::numeric = 1 THEN 'Activo' WHEN pta_status::numeric = 0 THEN 'Inactivo' END AS pta_status FROM tpta LEFT JOIN ttav ON tpta.pta_tipoaviso::numeric = ttav.tav_id",
+                                         array());
 
         if (isset($resSelect[0])) {
 

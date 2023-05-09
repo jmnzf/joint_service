@@ -167,7 +167,7 @@ class Tasa extends REST_Controller {
 											 	tsa_id,
 												tsa_curro,
 												tsa_currd,
-												concat(tsa_curro,' ',tsa_value) as tsa_value,
+												get_localcur()||' '||to_char(tsa_value, '999G999G999G999G999D'||lpad('9',get_decimals(),'9')) as tsa_value,
 												tsa_date,
                         tsa_enabled
 											 FROM tasa";

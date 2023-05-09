@@ -371,4 +371,13 @@ class Querys extends REST_Controller {
 		  $this->response($respuesta);
 	}
 
+	public function test_post(){
+
+
+		$respuesta = $this->pedeo->queryTable("SELECT now()");
+
+		$this->response($respuesta);
+
+	}
+
 }

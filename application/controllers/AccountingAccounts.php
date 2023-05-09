@@ -221,13 +221,12 @@ class AccountingAccounts extends REST_Controller {
 
   // OBTENER CUENTAS CONTABLES
   public function getAccountingAccounts_get(){
-
         $sqlSelect = "SELECT
 														    acc_id,
 														    cast(acc_code as varchar) ,
 														    acc_name,
 														    acc_level,
-														    round((select sum(t1.ac1_debit-t1.ac1_credit) from mac1 t1 where t1.ac1_account = acc_code), get_decimals()) as saldo,
+														    get_localcur()||' '||to_char((SELECT SUM(t1.ac1_debit-t1.ac1_credit) FROM mac1 t1 WHERE t1.ac1_account = acc_code AND EXTRACT(YEAR FROM ac1_doc_date) = EXTRACT(YEAR FROM current_date)),'999G999G999G999G999D'||lpad('9',get_decimals(),'9')) as saldo,
 														    acc_cash ,
 														    acc_cash_flow,
 														    acc_budget,

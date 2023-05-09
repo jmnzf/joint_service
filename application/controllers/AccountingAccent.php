@@ -102,7 +102,7 @@ class AccountingAccent extends REST_Controller
 			return;
 		}
 		//PERIODO CONTABLE
-		//
+		
 
 
 		// //BUSCANDO LA NUMERACION DEL DOCUMENTO
@@ -125,8 +125,8 @@ class AccountingAccent extends REST_Controller
 
 		$this->pedeo->trans_begin();
 
-		$sqlInsert = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, mac_currency, mac_doctype, business, branch)
-                      VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :mac_currency, :mac_doctype, :business, :branch)";
+		$sqlInsert = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, mac_currency, mac_doctype, business, branch, mac_accperiod)
+                      VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :mac_currency, :mac_doctype, :business, :branch, :mac_accperiod)";
 
 
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -161,7 +161,8 @@ class AccountingAccent extends REST_Controller
 			':mac_currency' => isset($Data['mac_currency']) ? $Data['mac_currency'] : NULL,
 			':mac_doctype' => 18,
 			':business' => $Data['business'],
-			':branch' => $Data['branch']
+			':branch' => $Data['branch'],
+			':mac_accperiod' => $periodo['data']
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -308,7 +309,7 @@ class AccountingAccent extends REST_Controller
 					':ac1_rescon_date' => $this->validateDate($detail['ac1_rescon_date']) ? $detail['ac1_rescon_date'] : NULL,
 					':ac1_recon_total' => is_numeric($detail['ac1_recon_total']) ? $detail['ac1_recon_total'] : 0,
 					':ac1_made_user' => isset($detail['ac1_made_user']) ? $detail['ac1_made_user'] : NULL,
-					':ac1_accperiod' => is_numeric($detail['ac1_accperiod']) ? $detail['ac1_accperiod'] : NULL,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => is_numeric($detail['ac1_close']) ? $detail['ac1_close'] : 0,
 					':ac1_cord' => is_numeric($detail['ac1_cord']) ? $detail['ac1_cord'] : 0,
 					':ac1_ven_debit' => is_numeric($detail['ac1_debit']) ? round($detail['ac1_debit'], $DECI_MALES) : 0,
@@ -322,7 +323,7 @@ class AccountingAccent extends REST_Controller
 					':ac1_codref' => is_numeric($detail['ac1_codref']) ? $detail['ac1_codref'] : 0,
 					':ac1_card_type' => isset($detail['ac1_card_type']) ? $detail['ac1_card_type'] : 0,
 					':business' => $Data['business'],
-					':branch'   => $Data['branch']
+					':branch'   => $Data['branch']			
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -418,7 +419,7 @@ class AccountingAccent extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['mac_made_usuer']) ? $Data['mac_made_usuer'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -515,7 +516,7 @@ class AccountingAccent extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['mac_made_usuer']) ? $Data['mac_made_usuer'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,

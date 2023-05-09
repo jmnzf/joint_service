@@ -51,7 +51,9 @@ class StockMM extends REST_Controller {
     // METODO PARA CREAR
     public function createStockMM_post(){
         $Data = $this->post();
-        if (!isset($Data['items'])) {
+
+        if ( !isset($Data['items']) OR !isset($Data['business']) OR !isset($Data['branch']) ) {
+
             $respuesta = array(
                 'error' => true,
                 'data'  => array(),
@@ -63,64 +65,113 @@ class StockMM extends REST_Controller {
             return;
         }
 
-        $sqlSelect = "SELECT * from tsmm where smm_store = :smm_store ";
+        $sqlSelect = "SELECT * FROM tsmm WHERE smm_store = :smm_store AND smm_itemcode = :smm_itemcode AND business = :business";
 
-        $sqlInsert = "INSERT INTO tsmm(smm_store, smm_max, smm_min, smm_itemcode) 
-                      VALUES (:smm_store, :smm_max, :smm_min, :smm_itemcode)";
+        $sqlInsert = "INSERT INTO tsmm(smm_store, smm_max, smm_min, smm_itemcode, business) 
+                      VALUES (:smm_store, :smm_max, :smm_min, :smm_itemcode, :business)";
 
-        $this->pedeo->trans_begin();
+      
 
-        $items = $Data['items'];
+        $items = json_decode($Data['items'], true);
 
-       if (is_array($items) and intval(count($items)) > 0 ) {
+        if ( !is_array( $items ) ){
+            $respuesta = array(
+                'error' => true,
+                'data'  => [],
+                'mensaje' =>'No se encontraro los datos necesarios'
+            );
+
+            return  $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+        }
+        
+
+        if (is_array($items) and intval(count($items)) > 0 ) {
+
+            $this->pedeo->trans_begin();
+
+            foreach ($items as $key => $value){
+
+                $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+                                                                    ':smm_store' => $value['smm_store'], 
+                                                                    ':smm_itemcode' => $value['smm_itemcode'],
+                                                                    ':business'  => $Data['business']
+                                                                ));
+
+                if(isset($resSelect[0])){
+
+                    $sqlUpdate = "UPDATE tsmm set smm_min = :smm_min,
+                                  smm_max = :smm_max
+                                  WHERE smm_id = :smm_id";
+
+                    $resUpdate = $this->pedeo->updateRow($sqlUpdate,array(
+                                    ':smm_max' => $value['smm_max'],
+                                    ':smm_min' => $value['smm_min'],
+                                    ':smm_id'  => $resSelect[0]['smm_id']
+                                ));
+
+                    if (is_numeric($resUpdate) AND $resUpdate > 0) {            
+
+                    }else{
+                        $this->pedeo->trans_rollback();
+                        $respuesta = array(
+                            'error' => true,
+                            'data'  => $resUpdate,
+                            'mensaje' =>'No se pudo actualizar las cantidades máximas y mínimas para almacen '.$value['smm_store']
+                        );
             
-        foreach ($items as $key => $value){
-
-            $resSelect = $this->pedeo->queryTable($sqlSelect, array(':smm_store' => $value['smm_store']));
-
-            if(isset($resSelect[0])){
-                $respuesta = array(
-                    'error' => true,
-                    'data'  => array(),
-                    'mensaje' =>'No se puede realizar la operacion'
-                );
-    
-                $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-    
-                return;
-
-                $this->pedeo->trans_rollback();
-            }
+                        return $this->response($respuesta);
             
-                $resInsert = $this->pedeo->insertRow($sqlInsert,
-                array(':smm_store' => $value['smm_store'],
-                    ':smm_max'    => $value['smm_max'],
-                    ':smm_min'   => $value['smm_min'],
-                    ':smm_itemcode' => $value['smm_itemcode']));
-
-                if(is_numeric($resInsert) && $resInsert > 0){
+                    }
                     
                 }else{
-                    $this->pedeo->trans_rollback();
-                    $respuesta = array(
-                        'error' => true,
-                        'data'  => $resInsert,
-                        'mensaje' =>'No se pudo realizar la operacion'
-                    );
-        
-                    $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-        
-                    return;
+
+                    $resInsert = $this->pedeo->insertRow($sqlInsert,
+
+                    array(':smm_store' => $value['smm_store'],
+                        ':smm_max'    => $value['smm_max'],
+                        ':smm_min'   => $value['smm_min'],
+                        ':smm_itemcode' => $value['smm_itemcode'],
+                        ':business' => $Data['business']
+                    ));
+
+                    if(is_numeric($resInsert) && $resInsert > 0){
+                        
+                    }else{
+
+                        $this->pedeo->trans_rollback();
+
+                        $respuesta = array(
+                            'error' => true,
+                            'data'  => $resInsert,
+                            'mensaje' =>'No se pudo realizar la operacion'
+                        );
+            
+                        return $this->response($respuesta);
+            
+                      
+                    }
                 }
+                
+                
 
             }
-       }
+
+            $this->pedeo->trans_commit();
+
+
+            $respuesta = array(
+                'error' => false,
+                'data'  => [],
+                'mensaje' => 'Operacion exitosa');
+        }else{
+
+            $respuesta = array(
+                'error' => false,
+                'data'  => [],
+                'mensaje' => 'No se realizo ningún cambio');
+        }
        
-        $this->pedeo->trans_commit();
-        $respuesta = array(
-	        'error' => false,
-	        'data'  => [],
-	        'mensaje' => 'Operacion exitosa');
+       
 
         $this->response($respuesta);
     }
@@ -164,10 +215,10 @@ class StockMM extends REST_Controller {
             }
 
             $sqlUpdate = "UPDATE tsmm set smm_store = :smm_store,
-                                      smm_min = :smm_min,
-                                      smm_max = :smm_max,   
-                                      smm_itemcode = :smm_itemcode
-                                    WHERE smm_id = :smm_id";
+                            smm_min = :smm_min,
+                            smm_max = :smm_max,   
+                            smm_itemcode = :smm_itemcode
+                          WHERE smm_id = :smm_id";
 
         
             $resUpdate = $this->pedeo->updateRow($sqlUpdate,array(':smm_store' => $Data['smm_store'],

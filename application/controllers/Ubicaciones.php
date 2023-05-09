@@ -145,14 +145,14 @@ class Ubicaciones extends REST_Controller
 
             return $this->response($respuesta);
         }
-
+     
         $sql = "SELECT
                     ubc_type ,
                     ubc_code ,
-                    ubc_alto_cm ,
-                    ubc_ancho_cm ,
-                    ubc_largo_cm ,
-                    ubc_resistencia_kg ,
+                    trim(to_char(ubc_alto_cm, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as ubc_alto_cm ,
+                    trim(to_char(ubc_ancho_cm, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as ubc_ancho_cm,
+                    trim(to_char(ubc_largo_cm, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as ubc_largo_cm,
+                    trim(to_char(ubc_resistencia_kg, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as ubc_resistencia_kg,
                     ubc_id ,
                     CASE
                         WHEN ubc_status::numeric = 1

@@ -589,10 +589,9 @@ class BpContracts extends REST_Controller
 			//
 			//DATOS COMPLEMENTARIOS SUSCRIPCION
 			if (is_array($DatosCS) && isset($DatosCS[0])) {
-
-
 				foreach ($DatosCS as $key => $value) {
 					foreach ($value['detalle'] as $key => $item) {
+						
 						$sqlInsertDetail3 = "INSERT INTO csn2(sn2_docentry, sn2_doctype, sn2_itemcode, sn2_itemdescription, sn2_daycode, sn2_period, sn2_price, sn2_susitemcode)VALUES(:sn2_docentry, :sn2_doctype, :sn2_itemcode, :sn2_itemdescription, :sn2_daycode, :sn2_period, :sn2_price, :sn2_susitemcode)";
 
 						$resInsertDetail3 = $this->pedeo->insertRow($sqlInsertDetail3, array(
@@ -1246,5 +1245,60 @@ class BpContracts extends REST_Controller
 
 			return;
 		}
+	}
+
+	public function notificationContracts_post()
+	{
+		$Data = $this->post();
+		
+
+		if(!isset($Data['business']) or !isset($Data['branch'])){
+			
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'Informacion invalida'
+			);
+
+			return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);;
+		}
+
+
+		$sql = "SELECT
+					tcsn.csn_cardcode,
+					tcsn.csn_cardname,
+					tcsn.csn_docnum,
+					dcsn.csn_remember,
+					abs(tcsn.csn_enddate - current_date) dif_day,
+					tcsn.csn_docentry,
+					tcsn.csn_doctype
+				from tcsn
+				inner join dcsn on tcsn.csn_docentry = dcsn.csn_docentry
+				where ((tcsn.csn_enddate - current_date)) <= dcsn.csn_remember
+				and tcsn.business = :business and tcsn.branch = :branch;";
+				
+		$resSql = $this->pedeo->queryTable($sql,array(
+			':business' => $Data['business'],
+			':branch' => $Data['branch']
+		));
+
+		if(isset($resSql[0])){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resSql,
+				'mensaje' => 'OK'
+			);
+		}else{
+
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'No se encontraron datos en la busqueda'
+			);
+
+			return $respuesta;
+		}
+
+		$this->response($respuesta);
 	}
 }
