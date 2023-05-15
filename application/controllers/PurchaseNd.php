@@ -597,6 +597,7 @@ class PurchaseNd extends REST_Controller
 									$DetalleRetencion->crt_profitrt = $value['crt_profitrt'];
 									$DetalleRetencion->crt_totalrt  = $value['crt_totalrt'];
 									$DetalleRetencion->crt_codret   = $value['crt_typert'];
+									$DetalleRetencion->crt_baseln 	= $value['crt_basert'];
 
 
 									$llaveRetencion = $DetalleRetencion->crt_typert . $DetalleRetencion->crt_profitrt;
@@ -1316,6 +1317,7 @@ class PurchaseNd extends REST_Controller
 
 			foreach ($DetalleConsolidadoRetencion as $key => $posicion) {
 				$totalRetencion = 0;
+				$BaseLineaRet = 0;
 				$totalRetencionOriginal = 0;
 				$dbito = 0;
 				$cdito = 0;
@@ -1327,7 +1329,7 @@ class PurchaseNd extends REST_Controller
 				$CodRet = 0;
 				foreach ($posicion as $key => $value) {
 
-					$sqlcuentaretencion = "SELECT mrt_acctcode FROM dmrt WHERE mrt_id = :mrt_id";
+					$sqlcuentaretencion = "SELECT mrt_acctcode, mrt_code FROM dmrt WHERE mrt_id = :mrt_id";
 					$rescuentaretencion = $this->pedeo->queryTable($sqlcuentaretencion, array(
 						'mrt_id' => $value->crt_typert
 					));
@@ -1337,7 +1339,8 @@ class PurchaseNd extends REST_Controller
 						$cuenta = $rescuentaretencion[0]['mrt_acctcode'];
 						$totalRetencion = $totalRetencion + $value->crt_basert;
 						$Profitrt =  $value->crt_profitrt;
-						$CodRet = $value->crt_codret;
+						$CodRet = $rescuentaretencion[0]['mrt_code'];
+						$BaseLineaRet = $BaseLineaRet + $value->crt_baseln;
 					} else {
 
 						$this->pedeo->trans_rollback();
@@ -1353,12 +1356,14 @@ class PurchaseNd extends REST_Controller
 						return;
 					}
 				}
-				$Basert = $totalRetencion;
+
+				$Basert = $BaseLineaRet;
 				$totalRetencionOriginal = $totalRetencion;
 
 				if (trim($Data['cnd_currency']) != $MONEDALOCAL) {
 					$totalRetencion = ($totalRetencion * $TasaDocLoc);
-					$Basert = $totalRetencion;
+					$BaseLineaRet = ($BaseLineaRet * $TasaDocLoc);
+					$Basert = $BaseLineaRet;
 				}
 
 

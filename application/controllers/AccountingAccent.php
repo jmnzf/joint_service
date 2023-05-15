@@ -53,8 +53,8 @@ class AccountingAccent extends REST_Controller
 
 		$DocNumVerificado = 0;
 
-		$sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type, business, branch)
-						VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type, :business, :branch)";
+		$sqlInsertDetail = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type, business, branch, ac1_codret, ac1_base_tax)
+						VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type, :business, :branch, :ac1_codret, :ac1_base_tax)";
 
 
 		if (!isset($Data['detail'])) {
@@ -215,70 +215,83 @@ class AccountingAccent extends REST_Controller
 				}
 				//*******
 				//VALIDACION CENTRO DE COSTO, UNIDAD DE NEGOCIO, PROYECTO Y SOCIO DE NEGOCIO
+
+				
+				$ValidateDmcc = $this->pedeo->queryTable("SELECT * FROM dmcc WHERE trim(dcc_prc_code) = :dcc_prc_code", array(':dcc_prc_code' => trim($detail['ac1_prc_code'])));
 				$ValidateDmun = $this->pedeo->queryTable("SELECT * FROM dmun WHERE trim(dun_un_code)  = :dun_un_code", array(':dun_un_code' => trim($detail['ac1_uncode'])));
 				$ValidateDmpj = $this->pedeo->queryTable("SELECT * FROM dmpj WHERE trim(dpj_pj_code)  = :dpj_pj_code", array(':dpj_pj_code' => trim($detail['ac1_prj_code'])));
-				$ValidateDmcc = $this->pedeo->queryTable("SELECT * FROM dmcc WHERE trim(dcc_prc_code) = :dcc_prc_code", array(':dcc_prc_code' => trim($detail['ac1_prc_code'])));
 				$ValidateSn   = $this->pedeo->queryTable("SELECT * FROM dmsn WHERE trim(dms_card_code) = :dms_card_code", array(':dms_card_code' => trim($detail['ac1_legal_num'])));
-
-				if (!isset($ValidateDmun[0])) {
-					$this->pedeo->trans_rollback();
-
-					$respuesta = array(
-						'error'   => true,
-						'data'    => $ValidateDmun,
-						'mensaje'	=> 'No existe la unidad de negocio ' . $detail['ac1_uncode']
-					);
-
-					$this->response($respuesta);
-
-					return;
+				
+				
+				if (!empty(($detail['ac1_uncode']))) {
+					if (!isset($ValidateDmun[0])) {
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error'   => true,
+							'data'    => $ValidateDmun,
+							'mensaje' => 'No existe la unidad de negocio ' . $detail['ac1_uncode']
+						);
+	
+						$this->response($respuesta);
+	
+						return;
+					}
 				}
 
-				if (!isset($ValidateDmpj[0])) {
-					$this->pedeo->trans_rollback();
-
-					$respuesta = array(
-						'error'   => true,
-						'data'    => $ValidateDmpj,
-						'mensaje'	=> 'No existe el proyecto ' . $detail['ac1_prj_code']
-					);
-
-					$this->response($respuesta);
-
-					return;
+				if (!empty(($detail['ac1_prj_code']))) {
+					if (!isset($ValidateDmpj[0])) {
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error'   => true,
+							'data'    => $ValidateDmpj,
+							'mensaje'	=> 'No existe el proyecto ' . $detail['ac1_prj_code']
+						);
+	
+						$this->response($respuesta);
+	
+						return;
+					}
 				}
 
-				if (!isset($ValidateDmcc[0])) {
-					$this->pedeo->trans_rollback();
 
-					$respuesta = array(
-						'error'   => true,
-						'data'    => $ValidateDmcc,
-						'mensaje'	=> 'No existe el centro de costo ' . $detail['ac1_prc_code']
-					);
+				
+				if (!empty(($detail['ac1_prc_code']))) {
 
-					$this->response($respuesta);
-
-					return;
+					if (!isset($ValidateDmcc[0])) {
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error'   => true,
+							'data'    => $ValidateDmcc,
+							'mensaje'	=> 'No existe el centro de costo ' . $detail['ac1_prc_code']
+						);
+	
+						$this->response($respuesta);
+	
+						return;
+					}
 				}
 
+			
 				if (!empty(($detail['ac1_legal_num']))) {
-
 					if (!isset($ValidateSn[0])) {
 						$this->pedeo->trans_rollback();
-
+	
 						$respuesta = array(
 							'error'   => true,
 							'data'    => $ValidateSn,
 							'mensaje'	=> 'No existe el socio de negocio ' . $detail['ac1_legal_num']
 						);
-
+	
 						$this->response($respuesta);
-
+	
 						return;
 					}
 				}
 
+				
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
@@ -315,7 +328,7 @@ class AccountingAccent extends REST_Controller
 					':ac1_ven_debit' => is_numeric($detail['ac1_debit']) ? round($detail['ac1_debit'], $DECI_MALES) : 0,
 					':ac1_ven_credit' => is_numeric($detail['ac1_credit']) ? round($detail['ac1_credit'], $DECI_MALES) : 0,
 					':ac1_fiscal_acct' => is_numeric($detail['ac1_fiscal_acct']) ? $detail['ac1_fiscal_acct'] : 0,
-					':ac1_taxid' => is_numeric($detail['ac1_taxid']) ? $detail['ac1_taxid'] : 0,
+					':ac1_taxid' => isset($detail['ac1_taxid']) ? $detail['ac1_taxid'] : 0,
 					':ac1_isrti' => is_numeric($detail['ac1_isrti']) ? $detail['ac1_isrti'] : 0,
 					':ac1_basert' => is_numeric($detail['ac1_basert']) ? $detail['ac1_basert'] : 0,
 					':ac1_mmcode' => is_numeric($detail['ac1_mmcode']) ? $detail['ac1_mmcode'] : 0,
@@ -323,7 +336,9 @@ class AccountingAccent extends REST_Controller
 					':ac1_codref' => is_numeric($detail['ac1_codref']) ? $detail['ac1_codref'] : 0,
 					':ac1_card_type' => isset($detail['ac1_card_type']) ? $detail['ac1_card_type'] : 0,
 					':business' => $Data['business'],
-					':branch'   => $Data['branch']			
+					':branch'   => $Data['branch'],
+					':ac1_codret' => isset($detail['ac1_codret']) && !empty($detail['ac1_codret']) ? $detail['ac1_codret'] : NULL,
+					':ac1_base_tax' => isset($detail['ac1_base_tax']) && !empty($detail['ac1_base_tax']) ? $detail['ac1_base_tax'] : NULL		
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -432,8 +447,10 @@ class AccountingAccent extends REST_Controller
 					':ac1_legal_num' => NULL,
 					':ac1_codref' => 1,
 					':ac1_card_type' => 0,
-					':business' => $detail['business'],
-					':branch'   => $detail['branch']
+					':business' => $Data['business'],
+					':branch'   => $Data['branch'],
+					':ac1_codret' => isset($detail['ac1_codret']) && !empty($detail['ac1_codret']) ? $detail['ac1_codret'] : NULL,
+					':ac1_base_tax' => isset($detail['ac1_base_tax']) && !empty($detail['ac1_base_tax']) ? $detail['ac1_base_tax'] : NULL	
 				));
 
 
@@ -448,7 +465,7 @@ class AccountingAccent extends REST_Controller
 					$respuesta = array(
 						'error'   => true,
 						'data'	  => $resDetalleAsiento,
-						'mensaje'	=> 'No se pudo registrar la conciliación de bancos, occurio un error al insertar el detalle del asiento diferencia en cambio'
+						'mensaje'	=> 'No se pudo registrar el asiento contable'
 					);
 
 					$this->response($respuesta);
@@ -529,8 +546,10 @@ class AccountingAccent extends REST_Controller
 					':ac1_legal_num' => NULL,
 					':ac1_codref' => 1,
 					':ac1_card_type' => 0,
-					':business' => $detail['business'],
-					':branch'   => $detail['branch']
+					':business' => $Data['business'],
+					':branch'   => $Data['branch'],
+					':ac1_codret' => isset($detail['ac1_codret']) && !empty($detail['ac1_codret']) ? $detail['ac1_codret'] : NULL,
+					':ac1_base_tax' => isset($detail['ac1_base_tax']) && !empty($detail['ac1_base_tax']) ? $detail['ac1_base_tax'] : NULL	
 
 				));
 
@@ -546,7 +565,7 @@ class AccountingAccent extends REST_Controller
 					$respuesta = array(
 						'error'   => true,
 						'data'	  => $resDetalleAsiento,
-						'mensaje'	=> 'No se pudo registrar la conciliación de bancos, occurio un error al insertar el detalle del asiento diferencia en cambio'
+						'mensaje'	=> 'No se encontro la cuenta para adicionar la diferencia en decimales'
 					);
 
 					$this->response($respuesta);

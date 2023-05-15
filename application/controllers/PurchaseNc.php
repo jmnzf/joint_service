@@ -641,6 +641,7 @@ class PurchaseNc extends REST_Controller
 									$DetalleRetencion->crt_profitrt = $value['crt_profitrt'];
 									$DetalleRetencion->crt_totalrt  = $value['crt_totalrt'];
 									$DetalleRetencion->crt_codret   = $value['crt_typert'];
+									$DetalleRetencion->crt_baseln 	= $value['crt_basert'];
 
 
 									$llaveRetencion = $DetalleRetencion->crt_typert . $DetalleRetencion->crt_profitrt;
@@ -671,7 +672,7 @@ class PurchaseNc extends REST_Controller
 									$respuesta = array(
 										'error'   => true,
 										'data' => $resInsertDetail,
-										'mensaje'	=> 'No se pudo registrar la factura de compras, fallo el proceso para insertar las retenciones'
+										'mensaje'	=> 'No se pudo registrar la nota credito de compras, fallo el proceso para insertar las retenciones'
 									);
 									$this->response($respuesta);
 									return;
@@ -2106,6 +2107,7 @@ class PurchaseNc extends REST_Controller
 			//PROCEDIMIENTO PARA LLENAR ASIENTO DE RETENCIONES
 			foreach ($DetalleConsolidadoRetencion as $key => $posicion) {
 				$totalRetencion = 0;
+				$BaseLineaRet = 0;
 				$totalRetencionOriginal = 0;
 				$dbito = 0;
 				$cdito = 0;
@@ -2117,7 +2119,7 @@ class PurchaseNc extends REST_Controller
 				$CodRet = 0;
 				foreach ($posicion as $key => $value) {
 
-					$sqlcuentaretencion = "SELECT mrt_acctcode FROM dmrt WHERE mrt_id = :mrt_id";
+					$sqlcuentaretencion = "SELECT mrt_acctcode, mrt_code FROM dmrt WHERE mrt_id = :mrt_id";
 					$rescuentaretencion = $this->pedeo->queryTable($sqlcuentaretencion, array(
 						'mrt_id' => $value->crt_typert
 					));
@@ -2127,7 +2129,8 @@ class PurchaseNc extends REST_Controller
 						$cuenta = $rescuentaretencion[0]['mrt_acctcode'];
 						$totalRetencion = $totalRetencion + $value->crt_basert;
 						$Profitrt =  $value->crt_profitrt;
-						$CodRet = $value->crt_codret;
+						$CodRet = $rescuentaretencion[0]['mrt_code'];
+						$BaseLineaRet = $BaseLineaRet + $value->crt_baseln;
 					} else {
 
 						$this->pedeo->trans_rollback();
@@ -2135,7 +2138,7 @@ class PurchaseNc extends REST_Controller
 						$respuesta = array(
 							'error'   => true,
 							'data'	  => $rescuentaretencion,
-							'mensaje'	=> 'No se pudo registrar la factura de compras, no se encontro la cuenta para la retencion ' . $value->crt_typert
+							'mensaje'	=> 'No se pudo registrar la nota credito de compras, no se encontro la cuenta para la retención ' . $value->crt_typert
 						);
 
 						$this->response($respuesta);
@@ -2144,12 +2147,13 @@ class PurchaseNc extends REST_Controller
 					}
 				}
 
-				$Basert = $totalRetencion;
+				$Basert = $BaseLineaRet;
 				$totalRetencionOriginal = $totalRetencion;
 
 				if (trim($Data['cnc_currency']) != $MONEDALOCAL) {
 					$totalRetencion = ($totalRetencion * $TasaDocLoc);
-					$Basert = $totalRetencion;
+					$BaseLineaRet = ($BaseLineaRet * $TasaDocLoc);
+					$Basert = $BaseLineaRet;
 				}
 
 

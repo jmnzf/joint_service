@@ -3586,7 +3586,7 @@ class SalesInv extends REST_Controller
 				//
 
 
-				//PROCEDIMIENTO PARA LLENAR ASIENTO DE RENTENCIONES
+				//PROCEDIMIENTO PARA LLENAR ASIENTO DE RENTENCIONES   
 
 				foreach ($DetalleConsolidadoRetencion as $key => $posicion) {
 					$totalRetencion = 0;
@@ -3602,7 +3602,7 @@ class SalesInv extends REST_Controller
 					$CodRet = 0;
 					foreach ($posicion as $key => $value) {
 
-						$sqlcuentaretencion = "SELECT mrt_acctcode FROM dmrt WHERE mrt_id = :mrt_id";
+						$sqlcuentaretencion = "SELECT mrt_acctcode, mrt_code FROM dmrt WHERE mrt_id = :mrt_id";
 						$rescuentaretencion = $this->pedeo->queryTable($sqlcuentaretencion, array(
 							'mrt_id' => $value->crt_typert
 						));
@@ -3612,7 +3612,7 @@ class SalesInv extends REST_Controller
 							$cuenta = $rescuentaretencion[0]['mrt_acctcode'];
 							$totalRetencion = $totalRetencion + $value->crt_basert;
 							$Profitrt =  $value->crt_profitrt;
-							$CodRet = $value->crt_codret;
+							$CodRet = $rescuentaretencion[0]['mrt_code'];
 							$BaseLineaRet = $BaseLineaRet + $value->crt_baseln;
 						} else {
 
@@ -3621,7 +3621,7 @@ class SalesInv extends REST_Controller
 							$respuesta = array(
 								'error'   => true,
 								'data'	  => $rescuentaretencion,
-								'mensaje'	=> 'No se pudo registrar la factura de compras, no se encontro la cuenta para la retencion ' . $value->crt_typert
+								'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro la cuenta para la retencion ' . $value->crt_typert
 							);
 
 							$this->response($respuesta);
