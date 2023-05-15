@@ -27,7 +27,7 @@ class BankReconciliation extends REST_Controller {
 	public function createBankReconciliation_post(){
 
 			$DECI_MALES =  $this->generic->getDecimals();
-      $Data = $this->post();
+      		$Data = $this->post();
 			$DocNumVerificado = 0;
 
 			$DetalleAsientoGasto = new stdClass();
@@ -1179,21 +1179,54 @@ class BankReconciliation extends REST_Controller {
 
 					}else{
 
-						 $this->pedeo->trans_rollback();
+						$this->pedeo->trans_rollback();
 
-						 $respuesta = array(
-							 'error'   => true,
-							 'data' 	 => $validateCont['data'],
-							 'mensaje' => $validateCont['mensaje']
-						 );
+						$respuesta = array(
+							'error'   => true,
+							'data' 	 => $validateCont['data'],
+							'mensaje' => $validateCont['mensaje']
+						);
 
-						 $this->response($respuesta);
+						$this->response($respuesta);
 
-						 return;
+						return;
 					}
 				}
 
 			  //
+				$sqlInsertDetail2 = "INSERT INTO crb2 (rb2_date, rb2_ref, rb2_amuont, rb2_expense, rb2_tax, rb2_bankinterest, rb2_docentry, rb2_linestatus) 
+				values (:rb2_date, :rb2_ref, :rb2_amuont, :rb2_expense, :rb2_tax, :rb2_bankinterest, :rb2_docentry, :rb2_linestatus)";
+
+				$detail2 = json_decode($Data['detail2'], true);
+				
+				foreach ($detail2 as $key => $value) {
+					$resInsert2 = $this->pedeo->insertRow($sqlInsertDetail2, array(
+						":rb2_date" => $value['rb2_date'],
+						":rb2_ref" => $value['rb2_ref'],
+						":rb2_amuont" => $value['rb2_amount'],
+						":rb2_expense" => $value['rb2_expense'],
+						":rb2_tax" => $value['rb2_tax'],
+						":rb2_bankinterest" => $value['rb2_bankinterest'],
+						":rb2_linestatus" => $value['rb2_linestatus'],
+						":rb2_docentry" => $resInsert
+					));
+
+					if(is_numeric($resInsert2) && $resInsert2 > 0  ){
+						
+					}else{
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data'    => $resInsert2,
+							'mensaje'	=> 'No se pudo crear la conciliación de bancos'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+					}
+				}
 
 
 				$this->pedeo->trans_commit();
@@ -1300,6 +1333,8 @@ class BankReconciliation extends REST_Controller {
 					return;
 				}
 
+				$opeComp = ($Data['isedit'] == 1) ? "=": "!=" ;
+
 				$sqlSelect = "SELECT mac1.ac1_trans_id as id,
 											mac1.ac1_doc_date as fecha,
 											mac1.ac1_debit as debit,
@@ -1314,7 +1349,7 @@ class BankReconciliation extends REST_Controller {
 											INNER JOIN mac1
 											ON mac1.ac1_trans_id = tmac.mac_trans_id
 											WHERE ac1_account = :ac1_account AND ac1_doc_date BETWEEN  :startdate AND :enddate
-											and ac1_line_num not in (select distinct rb1_linenumcod from  crb1 where rb1_linenumcod != 0)
+											and ac1_line_num not in (select distinct rb1_linenumcod from  crb1 where rb1_linenumcod {comp} 0)
 											UNION ALL
 											SELECT mac1.ac1_trans_id as id,
 											mac1.ac1_doc_date as fecha,
@@ -1330,9 +1365,10 @@ class BankReconciliation extends REST_Controller {
 											INNER JOIN mac1
 											ON mac1.ac1_trans_id = tmac.mac_trans_id
 											WHERE ac1_account = :ac1_account AND ac1_doc_date BETWEEN  :startdate AND :enddate
-											and ac1_line_num not in (select distinct rb1_linenumcod from  crb1 where rb1_linenumcod != 0)";
+											and ac1_line_num not in (select distinct rb1_linenumcod from  crb1 where rb1_linenumcod {comp} 0)";
 
 				// $sqlSelect = "SELECT * FROM mac1 WHERE ac1_account = :ac1_account AND ac1_doc_date BETWEEN :startdate AND :enddate ";
+				$sqlSelect = str_replace("{comp}",$opeComp, $sqlSelect);
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 					':ac1_account' => $Data['account'],
@@ -1389,6 +1425,124 @@ class BankReconciliation extends REST_Controller {
 		}
 
 		 $this->response($respuesta);
+	}
+
+	public function getBackReconciliationById_get()
+	{
+		$Data = $this->get();
+
+		if (!isset($Data['crb_id'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM dcrb where crb_id =:crb_id";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":crb_id" => $Data['crb_id']));
+		
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+	
+	public function getBackReconciliationDetailById_get(){
+		$Data = $this->get();
+		if (!isset($Data['crb_id'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM crb1 where rb1_crbid =:rb1_crbid";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":rb1_crbid" => $Data['rb1_crbid']));
+		
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+		
+		$this->response($respuesta);
+	}
+
+	public function getExcelData_get(){
+		$Data = $this->get();
+
+		if (!isset($Data['docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM crb2 where rb2_docentry =:rb2_docentry order by rb2_id asc";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":rb2_docentry" => $Data['docentry']));
+		
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+
 	}
 
 	private function buscarPosicion($llave, $inArray){
