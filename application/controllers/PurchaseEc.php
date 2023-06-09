@@ -210,10 +210,10 @@ class PurchaseEc extends REST_Controller
 		$sqlInsert = "INSERT INTO dcec(cec_series, cec_docnum, cec_docdate, cec_duedate, cec_duedev, cec_pricelist, cec_cardcode,
                       cec_cardname, cec_currency, cec_contacid, cec_slpcode, cec_empid, cec_comment, cec_doctotal, cec_baseamnt, cec_taxtotal,
                       cec_discprofit, cec_discount, cec_createat, cec_baseentry, cec_basetype, cec_doctype, cec_idadd, cec_adress, cec_paytype,
-                      cec_createby,cec_correl,cec_api,business,branch)VALUES(:cec_series, :cec_docnum, :cec_docdate, :cec_duedate, :cec_duedev, :cec_pricelist, :cec_cardcode, :cec_cardname,
+                      cec_createby,cec_correl,cec_api,business,branch,cec_internal_comments)VALUES(:cec_series, :cec_docnum, :cec_docdate, :cec_duedate, :cec_duedev, :cec_pricelist, :cec_cardcode, :cec_cardname,
                       :cec_currency, :cec_contacid, :cec_slpcode, :cec_empid, :cec_comment, :cec_doctotal, :cec_baseamnt, :cec_taxtotal, :cec_discprofit, :cec_discount,
                       :cec_createat, :cec_baseentry, :cec_basetype, :cec_doctype, :cec_idadd, :cec_adress, :cec_paytype,:cec_createby,:cec_correl,
-					  :cec_api,:business,:branch)";
+					  :cec_api,:business,:branch,:cec_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -254,7 +254,8 @@ class PurchaseEc extends REST_Controller
 			':cec_correl' => isset($Data['cec_correl']) ? $Data['cec_correl'] : NULL,
 			':cec_api' => isset($Data['cec_api']) ? $Data['cec_api'] : 0,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
-			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+			':cec_internal_comments' => isset($Data['cec_internal_comments']) ? $Data['cec_internal_comments'] : NULL
 
 		));
 
@@ -2345,7 +2346,7 @@ class PurchaseEc extends REST_Controller
 										cec_empid=:cec_empid, cec_comment=:cec_comment, cec_doctotal=:cec_doctotal, cec_baseamnt=:cec_baseamnt,
 										cec_taxtotal=:cec_taxtotal, cec_discprofit=:cec_discprofit, cec_discount=:cec_discount, cec_createat=:cec_createat,
 										cec_baseentry=:cec_baseentry, cec_basetype=:cec_basetype, cec_doctype=:cec_doctype, cec_idadd=:cec_idadd,
-										cec_adress=:cec_adress, cec_paytype=:cec_paytype WHERE cec_docentry=:cec_docentry";
+										cec_adress=:cec_adress, cec_paytype=:cec_paytype,cec_internal_comments=:cec_internal_comments WHERE cec_docentry=:cec_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -2373,6 +2374,7 @@ class PurchaseEc extends REST_Controller
 			':cec_idadd' => isset($Data['cec_idadd']) ? $Data['cec_idadd'] : NULL,
 			':cec_adress' => isset($Data['cec_adress']) ? $Data['cec_adress'] : NULL,
 			':cec_paytype' => is_numeric($Data['cec_paytype']) ? $Data['cec_paytype'] : 0,
+			':cec_internal_comments' => isset($Data['cec_internal_comments']) ? $Data['cec_internal_comments'] : 0,
 			':cec_docentry' => $Data['cec_docentry']
 		));
 

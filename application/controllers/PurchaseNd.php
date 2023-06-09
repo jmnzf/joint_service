@@ -205,9 +205,9 @@ class PurchaseNd extends REST_Controller
 		$sqlInsert = "INSERT INTO dcnd(cnd_series, cnd_docnum, cnd_docdate, cnd_duedate, cnd_duedev, cnd_pricelist, cnd_cardcode,
                       cnd_cardname, cnd_currency, cnd_contacid, cnd_slpcode, cnd_empid, cnd_comment, cnd_doctotal, cnd_baseamnt, cnd_taxtotal,
                       cnd_discprofit, cnd_discount, cnd_createat, cnd_baseentry, cnd_basetype, cnd_doctype, cnd_idadd, cnd_adress, cnd_paytype,
-                      cnd_createby)VALUES(:cnd_series, :cnd_docnum, :cnd_docdate, :cnd_duedate, :cnd_duedev, :cnd_pricelist, :cnd_cardcode, :cnd_cardname,
+                      cnd_createby, business, branch, cnd_internal_comments)VALUES(:cnd_series, :cnd_docnum, :cnd_docdate, :cnd_duedate, :cnd_duedev, :cnd_pricelist, :cnd_cardcode, :cnd_cardname,
                       :cnd_currency, :cnd_contacid, :cnd_slpcode, :cnd_empid, :cnd_comment, :cnd_doctotal, :cnd_baseamnt, :cnd_taxtotal, :cnd_discprofit, :cnd_discount,
-                      :cnd_createat, :cnd_baseentry, :cnd_basetype, :cnd_doctype, :cnd_idadd, :cnd_adress, :cnd_paytype, :cnd_createby)";
+                      :cnd_createat, :cnd_baseentry, :cnd_basetype, :cnd_doctype, :cnd_idadd, :cnd_adress, :cnd_paytype, :cnd_createby, :business, :branch, :cnd_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -244,7 +244,10 @@ class PurchaseNd extends REST_Controller
 			':cnd_idadd' => isset($Data['cnd_idadd']) ? $Data['cnd_idadd'] : NULL,
 			':cnd_adress' => isset($Data['cnd_adress']) ? $Data['cnd_adress'] : NULL,
 			':cnd_paytype' => is_numeric($Data['cnd_paytype']) ? $Data['cnd_paytype'] : 0,
-			':cnd_createby' => isset($Data['cnd_createby']) ? $Data['cnd_createby'] : NULL
+			':cnd_createby' => isset($Data['cnd_createby']) ? $Data['cnd_createby'] : NULL,
+			':business' => $Data['business'],
+			':branch' => $Data['branch'],
+			':cnd_internal_comments' => isset($Data['cnd_internal_comments']) ? $Data['cnd_internal_comments'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -1727,7 +1730,7 @@ class PurchaseNd extends REST_Controller
 										cnd_empid=:cnd_empid, cnd_comment=:cnd_comment, cnd_doctotal=:cnd_doctotal, cnd_baseamnt=:cnd_baseamnt,
 										cnd_taxtotal=:cnd_taxtotal, cnd_discprofit=:cnd_discprofit, cnd_discount=:cnd_discount, cnd_createat=:cnd_createat,
 										cnd_baseentry=:cnd_baseentry, cnd_basetype=:cnd_basetype, cnd_doctype=:cnd_doctype, cnd_idadd=:cnd_idadd,
-										cnd_adress=:cnd_adress, cnd_paytype=:cnd_paytype WHERE cnd_docentry=:cnd_docentry";
+										cnd_adress=:cnd_adress, cnd_paytype=:cnd_paytype, business = :business, branch = :branch, cnd_internal_comments = :cnd_internal_comments   WHERE cnd_docentry=:cnd_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -1756,6 +1759,9 @@ class PurchaseNd extends REST_Controller
 			':cnd_idadd' => isset($Data['cnd_idadd']) ? $Data['cnd_idadd'] : NULL,
 			':cnd_adress' => isset($Data['cnd_adress']) ? $Data['cnd_adress'] : NULL,
 			':cnd_paytype' => is_numeric($Data['cnd_paytype']) ? $Data['cnd_paytype'] : 0,
+			':business' => $Data['business'],
+			':branch' => $Data['branch'],
+			':cnd_internal_comments' => isset($Data['cnd_internal_comments']) ? $Data['cnd_internal_comments'] : NULL,
 			':cnd_docentry' => $Data['cnd_docentry']
 		));
 

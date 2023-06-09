@@ -218,10 +218,10 @@ class PurchaseNc extends REST_Controller
 		$sqlInsert = "INSERT INTO dcnc(cnc_series, cnc_docnum, cnc_docdate, cnc_duedate, cnc_duedev, cnc_pricelist, cnc_cardcode,
                       cnc_cardname, cnc_currency, cnc_contacid, cnc_slpcode, cnc_empid, cnc_comment, cnc_doctotal, cnc_baseamnt, cnc_taxtotal,
                       cnc_discprofit, cnc_discount, cnc_createat, cnc_baseentry, cnc_basetype, cnc_doctype, cnc_idadd, cnc_adress, cnc_paytype,
-                      cnc_createby, cnc_totalret, cnc_totalretiva,business,branch)VALUES(:cnc_series, :cnc_docnum, :cnc_docdate, :cnc_duedate, :cnc_duedev, :cnc_pricelist, :cnc_cardcode, :cnc_cardname,
+                      cnc_createby, cnc_totalret, cnc_totalretiva,business,branch,cnc_internal_comments)VALUES(:cnc_series, :cnc_docnum, :cnc_docdate, :cnc_duedate, :cnc_duedev, :cnc_pricelist, :cnc_cardcode, :cnc_cardname,
                       :cnc_currency, :cnc_contacid, :cnc_slpcode, :cnc_empid, :cnc_comment, :cnc_doctotal, :cnc_baseamnt, :cnc_taxtotal, :cnc_discprofit, :cnc_discount,
                       :cnc_createat, :cnc_baseentry, :cnc_basetype, :cnc_doctype, :cnc_idadd, :cnc_adress, :cnc_paytype,:cnc_createby, :cnc_totalret, :cnc_totalretiva,
-					  :business,:branch)";
+					  :business,:branch,:cnc_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -262,7 +262,8 @@ class PurchaseNc extends REST_Controller
 			':cnc_totalret' => is_numeric($Data['cnc_totalret']) ? $Data['cnc_totalret'] : 0,
 			':cnc_totalretiva' => is_numeric($Data['cnc_totalretiva']) ? $Data['cnc_totalretiva'] : 0,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
-			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+			':cnc_internal_comments' => isset($Data['cnc_internal_comments']) ? $Data['cnc_internal_comments'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -2683,7 +2684,7 @@ class PurchaseNc extends REST_Controller
 										cnc_empid=:cnc_empid, cnc_comment=:cnc_comment, cnc_doctotal=:cnc_doctotal, cnc_baseamnt=:cnc_baseamnt,
 										cnc_taxtotal=:cnc_taxtotal, cnc_discprofit=:cnc_discprofit, cnc_discount=:cnc_discount, cnc_createat=:cnc_createat,
 										cnc_baseentry=:cnc_baseentry, cnc_basetype=:cnc_basetype, cnc_doctype=:cnc_doctype, cnc_idadd=:cnc_idadd,
-										cnc_adress=:cnc_adress, cnc_paytype=:cnc_paytype WHERE cnc_docentry=:cnc_docentry";
+										cnc_adress=:cnc_adress, cnc_paytype=:cnc_paytype,cnc_internal_comments=:cnc_internal_comments WHERE cnc_docentry=:cnc_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -2712,6 +2713,7 @@ class PurchaseNc extends REST_Controller
 			':cnc_idadd' => isset($Data['cnc_idadd']) ? $Data['cnc_idadd'] : NULL,
 			':cnc_adress' => isset($Data['cnc_adress']) ? $Data['cnc_adress'] : NULL,
 			':cnc_paytype' => is_numeric($Data['cnc_paytype']) ? $Data['cnc_paytype'] : 0,
+			':cnc_internal_comments' => isset($Data['cnc_internal_comments']) ? $Data['cnc_internal_comments'] : NULL,
 			':cnc_docentry' => $Data['cnc_docentry']
 		));
 

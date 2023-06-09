@@ -240,8 +240,8 @@ class BpContracts extends REST_Controller
 
 
 
-		$sqlInsert = "INSERT INTO tcsn(	csn_docnum, csn_docdate, csn_duedate, csn_duedev, csn_pricelist, csn_cardcode, csn_cardname, csn_contacid, csn_slpcode, csn_empid, csn_comment, csn_doctotal, csn_baseamnt, csn_taxtotal, csn_discprofit, csn_discount, csn_createat, csn_baseentry, csn_basetype, csn_doctype, csn_idadd, csn_adress, csn_paytype, csn_series, csn_createby, csn_currency, csn_origen, csn_ref, csn_canceled, csn_enddate, csn_signaturedate, csn_description, csn_prjcode, business,branch)
-					VALUES (:csn_docnum, :csn_docdate, :csn_duedate, :csn_duedev, :csn_pricelist, :csn_cardcode, :csn_cardname, :csn_contacid, :csn_slpcode, :csn_empid, :csn_comment, :csn_doctotal, :csn_baseamnt, :csn_taxtotal, :csn_discprofit, :csn_discount, :csn_createat, :csn_baseentry, :csn_basetype, :csn_doctype, :csn_idadd, :csn_adress, :csn_paytype, :csn_series, :csn_createby, :csn_currency, :csn_origen, :csn_ref, :csn_canceled, :csn_enddate, :csn_signaturedate, :csn_description, :csn_prjcode, :business,:branch)";
+		$sqlInsert = "INSERT INTO tcsn(	csn_docnum, csn_docdate, csn_duedate, csn_duedev, csn_pricelist, csn_cardcode, csn_cardname, csn_contacid, csn_slpcode, csn_empid, csn_comment, csn_doctotal, csn_baseamnt, csn_taxtotal, csn_discprofit, csn_discount, csn_createat, csn_baseentry, csn_basetype, csn_doctype, csn_idadd, csn_adress, csn_paytype, csn_series, csn_createby, csn_currency, csn_origen, csn_ref, csn_canceled, csn_enddate, csn_signaturedate, csn_description, csn_prjcode, business,branch,csn_bankable,csn_internal_comments)
+					VALUES (:csn_docnum, :csn_docdate, :csn_duedate, :csn_duedev, :csn_pricelist, :csn_cardcode, :csn_cardname, :csn_contacid, :csn_slpcode, :csn_empid, :csn_comment, :csn_doctotal, :csn_baseamnt, :csn_taxtotal, :csn_discprofit, :csn_discount, :csn_createat, :csn_baseentry, :csn_basetype, :csn_doctype, :csn_idadd, :csn_adress, :csn_paytype, :csn_series, :csn_createby, :csn_currency, :csn_origen, :csn_ref, :csn_canceled, :csn_enddate, :csn_signaturedate, :csn_description, :csn_prjcode, :business,:branch,:csn_bankable,:csn_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -287,7 +287,9 @@ class BpContracts extends REST_Controller
 			':csn_description' => isset($Data['csn_description']) ? $Data['csn_description'] : NULL,
 			':csn_prjcode' => isset($Data['csn_prjcode']) ? $Data['csn_prjcode'] : NULL,
 			':business' => $Data['business'],
-			':branch' => isset($Data['branch'])
+			':branch' => isset($Data['branch']),
+			':csn_bankable' => is_numeric($Data['csn_bankable']) ? $Data['csn_bankable'] : 0,
+			':csn_internal_comments'  => isset($Data['csn_internal_comments']) ? $Data['csn_internal_comments'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -1300,5 +1302,111 @@ class BpContracts extends REST_Controller
 		}
 
 		$this->response($respuesta);
+	}
+
+	public function createSuspensionContracts_post() 
+	{
+		//
+		$Data = $this->post();
+		//
+		if ( !isset($Data['scs_doctype']) OR !isset($Data['scs_docentry']) OR !isset($Data['scs_start_date']) OR !isset($Data['scs_end_date']) OR !isset($Data['scs_createdby']) ){
+			//
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'Faltan parametros'
+			);
+			//
+			return $this->response($respuesta);
+		}
+		//
+		$sqlValidate = "SELECT * FROM hscs WHERE scs_end_date > current_date AND scs_docentry = :scs_docentry AND scs_doctype =:scs_doctype AND scs_status = :scs_status";
+		//
+		$resValidate = $this->pedeo->queryTable($sqlValidate, array(':scs_docentry' => $Data['scs_docentry'], ':scs_doctype' => $Data['scs_doctype'], ':scs_status' => 1));
+
+		if ( isset($resValidate[0]) ){
+			//
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'Ya existe una suspensión activa para este contrato'
+			);
+			//
+			return $this->response($respuesta);
+		}
+		//
+		$sqlInsert = "INSERT INTO hscs(scs_doctype, scs_docentry, scs_reason, scs_start_date, scs_end_date, scs_createdby, scs_createdat, scs_status)VALUES(:scs_doctype, :scs_docentry, :scs_reason, :scs_start_date, :scs_end_date, :scs_createdby, :scs_createdat, :scs_status)";
+		//
+		$this->pedeo->trans_being();
+		//
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+			
+			':scs_doctype' => $Data['scs_doctype'], 
+			':scs_docentry' => $Data['scs_docentry'], 
+			':scs_reason' => $Data['scs_reason'], 
+			':scs_start_date' => $Data['scs_start_date'], 
+			':scs_end_date' => $Data['scs_end_date'], 
+			':scs_createdby' => $Data['scs_createdby'], 
+			':scs_createdat' => date("Y-m-d"), 
+			':scs_status' => 1
+		));
+		//
+		if ( is_numeric($resInsert) && $resInsert > 0 ){
+			//
+			$respuesta = array(
+				'error' => false,
+				'data' => $resInsert,
+				'mensaje' => 'Operación exitosa'
+			);
+			//
+		}else{
+			//
+			$this->pedeo->trans_rollback();
+			//
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'No se pudo crear la suspensión del contrato'
+			);
+			//
+			$this->response($respuesta);
+			//
+			return;
+		}
+		//
+		//SE INSERTA EL ESTADO DEL DOCUMENTO
+		$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+		VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+		//
+		$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+			':bed_docentry' => $resInsert,
+			':bed_doctype' => $Data['scs_doctype'],
+			':bed_status' => 9, //ESTADO CERRADO
+			':bed_createby' => $Data['scs_createdby'],
+			':bed_date' => date('Y-m-d'),
+			':bed_baseentry' => NULL,
+			':bed_basetype' => NULL
+		));
+		//
+		if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+			//
+		}else {
+			//
+			$this->pedeo->trans_rollback();
+			//
+			$respuesta = array(
+				'error'   => true,
+				'data' => $resInsertEstado,
+				'mensaje'	=> 'No se pudo registrar la Entrega de ventas'
+			);
+			//
+			$this->response($respuesta);
+			//
+			return;
+		}
+		//
+		$this->pedeo->trans_commit();
+		//
+		return $this->response($respuesta);
 	}
 }

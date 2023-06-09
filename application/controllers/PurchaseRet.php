@@ -194,9 +194,9 @@ class PurchaseRet extends REST_Controller
 		$sqlInsert = "INSERT INTO dcdc(cdc_series, cdc_docnum, cdc_docdate, cdc_duedate, cdc_duedev, cdc_pricelist, cdc_cardcode,
                       cdc_cardname, cdc_currency, cdc_contacid, cdc_slpcode, cdc_empid, cdc_comment, cdc_doctotal, cdc_baseamnt, cdc_taxtotal,
                       cdc_discprofit, cdc_discount, cdc_createat, cdc_baseentry, cdc_basetype, cdc_doctype, cdc_idadd, cdc_adress, cdc_paytype,
-                      cdc_createby,business,branch)VALUES(:cdc_series, :cdc_docnum, :cdc_docdate, :cdc_duedate, :cdc_duedev, :cdc_pricelist, :cdc_cardcode, :cdc_cardname,
+                      cdc_createby,business,branch,cdc_internal_comments)VALUES(:cdc_series, :cdc_docnum, :cdc_docdate, :cdc_duedate, :cdc_duedev, :cdc_pricelist, :cdc_cardcode, :cdc_cardname,
                       :cdc_currency, :cdc_contacid, :cdc_slpcode, :cdc_empid, :cdc_comment, :cdc_doctotal, :cdc_baseamnt, :cdc_taxtotal, :cdc_discprofit, :cdc_discount,
-                      :cdc_createat, :cdc_baseentry, :cdc_basetype, :cdc_doctype, :cdc_idadd, :cdc_adress, :cdc_paytype, :cdc_createby,:business,:branch)";
+                      :cdc_createat, :cdc_baseentry, :cdc_basetype, :cdc_doctype, :cdc_idadd, :cdc_adress, :cdc_paytype, :cdc_createby,:business,:branch,:cdc_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -235,7 +235,8 @@ class PurchaseRet extends REST_Controller
 			':cdc_paytype' => is_numeric($Data['cdc_paytype']) ? $Data['cdc_paytype'] : 0,
 			':cdc_createby' => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
-			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+			':cdc_internal_comments' => isset($Data['cdc_internal_comments']) ? $Data['cdc_internal_comments'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {

@@ -26,6 +26,7 @@ class Quotation extends REST_Controller
 		$this->load->library('DocumentCopy');
 		$this->load->library('aprobacion');
 		$this->load->library('DocumentNumbering');
+		$this->load->library('DocUpdate');
 		$this->load->library('Tasa');
 	}
 
@@ -319,9 +320,9 @@ class Quotation extends REST_Controller
 		$sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                      dvc_createby,business,branch)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
+                      dvc_createby,business,branch, dvc_internal_comments)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
                       :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
-                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype,:dvc_createby,:business,:branch)";
+                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype,:dvc_createby,:business,:branch, :dvc_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -360,7 +361,8 @@ class Quotation extends REST_Controller
 			':dvc_paytype' => is_numeric($Data['dvc_paytype']) ? $Data['dvc_paytype'] : 0,
 			':dvc_createby' => isset($Data['dvc_createby']) ? $Data['dvc_createby'] : NULL,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
-			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+			':dvc_internal_comments' => isset($Data['dvc_internal_comments']) ? $Data['dvc_internal_comments'] : NULL
 		
 		));
 
@@ -757,17 +759,86 @@ class Quotation extends REST_Controller
 
 			return;
 		}
+		
+		$sqlBefore = "SELECT dvc_docdate ,
+						dvc_duedate, 
+						dvc_duedev, 
+						dvc_pricelist, 
+						dvc_cardcode,
+						dvc_cardname, 
+						dvc_currency, 
+						dvc_contacid, 
+						dvc_slpcode,
+						dvc_empid, 
+						dvc_comment, 
+						dvc_doctotal, 
+						dvc_baseamnt,
+						dvc_taxtotal, 
+						dvc_discprofit,
+						dvc_discount, 
+						dvc_createat,
+						dvc_baseentry, 
+						dvc_basetype, 
+						dvc_doctype, 
+						dvc_idadd,
+						dvc_adress, 
+						dvc_paytype ,
+						business,
+						branch , 
+						dvc_internal_comments,
+						(SELECT json_agg(json_build_object('vc1_docentry', campo1, 'vc1_itemcode', campo2,'vc1_itemname', campo3,'vc1_quantity',campo4,'vc1_uom',campo5,'vc1_whscode',campo6,
+								'vc1_price',campo7,'vc1_vat',campo8,'vc1_vatsum',campo9,'vc1_linetotal',campo10,'vc1_linetotal',campo11,'vc1_costcode',campo12,
+								'vc1_ubusiness',campo13,'vc1_project',campo14,'vc1_project',campo15,'vc1_basetype',campo16,'vc1_doctype',campo17,'vc1_avprice',campo18,
+								'vc1_inventory',campo19,'vc1_acciva',campo20,'vc1_linenum',campo21,'vc1_ubication',campo22)) AS detail
+						FROM (SELECT 
+									vc1_docentry as campo1, 
+									vc1_itemcode as campo2, 
+									vc1_itemname as campo3, 
+									vc1_quantity as campo4, 
+									vc1_uom as campo5, 
+									vc1_whscode as campo6,
+									vc1_price as campo7, 
+									vc1_vat as campo8, 
+									vc1_vatsum as campo9, 
+									vc1_discount as campo10, 
+									vc1_linetotal as campo11, 
+									vc1_costcode as campo12, 
+									vc1_ubusiness as campo13, 
+									vc1_project as campo14,
+									vc1_acctcode as campo15, 
+									vc1_basetype as campo16, 
+									vc1_doctype as campo17, 
+									vc1_avprice as campo18, 
+									vc1_inventory as campo19, 
+									vc1_acciva as campo20, 
+									vc1_linenum as campo21, 
+									vc1_ubication as campo22 
+								FROM vct1 Where vct1.vc1_docentry = dvc_docentry) as subconsulta)
+					FROM dvct
+					WHERE dvc_docentry = :dvc_docentry";
+		$resSqlBefore = $this->pedeo->queryTable($sqlBefore,array(':dvc_docentry' => $Data['dvc_docentry']));
+
+		$json_Before = json_encode($resSqlBefore);
+		$json_after = json_encode($Data);
+		
 
 		$sqlUpdate = "UPDATE dvct	SET dvc_docdate=:dvc_docdate,dvc_duedate=:dvc_duedate, dvc_duedev=:dvc_duedev, dvc_pricelist=:dvc_pricelist, dvc_cardcode=:dvc_cardcode,
 			  						dvc_cardname=:dvc_cardname, dvc_currency=:dvc_currency, dvc_contacid=:dvc_contacid, dvc_slpcode=:dvc_slpcode,
 										dvc_empid=:dvc_empid, dvc_comment=:dvc_comment, dvc_doctotal=:dvc_doctotal, dvc_baseamnt=:dvc_baseamnt,
-										dvc_taxtotal=:dvc_taxtotal, dvc_discprofit=:dvc_discprofit, dvc_discount=:dvc_discount, dvc_createat=:dvc_createat,
-										dvc_baseentry=:dvc_baseentry, dvc_basetype=:dvc_basetype, dvc_doctype=:dvc_doctype, dvc_idadd=:dvc_idadd,
-										dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype ,business = :business,branch = :branch
+										dvc_taxtotal=:dvc_taxtotal, dvc_discprofit=:dvc_discprofit, dvc_discount=:dvc_discount, dvc_baseentry=:dvc_baseentry, 
+										dvc_basetype=:dvc_basetype, dvc_doctype=:dvc_doctype, dvc_idadd=:dvc_idadd,dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype ,
+										business = :business,branch = :branch, dvc_internal_comments = :dvc_internal_comments
 										WHERE dvc_docentry=:dvc_docentry";
 
 		$this->pedeo->trans_begin();
+		$doc_update = $this->docupdate->updatedDoc($Data['dvc_doctype'],$Data['dvc_docentry'],$json_Before,$json_after,$Data['dvc_createby']);
 
+		if($doc_update['error'] == true){
+			$this->pedeo->trans_rollback();
+			return $this->response($doc_update);
+		}
+
+		// print_r($Data['dvc_duedev']);exit;die;
 		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 			':dvc_docdate' => $this->validateDate($Data['dvc_docdate']) ? $Data['dvc_docdate'] : NULL,
 			':dvc_duedate' => $this->validateDate($Data['dvc_duedate']) ? $Data['dvc_duedate'] : NULL,
@@ -785,7 +856,6 @@ class Quotation extends REST_Controller
 			':dvc_taxtotal' => is_numeric($Data['dvc_taxtotal']) ? $Data['dvc_taxtotal'] : 0,
 			':dvc_discprofit' => is_numeric($Data['dvc_discprofit']) ? $Data['dvc_discprofit'] : 0,
 			':dvc_discount' => is_numeric($Data['dvc_discount']) ? $Data['dvc_discount'] : 0,
-			':dvc_createat' => $this->validateDate($Data['dvc_createat']) ? $Data['dvc_createat'] : NULL,
 			':dvc_baseentry' => is_numeric($Data['dvc_baseentry']) ? $Data['dvc_baseentry'] : 0,
 			':dvc_basetype' => is_numeric($Data['dvc_basetype']) ? $Data['dvc_basetype'] : 0,
 			':dvc_doctype' => is_numeric($Data['dvc_doctype']) ? $Data['dvc_doctype'] : 0,
@@ -794,9 +864,10 @@ class Quotation extends REST_Controller
 			':dvc_paytype' => is_numeric($Data['dvc_paytype']) ? $Data['dvc_paytype'] : 0,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+			':dvc_internal_comments' => isset($Data['dvc_internal_comments']) ? $Data['dvc_internal_comments'] : NULL,
 			':dvc_docentry' => $Data['dvc_docentry']
 		));
-
+		
 		if (is_numeric($resUpdate) && $resUpdate == 1) {
 
 			$this->pedeo->queryTable("DELETE FROM vct1 WHERE vc1_docentry=:vc1_docentry", array(':vc1_docentry' => $Data['dvc_docentry']));
@@ -862,6 +933,7 @@ class Quotation extends REST_Controller
 				'data' => $resUpdate,
 				'mensaje' => 'Cotización actualizada con exito'
 			);
+
 		} else {
 
 			$this->pedeo->trans_rollback();
@@ -1197,6 +1269,8 @@ class Quotation extends REST_Controller
 		} else {
 			return false;
 		}
+
+		
 	}
 
 

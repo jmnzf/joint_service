@@ -318,9 +318,9 @@ class SalesOrder extends REST_Controller
 		$sqlInsert = "INSERT INTO dvov(vov_series, vov_docnum, vov_docdate, vov_duedate, vov_duedev, vov_pricelist, vov_cardcode,
                       vov_cardname, vov_currency, vov_contacid, vov_slpcode, vov_empid, vov_comment, vov_doctotal, vov_baseamnt, vov_taxtotal,
                       vov_discprofit, vov_discount, vov_createat, vov_baseentry, vov_basetype, vov_doctype, vov_idadd, vov_adress, vov_paytype,
-                      vov_createby,business,branch)VALUES(:vov_series, :vov_docnum, :vov_docdate, :vov_duedate, :vov_duedev, :vov_pricelist, :vov_cardcode, :vov_cardname,
+                      vov_createby,business,branch, vov_internal_comments)VALUES(:vov_series, :vov_docnum, :vov_docdate, :vov_duedate, :vov_duedev, :vov_pricelist, :vov_cardcode, :vov_cardname,
                       :vov_currency, :vov_contacid, :vov_slpcode, :vov_empid, :vov_comment, :vov_doctotal, :vov_baseamnt, :vov_taxtotal, :vov_discprofit, :vov_discount,
-                      :vov_createat, :vov_baseentry, :vov_basetype, :vov_doctype, :vov_idadd, :vov_adress, :vov_paytype,:vov_createby,:business,:branch)";
+                      :vov_createat, :vov_baseentry, :vov_basetype, :vov_doctype, :vov_idadd, :vov_adress, :vov_paytype,:vov_createby,:business,:branch, :vov_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -359,7 +359,8 @@ class SalesOrder extends REST_Controller
 			':vov_paytype' => is_numeric($Data['vov_paytype']) ? $Data['vov_paytype'] : 0,
 			':vov_createby' => isset($Data['vov_createby']) ? $Data['vov_createby'] : NULL,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
-			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+			':vov_internal_comments' => isset($Data['vov_internal_comments']) ? $Data['vov_internal_comments'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -854,7 +855,7 @@ class SalesOrder extends REST_Controller
 										vov_empid=:vov_empid, vov_comment=:vov_comment, vov_doctotal=:vov_doctotal, vov_baseamnt=:vov_baseamnt,
 										vov_taxtotal=:vov_taxtotal, vov_discprofit=:vov_discprofit, vov_discount=:vov_discount, vov_createat=:vov_createat,
 										vov_baseentry=:vov_baseentry, vov_basetype=:vov_basetype, vov_doctype=:vov_doctype, vov_idadd=:vov_idadd,
-										vov_adress=:vov_adress, vov_paytype=:vov_paytype, business = :business,branch = :branch
+										vov_adress=:vov_adress, vov_paytype=:vov_paytype, business = :business,branch = :branch, vov_internal_comments = :vov_internal_comments
 										WHERE vov_docentry=:vov_docentry";
 
 		$this->pedeo->trans_begin();
@@ -886,6 +887,7 @@ class SalesOrder extends REST_Controller
 			':vov_paytype' => is_numeric($Data['vov_paytype']) ? $Data['vov_paytype'] : 0,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+			':vov_internal_comments' => isset($Data['vov_internal_comments']) ? $Data['vov_internal_comments'] : NULL,
 			':vov_docentry' => $Data['vov_docentry']
 		));
 

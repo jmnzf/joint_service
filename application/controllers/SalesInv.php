@@ -33,6 +33,7 @@ class SalesInv extends REST_Controller
 	public function createSalesInv_post()
 	{
 		$Data = $this->post();
+		print_r($Data);exit;die;
 		$TasaDocLoc = 0;
 		$TasaLocSys = 0;
 		$MONEDALOCAL = "";
@@ -299,12 +300,12 @@ class SalesInv extends REST_Controller
 						dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
 						dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
 						dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,
-						dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed,dvf_igtfcode,business,branch,dvf_totalret,dvf_totalretiva)
+						dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed,dvf_igtfcode,business,branch,dvf_totalret,dvf_totalretiva,dvf_bankable,dvf_internal_comments)
 						VALUES(:dvf_series, :dvf_docnum, :dvf_docdate, :dvf_duedate, :dvf_duedev, :dvf_pricelist, :dvf_cardcode, :dvf_cardname,
 						:dvf_currency, :dvf_contacid, :dvf_slpcode, :dvf_empid, :dvf_comment, :dvf_doctotal, :dvf_baseamnt, :dvf_taxtotal, :dvf_discprofit, :dvf_discount,
 						:dvf_createat, :dvf_baseentry, :dvf_basetype, :dvf_doctype, :dvf_idadd, :dvf_adress, :dvf_paytype, :dvf_createby,:dvf_correl,:dvf_transport,:dvf_sub_transport,:dvf_ci,:dvf_t_vehiculo,
 						:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfapplyed,
-						:dvf_igtfcode,:business,:branch,:dvf_totalret,:dvf_totalretiva)";
+						:dvf_igtfcode,:business,:branch,:dvf_totalret,:dvf_totalretiva,:dvf_bankable,:dvf_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -345,7 +346,7 @@ class SalesInv extends REST_Controller
 				':dvf_adress' => isset($Data['dvf_adress']) ? $Data['dvf_adress'] : NULL,
 				':dvf_paytype' => is_numeric($Data['dvf_paytype']) ? $Data['dvf_paytype'] : 0,
 				':dvf_createby' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-				':dvf_correl' => isset($Data['dvf_correl']) && is_numeric($Data['dvf_correl']) ? $Data['dvf_correl'] : 0,
+				':dvf_correl' => isset($Data['dvf_correl']) ? $Data['dvf_correl'] : 0,
 				':dvf_transport' => isset($Data['dvf_transport']) ? $Data['dvf_transport'] : NULL,
 				':dvf_sub_transport' => isset($Data['dvf_sub_transport']) ? $Data['dvf_sub_transport'] : NULL,
 				':dvf_ci' => isset($Data['dvf_ci']) ? $Data['dvf_ci'] : NULL,
@@ -365,6 +366,8 @@ class SalesInv extends REST_Controller
 				':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 				':dvf_totalret' => isset($Data['dvf_totalret']) && is_numeric($Data['dvf_totalret']) ? $Data['dvf_totalret'] : 0,
 				':dvf_totalretiva' => isset($Data['dvf_totalretiva']) && is_numeric($Data['dvf_totalretiva']) ? $Data['dvf_totalretiva'] : 0,
+				':dvf_bankable' => is_numeric($Data['dvf_bankable']) ? $Data['dvf_bankable'] : 0,
+				':dvf_internal_comments'  => isset($Data['dvf_internal_comments']) ? $Data['dvf_internal_comments'] : NULL
 			));
 
 			if (is_numeric($resInsert) && $resInsert > 0) {
@@ -4390,7 +4393,7 @@ class SalesInv extends REST_Controller
 										dvf_empid=:dvf_empid, dvf_comment=:dvf_comment, dvf_doctotal=:dvf_doctotal, dvf_baseamnt=:dvf_baseamnt,
 										dvf_taxtotal=:dvf_taxtotal, dvf_discprofit=:dvf_discprofit, dvf_discount=:dvf_discount, dvf_createat=:dvf_createat,
 										dvf_baseentry=:dvf_baseentry, dvf_basetype=:dvf_basetype, dvf_doctype=:dvf_doctype, dvf_idadd=:dvf_idadd,
-										dvf_adress=:dvf_adress, dvf_paytype=:dvf_paytype,business = :business,branch = :branch
+										dvf_adress=:dvf_adress, dvf_paytype=:dvf_paytype,business = :business,branch = :branch, dvf_internal_comments =:dvf_internal_comments
 										WHERE dvf_docentry=:dvf_docentry";
 
 		$this->pedeo->trans_begin();
@@ -4422,6 +4425,7 @@ class SalesInv extends REST_Controller
 			':dvf_paytype' => is_numeric($Data['dvf_paytype']) ? $Data['dvf_paytype'] : 0,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+			':dvf_internal_comments' => isset($Data['dvf_internal_comments']) ? $Data['dvf_internal_comments'] : NULL,
 			':dvf_docentry' => $Data['dvf_docentry']
 		));
 

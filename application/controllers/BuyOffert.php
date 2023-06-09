@@ -50,6 +50,7 @@ class BuyOffert extends REST_Controller
 		$DECI_MALES =  $this->generic->getDecimals();
 
 		$sqlSelect = self::getColumn('dcoc', 'coc', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		// print_r($sqlSelect);exit;
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -507,9 +508,9 @@ class BuyOffert extends REST_Controller
 		$sqlInsert = "INSERT INTO dcoc(coc_series, coc_docnum, coc_docdate, coc_duedate, coc_duedev, coc_pricelist, coc_cardcode,
 					coc_cardname, coc_currency, coc_contacid, coc_slpcode, coc_empid, coc_comment, coc_doctotal, coc_baseamnt, coc_taxtotal,
 					coc_discprofit, coc_discount, coc_createat, coc_baseentry, coc_basetype, coc_doctype, coc_idadd, coc_adress, coc_paytype,
-					coc_createby, business, branch)VALUES(:coc_series, :coc_docnum, :coc_docdate, :coc_duedate, :coc_duedev, :coc_pricelist, :coc_cardcode, :coc_cardname,
+					coc_createby, business, branch, coc_internal_comments)VALUES(:coc_series, :coc_docnum, :coc_docdate, :coc_duedate, :coc_duedev, :coc_pricelist, :coc_cardcode, :coc_cardname,
 					:coc_currency, :coc_contacid, :coc_slpcode, :coc_empid, :coc_comment, :coc_doctotal, :coc_baseamnt, :coc_taxtotal, :coc_discprofit, :coc_discount,
-					:coc_createat, :coc_baseentry, :coc_basetype, :coc_doctype, :coc_idadd, :coc_adress, :coc_paytype,:coc_createby, :business, :branch)";
+					:coc_createat, :coc_baseentry, :coc_basetype, :coc_doctype, :coc_idadd, :coc_adress, :coc_paytype,:coc_createby, :business, :branch, :coc_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -548,7 +549,8 @@ class BuyOffert extends REST_Controller
 			':coc_paytype' => is_numeric($Data['coc_paytype']) ? $Data['coc_paytype'] : 0,
 			':coc_createby' => isset($Data['coc_createby']) ? $Data['coc_createby'] : NULL,
 			':business' => $Data['business'],
-			':branch' => $Data['branch']
+			':branch' => $Data['branch'],
+			':coc_internal_comments' => isset($Data['coc_internal_comments']) ? $Data['coc_internal_comments'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {

@@ -2,7 +2,13 @@
 // NOTIFICACIONES PUSH
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+require_once(APPPATH.'/asset/vendor/autoload.php');
 require_once(APPPATH.'/libraries/REST_Controller.php');
+
+use Minishlink\WebPush\WebPush;
+use Minishlink\WebPush\Subscription;
+use Minishlink\WebPush\VAPID;
+
 use Restserver\libraries\REST_Controller;
 
 class PushNotification extends REST_Controller {
@@ -66,12 +72,38 @@ class PushNotification extends REST_Controller {
 
     $this->response($return);
 
-
 	}
+  // ACTUALIZAR LA SUSCRIPCION DEL USUARIO
+
+  public function updateUserSuscription_post(){
+
+    $Data = $this->post();
+
+    $sqlUpdate = "UPDATE pgus SET pgu_subscription_credentials = :pgu_subscription_credentials WHERE pgu_code_user = :pgu_code_user";
+
+    $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+        ':pgu_subscription_credentials' => $Data['pgu_subscription_credentials'],
+        ':pgu_code_user'                => $Data['pgu_code_user']
+    ));
+
+    if ( is_numeric($resUpdate) && $resUpdate == 1 ){
+      $respuesta = array(
+				'error' => false,
+				'data'  => array(),
+				'mensaje' => 'Usuario actualizado con exito'
+			);
+    }else{
+
+      $respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se pudo actualizar el usuario'
+			);
+    }
 
 
+    $this->response($respuesta);
 
-
-
+  }
 
 }

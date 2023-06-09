@@ -340,9 +340,9 @@ class PurchaseRequest extends REST_Controller
 		$sqlInsert = "INSERT INTO dcsc(csc_series, csc_docnum, csc_docdate, csc_duedate, csc_duedev, csc_pricelist, csc_cardcode,
                       csc_cardname, csc_currency, csc_contacid, csc_slpcode, csc_empid, csc_comment, csc_doctotal, csc_baseamnt, csc_taxtotal,
                       csc_discprofit, csc_discount, csc_createat, csc_baseentry, csc_basetype, csc_doctype, csc_idadd, csc_adress, csc_paytype,
-                      csc_attch,csc_createby,business,branch)VALUES(:csc_series, :csc_docnum, :csc_docdate, :csc_duedate, :csc_duedev, :csc_pricelist, :csc_cardcode, :csc_cardname,
+                      csc_attch,csc_createby,business,branch,csc_internal_comments)VALUES(:csc_series, :csc_docnum, :csc_docdate, :csc_duedate, :csc_duedev, :csc_pricelist, :csc_cardcode, :csc_cardname,
                       :csc_currency, :csc_contacid, :csc_slpcode, :csc_empid, :csc_comment, :csc_doctotal, :csc_baseamnt, :csc_taxtotal, :csc_discprofit, :csc_discount,
-                      :csc_createat, :csc_baseentry, :csc_basetype, :csc_doctype, :csc_idadd, :csc_adress, :csc_paytype, :csc_attch,:csc_createby,:business,:branch)";
+                      :csc_createat, :csc_baseentry, :csc_basetype, :csc_doctype, :csc_idadd, :csc_adress, :csc_paytype, :csc_attch,:csc_createby,:business,:branch,:csc_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -382,7 +382,8 @@ class PurchaseRequest extends REST_Controller
 			':csc_createby' => isset($Data['csc_createby']) ? $Data['csc_createby'] : NULL,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
-			':csc_attch' => $this->getUrl(count(trim(($Data['csc_attch']))) > 0 ? $Data['csc_attch'] : NULL, $resMainFolder[0]['main_folder'])
+			':csc_attch' => NULL,
+			':csc_internal_comments' => isset($Data['csc_internal_comments']) ? $Data['csc_internal_comments'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -827,11 +828,12 @@ class PurchaseRequest extends REST_Controller
 		}
 
 		$sqlUpdate = "UPDATE dcsc	SET csc_docdate=:csc_docdate,csc_duedate=:csc_duedate, csc_duedev=:csc_duedev, csc_pricelist=:csc_pricelist, csc_cardcode=:csc_cardcode,
-			  						csc_cardname=:csc_cardname, csc_currency=:csc_currency, csc_contacid=:csc_contacid, csc_slpcode=:csc_slpcode,
+			  							csc_cardname=:csc_cardname, csc_currency=:csc_currency, csc_contacid=:csc_contacid, csc_slpcode=:csc_slpcode,
 										csc_empid=:csc_empid, csc_comment=:csc_comment, csc_doctotal=:csc_doctotal, csc_baseamnt=:csc_baseamnt,
 										csc_taxtotal=:csc_taxtotal, csc_discprofit=:csc_discprofit, csc_discount=:csc_discount, csc_createat=:csc_createat,
 										csc_baseentry=:csc_baseentry, csc_basetype=:csc_basetype, csc_doctype=:csc_doctype, csc_idadd=:csc_idadd,
-										csc_adress=:csc_adress, csc_paytype=:csc_paytype,business = :business,branch = :branch, csc_attch=:csc_attch WHERE csc_docentry=:csc_docentry";
+										csc_adress=:csc_adress, csc_paytype=:csc_paytype,business = :business,branch = :branch, csc_attch=:csc_attch, csc_internal_comments = :csc_internal_comments
+										WHERE csc_docentry=:csc_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -862,7 +864,8 @@ class PurchaseRequest extends REST_Controller
 			':csc_paytype' => is_numeric($Data['csc_paytype']) ? $Data['csc_paytype'] : 0,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
-			':csc_attch' => $this->getUrl(count(trim(($Data['csc_attch']))) > 0 ? $Data['csc_attch'] : NULL, $resMainFolder[0]['main_folder']),
+			':csc_attch' => NULL,
+			':csc_internal_comments' => isset($Data['csc_internal_comments']) ? $Data['csc_internal_comments'] : NULL,
 			':csc_docentry' => $Data['csc_docentry']
 		));
 

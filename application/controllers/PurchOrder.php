@@ -321,10 +321,10 @@ class PurchOrder extends REST_Controller
 		$sqlInsert = "INSERT INTO dcpo(cpo_series, cpo_docnum, cpo_docdate, cpo_duedate, cpo_duedev, cpo_pricelist, cpo_cardcode,
                       cpo_cardname, cpo_currency, cpo_contacid, cpo_slpcode, cpo_empid, cpo_comment, cpo_doctotal, cpo_baseamnt, cpo_taxtotal,
                       cpo_discprofit, cpo_discount, cpo_createat, cpo_baseentry, cpo_basetype, cpo_doctype, cpo_idadd, cpo_adress, cpo_paytype,
-                      cpo_createby,cpo_correl, cpo_date_inv, cpo_date_del, cpo_place_del,business,branch)VALUES(:cpo_series, :cpo_docnum, :cpo_docdate, :cpo_duedate, :cpo_duedev, :cpo_pricelist, :cpo_cardcode, :cpo_cardname,
+                      cpo_createby,cpo_correl, cpo_date_inv, cpo_date_del, cpo_place_del,business,branch, cpo_internal_comments)VALUES(:cpo_series, :cpo_docnum, :cpo_docdate, :cpo_duedate, :cpo_duedev, :cpo_pricelist, :cpo_cardcode, :cpo_cardname,
                       :cpo_currency, :cpo_contacid, :cpo_slpcode, :cpo_empid, :cpo_comment, :cpo_doctotal, :cpo_baseamnt, :cpo_taxtotal, :cpo_discprofit, :cpo_discount,
                       :cpo_createat, :cpo_baseentry, :cpo_basetype, :cpo_doctype, :cpo_idadd, :cpo_adress, :cpo_paytype,:cpo_createby,:cpo_correl, 
-					  :cpo_date_inv, :cpo_date_del, :cpo_place_del,:business,:branch)";
+					  :cpo_date_inv, :cpo_date_del, :cpo_place_del,:business,:branch, :cpo_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -362,12 +362,13 @@ class PurchOrder extends REST_Controller
 			':cpo_adress' => isset($Data['cpo_adress']) ? $Data['cpo_adress'] : NULL,
 			':cpo_paytype' => is_numeric($Data['cpo_paytype']) ? $Data['cpo_paytype'] : 0,
 			':cpo_createby' => isset($Data['cpo_createby']) ? $Data['cpo_createby'] : NULL,
-			'cpo_correl' => isset($Data['cpo_correl']) ? $Data['cpo_correl'] : NULL,
-			'cpo_date_inv' => $this->validateDate($Data['cpo_date_inv']) ? $Data['cpo_date_inv'] : NULL,
-			'cpo_date_del' => $this->validateDate($Data['cpo_date_del']) ? $Data['cpo_date_del'] : NULL,
-			'cpo_place_del' => isset($Data['cpo_place_del']) ? $Data['cpo_place_del'] : NULL,
-			'business' => isset($Data['business']) ? $Data['business'] : NULL,
-			'branch' => isset($Data['branch']) ? $Data['branch'] : NULL
+			':cpo_correl' => isset($Data['cpo_correl']) ? $Data['cpo_correl'] : NULL,
+			':cpo_date_inv' => $this->validateDate($Data['cpo_date_inv']) ? $Data['cpo_date_inv'] : NULL,
+			':cpo_date_del' => $this->validateDate($Data['cpo_date_del']) ? $Data['cpo_date_del'] : NULL,
+			':cpo_place_del' => isset($Data['cpo_place_del']) ? $Data['cpo_place_del'] : NULL,
+			':business' => isset($Data['business']) ? $Data['business'] : NULL,
+			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+			':cpo_internal_comments' => isset($Data['cpo_internal_comments']) ? $Data['cpo_internal_comments'] : NULL
 
 		));
 
@@ -1071,7 +1072,7 @@ class PurchOrder extends REST_Controller
 										cpo_empid=:cpo_empid, cpo_comment=:cpo_comment, cpo_doctotal=:cpo_doctotal, cpo_baseamnt=:cpo_baseamnt,
 										cpo_taxtotal=:cpo_taxtotal, cpo_discprofit=:cpo_discprofit, cpo_discount=:cpo_discount, cpo_createat=:cpo_createat,
 										cpo_baseentry=:cpo_baseentry, cpo_basetype=:cpo_basetype, cpo_doctype=:cpo_doctype, cpo_idadd=:cpo_idadd,
-										cpo_adress=:cpo_adress, cpo_paytype=:cpo_paytype WHERE cpo_docentry=:cpo_docentry";
+										cpo_adress=:cpo_adress, cpo_paytype=:cpo_paytype, cpo_internal_comments = :cpo_internal_comments WHERE cpo_docentry=:cpo_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -1099,6 +1100,7 @@ class PurchOrder extends REST_Controller
 			':cpo_idadd' => isset($Data['cpo_idadd']) ? $Data['cpo_idadd'] : NULL,
 			':cpo_adress' => isset($Data['cpo_adress']) ? $Data['cpo_adress'] : NULL,
 			':cpo_paytype' => is_numeric($Data['cpo_paytype']) ? $Data['cpo_paytype'] : 0,
+			':cpo_internal_comments' => is_numeric($Data['cpo_internal_comments']) ? $Data['cpo_internal_comments'] : NULL,
 			':cpo_docentry' => $Data['cpo_docentry']
 		));
 

@@ -206,10 +206,10 @@ class SalesNd extends REST_Controller
 			$sqlInsert = "INSERT INTO dvnd(vnd_series, vnd_docnum, vnd_docdate, vnd_duedate, vnd_duedev, vnd_pricelist, vnd_cardcode,
 					                      vnd_cardname, vnd_currency, vnd_contacid, vnd_slpcode, vnd_empid, vnd_comment, vnd_doctotal, vnd_baseamnt, vnd_taxtotal,
 					                      vnd_discprofit, vnd_discount, vnd_createat, vnd_baseentry, vnd_basetype, vnd_doctype, vnd_idadd, vnd_adress, vnd_paytype,
-					                      vnd_createby,business,branch)VALUES(:vnd_series, :vnd_docnum, :vnd_docdate, :vnd_duedate, :vnd_duedev, :vnd_pricelist, :vnd_cardcode, :vnd_cardname,
+					                      vnd_createby,business,branch,vnd_internal_comments)VALUES(:vnd_series, :vnd_docnum, :vnd_docdate, :vnd_duedate, :vnd_duedev, :vnd_pricelist, :vnd_cardcode, :vnd_cardname,
 					                      :vnd_currency, :vnd_contacid, :vnd_slpcode, :vnd_empid, :vnd_comment, :vnd_doctotal, :vnd_baseamnt, :vnd_taxtotal, :vnd_discprofit, :vnd_discount,
 					                      :vnd_createat, :vnd_baseentry, :vnd_basetype, :vnd_doctype, :vnd_idadd, :vnd_adress, :vnd_paytype,:vnd_createby,
-										  :business,:branch)";
+										  :business,:branch,:vnd_internal_comments)";
 
 
 			// Se Inicia la transaccion,
@@ -250,7 +250,8 @@ class SalesNd extends REST_Controller
 				':vnd_paytype' => is_numeric($Data['vnd_paytype']) ? $Data['vnd_paytype'] : 0,
 				':vnd_createby' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL,
 				':business' => isset($Data['business']) ? $Data['business'] : NULL,
-				':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
+				':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
+				':vnd_internal_comments' => isset($Data['vnd_internal_comments']) ? $Data['vnd_internal_comments'] : NULL
 			));
 
 			if (is_numeric($resInsert) && $resInsert > 0) {

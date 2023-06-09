@@ -222,9 +222,11 @@ class PurchaseInv extends REST_Controller
 		$sqlInsert = "INSERT INTO dcfc(cfc_series, cfc_docnum, cfc_docdate, cfc_duedate, cfc_duedev, cfc_pricelist, cfc_cardcode,
                       cfc_cardname, cfc_currency, cfc_contacid, cfc_slpcode, cfc_empid, cfc_comment, cfc_doctotal, cfc_baseamnt, cfc_taxtotal,
                       cfc_discprofit, cfc_discount, cfc_createat, cfc_baseentry, cfc_basetype, cfc_doctype, cfc_idadd, cfc_adress, cfc_paytype,
-                      cfc_createby,cfc_totalret,cfc_totalretiva,cfc_correl, cfc_tax_control_num, business, branch)VALUES(:cfc_series, :cfc_docnum, :cfc_docdate, :cfc_duedate, :cfc_duedev, :cfc_pricelist, :cfc_cardcode, :cfc_cardname,
+                      cfc_createby,cfc_totalret,cfc_totalretiva,cfc_correl, cfc_tax_control_num, business, branch,cfc_bankable,cfc_internal_comments)
+					  VALUES(:cfc_series, :cfc_docnum, :cfc_docdate, :cfc_duedate, :cfc_duedev, :cfc_pricelist, :cfc_cardcode, :cfc_cardname,
                       :cfc_currency, :cfc_contacid, :cfc_slpcode, :cfc_empid, :cfc_comment, :cfc_doctotal, :cfc_baseamnt, :cfc_taxtotal, :cfc_discprofit, :cfc_discount,
-                      :cfc_createat, :cfc_baseentry, :cfc_basetype, :cfc_doctype, :cfc_idadd, :cfc_adress, :cfc_paytype,:cfc_createby,:cfc_totalret,:cfc_totalretiva,:cfc_correl, :cfc_tax_control_num, :business, :branch)";
+                      :cfc_createat, :cfc_baseentry, :cfc_basetype, :cfc_doctype, :cfc_idadd, :cfc_adress, :cfc_paytype,:cfc_createby,:cfc_totalret,:cfc_totalretiva,
+					  :cfc_correl, :cfc_tax_control_num, :business, :branch,:cfc_bankable,:cfc_internal_comments)";
 
 
 		// Se Inicia la transaccion,
@@ -267,7 +269,9 @@ class PurchaseInv extends REST_Controller
 			':cfc_correl' => isset($Data['cfc_correl']) ? $Data['cfc_correl'] : NULL,
 			':cfc_tax_control_num' => isset($Data['cfc_tax_control_num']) ? $Data['cfc_tax_control_num'] : NULL,
 			':business' => $Data['business'],
-			':branch' => $Data['branch']
+			':branch' => $Data['branch'],
+			':cfc_bankable' => is_numeric($Data['cfc_bankable']) ? $Data['cfc_bankable'] : 0,
+			':cfc_internal_comments' => isset($Data['cfc_internal_comments']) ? $Data['cfc_internal_comments'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -374,6 +378,7 @@ class PurchaseInv extends REST_Controller
 				':mac_update_date' => date("Y-m-d"),
 				':mac_update_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
 				':mac_accperiod' => $periodo['data']
+				
 			));
 
 
@@ -3219,7 +3224,7 @@ class PurchaseInv extends REST_Controller
 										cfc_empid=:cfc_empid, cfc_comment=:cfc_comment, cfc_doctotal=:cfc_doctotal, cfc_baseamnt=:cfc_baseamnt,
 										cfc_taxtotal=:cfc_taxtotal, cfc_discprofit=:cfc_discprofit, cfc_discount=:cfc_discount, cfc_createat=:cfc_createat,
 										cfc_baseentry=:cfc_baseentry, cfc_basetype=:cfc_basetype, cfc_doctype=:cfc_doctype, cfc_idadd=:cfc_idadd,
-										cfc_adress=:cfc_adress, cfc_paytype=:cfc_paytype WHERE cfc_docentry=:cfc_docentry";
+										cfc_adress=:cfc_adress, cfc_paytype=:cfc_paytype, cfc_internal_comments=:cfc_internal_comments WHERE cfc_docentry=:cfc_docentry";
 
 		$this->pedeo->trans_begin();
 
@@ -3248,6 +3253,7 @@ class PurchaseInv extends REST_Controller
 			':cfc_idadd' => isset($Data['cfc_idadd']) ? $Data['cfc_idadd'] : NULL,
 			':cfc_adress' => isset($Data['cfc_adress']) ? $Data['cfc_adress'] : NULL,
 			':cfc_paytype' => is_numeric($Data['cfc_paytype']) ? $Data['cfc_paytype'] : 0,
+			':cfc_internal_comments' => isset($Data['cfc_internal_comments']) ? $Data['cfc_internal_comments'] : NULL,
 			':cfc_docentry' => $Data['cfc_docentry']
 		));
 
