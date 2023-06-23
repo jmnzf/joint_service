@@ -33,7 +33,6 @@ class SalesInv extends REST_Controller
 	public function createSalesInv_post()
 	{
 		$Data = $this->post();
-		print_r($Data);exit;die;
 		$TasaDocLoc = 0;
 		$TasaLocSys = 0;
 		$MONEDALOCAL = "";

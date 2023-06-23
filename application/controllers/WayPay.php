@@ -41,13 +41,14 @@ class WayPay extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dmpf(mpf_name, mpf_days)
-                      VALUES(:mpf_name, :mpf_days)";
+        $sqlInsert = "INSERT INTO dmpf(mpf_name, mpf_days, mpf_pay)
+                      VALUES(:mpf_name, :mpf_days, :mpf_pay)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
               ':mpf_name' => $Data['mpf_name'],
-              ':mpf_days' => $Data['mpf_days']
+              ':mpf_days' => $Data['mpf_days'],
+              'mpf_pay'   => $Data['mpf_pay']
 
 
         ));
@@ -94,12 +95,13 @@ class WayPay extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE dmpf SET mpf_name = :mpf_name, mpf_days = :mpf_days WHERE mpf_id = :mpf_id";
+      $sqlUpdate = "UPDATE dmpf SET mpf_name = :mpf_name, mpf_days = :mpf_days, mpf_pay = :mpf_pay WHERE mpf_id = :mpf_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
               ':mpf_name' => $Data['mpf_name'],
               ':mpf_days' => $Data['mpf_days'],
+              ':mpf_pay'  => $Data['mpf_pay'],
               ':mpf_id'   => $Data['mpf_id']
       ));
 
