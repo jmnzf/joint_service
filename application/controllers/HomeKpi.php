@@ -38,18 +38,18 @@ class HomeKpi extends REST_Controller {
             return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
         }
 
-        $sqlDMA = "SELECT ROUND(SUM(dvf_baseamnt/1000000),2)::TEXT||' M' as monto,
-                    Round(((SUM(dvf_baseamnt) / (SELECT SUM(dvf_baseamnt) FROM dvfv WHERE business = :business  AND dvf_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2) as diff
+        $sqlDMA = "SELECT coalesce(ROUND(SUM(dvf_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
+                    coalesce(Round(((SUM(dvf_baseamnt) / (SELECT SUM(dvf_baseamnt) FROM dvfv WHERE business = :business  AND dvf_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2),0.00) as diff
                     FROM dvfv
                     WHERE dvf_docdate = current_date
                     AND business = :business 
                     
                     UNION ALL
                     
-                    SELECT ROUND(SUM(dvf_baseamnt/1000000),2)::TEXT||' M' as monto,
-                        round((SUM(dvf_baseamnt) / (SELECT SUM(dvf_baseamnt) FROM dvfv
+                    SELECT coalesce(ROUND(SUM(dvf_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
+                    coalesce(round((SUM(dvf_baseamnt) / (SELECT SUM(dvf_baseamnt) FROM dvfv
                         WHERE business = :business  AND date_trunc('month', dvf_docdate) = date_trunc('month', current_date - interval '1 month')
-                        AND EXTRACT(YEAR FROM dvf_docdate) = EXTRACT(YEAR FROM current_date)) -1) * 100, 2) as diff
+                        AND EXTRACT(YEAR FROM dvf_docdate) = EXTRACT(YEAR FROM current_date)) -1) * 100, 2),0.00) as diff
                     FROM dvfv
                     WHERE EXTRACT(MONTH FROM dvf_docdate) = EXTRACT(MONTH FROM current_date) 
                     AND EXTRACT(YEAR FROM dvf_docdate) = EXTRACT(YEAR FROM current_date) 
@@ -57,7 +57,7 @@ class HomeKpi extends REST_Controller {
                     
                     UNION ALL
                     
-                    SELECT ROUND(SUM(dvf_baseamnt/1000000),2)::TEXT||' M' as monto,
+                    SELECT coalesce(ROUND(SUM(dvf_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
                         coalesce(round(((SUM(dvf_baseamnt) / (SELECT SUM(dvf_baseamnt) FROM dvfv
                         WHERE business = :business  AND date_trunc('year', dvf_docdate) = date_trunc('year', current_date - interval '1 year'))) -1) * 100, 2), 100) as diff 
                     FROM dvfv
@@ -128,18 +128,18 @@ class HomeKpi extends REST_Controller {
             return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
         }
 
-        $sqlDMA = "SELECT ROUND(SUM(cfc_baseamnt/1000000),2)::TEXT||' M' as monto,
-                    Round(((SUM(cfc_baseamnt) / (SELECT SUM(cfc_baseamnt) FROM dcfc WHERE business = :business  AND cfc_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2) as diff
+        $sqlDMA = "SELECT coalesce(ROUND(SUM(cfc_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
+                    coalesce(Round(((SUM(cfc_baseamnt) / (SELECT SUM(cfc_baseamnt) FROM dcfc WHERE business = :business  AND cfc_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2),0.00) as diff
                     FROM dcfc
                     WHERE cfc_docdate = current_date
                     AND business = :business 
                     
                     UNION ALL
                     
-                    SELECT ROUND(SUM(cfc_baseamnt/1000000),2)::TEXT||' M' as monto,
-                        round((SUM(cfc_baseamnt) / (SELECT SUM(cfc_baseamnt) FROM dcfc
+                    SELECT coalesce(ROUND(SUM(cfc_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
+                    coalesce(round((SUM(cfc_baseamnt) / (SELECT SUM(cfc_baseamnt) FROM dcfc
                         WHERE business = :business  AND date_trunc('month', cfc_docdate) = date_trunc('month', current_date - interval '1 month')
-                        AND EXTRACT(YEAR FROM cfc_docdate) = EXTRACT(YEAR FROM current_date)) -1) * 100, 2) as diff
+                        AND EXTRACT(YEAR FROM cfc_docdate) = EXTRACT(YEAR FROM current_date)) -1) * 100, 2),0.00) as diff
                     FROM dcfc
                     WHERE EXTRACT(MONTH FROM cfc_docdate) = EXTRACT(MONTH FROM current_date) 
                     AND EXTRACT(YEAR FROM cfc_docdate) = EXTRACT(YEAR FROM current_date) 
@@ -147,7 +147,7 @@ class HomeKpi extends REST_Controller {
                     
                     UNION ALL
                     
-                    SELECT ROUND(SUM(cfc_baseamnt/1000000),2)::TEXT||' M' as monto,
+                    SELECT coalesce(ROUND(SUM(cfc_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
                         coalesce(round(((SUM(cfc_baseamnt) / (SELECT SUM(cfc_baseamnt) FROM dcfc
                         WHERE business = :business  AND date_trunc('year', cfc_docdate) = date_trunc('year', current_date - interval '1 year'))) -1) * 100, 2), 100) as diff 
                     FROM dcfc
