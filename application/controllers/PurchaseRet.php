@@ -83,11 +83,11 @@ class PurchaseRet extends REST_Controller
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 							ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 							ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-							ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref,ac1_line)VALUES (:ac1_trans_id, :ac1_account,
+							ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref,ac1_line,business,branch)VALUES (:ac1_trans_id, :ac1_account,
 							:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 							:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 							:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-							:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line)";
+							:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line,:business,:branch)";
 
 
 		if (!isset($Data['detail'])) {
@@ -309,8 +309,8 @@ class PurchaseRet extends REST_Controller
 
 			//Se agregan los asientos contables*/*******
 
-			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user)
-															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user)";
+			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user,business,branch)
+															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user,:business,:branch)";
 
 			$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
 				':mac_doc_num' => 1,
@@ -339,7 +339,9 @@ class PurchaseRet extends REST_Controller
 				':mac_create_date' => $this->validateDate($Data['cdc_createat']) ? $Data['cdc_createat'] : NULL,
 				':mac_made_usuer' => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL,
 				':mac_update_date' => date("Y-m-d"),
-				':mac_update_user' => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL
+				':mac_update_user' => isset($Data['cdc_createby']) ? $Data['cdc_createby'] : NULL,
+				':business' => $Data['business'],
+				':branch' => $Data['branch']
 			));
 
 
@@ -1335,7 +1337,9 @@ class PurchaseRet extends REST_Controller
 					':ac1_mmcode' => 0,
 					':ac1_legal_num' => isset($Data['cdc_cardcode']) ? $Data['cdc_cardcode'] : NULL,
 					':ac1_codref' => 1,
-					':ac1_line'   => $AC1LINE //new line
+					':ac1_line'   => $AC1LINE ,//new line
+					':business' => $Data['business'],
+					':branch' => $Data['branch']
 				));
 
 				if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1514,7 +1518,9 @@ class PurchaseRet extends REST_Controller
 					':ac1_mmcode' => 0,
 					':ac1_legal_num' => isset($Data['cdc_cardcode']) ? $Data['cdc_cardcode'] : NULL,
 					':ac1_codref' => 1,
-					':ac1_line'   => $AC1LINE //new line
+					':ac1_line'   => $AC1LINE ,//new line
+					':business' => $Data['business'],
+					':branch' => $Data['branch']
 				));
 
 				if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {

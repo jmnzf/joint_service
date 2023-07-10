@@ -1494,4 +1494,318 @@ class AccountingAccent extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	// FUNCION PARA ANULAR UN ASIENTO CONTABLE MANUAL
+	public function cancelAccountingEntry_post() {
+
+		$Data = $this->post();
+		
+		if ( !isset( $Data['mac_trans_id'] ) OR !isset( $Data['mac_comments'] ) ) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlAsiento = "SELECT * FROM tmac WHERE mac_trans_id = :mac_trans_id ";
+
+		$resAsiento = $this->pedeo->queryTable($sqlAsiento, array(
+			":mac_trans_id" => $Data['mac_trans_id']
+		));
+
+
+		if ( isset($resAsiento[0]) ){
+
+			if ( $resAsiento[0]['mac_base_type'] == 18 ){
+
+				$sqlDetalleAsiento = "SELECT * FROM mac1 WHERE ac1_trans_id = :ac1_trans_id ";
+
+				$resDetalleAsiento = $this->pedeo->queryTable($sqlDetalleAsiento, array(
+					":ac1_trans_id" => $Data['mac_trans_id']
+				));
+
+				if ( isset( $resDetalleAsiento[0] ) ) {
+
+					$this->pedeo->trans_begin();
+
+					// //BUSCANDO LA NUMERACION DEL DOCUMENTO
+					$DocNumVerificado = $this->documentnumbering->NumberDoc($resAsiento[0]['mac_serie'],$resAsiento[0]['mac_doc_date'],$resAsiento[0]['mac_doc_duedate']);
+
+					if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
+				
+					}else if ($DocNumVerificado['error']){
+				
+						return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
+					}
+
+					$sqlInsertHeader = "INSERT INTO tmac( mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_update_date, mac_series, mac_made_usuer, mac_update_user, mac_currency, mac_doctype, business, branch, mac_accperiod)
+										VALUES(:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_update_date, :mac_series, :mac_made_usuer, :mac_update_user, :mac_currency, :mac_doctype, :business, :branch, :mac_accperiod)";
+					
+					$resSqlInsertHeader = $this->pedeo->insertRow($sqlInsertHeader, array(
+						'mac_doc_num' => $DocNumVerificado,
+						':mac_status' => $resAsiento[0]['mac_status'], 
+						':mac_base_type' => $resAsiento[0]['mac_base_type'], 
+						':mac_base_entry' => $resAsiento[0]['mac_base_entry'], 
+						':mac_doc_date' => $resAsiento[0]['mac_doc_date'], 
+						':mac_doc_duedate' => $resAsiento[0]['mac_doc_duedate'], 
+						':mac_legal_date' => $resAsiento[0]['mac_legal_date'], 
+						':mac_ref1' => $resAsiento[0]['mac_ref1'], 
+						':mac_ref2' => $resAsiento[0]['mac_ref2'], 
+						':mac_ref3' => $resAsiento[0]['mac_ref3'], 
+						':mac_loc_total' => $resAsiento[0]['mac_loc_total'], 
+						':mac_fc_total' => $resAsiento[0]['mac_fc_total'], 
+						':mac_sys_total' => $resAsiento[0]['mac_sys_total'], 
+						':mac_trans_dode' => $resAsiento[0]['mac_trans_dode'], 
+						':mac_beline_nume' => $resAsiento[0]['mac_beline_nume'], 
+						':mac_vat_date' => $resAsiento[0]['mac_vat_date'], 
+						':mac_serie' => $resAsiento[0]['mac_serie'], 
+						':mac_number' => $resAsiento[0]['mac_number'], 
+						':mac_bammntsys' => $resAsiento[0]['mac_bammntsys'], 
+						':mac_bammnt' => $resAsiento[0]['mac_bammnt'], 
+						':mac_wtsum' => $resAsiento[0]['mac_wtsum'], 
+						':mac_vatsum' => $resAsiento[0]['mac_vatsum'], 
+						':mac_comments' => $resAsiento[0]['mac_comments'], 
+						':mac_create_date' => $resAsiento[0]['mac_create_date'], 
+						':mac_update_date' => $resAsiento[0]['mac_update_date'], 
+						':mac_series' => $resAsiento[0]['mac_series'], 
+						':mac_made_usuer' => $resAsiento[0]['mac_made_usuer'], 
+						':mac_update_user' => $resAsiento[0]['mac_update_user'], 
+						':mac_currency' => $resAsiento[0]['mac_currency'], 
+						':mac_doctype' => $resAsiento[0]['mac_doctype'], 
+						':business' => $resAsiento[0]['business'], 
+						':branch' => $resAsiento[0]['branch'], 
+						':mac_accperiod' => $resAsiento[0]['mac_accperiod']
+					));
+
+
+					if ( is_numeric($resSqlInsertHeader) && $resSqlInsertHeader > 0 ){
+
+						// Se actualiza la serie de la numeracion del documento
+
+						$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+													WHERE pgs_id = :pgs_id";
+
+						$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+							':pgs_nextnum' => $DocNumVerificado,
+							':pgs_id'      => $resAsiento[0]['mac_serie']
+						));
+
+						if (is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1) {
+
+						} else {
+							
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+							'error'   => true,
+							'data'    => $resActualizarNumeracion,
+							'mensaje'	=> 'No se pudo crear el asiento'
+							);
+
+							return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+						}
+						// Fin de la actualizacion de la numeracion del documento
+
+						
+
+						foreach ($resDetalleAsiento as $key => $detalle) {
+
+							$sqlInsertDetalle = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type, business, branch, ac1_codret, ac1_base_tax)
+												 VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type, :business, :branch, :ac1_codret, :ac1_base_tax)";
+							
+							$debito = 0;
+							$credito = 0;
+
+							$debitosys = 0;
+							$creditosys= 0;
+
+							$vendebito = 0;
+							$vencredito = 0;
+
+							if ( $resDetalleAsiento[0]['ac1_debit'] > 0 ){
+							
+								$debito = $resDetalleAsiento[0]['ac1_debit'];
+								$credito = 0;
+								
+							}
+
+							if ( $resDetalleAsiento[0]['ac1_credit'] > 0 ){
+							
+								$debito = 0;
+								$credito = $resDetalleAsiento[0]['ac1_credit'];
+								
+							}
+
+							if ( $resDetalleAsiento[0]['ac1_debit_sys'] > 0 ){
+							
+								$debitosys = $resDetalleAsiento[0]['ac1_debit_sys'];
+								$creditosys = 0;
+								
+							}
+
+							if ( $resDetalleAsiento[0]['ac1_credit_sys'] > 0 ){
+							
+								$debitosys = 0;
+								$creditosys = $debitosys = $resDetalleAsiento[0]['ac1_credit_sys'];
+								
+							}
+
+							if ( $resDetalleAsiento[0]['ac1_ven_debit'] > 0 ){
+							
+								$vendebito = $resDetalleAsiento[0]['ac1_ven_debit'];
+								$vencredito = 0;
+								
+							}
+
+							if ( $resDetalleAsiento[0]['ac1_ven_credit'] > 0 ){
+							
+								$vendebito = 0;
+								$vencredito = $resDetalleAsiento[0]['ac1_ven_credit'];
+								
+							}
+
+
+
+							
+							$resInsertDetalle = $this->pedeo->insertRow($sqlInsertDetalle, array(
+
+								':ac1_trans_id' => $resSqlInsertHeader,
+								':ac1_account' => $resDetalleAsiento[0]['ac1_account'], 
+								':ac1_debit' => $debito, 
+								':ac1_credit' => $credito, 
+								':ac1_debit_sys' => $debitosys, 
+								':ac1_credit_sys' => $creditosys, 
+								':ac1_currex' => $resDetalleAsiento[0]['ac1_currex'], 
+								':ac1_doc_date' => $resDetalleAsiento[0]['ac1_doc_date'], 
+								':ac1_doc_duedate' => $resDetalleAsiento[0]['ac1_doc_duedate'], 
+								':ac1_debit_import' => $resDetalleAsiento[0]['ac1_debit_import'], 
+								':ac1_credit_import' => $resDetalleAsiento[0]['ac1_credit_import'], 
+								':ac1_debit_importsys' => $resDetalleAsiento[0]['ac1_debit_importsys'], 
+								':ac1_credit_importsys' => $resDetalleAsiento[0]['ac1_credit_importsys'], 
+								':ac1_font_key' => $resSqlInsertHeader,
+								':ac1_font_line' => $resDetalleAsiento[0]['ac1_font_line'], 
+								':ac1_font_type' => 18,
+								':ac1_accountvs' => $resDetalleAsiento[0]['ac1_accountvs'], 
+								':ac1_doctype' => $resDetalleAsiento[0]['ac1_doctype'],
+								':ac1_ref1' => $resDetalleAsiento[0]['ac1_ref1'], 
+								':ac1_ref2' => $resDetalleAsiento[0]['ac1_ref2'], 
+								':ac1_ref3' => $resDetalleAsiento[0]['ac1_ref3'], 
+								':ac1_prc_code' => $resDetalleAsiento[0]['ac1_prc_code'], 
+								':ac1_uncode' => $resDetalleAsiento[0]['ac1_uncode'], 
+								':ac1_prj_code' => $resDetalleAsiento[0]['ac1_prj_code'], 
+								':ac1_rescon_date' => $resDetalleAsiento[0]['ac1_rescon_date'],
+								':ac1_recon_total' => $resDetalleAsiento[0]['ac1_recon_total'], 
+								':ac1_made_user' => $resDetalleAsiento[0]['ac1_made_user'], 
+								':ac1_accperiod' => $resDetalleAsiento[0]['ac1_accperiod'],
+								':ac1_close' => $resDetalleAsiento[0]['ac1_close'], 
+								':ac1_cord' => $resDetalleAsiento[0]['ac1_cord'], 
+								':ac1_ven_debit' => $vendebito, 
+								':ac1_ven_credit' => $vencredito, 
+								':ac1_fiscal_acct' => $resDetalleAsiento[0]['ac1_fiscal_acct'], 
+								':ac1_taxid' => $resDetalleAsiento[0]['ac1_taxid'], 
+								':ac1_isrti' => $resDetalleAsiento[0]['ac1_isrti'],
+								':ac1_basert' => $resDetalleAsiento[0]['ac1_basert'],
+								':ac1_mmcode' => $resDetalleAsiento[0]['ac1_mmcode'],
+								':ac1_legal_num' => $resDetalleAsiento[0]['ac1_legal_num'], 
+								':ac1_codref' => $resDetalleAsiento[0]['ac1_codref'], 
+								':ac1_card_type' => $resDetalleAsiento[0]['ac1_card_type'], 
+								':business' => $resDetalleAsiento[0]['business'],
+								':branch'   => $resDetalleAsiento[0]['branch'], 
+								':ac1_codret' => $resDetalleAsiento[0]['ac1_codret'], 
+								':ac1_base_tax' => $resDetalleAsiento[0]['ac1_base_tax'] 
+							));
+
+							if (is_numeric($resInsertDetalle) && $resInsertDetalle > 0 ) {
+
+							
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error' => true,
+									'data' => $resSqlInsertHeader,
+									'mensaje' => 'Error al insertar la copia del detalle del asiento'
+								);
+
+								return $this->response($respuesta);
+							}
+						}
+
+						$update = $this->pedeo->updateRow("UPDATE tmac SET mac_status = :mac_status, mac_comments = concat(mac_comments,' ', '".$Data['mac_comments']."') WHERE mac_trans_id = :mac_trans_id", array("mac_status" => 2, ":mac_trans_id" => $Data['mac_trans_id'] ));
+
+						if ( is_numeric($update) && $update == 1 ){
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $update,
+								'mensaje' => 'No se pudo cambiar el estado del documento'
+							);
+	
+							return $this->response($respuesta);
+						}
+
+						$this->pedeo->trans_commit();
+
+						$respuesta = array(
+							'error' => false,
+							'data' => [],
+							'mensaje' => 'Asiento anulado con exito'
+						);
+
+
+
+					}else{
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $resSqlInsertHeader,
+							'mensaje' => 'Error al insertar la copia del asiento'
+						);
+
+						return $this->response($respuesta);
+					}
+
+				}else{
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $resDetalleAsiento,
+						'mensaje' => 'No se encontro el detalle del asiento'
+					);
+				}
+
+			}else{
+
+				$respuesta = array(
+					'error' => true,
+					'data' => $resAsiento,
+					'mensaje' => 'No se puede anular el asiento actual, el documento afectado no es del tipo correcto'
+				);
+			}
+
+		}else{
+
+			$respuesta = array(
+				'error' => true,
+				'data' => $resAsiento,
+				'mensaje' => 'No se encontro el asiento'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
 }
