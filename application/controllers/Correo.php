@@ -27,7 +27,7 @@ class Correo extends REST_Controller {
 		$this->load->library('DocumentAccSeat');
 		$this->load->library('DocumentPayment');
 		$this->load->library('DocumentContract');
-		$this->load->library('DocumentContract1');
+		// $this->load->library('DocumentContract1');
 	}
 	//
 	public function send_post()
@@ -56,7 +56,7 @@ class Correo extends REST_Controller {
 			$value = $this->documentcontract1->format($request,"F");
 			$subject = $resSql[0]['mdt_docname']." - #".$value['data']['docnum'];
 		}
-		
+		// print_r($value);exit;
 		//CONVERTIR EN ARRAY LOS CORREOS Y SEPARARLOS POR ;$request['cde_text']
 		$email = explode(";",$request['cde_email']);
 		$array = array_map('trim',$email);
