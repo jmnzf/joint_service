@@ -40,7 +40,7 @@ class Reports extends REST_Controller {
 
 		  return;
 	  }
-		$where = [':business' => $request['business']];
+	  	$where = [];
       	$sql = '';
 
 		// ID ARTICULO.
@@ -96,10 +96,10 @@ class Reports extends REST_Controller {
 						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
 						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
 						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code 
-						WHERE 1=1 AND tbmi.business = :business ".$sql." 
+						WHERE 1=1 ".$sql." 
 						ORDER BY cast(tbmi.bmi_createat as date) DESC";
 
-		$result = $this->pedeo->queryTable($sqlAnalitic, $where);
+		$result = $this->pedeo->queryTable($sqlAnalitic,$where);
 		
 		if(isset($result[0])){
 
