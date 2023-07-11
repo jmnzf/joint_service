@@ -166,7 +166,8 @@ class PurchaseRequest extends REST_Controller
 		//FIN DE PROCESO DE TASA
 
 		// SE VERIFICA SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
-
+		//VARIABLE VALOR RESPUESTA DEL MONTO DE LA CONVERSION
+		$monto = 0;
 		$sqlVerificarAprobacion = "SELECT * FROM tbed WHERE bed_docentry =:bed_docentry AND bed_doctype =:bed_doctype AND bed_status =:bed_status";
 		$resVerificarAprobacion = $this->pedeo->queryTable($sqlVerificarAprobacion, array(
 
@@ -207,7 +208,6 @@ class PurchaseRequest extends REST_Controller
 			if (isset($resDocModelo[0])) {
 
 				foreach ($resDocModelo as $key => $value) {
-
 					//VERIFICAR MODELO DE APROBACION
 					$condicion = $value['condicion'];
 					$valorDocTotal1 = $value['doctotal'];
@@ -215,7 +215,7 @@ class PurchaseRequest extends REST_Controller
 					$TotalDocumento = $Data['csc_doctotal'];
 					$doctype =  $value['doctype'];
 					$modelo = $value['modelo'];
-
+					
 					$sqlTasaMonedaModelo = "SELECT COALESCE(get_dynamic_conversion(:mau_currency,:doc_currency,:doc_date,:doc_total,get_localcur()), 0) AS monto"; 
 					$resTasaMonedaModelo = $this->pedeo->queryTable($sqlTasaMonedaModelo, array(
 						':mau_currency' => $value['mau_currency'],
@@ -223,8 +223,10 @@ class PurchaseRequest extends REST_Controller
 						':doc_date' 	=> $Data['csc_docdate'],
 						':doc_total' 	=> $TotalDocumento
 					));
-
-					if ( $resTasaMonedaModelo[0]['monto'] == 0 ){
+					$monto = $resTasaMonedaModelo[0]['monto'];
+					if ( $monto == 0 && $doctype == 10){
+						
+					}else if($monto <> 0 && $doctype <> 10){
 						$respuesta = array(
 							'error' => true,
 							'data'  => array(),
@@ -234,9 +236,10 @@ class PurchaseRequest extends REST_Controller
 						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 			
 						return;
+
 					}
 
-					$TotalDocumento =  $resTasaMonedaModelo[0]['monto'];
+					$TotalDocumento =  $monto;
 
 					if ($condicion == ">") {
 

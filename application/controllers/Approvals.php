@@ -391,7 +391,7 @@ class Approvals extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT distinct mev_names,t0.*,(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry) estado FROM dpap t0 inner join dmev on t0.pap_slpcode = dmev.mev_id
+		$sqlSelect = "SELECT distinct 0 as pap_doctotal_new,mev_names,t0.*,(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry) estado FROM dpap t0 inner join dmev on t0.pap_slpcode = dmev.mev_id
 							where t0.pap_cardcode  = CAST(:pap_cardcode AS VARCHAR)  and t0.pap_origen = :pap_origen AND t0.business = :business AND t0.branch = :branch AND
 							(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry)  = 'Aprobado' ";
 
@@ -481,8 +481,7 @@ class Approvals extends REST_Controller
 
 			return;
 		}
-		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1');
-
+		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1','fechaentrega');
 
 		if (isset($copy[0])) {
 
