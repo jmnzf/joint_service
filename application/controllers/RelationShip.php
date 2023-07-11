@@ -56,7 +56,7 @@ class RelationShip extends REST_Controller {
 
 
       	$result = $this->pedeo->queryTable($sql,array());
-// print_r($result);exit();die();
+
 		if(isset($result[0])){
 
 			$respuesta = array(

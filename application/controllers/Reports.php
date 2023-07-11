@@ -92,10 +92,10 @@ class Reports extends REST_Controller {
 						get_localcur()||' '||trim(to_char( (tbmi.bmi_cost * (tbmi.bmi_quantity + tbmi.bmi_currequantity)), '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) costoacumulado,
 						tbmi.bmi_createby AS creadopor,tbmi.bmi_docdate AS fechadoc,tbmi.bmi_comment AS comentario
 						FROM tbmi
-						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode and tbmi.business = tbdi.business
+						INNER JOIN tbdi ON tbmi.bmi_itemcode = tbdi.bdi_itemcode AND tbmi.bmi_whscode  = tbdi.bdi_whscode
 						INNER JOIN dmar ON tbmi.bmi_itemcode = dmar.dma_item_code
 						INNER JOIN dmdt ON tbmi.bmy_doctype = dmdt.mdt_doctype
-						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code and dmws.business = tbmi.business
+						INNER JOIN dmws ON tbmi.bmi_whscode = dmws.dws_code 
 						WHERE 1=1 AND tbmi.business = :business ".$sql." 
 						ORDER BY cast(tbmi.bmi_createat as date) DESC";
 
