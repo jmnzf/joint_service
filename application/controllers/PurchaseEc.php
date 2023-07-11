@@ -546,10 +546,10 @@ class PurchaseEc extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO cec1(ec1_docentry,ec1_itemcode, ec1_itemname, ec1_quantity, ec1_uom, ec1_whscode,
                                     ec1_price, ec1_vat, ec1_vatsum, ec1_discount, ec1_linetotal, ec1_costcode, ec1_ubusiness, ec1_project,
                                     ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_linenum, ec1_acciva, ec1_codimp, ec1_ubication,
-									ec1_baseline,ote_code)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
+									ec1_baseline,ote_code,ec1_gift)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
                                     :ec1_uom, :ec1_whscode,:ec1_price, :ec1_vat, :ec1_vatsum, :ec1_discount, :ec1_linetotal, :ec1_costcode, :ec1_ubusiness, :ec1_project,
                                     :ec1_acctcode, :ec1_basetype, :ec1_doctype, :ec1_avprice, :ec1_inventory,:ec1_linenum,:ec1_acciva,:ec1_codimp, 
-									:ec1_ubication,:ec1_baseline,:ote_code)";
+									:ec1_ubication,:ec1_baseline,:ote_code,:ec1_gift)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ec1_docentry' => $resInsert,
@@ -576,7 +576,8 @@ class PurchaseEc extends REST_Controller
 					':ec1_codimp' => isset($detail['ec1_codimp']) ? $detail['ec1_codimp'] : NULL,
 					':ec1_ubication' => isset($detail['ec1_ubication']) ? $detail['ec1_ubication'] : NULL,
 					':ec1_baseline' => is_numeric($detail['ec1_baseline']) ? $detail['ec1_baseline'] : 0,
-					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
+					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':ec1_gift' => is_numeric($detail['ec1_gift']) ? $detail['ec1_gift'] : 0
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
