@@ -37,7 +37,7 @@ class BankReconciliation extends REST_Controller {
 			$inArrayGasto = array();
 			$inArrayImpuesto = array();
 			$llaveGasto = "";
-		  $llaveImpuesto = "";
+		  	$llaveImpuesto = "";
 			$posicionGasto = 0;
 			$posicionImpuesto = 0;
 

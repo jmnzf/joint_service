@@ -30,7 +30,6 @@ class RetFisc extends REST_Controller {
 			!isset($Data['mrt_enabled'])OR
 			!isset($Data['mrt_name'])OR
 			!isset($Data['mrt_type'])OR
-			!isset($Data['mrt_action'])OR
 			!isset($Data['mrt_dateini'])OR
 			!isset($Data['mrt_base'])OR
 			!isset($Data['mrt_tipobase'])OR
@@ -40,9 +39,8 @@ class RetFisc extends REST_Controller {
 			!isset($Data['mrt_minbase'])OR
 			!isset($Data['mrt_selftret'])OR
 			!isset($Data['mrt_pos'])OR
-			!isset($Data['mrt_selfttype'])OR
-			!isset($Data['mrt_typetax'])OR
-			!isset($Data['mrt_sustra'])){
+			!isset($Data['mrt_use_fc'])OR
+			!isset($Data['mrt_selfttype'])){
 
 			$respuesta = array(
 				'error' => true,
@@ -74,8 +72,8 @@ class RetFisc extends REST_Controller {
             return;
         }
 
-        $sqlInsert = "INSERT INTO dmrt(mrt_code, mrt_enabled, mrt_name, mrt_type, mrt_action, mrt_dateini, mrt_base, mrt_tipobase, mrt_tasa, mrt_codeof, mrt_acctcode, mrt_mm, mrt_typeret, mrt_minbase, mrt_selftret, mrt_pos, mrt_selfttype, mrt_typetax, mrt_sustra)
-	                    VALUES (:mrt_code, :mrt_enabled, :mrt_name, :mrt_type, :mrt_action, :mrt_dateini, :mrt_base, :mrt_tipobase, :mrt_tasa, :mrt_codeof, :mrt_acctcode, :mrt_mm, :mrt_typeret, :mrt_minbase, :mrt_selftret, :mrt_pos, :mrt_selfttype, :mrt_typetax, :mrt_sustra)";
+        $sqlInsert = "INSERT INTO dmrt(mrt_code, mrt_enabled, mrt_name, mrt_type, mrt_action, mrt_dateini, mrt_base, mrt_tipobase, mrt_tasa, mrt_codeof, mrt_acctcode, mrt_mm, mrt_typeret, mrt_minbase, mrt_selftret, mrt_pos, mrt_selfttype, mrt_typetax, mrt_sustra, mrt_use_fc)
+	                    VALUES (:mrt_code, :mrt_enabled, :mrt_name, :mrt_type, :mrt_action, :mrt_dateini, :mrt_base, :mrt_tipobase, :mrt_tasa, :mrt_codeof, :mrt_acctcode, :mrt_mm, :mrt_typeret, :mrt_minbase, :mrt_selftret, :mrt_pos, :mrt_selfttype, :mrt_typetax, :mrt_sustra, :mrt_use_fc)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -83,7 +81,7 @@ class RetFisc extends REST_Controller {
               ':mrt_enabled' => $Data['mrt_enabled'],
               ':mrt_name' => $Data['mrt_name'],
               ':mrt_type' => $Data['mrt_type'],
-              ':mrt_action' => $Data['mrt_action'],
+              ':mrt_action' => @$Data['mrt_action'] ?: "",
               ':mrt_dateini' => $Data['mrt_dateini'],
               ':mrt_base' => $Data['mrt_base'],
               ':mrt_tipobase' => $Data['mrt_tipobase'],
@@ -96,8 +94,9 @@ class RetFisc extends REST_Controller {
               ':mrt_selftret' => $Data['mrt_selftret'],
               ':mrt_pos' => $Data['mrt_pos'],
               ':mrt_selfttype' => $Data['mrt_selfttype'],
-              ':mrt_typetax' => $Data['mrt_typetax'],
-              ':mrt_sustra' => $Data['mrt_sustra']
+              ':mrt_typetax' => @$Data['mrt_typetax'] ?: 0,
+              ':mrt_sustra' => @$Data['mrt_sustra'] ?: 0,
+              ':mrt_use_fc' => $Data['mrt_use_fc']
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -143,7 +142,8 @@ class RetFisc extends REST_Controller {
 					tpdm.pdm_municipality AS municipio,
 					tdar.dar_name AS autoretencion,
 					trmm.rmm_name AS retencionmagnetica,
-					ttrt.trt_description AS mrt_description
+					ttrt.trt_description AS mrt_description,
+					mrt_use_fc
 					FROM dmrt
 					INNER JOIN ttrt
 					ON dmrt.mrt_type = ttrt.trt_id
@@ -217,7 +217,6 @@ class RetFisc extends REST_Controller {
 			!isset($Data['mrt_enabled'])OR
 			!isset($Data['mrt_name'])OR
 			!isset($Data['mrt_type'])OR
-			!isset($Data['mrt_action'])OR
 			!isset($Data['mrt_dateini'])OR
 			!isset($Data['mrt_base'])OR
 			!isset($Data['mrt_tipobase'])OR
@@ -228,8 +227,7 @@ class RetFisc extends REST_Controller {
 			!isset($Data['mrt_selftret'])OR
 			!isset($Data['mrt_pos'])OR
 			!isset($Data['mrt_selfttype'])OR
-			!isset($Data['mrt_typetax'])OR
-			!isset($Data['mrt_sustra'])OR
+			!isset($Data['mrt_use_fc'])OR
 			!isset($Data['mrt_id'])){
 
 			$respuesta = array(
@@ -261,7 +259,8 @@ class RetFisc extends REST_Controller {
 														mrt_pos = :mrt_pos,
 														mrt_selfttype = :mrt_selfttype,
 														mrt_typetax = :mrt_typetax,
-														mrt_sustra = :mrt_sustra
+														mrt_sustra = :mrt_sustra,
+														mrt_use_fc = :mrt_use_fc
 														WHERE mrt_id = :mrt_id";
 
 		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -269,7 +268,7 @@ class RetFisc extends REST_Controller {
 					':mrt_enabled' => $Data['mrt_enabled'],
 					':mrt_name' => $Data['mrt_name'],
 					':mrt_type' => $Data['mrt_type'],
-					':mrt_action' => $Data['mrt_action'],
+					':mrt_action' => @$Data['mrt_action'] ?: "",
 					':mrt_dateini' => $Data['mrt_dateini'],
 					':mrt_base' => $Data['mrt_base'],
 					':mrt_tipobase' => $Data['mrt_tipobase'],
@@ -282,8 +281,9 @@ class RetFisc extends REST_Controller {
 					':mrt_selftret' => $Data['mrt_selftret'],
 					':mrt_pos' => $Data['mrt_pos'],
 					':mrt_selfttype' => $Data['mrt_selfttype'],
-					':mrt_typetax' => $Data['mrt_typetax'],
-					':mrt_sustra' => $Data['mrt_sustra'],
+					':mrt_typetax' => @$Data['mrt_typetax'] ?: 0,
+					':mrt_sustra' => @$Data['mrt_sustra'] ?: 0,
+					':mrt_use_fc' => $Data['mrt_use_fc'],
 					':mrt_id' => $Data['mrt_id']));
 
 		if(is_numeric($resUpdate) && $resUpdate == 1){

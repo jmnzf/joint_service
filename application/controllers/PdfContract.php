@@ -32,7 +32,6 @@ class PdfContract extends REST_Controller {
 	public function PdfContract_post(){
 		
         $Data = $this->post();
-		$Data = $Data['CSN_DOCENTRY'];
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
@@ -134,7 +133,7 @@ class PdfContract extends REST_Controller {
 									WHERE T0.csn_docentry = :csn_docentry";
 
 
-			$contenidoContrato = $this->pedeo->queryTable($sqlcotizacion,array(':csn_docentry'=>$Data));
+			$contenidoContrato = $this->pedeo->queryTable($sqlcotizacion,array(':csn_docentry'=>$Data['CSN_DOCENTRY']));
 
 				if(!isset($contenidoContrato[0])){
 						$respuesta = array(
