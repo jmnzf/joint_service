@@ -1259,8 +1259,7 @@ class BankReconciliation extends REST_Controller {
 	//OBTENER RECONCIALIACIONES REALIZADAS
 	public function getBankReconciliation_get(){
 
-		$sqlSelect = "SELECT *
-									FROM dcrb";
+		$sqlSelect = "SELECT * FROM dcrb";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1336,7 +1335,7 @@ class BankReconciliation extends REST_Controller {
 				$opeComp = ($Data['isedit'] == 1) ? "=": "!=" ;
 
 				$sqlSelect = "SELECT mac1.ac1_trans_id as id,
-											mac1.ac1_doc_date as fecha,
+											gbpr.bpe_datetransfer as fecha,
 											mac1.ac1_debit as debit,
 											mac1.ac1_credit as credit,
 											tmac.mac_base_type as basetype,
