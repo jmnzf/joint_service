@@ -1549,7 +1549,7 @@ class AccountingAccent extends REST_Controller
 					
 					$resSqlInsertHeader = $this->pedeo->insertRow($sqlInsertHeader, array(
 						'mac_doc_num' => $DocNumVerificado,
-						':mac_status' => $resAsiento[0]['mac_status'], 
+						':mac_status' => 2, 
 						':mac_base_type' => $resAsiento[0]['mac_base_type'], 
 						':mac_base_entry' => $resAsiento[0]['mac_base_entry'], 
 						':mac_doc_date' => $resAsiento[0]['mac_doc_date'], 
@@ -1628,97 +1628,86 @@ class AccountingAccent extends REST_Controller
 							$vendebito = 0;
 							$vencredito = 0;
 
-							if ( $resDetalleAsiento[0]['ac1_debit'] > 0 ){
-							
-								$debito = $resDetalleAsiento[0]['ac1_debit'];
-								$credito = 0;
-								
-							}
+							$oldVen = 0;
 
-							if ( $resDetalleAsiento[0]['ac1_credit'] > 0 ){
+							if ( $detalle['ac1_debit'] > 0 ){
 							
 								$debito = 0;
-								$credito = $resDetalleAsiento[0]['ac1_credit'];
+								$credito = $detalle['ac1_debit'];
+
+								$oldVen = $detalle['ac1_debit'];
 								
 							}
 
-							if ( $resDetalleAsiento[0]['ac1_debit_sys'] > 0 ){
+							if ( $detalle['ac1_credit'] > 0 ){
 							
-								$debitosys = $resDetalleAsiento[0]['ac1_debit_sys'];
+								$debito = $detalle['ac1_credit'];;
+								$credito = 0;
+								
+								$oldVen = $detalle['ac1_credit'];
+							}
+
+							if ( $detalle['ac1_debit_sys'] > 0 ){
+							
+								$debitosys = 0;
+								$creditosys = $detalle['ac1_debit_sys'];
+								
+							}
+
+							if ( $detalle['ac1_credit_sys'] > 0 ){
+							
+								$debitosys = $detalle['ac1_credit_sys'];
 								$creditosys = 0;
 								
 							}
-
-							if ( $resDetalleAsiento[0]['ac1_credit_sys'] > 0 ){
-							
-								$debitosys = 0;
-								$creditosys = $debitosys = $resDetalleAsiento[0]['ac1_credit_sys'];
-								
-							}
-
-							if ( $resDetalleAsiento[0]['ac1_ven_debit'] > 0 ){
-							
-								$vendebito = $resDetalleAsiento[0]['ac1_ven_debit'];
-								$vencredito = 0;
-								
-							}
-
-							if ( $resDetalleAsiento[0]['ac1_ven_credit'] > 0 ){
-							
-								$vendebito = 0;
-								$vencredito = $resDetalleAsiento[0]['ac1_ven_credit'];
-								
-							}
-
-
 
 							
 							$resInsertDetalle = $this->pedeo->insertRow($sqlInsertDetalle, array(
 
 								':ac1_trans_id' => $resSqlInsertHeader,
-								':ac1_account' => $resDetalleAsiento[0]['ac1_account'], 
+								':ac1_account' => $detalle['ac1_account'], 
 								':ac1_debit' => $debito, 
 								':ac1_credit' => $credito, 
 								':ac1_debit_sys' => $debitosys, 
 								':ac1_credit_sys' => $creditosys, 
-								':ac1_currex' => $resDetalleAsiento[0]['ac1_currex'], 
-								':ac1_doc_date' => $resDetalleAsiento[0]['ac1_doc_date'], 
-								':ac1_doc_duedate' => $resDetalleAsiento[0]['ac1_doc_duedate'], 
-								':ac1_debit_import' => $resDetalleAsiento[0]['ac1_debit_import'], 
-								':ac1_credit_import' => $resDetalleAsiento[0]['ac1_credit_import'], 
-								':ac1_debit_importsys' => $resDetalleAsiento[0]['ac1_debit_importsys'], 
-								':ac1_credit_importsys' => $resDetalleAsiento[0]['ac1_credit_importsys'], 
+								':ac1_currex' => $detalle['ac1_currex'], 
+								':ac1_doc_date' => $detalle['ac1_doc_date'], 
+								':ac1_doc_duedate' => $detalle['ac1_doc_duedate'], 
+								':ac1_debit_import' => $detalle['ac1_debit_import'], 
+								':ac1_credit_import' => $detalle['ac1_credit_import'], 
+								':ac1_debit_importsys' => $detalle['ac1_debit_importsys'], 
+								':ac1_credit_importsys' => $detalle['ac1_credit_importsys'], 
 								':ac1_font_key' => $resSqlInsertHeader,
-								':ac1_font_line' => $resDetalleAsiento[0]['ac1_font_line'], 
+								':ac1_font_line' => $detalle['ac1_font_line'], 
 								':ac1_font_type' => 18,
-								':ac1_accountvs' => $resDetalleAsiento[0]['ac1_accountvs'], 
-								':ac1_doctype' => $resDetalleAsiento[0]['ac1_doctype'],
-								':ac1_ref1' => $resDetalleAsiento[0]['ac1_ref1'], 
-								':ac1_ref2' => $resDetalleAsiento[0]['ac1_ref2'], 
-								':ac1_ref3' => $resDetalleAsiento[0]['ac1_ref3'], 
-								':ac1_prc_code' => $resDetalleAsiento[0]['ac1_prc_code'], 
-								':ac1_uncode' => $resDetalleAsiento[0]['ac1_uncode'], 
-								':ac1_prj_code' => $resDetalleAsiento[0]['ac1_prj_code'], 
-								':ac1_rescon_date' => $resDetalleAsiento[0]['ac1_rescon_date'],
-								':ac1_recon_total' => $resDetalleAsiento[0]['ac1_recon_total'], 
-								':ac1_made_user' => $resDetalleAsiento[0]['ac1_made_user'], 
-								':ac1_accperiod' => $resDetalleAsiento[0]['ac1_accperiod'],
-								':ac1_close' => $resDetalleAsiento[0]['ac1_close'], 
-								':ac1_cord' => $resDetalleAsiento[0]['ac1_cord'], 
+								':ac1_accountvs' => $detalle['ac1_accountvs'], 
+								':ac1_doctype' => $detalle['ac1_doctype'],
+								':ac1_ref1' => $detalle['ac1_ref1'], 
+								':ac1_ref2' => $detalle['ac1_ref2'], 
+								':ac1_ref3' => $detalle['ac1_ref3'], 
+								':ac1_prc_code' => $detalle['ac1_prc_code'], 
+								':ac1_uncode' => $detalle['ac1_uncode'], 
+								':ac1_prj_code' => $detalle['ac1_prj_code'], 
+								':ac1_rescon_date' => $detalle['ac1_rescon_date'],
+								':ac1_recon_total' => $detalle['ac1_recon_total'], 
+								':ac1_made_user' => $detalle['ac1_made_user'], 
+								':ac1_accperiod' => $detalle['ac1_accperiod'],
+								':ac1_close' => $detalle['ac1_close'], 
+								':ac1_cord' => $detalle['ac1_cord'], 
 								':ac1_ven_debit' => $vendebito, 
 								':ac1_ven_credit' => $vencredito, 
-								':ac1_fiscal_acct' => $resDetalleAsiento[0]['ac1_fiscal_acct'], 
-								':ac1_taxid' => $resDetalleAsiento[0]['ac1_taxid'], 
-								':ac1_isrti' => $resDetalleAsiento[0]['ac1_isrti'],
-								':ac1_basert' => $resDetalleAsiento[0]['ac1_basert'],
-								':ac1_mmcode' => $resDetalleAsiento[0]['ac1_mmcode'],
-								':ac1_legal_num' => $resDetalleAsiento[0]['ac1_legal_num'], 
-								':ac1_codref' => $resDetalleAsiento[0]['ac1_codref'], 
-								':ac1_card_type' => $resDetalleAsiento[0]['ac1_card_type'], 
-								':business' => $resDetalleAsiento[0]['business'],
-								':branch'   => $resDetalleAsiento[0]['branch'], 
-								':ac1_codret' => $resDetalleAsiento[0]['ac1_codret'], 
-								':ac1_base_tax' => $resDetalleAsiento[0]['ac1_base_tax'] 
+								':ac1_fiscal_acct' => $detalle['ac1_fiscal_acct'], 
+								':ac1_taxid' => $detalle['ac1_taxid'], 
+								':ac1_isrti' => $detalle['ac1_isrti'],
+								':ac1_basert' => $detalle['ac1_basert'],
+								':ac1_mmcode' => $detalle['ac1_mmcode'],
+								':ac1_legal_num' => $detalle['ac1_legal_num'], 
+								':ac1_codref' => $detalle['ac1_codref'], 
+								':ac1_card_type' => $detalle['ac1_card_type'], 
+								':business' => $detalle['business'],
+								':branch'   => $detalle['branch'], 
+								':ac1_codret' => $detalle['ac1_codret'], 
+								':ac1_base_tax' => $detalle['ac1_base_tax'] 
 							));
 
 							if (is_numeric($resInsertDetalle) && $resInsertDetalle > 0 ) {
@@ -1732,6 +1721,35 @@ class AccountingAccent extends REST_Controller
 									'error' => true,
 									'data' => $resSqlInsertHeader,
 									'mensaje' => 'Error al insertar la copia del detalle del asiento'
+								);
+
+								return $this->response($respuesta);
+							}
+
+
+							// ACTUALIZAR VEN DEBIT Y CREDIT DEL ASIENTO VIEJO
+
+							$sqlUpdate = "UPDATE mac1 SET ac1_ven_debit = :ac1_ven_debit, ac1_ven_credit = :ac1_ven_credit WHERE ac1_line_num = :ac1_line_num";
+
+							$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+								':ac1_ven_credit' => $oldVen,
+								':ac1_ven_debit'  => $oldVen,
+								':ac1_line_num'   => $detalle['ac1_line_num']
+
+							));
+
+
+							if (is_numeric($resUpdate) && $resUpdate == 1 ) {
+
+							
+							}else{
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error' => true,
+									'data' => $resUpdate,
+									'mensaje' => 'Error al actualizar el asiento viejo'
 								);
 
 								return $this->response($respuesta);
