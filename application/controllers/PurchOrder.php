@@ -85,7 +85,7 @@ class PurchOrder extends REST_Controller
 
 			return;
 		}
-		// //BUSCANDO LA NUMERACION DEL DOCUMENTO
+		//BUSCANDO LA NUMERACION DEL DOCUMENTO
 		$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['cpo_series'],$Data['cpo_docdate'],$Data['cpo_duedate']);
 		
 		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){

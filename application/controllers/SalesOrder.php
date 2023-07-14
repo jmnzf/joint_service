@@ -756,6 +756,58 @@ class SalesOrder extends REST_Controller
 						return;
 					}
 				}
+			}else if ($Data['vov_basetype'] == 32){
+
+				$sql_contract = "SELECT dcsn.csn_typeagreement,tcsn.* FROM tcsn INNER JOIN dcsn ON tcsn.csn_docentry = dcsn.csn_docentry WHERE tcsn.csn_doctype = :csn_doctype AND tcsn.csn_docentry = :csn_docentry";
+				$resSql_contract = $this->pedeo->queryTable($sql_contract,array(
+					':csn_doctype' => $Data['vov_basetype'],
+					':csn_docentry' => $Data['vov_baseentry']
+				));
+
+				if(isset($resSql_contract[0]) && $resSql_contract[0]['csn_typeagreement'] == 1){
+					$sqlOrder = "SELECT SUM(dvov.vov_doctotal) as total FROM dvov WHERE dvov.vov_basetype = :vov_basetype AND dvov.vov_baseentry = :vov_baseentry";
+					$resOrder = $this->pedeo->queryTable($sqlOrder,array(
+						':vov_basetype' => $Data['vov_basetype'],
+						':vov_baseentry' => $Data['vov_baseentry']
+					));
+
+					$totalOrder = is_numeric($resOrder[0]['total']) ? $resOrder[0]['total'] : 0;
+					$totalContract = is_numeric($resSql_contract[0]['csn_doctotal']) ? $resSql_contract[0]['csn_doctotal'] : 0;
+
+					if($totalContract == $totalOrder){
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+											VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+							':bed_docentry' => $Data['vov_baseentry'],
+							':bed_doctype' => $Data['vov_basetype'],
+							':bed_status' => 3, //ESTADO CERRADO
+							':bed_createby' => $Data['vov_createby'],
+							':bed_date' => date('Y-m-d'),
+							':bed_baseentry' => $resInsert,
+							':bed_basetype' => $Data['vov_doctype']
+						));
+
+
+						if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+						} else {
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resInsertEstado,
+								'mensaje'	=> 'No se pudo registrar la orden de venta'
+							);
+
+
+							$this->response($respuesta);
+
+							return;
+						}
+					}
+				}
+
 			}
 
 

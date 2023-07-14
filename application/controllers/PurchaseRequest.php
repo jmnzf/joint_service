@@ -180,7 +180,15 @@ class PurchaseRequest extends REST_Controller
 		if (!isset($resVerificarAprobacion[0])) {
 
 			$aprobacion = $this->aprobacion->validmodelaprobacion($Data,$ContenidoDetalle,'csc','sc1',$Data['business'],$Data['branch']);
-			return $this->response($aprobacion);
+
+			if ( isset($aprobacion['error']) && $aprobacion['error'] == false || $aprobacion['data'] == 1 ){
+
+				return $this->response($aprobacion);
+
+			} else  if ( isset($aprobacion['error']) && $aprobacion['error'] == true ) {
+				
+				return $this->response($aprobacion);
+			}
 		}
 
 

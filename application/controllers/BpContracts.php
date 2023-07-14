@@ -762,7 +762,7 @@ class BpContracts extends REST_Controller
 			return;
 		}
 
-		$copyData = $this->documentcopy->copyData('tcsn','csn',$Data['dms_card_code'],$Data['business'],$Data['branch']);
+		$copyData = $this->documentcopy->copyData('tcsn','csn',$Data['dms_card_code'],$Data['business'],$Data['branch'],32);
 
 		if (isset($copyData[0])) {
 			$respuesta = array(
