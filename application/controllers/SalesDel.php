@@ -747,7 +747,7 @@ class SalesDel extends REST_Controller
 					':em1_ubication' => isset($detail['em1_ubication']) ? $detail['em1_ubication'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':em1_baseline' => isset($detail['em1_baseline']) && is_numeric($detail['em1_baseline']) ? $detail['em1_baseline'] : 0,
-					':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
+					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

@@ -40,7 +40,7 @@ class Items extends REST_Controller
 			$cantidad2 = 1;
 		}
 
-		$sqlSelect = "SELECT dma_item_code FROM dmar WHERE dma_item_code = :dma_item_code";
+		$sqlSelect = "SELECT dma_item_code FROM dmar WHERE UPPER(trim(dma_item_code)) = UPPER(trim(:dma_item_code))";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 

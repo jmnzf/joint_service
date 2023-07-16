@@ -501,7 +501,7 @@ class SalesDv extends REST_Controller {
             ':dv1_ubication' => isset($detail['dv1_ubication'])?$detail['dv1_ubication']:NULL,
             ':ote_code' => isset($detail['ote_code'])?$detail['ote_code']:NULL,
             ':dv1_baseline' => isset($detail['dv1_baseline']) && is_numeric($detail['dv1_baseline']) ? $detail['dv1_baseline'] : 0,
-            ':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
+            ':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
           ));
 
           if(is_numeric($resInsertDetail) && $resInsertDetail > 0){

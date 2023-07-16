@@ -20,6 +20,7 @@ class Reports extends REST_Controller {
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
     	$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('AccountStatus');
 
 	}
 
@@ -622,592 +623,116 @@ class Reports extends REST_Controller {
 	// ESTADO DE CUENTA PARA CLIENTE Y PROVEEDOR
 	public function EstadoCuentaCl_post(){
 
-				$Data = $this->post();
+		$Data = $this->post();
 
-				if(!isset($Data['business']) or empty($Data['business']) or
-					!isset($Data['cardcode']) or empty($Data['cardcode']) or 
-					!isset($Data['currency']) or empty($Data['currency']) or
-					!isset($Data['cardtype']) or empty($Data['cardtype'])){
+		if(!isset($Data['business']) or empty($Data['business']) or
+			!isset($Data['cardcode']) or empty($Data['cardcode']) or 
+			!isset($Data['currency']) or empty($Data['currency']) or
+			!isset($Data['cardtype']) or empty($Data['cardtype'])){
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => [],
-						'mensaje'	=> 'Falta alguno de los siguientes parametros (business,cardcode,currency,cardtype)'
-					);
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-					return;
-				}
+			$respuesta = array(
+				'error'   => true,
+				'data' => [],
+				'mensaje'	=> 'Falta alguno de los siguientes parametros (business,cardcode,currency,cardtype)'
+			);
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			return;
+		}
 
-				$fecha = "";
+		$fecha = "";
 
-				if(isset($Data['cardcode']) && !empty($Data['cardcode']) && isset($Data['cardtype'])){
+		$cliente = "";
+		
+		$proveedor = "";
 
-					if( isset($Data['fecha']) ){
-						$fecha = $Data['fecha'];
-					}else{
-						$fecha = 'CURRENT_DATE';
-					}
 
-					$sql = "";
+		
 
-					if( $Data['cardtype'] == 1 ){
+		if ( is_array( $Data['cardcode'] ) && is_array( $Data['cardtype'] ) ) {
 
-						$sql = "SELECT distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						CURRENT_DATE - dvf_duedate dias,
-						CURRENT_DATE - dvf_duedate dias_atrasado,
-						dvfv.dvf_comment,
-						get_localcur() as currency,
-						mac1.ac1_font_key as dvf_docentry,
-						mac1.ac1_font_key as docentry,
-						dvfv.dvf_docnum,
-						dvfv.dvf_docnum as numerodocumento,
-						dvfv.dvf_docdate as fecha_doc,
-						dvfv.dvf_docdate as fechadocumento,
-						dvfv.dvf_duedate as fecha_ven,
-						dvfv.dvf_duedate as fechavencimiento,
-						dvf_docnum as id_origen,
-						mac1.ac1_font_type as numtype,
-						mac1.ac1_font_type as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_font_type = 5 then  get_dynamic_conversion(:currency, dvf_currency,dvf_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, dvf_currency,dvf_docdate,mac1.ac1_credit ,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency, dvf_currency,dvf_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, dvf_currency,dvf_docdate,mac1.ac1_credit ,get_localcur())
-						end	 as totalfactura,
-						get_dynamic_conversion(:currency, dvf_currency,dvf_docdate,(mac1.ac1_debit) - (mac1.ac1_ven_credit) ,get_localcur()) as saldo_venc,
-						'' retencion,
-						get_tax_currency(dvfv.dvf_currency, dvfv.dvf_docdate) as tasa_dia,
-						dvfv.dvf_cardname as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join dvfv
-						on dvfv.dvf_doctype = mac1.ac1_font_type
-						and dvfv.dvf_docentry = mac1.ac1_font_key
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-						and mac1.business = :business
-						--ANTICIPO CLIENTE
-						union all
-						select distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						0 as dias,
-						0 as dias_atrasado,
-						gbpr.bpr_comments,
-						get_localcur() as currency,
-						mac1.ac1_font_key as dvf_docentry,
-						mac1.ac1_font_key as docentry,
-						gbpr.bpr_docnum,
-						gbpr.bpr_docnum as numerodocumento,
-						gbpr.bpr_docdate as fecha_doc,
-						gbpr.bpr_docdate as fechadocumento,
-						gbpr.bpr_docdate as fecha_ven,
-						gbpr.bpr_docdate as fechavencimiento,
-						bpr_docnum as id_origen,
-						mac1.ac1_font_type as numtype,
-						mac1.ac1_font_type as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_font_type = 5 then  get_dynamic_conversion(:currency, get_localcur(),bpr_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),bpr_docdate,mac1.ac1_credit ,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency, get_localcur(),bpr_docdate,mac1.ac1_debit ,get_localcur()) * -1
-							else  get_dynamic_conversion(:currency, get_localcur(),bpr_docdate,mac1.ac1_credit ,get_localcur()) * -1
-						end	 as totalfactura,
-						 get_dynamic_conversion(:currency, get_localcur(),bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) as saldo_venc,
-						'' retencion,
-						get_tax_currency(gbpr.bpr_currency, gbpr.bpr_docdate) as tasa_dia,
-						gbpr.bpr_cardname as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join gbpr
-						on gbpr.bpr_doctype = mac1.ac1_font_type
-						and gbpr.bpr_docentry = mac1.ac1_font_key
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-						and mac1.business = :business
-						--NOTA CREDITO
-						union all
-						select distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						CURRENT_DATE - vnc_duedate dias,
-						CURRENT_DATE - vnc_duedate dias_atrasado,
-						dvnc.vnc_comment,
-						get_localcur() as currency,
-						mac1.ac1_font_key as dvf_docentry,
-						mac1.ac1_font_key as docentry,
-						dvnc.vnc_docnum,
-						dvnc.vnc_docnum as numerodocumento,
-						dvnc.vnc_docdate as fecha_doc,
-						dvnc.vnc_docdate as fechadocumento,
-						dvnc.vnc_duedate as fecha_ven,
-						dvnc.vnc_duedate as fechavencimiento,
-						vnc_docnum as id_origen,
-						mac1.ac1_font_type as numtype,
-						mac1.ac1_font_type as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_font_type = 5 then get_dynamic_conversion(:currency, get_localcur(),vnc_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),vnc_docdate,mac1.ac1_credit ,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_font_type = 5 then  get_dynamic_conversion(:currency, get_localcur(),vnc_docdate,mac1.ac1_debit,get_localcur()) * -1
-							else  get_dynamic_conversion(:currency, get_localcur(),vnc_docdate,mac1.ac1_credit ,get_localcur()) * -1
-						end	 as totalfactura,
-						get_dynamic_conversion(:currency, get_localcur(),vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())  as saldo_venc,
-						'' retencion,
-						get_tax_currency(dvnc.vnc_currency,	dvnc.vnc_docdate) as tasa_dia,
-						dvnc.vnc_cardname as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join dvnc
-						on dvnc.vnc_doctype = mac1.ac1_font_type
-						and dvnc.vnc_docentry = mac1.ac1_font_key
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-						and mac1.business = :business
-						--NOTA DEBITO
-						union all
-						select distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						CURRENT_DATE - vnd_duedate dias,
-						CURRENT_DATE - vnd_duedate dias_atrasado,
-						dvnd.vnd_comment,
-						get_localcur() as currency,
-						mac1.ac1_font_key as dvf_docentry,
-						mac1.ac1_font_key as docentry,
-						dvnd.vnd_docnum,
-						dvnd.vnd_docnum as numerodocumento,
-						dvnd.vnd_docdate as fecha_doc,
-						dvnd.vnd_docdate as fechadocumento,
-						dvnd.vnd_duedate as fecha_ven,
-						dvnd.vnd_duedate as fechavencimiento,
-						vnd_docnum as id_origen,
-						mac1.ac1_font_type as numtype,
-						mac1.ac1_font_type as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_font_type = 5 then  get_dynamic_conversion(:currency, get_localcur(),vnd_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),vnd_docdate,mac1.ac1_credit ,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_font_type = 5 then  get_dynamic_conversion(:currency, get_localcur(),vnd_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),vnd_docdate,mac1.ac1_credit ,get_localcur())
-						end	 as totalfactura,
-						get_dynamic_conversion(:currency, get_localcur(),vnd_docdate,(mac1.ac1_debit) - (mac1.ac1_ven_credit) ,get_localcur()) as saldo_venc,
-						'' retencion,
-						get_tax_currency(dvnd.vnd_currency, dvnd.vnd_docdate) as tasa_dia,
-						dvnd.vnd_cardname as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join dvnd
-						on dvnd.vnd_doctype = mac1.ac1_font_type
-						and dvnd.vnd_docentry = mac1.ac1_font_key
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-						and mac1.business = :business
-						--ASIENTOS MANUALES
-						union all
-						select distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						CURRENT_DATE - tmac.mac_doc_duedate dias,
-						CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
-						tmac.mac_comments,
-						get_localcur() as currency,
-						0 as dvf_docentry,
-						0 as docentry,
-						0 as docnum,
-						0 as numerodocumento,
-						tmac.mac_doc_date as fecha_doc,
-						tmac.mac_doc_date as fechadocumento,
-						tmac.mac_doc_duedate as fecha_ven,
-						tmac.mac_doc_duedate as fechavencimiento,
-						0 as id_origen,
-						18 as numtype,
-						18 as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_cord = 0 then get_dynamic_conversion(:currency, get_localcur(),mac_doc_date, mac1.ac1_debit ,get_localcur())
-							when mac1.ac1_cord = 1 then get_dynamic_conversion(:currency, get_localcur(),mac_doc_date, mac1.ac1_credit ,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_cord = 0 then get_dynamic_conversion(:currency, get_localcur(),mac_doc_date, mac1.ac1_debit ,get_localcur())
-							when mac1.ac1_cord = 1 then get_dynamic_conversion(:currency, get_localcur(),mac_doc_date, mac1.ac1_credit ,get_localcur())
-						end	 as totalfactura,
-						 get_dynamic_conversion(:currency, get_localcur(),mac_doc_date, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) as saldo_venc,
-						'' retencion,
-						get_tax_currency(tmac.mac_currency, tmac.mac_doc_date) as tasa_dia,
-						dmsn.dms_card_name as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join tmac
-						on tmac.mac_trans_id = mac1.ac1_font_key
-						and tmac.mac_doctype = mac1.ac1_font_type
-						inner join dmsn
-						on mac1.ac1_card_type = dmsn.dms_card_type
-						and mac1.ac1_legal_num = dmsn.dms_card_code
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-						and mac1.business = :business";
+			if ( isset( $Data['cardcode'][2] ) ){
 
-					}else if ( $Data['cardtype'] == 2 ){
+				$respuesta = array(
+					'error'   => true,
+					'data' => [],
+					'mensaje'	=> 'El numero de socios a conciliar es mayor del permitido, (2)'
+				);
 
-						$sql = "SELECT distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						CURRENT_DATE - cfc_duedate dias,
-						CURRENT_DATE - cfc_duedate dias_atrasado,
-						dcfc.cfc_comment,
-						get_localcur() as currency,
-						mac1.ac1_font_key as dvf_docentry,
-						mac1.ac1_font_key as docentry,
-						dcfc.cfc_docnum,
-						dcfc.cfc_docnum as numerodocumento,
-						dcfc.cfc_docdate as fecha_doc,
-						dcfc.cfc_docdate as fechadocumento,
-						dcfc.cfc_duedate as fecha_ven,
-						dcfc.cfc_duedate as fechavencimiento,
-						cfc_docnum as id_origen,
-						mac1.ac1_font_type as numtype,
-						mac1.ac1_font_type as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency, get_localcur(),cfc_docdate,mac1.ac1_credit,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),cfc_docdate,mac1.ac1_debit,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency, get_localcur(),cfc_docdate,mac1.ac1_credit,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),cfc_docdate,mac1.ac1_debit,get_localcur())
-						end	 as totalfactura,
-						 get_dynamic_conversion(:currency, get_localcur(),cfc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_credit) ,get_localcur())  as saldo_venc,
-						'' retencion,
-						get_tax_currency(dcfc.cfc_currency,dcfc.cfc_docdate) as tasa_dia,
-						dcfc.cfc_cardname as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join dcfc
-						on dcfc.cfc_doctype = mac1.ac1_font_type
-						and dcfc.cfc_docentry = mac1.ac1_font_key
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
-						and mac1.business = :business
-						--PAGO EFECTUADO
-						union all
-						select distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						CURRENT_DATE - gbpe.bpe_docdate as dias,
-						CURRENT_DATE - gbpe.bpe_docdate as dias_atrasado,
-						gbpe.bpe_comments as bpr_comment,
-						get_localcur() as currency,
-						mac1.ac1_font_key as dvf_docentry,
-						mac1.ac1_font_key as docentry,
-						gbpe.bpe_docnum,
-						gbpe.bpe_docnum as numerodocumento,
-						gbpe.bpe_docdate as fecha_doc,
-						gbpe.bpe_docdate as fechadocumento,
-						gbpe.bpe_docdate as fecha_ven,
-						gbpe.bpe_docdate as fechavencimiento,
-						gbpe.bpe_docnum as id_origen,
-						mac1.ac1_font_type as numtype,
-						mac1.ac1_font_type as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_font_type = 15 then  get_dynamic_conversion(:currency, get_localcur(),bpe_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),bpe_docdate,mac1.ac1_debit ,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency, get_localcur(),bpe_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),bpe_docdate,mac1.ac1_debit ,get_localcur())
-						end	 as totalfactura,
-						get_dynamic_conversion(:currency, get_localcur(),bpe_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) as saldo_venc,
-						'' retencion,
-						get_tax_currency(gbpe.bpe_currency, gbpe.bpe_docdate) as tasa_dia,
-						gbpe.bpe_cardname as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join gbpe
-						on gbpe.bpe_doctype = mac1.ac1_font_type
-						and gbpe.bpe_docentry = mac1.ac1_font_key
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-						and mac1.business = :business
-						--NOTA CREDITO
-						union all
-						select distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						CURRENT_DATE - dcnc.cnc_docdate dias,
-						CURRENT_DATE - dcnc.cnc_docdate as dias_atrasado,
-						dcnc.cnc_comment as bpr_comment,
-						get_localcur() as currency,
-						mac1.ac1_font_key as dvf_docentry,
-						mac1.ac1_font_key as docentry,
-						dcnc.cnc_docnum,
-						dcnc.cnc_docnum as numerodocumento,
-						dcnc.cnc_docdate as fecha_doc,
-						dcnc.cnc_docdate as fechadocumento,
-						dcnc.cnc_duedate as fecha_ven,
-						dcnc.cnc_duedate as fechavencimiento,
-						dcnc.cnc_docnum as id_origen,
-						mac1.ac1_font_type as numtype,
-						mac1.ac1_font_type as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency, get_localcur(),cnc_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),cnc_docdate,mac1.ac1_debit ,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency, get_localcur(),cnc_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),cnc_docdate,mac1.ac1_debit ,get_localcur())
-						end	 as totalfactura,
-						get_dynamic_conversion(:currency, get_localcur(),cnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)  ,get_localcur()) as saldo_venc,
-						'' retencion,
-						get_tax_currency(dcnc.cnc_currency, dcnc.cnc_docdate) as tasa_dia,
-						dcnc.cnc_cardname as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join dcnc
-						on dcnc.cnc_doctype = mac1.ac1_font_type
-						and dcnc.cnc_docentry = mac1.ac1_font_key
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-						and mac1.business = :business
-						--NOTA DEBITO
-						union all
-						select distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						CURRENT_DATE - dcnd.cnd_docdate as dias,
-						CURRENT_DATE - dcnd.cnd_docdate as dias_atrasado,
-						dcnd.cnd_comment as bpr_comment,
-						get_localcur() as currency,
-						mac1.ac1_font_key as dvf_docentry,
-						mac1.ac1_font_key as docentry,
-						dcnd.cnd_docnum,
-						dcnd.cnd_docnum as numerodocumento,
-						dcnd.cnd_docdate as fecha_doc,
-						dcnd.cnd_docdate as fechadocumento,
-						dcnd.cnd_duedate as fecha_ven,
-						dcnd.cnd_duedate as fechavencimiento,
-						dcnd.cnd_docnum as id_origen,
-						mac1.ac1_font_type as numtype,
-						mac1.ac1_font_type as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency, get_localcur(),cnd_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),cnd_docdate,mac1.ac1_credit ,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency, get_localcur(),cnd_docdate,mac1.ac1_debit ,get_localcur())
-							else get_dynamic_conversion(:currency, get_localcur(),cnd_docdate,mac1.ac1_credit ,get_localcur())
-						end	 as totalfactura,
-						get_dynamic_conversion(:currency, get_localcur(),cnd_docdate,(mac1.ac1_ven_credit) - (mac1.ac1_debit) ,get_localcur()) as saldo_venc,
-						'' retencion,
-						get_tax_currency(dcnd.cnd_currency, dcnd.cnd_docdate) as tasa_dia,
-						dcnd.cnd_cardname as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join dcnd
-						on dcnd.cnd_doctype = mac1.ac1_font_type
-						and dcnd.cnd_docentry = mac1.ac1_font_key
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-						and mac1.business = :business
-						--ASIENTOS MANUALES
-						union all
-						select distinct
-						mac1.ac1_font_key,
-						mac1.ac1_legal_num,
-						mac1.ac1_legal_num as codigoproveedor,
-						mac1.ac1_account as cuenta,
-						mac1.ac1_account,
-						CURRENT_DATE - tmac.mac_doc_duedate dias,
-						CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
-						tmac.mac_comments,
-						get_localcur() as currency,
-						0 as dvf_docentry,
-						0 as docentry,
-						0 as docnum,
-						0 as numerodocumento,
-						tmac.mac_doc_date as fecha_doc,
-						tmac.mac_doc_date as fechadocumento,
-						tmac.mac_doc_duedate as fecha_ven,
-						tmac.mac_doc_duedate as fechavencimiento,
-						0 as id_origen,
-						18 as numtype,
-						18 as doctype,
-						mdt_docname as tipo,
-						case
-							when mac1.ac1_cord = 0 then get_dynamic_conversion(:currency, get_localcur(),mac_doc_date,mac1.ac1_debit ,get_localcur())
-							when mac1.ac1_cord = 1 then get_dynamic_conversion(:currency, get_localcur(),mac_doc_date,mac1.ac1_credit ,get_localcur())
-						end	 as total_doc,
-						case
-							when mac1.ac1_cord = 0 then get_dynamic_conversion(:currency, get_localcur(),mac_doc_date,mac1.ac1_debit ,get_localcur())
-							when mac1.ac1_cord  = 1 then get_dynamic_conversion(:currency, get_localcur(),mac_doc_date,mac1.ac1_credit ,get_localcur())
-						end	 as totalfactura,
-						get_dynamic_conversion(:currency, get_localcur(),mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)  ,get_localcur()) as saldo_venc,
-						'' retencion,
-						get_tax_currency(tmac.mac_currency, tmac.mac_doc_date) as tasa_dia,
-						dmsn.dms_card_name as nombreproveedor,
-						get_localcur() as monedadocumento,
-						:fecha as  fechacorte,
-						ac1_line_num,
-						ac1_cord
-						from  mac1
-						inner join dacc
-						on mac1.ac1_account = dacc.acc_code
-						and acc_businessp = '1'
-						inner join dmdt
-						on mac1.ac1_font_type = dmdt.mdt_doctype
-						inner join tmac
-						on tmac.mac_trans_id = mac1.ac1_font_key
-						and tmac.mac_doctype = mac1.ac1_font_type
-						inner join dmsn
-						on mac1.ac1_card_type = dmsn.dms_card_type
-						and mac1.ac1_legal_num = dmsn.dms_card_code
-						where mac1.ac1_legal_num = :cardcode
-						and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-						and mac1.business = :business";
-					}
-					// print_r($sql);exit();die();
-					$result = $this->pedeo->queryTable($sql,array(
-						":cardcode" => $Data['cardcode'],
-						":fecha" => $fecha,
-						":currency" => $Data['currency'],
-						":business" => $Data['business']
-					));
+				return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			}
+
+			for ($i=0; $i < count($Data['cardtype']); $i++) { 
+
+				if ( $Data['cardtype'][$i] == 1 ){
+
+					$cliente = $Data['cardcode'][$i];
 					
 
-					if(isset($result[0])){
+				}else if ( $Data['cardtype'][$i] == 2 ){
 
-						$respuesta = array(
-							'error'   => false,
-							'data'    => $result,
-							'mensaje' =>''
-						);
-
-					}else{
-
-						$respuesta = array(
-							'error'   => true,
-							'data' => array(),
-							'mensaje'	=> 'busqueda sin resultados'
-						);
-
-					}
-
-					$this->response($respuesta);
+					$proveedor = $Data['cardcode'][$i];
+					
+				}
+				
 			}
-		}	
+
+			
+
+		}else{
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => [],
+				'mensaje'	=> 'El formato de la información enviada no es valido'
+			);
+
+			return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			
+		}
+
+		if(isset($Data['cardcode']) && !empty($Data['cardcode']) && isset($Data['cardtype'])){
+
+			if( isset($Data['fecha']) ){
+				$fecha = $Data['fecha'];
+			}else{
+				$fecha = 'CURRENT_DATE';
+			}
+
+			$array = [];
+
+			$result1 = $this->accountstatus->getECC($cliente,$fecha,$Data['currency'],$Data['business']);
+			$result2 = $this->accountstatus->getECP($proveedor,$fecha,$Data['currency'],$Data['business']);
+
+
+			if ( isset($result1[0]) && isset($result2[0]) ){
+				$array = array_merge($result1, $result2);
+			}else if ( isset($result1[0]) ){
+				$array = $result1;
+			}else if(isset($result2[0])) {
+				$array = $result2;
+			}
+
+			if(isset($array[0])){
+
+				$respuesta = array(
+					'error'   => false,
+					'data'    => $array,
+					'mensaje' =>''
+				);
+
+			}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+			}
+
+			$this->response($respuesta);
+		}
+	}	
 
 
 	// OBTENER ACIENTO CONTABLE POR ID
@@ -1349,19 +874,19 @@ class Reports extends REST_Controller {
 	public function  logBook_post(){
 		$Data = $this->post();
 
-    if( !isset($Data['inicio']) OR
-        !isset($Data['fin'])OR
-		!isset($Data['tipo']) or
-		!isset($Data['business'])
-      ){
-      $this->response(array(
-        'error'  => true,
-        'data'   => [],
-        'mensaje'=>'La informacion enviada no es valida'
-      ), REST_Controller::HTTP_BAD_REQUEST);
+		if( !isset($Data['inicio']) OR
+			!isset($Data['fin'])OR
+			!isset($Data['tipo']) or
+			!isset($Data['business'])
+		){
+		$this->response(array(
+			'error'  => true,
+			'data'   => [],
+			'mensaje'=>'La informacion enviada no es valida'
+		), REST_Controller::HTTP_BAD_REQUEST);
 
-      return ;
-    }
+		return ;
+		}
 
 		$sqlSelect = "SELECT
 									fv.dvf_docentry as docentry, fv.dvf_docdate as docdate, dmdt.mdt_docname as doctype, fv.dvf_docnum as docnum , fv.dvf_correl as correl,
@@ -1876,7 +1401,7 @@ class Reports extends REST_Controller {
 									where 1 = 1 and mac1.business = :business
 									".$sql."
 									and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0";
-// print_r($sqlSelect);exit;
+
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business']));
 
 
@@ -2079,5 +1604,10 @@ class Reports extends REST_Controller {
 
 		 $this->response($respuesta);
 	}
+
+
+
+
+	
 
 }

@@ -544,7 +544,7 @@ class SalesNd extends REST_Controller
 						':nd1_ubication' => is_numeric($detail['nd1_ubication']) ? $detail['nd1_ubication'] : NULL,
 						':nd1_baseline' => isset($detail['nd1_baseline']) && is_numeric($detail['nd1_baseline']) ? $detail['nd1_baseline'] : 0,
 						':ote_code' => is_numeric($detail['ote_code']) ? $detail['ote_code'] : NULL,
-						':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
+						':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
