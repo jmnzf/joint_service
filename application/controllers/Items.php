@@ -30,6 +30,15 @@ class Items extends REST_Controller
 	{
 
 		$Data = $this->post();
+		//ASIGNAR UNIDAD DE MEDIDA SI EL ARTICULO NO SE MARCA COMO IVENTARIO
+		$unidad = 0;
+		$cantidad1 = 0;
+		$cantidad2 = 0;
+		if(isset($Data['dma_item_inv']) && $Data['dma_item_inv'] == "0"){
+			$unidad = 10;
+			$cantidad1 = 1;
+			$cantidad2 = 1;
+		}
 
 		$sqlSelect = "SELECT dma_item_code FROM dmar WHERE dma_item_code = :dma_item_code";
 
@@ -120,17 +129,17 @@ class Items extends REST_Controller
 				':dma_series_code' => isset($Data['dma_series_code']) ? $Data['dma_series_code'] : NULL,
 				':dma_sup_set' => isset($Data['dma_sup_set']) ? $Data['dma_sup_set'] : NULL,
 				':dma_sku_sup' => isset($Data['dma_sku_sup']) ? $Data['dma_sku_sup'] : NULL,
-				':dma_uom_purch' => isset($Data['dma_uom_purch']) && is_numeric($Data['dma_uom_purch']) ? $Data['dma_uom_purch'] : 0,
-				':dma_uom_pqty' => isset($Data['dma_uom_pqty']) && is_numeric($Data['dma_uom_pqty']) ? $Data['dma_uom_pqty'] : 0,
-				':dma_uom_pemb' => isset($Data['dma_uom_pemb']) && is_numeric($Data['dma_uom_pemb']) ? $Data['dma_uom_pemb'] : 0,
-				':dma_uom_pembqty' => isset($Data['dma_uom_pembqty']) && is_numeric($Data['dma_uom_pembqty']) ? $Data['dma_uom_pembqty'] : 0,
+				':dma_uom_purch' => $unidad == 0 ? $Data['dma_uom_purch'] : $unidad,
+				':dma_uom_pqty' => $cantidad1 == 0 ? $Data['dma_uom_pqty'] : $cantidad1,
+				':dma_uom_pemb' => $cantidad1 == 0 ? $Data['dma_uom_embqty'] : $cantidad1,
+				':dma_uom_pembqty' => $cantidad2 == 0 ? $Data['dma_uom_pembqty'] : $cantidad2,
 				':dma_tax_purch' => is_numeric($Data['dma_tax_purch']) ? $Data['dma_tax_purch'] : 0,
 				':dma_price_list' => isset($Data['dma_price_list']) ? $Data['dma_price_list'] : 0,
 				':dma_price' => is_numeric($Data['dma_price']) ? $Data['dma_price'] : 0,
-				':dma_uom_sale' => isset($Data['dma_uom_sale']) && is_numeric($Data['dma_uom_sale']) ? $Data['dma_uom_sale'] : 0,
-				':dma_uom_sqty' => isset($Data['dma_uom_sqty']) && is_numeric($Data['dma_uom_sqty']) ? $Data['dma_uom_sqty'] : 0,
-				':dma_uom_semb' => isset($Data['dma_uom_semb']) && is_numeric($Data['dma_uom_semb']) ? $Data['dma_uom_semb'] : 0,
-				':dma_uom_embqty' => is_numeric($Data['dma_uom_embqty']) ? $Data['dma_uom_embqty'] : 0,
+				':dma_uom_sale' => $unidad == 0 ? $Data['dma_uom_sale'] : $unidad,
+				':dma_uom_sqty' => $cantidad1 == 0 ? $Data['dma_uom_sqty'] : $cantidad1,
+				':dma_uom_semb' => $cantidad1 == 0 ? $Data['dma_uom_embqty'] : $cantidad1,
+				':dma_uom_embqty' => $cantidad2 == 0 ? $Data['dma_uom_embqty'] : $cantidad2,
 				':dma_tax_sales' => is_numeric($Data['dma_tax_sales']) ? $Data['dma_tax_sales'] : 0,
 				':dma_acct_type' => is_numeric($Data['dma_acct_type']) ? $Data['dma_acct_type'] : 0,
 				':dma_avprice' => is_numeric($Data['dma_avprice']) ? $Data['dma_avprice'] : 0,
@@ -142,7 +151,7 @@ class Items extends REST_Controller
 				':dma_lotes_code' => isset($Data['dma_lotes_code']) ? $Data['dma_lotes_code'] : '0',
 				':dma_emisionmethod' => isset($Data['dma_emisionmethod']) ? $Data['dma_emisionmethod'] : 0,
 				':dma_long_description' => isset($Data['dma_long_description']) ? $Data['dma_long_description'] : NULL,
-				':dma_um_inventory' => isset($Data['dma_um_inventory']) ? $Data['dma_um_inventory'] : NULL,
+				':dma_um_inventory' => $unidad == 0 ? $Data['dma_uom_purch'] : $unidad,
 				':dma_item_mat' => isset($Data['dma_item_mat']) ? $Data['dma_item_mat'] : 0,
 				//CUENTAS CONTABLES
 				':dma_accounting' => isset($Data['dma_accounting']) ? $Data['dma_accounting'] : NULL,

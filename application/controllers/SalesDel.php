@@ -716,10 +716,10 @@ class SalesDel extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
                                     em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp,em1_ubication,ote_code,em1_baseline)
+                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp,em1_ubication,ote_code,em1_baseline,detalle_modular)
 									VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,:em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, 
 									:em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,:em1_acctcode, :em1_basetype, :em1_doctype, 
-									:em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp,:em1_ubication,:ote_code,:em1_baseline)";
+									:em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp,:em1_ubication,:ote_code,:em1_baseline,:detalle_modular)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':em1_docentry' => $resInsert,
@@ -746,7 +746,8 @@ class SalesDel extends REST_Controller
 					':em1_codimp' => isset($detail['em1_codimp']) ? $detail['em1_codimp'] : NULL,
 					':em1_ubication' => isset($detail['em1_ubication']) ? $detail['em1_ubication'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
-					':em1_baseline' => isset($detail['em1_baseline']) && is_numeric($detail['em1_baseline']) ? $detail['em1_baseline'] : 0
+					':em1_baseline' => isset($detail['em1_baseline']) && is_numeric($detail['em1_baseline']) ? $detail['em1_baseline'] : 0,
+					':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -2325,7 +2326,7 @@ class SalesDel extends REST_Controller
 			return;
 		}
 
-		$copy = $this->documentcopy->Copy($Data['em1_docentry'],'dvem','vem1','vem','em1');
+		$copy = $this->documentcopy->Copy($Data['em1_docentry'],'dvem','vem1','vem','em1','detalle_modular::jsonb');
 
 		if (isset($copy[0])) {
 
@@ -2392,7 +2393,8 @@ class SalesDel extends REST_Controller
 						(((t1.em1_quantity ) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
 						t1.em1_whscode,
 						dmar.dma_series_code,
-						t1.em1_ubication
+						t1.em1_ubication,
+						t1.detalle_modular::jsonb
 						from dvem t0
 						left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
 						INNER JOIN dmar ON em1_itemcode = dmar.dma_item_code
@@ -2421,7 +2423,8 @@ class SalesDel extends REST_Controller
 						t1.em1_whscode,
 						t1.em1_quantity,
 						dmar.dma_series_code,
-						t1.em1_ubication";
+						t1.em1_ubication,
+						t1.detalle_modular::jsonb";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
 

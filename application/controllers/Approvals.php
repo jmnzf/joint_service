@@ -485,7 +485,16 @@ class Approvals extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT distinct 0 as pap_doctotal_new, mev_names,pap_docnum, pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode, pap_cardname, pap_contacid, pap_slpcode, pap_empid, pap_comment, pap_doctotal, pap_baseamnt, pap_taxtotal, pap_discprofit, pap_discount, pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress, pap_paytype, pap_attch, pap_docentry, pap_series, pap_createby, pap_currency, pap_paytoday, pap_origen, pap_qtyrq, pap_qtyap, pap_correl, pap_date_inv, pap_date_del, pap_place_del, t0.business, t0.branch, pap_totalret, pap_totalretiva, pap_tax_control_num, pap_anticipate_value, pap_anticipate_type, pap_anticipate_total, pap_internal_comments,
+		$sqlSelect = "SELECT distinct 0 as pap_doctotal_new, mev_names,pap_docnum, 
+						pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode, 
+						pap_cardname, pap_contacid, pap_slpcode, pap_empid, pap_comment, 
+						pap_doctotal, pap_baseamnt, pap_taxtotal, pap_discprofit, pap_discount, 
+						pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress,
+						pap_paytype, pap_attch, pap_docentry, pap_series, pap_createby, pap_currency, 
+						pap_paytoday, pap_origen, pap_qtyrq, pap_qtyap, pap_correl, pap_date_inv, 
+						pap_date_del, pap_place_del, t0.business, t0.branch, pap_totalret, 
+						pap_totalretiva, pap_tax_control_num, pap_anticipate_value, 
+						pap_anticipate_type, pap_anticipate_total, pap_internal_comments,
 					(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' AND aa.id = t0.pap_docentry) estado 
 					FROM dpap t0 
 					inner join dmev on t0.pap_slpcode = dmev.mev_id
@@ -582,7 +591,7 @@ class Approvals extends REST_Controller
 
 			return;
 		}
-		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1');
+		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1','detalle_modular::jsonb');
 
 
 		if (isset($copy[0])) {

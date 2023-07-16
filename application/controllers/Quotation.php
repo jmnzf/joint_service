@@ -149,9 +149,9 @@ class Quotation extends REST_Controller
 		
 		if (!isset($resVerificarAprobacion[0])) {
 
-			$aprobacion = $this->aprobacion->validmodelaprobacion($Data,$ContenidoDetalle,'dvc','vc1',$Data['business'],$Data['branch']);
-
-			if ( isset($aprobacion['error']) && $aprobacion['error'] == false || $aprobacion['data'] == 1 ){
+			$aprobacion = $this->aprobacion->ValidModelAprobacion($Data,$ContenidoDetalle,'dvc','vc1',$Data['business'],$Data['branch']);
+		
+			if ( isset($aprobacion['error']) && $aprobacion['error'] == false && $aprobacion['data'] == 1 ){
 
 				return $this->response($aprobacion);
 
@@ -485,10 +485,10 @@ class Quotation extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry,vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
                                     vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
                                     vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_linenum, vc1_acciva, vc1_codimp, vc1_ubication, 
-									ote_code,vc1_baseline)
+									ote_code,vc1_baseline,detalle_modular)
 									VALUES(:vc1_docentry,:vc1_itemcode, :vc1_itemname, :vc1_quantity,:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, 
 									:vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory,
-									:vc1_linenum,:vc1_acciva,:vc1_codimp, :vc1_ubication, :ote_code,:vc1_baseline)";
+									:vc1_linenum,:vc1_acciva,:vc1_codimp, :vc1_ubication, :ote_code,:vc1_baseline,:detalle_modular)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':vc1_docentry' => $resInsert,
@@ -515,7 +515,8 @@ class Quotation extends REST_Controller
 					':vc1_codimp' => isset($detail['vc1_codimp']) ? $detail['vc1_codimp'] : NULL,
 					':vc1_ubication' => isset($detail['vc1_ubication']) ? $detail['vc1_ubication'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
-					':vc1_baseline' => is_numeric($detail['vc1_baseline']) ? $detail['vc1_baseline'] : 0
+					':vc1_baseline' => is_numeric($detail['vc1_baseline']) ? $detail['vc1_baseline'] : 0,
+					':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -959,7 +960,7 @@ class Quotation extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentcopy->Copy($Data['vc1_docentry'],'dvct','vct1','dvc','vc1');
+			$copy = $this->documentcopy->Copy($Data['vc1_docentry'],'dvct','vct1','dvc','vc1','detalle_modular::jsonb');
 
 			if (isset($copy[0])) {
 
