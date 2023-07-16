@@ -1335,7 +1335,7 @@ class BankReconciliation extends REST_Controller {
 				$opeComp = ($Data['isedit'] == 1) ? "=": "!=" ;
 
 				$sqlSelect = "SELECT mac1.ac1_trans_id as id,
-											gbpr.bpe_datetransfer as fecha,
+											gbpr.bpr_datetransfer as fecha,
 											mac1.ac1_debit as debit,
 											mac1.ac1_credit as credit,
 											tmac.mac_base_type as basetype,
@@ -1351,7 +1351,7 @@ class BankReconciliation extends REST_Controller {
 											and ac1_line_num not in (select distinct rb1_linenumcod from  crb1 where rb1_linenumcod {comp} 0)
 											UNION ALL
 											SELECT mac1.ac1_trans_id as id,
-											mac1.ac1_doc_date as fecha,
+											gbpe.bpe_datetransfer as fecha,
 											mac1.ac1_debit as debit,
 											mac1.ac1_credit as credit,
 											tmac.mac_base_type as basetype,
@@ -1368,7 +1368,7 @@ class BankReconciliation extends REST_Controller {
 
 				// $sqlSelect = "SELECT * FROM mac1 WHERE ac1_account = :ac1_account AND ac1_doc_date BETWEEN :startdate AND :enddate ";
 				$sqlSelect = str_replace("{comp}",$opeComp, $sqlSelect);
-
+				
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 					':ac1_account' => $Data['account'],
 					':startdate'   => $Data['startdate'],
