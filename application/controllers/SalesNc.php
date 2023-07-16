@@ -596,7 +596,7 @@ class SalesNc extends REST_Controller
 						':nc1_ubication'  => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL,
 						':nc1_baseline' => isset($detail['nc1_baseline']) && is_numeric($detail['nc1_baseline']) ? $detail['nc1_baseline'] : 0,
 						':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
-						':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
+						':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

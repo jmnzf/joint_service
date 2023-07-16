@@ -623,7 +623,7 @@ class SalesOrder extends REST_Controller
 
 					return;
 				}
-
+				
 				$sqlInsertDetail = "INSERT INTO vov1(ov1_docentry,ov1_linenum, ov1_itemcode, ov1_itemname, ov1_quantity, ov1_uom, ov1_whscode,
                                     ov1_price, ov1_vat, ov1_vatsum, ov1_discount, ov1_linetotal, ov1_costcode, ov1_ubusiness, ov1_project,
                                     ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva, ov1_codimp,ov1_ubication,ote_code,ov1_baseline,detalle_modular)
@@ -657,7 +657,7 @@ class SalesOrder extends REST_Controller
 					':ov1_ubication' => isset($detail['ov1_ubication']) ? $detail['ov1_ubication'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':ov1_baseline' => is_numeric($detail['ov1_baseline']) ? $detail['ov1_baseline'] : 0,
-					':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
+					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -812,21 +812,21 @@ class SalesOrder extends REST_Controller
 					$cant_1 = 0;
 					$item_2 = 0;
 					$cant_2 = 0;
-
+					
 					$sql1 = "SELECT 
 								coalesce(count(distinct c.sn1_linenum),0) as item,
-								coalesce(sum(c.sn1_quantity),0) as cantidad
+								cast(coalesce(sum(c.sn1_quantity),0) as int) as cantidad
 							from tcsn t 
 							inner join csn1 c on t.csn_docentry = c.sn1_docentry 
 							where t.csn_doctype = :csn_doctype and t.csn_docentry = :csn_docentry";
 					$resSql1 = $this->pedeo->queryTable($sql1,array(
 						':csn_doctype' => $Data['vov_basetype'],
-						':csn_docentry' => $Data['vov_basentry']
+						':csn_docentry' => $Data['vov_baseentry']
 					));
 
 					$sql2 = "SELECT 
 								coalesce(count(distinct v.ov1_baseline),0) as item,
-								coalesce(sum(v.ov1_quantity),0) as cantidad
+								cast(coalesce(sum(v.ov1_quantity),0) as int) as cantidad
 							from tcsn t 
 							inner join csn1 c on t.csn_docentry = c.sn1_docentry
 							left join dvov d on t.csn_docentry = d.vov_baseentry and t.csn_doctype = d.vov_basetype 
@@ -835,13 +835,13 @@ class SalesOrder extends REST_Controller
 
 					$resSql2 = $this->pedeo->queryTable($sql2,array(
 						':csn_doctype' => $Data['vov_basetype'],
-						':csn_docentry' => $Data['vov_basentry']
+						':csn_docentry' => $Data['vov_baseentry']
 					));
 
 					$item_1 = isset($resSql1[0]) ? $resSql1[0]['item'] : $item_1;
 					$cant_1 = isset($resSql1[0]) ? $resSql1[0]['cantidad'] : $cant_1;
 					$item_2 = isset($resSql2[0]) ? $resSql2[0]['item'] : $item_2;
-					$item_2 = isset($resSql2[0]) ? $resSql2[0]['cantidad'] : $item_2;
+					$cant_2 = isset($resSql2[0]) ? $resSql2[0]['cantidad'] : $cant_2;
 
 					if($item_1 == $item_2 && $cant_1 == $cant_2){
 						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)

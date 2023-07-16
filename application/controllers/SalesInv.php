@@ -701,7 +701,7 @@ class SalesInv extends REST_Controller
 						':fv1_baseline' => isset($detail['fv1_baseline']) && is_numeric($detail['fv1_baseline']) ? $detail['fv1_baseline'] : 0,
 						':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 						':fv1_gift' => isset($detail['fv1_gift']) && is_numeric($detail['fv1_gift']) ? $detail['fv1_gift'] : 0,
-						':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
+						':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

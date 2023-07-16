@@ -516,7 +516,7 @@ class Quotation extends REST_Controller
 					':vc1_ubication' => isset($detail['vc1_ubication']) ? $detail['vc1_ubication'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':vc1_baseline' => is_numeric($detail['vc1_baseline']) ? $detail['vc1_baseline'] : 0,
-					':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
+					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
