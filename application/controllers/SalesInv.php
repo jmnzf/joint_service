@@ -668,10 +668,10 @@ class SalesInv extends REST_Controller
 					$sqlInsertDetail = "INSERT INTO vfv1(fv1_docentry, fv1_itemcode, fv1_itemname, fv1_quantity, fv1_uom, fv1_whscode,
 										fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
 										fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate, fv1_codimp,fv1_ubication,
-										fv1_linenum,fv1_baseline,ote_code,fv1_gift)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
+										fv1_linenum,fv1_baseline,ote_code,fv1_gift,detalle_modular)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
 										:fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,:fv1_acctcode, :fv1_basetype, 
 										:fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate, :fv1_codimp,:fv1_ubication,:fv1_linenum,
-										:fv1_baseline,:ote_code,:fv1_gift)";
+										:fv1_baseline,:ote_code,:fv1_gift,:detalle_modular)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':fv1_docentry' => $resInsert,
@@ -700,7 +700,8 @@ class SalesInv extends REST_Controller
 						':fv1_linenum' => isset($detail['fv1_linenum']) && is_numeric($detail['fv1_linenum']) ? $detail['fv1_linenum'] : 0,
 						':fv1_baseline' => isset($detail['fv1_baseline']) && is_numeric($detail['fv1_baseline']) ? $detail['fv1_baseline'] : 0,
 						':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
-						':fv1_gift' => isset($detail['fv1_gift']) && is_numeric($detail['fv1_gift']) ? $detail['fv1_gift'] : 0
+						':fv1_gift' => isset($detail['fv1_gift']) && is_numeric($detail['fv1_gift']) ? $detail['fv1_gift'] : 0,
+						':detalle_modular' => isset($detail['detalle_modular']) ? $detail['detalle_modular'] : NULL
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -715,7 +716,7 @@ class SalesInv extends REST_Controller
 										left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
 										where t0.vov_docentry = :vov_docentry and t0.vov_doctype = :vov_doctype 
 										and t1.ov1_itemcode = :ov1_itemcode
-										group by t1.ov1_itemcode";
+										group by t1.ov1_itemcode,t1.ov1_quantity";
 							$resSqlDev = $this->pedeo->queryTable($sqlDev, array(
 								':vov_docentry' => $Data['dvf_baseentry'],
 								':vov_doctype' => $Data['dvf_basetype'],
@@ -737,6 +738,7 @@ class SalesInv extends REST_Controller
 							//OBTENER NUMERO DOCUMENTO ORIGEN
 							$DOC = "SELECT vov_docnum FROM dvov WHERE vov_doctype = :vov_doctype AND vov_docentry = :vov_docentry";
 							$RESULT_DOC = $this->pedeo->queryTable($DOC,array(':vov_docentry' =>$Data['dvf_baseentry'],':vov_doctype' => $Data['dvf_basetype']));
+							
 							foreach ($ContenidoDetalle as $key => $value) {
 								# code...
 								$sql = "SELECT dvov.vov_docnum,vov1.ov1_itemcode FROM dvov INNER JOIN vov1 ON dvov.vov_docentry = vov1.ov1_docentry 
@@ -3972,7 +3974,8 @@ class SalesInv extends REST_Controller
 								left join vov1 t1 on t0.vov_docentry = t1.ov1_docentry
 								left join dvfv t2 on t0.vov_docentry = t2.dvf_baseentry
 								left join vfv1 t3 on t2.dvf_docentry = t3.fv1_docentry and t1.ov1_itemcode = t3.fv1_itemcode and t1.ov1_linenum = t3.fv1_baseline
-								where t0.vem_docentry = :vem_docentry and t0.vem_doctype = :vem_doctype";
+								where t0.vov_docentry = :vem_docentry and t0.vov_doctype = :vem_doctype";
+
 					$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
 						':vem_docentry' => $Data['dvf_baseentry'],
 						':vem_doctype' => $Data['dvf_basetype']
@@ -4123,7 +4126,7 @@ class SalesInv extends REST_Controller
 								$resta_item1 = $resEstado1[0]['item'] - $resDev1[0]['item'];
 
 								$sqlDev2 = "SELECT DISTINCT
-											t2.*
+											t2.vdv_docentry,t2.vdv_doctype
 											from dvem t0
 											left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
 											left join dvdv t2 on t0.vem_docentry = t2.vdv_baseentry and t0.vem_doctype = t2.vdv_basetype
@@ -4150,8 +4153,10 @@ class SalesInv extends REST_Controller
 
 								if (is_numeric($resta_item1) && $resta_item1 == 0) {
 									$item_del1 = abs($resEstado1[0]['item']);
+									
 								} else {
 									$item_del1 = abs($resta_item1);
+									
 								}
 
 								//  $item_del1 = $resEstado1[0]['item'];
@@ -4760,7 +4765,7 @@ class SalesInv extends REST_Controller
 
 			}else if($resCopyBy[0]['dvf_doctype'] == 5){
 				
-				$copy = $this->documentcopy->Copy($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1','gift');
+				$copy = $this->documentcopy->Copy($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1','gift,detalle_modular::jsonb');
 				
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv

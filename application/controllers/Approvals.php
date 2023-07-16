@@ -209,52 +209,95 @@ class Approvals extends REST_Controller
 
 			return;
 		}
-
 		$sqlSelect = "SELECT distinct
-            t3.mdt_docname,
-            t8.mdt_docname as origen,
-            t0.pap_docentry,
-            t0.pap_doctype,
-            t0.pap_docnum,
-            t0.pap_docdate,
-            t0.pap_duedate,
-         	t0.pap_cardname,
-            t0.pap_comment,
-            t0.pap_createby,
-            t0.pap_origen AS origin,
-            T0.pap_CURRENCY,
-            CASE
-            WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
-            THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
-            ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
-            END direccion,
-            concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
-            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_baseamnt,'999,999,999,999.00'))) base ,
-            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_DISCOUNT,'999,999,999,999.00'))) descuento,
-            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
-            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_TAXTOTAl,'999,999,999,999.00'))) iva,
-            CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
-			case
-                when  t1.estado in('Aprobado','Rechazado','Pendiente Aprobación') then estado
-            end estado,
-            t2.mev_names as pap_slpcode,
-            t0.pap_createby
-            FROM dpap t0
-            INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id AND t0.pap_doctype = t1.tipo
-            INNER JOIN dmev t2 ON t0.pap_slpcode = t2.mev_id
-            INNER JOIN dmdt t3 ON t0.pap_doctype = t3.mdt_doctype
-            LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
-            LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
-            LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
-            LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
-            LEFT JOIN dmdt t8 ON pap_origen = t8.mdt_doctype
-			left join tbad t11 ON  t11.bad_origen = t0.pap_origen AND t11.bad_docentry = t0.pap_docentry
-            inner join tmau t9 ON t9.mau_docentry = t0.pap_model
-            inner join pgus t10 ON t10.pgu_code_user = t0.pap_createby
-            left join tmau t12 ON t0.pap_model = t12.mau_docentry
-            WHERE t0.pap_createby = :pgu_code_user 
-			AND estado <> 'Cerrado'
-			AND t0.business = :business";
+				t3.mdt_docname,
+				t8.mdt_docname as origen,
+				t0.pap_docentry,
+				t0.pap_doctype,
+				t0.pap_docnum,
+				t0.pap_docdate,
+				t0.pap_duedate,
+				t0.pap_cardname,
+				t0.pap_comment,
+				t0.pap_createby,
+				t0.pap_origen AS origin,
+				T0.pap_CURRENCY,
+				CASE
+				WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
+				THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
+				ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
+				END direccion,
+				concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_baseamnt,'999,999,999,999.00'))) base ,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_DISCOUNT,'999,999,999,999.00'))) descuento,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_TAXTOTAl,'999,999,999,999.00'))) iva,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
+				case
+					when  t1.estado in('Aprobado','Rechazado','Pendiente Aprobación') then estado
+				end estado,
+				t2.mev_names as pap_slpcode,
+				t0.pap_createby
+				FROM dpap t0
+				INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id AND t0.pap_doctype = t1.tipo
+				INNER JOIN dmev t2 ON t0.pap_slpcode = t2.mev_id
+				INNER JOIN dmdt t3 ON t0.pap_doctype = t3.mdt_doctype
+				LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
+				LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
+				LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
+				LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
+				LEFT JOIN dmdt t8 ON pap_origen = t8.mdt_doctype
+				left join tbad t11 ON  t11.bad_origen = t0.pap_origen AND t11.bad_docentry = t0.pap_docentry
+				INNER JOIN tmau t9 ON t9.mau_docentry = ANY(SELECT json_array_elements_text(t0.pap_model)::integer)
+				inner join pgus t10 ON t10.pgu_code_user = t0.pap_createby
+				WHERE t0.pap_createby = :pgu_code_user
+				AND estado <> 'Cerrado'
+				AND t0.business = :business";
+		// $sqlSelect = "SELECT distinct
+        //     t3.mdt_docname,
+        //     t8.mdt_docname as origen,
+        //     t0.pap_docentry,
+        //     t0.pap_doctype,
+        //     t0.pap_docnum,
+        //     t0.pap_docdate,
+        //     t0.pap_duedate,
+        //  	t0.pap_cardname,
+        //     t0.pap_comment,
+        //     t0.pap_createby,
+        //     t0.pap_origen AS origin,
+        //     T0.pap_CURRENCY,
+        //     CASE
+        //     WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
+        //     THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
+        //     ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
+        //     END direccion,
+        //     concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
+        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_baseamnt,'999,999,999,999.00'))) base ,
+        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_DISCOUNT,'999,999,999,999.00'))) descuento,
+        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
+        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_TAXTOTAl,'999,999,999,999.00'))) iva,
+        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
+		// 	case
+        //         when  t1.estado in('Aprobado','Rechazado','Pendiente Aprobación') then estado
+        //     end estado,
+        //     t2.mev_names as pap_slpcode,
+        //     t0.pap_createby
+        //     FROM dpap t0
+        //     INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id AND t0.pap_doctype = t1.tipo
+        //     INNER JOIN dmev t2 ON t0.pap_slpcode = t2.mev_id
+        //     INNER JOIN dmdt t3 ON t0.pap_doctype = t3.mdt_doctype
+        //     LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
+        //     LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
+        //     LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
+        //     LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
+        //     LEFT JOIN dmdt t8 ON pap_origen = t8.mdt_doctype
+		// 	left join tbad t11 ON  t11.bad_origen = t0.pap_origen AND t11.bad_docentry = t0.pap_docentry
+        //     inner join tmau t9 ON t9.mau_docentry = t0.pap_model
+        //     inner join pgus t10 ON t10.pgu_code_user = t0.pap_createby
+        //     left join tmau t12 ON t0.pap_model = t12.mau_docentry
+        //     WHERE t0.pap_createby = :pgu_code_user 
+		// 	AND estado <> 'Cerrado'
+		// 	AND t0.business = :business";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgu_code_user' => $Data['code_user'], ':business' => $Data['business']));
 		// print_r($sqlSelect);exit();die();
@@ -295,60 +338,111 @@ class Approvals extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT distinct  on (pap_docentry)
-								    t3.mdt_docname,
-								    t8.mdt_docname as origen,
-								    t0.pap_docentry,
-								    t0.pap_doctype,
-								    t0.pap_docnum,
-								    t0.pap_docdate,
-								    t0.pap_duedate,
-								    t0.pap_cardname,
-								    t0.pap_comment,
-								    t0.pap_createby,
-								    t0.pap_origen AS origin,
-								    T0.pap_CURRENCY,
-								    CASE
-								    WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
-								    THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
-								    ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
-								    END direccion,
-								    concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
-								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_baseamnt,'999,999,999,999.00'))) base ,
-								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_DISCOUNT,'999,999,999,999.00'))) descuento,
-								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
-								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_TAXTOTAl,'999,999,999,999.00'))) iva,
-								    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
-								    case
-								        when lower(statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry)) in('aprobado por mi','rechazado por mi')
-								        then statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry)
-								        else 'Pendiente Aprobación'
-								end estado,
-								    t2.mev_names as pap_slpcode
-								    FROM dpap t0
-									INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
-								    left  join dmev t2 on t0.pap_slpcode = t2.mev_id
-								    left JOIN dmdt t3 on t0.pap_doctype = t3.mdt_doctype
-								    LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
-								    LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
-								    LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
-								    LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
-								    LEFT JOIN dmdt t8 on pap_origen = t8.mdt_doctype
-								    left join tbad t11 on  t11.bad_origen = t0.pap_origen and t11.bad_docentry = t0.pap_docentry
-								    left join tmau t12 on t0.pap_model = t12.mau_docentry
-								    WHERE t0.pap_model IN(
-								    SELECT tmau.mau_docentry
-								    FROM tmau
-								    INNER JOIN pgus
-								    ON pgu_code_user = :pap_createby
-								    AND pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[]))
-									and estado not in ('Cerrado','Aprobado','Rechazado')  and  process  = 'ApprovalProcess'
-									and t0.business = :business and t0.branch = :branch";
+		$sqlSelect = "SELECT distinct
+				t3.mdt_docname,
+				t8.mdt_docname as origen,
+				t0.pap_docentry,
+				t0.pap_doctype,
+				t0.pap_docnum,
+				t0.pap_docdate,
+				t0.pap_duedate,
+				t0.pap_cardname,
+				concat(t0.pap_comment, '(*)', mau_decription) as pap_comment,
+				t0.pap_createby,
+				t0.pap_origen AS origin,
+				T0.pap_CURRENCY,
+				CASE
+				WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
+				THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
+				ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
+				END direccion,
+				concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_baseamnt,'999,999,999,999.00'))) base ,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_DISCOUNT,'999,999,999,999.00'))) descuento,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_TAXTOTAl,'999,999,999,999.00'))) iva,
+				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
+				case
+					when lower(statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry,t12.mau_docentry)) in('aprobado por mi','rechazado por mi')
+					then statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry,t12.mau_docentry)
+					else 'Pendiente Aprobación'
+				end estado,
+				t2.mev_names as pap_slpcode,
+				mau_docentry
+				FROM dpap t0
+				INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
+				left  join dmev t2 on t0.pap_slpcode = t2.mev_id
+				left JOIN dmdt t3 on t0.pap_doctype = t3.mdt_doctype
+				LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
+				LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
+				LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
+				LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
+				LEFT JOIN dmdt t8 ON pap_origen = t8.mdt_doctype
+				INNER JOIN tmau t12 ON t12.mau_docentry = ANY(SELECT json_array_elements_text(t0.pap_model)::integer)
+				LEFT JOIN tbad t11 ON  t11.bad_origen = t0.pap_origen and t11.bad_docentry = t0.pap_docentry and t11.bad_docentry_model = t12.mau_docentry 
+				INNER JOIN pgus
+				ON pgu_code_user = :pap_createby
+				AND pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[])
+				where estado not in ('Cerrado','Aprobado','Rechazado')  
+				and  process  = 'ApprovalProcess'
+				and t0.business = :business
+				and bad_id not in(
+				select bad_id from tbad where bad_docentry_model = t12.mau_docentry and bad_doctype = t11.bad_doctype and bad_docentry = t11.bad_doctype and bad_createby = :pap_createby)";
+	
+	
+		// $sqlSelect = "SELECT distinct  on (pap_docentry)
+		// 						    t3.mdt_docname,
+		// 						    t8.mdt_docname as origen,
+		// 						    t0.pap_docentry,
+		// 						    t0.pap_doctype,
+		// 						    t0.pap_docnum,
+		// 						    t0.pap_docdate,
+		// 						    t0.pap_duedate,
+		// 						    t0.pap_cardname,
+		// 						    t0.pap_comment,
+		// 						    t0.pap_createby,
+		// 						    t0.pap_origen AS origin,
+		// 						    T0.pap_CURRENCY,
+		// 						    CASE
+		// 						    WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
+		// 						    THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
+		// 						    ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
+		// 						    END direccion,
+		// 						    concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
+		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_baseamnt,'999,999,999,999.00'))) base ,
+		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_DISCOUNT,'999,999,999,999.00'))) descuento,
+		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
+		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_TAXTOTAl,'999,999,999,999.00'))) iva,
+		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
+		// 						    case
+		// 						        when lower(statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry)) in('aprobado por mi','rechazado por mi')
+		// 						        then statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry)
+		// 						        else 'Pendiente Aprobación'
+		// 						end estado,
+		// 						    t2.mev_names as pap_slpcode
+		// 						    FROM dpap t0
+		// 							INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
+		// 						    left  join dmev t2 on t0.pap_slpcode = t2.mev_id
+		// 						    left JOIN dmdt t3 on t0.pap_doctype = t3.mdt_doctype
+		// 						    LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
+		// 						    LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
+		// 						    LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
+		// 						    LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
+		// 						    LEFT JOIN dmdt t8 on pap_origen = t8.mdt_doctype
+		// 						    left join tbad t11 on  t11.bad_origen = t0.pap_origen and t11.bad_docentry = t0.pap_docentry
+		// 						    left join tmau t12 on t0.pap_model = t12.mau_docentry
+		// 						    WHERE t0.pap_model IN(
+		// 						    SELECT tmau.mau_docentry
+		// 						    FROM tmau
+		// 						    INNER JOIN pgus
+		// 						    ON pgu_code_user = :pap_createby
+		// 						    AND pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[]))
+		// 							and estado not in ('Cerrado','Aprobado','Rechazado')  and  process  = 'ApprovalProcess'
+		// 							and t0.business = :business and t0.branch = :branch";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 			':pap_createby' => $Data['code_user'],
-			':business' => $Data['business'],
-			':branch' => $Data['branch']
+			':business' => $Data['business']
 		));
 
 		if (isset($resSelect[0])) {
@@ -391,9 +485,25 @@ class Approvals extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT distinct 0 as pap_doctotal_new,mev_names,t0.*,(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry) estado FROM dpap t0 inner join dmev on t0.pap_slpcode = dmev.mev_id
-							where t0.pap_cardcode  = CAST(:pap_cardcode AS VARCHAR)  and t0.pap_origen = :pap_origen AND t0.business = :business AND t0.branch = :branch AND
-							(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry)  = 'Aprobado' ";
+		$sqlSelect = "SELECT distinct 0 as pap_doctotal_new, mev_names,pap_docnum, 
+						pap_docdate, pap_duedate, pap_duedev, pap_pricelist, pap_cardcode, 
+						pap_cardname, pap_contacid, pap_slpcode, pap_empid, pap_comment, 
+						pap_doctotal, pap_baseamnt, pap_taxtotal, pap_discprofit, pap_discount, 
+						pap_createat, pap_baseentry, pap_basetype, pap_doctype, pap_idadd, pap_adress,
+						pap_paytype, pap_attch, pap_docentry, pap_series, pap_createby, pap_currency, 
+						pap_paytoday, pap_origen, pap_qtyrq, pap_qtyap, pap_correl, pap_date_inv, 
+						pap_date_del, pap_place_del, t0.business, t0.branch, pap_totalret, 
+						pap_totalretiva, pap_tax_control_num, pap_anticipate_value, 
+						pap_anticipate_type, pap_anticipate_total, pap_internal_comments,
+					(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' AND aa.id = t0.pap_docentry) estado 
+					FROM dpap t0 
+					inner join dmev on t0.pap_slpcode = dmev.mev_id
+					where t0.pap_cardcode  = CAST(:pap_cardcode AS VARCHAR) AND t0.pap_origen = :pap_origen AND t0.business = :business AND t0.branch = :branch 
+					AND (select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' AND aa.id = t0.pap_docentry)  = 'Aprobado'";
+
+		// $sqlSelect = "SELECT distinct mev_names,t0.*,(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry) estado FROM dpap t0 inner join dmev on t0.pap_slpcode = dmev.mev_id
+		// 					where t0.pap_cardcode  = CAST(:pap_cardcode AS VARCHAR)  and t0.pap_origen = :pap_origen AND t0.business = :business AND t0.branch = :branch AND
+		// 					(select aa.estado from responsestatus aa where aa.process = 'ApprovalProcess' and aa.id = t0.pap_docentry)  = 'Aprobado' ";
 
 		
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
@@ -481,7 +591,8 @@ class Approvals extends REST_Controller
 
 			return;
 		}
-		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1','fechaentrega');
+		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1','detalle_modular::jsonb');
+
 
 		if (isset($copy[0])) {
 
@@ -514,8 +625,10 @@ class Approvals extends REST_Controller
 			!isset($Data['bad_docentry'])  or
 			!isset($Data['bad_origen']) or
 			!isset($Data['bad_estado']) or
-			!isset($Data['bad_createby'])
-		) {
+			!isset($Data['bad_createby']) or 
+			!isset($Data['bad_docentry_model']) or
+			!isset($Data['business']))
+		{
 
 			$respuesta = array(
 				'error' => true,
@@ -530,8 +643,8 @@ class Approvals extends REST_Controller
 
 		$this->pedeo->trans_begin();
 
-		$sqlInsert = "INSERT INTO tbad(bad_doctype,bad_docentry,bad_origen,bad_estado,bad_createby,bad_createdate)
-												  VALUES (:bad_doctype, :bad_docentry, :bad_origen, :bad_estado, :bad_createby , :bad_createdate)";
+		$sqlInsert = "INSERT INTO tbad(bad_doctype,bad_docentry,bad_origen,bad_estado,bad_createby,bad_createdate, bad_docentry_model, business)
+					VALUES (:bad_doctype, :bad_docentry, :bad_origen, :bad_estado, :bad_createby , :bad_createdate, :bad_docentry_model, :business)";
 
 
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -540,7 +653,9 @@ class Approvals extends REST_Controller
 			':bad_origen'  	  => $Data['bad_origen'],
 			':bad_estado'  		=> $Data['bad_estado'],
 			':bad_createby' 	=> $Data['bad_createby'],
-			':bad_createdate' => date('Y-m-d H:i:s')
+			':bad_docentry_model' => $Data['bad_docentry_model'],
+			':bad_createdate' => date('Y-m-d H:i:s'),
+			':business' => $Data['business']
 
 		));
 
@@ -548,17 +663,17 @@ class Approvals extends REST_Controller
 		if (is_numeric($resInsert) && $resInsert > 0) {
 			//VALIDACION DE CANTIDADES DE REGISTRO PARA APROBAR == CANTIDAD DE APROBACIONES POR MODELO DE DOCUMENTO
 			$sqlComp = "SELECT COALESCE(case when t2.bad_estado = 1 then count(t2.bad_estado) end, 0) aprobados,
-															 COALESCE(case when t2.bad_estado = 2 then count(t2.bad_estado) end, 0 ) rechazados,
-															  COALESCE(case when t2.bad_estado = 2 then count(t2.bad_estado) end, 0) +  COALESCE(case when t2.bad_estado = 1 then count(t2.bad_estado) end, 0) total_respuestas,
-															  cast(avg(t1.pap_qtyrq) as int)  requeridas, cast (avg(t1.pap_qtyap) as integer) aprobadores
-															FROM dpap t1
-															left join tbad t2
-															on t2.bad_docentry = t1.pap_docentry and t2.bad_origen = t1.pap_origen
-															WHERE t2.bad_estado = 1
-															AND t1.pap_doctype = :pap_doctype
-															AND t1.pap_docentry = :pap_docentry
-															AND t1.pap_origen = :pap_origen
-															GROUP BY t2.bad_estado";
+							COALESCE(case when t2.bad_estado = 2 then count(t2.bad_estado) end, 0 ) rechazados,
+							COALESCE(case when t2.bad_estado = 2 then count(t2.bad_estado) end, 0) +  COALESCE(case when t2.bad_estado = 1 then count(t2.bad_estado) end, 0) total_respuestas,
+							cast(avg(t1.pap_qtyrq) as int)  requeridas, cast (avg(t1.pap_qtyap) as integer) aprobadores
+						FROM dpap t1
+						left join tbad t2
+						on t2.bad_docentry = t1.pap_docentry and t2.bad_origen = t1.pap_origen
+						WHERE t2.bad_estado = 1
+						AND t1.pap_doctype = :pap_doctype
+						AND t1.pap_docentry = :pap_docentry
+						AND t1.pap_origen = :pap_origen
+						GROUP BY t2.bad_estado";
 
 			$resComp = $this->pedeo->queryTable($sqlComp, array(':pap_doctype' => $Data['bad_doctype'], ':pap_docentry' => $Data['bad_docentry'], ':pap_origen' => $Data['bad_origen']));
 
@@ -812,13 +927,14 @@ class Approvals extends REST_Controller
 		$Data = $this->post();
 		$allData = [];
 		$modelo = [];
-		$Sql = " SELECT mau_approvers,mau_quantity,mau_decription FROM tmau WHERE mau_docentry = :mau_docentry";
+		$Sql = " SELECT mau_approvers,mau_quantity,mau_decription,mau_currency FROM tmau WHERE mau_docentry = :mau_docentry";
 
 		$resSql = $this->pedeo->queryTable($Sql, array(
 			':mau_docentry' => $Data['mau_docentry']
 		));
 		$modelo['cantidad'] = $resSql[0]['mau_quantity'];
 		$modelo['descripcion'] = $resSql[0]['mau_decription'];
+		$modelo['currency'] = $resSql[0]['mau_currency'];
 
 
 		$usersId = explode(",", $resSql[0]['mau_approvers']);

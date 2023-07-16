@@ -1069,4 +1069,71 @@ class BusinessPartner extends REST_Controller
       return 0;
     }
   }
+
+  //FUNCION PARA OBTENER SALDO DEL SN CLIENTE/PROVEEDOR
+  public function getBalance_get()
+  {
+    //DECLARR VARIABLES
+    $saldo = 0;
+    //RESPUESTA POR DEFAULT
+    $respuesta = array(
+      'error' => true,
+      'data' => [],
+      'mensaje' => 'No se encontraron datos en la busqueda'
+    );
+    //
+    $Data = $this->get();
+    //CONSULTA PARA OBTENER EL SALDO
+    $moneda = "SELECT get_localcur() as moneda";
+    $resMoneda = $this->pedeo->queryTable($moneda,array());
+
+    $sql = "SELECT
+              COALESCE(SUM(mac1.ac1_ven_debit  - mac1.ac1_ven_credit) 
+              +
+              COALESCE((select 
+           		            sum({table_e}.{prefijo}_doctotal) as saldo
+           	            from {table_e} 
+           	            inner join responsestatus r on {table_e}.{prefijo}_doctype = r.tipo and {table_e}.{prefijo}_docentry = r.id
+           	            where {table_e}.{prefijo}_cardcode = :cardcode and r.estado = 'Abierto'),0),0)
+              AS saldo
+            FROM mac1
+            INNER JOIN dmsn ON mac1.ac1_legal_num  = dmsn.dms_card_code
+            WHERE mac1.ac1_legal_num = :cardcode AND mac1.business = :business AND mac1.branch = :branch AND dmsn.dms_card_type = '{card_type}'";
+    //REEMPLAZAR DATOS DE LA CONSULTA
+    if($Data['doctype'] == 2 ){
+      $sql = str_replace("{card_type}",1,$sql);
+      $sql = str_replace("{table_e}","dvov",$sql);
+      $sql = str_replace("{prefijo}","vov",$sql);
+    }else if ($Data['doctype'] == 5){
+      $sql = str_replace("{card_type}",1,$sql);
+      $sql = str_replace("{table_e}","dvov",$sql);
+      $sql = str_replace("{prefijo}","vov",$sql);
+    }else if ($Data['doctype'] == 12){
+      $sql = str_replace("{card_type}",2,$sql);
+      $sql = str_replace("{table_e}","dcpo",$sql);
+      $sql = str_replace("{prefijo}","cpo",$sql);
+    }else if ($Data['doctype'] == 15){
+      $sql = str_replace("{card_type}",2,$sql);
+      $sql = str_replace("{table_e}","dcpo",$sql);
+      $sql = str_replace("{prefijo}","cpo",$sql);
+    }
+    //RESULTADO DE LA CONSULTA
+    $resSql = $this->pedeo->queryTable($sql,array(
+      ':cardcode' => $Data['cardcode'],
+      ':business' => $Data['business'],
+      ':branch' => $Data['branch']
+    ));
+    //
+    $saldo = isset($resSql[0]['saldo']) && is_numeric($resSql[0]['saldo']) ? number_format($resSql[0]['saldo'],2,',','.') : number_format(0,2,',','.');
+    //VALIDAR SI EL RESULTADO TRAE DATOS
+    if(isset($resSql[0])){
+      $respuesta = array(
+        'error' => false,
+        'data' => array('saldo' => $resMoneda[0]['moneda']." ".$saldo),
+        'mensaje' => 'OK'
+      );
+    }
+
+    $this->response($respuesta);
+  }
 }

@@ -1,1857 +1,1859 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-require_once(APPPATH.'/libraries/REST_Controller.php');
+require_once APPPATH . '/libraries/REST_Controller.php';
 use Restserver\libraries\REST_Controller;
 
-class ParModule extends REST_Controller {
+class ParModule extends REST_Controller
+{
 
-	private $pdo;
+    private $pdo;
 
-	public function __construct(){
+    public function __construct()
+    {
 
-		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
-		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
-		header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
+        header("Access-Control-Allow-Origin: *");
 
-		parent::__construct();
-		$this->load->database();
-		$this->pdo = $this->load->database('pdo', true)->conn_id;
-      $this->load->library('pedeo', [$this->pdo]);
-	}
+        parent::__construct();
+        $this->load->database();
+        $this->pdo = $this->load->database('pdo', true)->conn_id;
+        $this->load->library('pedeo', [$this->pdo]);
+    }
 
-   //Crear Tipo de Color Modular
-	public function createTypeColorModule_post(){
+    //Crear Tipo de Color Modular
+    public function createTypeColorModule_post()
+    {
 
-      $Data = $this->post();
+        $Data = $this->post();
 
-      if(!isset($Data['mtc_name'])){
+        if (!isset($Data['mtc_name'])) {
 
-         $respuesta = array(
-            'error' => true,
-            'data'  => array(),
-            'mensaje' =>'La informacion enviada no es valida'
-         );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-        return;
-      }
+            return;
+        }
 
-      $sqlInsert = "INSERT INTO tmtc(mtc_name, mtc_status)
+        $sqlInsert = "INSERT INTO tmtc(mtc_name, mtc_status)
                    VALUES(:mtc_name, :mtc_status)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':mtc_name' => $Data['mtc_name'],
+            ':mtc_status' => $Data['mtc_status'],
+        ));
 
-      $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-         ':mtc_name' => $Data['mtc_name'],
-         ':mtc_status' => $Data['mtc_status']
-      ));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Tipo de color modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar el tipo de color modular',
+            );
 
-      if(is_numeric($resInsert) && $resInsert > 0){
-         $respuesta = array(
-           'error'	 => false,
-           'data' 	 => $resInsert,
-           'mensaje' =>'Tipo de color modular registrado con exito'
-         );
-      }else{
+        }
 
-				$respuesta = array(
-					'error'   => true,
-					'data' 		=> $resInsert,
-					'mensaje' => 'No se pudo registrar el tipo de color modular'
-				);
+        $this->response($respuesta);
+    }
 
-			}
+    //Actualizar Datos de Tipo de Color Modular
+    public function updateTypeColorModule_post()
+    {
 
-      $this->response($respuesta);
-	}
+        $Data = $this->post();
 
-  //Actualizar Datos de Tipo de Color Modular
-  public function updateTypeColorModule_post(){
+        if (!isset($Data['mtc_id']) or
+            !isset($Data['mtc_name']) or
+            !isset($Data['mtc_status'])) {
 
-      $Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-      if(!isset($Data['mtc_id']) OR
-         !isset($Data['mtc_name']) OR
-         !isset($Data['mtc_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-        $respuesta = array(
-          'error' => true,
-          'data'  => array(),
-          'mensaje' =>'La informacion enviada no es valida'
-        );
+            return;
+        }
 
-        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-        return;
-      }
-
-      $sqlUpdate = "UPDATE tmtc SET mtc_name = :mtc_name, mtc_status = :mtc_status
+        $sqlUpdate = "UPDATE tmtc SET mtc_name = :mtc_name, mtc_status = :mtc_status
                     WHERE mtc_id = :mtc_id";
 
-
-      $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
             ':mtc_name' => $Data['mtc_name'],
             ':mtc_status' => $Data['mtc_status'],
-						':mtc_id' => $Data['mtc_id']
-      ));
+            ':mtc_id' => $Data['mtc_id'],
+        ));
 
-      if(is_numeric($resUpdate) && $resUpdate == 1){
-
-            $respuesta = array(
-              'error' => false,
-              'data' => $resUpdate,
-              'mensaje' =>'Tipo de color modular actualizado con exito'
-            );
-
-
-      }else{
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
             $respuesta = array(
-              'error'   => true,
-              'data' => $resUpdate,
-              'mensaje'	=> 'No se pudo actualizar el tipo de color modular'
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Tipo de color modular actualizado con exito',
             );
 
-      }
+        } else {
 
-       $this->response($respuesta);
-  }
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el tipo de color modular',
+            );
 
-  // Obtener Tipos de color MOdular
-  public function getTypeColorModule_get(){
+        }
+
+        $this->response($respuesta);
+    }
+
+    // Obtener Tipos de color MOdular
+    public function getTypeColorModule_get()
+    {
 
         $sqlSelect = "SELECT * FROM tmtc";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-        if(isset($resSelect[0])){
-
-          $respuesta = array(
-            'error' => false,
-            'data'  => $resSelect,
-            'mensaje' => '');
-
-        }else{
+        if (isset($resSelect[0])) {
 
             $respuesta = array(
-              'error'   => true,
-              'data' => array(),
-              'mensaje'	=> 'busqueda sin resultados'
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
+
+        } else {
+
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
             );
 
         }
 
-         $this->response($respuesta);
-  }
+        $this->response($respuesta);
+    }
 
 //Obtener datos Tipo de Color Modular por id
-  public function getTypeColorModuleById_get(){
+    public function getTypeColorModuleById_get()
+    {
 
         $Data = $this->get();
 
-        if(!isset($Data['mtc_id'])){
+        if (!isset($Data['mtc_id'])) {
 
-          $respuesta = array(
-            'error' => true,
-            'data'  => array(),
-            'mensaje' =>'La informacion enviada no es valida'
-          );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-          return;
+            return;
         }
 
         $sqlSelect = " SELECT * FROM tmtc WHERE mtc_id = :mtc_id";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':mtc_id' => $Data['mtc_id']));
 
-        if(isset($resSelect[0])){
-
-          $respuesta = array(
-            'error' => false,
-            'data'  => $resSelect,
-            'mensaje' => '');
-
-        }else{
+        if (isset($resSelect[0])) {
 
             $respuesta = array(
-              'error'   => true,
-              'data' => array(),
-              'mensaje'	=> 'busqueda sin resultados'
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
+
+        } else {
+
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
             );
 
         }
 
-         $this->response($respuesta);
-  }
+        $this->response($respuesta);
+    }
 
-	//
-	//
-	//
-	//
-	//
+    //
+    //
+    //
+    //
+    //
 
-	//Crear Tipo de Cuerpo Modular
- public function createTypeBodyModule_post(){
+    //Crear Tipo de Cuerpo Modular
+    public function createTypeBodyModule_post()
+    {
 
-		 $Data = $this->post();
+        $Data = $this->post();
 
-		 if(!isset($Data['tdc_name'])){
+        if (!isset($Data['tdc_name'])) {
 
-				$respuesta = array(
-					 'error' => true,
-					 'data'  => array(),
-					 'mensaje' =>'La informacion enviada no es valida'
-				);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-			 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			 return;
-		 }
+            return;
+        }
 
-		 $sqlInsert = "INSERT INTO mtdc(tdc_name, tdc_status)
+        $sqlInsert = "INSERT INTO mtdc(tdc_name, tdc_status)
 									VALUES(:tdc_name, :tdc_status)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':tdc_name' => $Data['tdc_name'],
+            ':tdc_status' => $Data['tdc_status'],
+        ));
 
-		 $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-				':tdc_name' => $Data['tdc_name'],
-				':tdc_status' => $Data['tdc_status']
-		 ));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Tipo de cuerpo modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar el tipo de cuerpo modular',
+            );
 
-		 if(is_numeric($resInsert) && $resInsert > 0){
-				$respuesta = array(
-					'error'	 => false,
-					'data' 	 => $resInsert,
-					'mensaje' =>'Tipo de cuerpo modular registrado con exito'
-				);
-		 }else{
+        }
 
-			 $respuesta = array(
-				 'error'   => true,
-				 'data' 		=> $resInsert,
-				 'mensaje' => 'No se pudo registrar el tipo de cuerpo modular'
-			 );
+        $this->response($respuesta);
+    }
 
-		 }
+    //Actualizar Datos de Tipo de Cuerpo Modular
+    public function updateTypeBodyModule_post()
+    {
 
-		 $this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de Tipo de Cuerpo Modular
- public function updateTypeBodyModule_post(){
+        if (!isset($Data['tdc_id']) or
+            !isset($Data['tdc_name']) or
+            !isset($Data['tdc_status'])) {
 
-		 $Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-		 if(!isset($Data['tdc_id']) OR
-				!isset($Data['tdc_name']) OR
-				!isset($Data['tdc_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			 $respuesta = array(
-				 'error' => true,
-				 'data'  => array(),
-				 'mensaje' =>'La informacion enviada no es valida'
-			 );
+            return;
+        }
 
-			 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			 return;
-		 }
-
-		 $sqlUpdate = "UPDATE mtdc SET tdc_name = :tdc_name, tdc_status = :tdc_status
+        $sqlUpdate = "UPDATE mtdc SET tdc_name = :tdc_name, tdc_status = :tdc_status
 									 WHERE tdc_id = :tdc_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-		 $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':tdc_name' => $Data['tdc_name'],
+            ':tdc_status' => $Data['tdc_status'],
+            ':tdc_id' => $Data['tdc_id'],
+        ));
 
-					 ':tdc_name' => $Data['tdc_name'],
-					 ':tdc_status' => $Data['tdc_status'],
-					 ':tdc_id' => $Data['tdc_id']
-		 ));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
-		 if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Tipo de cuerpo modular actualizado con exito',
+            );
 
-					 $respuesta = array(
-						 'error' => false,
-						 'data' => $resUpdate,
-						 'mensaje' =>'Tipo de cuerpo modular actualizado con exito'
-					 );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el tipo de cuerpo modular',
+            );
 
-		 }else{
+        }
 
-					 $respuesta = array(
-						 'error'   => true,
-						 'data' => $resUpdate,
-						 'mensaje'	=> 'No se pudo actualizar el tipo de cuerpo modular'
-					 );
+        $this->response($respuesta);
+    }
 
-		 }
+    // Obtener Tipos de Cuerpo MOdular
+    public function getTypeBodyModule_get()
+    {
 
-			$this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM mtdc";
 
- // Obtener Tipos de Cuerpo MOdular
- public function getTypeBodyModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-			 $sqlSelect = "SELECT * FROM mtdc";
+        if (isset($resSelect[0])) {
 
-			 $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-			 if(isset($resSelect[0])){
+        } else {
 
-				 $respuesta = array(
-					 'error' => false,
-					 'data'  => $resSelect,
-					 'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-			 }else{
+        }
 
-					 $respuesta = array(
-						 'error'   => true,
-						 'data' => array(),
-						 'mensaje'	=> 'busqueda sin resultados'
-					 );
-
-			 }
-
-				$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos Tipo de Cuerpo Modular por id
- public function getTypeBodyModuleById_get(){
+    public function getTypeBodyModuleById_get()
+    {
 
-			 $Data = $this->get();
+        $Data = $this->get();
 
-			 if(!isset($Data['tdc_id'])){
+        if (!isset($Data['tdc_id'])) {
 
-				 $respuesta = array(
-					 'error' => true,
-					 'data'  => array(),
-					 'mensaje' =>'La informacion enviada no es valida'
-				 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-				 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-				 return;
-			 }
+            return;
+        }
 
-			 $sqlSelect = " SELECT * FROM mtdc WHERE tdc_id = :tdc_id";
+        $sqlSelect = " SELECT * FROM mtdc WHERE tdc_id = :tdc_id";
 
-			 $resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdc_id' => $Data['tdc_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdc_id' => $Data['tdc_id']));
 
-			 if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-				 $respuesta = array(
-					 'error' => false,
-					 'data'  => $resSelect,
-					 'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-			 }else{
+        } else {
 
-					 $respuesta = array(
-						 'error'   => true,
-						 'data' => array(),
-						 'mensaje'	=> 'busqueda sin resultados'
-					 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-			 }
+        }
 
-				$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //
- //
- //
- //
- //
+    //
+    //
+    //
+    //
+    //
 
- //Crear Tipo de Pagina Modular
- public function createTypePageModule_post(){
+    //Crear Tipo de Pagina Modular
+    public function createTypePageModule_post()
+    {
 
-		$Data = $this->post();
+        $Data = $this->post();
 
-		if(!isset($Data['tdp_name'])){
+        if (!isset($Data['tdp_name'])) {
 
-			 $respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' =>'La informacion enviada no es valida'
-			 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			return;
-		}
+            return;
+        }
 
-		$sqlInsert = "INSERT INTO mtdp(tdp_name, tdp_status)
+        $sqlInsert = "INSERT INTO mtdp(tdp_name, tdp_status)
 								 VALUES(:tdp_name, :tdp_status)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':tdp_name' => $Data['tdp_name'],
+            ':tdp_status' => $Data['tdp_status'],
+        ));
 
-		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
-			 ':tdp_name' => $Data['tdp_name'],
-			 ':tdp_status' => $Data['tdp_status']
-		));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Tipo de pagina modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar el tipo de pagina modular',
+            );
 
-		if(is_numeric($resInsert) && $resInsert > 0){
-			 $respuesta = array(
-				 'error'	 => false,
-				 'data' 	 => $resInsert,
-				 'mensaje' =>'Tipo de pagina modular registrado con exito'
-			 );
-		}else{
+        }
 
-			$respuesta = array(
-				'error'   => true,
-				'data' 		=> $resInsert,
-				'mensaje' => 'No se pudo registrar el tipo de pagina modular'
-			);
+        $this->response($respuesta);
+    }
 
-		}
+    //Actualizar Datos de Tipo de Pagina Modular
+    public function updateTypePageModule_post()
+    {
 
-		$this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de Tipo de Pagina Modular
- public function updateTypePageModule_post(){
+        if (!isset($Data['tdp_id']) or
+            !isset($Data['tdp_name']) or
+            !isset($Data['tdp_status'])) {
 
-		$Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-		if(!isset($Data['tdp_id']) OR
-			 !isset($Data['tdp_name']) OR
-			 !isset($Data['tdp_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' =>'La informacion enviada no es valida'
-			);
+            return;
+        }
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-		}
-
-		$sqlUpdate = "UPDATE mtdp SET tdp_name = :tdp_name, tdp_status = :tdp_status
+        $sqlUpdate = "UPDATE mtdp SET tdp_name = :tdp_name, tdp_status = :tdp_status
 									WHERE tdp_id = :tdp_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':tdp_name' => $Data['tdp_name'],
+            ':tdp_status' => $Data['tdp_status'],
+            ':tdp_id' => $Data['tdp_id'],
+        ));
 
-					':tdp_name' => $Data['tdp_name'],
-					':tdp_status' => $Data['tdp_status'],
-					':tdp_id' => $Data['tdp_id']
-		));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
-		if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Tipo de pagina modular actualizada con exito',
+            );
 
-					$respuesta = array(
-						'error' => false,
-						'data' => $resUpdate,
-						'mensaje' =>'Tipo de pagina modular actualizada con exito'
-					);
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el tipo de pagina modular',
+            );
 
-		}else{
+        }
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => $resUpdate,
-						'mensaje'	=> 'No se pudo actualizar el tipo de pagina modular'
-					);
+        $this->response($respuesta);
+    }
 
-		}
+    // Obtener Tipos de Pagina MOdular
+    public function getTypePageModule_get()
+    {
 
-		 $this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM mtdp";
 
- // Obtener Tipos de Pagina MOdular
- public function getTypePageModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-			$sqlSelect = "SELECT * FROM mtdp";
+        if (isset($resSelect[0])) {
 
-			$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-			if(isset($resSelect[0])){
+        } else {
 
-				$respuesta = array(
-					'error' => false,
-					'data'  => $resSelect,
-					'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-			}else{
+        }
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => array(),
-						'mensaje'	=> 'busqueda sin resultados'
-					);
-
-			}
-
-			 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos Tipo de Pagina Modular por id
- public function getTypePageModuleById_get(){
+    public function getTypePageModuleById_get()
+    {
 
-			$Data = $this->get();
+        $Data = $this->get();
 
-			if(!isset($Data['tdp_id'])){
+        if (!isset($Data['tdp_id'])) {
 
-				$respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' =>'La informacion enviada no es valida'
-				);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-				return;
-			}
+            return;
+        }
 
-			$sqlSelect = " SELECT * FROM mtdp WHERE tdp_id = :tdp_id";
+        $sqlSelect = " SELECT * FROM mtdp WHERE tdp_id = :tdp_id";
 
-			$resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdp_id' => $Data['tdp_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdp_id' => $Data['tdp_id']));
 
-			if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-				$respuesta = array(
-					'error' => false,
-					'data'  => $resSelect,
-					'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-			}else{
+        } else {
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => array(),
-						'mensaje'	=> 'busqueda sin resultados'
-					);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-			}
+        }
 
-			 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //
- //
- //
- //
- //
+    //
+    //
+    //
+    //
+    //
 
- //Crear Tipo de clasificacion Pagina Modular
- public function createClassPageModule_post(){
+    //Crear Tipo de clasificacion Pagina Modular
+    public function createClassPageModule_post()
+    {
 
-		$Data = $this->post();
+        $Data = $this->post();
 
-		if(!isset($Data['cdp_name'])){
+        if (!isset($Data['cdp_name'])) {
 
-			 $respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' =>'La informacion enviada no es valida'
-			 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			return;
-		}
+            return;
+        }
 
-		$sqlInsert = "INSERT INTO mcdp(cdp_name, cdp_status)
+        $sqlInsert = "INSERT INTO mcdp(cdp_name, cdp_status)
 								 VALUES(:cdp_name, :cdp_status)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':cdp_name' => $Data['cdp_name'],
+            ':cdp_status' => $Data['cdp_status'],
+        ));
 
-		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
-			 ':cdp_name' => $Data['cdp_name'],
-			 ':cdp_status' => $Data['cdp_status']
-		));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Clasificacion de pagina modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar la clasificacion de pagina modular',
+            );
 
-		if(is_numeric($resInsert) && $resInsert > 0){
-			 $respuesta = array(
-				 'error'	 => false,
-				 'data' 	 => $resInsert,
-				 'mensaje' =>'Clasificacion de pagina modular registrado con exito'
-			 );
-		}else{
+        }
 
-			$respuesta = array(
-				'error'   => true,
-				'data' 		=> $resInsert,
-				'mensaje' => 'No se pudo registrar la clasificacion de pagina modular'
-			);
+        $this->response($respuesta);
+    }
 
-		}
+    //Actualizar Datos de Tipo de clasificacion Pagina Modular
+    public function updateClassPageModule_post()
+    {
 
-		$this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de Tipo de clasificacion Pagina Modular
- public function updateClassPageModule_post(){
+        if (!isset($Data['cdp_id']) or
+            !isset($Data['cdp_name']) or
+            !isset($Data['cdp_status'])) {
 
-		$Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-		if(!isset($Data['cdp_id']) OR
-			 !isset($Data['cdp_name']) OR
-			 !isset($Data['cdp_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' =>'La informacion enviada no es valida'
-			);
+            return;
+        }
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-		}
-
-		$sqlUpdate = "UPDATE mcdp SET cdp_name = :cdp_name, cdp_status = :cdp_status
+        $sqlUpdate = "UPDATE mcdp SET cdp_name = :cdp_name, cdp_status = :cdp_status
 									WHERE cdp_id = :cdp_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':cdp_name' => $Data['cdp_name'],
+            ':cdp_status' => $Data['cdp_status'],
+            ':cdp_id' => $Data['cdp_id'],
+        ));
 
-					':cdp_name' => $Data['cdp_name'],
-					':cdp_status' => $Data['cdp_status'],
-					':cdp_id' => $Data['cdp_id']
-		));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
-		if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Clasificacion de pagina modular actualizada con exito',
+            );
 
-					$respuesta = array(
-						'error' => false,
-						'data' => $resUpdate,
-						'mensaje' =>'Clasificacion de pagina modular actualizada con exito'
-					);
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar la clasificacion de pagina modular',
+            );
 
-		}else{
+        }
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => $resUpdate,
-						'mensaje'	=> 'No se pudo actualizar la clasificacion de pagina modular'
-					);
+        $this->response($respuesta);
+    }
 
-		}
+    // Obtener Tipos de clasificacion Pagina MOdular
+    public function getClassPageModule_get()
+    {
 
-		 $this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM mcdp";
 
- // Obtener Tipos de clasificacion Pagina MOdular
- public function getClassPageModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-			$sqlSelect = "SELECT * FROM mcdp";
+        if (isset($resSelect[0])) {
 
-			$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-			if(isset($resSelect[0])){
+        } else {
 
-				$respuesta = array(
-					'error' => false,
-					'data'  => $resSelect,
-					'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-			}else{
+        }
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => array(),
-						'mensaje'	=> 'busqueda sin resultados'
-					);
-
-			}
-
-			 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos Tipo de clasificacion Pagina Modular por id
- public function getClassPageModuleById_get(){
+    public function getClassPageModuleById_get()
+    {
 
-			$Data = $this->get();
+        $Data = $this->get();
 
-			if(!isset($Data['cdp_id'])){
+        if (!isset($Data['cdp_id'])) {
 
-				$respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' =>'La informacion enviada no es valida'
-				);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-				return;
-			}
+            return;
+        }
 
-			$sqlSelect = " SELECT * FROM mcdp WHERE cdp_id = :cdp_id";
+        $sqlSelect = " SELECT * FROM mcdp WHERE cdp_id = :cdp_id";
 
-			$resSelect = $this->pedeo->queryTable($sqlSelect, array(':cdp_id' => $Data['cdp_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':cdp_id' => $Data['cdp_id']));
 
-			if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-				$respuesta = array(
-					'error' => false,
-					'data'  => $resSelect,
-					'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-			}else{
+        } else {
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => array(),
-						'mensaje'	=> 'busqueda sin resultados'
-					);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-			}
+        }
 
-			 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //
- //
- //
- //
- //
+    //
+    //
+    //
+    //
+    //
 
- //Crear Tipo de calsificado Modular
- public function createTypeClassModule_post(){
+    //Crear Tipo de calsificado Modular
+    public function createTypeClassModule_post()
+    {
 
-		$Data = $this->post();
+        $Data = $this->post();
 
-		if(!isset($Data['tpc_name'])){
+        if (!isset($Data['tpc_name'])) {
 
-			 $respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' =>'La informacion enviada no es valida'
-			 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			return;
-		}
+            return;
+        }
 
-		$sqlInsert = "INSERT INTO mtpc(tpc_name, tpc_status)
+        $sqlInsert = "INSERT INTO mtpc(tpc_name, tpc_status)
 								 VALUES(:tpc_name, :tpc_status)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':tpc_name' => $Data['tpc_name'],
+            ':tpc_status' => $Data['tpc_status'],
+        ));
 
-		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
-			 ':tpc_name' => $Data['tpc_name'],
-			 ':tpc_status' => $Data['tpc_status']
-		));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Tipo de clasificado pagina modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar el tipo de clasificado pagina modular',
+            );
 
-		if(is_numeric($resInsert) && $resInsert > 0){
-			 $respuesta = array(
-				 'error'	 => false,
-				 'data' 	 => $resInsert,
-				 'mensaje' =>'Tipo de clasificado pagina modular registrado con exito'
-			 );
-		}else{
+        }
 
-			$respuesta = array(
-				'error'   => true,
-				'data' 		=> $resInsert,
-				'mensaje' => 'No se pudo registrar el tipo de clasificado pagina modular'
-			);
+        $this->response($respuesta);
+    }
 
-		}
+    //Actualizar Datos de Tipo de clasificado Modular
+    public function updateTypeClassModule_post()
+    {
 
-		$this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de Tipo de clasificado Modular
- public function updateTypeClassModule_post(){
+        if (!isset($Data['tpc_id']) or
+            !isset($Data['tpc_name']) or
+            !isset($Data['tpc_status'])) {
 
-		$Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-		if(!isset($Data['tpc_id']) OR
-			 !isset($Data['tpc_name']) OR
-			 !isset($Data['tpc_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' =>'La informacion enviada no es valida'
-			);
+            return;
+        }
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
-		}
-
-		$sqlUpdate = "UPDATE mtpc SET tpc_name = :tpc_name, tpc_status = :tpc_status
+        $sqlUpdate = "UPDATE mtpc SET tpc_name = :tpc_name, tpc_status = :tpc_status
 									WHERE tpc_id = :tpc_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':tpc_name' => $Data['tpc_name'],
+            ':tpc_status' => $Data['tpc_status'],
+            ':tpc_id' => $Data['tpc_id'],
+        ));
 
-					':tpc_name' => $Data['tpc_name'],
-					':tpc_status' => $Data['tpc_status'],
-					':tpc_id' => $Data['tpc_id']
-		));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
-		if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Tipo de clasificado pagina modular actualizada con exito',
+            );
 
-					$respuesta = array(
-						'error' => false,
-						'data' => $resUpdate,
-						'mensaje' =>'Tipo de clasificado pagina modular actualizada con exito'
-					);
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el tipo de clasificado pagina modular',
+            );
 
-		}else{
+        }
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => $resUpdate,
-						'mensaje'	=> 'No se pudo actualizar el tipo de clasificado pagina modular'
-					);
+        $this->response($respuesta);
+    }
 
-		}
+    // Obtener Tipos de clasificado MOdular
+    public function getTypeClassModule_get()
+    {
 
-		 $this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM mtpc";
 
- // Obtener Tipos de clasificado MOdular
- public function getTypeClassModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-			$sqlSelect = "SELECT * FROM mtpc";
+        if (isset($resSelect[0])) {
 
-			$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-			if(isset($resSelect[0])){
+        } else {
 
-				$respuesta = array(
-					'error' => false,
-					'data'  => $resSelect,
-					'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-			}else{
+        }
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => array(),
-						'mensaje'	=> 'busqueda sin resultados'
-					);
-
-			}
-
-			 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos Tipo de calsificado Pagina Modular por id
- public function getTypeClassModuleById_get(){
+    public function getTypeClassModuleById_get()
+    {
 
-			$Data = $this->get();
+        $Data = $this->get();
 
-			if(!isset($Data['tpc_id'])){
+        if (!isset($Data['tpc_id'])) {
 
-				$respuesta = array(
-					'error' => true,
-					'data'  => array(),
-					'mensaje' =>'La informacion enviada no es valida'
-				);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-				return;
-			}
+            return;
+        }
 
-			$sqlSelect = " SELECT * FROM mtpc WHERE tpc_id = :tpc_id";
+        $sqlSelect = " SELECT * FROM mtpc WHERE tpc_id = :tpc_id";
 
-			$resSelect = $this->pedeo->queryTable($sqlSelect, array(':tpc_id' => $Data['tpc_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':tpc_id' => $Data['tpc_id']));
 
-			if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-				$respuesta = array(
-					'error' => false,
-					'data'  => $resSelect,
-					'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-			}else{
+        } else {
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => array(),
-						'mensaje'	=> 'busqueda sin resultados'
-					);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-			}
+        }
 
-			 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //
- //
- //
- //
- //
+    //
+    //
+    //
+    //
+    //
 
- //Crear Tipo de recargo Modular
- public function createTypeSurchargeModule_post(){
+    //Crear Tipo de recargo Modular
+    public function createTypeSurchargeModule_post()
+    {
 
-	 $Data = $this->post();
+        $Data = $this->post();
 
-	 if(!isset($Data['tdr_name'])){
+        if (!isset($Data['tdr_name'])) {
 
-			$respuesta = array(
-				 'error' => true,
-				 'data'  => array(),
-				 'mensaje' =>'La informacion enviada no es valida'
-			);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-		 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-		 return;
-	 }
+            return;
+        }
 
-	 $sqlInsert = "INSERT INTO mtdr(tdr_name, tdr_status, tdr_percentage)
+        $sqlInsert = "INSERT INTO mtdr(tdr_name, tdr_status, tdr_percentage)
 								VALUES(:tdr_name, :tdr_status, :tdr_percentage)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':tdr_name' => $Data['tdr_name'],
+            ':tdr_status' => $Data['tdr_status'],
+            ':tdr_percentage' => $Data['tdr_percentage'],
+        ));
 
-	 $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-			':tdr_name' => $Data['tdr_name'],
-			':tdr_status' => $Data['tdr_status'],
-			':tdr_percentage' => $Data['tdr_percentage']
-	 ));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Tipo de recargo modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar el tipo de recargo modular',
+            );
 
-	 if(is_numeric($resInsert) && $resInsert > 0){
-			$respuesta = array(
-				'error'	 => false,
-				'data' 	 => $resInsert,
-				'mensaje' =>'Tipo de recargo modular registrado con exito'
-			);
-	 }else{
+        }
 
-		 $respuesta = array(
-			 'error'   => true,
-			 'data' 		=> $resInsert,
-			 'mensaje' => 'No se pudo registrar el tipo de recargo modular'
-		 );
+        $this->response($respuesta);
+    }
 
-	 }
+    //Actualizar Datos de Tipo de recargo Modular
+    public function updateTypeSurchargeModule_post()
+    {
 
-	 $this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de Tipo de recargo Modular
- public function updateTypeSurchargeModule_post(){
+        if (!isset($Data['tdr_id']) or
+            !isset($Data['tdr_name']) or
+            !isset($Data['tdr_status'])) {
 
-	 $Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-	 if(!isset($Data['tdr_id']) OR
-			!isset($Data['tdr_name']) OR
-			!isset($Data['tdr_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-		 $respuesta = array(
-			 'error' => true,
-			 'data'  => array(),
-			 'mensaje' =>'La informacion enviada no es valida'
-		 );
+            return;
+        }
 
-		 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-		 return;
-	 }
-
-	 $sqlUpdate = "UPDATE mtdr SET tdr_name = :tdr_name, tdr_status = :tdr_status, tdr_percentage = :tdr_percentage
+        $sqlUpdate = "UPDATE mtdr SET tdr_name = :tdr_name, tdr_status = :tdr_status, tdr_percentage = :tdr_percentage
 								 WHERE tdr_id = :tdr_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-	 $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':tdr_name' => $Data['tdr_name'],
+            ':tdr_status' => $Data['tdr_status'],
+            ':tdr_percentage' => $Data['tdr_percentage'],
+            ':tdr_id' => $Data['tdr_id'],
+        ));
 
-				 ':tdr_name' => $Data['tdr_name'],
-				 ':tdr_status' => $Data['tdr_status'],
-				 ':tdr_percentage' => $Data['tdr_percentage'],
-				 ':tdr_id' => $Data['tdr_id']
-	 ));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
-	 if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Tipo de recargo modular actualizado con exito',
+            );
 
-				 $respuesta = array(
-					 'error' => false,
-					 'data' => $resUpdate,
-					 'mensaje' =>'Tipo de recargo modular actualizado con exito'
-				 );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el tipo de recargo modular',
+            );
 
-	 }else{
+        }
 
-				 $respuesta = array(
-					 'error'   => true,
-					 'data' => $resUpdate,
-					 'mensaje'	=> 'No se pudo actualizar el tipo de recargo modular'
-				 );
+        $this->response($respuesta);
+    }
 
-	 }
+    // Obtener Tipos de recargo MOdular
+    public function getTypeSurchargeModule_get()
+    {
 
-		$this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM mtdr";
 
- // Obtener Tipos de recargo MOdular
- public function getTypeSurchargeModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-		 $sqlSelect = "SELECT * FROM mtdr";
+        if (isset($resSelect[0])) {
 
-		 $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-		 if(isset($resSelect[0])){
+        } else {
 
-			 $respuesta = array(
-				 'error' => false,
-				 'data'  => $resSelect,
-				 'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-		 }else{
+        }
 
-				 $respuesta = array(
-					 'error'   => true,
-					 'data' => array(),
-					 'mensaje'	=> 'busqueda sin resultados'
-				 );
-
-		 }
-
-			$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos Tipo de recargo Modular por id
- public function getTypeSurchargeModuleById_get(){
+    public function getTypeSurchargeModuleById_get()
+    {
 
-		 $Data = $this->get();
+        $Data = $this->get();
 
-		 if(!isset($Data['tdr_id'])){
+        if (!isset($Data['tdr_id'])) {
 
-			 $respuesta = array(
-				 'error' => true,
-				 'data'  => array(),
-				 'mensaje' =>'La informacion enviada no es valida'
-			 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-			 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			 return;
-		 }
+            return;
+        }
 
-		 $sqlSelect = " SELECT * FROM mtdr WHERE tdr_id = :tdr_id";
+        $sqlSelect = " SELECT * FROM mtdr WHERE tdr_id = :tdr_id";
 
-		 $resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdr_id' => $Data['tdr_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdr_id' => $Data['tdr_id']));
 
-		 if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-			 $respuesta = array(
-				 'error' => false,
-				 'data'  => $resSelect,
-				 'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-		 }else{
+        } else {
 
-				 $respuesta = array(
-					 'error'   => true,
-					 'data' => array(),
-					 'mensaje'	=> 'busqueda sin resultados'
-				 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-		 }
+        }
 
-			$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //
- //
- //
- //
- //
+    //
+    //
+    //
+    //
+    //
 
- //Crear Tipo de distribucion Modular
- public function createTypeDistributionModule_post(){
+    //Crear Tipo de distribucion Modular
+    public function createTypeDistributionModule_post()
+    {
 
-	$Data = $this->post();
+        $Data = $this->post();
 
-	if(!isset($Data['tdd_name'])){
+        if (!isset($Data['tdd_name'])) {
 
-		 $respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' =>'La informacion enviada no es valida'
-		 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-		return;
-	}
+            return;
+        }
 
-	$sqlInsert = "INSERT INTO mtdd(tdd_name, tdd_status)
+        $sqlInsert = "INSERT INTO mtdd(tdd_name, tdd_status)
 							 VALUES(:tdd_name, :tdd_status)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':tdd_name' => $Data['tdd_name'],
+            ':tdd_status' => $Data['tdd_status'],
+        ));
 
-	$resInsert = $this->pedeo->insertRow($sqlInsert, array(
-		 ':tdd_name' => $Data['tdd_name'],
-		 ':tdd_status' => $Data['tdd_status']
-	));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Tipo de distribucion modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar el tipo de distribucion modular',
+            );
 
-	if(is_numeric($resInsert) && $resInsert > 0){
-		 $respuesta = array(
-			 'error'	 => false,
-			 'data' 	 => $resInsert,
-			 'mensaje' =>'Tipo de distribucion modular registrado con exito'
-		 );
-	}else{
+        }
 
-		$respuesta = array(
-			'error'   => true,
-			'data' 		=> $resInsert,
-			'mensaje' => 'No se pudo registrar el tipo de distribucion modular'
-		);
+        $this->response($respuesta);
+    }
 
-	}
+    //Actualizar Datos de Tipo de distribucion Modular
+    public function updateTypeDistributionModule_post()
+    {
 
-	$this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de Tipo de distribucion Modular
- public function updateTypeDistributionModule_post(){
+        if (!isset($Data['tdd_id']) or
+            !isset($Data['tdd_name']) or
+            !isset($Data['tdd_status'])) {
 
-	$Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-	if(!isset($Data['tdd_id']) OR
-		 !isset($Data['tdd_name']) OR
-		 !isset($Data['tdd_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-		$respuesta = array(
-			'error' => true,
-			'data'  => array(),
-			'mensaje' =>'La informacion enviada no es valida'
-		);
+            return;
+        }
 
-		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-		return;
-	}
-
-	$sqlUpdate = "UPDATE mtdd SET tdd_name = :tdd_name, tdd_status = :tdd_status
+        $sqlUpdate = "UPDATE mtdd SET tdd_name = :tdd_name, tdd_status = :tdd_status
 								WHERE tdd_id = :tdd_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
-	$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':tdd_name' => $Data['tdd_name'],
+            ':tdd_status' => $Data['tdd_status'],
+            ':tdd_id' => $Data['tdd_id'],
+        ));
 
-				':tdd_name' => $Data['tdd_name'],
-				':tdd_status' => $Data['tdd_status'],
-				':tdd_id' => $Data['tdd_id']
-	));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
-	if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Tipo de distribucion modular actualizado con exito',
+            );
 
-				$respuesta = array(
-					'error' => false,
-					'data' => $resUpdate,
-					'mensaje' =>'Tipo de distribucion modular actualizado con exito'
-				);
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el tipo de distribucion modular',
+            );
 
-	}else{
+        }
 
-				$respuesta = array(
-					'error'   => true,
-					'data' => $resUpdate,
-					'mensaje'	=> 'No se pudo actualizar el tipo de distribucion modular'
-				);
+        $this->response($respuesta);
+    }
 
-	}
+    // Obtener Tipos de distribucion MOdular
+    public function getTypeDistributionModule_get()
+    {
 
-	 $this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM mtdd";
 
- // Obtener Tipos de distribucion MOdular
- public function getTypeDistributionModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-		$sqlSelect = "SELECT * FROM mtdd";
+        if (isset($resSelect[0])) {
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-		if(isset($resSelect[0])){
+        } else {
 
-			$respuesta = array(
-				'error' => false,
-				'data'  => $resSelect,
-				'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-		}else{
+        }
 
-				$respuesta = array(
-					'error'   => true,
-					'data' => array(),
-					'mensaje'	=> 'busqueda sin resultados'
-				);
-
-		}
-
-		 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos Tipo de distribucion Modular por id
- public function getTypeDistributionModuleById_get(){
+    public function getTypeDistributionModuleById_get()
+    {
 
-		$Data = $this->get();
+        $Data = $this->get();
 
-		if(!isset($Data['tdd_id'])){
+        if (!isset($Data['tdd_id'])) {
 
-			$respuesta = array(
-				'error' => true,
-				'data'  => array(),
-				'mensaje' =>'La informacion enviada no es valida'
-			);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			return;
-		}
+            return;
+        }
 
-		$sqlSelect = " SELECT * FROM mtdd WHERE tdd_id = :tdd_id";
+        $sqlSelect = " SELECT * FROM mtdd WHERE tdd_id = :tdd_id";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdd_id' => $Data['tdd_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdd_id' => $Data['tdd_id']));
 
-		if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-			$respuesta = array(
-				'error' => false,
-				'data'  => $resSelect,
-				'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-		}else{
+        } else {
 
-				$respuesta = array(
-					'error'   => true,
-					'data' => array(),
-					'mensaje'	=> 'busqueda sin resultados'
-				);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-		}
+        }
 
-		 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //
- //
- //
- //
- //
+    //
+    //
+    //
+    //
+    //
 
- //Crear Tipo de negociacion Modular
- public function createTypeNegotiationModule_post(){
+    //Crear Tipo de negociacion Modular
+    public function createTypeNegotiationModule_post()
+    {
 
- $Data = $this->post();
+        $Data = $this->post();
 
- if(!isset($Data['tdn_name'])){
+        if (!isset($Data['tdn_name'])) {
 
-		$respuesta = array(
-			 'error' => true,
-			 'data'  => array(),
-			 'mensaje' =>'La informacion enviada no es valida'
-		);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-	 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-	 return;
- }
+            return;
+        }
 
- $sqlInsert = "INSERT INTO mtdn(tdn_name, tdn_status)
+        $sqlInsert = "INSERT INTO mtdn(tdn_name, tdn_status)
 							VALUES(:tdn_name, :tdn_status)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':tdn_name' => $Data['tdn_name'],
+            ':tdn_status' => $Data['tdn_status'],
+        ));
 
- $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-		':tdn_name' => $Data['tdn_name'],
-		':tdn_status' => $Data['tdn_status']
- ));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Tipo de negociacion modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar el tipo de negociacion modular',
+            );
 
- if(is_numeric($resInsert) && $resInsert > 0){
-		$respuesta = array(
-			'error'	 => false,
-			'data' 	 => $resInsert,
-			'mensaje' =>'Tipo de negociacion modular registrado con exito'
-		);
- }else{
+        }
 
-	 $respuesta = array(
-		 'error'   => true,
-		 'data' 		=> $resInsert,
-		 'mensaje' => 'No se pudo registrar el tipo de negociacion modular'
-	 );
+        $this->response($respuesta);
+    }
 
- }
+    //Actualizar Datos de Tipo de negociacion Modular
+    public function updateTypeNegotiationModule_post()
+    {
 
- $this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de Tipo de negociacion Modular
- public function updateTypeNegotiationModule_post(){
+        if (!isset($Data['tdn_id']) or
+            !isset($Data['tdn_name']) or
+            !isset($Data['tdn_status'])) {
 
- $Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
- if(!isset($Data['tdn_id']) OR
-		!isset($Data['tdn_name']) OR
-		!isset($Data['tdn_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-	 $respuesta = array(
-		 'error' => true,
-		 'data'  => array(),
-		 'mensaje' =>'La informacion enviada no es valida'
-	 );
+            return;
+        }
 
-	 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-	 return;
- }
-
- $sqlUpdate = "UPDATE mtdn SET tdn_name = :tdn_name, tdn_status = :tdn_status
+        $sqlUpdate = "UPDATE mtdn SET tdn_name = :tdn_name, tdn_status = :tdn_status
 							 WHERE tdn_id = :tdn_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
- $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':tdn_name' => $Data['tdn_name'],
+            ':tdn_status' => $Data['tdn_status'],
+            ':tdn_id' => $Data['tdn_id'],
+        ));
 
-			 ':tdn_name' => $Data['tdn_name'],
-			 ':tdn_status' => $Data['tdn_status'],
-			 ':tdn_id' => $Data['tdn_id']
- ));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
- if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Tipo de negociacion modular actualizado con exito',
+            );
 
-			 $respuesta = array(
-				 'error' => false,
-				 'data' => $resUpdate,
-				 'mensaje' =>'Tipo de negociacion modular actualizado con exito'
-			 );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el tipo de negociacion modular',
+            );
 
- }else{
+        }
 
-			 $respuesta = array(
-				 'error'   => true,
-				 'data' => $resUpdate,
-				 'mensaje'	=> 'No se pudo actualizar el tipo de negociacion modular'
-			 );
+        $this->response($respuesta);
+    }
 
- }
+    // Obtener Tipos de negociacion MOdular
+    public function getTypeNegotiationModule_get()
+    {
 
-	$this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM mtdn";
 
- // Obtener Tipos de negociacion MOdular
- public function getTypeNegotiationModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-	 $sqlSelect = "SELECT * FROM mtdn";
+        if (isset($resSelect[0])) {
 
-	 $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-	 if(isset($resSelect[0])){
+        } else {
 
-		 $respuesta = array(
-			 'error' => false,
-			 'data'  => $resSelect,
-			 'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-	 }else{
+        }
 
-			 $respuesta = array(
-				 'error'   => true,
-				 'data' => array(),
-				 'mensaje'	=> 'busqueda sin resultados'
-			 );
-
-	 }
-
-		$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos Tipo de negociacion Modular por id
- public function getTypeNegotiationModuleById_get(){
+    public function getTypeNegotiationModuleById_get()
+    {
 
-	 $Data = $this->get();
+        $Data = $this->get();
 
-	 if(!isset($Data['tdn_id'])){
+        if (!isset($Data['tdn_id'])) {
 
-		 $respuesta = array(
-			 'error' => true,
-			 'data'  => array(),
-			 'mensaje' =>'La informacion enviada no es valida'
-		 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-		 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-		 return;
-	 }
+            return;
+        }
 
-	 $sqlSelect = " SELECT * FROM mtdn WHERE tdn_id = :tdn_id";
+        $sqlSelect = " SELECT * FROM mtdn WHERE tdn_id = :tdn_id";
 
-	 $resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdn_id' => $Data['tdn_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':tdn_id' => $Data['tdn_id']));
 
-	 if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-		 $respuesta = array(
-			 'error' => false,
-			 'data'  => $resSelect,
-			 'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-	 }else{
+        } else {
 
-			 $respuesta = array(
-				 'error'   => true,
-				 'data' => array(),
-				 'mensaje'	=> 'busqueda sin resultados'
-			 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-	 }
+        }
 
-		$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //
- //
- //
- //
- //
+    //
+    //
+    //
+    //
+    //
 
- //Crear rango Modular
- public function createRangeModule_post(){
+    //Crear rango Modular
+    public function createRangeModule_post()
+    {
 
- $Data = $this->post();
+        $Data = $this->post();
 
- if(!isset($Data['rdm_name'])){
+        if (!isset($Data['rdm_name'])) {
 
-		$respuesta = array(
-			 'error' => true,
-			 'data'  => array(),
-			 'mensaje' =>'La informacion enviada no es valida'
-		);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-	 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-	 return;
- }
+            return;
+        }
 
- $sqlInsert = "INSERT INTO mrdm(rdm_name, rdm_status)
+        $sqlInsert = "INSERT INTO mrdm(rdm_name, rdm_status)
 							VALUES(:rdm_name, :rdm_status)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':rdm_name' => $Data['rdm_name'],
+            ':rdm_status' => $Data['rdm_status'],
+        ));
 
- $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-		':rdm_name' => $Data['rdm_name'],
-		':rdm_status' => $Data['rdm_status']
- ));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Rango modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar el rango modular',
+            );
 
- if(is_numeric($resInsert) && $resInsert > 0){
-		$respuesta = array(
-			'error'	 => false,
-			'data' 	 => $resInsert,
-			'mensaje' =>'Rango modular registrado con exito'
-		);
- }else{
+        }
 
-	 $respuesta = array(
-		 'error'   => true,
-		 'data' 		=> $resInsert,
-		 'mensaje' => 'No se pudo registrar el rango modular'
-	 );
+        $this->response($respuesta);
+    }
 
- }
+    //Actualizar Datos de rango Modular
+    public function updateRangeModule_post()
+    {
 
- $this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de rango Modular
- public function updateRangeModule_post(){
+        if (!isset($Data['rdm_id']) or
+            !isset($Data['rdm_name']) or
+            !isset($Data['rdm_status'])) {
 
- $Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
- if(!isset($Data['rdm_id']) OR
-		!isset($Data['rdm_name']) OR
-		!isset($Data['rdm_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-	 $respuesta = array(
-		 'error' => true,
-		 'data'  => array(),
-		 'mensaje' =>'La informacion enviada no es valida'
-	 );
+            return;
+        }
 
-	 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-	 return;
- }
-
- $sqlUpdate = "UPDATE mrdm SET rdm_name = :rdm_name, rdm_status = :rdm_status
+        $sqlUpdate = "UPDATE mrdm SET rdm_name = :rdm_name, rdm_status = :rdm_status
 							 WHERE rdm_id = :rdm_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
- $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':rdm_name' => $Data['rdm_name'],
+            ':rdm_status' => $Data['rdm_status'],
+            ':rdm_id' => $Data['rdm_id'],
+        ));
 
-			 ':rdm_name' => $Data['rdm_name'],
-			 ':rdm_status' => $Data['rdm_status'],
-			 ':rdm_id' => $Data['rdm_id']
- ));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
- if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Rango modular actualizado con exito',
+            );
 
-			 $respuesta = array(
-				 'error' => false,
-				 'data' => $resUpdate,
-				 'mensaje' =>'Rango modular actualizado con exito'
-			 );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el rango modular',
+            );
 
- }else{
+        }
 
-			 $respuesta = array(
-				 'error'   => true,
-				 'data' => $resUpdate,
-				 'mensaje'	=> 'No se pudo actualizar el rango modular'
-			 );
+        $this->response($respuesta);
+    }
 
- }
+    // Obtener rango MOdular
+    public function getRangeModule_get()
+    {
 
-	$this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM mrdm";
 
- // Obtener rango MOdular
- public function getRangeModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-	 $sqlSelect = "SELECT * FROM mrdm";
+        if (isset($resSelect[0])) {
 
-	 $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-	 if(isset($resSelect[0])){
+        } else {
 
-		 $respuesta = array(
-			 'error' => false,
-			 'data'  => $resSelect,
-			 'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-	 }else{
+        }
 
-			 $respuesta = array(
-				 'error'   => true,
-				 'data' => array(),
-				 'mensaje'	=> 'busqueda sin resultados'
-			 );
-
-	 }
-
-		$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos rango Modular por id
- public function getRangeModuleById_get(){
+    public function getRangeModuleById_get()
+    {
 
-	 $Data = $this->get();
+        $Data = $this->get();
 
-	 if(!isset($Data['rdm_id'])){
+        if (!isset($Data['rdm_id'])) {
 
-		 $respuesta = array(
-			 'error' => true,
-			 'data'  => array(),
-			 'mensaje' =>'La informacion enviada no es valida'
-		 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-		 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-		 return;
-	 }
+            return;
+        }
 
-	 $sqlSelect = " SELECT * FROM mrdm WHERE rdm_id = :rdm_id";
+        $sqlSelect = " SELECT * FROM mrdm WHERE rdm_id = :rdm_id";
 
-	 $resSelect = $this->pedeo->queryTable($sqlSelect, array(':rdm_id' => $Data['rdm_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':rdm_id' => $Data['rdm_id']));
 
-	 if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-		 $respuesta = array(
-			 'error' => false,
-			 'data'  => $resSelect,
-			 'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-	 }else{
+        } else {
 
-			 $respuesta = array(
-				 'error'   => true,
-				 'data' => array(),
-				 'mensaje'	=> 'busqueda sin resultados'
-			 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-	 }
+        }
 
-		$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //
- //
- //
- //
- //
+    //
+    //
+    //
+    //
+    //
 
- //Crear tipo de pago Modular
- public function createTypePayModule_post(){
+    //Crear tipo de pago Modular
+    public function createTypePayModule_post()
+    {
 
- $Data = $this->post();
+        $Data = $this->post();
 
- if(!isset($Data['mtp_name'])){
+        if (!isset($Data['mtp_name'])) {
 
-	 $respuesta = array(
-			'error' => true,
-			'data'  => array(),
-			'mensaje' =>'La informacion enviada no es valida'
-	 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-	$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-	return;
- }
+            return;
+        }
 
- $sqlInsert = "INSERT INTO tmtp(mtp_name, mtp_status)
+        $sqlInsert = "INSERT INTO tmtp(mtp_name, mtp_status)
 						 VALUES(:mtp_name, :mtp_status)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':mtp_name' => $Data['mtp_name'],
+            ':mtp_status' => $Data['mtp_status'],
+        ));
 
- $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-	 ':mtp_name' => $Data['mtp_name'],
-	 ':mtp_status' => $Data['mtp_status']
- ));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Forma de pago registrada con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar la forma de pago',
+            );
 
- if(is_numeric($resInsert) && $resInsert > 0){
-	 $respuesta = array(
-		 'error'	 => false,
-		 'data' 	 => $resInsert,
-		 'mensaje' =>'Rango modular registrado con exito'
-	 );
- }else{
+        }
 
-	$respuesta = array(
-		'error'   => true,
-		'data' 		=> $resInsert,
-		'mensaje' => 'No se pudo registrar el rango modular'
-	);
+        $this->response($respuesta);
+    }
 
- }
+    //Actualizar Datos de tipo de pago Modular
+    public function updateTypePayModule_post()
+    {
 
- $this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de tipo de pago Modular
- public function updateTypePayModule_post(){
+        if (!isset($Data['mtp_id']) or
+            !isset($Data['mtp_name']) or
+            !isset($Data['mtp_status'])) {
 
- $Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
- if(!isset($Data['mtp_id']) OR
-	 !isset($Data['mtp_name']) OR
-	 !isset($Data['mtp_status'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-	$respuesta = array(
-		'error' => true,
-		'data'  => array(),
-		'mensaje' =>'La informacion enviada no es valida'
-	);
+            return;
+        }
 
-	$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-	return;
- }
-
- $sqlUpdate = "UPDATE tmtp SET mtp_name = :mtp_name, mtp_status = :mtp_status
+        $sqlUpdate = "UPDATE tmtp SET mtp_name = :mtp_name, mtp_status = :mtp_status
 							WHERE mtp_id = :mtp_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
- $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':mtp_name' => $Data['mtp_name'],
+            ':mtp_status' => $Data['mtp_status'],
+            ':mtp_id' => $Data['mtp_id'],
+        ));
 
-			':mtp_name' => $Data['mtp_name'],
-			':mtp_status' => $Data['mtp_status'],
-			':mtp_id' => $Data['mtp_id']
- ));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
- if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Rango modular actualizado con exito',
+            );
 
-			$respuesta = array(
-				'error' => false,
-				'data' => $resUpdate,
-				'mensaje' =>'Rango modular actualizado con exito'
-			);
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el rango modular',
+            );
 
- }else{
+        }
 
-			$respuesta = array(
-				'error'   => true,
-				'data' => $resUpdate,
-				'mensaje'	=> 'No se pudo actualizar el rango modular'
-			);
+        $this->response($respuesta);
+    }
 
- }
+    // Obtener tipo de pago MOdular
+    public function getTypePayModule_get()
+    {
 
- $this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM tmtp";
 
- // Obtener tipo de pago MOdular
- public function getTypePayModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-	$sqlSelect = "SELECT * FROM tmtp";
+        if (isset($resSelect[0])) {
 
-	$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-	if(isset($resSelect[0])){
+        } else {
 
-		$respuesta = array(
-			'error' => false,
-			'data'  => $resSelect,
-			'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-	}else{
+        }
 
-			$respuesta = array(
-				'error'   => true,
-				'data' => array(),
-				'mensaje'	=> 'busqueda sin resultados'
-			);
-
-	}
-
-	 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos tipo de pago Modular por id
- public function getTypePayModuleById_get(){
+    public function getTypePayModuleById_get()
+    {
 
-	$Data = $this->get();
+        $Data = $this->get();
 
-	if(!isset($Data['mtp_id'])){
+        if (!isset($Data['mtp_id'])) {
 
-		$respuesta = array(
-			'error' => true,
-			'data'  => array(),
-			'mensaje' =>'La informacion enviada no es valida'
-		);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-		return;
-	}
+            return;
+        }
 
-	$sqlSelect = " SELECT * FROM tmtp WHERE mtp_id = :mtp_id";
+        $sqlSelect = " SELECT * FROM tmtp WHERE mtp_id = :mtp_id";
 
-	$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mtp_id' => $Data['mtp_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':mtp_id' => $Data['mtp_id']));
 
-	if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-		$respuesta = array(
-			'error' => false,
-			'data'  => $resSelect,
-			'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-	}else{
+        } else {
 
-			$respuesta = array(
-				'error'   => true,
-				'data' => array(),
-				'mensaje'	=> 'busqueda sin resultados'
-			);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-	}
+        }
 
-	 $this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //
- //
- //
- //
- //
+    //
+    //
+    //
+    //
+    //
 
- //Crear impuestos maestros o globales Modular
- public function createTaxMasterModule_post(){
+    //Crear impuestos maestros o globales Modular
+    public function createTaxMasterModule_post()
+    {
 
- $Data = $this->post();
+        $Data = $this->post();
 
- if(!isset($Data['imm_code']) or
-	 	!isset($Data['imm_name_tax']) or
-		!isset($Data['imm_rate_tax']) or
-		!isset($Data['imm_type']) or
-		!isset($Data['imm_acctcode'])
-	){
+        if (!isset($Data['imm_code']) or
+            !isset($Data['imm_name_tax']) or
+            !isset($Data['imm_rate_tax']) or
+            !isset($Data['imm_type']) or
+            !isset($Data['imm_acctcode'])
+        ) {
 
-	$respuesta = array(
-		 'error' => true,
-		 'data'  => array(),
-		 'mensaje' =>'La informacion enviada no es valida'
-	);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
- $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
- return;
- }
+            return;
+        }
 
- $sqlInsert = "INSERT INTO timm(imm_code, imm_name_tax,imm_rate_tax,imm_type,imm_acctcode,imm_enable)
+        $sqlInsert = "INSERT INTO timm(imm_code, imm_name_tax,imm_rate_tax,imm_type,imm_acctcode,imm_enable)
 						VALUES(:imm_code, :imm_name_tax,:imm_rate_tax,:imm_type,:imm_acctcode,:imm_enable)";
 
+        $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+            ':imm_code' => $Data['imm_code'],
+            ':imm_name_tax' => $Data['imm_name_tax'],
+            ':imm_rate_tax' => $Data['imm_rate_tax'],
+            ':imm_type' => $Data['imm_type'],
+            ':imm_acctcode' => $Data['imm_acctcode'],
+            ':imm_enable' => $Data['imm_enable'],
+        ));
 
- $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-	':imm_code' => $Data['imm_code'],
-	':imm_name_tax' => $Data['imm_name_tax'],
-	':imm_rate_tax' => $Data['imm_rate_tax'],
-	':imm_type' => $Data['imm_type'],
-	':imm_acctcode' => $Data['imm_acctcode'],
-	':imm_enable' => $Data['imm_enable']
- ));
+        if (is_numeric($resInsert) && $resInsert > 0) {
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'impuesto maestro modular registrado con exito',
+            );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se pudo registrar el impuesto maestro modular',
+            );
 
- if(is_numeric($resInsert) && $resInsert > 0){
-	$respuesta = array(
-		'error'	 => false,
-		'data' 	 => $resInsert,
-		'mensaje' =>'impuesto maestro modular registrado con exito'
-	);
- }else{
+        }
 
- $respuesta = array(
-	 'error'   => true,
-	 'data' 		=> $resInsert,
-	 'mensaje' => 'No se pudo registrar el impuesto maestro modular'
- );
+        $this->response($respuesta);
+    }
 
- }
+    //Actualizar Datos de impuestos maestros o globales Modular
+    public function updateTaxMasterModule_post()
+    {
 
- $this->response($respuesta);
- }
+        $Data = $this->post();
 
- //Actualizar Datos de impuestos maestros o globales Modular
- public function updateTaxMasterModule_post(){
+        if (!isset($Data['imm_id']) or
+            !isset($Data['imm_code']) or
+            !isset($Data['imm_name_tax']) or
+            !isset($Data['imm_rate_tax']) or
+            !isset($Data['imm_type']) or
+            !isset($Data['imm_acctcode'])) {
 
- $Data = $this->post();
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
- if(!isset($Data['imm_id']) or
- 		!isset($Data['imm_code']) or
-	 	!isset($Data['imm_name_tax']) or
-		!isset($Data['imm_rate_tax']) or
-		!isset($Data['imm_type']) or
-		!isset($Data['imm_acctcode'])){
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
- $respuesta = array(
-	 'error' => true,
-	 'data'  => array(),
-	 'mensaje' =>'La informacion enviada no es valida'
- );
+            return;
+        }
 
- $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
- return;
- }
-
- $sqlUpdate = "UPDATE timm
+        $sqlUpdate = "UPDATE timm
  								SET imm_code = :imm_code
  									,	imm_name_tax = :imm_name_tax
  									, imm_rate_tax = :imm_rate_tax
@@ -1860,136 +1862,269 @@ class ParModule extends REST_Controller {
 									, imm_enable = :imm_enable
 						 	WHERE imm_id = :imm_id";
 
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
- $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':imm_code' => $Data['imm_code'],
+            ':imm_name_tax' => $Data['imm_name_tax'],
+            ':imm_rate_tax' => $Data['imm_rate_tax'],
+            ':imm_type' => $Data['imm_type'],
+            ':imm_acctcode' => $Data['imm_acctcode'],
+            ':imm_enable' => $Data['imm_enable'],
+            ':imm_id' => $Data['imm_id'],
+        ));
 
-		 ':imm_code' => $Data['imm_code'],
-		 ':imm_name_tax' => $Data['imm_name_tax'],
-		 ':imm_rate_tax' => $Data['imm_rate_tax'],
-		 ':imm_type' => $Data['imm_type'],
-		 ':imm_acctcode' => $Data['imm_acctcode'],
-		 ':imm_enable' => $Data['imm_enable'],
-		 ':imm_id' => $Data['imm_id']
- ));
+        if (is_numeric($resUpdate) && $resUpdate == 1) {
 
- if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Maestro modular modular actualizado con exito',
+            );
 
-		 $respuesta = array(
-			 'error' => false,
-			 'data' => $resUpdate,
-			 'mensaje' =>'Maestro modular modular actualizado con exito'
-		 );
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se pudo actualizar el maestro modular modular',
+            );
 
- }else{
+        }
 
-		 $respuesta = array(
-			 'error'   => true,
-			 'data' => $resUpdate,
-			 'mensaje'	=> 'No se pudo actualizar el maestro modular modular'
-		 );
+        $this->response($respuesta);
+    }
 
- }
+    // Obtener impuestos maestros o globales MOdular
+    public function getTaxMasterModule_get()
+    {
 
- $this->response($respuesta);
- }
+        $sqlSelect = "SELECT * FROM timm";
 
- // Obtener impuestos maestros o globales MOdular
- public function getTaxMasterModule_get(){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
- $sqlSelect = "SELECT * FROM timm";
+        if (isset($resSelect[0])) {
 
- $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
- if(isset($resSelect[0])){
+        } else {
 
-	 $respuesta = array(
-		 'error' => false,
-		 'data'  => $resSelect,
-		 'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
- }else{
+        }
 
-		 $respuesta = array(
-			 'error'   => true,
-			 'data' => array(),
-			 'mensaje'	=> 'busqueda sin resultados'
-		 );
-
- }
-
-	$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
 //Obtener datos impuestos maestros o globales Modular por id
- public function getTaxMasterModuleById_get(){
+    public function getTaxMasterModuleById_get()
+    {
 
- $Data = $this->get();
+        $Data = $this->get();
 
- if(!isset($Data['mtp_id'])){
+        if (!isset($Data['mtp_id'])) {
 
-	 $respuesta = array(
-		 'error' => true,
-		 'data'  => array(),
-		 'mensaje' =>'La informacion enviada no es valida'
-	 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-	 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-	 return;
- }
+            return;
+        }
 
- $sqlSelect = " SELECT * FROM timm WHERE imm_id = :imm_id";
+        $sqlSelect = " SELECT * FROM timm WHERE imm_id = :imm_id";
 
- $resSelect = $this->pedeo->queryTable($sqlSelect, array(':imm_id' => $Data['imm_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':imm_id' => $Data['imm_id']));
 
- if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-	 $respuesta = array(
-		 'error' => false,
-		 'data'  => $resSelect,
-		 'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
- }else{
+        } else {
 
-		 $respuesta = array(
-			 'error'   => true,
-			 'data' => array(),
-			 'mensaje'	=> 'busqueda sin resultados'
-		 );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
- }
+        }
 
-	$this->response($respuesta);
- }
+        $this->response($respuesta);
+    }
 
- //listar cuentas contables
+    //listar cuentas contables
 
- // Obtener impuestos maestros o globales MOdular
- public function getAccountModule_get(){
+    // Obtener impuestos maestros o globales MOdular
+    public function getAccountModule_get()
+    {
 
- $sqlSelect = "SELECT acc_code as id,acc_name as text FROM dacc where acc_level >= 6 order by acc_code asc";
+        $sqlSelect = "SELECT acc_code as id,acc_name as text FROM dacc where acc_level >= 6 order by acc_code asc";
 
- $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
- if(isset($resSelect[0])){
+        if (isset($resSelect[0])) {
 
-	$respuesta = array(
-		'error' => false,
-		'data'  => $resSelect,
-		'mensaje' => '');
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
- }else{
+        } else {
 
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
+
+        }
+
+        $this->response($respuesta);
+    }
+
+
+	 //Crear Edicion de publicacion
+	 public function createEditionPublication_post(){
+
+		$Data = $this->post();
+	   
+		if(!isset($Data['mpp_name']) or
+				!isset($Data['mpp_status']) 
+		   ){
+	   
+		   $respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' =>'La informacion enviada no es valida'
+		   );
+	   
+		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+	   
+		return;
+		}
+	   
+		$sqlInsert = "INSERT INTO dmpp(mpp_name, mpp_status)
+					VALUES(:mpp_name, :mpp_status)";
+	   
+	   
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+			':mpp_name'   => $Data['mpp_name'],
+			':mpp_status' => $Data['mpp_status'],
+		));
+	   
+	   
+		if(is_numeric($resInsert) && $resInsert > 0){
+		   $respuesta = array(
+			   'error'	 => false,
+			   'data' 	 => $resInsert,
+			   'mensaje' =>'Edición de publicación registrada con exito'
+		   );
+		}else{
+	   
 		$respuesta = array(
 			'error'   => true,
-			'data' => array(),
-			'mensaje'	=> 'busqueda sin resultados'
+			'data' 		=> $resInsert,
+			'mensaje' => 'No se pudo registrar la edición de publicación'
 		);
-
- }
-
- $this->response($respuesta);
- }
+	   
+		}
+	   
+		$this->response($respuesta);
+		}
+	   
+		//Actualizar Edición de publicación
+		public function updateEditionPublication_post(){
+	   
+		$Data = $this->post();
+	   
+		if(!isset($Data['mpp_id']) or
+				!isset($Data['mpp_name']) or
+				!isset($Data['mpp_status'])){
+	   
+		$respuesta = array(
+			'error' => true,
+			'data'  => array(),
+			'mensaje' =>'La informacion enviada no es valida'
+		);
+	   
+		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+	   
+		return;
+		}
+	   
+		$sqlUpdate = "UPDATE dmpp
+						SET mpp_name = :mpp_name
+						,	mpp_status = :mpp_status
+						WHERE mpp_id = :mpp_id";
+	   
+	   
+		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+	   
+				':mpp_name' => $Data['mpp_name'],
+				':mpp_status' => $Data['mpp_status'],
+				':mpp_id' => $Data['mpp_id']
+		));
+	   
+		if(is_numeric($resUpdate) && $resUpdate == 1){
+	   
+				$respuesta = array(
+					'error' => false,
+					'data' => $resUpdate,
+					'mensaje' =>'Edición de publicación actualizada con exito'
+				);
+	   
+	   
+		}else{
+	   
+				$respuesta = array(
+					'error'   => true,
+					'data' => $resUpdate,
+					'mensaje'	=> 'No se pudo actualizar la edición de publicación'
+				);
+	   
+		}
+	   
+			$this->response($respuesta);
+		}
+	   
+		// Obtener Edición de publicación
+		public function getEditionPublication_get(){
+	   
+		$sqlSelect = "SELECT * FROM dmpp WHERE mpp_status = :mpp_status";
+	   
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":mpp_status" => 1));
+	   
+		if(isset($resSelect[0])){
+	   
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
+	   
+		}else{
+	   
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+	   
+		}
+	   
+		   $this->response($respuesta);
+		}
 
 }
