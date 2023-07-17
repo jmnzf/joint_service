@@ -1501,7 +1501,7 @@ class AccountingAccent extends REST_Controller
 		$Data = $this->post();
 		
 		if ( !isset( $Data['mac_trans_id'] ) OR !isset( $Data['mac_comments'] ) ) {
-
+			
 			$respuesta = array(
 				'error' => true,
 				'data'  => array(),
