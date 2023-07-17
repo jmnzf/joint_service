@@ -25,6 +25,7 @@ class PaymentsMade extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('DocumentNumbering');
+		$this->load->library('CancelPay');
 	}
 
 	//OBTENER PAGOS REALIZADOS
@@ -3175,4 +3176,70 @@ class PaymentsMade extends REST_Controller
 			return false;
 		}
 	}
+
+	public function cancelPay_post()
+	{
+		$Data = $this->post();
+		$docentry = $Data['bpe_docentry'];
+		$create_by = $Data['bpe_createby'];
+
+		$sql = "SELECT
+					distinct
+					g.bpe_docnum ,g.bpe_docentry,g.bpe_doctype ,g.bpe_comments ,m.ac1_trans_id ,g.bpe_createby
+				from gbpe g 
+				inner join mac1 m on g.bpe_docentry = m.ac1_font_key  
+				and g.bpe_doctype = m.ac1_font_type
+				where g.bpe_docentry = :docentry";
+		$resSql = $this->pedeo->queryTable($sql,array(':docentry' => $docentry));
+		
+		if(isset($resSql[0])){
+			$data = array(
+				'mac_trans_id' => $resSql[0]['ac1_trans_id'],
+				'doctype' => $resSql[0]['bpe_doctype'],
+				'mac_comments' => "Asiento de pago #".$resSql[0]['bpe_docnum']." Anualdo"
+			);
+
+			
+        	$process = $this->cancelpay->cancelAccountingEntry($data);
+			
+			if($process['error'] == false){
+				// print_r("hola");exit;
+				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+					':bed_docentry' => $docentry,
+					':bed_doctype' => $resSql[0]['bpe_doctype'],
+					':bed_status' => 2, //ESTADO CERRADO
+					':bed_createby' => $create_by,
+					':bed_date' => date('Y-m-d'),
+					':bed_baseentry' => $docentry,
+					':bed_basetype' => $resSql[0]['bpe_doctype']
+				));
+
+
+				if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+				} else {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resInsertEstado,
+						'mensaje'	=> 'No se pudo registrar la anulacion'
+					);
+
+
+					$this->response($respuesta);
+
+					return;
+				}
+			}
+
+			$this->response($process);
+		}	
+	}
+
 }
