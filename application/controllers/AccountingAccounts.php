@@ -52,7 +52,7 @@ class AccountingAccounts extends REST_Controller {
 
         return;
       }
-
+      //VALIDAR QUE LA CUENTA PERTENEZCA AL NIVEL SELECCIONADO
       //VALIDAR SI LA CUENTA YA ESXISTE EN EL SISTEMA
 
       $validAccount = "SELECT * FROM dacc WHERE dacc.acc_code = :acc_code";

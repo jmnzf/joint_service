@@ -18,7 +18,8 @@ class FixedAsset extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+        $this->load->library('pedeo', [$this->pdo]);
+        $this->load->library('session');
 
 	}
 
@@ -111,8 +112,8 @@ class FixedAsset extends REST_Controller {
         }
 
         //
-        $insert = "INSERT INTO afav (fav_code, fav_description, fav_type, fav_dvalarea, fav_lowaccounting, business, branch,fav_mdarea,fav_pdepreciation)
-                    VALUES (:fav_code,:fav_description,:fav_type,:fav_dvalarea,:fav_lowaccounting,:business,:branch,:fav_mdarea,:fav_pdepreciation)";
+        $insert = "INSERT INTO afav (fav_code, fav_description, fav_type, fav_dvalarea, fav_lowaccounting, business, branch,fav_pdepreciation)
+                    VALUES (:fav_code,:fav_description,:fav_type,:fav_dvalarea,:fav_lowaccounting,:business,:branch,:fav_pdepreciation)";
 
         $resInsert = $this->pedeo->insertRow($insert,array(
             ':fav_code' => isset($Data['fav_code']) ? $Data['fav_code'] : NULL,
@@ -122,7 +123,6 @@ class FixedAsset extends REST_Controller {
             ':fav_lowaccounting' => is_numeric($Data['fav_lowaccounting']) ? $Data['fav_lowaccounting'] : 0,
             ':business' => $Data['business'],
             ':branch' => $Data['branch'],
-            ':fav_mdarea' => is_numeric($Data['fav_mdarea']) ? $Data['fav_mdarea'] : 0,
             ':fav_pdepreciation' => is_numeric($Data['fav_pdepreciation']) ? $Data['fav_pdepreciation'] : 0
         ));
 
@@ -206,15 +206,15 @@ class FixedAsset extends REST_Controller {
         }
 
         //
-        $insert = "INSERT INTO afga (fga_code, fga_description, business, branch, fga_createby)
-                    VALUES (:fga_code,:fga_description,:business,:branch,:fga_createby)";
+        $insert = "INSERT INTO afga (fga_code, fga_description, business, branch)
+                    VALUES (:fga_code,:fga_description,:business,:branch)";
 
         $resInsert = $this->pedeo->insertRow($insert,array(
             ':fga_code' => isset($Data['fga_code']) ? $Data['fga_code'] : NULL,
             ':fga_description' => isset($Data['fga_description']) ? $Data['fga_description'] : NULL,
             ':business' => is_numeric($Data['business']) ? $Data['business'] : 0,
             ':branch' => is_numeric($Data['branch']) ? $Data['branch'] : 0,
-            ':fga_createby' => isset($Data['fga_createby']) ? $Data['fga_createby'] : NULL
+            //':fga_createby' => isset($Data['fga_createby']) ? $Data['fga_createby'] : NULL
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -275,14 +275,14 @@ class FixedAsset extends REST_Controller {
         }
 
         //
-        $insert = "INSERT INTO afag (fag_code, fag_description, fag_group, fag_createby, business, branch)
-                    VALUES (:fag_code,:fag_description,:fag_group,:fag_createby,:business,:branch)";
+        $insert = "INSERT INTO afag (fag_code, fag_description, fag_group, business, branch)
+                    VALUES (:fag_code,:fag_description,:fag_group,:business,:branch)";
 
         $resInsert = $this->pedeo->insertRow($insert,array(
             ':fag_code' => isset($Data['fag_code']) ? $Data['fag_code'] : NULL,
             ':fag_description' => isset($Data['fag_description']) ? $Data['fag_description'] : NULL,
             ':fag_group' => is_numeric($Data['fag_group']) ? $Data['fag_group'] : 0,
-            ':fag_createby' => is_numeric($Data['fag_createby']) ? $Data['fag_createby'] : 0,
+            //':fag_createby' => is_numeric($Data['fag_createby']) ? $Data['fag_createby'] : 0,
             ':business' => isset($Data['business']) ? $Data['business'] : NULL,
             ':branch' => isset($Data['branch']) ? $Data['branch'] : NULL
         ));

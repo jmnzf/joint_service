@@ -102,6 +102,7 @@ class Resource extends REST_Controller
     public function createResource_post()
     {
         $Data = $this->post();
+
         if (
             !isset($Data['mrp_serie']) or
             !isset($Data['mrp_description']) or
@@ -110,9 +111,9 @@ class Resource extends REST_Controller
             !isset($Data['mrp_group']) or
             !isset($Data['mrp_barcode']) or
             !isset($Data['mrp_method']) or
-            !isset($Data['mrp_time']) or
-            !isset($Data['mrp_qtybytime']) or
-            !isset($Data['mrp_comments'])
+            !isset($Data['mrp_um']) or 
+            !isset($Data['mrp_quantity']) 
+           // !isset($Data['mrp_comments'])
         ) {
 
             $respuesta = array(
@@ -125,7 +126,8 @@ class Resource extends REST_Controller
 
             return;
         }
-        $sqlInsert = "INSERT INTO dmrp (mrp_serie,mrp_description,mrp_foringname,mrp_type,mrp_group,mrp_barcode,mrp_method,mrp_assing,mrp_relationart,mrp_time,mrp_qtybytime,mrp_comments) values (:mrp_serie,:mrp_description,:mrp_foringname,:mrp_type,:mrp_group,:mrp_barcode,:mrp_method,:mrp_assing,:mrp_relationart,:mrp_time,:mrp_qtybytime,:mrp_comments)";
+        $sqlInsert = "INSERT INTO dmrp (mrp_serie,mrp_description,mrp_foringname,mrp_type,mrp_group,mrp_barcode,mrp_method,mrp_assing,mrp_relationart,mrp_um,mrp_quantity,mrp_comments) 
+        values (:mrp_serie,:mrp_description,:mrp_foringname,:mrp_type,:mrp_group,:mrp_barcode,:mrp_method,:mrp_assing,:mrp_relationart,:mrp_um,:mrp_quantity,:mrp_comments)";
 
         $this->pedeo->trans_begin();
 
@@ -139,8 +141,8 @@ class Resource extends REST_Controller
             ":mrp_method" => $Data['mrp_method'],
             ":mrp_assing" => isset($Data['mrp_assing']) ? $Data['mrp_assing'] : null,
             ":mrp_relationart" => isset($Data['mrp_relationart']) ? $Data['mrp_relationart'] : null,
-            ":mrp_time" => $Data['mrp_time'],
-            ":mrp_qtybytime" => $Data['mrp_qtybytime'],
+            ":mrp_um" => $Data['mrp_um'],
+            ":mrp_quantity" => $Data['mrp_quantity'],
             ":mrp_comments" => $Data['mrp_comments']
         ));
 
@@ -200,8 +202,8 @@ class Resource extends REST_Controller
             !isset($Data['mrp_group']) or
             !isset($Data['mrp_barcode']) or
             !isset($Data['mrp_method']) or
-            !isset($Data['mrp_time']) or
-            !isset($Data['mrp_qtybytime']) or
+            !isset($Data['mrp_um']) or
+            !isset($Data['mrp_quantity']) or
             !isset($Data['mrp_comments'])
         ) {
 
@@ -224,8 +226,8 @@ class Resource extends REST_Controller
         mrp_method = :mrp_method,
         mrp_assing = :mrp_assing,
         mrp_relationart = :mrp_relationart,
-        mrp_time = :mrp_time,
-        mrp_qtybytime = :mrp_qtybytime,
+        mrp_um = :mrp_um,
+        mrp_quantity = :mrp_quantity,
         mrp_comments = :mrp_comments
         WHERE mrp_id = :mrp_id";
 
@@ -241,8 +243,8 @@ class Resource extends REST_Controller
             ":mrp_method" => $Data['mrp_method'],
             ":mrp_assing" => isset($Data['mrp_assing']) ? $Data['mrp_assing'] : null,
             ":mrp_relationart" => isset($Data['mrp_relationart']) ? $Data['mrp_relationart'] : null,
-            ":mrp_time" => $Data['mrp_time'],
-            ":mrp_qtybytime" => $Data['mrp_qtybytime'],
+            ":mrp_um" => $Data['mrp_um'],
+            ":mrp_quantity" => $Data['mrp_quantity'],
             ":mrp_comments" => $Data['mrp_comments'],
             ":mrp_id" => $Data['mrp_id']
         ));
@@ -287,6 +289,43 @@ class Resource extends REST_Controller
                 'error' => true,
                 'data'  => $resUpdate,
                 'mensaje' => 'No se pudo actualizar el recurso'
+            );
+        }
+
+        $this->response($respuesta);
+    }
+
+    public function getResourcesLM_get ()
+    {
+        $respuesta = array(
+            'error' => true,
+            'data' => [],
+            'mensaje' => 'No se encontraron datos en la busqueda'
+        );
+
+        $sql = 'SELECT 
+                    d.mrp_id ,
+                    d.mrp_serie ,
+                    d.mrp_description ,
+                    d.mrp_um ,
+                    d.mrp_quantity ,
+                    coalesce(sum(t.rrc_cost),0) as costo
+                from dmrp d 
+                left join trrc t on d.mrp_id = t."rrc_resourceId" 
+                group by 
+                    d.mrp_id ,
+                    d.mrp_serie ,
+                    d.mrp_description ,
+                    d.mrp_um ,
+                    d.mrp_quantity 
+                order by mrp_id asc';
+        $resSql = $this->pedeo->queryTable($sql,array());
+
+        if(isset($resSql[0])){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSql,
+                'mensaje' => 'OK'
             );
         }
 
