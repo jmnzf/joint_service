@@ -1086,20 +1086,20 @@ class BusinessPartner extends REST_Controller
     //CONSULTA PARA OBTENER EL SALDO
     $moneda = "SELECT get_localcur() as moneda";
     $resMoneda = $this->pedeo->queryTable($moneda,array());
-
     $sql = "SELECT
-              COALESCE(SUM(mac1.ac1_ven_debit  - mac1.ac1_ven_credit) 
+              concat('{moneda}',' ',COALESCE(SUM(mac1.ac1_ven_debit  - mac1.ac1_ven_credit) 
               +
               COALESCE((select 
            		            sum({table_e}.{prefijo}_doctotal) as saldo
            	            from {table_e} 
            	            inner join responsestatus r on {table_e}.{prefijo}_doctype = r.tipo and {table_e}.{prefijo}_docentry = r.id
-           	            where {table_e}.{prefijo}_cardcode = :cardcode and r.estado = 'Abierto'),0),0)
+           	            where {table_e}.{prefijo}_cardcode = :cardcode and r.estado = 'Abierto'),0),0))
               AS saldo
             FROM mac1
             INNER JOIN dmsn ON mac1.ac1_legal_num  = dmsn.dms_card_code
             WHERE mac1.ac1_legal_num = :cardcode AND mac1.business = :business AND mac1.branch = :branch AND dmsn.dms_card_type = '{card_type}'";
     //REEMPLAZAR DATOS DE LA CONSULTA
+    $sql = str_replace("{moneda}",$resMoneda[0]['moneda'],$sql);
     if($Data['doctype'] == 2 ){
       $sql = str_replace("{card_type}",1,$sql);
       $sql = str_replace("{table_e}","dvov",$sql);
@@ -1124,12 +1124,12 @@ class BusinessPartner extends REST_Controller
       ':branch' => $Data['branch']
     ));
     //
-    $saldo = isset($resSql[0]['saldo']) && is_numeric($resSql[0]['saldo']) ? number_format($resSql[0]['saldo'],2,',','.') : number_format(0,2,',','.');
+    //$saldo = isset($resSql[0]['saldo']) && is_numeric($resSql[0]['saldo']) ? number_format($resSql[0]['saldo'],2,',','.') : number_format(0,2,',','.');
     //VALIDAR SI EL RESULTADO TRAE DATOS
     if(isset($resSql[0])){
       $respuesta = array(
         'error' => false,
-        'data' => array('saldo' => $resMoneda[0]['moneda']." ".$saldo),
+        'data' => $resSql,
         'mensaje' => 'OK'
       );
     }
