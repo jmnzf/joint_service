@@ -1094,7 +1094,6 @@ class BusinessPartner extends REST_Controller
            	            from {table_e} 
            	            inner join responsestatus r on {table_e}.{prefijo}_doctype = r.tipo and {table_e}.{prefijo}_docentry = r.id
            	            where {table_e}.{prefijo}_cardcode = :cardcode and r.estado = 'Abierto'),0),0))
-              AS saldo
             FROM mac1
             INNER JOIN dmsn ON mac1.ac1_legal_num  = dmsn.dms_card_code
             WHERE mac1.ac1_legal_num = :cardcode AND mac1.business = :business AND mac1.branch = :branch AND dmsn.dms_card_type = '{card_type}'";
