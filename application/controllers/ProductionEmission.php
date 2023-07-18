@@ -102,7 +102,7 @@ class ProductionEmission extends REST_Controller
         }
 
 		// //BUSCANDO LA NUMERACION DEL DOCUMENTO
-        $DocNumVerificado = $this->documentnumbering->NumberDoc($Data['brp_series'],$Data['brp_docdate'],$Data['brp_duedate']);
+        $DocNumVerificado = $this->documentnumbering->NumberDoc($Data['bep_serie'],$Data['bep_docdate'],$Data['bep_docdate']);
 		
 	    if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
 	
@@ -175,7 +175,7 @@ class ProductionEmission extends REST_Controller
 
 										':bed_docentry' => $resInsert,
 										':bed_doctype' => $Data['bep_doctype'],
-										':bed_status' => $Data['bep_status'], // Estado planificado
+										':bed_status' => 3, // Estado cerrado
 										':bed_createby' => $Data['bep_createby'],
 										':bed_date' => date('Y-m-d'),
 										':bed_baseentry' => NULL,
