@@ -17,7 +17,7 @@ class MaterialList extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 
 	}
@@ -87,9 +87,9 @@ class MaterialList extends REST_Controller {
 		//
 
 		$sqlInsert = "INSERT INTO prlm(rlm_item_code, rlm_quantity, rlm_bom_type, rlm_whscode, rlm_pricelist, rlm_nom_dist,
-			 												rlm_project, rlm_comment, rlm_costoprod, rlm_total, rlm_createat, rlm_createby, rlm_item_name, rlm_doctype)
-															VALUES(:rlm_item_code, :rlm_quantity, :rlm_bom_type, :rlm_whscode, :rlm_pricelist, :rlm_nom_dist,
-															:rlm_project, :rlm_comment, :rlm_costoprod, :rlm_total, :rlm_createat, :rlm_createby, :rlm_item_name, :rlm_doctype)";
+					rlm_project, rlm_comment, rlm_costoprod, rlm_total, rlm_createat, rlm_createby, rlm_item_name, rlm_doctype, business)
+					VALUES(:rlm_item_code, :rlm_quantity, :rlm_bom_type, :rlm_whscode, :rlm_pricelist, :rlm_nom_dist,
+					:rlm_project, :rlm_comment, :rlm_costoprod, :rlm_total, :rlm_createat, :rlm_createby, :rlm_item_name, :rlm_doctype, :business)";
 
 		$resInsert = $this->pedeo->insertRow(	$sqlInsert, array(
 			':rlm_item_code' => isset($Data['rlm_item_code'])?$Data['rlm_item_code']:NULL,
@@ -105,7 +105,8 @@ class MaterialList extends REST_Controller {
 			':rlm_createat' => $this->generic->validateDate($Data['rlm_createat'])?$Data['rlm_createat']:NULL,
 			':rlm_createby' => isset($Data['rlm_createby'])?$Data['rlm_createby']:NULL,
 			':rlm_item_name' => isset($Data['rlm_item_name'])?$Data['rlm_item_name']:NULL,
-			':rlm_doctype' => isset($Data['rlm_doctype'])?$Data['rlm_doctype']:NULL
+			':rlm_doctype' => isset($Data['rlm_doctype'])?$Data['rlm_doctype']:NULL,
+			':business' => $Data['business']
 
 		));
 
@@ -266,32 +267,32 @@ class MaterialList extends REST_Controller {
 	//OBTENER LISTA DE MATERIALES
 	public function getMaterialList_get(){
 
-				$Data = $this->get();
+		$Data = $this->get();
 
 
 
-				$sqlSelect = " SELECT * FROM prlm";
+		$sqlSelect = " SELECT * FROM prlm WHERE business = :business";
 
-				$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business']));
 
-				if(isset($resSelect[0])){
+		if(isset($resSelect[0])){
 
-					$respuesta = array(
-						'error' => false,
-						'data'  => $resSelect,
-						'mensaje' => '');
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
 
-				}else{
+		}else{
 
-						$respuesta = array(
-							'error'   => true,
-							'data' => array(),
-							'mensaje'	=> 'busqueda sin resultados'
-						);
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
 
-				}
+		}
 
-				 $this->response($respuesta);
+			$this->response($respuesta);
 	}
 
 	// OBTENER LISTA DE MATERIALES POR CODIGO DE ITEM

@@ -103,7 +103,7 @@ class Items extends REST_Controller
 						dma_uom_vqty, dma_uom_weightn, dma_uom_sizedim,dma_lotes_code, dma_emisionmethod, dma_long_description, dma_item_mat,
 						dma_accounting, dma_acctin, dma_acct_out, dma_acct_inv, dma_acct_stockn, dma_acct_stockp, dma_acct_redu, dma_acct_amp,
 						dma_acct_cost, dma_acct_return, dma_uom_width, dma_uom_tall, dma_uom_length, dma_uom_vol, dma_um_inventory, dma_tax_sales_code, dma_tax_purch_code,dma_acct_invproc,
-						dma_modular, dma_advertisement, dma_subscription, dma_use_tbase, dma_tasa_base)
+						dma_modular, dma_advertisement, dma_subscription, dma_use_tbase, dma_tasa_base, dma_type_art)
 						VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
 						:dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,:dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set,
 						:dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,:dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty,
@@ -111,7 +111,7 @@ class Items extends REST_Controller
 						:dma_uom_sizedim,:dma_lotes_code, :dma_emisionmethod, :dma_long_description, :dma_item_mat,
 						:dma_accounting, :dma_acctin, :dma_acct_out, :dma_acct_inv, :dma_acct_stockn, :dma_acct_stockp, :dma_acct_redu, :dma_acct_amp,
 						:dma_acct_cost, :dma_acct_return, :dma_uom_width, :dma_uom_tall, :dma_uom_length, :dma_uom_vol, :dma_um_inventory, :dma_tax_sales_code, :dma_tax_purch_code,:dma_acct_invproc,
-						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base)";
+						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base,:dma_type_art)";
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -179,6 +179,11 @@ class Items extends REST_Controller
 				// TASA DE IMPUESTOS
 				':dma_use_tbase' => isset($Data['dma_use_tbase']) ? $Data['dma_use_tbase'] : 0,
 				':dma_tasa_base' => isset($Data['dma_tasa_base']) ? $Data['dma_tasa_base'] : 0,
+				//CAMPO PARA ALMACENAR SI ES ARTICULO DE ACTIVO FIJO
+				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0
+				
+
+
 			));
 
 
@@ -278,7 +283,7 @@ class Items extends REST_Controller
 						dma_acct_amp = :dma_acct_amp, dma_acct_cost = :dma_acct_cost, dma_acct_return = :dma_acct_return,
 						dma_uom_width = :dma_uom_width, dma_uom_tall = :dma_uom_tall, dma_uom_length = :dma_uom_length, dma_uom_vol = :dma_uom_vol, dma_um_inventory = :dma_um_inventory,
 						dma_tax_sales_code = :dma_tax_sales_code, dma_tax_purch_code = :dma_tax_purch_code,dma_acct_invproc = :dma_acct_invproc, dma_modular = :dma_modular, dma_advertisement = :dma_advertisement,
-						dma_subscription = :dma_subscription, dma_use_tbase = :dma_use_tbase, dma_tasa_base = :dma_tasa_base
+						dma_subscription = :dma_subscription, dma_use_tbase = :dma_use_tbase, dma_tasa_base = :dma_tasa_base, dma_type_art = :dma_type_art
 						WHERE dma_id = :dma_id";
 
 			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -346,6 +351,9 @@ class Items extends REST_Controller
 				// TASA DE IMPUESTOS
 				':dma_use_tbase' => isset($Data['dma_use_tbase']) ? $Data['dma_use_tbase'] : 0,
 				':dma_tasa_base' => isset($Data['dma_tasa_base']) ? $Data['dma_tasa_base'] : 0,
+				//SI ES ACTIVO FIJO
+				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0
+				
 			));
 
 			if (is_numeric($resUpdate) && $resUpdate == 1) {

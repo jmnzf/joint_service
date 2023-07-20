@@ -2,145 +2,149 @@
 
 // OPERACIONES DE AYUDA
 
-defined('BASEPATH') OR exit('No direct script access allowed');
+defined('BASEPATH') or exit('No direct script access allowed');
 
-require_once(APPPATH.'/libraries/REST_Controller.php');
+require_once APPPATH . '/libraries/REST_Controller.php';
 use Restserver\libraries\REST_Controller;
 
-class Helpers extends REST_Controller {
+class Helpers extends REST_Controller
+{
 
-	private $pdo;
+    private $pdo;
 
-	public function __construct(){
+    public function __construct()
+    {
 
-		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
-		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
-		header("Access-Control-Allow-Origin: *");
+        header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
+        header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
+        header("Access-Control-Allow-Origin: *");
 
-		parent::__construct();
-		$this->load->database();
-		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+        parent::__construct();
+        $this->load->database();
+        $this->pdo = $this->load->database('pdo', true)->conn_id;
+        $this->load->library('pedeo', [$this->pdo]);
 
-	}
+    }
 
-  //Obtener Campos para Llenar Input Select
-	public function getFiels_post(){
+    //Obtener Campos para Llenar Input Select
+    public function getFiels_post()
+    {
 
         $Data = $this->post();
 
-        if(!isset($Data['table_name']) OR
-           !isset($Data['table_camps']) OR
-           !isset($Data['camps_order']) OR
-           !isset($Data['order'])){
+        if (!isset($Data['table_name']) or
+            !isset($Data['table_camps']) or
+            !isset($Data['camps_order']) or
+            !isset($Data['order'])) {
 
-          $respuesta = array(
-            'error' => true,
-            'data'  => array(),
-            'mensaje' =>'La informacion enviada no es valida'
-          );
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-          return;
+            return;
         }
 
-		$filtro = "";
+        $filtro = "";
         $limite = "";
-		if(isset($Data['filter'])){$filtro = $Data['filter'];}
+        if (isset($Data['filter'])) {$filtro = $Data['filter'];}
 
-        if(isset($Data['limit'])){$limite = $Data['limit'];}
+        if (isset($Data['limit'])) {$limite = $Data['limit'];}
 
-        $sqlSelect = "SELECT ".$Data['table_camps']." FROM ".$Data['table_name']." WHERE 1=1 ".$filtro." ORDER BY ".$Data['camps_order']." ".$Data['order']." ".$limite."";
+        $sqlSelect = "SELECT " . $Data['table_camps'] . " FROM " . $Data['table_name'] . " WHERE 1=1 " . $filtro . " ORDER BY " . $Data['camps_order'] . " " . $Data['order'] . " " . $limite . "";
 
-				// print_r($sqlSelect);exit();die();
-
+        // print_r($sqlSelect);exit();die();
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-        if(isset($resSelect[0])){
-
-          $respuesta = array(
-            'error' => false,
-            'data'  => $resSelect,
-            'mensaje' => '');
-
-        }else{
+        if (isset($resSelect[0])) {
 
             $respuesta = array(
-              'error'   => true,
-              'data' => array(),
-              'mensaje'	=> 'busqueda sin resultados'
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
+
+        } else {
+
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
             );
 
         }
 
         $this->response($respuesta);
-	}
-
-  public function get_Query_post(){
-
-    $Data = $this->post();
-
-    if(!isset($Data['tabla']) OR
-       !isset($Data['campos']) OR
-       !isset($Data['where'])){
-
-      $respuesta = array(
-        'error' => true,
-        'data'  => array(),
-        'mensaje' =>'La informacion enviada no es valida'
-      );
-
-      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-      return;
     }
 
-    $sqlSelect = " SELECT ".$Data['campos']." FROM ".$Data['tabla']." WHERE ".$Data['where']." ";
+    public function get_Query_post()
+    {
 
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+        $Data = $this->post();
 
-    if(isset($resSelect[0])){
+        if (!isset($Data['tabla']) or
+            !isset($Data['campos']) or
+            !isset($Data['where'])) {
 
-      $respuesta = array(
-        'error' => false,
-        'data'  => $resSelect,
-        'mensaje' => '');
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
 
-    }else{
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-        $respuesta = array(
-          'error'   => true,
-          'data' => array(),
-          'mensaje'	=> 'busqueda sin resultados'
-        );
+            return;
+        }
 
+        $sqlSelect = " SELECT " . $Data['campos'] . " FROM " . $Data['tabla'] . " WHERE " . $Data['where'] . " ";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+        if (isset($resSelect[0])) {
+
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
+
+        } else {
+
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
+
+        }
+
+        $this->response($respuesta);
     }
 
-    $this->response($respuesta);
-}
+    // OBTENER DATOS DE EMPLEADO DE DEPARTAMENTO DE VENTA
+    public function getVendorData_post()
+    {
 
- // OBTENER DATOS DE EMPLEADO DE DEPARTAMENTO DE VENTA
- public function getVendorData_post(){
+        $Data = $this->post();
 
-  $Data = $this->post();
+        if (!isset($Data['mev_id']) or
+            !isset($Data['business'])) {
 
-  if(!isset($Data['mev_id']) or
-    !isset($Data['business'])){
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'El empleado del departamento de venta NO EXISTE',
+            );
 
-    $respuesta = array(
-      'error' => true,
-      'data'  => array(),
-      'mensaje' =>'El empleado del departamento de venta NO EXISTE'
-    );
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-    $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            return;
+        }
 
-    return;
-  }
-
-      $sqlSelect = "SELECT distinct
+        $sqlSelect = "SELECT distinct
                         v.mev_id,
                         v.mev_prc_code,
                         v.mev_dpj_pj_code,
@@ -157,50 +161,51 @@ class Helpers extends REST_Controller {
                     inner join dmun d2 on v.mev_dun_un_code = d2.dun_un_code and d2.business = :business
                     inner join dmcc d3 on v.mev_prc_code = d3.dcc_prc_code and d3.business = :business
                     where u.reu_user = :iduservendor and u.reu_status = 1";
-                    
-  $resSelect = $this->pedeo->queryTable($sqlSelect, array(
-    ':iduservendor'=> $Data['mev_id'],
-    ':business' => $Data['business']
-  ));
 
-  if(isset($resSelect[0])){
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+            ':iduservendor' => $Data['mev_id'],
+            ':business' => $Data['business'],
+        ));
 
-    $respuesta = array(
-      'error' => false,
-      'data'  => $resSelect,
-      'mensaje' => '');
+        if (isset($resSelect[0])) {
 
-  }else{
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-      $respuesta = array(
-        'error'   => true,
-        'data' => array(),
-        'mensaje'	=> 'busqueda sin resultados'
-      );
+        } else {
 
-  }
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-  $this->response($respuesta);
-}
+        }
+
+        $this->response($respuesta);
+    }
 // OBTENER SERIE VENDEDOR
-public function getVendorSerie_post(){
+    public function getVendorSerie_post()
+    {
 
-	$Data = $this->post();
+        $Data = $this->post();
 
-	if(!isset($Data['pgu_id_usuario']) OR !isset($Data['dnd_doctype'])){
+        if (!isset($Data['pgu_id_usuario']) or !isset($Data['dnd_doctype'])) {
 
-		$respuesta = array(
-			'error' => true,
-			'data'  => array(),
-			'mensaje' =>'Informacion enviada no valida'
-		);
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'Informacion enviada no valida',
+            );
 
-		$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-		return;
-	}
+            return;
+        }
 
-	$sqlSelect = "SELECT v.mev_id, v.mev_prc_code, v.mev_dpj_pj_code, v.mev_dun_un_code,  v.mev_whs_code,
+        $sqlSelect = "SELECT v.mev_id, v.mev_prc_code, v.mev_dpj_pj_code, v.mev_dun_un_code,  v.mev_whs_code,
 								d.dnd_serie, pg.pgs_nextnum + 1 as pgs_nextnum, pg.pgs_last_num
 								FROM pgus u
 								inner join dmev v
@@ -215,38 +220,36 @@ public function getVendorSerie_post(){
 								d.dnd_serie, pg.pgs_nextnum, pg.pgs_last_num
 								having((pgs_nextnum + 1) < pgs_last_num)";
 
-	// $sqlSelect = "SELECT v.mev_id, v.mev_prc_code, v.mev_dpj_pj_code, v.mev_dun_un_code,  v.mev_whs_code,
-	// 							d.dnd_serie
-	// 							FROM pgus u
-	// 							inner join dmev v
-	// 							on u.pgu_id_vendor = v.mev_id
-	// 							inner join  dmnd d
-	// 							on u.pgu_code_user = d.dnd_user
-	// 							where u.pgu_id_usuario = :pgu_id_usuario
-	// 							and d.dnd_doctype = :dnd_doctype";
+        // $sqlSelect = "SELECT v.mev_id, v.mev_prc_code, v.mev_dpj_pj_code, v.mev_dun_un_code,  v.mev_whs_code,
+        //                             d.dnd_serie
+        //                             FROM pgus u
+        //                             inner join dmev v
+        //                             on u.pgu_id_vendor = v.mev_id
+        //                             inner join  dmnd d
+        //                             on u.pgu_code_user = d.dnd_user
+        //                             where u.pgu_id_usuario = :pgu_id_usuario
+        //                             and d.dnd_doctype = :dnd_doctype";
 
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgu_code_user' => $Data['pgu_id_usuario'], ':dnd_doctype' => $Data['dnd_doctype']));
 
-	$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgu_code_user'=> $Data['pgu_id_usuario'],':dnd_doctype'=> $Data['dnd_doctype']));
+        if (isset($resSelect[0])) {
 
-	if(isset($resSelect[0])){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
 
-		$respuesta = array(
-			'error' => false,
-			'data'  => $resSelect,
-			'mensaje' => '');
+        } else {
 
-	}else{
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
 
-			$respuesta = array(
-				'error'   => true,
-				'data' => array(),
-				'mensaje'	=> 'busqueda sin resultados'
-			);
+        }
 
-	}
-
-	$this->response($respuesta);
-}
-
+        $this->response($respuesta);
+    }
 
 }

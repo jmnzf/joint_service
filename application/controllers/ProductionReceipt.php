@@ -2,7 +2,7 @@
 // MODELO DE APROBACIONES
 defined('BASEPATH') or exit('No direct script access allowed');
 
-require_once(APPPATH . '/libraries/REST_Controller.php');
+require_once APPPATH . '/libraries/REST_Controller.php';
 
 use Restserver\libraries\REST_Controller;
 
@@ -27,22 +27,23 @@ class ProductionReceipt extends REST_Controller
     public function getProductionReceipt_get()
     {
 
-        
+        $Data = $this->get();
+
         $respuesta = array(
-            'error'  => true,
-            'data'   => [],
+            'error' => true,
+            'data' => [],
             'mensaje' => 'busqueda sin resultados'
         );
 
-        $sqlSelect = "SELECT * from tbrp";
+        $sqlSelect = "SELECT * from tbrp WHERE business = :business";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business']));
 
         if (isset($resSelect[0])) {
             $respuesta = array(
-                'error'  => false,
-                'data'   => $resSelect,
-                'mensaje' => ''
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '',
             );
         }
 
@@ -64,8 +65,8 @@ class ProductionReceipt extends REST_Controller
         ) {
             $respuesta = array(
                 'error' => true,
-                'data'  => array(),
-                'mensaje' => 'La informacion enviada no es valida'
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -79,8 +80,8 @@ class ProductionReceipt extends REST_Controller
         if (!is_array($ContenidoDetalle)) {
             $respuesta = array(
                 'error' => true,
-                'data'  => array(),
-                'mensaje' => 'No se encontro el detalle'
+                'data' => array(),
+                'mensaje' => 'No se encontro el detalle',
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -91,8 +92,8 @@ class ProductionReceipt extends REST_Controller
         if (!intval(count($ContenidoDetalle)) > 0) {
             $respuesta = array(
                 'error' => true,
-                'data'  => array(),
-                'mensaje' => 'Documento sin detalle'
+                'data' => array(),
+                'mensaje' => 'Documento sin detalle',
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -101,16 +102,16 @@ class ProductionReceipt extends REST_Controller
         }
 
         // //BUSCANDO LA NUMERACION DEL DOCUMENTO
-			$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['brp_series'],$Data['brp_docdate'],$Data['brp_duedate']);
-		
-	    if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
-	
-		}else if ($DocNumVerificado['error']){
-	
-		    return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);;
-		}
+        $DocNumVerificado = $this->documentnumbering->NumberDoc($Data['brp_serie'], $Data['brp_docdate'], $Data['brp_docdate']);
 
-        $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref, brp_baseentry, brp_basetype, brp_description, brp_createby) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref, :brp_baseentry, :brp_basetype, :brp_description, :brp_createby)";
+        if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0) {
+
+        } else if ($DocNumVerificado['error']) {
+
+            return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
+        }
+
+        $sqlInsert = "INSERT INTO tbrp ( brp_doctype, brp_docnum, brp_cardcode, brp_cardname, brp_duedev, brp_docdate, brp_ref, brp_baseentry, brp_basetype, brp_description, brp_createby, business) VALUES(:brp_doctype, :brp_docnum, :brp_cardcode, :brp_cardname, :brp_duedev, :brp_docdate, :brp_ref, :brp_baseentry, :brp_basetype, :brp_description, :brp_createby, :business)";
 
         $this->pedeo->trans_begin();
 
@@ -126,73 +127,68 @@ class ProductionReceipt extends REST_Controller
             ":brp_basetype" => is_numeric($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
             ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null,
             ":brp_createby" => $Data['brp_createby'],
+            ":business" => $Data['business'],
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
 
             // Se actualiza la serie de la numeracion del documento
 
-					$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+            $sqlActualizarNumeracion = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
 																			 WHERE pgs_id = :pgs_id";
-					$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
-							':pgs_nextnum' => $DocNumVerificado,
-							':pgs_id'      => $Data['brp_serie']
-					));
+            $resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+                ':pgs_nextnum' => $DocNumVerificado,
+                ':pgs_id' => $Data['brp_serie'],
+            ));
 
+            if (is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1) {
 
-					if(is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1){
+            } else {
+                $this->pedeo->trans_rollback();
 
-					}else{
-								$this->pedeo->trans_rollback();
+                $respuesta = array(
+                    'error' => true,
+                    'data' => $resActualizarNumeracion,
+                    'mensaje' => 'No se pudo crear la recepción de fabricación',
+                );
 
-								$respuesta = array(
-									'error'   => true,
-									'data'    => $resActualizarNumeracion,
-									'mensaje'	=> 'No se pudo crear la recepción de fabricación'
-								);
+                $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-								$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+                return;
+            }
+            // Fin de la actualizacion de la numeracion del documento
 
-								return;
-					}
-					// Fin de la actualizacion de la numeracion del documento
+            //SE INSERTA EL ESTADO DEL DOCUMENTO
 
-
-
-					//SE INSERTA EL ESTADO DEL DOCUMENTO
-
-					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+            $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
-					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+            $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
+                ':bed_docentry' => $resInsert,
+                ':bed_doctype' => $Data['brp_doctype'],
+                ':bed_status' => 3, // Estado cerrado
+                ':bed_createby' => $Data['brp_createby'],
+                ':bed_date' => date('Y-m-d'),
+                ':bed_baseentry' => null,
+                ':bed_basetype' => null,
+            ));
 
-										':bed_docentry' => $resInsert,
-										':bed_doctype' => $Data['brp_doctype'],
-										':bed_status' => $Data['brp_status'], // Estado planificado
-										':bed_createby' => $Data['brp_createby'],
-										':bed_date' => date('Y-m-d'),
-										':bed_baseentry' => NULL,
-										':bed_basetype' => NULL
-					));
+            if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
 
+            } else {
 
-					if(is_numeric($resInsertEstado) && $resInsertEstado > 0){
+                $this->pedeo->trans_rollback();
 
-					}else{
+                $respuesta = array(
+                    'error' => true,
+                    'data' => $resInsertEstado,
+                    'mensaje' => 'No se pudo registrar la recepción de fabricación',
+                );
 
-							 $this->pedeo->trans_rollback();
+                $this->response($respuesta);
 
-								$respuesta = array(
-									'error'   => true,
-									'data' => $resInsertEstado,
-									'mensaje'	=> 'No se pudo registrar la recepción de fabricación'
-								);
-
-
-								$this->response($respuesta);
-
-                }
+            }
 
             $sqlInsert2 = "INSERT INTO brp1 (rp1_item_description, rp1_quantity, rp1_itemcost, rp1_im, rp1_ccost, rp1_ubusiness, rp1_item_code, rp1_listmat, rp1_baseentry, rp1_plan) values (:rp1_item_description, :rp1_quantity, :rp1_itemcost, :rp1_im, :rp1_ccost, :rp1_ubusiness, :rp1_item_code, :rp1_listmat, :rp1_baseentry, :rp1_plan)";
 
@@ -200,14 +196,14 @@ class ProductionReceipt extends REST_Controller
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
                     ":rp1_item_description" => $detail['rp1_item_description'],
                     ":rp1_quantity" => $detail['rp1_quantity'],
-                    ":rp1_itemcost" => is_numeric($detail['rp1_itemcost'])?$detail['rp1_itemcost']:0,
+                    ":rp1_itemcost" => is_numeric($detail['rp1_itemcost']) ? $detail['rp1_itemcost'] : 0,
                     ":rp1_im" => $detail['rp1_im'],
                     ":rp1_ccost" => $detail['rp1_ccost'],
                     ":rp1_ubusiness" => $detail['rp1_ubusiness'],
                     ":rp1_item_code" => $detail['rp1_item_code'],
                     ":rp1_listmat" => $detail['rp1_listmat'],
-                    ":rp1_plan" => is_numeric($detail['rp1_plan'])?$detail['rp1_plan']:0,
-                    ":rp1_baseentry" => $resInsert
+                    ":rp1_plan" => is_numeric($detail['rp1_plan']) ? $detail['rp1_plan'] : 0,
+                    ":rp1_baseentry" => $resInsert,
                 ));
 
                 if (is_numeric($resInsert2) and $resInsert2 > 0) {
@@ -217,7 +213,7 @@ class ProductionReceipt extends REST_Controller
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se pudo realizar operación'
+                        'mensaje' => 'No se pudo realizar operación',
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -230,7 +226,7 @@ class ProductionReceipt extends REST_Controller
             $respuesta = array(
                 'error' => false,
                 'data' => $resInsert,
-                'mensaje' => 'Recepción de producción registrada con exito'
+                'mensaje' => 'Recepción de producción registrada con exito',
             );
         } else {
             $this->pedeo->trans_rollback();
@@ -238,7 +234,7 @@ class ProductionReceipt extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data' => $resInsert,
-                'mensaje' => 'No se pudo realizar operación'
+                'mensaje' => 'No se pudo realizar operación',
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -248,7 +244,8 @@ class ProductionReceipt extends REST_Controller
         $this->response($respuesta);
     }
 
-    public function updateProductionReceipt_post(){
+    public function updateProductionReceipt_post()
+    {
         $Data = $this->post();
         $respuesta = array();
         if (
@@ -262,8 +259,8 @@ class ProductionReceipt extends REST_Controller
         ) {
             $respuesta = array(
                 'error' => true,
-                'data'  => array(),
-                'mensaje' => 'La informacion enviada no es valida'
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -277,8 +274,8 @@ class ProductionReceipt extends REST_Controller
         if (!is_array($ContenidoDetalle)) {
             $respuesta = array(
                 'error' => true,
-                'data'  => array(),
-                'mensaje' => 'No se encontro el detalle de la recepción'
+                'data' => array(),
+                'mensaje' => 'No se encontro el detalle de la recepción',
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -289,8 +286,8 @@ class ProductionReceipt extends REST_Controller
         if (!intval(count($ContenidoDetalle)) > 0) {
             $respuesta = array(
                 'error' => true,
-                'data'  => array(),
-                'mensaje' => 'Documento sin detalle'
+                'data' => array(),
+                'mensaje' => 'Documento sin detalle',
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -298,7 +295,7 @@ class ProductionReceipt extends REST_Controller
             return;
         }
 
-        $sqlUpdate = "UPDATE tbrp SET 
+        $sqlUpdate = "UPDATE tbrp SET
          brp_doctype = :brp_doctype,
          brp_docnum = :brp_docnum,
          brp_cardcode = :brp_cardcode,
@@ -311,25 +308,24 @@ class ProductionReceipt extends REST_Controller
          brp_description = :brp_description
          WHERE brp_docentry = :brp_docentry ";
 
-         $this->pedeo->trans_begin();
+        $this->pedeo->trans_begin();
 
-         $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-         ":brp_doctype" => $Data['brp_doctype'],
-         ":brp_docnum" => $Data['brp_docnum'],
-         ":brp_cardcode" => $Data['brp_cardcode'],
-         ":brp_cardname" => $Data['brp_cardname'],
-         ":brp_duedev" => $Data['brp_duedev'],
-         ":brp_docdate" => $Data['brp_docdate'],
-         ":brp_ref" => $Data['brp_ref'],
-         ":brp_baseentry" => isset($Data['brp_baseentry']) ? $Data['brp_baseentry'] : 0,
-         ":brp_basetype" => isset($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
-         ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null,
-         ":brp_docentry" => $Data['brp_docentry']));
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ":brp_doctype" => $Data['brp_doctype'],
+            ":brp_docnum" => $Data['brp_docnum'],
+            ":brp_cardcode" => $Data['brp_cardcode'],
+            ":brp_cardname" => $Data['brp_cardname'],
+            ":brp_duedev" => $Data['brp_duedev'],
+            ":brp_docdate" => $Data['brp_docdate'],
+            ":brp_ref" => $Data['brp_ref'],
+            ":brp_baseentry" => isset($Data['brp_baseentry']) ? $Data['brp_baseentry'] : 0,
+            ":brp_basetype" => isset($Data['brp_basetype']) ? $Data['brp_basetype'] : 0,
+            ":brp_description" => isset($Data['brp_description']) ? $Data['brp_description'] : null,
+            ":brp_docentry" => $Data['brp_docentry']));
 
-         if(is_numeric($resUpdate) and $resUpdate > 0){
+        if (is_numeric($resUpdate) and $resUpdate > 0) {
 
             $this->pedeo->queryTable("DELETE FROM brp1 WHERE rp1_baseentry = :brp_docentry", array(':brp_docentry' => $Data['brp_docentry']));
-
 
             $sqlInsert2 = "INSERT INTO brp1 (rp1_item_description, rp1_quantity, rp1_itemcost, rp1_im, rp1_ccost, rp1_ubusiness, rp1_item_code, rp1_listmat, rp1_baseentry, rp1_plan) values (:rp1_item_description, :rp1_quantity, :rp1_itemcost, :rp1_im, :rp1_ccost, :rp1_ubusiness, :rp1_item_code, :rp1_listmat, :rp1_baseentry, :rp1_plan)";
 
@@ -344,7 +340,7 @@ class ProductionReceipt extends REST_Controller
                     ":rp1_item_code" => $detail['rp1_item_code'],
                     ":rp1_listmat" => $detail['rp1_listmat'],
                     ":rp1_plan" => $detail['rp1_plan'],
-                    ":rp1_baseentry" => $Data['brp_docentry']
+                    ":rp1_baseentry" => $Data['brp_docentry'],
                 ));
 
                 if (is_numeric($resInsert2) and $resInsert2 > 0) {
@@ -354,7 +350,7 @@ class ProductionReceipt extends REST_Controller
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se pudo realizar operación'
+                        'mensaje' => 'No se pudo realizar operación',
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -367,20 +363,78 @@ class ProductionReceipt extends REST_Controller
             $respuesta = array(
                 'error' => false,
                 'data' => $resUpdate,
-                'mensaje' => 'Recepción de producción actualizada con exito'
+                'mensaje' => 'Recepción de producción actualizada con exito',
             );
-         }else{
+        } else {
             $respuesta = array(
                 'error' => true,
-                'data'  => array(),
-                'mensaje' => 'La informacion enviada no es valida'
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
             );
 
             $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
             return;
-         }
+        }
 
-         $this->response($respuesta);
+        $this->response($respuesta);
+    }
+    //
+    public function getCostPT_post()
+    {
+
+        $Data = $this->post();
+
+        if (
+            !isset($Data['bep_docentry']) or
+            !isset($Data['dma_item_code'])
+        ) {
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+
+        $sqlSelect = "SELECT sum(ep1_quantity * ep1_itemcost)::text as result
+                        from tbep
+                        inner join bep1 on bep_docentry = ep1_baseentry
+                        inner join tbof on bep_baseentry = bof_docentry
+                        where bep_basetype = 28
+                        and bep_docentry = :bep_docentry
+                        union all
+                        SELECT dmu_code::text as result
+                        from dmar
+                        inner join dmum on dma_uom_sale = dmu_id
+                        where dma_item_code = :dma_item_code";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+            ':bep_docentry' => $Data['bep_docentry'],
+            ':dma_item_code' => $Data['dma_item_code'],
+        ));
+
+        if (isset($resSelect[0])) {
+
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '',
+            );
+
+        } else {
+
+            $respuesta = array(
+                'error' => true,
+                'data' => '',
+                'mensaje' => 'Busqueda sin resultados',
+            );
+        }
+
+        $this->response($respuesta);
+
     }
 }
