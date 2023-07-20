@@ -66,13 +66,15 @@ class Business extends REST_Controller
                     pge_branch, pge_mail, pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def, 
                     pge_bank_acct, pge_acc_type, pge_bridge_inv, pge_bridge_inv_purch,pge_acc_dcp, 
                     pge_acc_dcn,pge_acc_ajp,pge_page_social,pge_client_default,pge_supplier_default,
-                    pge_bridge_purch_int)
+                    pge_bridge_purch_int,pge_tax_debit_account, pge_tax_credit_account, 
+                    pge_shopping_discount_account, pge_sales_discount_account)
                    VALUES(:Pge_NameSoc, :Pge_SmallName, :Pge_AddSoc, :Pge_StateSoc, :Pge_CitySoc, 
                    :Pge_CouSoc, :Pge_IdType, :Pge_IdSoc, :Pge_WebSite, :Pge_Phone1, :Pge_Phone2, 
                    :Pge_Cel, :Pge_Branch, :Pge_Mail, :Pge_CurrFirst, :Pge_CurrSys, :Pge_CouBank, 
                    :Pge_BankDef, :Pge_BankAcct, :Pge_AccType, :pge_bridge_inv, :pge_bridge_inv_purch,
                    :pge_acc_dcp, :pge_acc_dcn,:pge_acc_ajp,:pge_page_social,:pge_client_default,
-                   :pge_supplier_default,:pge_bridge_purch_int)";
+                   :pge_supplier_default,:pge_bridge_purch_int,:pge_tax_debit_account, :pge_tax_credit_account,
+                   :pge_shopping_discount_account, :pge_sales_discount_account)";
 
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -104,7 +106,11 @@ class Business extends REST_Controller
       ':pge_page_social' => (!empty($DataCompany['pge_page_social'])) ? $DataCompany['pge_page_social'] : null,
       ':pge_client_default' => (!empty($DataCompany['pge_client_default'])) ? $DataCompany['pge_client_default'] : null,
       ':pge_supplier_default' => (!empty($DataCompany['pge_supplier_default'])) ? $DataCompany['pge_supplier_default'] : null,
-      ':pge_bridge_purch_int' => (!empty($DataCompany['pge_bridge_purch_int'])) ? $DataCompany['pge_bridge_purch_int'] : null
+      ':pge_bridge_purch_int' => (!empty($DataCompany['pge_bridge_purch_int'])) ? $DataCompany['pge_bridge_purch_int'] : null,
+      ':pge_tax_debit_account' => isset($DataCompany['pge_tax_debit_account']) && is_numeric($DataCompany['pge_tax_debit_account']) ? $DataCompany['pge_tax_debit_account'] : NULL,
+      ':pge_tax_credit_account' => isset($DataCompany['pge_tax_credit_account']) && is_numeric($DataCompany['pge_tax_credit_account']) ? $DataCompany['pge_tax_credit_account'] : NULL,
+      ':pge_shopping_discount_account' => isset($DataCompany['pge_shopping_discount_account']) && is_numeric($DataCompany['pge_shopping_discount_account']) ? $DataCompany['pge_shopping_discount_account'] : NULL,
+      ':pge_sales_discount_account' => isset($DataCompany['pge_sales_discount_account']) && is_numeric($DataCompany['pge_sales_discount_account']) ? $DataCompany['pge_sales_discount_account'] : NULL
     ));
 
 
@@ -175,8 +181,10 @@ class Business extends REST_Controller
                     pge_bridge_inv_purch = :pge_bridge_inv_purch, pge_acc_dcp = :pge_acc_dcp, 
                     pge_acc_dcn = :pge_acc_dcn, pge_acc_ajp = :pge_acc_ajp, 
                     pge_page_social = :pge_page_social ,pge_client_default = :pge_client_default,
-                    pge_supplier_default = :pge_supplier_default,pge_bridge_purch_int = :pge_bridge_purch_int
-                    WHERE pge_id = :Pge_Id";
+                    pge_supplier_default = :pge_supplier_default,pge_bridge_purch_int = :pge_bridge_purch_int,
+                    pge_tax_debit_account = :pge_tax_debit_account, pge_tax_credit_account = :pge_tax_credit_account, 
+                    pge_shopping_discount_account = :pge_shopping_discount_account, pge_sales_discount_account = :pge_sales_discount_account
+                    WHERE pge_id = :Pge_Id" ;
 
 
     $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -208,7 +216,11 @@ class Business extends REST_Controller
       ':pge_page_social' => (!empty($DataCompany['pge_page_social'])) ? $DataCompany['pge_page_social'] : null,
       ':pge_client_default' => (!empty($DataCompany['pge_client_default'])) ? $DataCompany['pge_client_default'] : null,
       ':pge_supplier_default' => (!empty($DataCompany['pge_supplier_default'])) ? $DataCompany['pge_supplier_default'] : null,
-      ':pge_bridge_purch_int' => (!empty($DataCompany['pge_bridge_purch_int'])) ? $DataCompany['pge_bridge_purch_int'] : null
+      ':pge_bridge_purch_int' => (!empty($DataCompany['pge_bridge_purch_int'])) ? $DataCompany['pge_bridge_purch_int'] : null,
+      ':pge_tax_debit_account' => isset($DataCompany['pge_tax_debit_account']) && is_numeric($DataCompany['pge_tax_debit_account']) ? $DataCompany['pge_tax_debit_account'] : NULL,
+      ':pge_tax_credit_account' => isset($DataCompany['pge_tax_credit_account']) && is_numeric($DataCompany['pge_tax_credit_account']) ? $DataCompany['pge_tax_credit_account'] : NULL,
+      ':pge_shopping_discount_account' => isset($DataCompany['pge_shopping_discount_account']) && is_numeric($DataCompany['pge_shopping_discount_account']) ? $DataCompany['pge_shopping_discount_account'] : NULL,
+      ':pge_sales_discount_account' => isset($DataCompany['pge_sales_discount_account']) && is_numeric($DataCompany['pge_sales_discount_account']) ? $DataCompany['pge_sales_discount_account'] : NULL
     ));
 
     if (is_numeric($resUpdate) && $resUpdate == 1) {
