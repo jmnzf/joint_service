@@ -142,8 +142,8 @@ class RetFisc extends REST_Controller {
 					tpdm.pdm_municipality AS municipio,
 					tdar.dar_name AS autoretencion,
 					trmm.rmm_name AS retencionmagnetica,
-					ttrt.trt_description AS mrt_description,
-					mrt_use_fc
+					ttrt.trt_description AS mrt_description
+					--mrt_use_fc
 					FROM dmrt
 					INNER JOIN ttrt
 					ON dmrt.mrt_type = ttrt.trt_id
