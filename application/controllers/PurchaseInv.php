@@ -98,6 +98,20 @@ class PurchaseInv extends REST_Controller
 		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
 		$CANTUOMSALE = 0;
 
+
+		//
+		$DetalleAsientoDescuento = new stdClass();
+		$DetalleAsientoIvaDescuento = new stdClass();
+		$DetalleConsolidadoDescuento = [];
+		$DetalleConsolidadoIvaDescuento = [];
+		$llaveDescuento = ""; 
+		$llaveIvaDescuento = "";
+		$inArrayDescuento = array();
+		$inArrayIvaDescuento = array();
+		$posicionDescuento = 0; 
+		$posicionIvaDescuento = 0;
+		//
+		$FactorC = false; // Impuesto con factor de conversion
 		// VARIABLES PARA SUMAS
 		$SumaCreditosSYS = 0;
 		$SumaDebitosSYS = 0;
@@ -1754,6 +1768,22 @@ class PurchaseInv extends REST_Controller
 					}
 				}
 
+				// se valida si se esta usando factor de conversion en alguna de las lineas del documento
+				// if (!$FactorC){
+
+				// 	foreach ($ContenidoDetalle as $key => $detail) {
+
+				// 		$sqlFactorC = "SELECT * FROM dmtx WHERE dmi_type = :dmi_type AND dmi_use_fc = :dmi_use_fc AND dmi_code = :dmi_code";
+				// 		$resFactorC = $this->pedeo->queryTable($sqlFactorC, array(':dmi_type' => '2', ':dmi_use_fc' => 1, ':dmi_code' => $detail['fc1_codimp']));
+
+				// 		if (isset($resFactorC[0])){
+				// 			$FactorC =  true;
+				// 			break;
+				// 		}
+				// 	}
+				// }
+				//
+
 				//LLENANDO DETALLE ASIENTO CONTABLES
 				$DetalleAsientoIngreso = new stdClass();
 				$DetalleAsientoIva = new stdClass();
@@ -1761,6 +1791,30 @@ class PurchaseInv extends REST_Controller
 				$DetalleCostoCosto = new stdClass();
 				$DetalleItemNoInventariable = new stdClass();
 
+
+				// ESTO SOLO APLICA PARA CUANDO SE MANEJA IMPUESTO CON FACTOR DE CONVERSION
+				// CASO PARA BOLIVIA
+				// if ($FactorC) {
+
+				// 	if ( isset( $detail['fc1_discount'] ) &&  isset( $detail['fc1_discount'] ) && $detail['fc1_discount'] > 0 ) {
+						
+				// 		$DetalleAsientoDescuento = new stdClass();
+				// 		$DetalleAsientoIvaDescuento = new stdClass();
+
+				// 		$DetalleAsientoDescuento->descuento = $detail['fc1_discount'];
+
+
+				// 		$DetalleAsientoIvaDescuento->ivadescuento = (($detail['fc1_discount'] * $detail['fc1_vat']) / 100);
+
+
+				// 		array_push($DetalleConsolidadoDescuento, $DetalleAsientoDescuento);
+				// 		array_push($DetalleConsolidadoIvaDescuento, $DetalleAsientoIvaDescuento);
+
+				// 	}
+
+				// }
+
+				//
 
 				$DetalleAsientoIngreso->ac1_account = is_numeric($detail['fc1_acctcode']) ? $detail['fc1_acctcode'] : 0;
 				$DetalleAsientoIngreso->ac1_prc_code = isset($detail['fc1_costcode']) ? $detail['fc1_costcode'] : NULL;
@@ -2840,9 +2894,279 @@ class PurchaseInv extends REST_Controller
 				}
 			}
 
-			//FIN PROCEDIMIENTO PARA LLENAR ASIENTO DE RENTENCIONES
+			// FIN PROCEDIMIENTO PARA LLENAR ASIENTO DE RENTENCIONES
 
-			//FIN DE OPERACIONES VITALES
+
+			// ASIENTO PARA DESCUENTO
+			// if ($FactorC) {
+
+			// 	if (isset($DetalleConsolidadoDescuento[0])){
+
+			// 		$descuento = 0;
+			// 		$cuentadescuento = 0;
+			// 		$totalDescuento = 0;
+			// 		$totalDescuentoOriginal = 0;
+
+			// 		// BUSCANDO CUENTA DE DESCUENTO PARA COMPRAS
+
+			// 		$cuentaDescuento = "SELECT coalesce(pge_shopping_discount_account, 0) as cuenta FROM pgem WHERE pge_id = :pge_id";
+			// 		$rescuentaDescuento = $this->pedeo->queryTable($cuentaDescuento, array(':pge_id' => $Data['business']));
+
+			// 		if (isset( $rescuentaDescuento[0] ) && $rescuentaDescuento[0]['cuenta'] > 0 ) {
+
+			// 			$cuentadescuento = $rescuentaDescuento[0]['cuenta'];
+
+			// 		} else {
+
+			// 			$this->pedeo->trans_rollback();
+
+			// 			$respuesta = array(
+			// 				'error'   => true,
+			// 				'data'	  => $rescuentaDescuento,
+			// 				'mensaje'	=> 'No se pudo registrar la factura de compras, el no se encontro la cuenta para el descuento'
+			// 			);
+
+			// 			return $this->response($respuesta);
+
+						
+			// 		}
+
+			// 		foreach ($DetalleConsolidadoDescuento as $key => $posicion) {
+
+			// 			$descuento = ( $descuento + $posicion->descuento );
+						
+		
+			// 		}
+
+			// 		$totalDescuento = $descuento;
+			// 		$totalDescuentoOriginal  = $totalDescuento;
+
+
+			// 		if (trim($Data['cfc_currency']) != $MONEDALOCAL) {
+			// 			$totalDescuento = ($totalDescuento * $TasaDocLoc);
+			// 		}
+	
+	
+			// 		if (trim($Data['cfc_currency']) != $MONEDASYS) {
+			// 			$MontoSysCR = ($totalDescuento / $TasaLocSys);
+			// 		} else {
+			// 			$MontoSysCR = 	$totalDescuentoOriginal;
+			// 		}
+	
+			// 		$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+			// 		$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+
+			// 		$AC1LINE = $AC1LINE + 1;
+			// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+	
+			// 			':ac1_trans_id' => $resInsertAsiento,
+			// 			':ac1_account' => $cuentadescuento,
+			// 			':ac1_debit' => 0,
+			// 			':ac1_credit' => round($totalDescuento, $DECI_MALES),
+			// 			':ac1_debit_sys' => 0,
+			// 			':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+			// 			':ac1_currex' => 0,
+			// 			':ac1_doc_date' => $this->validateDate($Data['cfc_docdate']) ? $Data['cfc_docdate'] : NULL,
+			// 			':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate']) ? $Data['cfc_duedate'] : NULL,
+			// 			':ac1_debit_import' => 0,
+			// 			':ac1_credit_import' => 0,
+			// 			':ac1_debit_importsys' => 0,
+			// 			':ac1_credit_importsys' => 0,
+			// 			':ac1_font_key' => $resInsert,
+			// 			':ac1_font_line' => 1,
+			// 			':ac1_font_type' => is_numeric($Data['cfc_doctype']) ? $Data['cfc_doctype'] : 0,
+			// 			':ac1_accountvs' => 1,
+			// 			':ac1_doctype' => 18,
+			// 			':ac1_ref1' => "",
+			// 			':ac1_ref2' => "",
+			// 			':ac1_ref3' => "",
+			// 			':ac1_prc_code' => NULL,
+			// 			':ac1_uncode' => NULL,
+			// 			':ac1_prj_code' => NULL,
+			// 			':ac1_rescon_date' => NULL,
+			// 			':ac1_recon_total' => 0,
+			// 			':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
+			// 			':ac1_accperiod' => 1,
+			// 			':ac1_close' => 0,
+			// 			':ac1_cord' => 0,
+			// 			':ac1_ven_debit' => 0,
+			// 			':ac1_ven_credit' => 0,
+			// 			':ac1_fiscal_acct' => 0,
+			// 			':ac1_taxid' => 0,
+			// 			':ac1_isrti' => 0,
+			// 			':ac1_basert' => 0,
+			// 			':ac1_mmcode' => 0,
+			// 			':ac1_legal_num' => isset($Data['cfc_cardcode']) ? $Data['cfc_cardcode'] : NULL,
+			// 			':ac1_codref' => 1,
+			// 			":ac1_line" => $AC1LINE,
+			// 			':ac1_base_tax' => 0,
+			// 			':business' => $Data['business'],
+			// 			':branch' 	=> $Data['branch'],
+			// 			':ac1_codret' => '0'
+			// 		));
+		
+		
+		
+			// 		if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+			// 			// Se verifica que el detalle no de error insertando //
+			// 		} else {
+	
+			// 			// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
+			// 			// se retorna el error y se detiene la ejecucion del codigo restante.
+			// 			$this->pedeo->trans_rollback();
+	
+			// 			$respuesta = array(
+			// 				'error'   => true,
+			// 				'data'	  => $resDetalleAsiento,
+			// 				'mensaje'	=> 'No se pudo registrar la factura de compras'
+			// 			);
+	
+			// 			$this->response($respuesta);
+	
+			// 			return;
+			// 		}
+
+			// 	}
+
+			// }
+			// FIN ASIENTO PARA DESCUENTO
+
+			// ASIENTO PARA IVA DEL DESCUENTO
+			// if ($FactorC) {
+
+			// 	if (isset($DetalleConsolidadoIvaDescuento[0])){
+
+			// 		$ivadescuento = 0;
+			// 		$cuentaivadescuento = 0;
+			// 		$totalIvaDescuento = 0;
+			// 		$totalIvaDescuentoOriginal = 0;
+
+			// 		// BUSCANDO CUENTA DE DESCUENTO PARA COMPRAS
+
+			// 		$cuentaIvaDescuento = "SELECT coalesce(pge_tax_debit_account, 0) as cuenta FROM pgem WHERE pge_id = :pge_id";
+			// 		$rescuentaIvaDescuento = $this->pedeo->queryTable($cuentaDescuento, array(':pge_id' => $Data['business']));
+
+			// 		if (isset( $rescuentaIvaDescuento[0] ) && $rescuentaIvaDescuento[0]['cuenta'] > 0 ) {
+
+			// 			$cuentaivadescuento = $rescuentaIvaDescuento[0]['cuenta'];
+
+			// 		} else {
+
+			// 			$this->pedeo->trans_rollback();
+
+			// 			$respuesta = array(
+			// 				'error'   => true,
+			// 				'data'	  => $rescuentaIvaDescuento,
+			// 				'mensaje'	=> 'No se pudo registrar la factura de compras, el no se encontro la cuenta para asociar el iva del descuento'
+			// 			);
+
+			// 			return $this->response($respuesta);
+
+						
+			// 		}
+
+			// 		foreach ($DetalleConsolidadoIvaDescuento as $key => $posicion) {
+
+			// 			$ivadescuento = ( $ivadescuento + $posicion->ivadescuento );
+						
+		
+			// 		}
+
+			// 		$totalIvaDescuento = $ivadescuento;
+			// 		$totalIvaDescuentoOriginal  = $totalIvaDescuento;
+
+
+			// 		if (trim($Data['cfc_currency']) != $MONEDALOCAL) {
+			// 			$totalIvaDescuento = ($totalIvaDescuento * $TasaDocLoc);
+			// 		}
+	
+	
+			// 		if (trim($Data['cfc_currency']) != $MONEDASYS) {
+			// 			$MontoSysCR = ($totalIvaDescuento / $TasaLocSys);
+			// 		} else {
+			// 			$MontoSysCR = 	$totalIvaDescuentoOriginal;
+			// 		}
+	
+			// 		$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+			// 		$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+
+			// 		$AC1LINE = $AC1LINE + 1;
+			// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+	
+			// 			':ac1_trans_id' => $resInsertAsiento,
+			// 			':ac1_account' => $cuentaivadescuento,
+			// 			':ac1_debit' => 0,
+			// 			':ac1_credit' => round($totalIvaDescuento, $DECI_MALES),
+			// 			':ac1_debit_sys' => 0,
+			// 			':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+			// 			':ac1_currex' => 0,
+			// 			':ac1_doc_date' => $this->validateDate($Data['cfc_docdate']) ? $Data['cfc_docdate'] : NULL,
+			// 			':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate']) ? $Data['cfc_duedate'] : NULL,
+			// 			':ac1_debit_import' => 0,
+			// 			':ac1_credit_import' => 0,
+			// 			':ac1_debit_importsys' => 0,
+			// 			':ac1_credit_importsys' => 0,
+			// 			':ac1_font_key' => $resInsert,
+			// 			':ac1_font_line' => 1,
+			// 			':ac1_font_type' => is_numeric($Data['cfc_doctype']) ? $Data['cfc_doctype'] : 0,
+			// 			':ac1_accountvs' => 1,
+			// 			':ac1_doctype' => 18,
+			// 			':ac1_ref1' => "",
+			// 			':ac1_ref2' => "",
+			// 			':ac1_ref3' => "",
+			// 			':ac1_prc_code' => NULL,
+			// 			':ac1_uncode' => NULL,
+			// 			':ac1_prj_code' => NULL,
+			// 			':ac1_rescon_date' => NULL,
+			// 			':ac1_recon_total' => 0,
+			// 			':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
+			// 			':ac1_accperiod' => 1,
+			// 			':ac1_close' => 0,
+			// 			':ac1_cord' => 0,
+			// 			':ac1_ven_debit' => 0,
+			// 			':ac1_ven_credit' => 0,
+			// 			':ac1_fiscal_acct' => 0,
+			// 			':ac1_taxid' => 0,
+			// 			':ac1_isrti' => 0,
+			// 			':ac1_basert' => 0,
+			// 			':ac1_mmcode' => 0,
+			// 			':ac1_legal_num' => isset($Data['cfc_cardcode']) ? $Data['cfc_cardcode'] : NULL,
+			// 			':ac1_codref' => 1,
+			// 			":ac1_line" => $AC1LINE,
+			// 			':ac1_base_tax' => 0,
+			// 			':business' => $Data['business'],
+			// 			':branch' 	=> $Data['branch'],
+			// 			':ac1_codret' => '0'
+			// 		));
+		
+		
+		
+			// 		if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+			// 			// Se verifica que el detalle no de error insertando //
+			// 		} else {
+	
+			// 			// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
+			// 			// se retorna el error y se detiene la ejecucion del codigo restante.
+			// 			$this->pedeo->trans_rollback();
+	
+			// 			$respuesta = array(
+			// 				'error'   => true,
+			// 				'data'	  => $resDetalleAsiento,
+			// 				'mensaje'	=> 'No se pudo registrar la factura de compras'
+			// 			);
+	
+			// 			$this->response($respuesta);
+	
+			// 			return;
+			// 		}
+
+			// 	}
+
+			// }
+			// FIN ASIENTO PARA IVA DEL DESCUENTO
+
+
+			// FIN DE OPERACIONES VITALES
 
 			// FIN VALIDACION DE ESTADOS
 

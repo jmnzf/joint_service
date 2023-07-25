@@ -146,13 +146,14 @@ class Quotation extends REST_Controller
 			':bed_status'   => 4 // 4 APROBADO SEGUN MODELO DE APROBACION
 
 		));
-		
+
+		// VERIFICA EL MODELO DE APROBACION
 		if (!isset($resVerificarAprobacion[0])) {
 
-			$aprobacion = $this->aprobacion->ValidModelAprobacion($Data,$ContenidoDetalle,'dvc','vc1',$Data['business'],$Data['branch']);
-		
-			if ( isset($aprobacion['error']) && $aprobacion['error'] == false && $aprobacion['data'] == 1 ){
-
+			$aprobacion = $this->aprobacion->validmodelaprobacion($Data,$ContenidoDetalle,'dvc','vc1',$Data['business'],$Data['branch']);
+	
+			if ( isset($aprobacion['error']) && $aprobacion['error'] == false && $aprobacion['data'] == 1 ) {
+				
 				return $this->response($aprobacion);
 
 			} else  if ( isset($aprobacion['error']) && $aprobacion['error'] == true ) {
@@ -160,10 +161,10 @@ class Quotation extends REST_Controller
 				return $this->response($aprobacion);
 			}
 		}
-
+	
 		// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
 
-		// //BUSCANDO LA NUMERACION DEL DOCUMENTO
+		// BUSCANDO LA NUMERACION DEL DOCUMENTO
 		$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['dvc_series'],$Data['dvc_docdate'],$Data['dvc_duedate']);
 		
 		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){

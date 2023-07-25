@@ -319,189 +319,19 @@ class BuyOffert extends REST_Controller
 			':bed_doctype'  => $Data['coc_basetype'],
 			':bed_status'   => 4 // 4 APROBADO SEGUN MODELO DE APROBACION
 		));
-
-
-
+		
+		// VERIFICA EL MODELO DE APROBACION
 		if (!isset($resVerificarAprobacion[0])) {
 
-			// BUSCANDO MODELO PARA EL DOCUMENTO
+			$aprobacion = $this->aprobacion->validmodelaprobacion($Data,$ContenidoDetalle,'coc','oc1',$Data['business'],$Data['branch']);
+	
+			if ( isset($aprobacion['error']) && $aprobacion['error'] == false && $aprobacion['data'] == 1 ) {
+				
+				return $this->response($aprobacion);
 
-			$Emmpleado = $Data['coc_createby'];
-
-			$sqlModeloDocumentoEmpleado = "SELECT * FROM tmau	WHERE mau_doctype = :mau_doctype AND mau_emp = :mau_emp AND mau_status = :mau_status";
-			$resModeloDocumentoEmpleado = $this->pedeo->queryTable($sqlModeloDocumentoEmpleado, array(
-				':mau_doctype' => $Data['coc_doctype'],
-				':mau_emp' => 1,
-				':mau_status' => 1
-			));
-
-			if (isset($resModeloDocumentoEmpleado[0])) {
-				// SE BUSCA EL USUARIO DEL EMPLEADO DE VENTAS
-				$sqlUsuarioEmpleadoVentas = "SELECT pgu_code_user FROM pgus WHERE pgu_id_vendor = :pgu_id_vendor";
-				$resUsuarioEmpleadoVentas = $this->pedeo->queryTable($sqlUsuarioEmpleadoVentas, array(
-					':pgu_id_vendor' => $Data['coc_slpcode']
-				));
-
-				if (isset($resUsuarioEmpleadoVentas[0])) {
-					$Emmpleado = $resUsuarioEmpleadoVentas[0]['pgu_code_user'];
-				} else {
-					$Emmpleado = $Data['coc_createby'];
-				}
-			}
-
-			$sqlDocModelo = "SELECT mau_docentry as modelo, mau_doctype as doctype, mau_quantity as cantidad,
-							au1_doctotal as doctotal,au1_doctotal2 as doctotal2, au1_c1 as condicion, mau_currency
-							FROM tmau
-							INNER JOIN mau1
-							ON mau_docentry =  au1_docentry
-							INNER JOIN taus
-							ON mau_docentry  = aus_id_model
-							INNER JOIN pgus
-							ON aus_id_usuario = pgu_id_usuario
-							WHERE mau_doctype = :mau_doctype
-							AND pgu_code_user = :pgu_code_user
-							AND mau_status = :mau_status
-							AND tmau.business = :business
-							AND aus_status = :aus_status";
-
-			$resDocModelo = $this->pedeo->queryTable($sqlDocModelo, array(
-
-				':mau_doctype'   => $Data['coc_doctype'],
-				':pgu_code_user' => $Emmpleado,
-				':mau_status' 	 => 1,
-				':aus_status' 	 => 1,
-				':business'		 => $Data['business']
-
-			));
-
-			if (isset($resDocModelo[0])) {
-
-				foreach ($resDocModelo as $key => $value) {
-
-					//VERIFICAR MODELO DE APROBACION
-					$condicion = $value['condicion'];
-					$valorDocTotal1 = $value['doctotal'];
-					$valorDocTotal2 = $value['doctotal2'];
-					$TotalDocumento = $Data['coc_doctotal'];
-					$doctype =  $value['doctype'];
-					$modelo = $value['modelo'];
-
-					$sqlTasaMonedaModelo = "SELECT COALESCE(get_dynamic_conversion(:mau_currency,:doc_currency,:doc_date,:doc_total,get_localcur()), 0) AS monto"; 
-					$resTasaMonedaModelo = $this->pedeo->queryTable($sqlTasaMonedaModelo, array(
-						':mau_currency' => $value['mau_currency'],
-						':doc_currency' => $Data['coc_currency'],
-						':doc_date' 	=> $Data['coc_docdate'],
-						':doc_total' 	=> $TotalDocumento
-					));
-
-					if ( $resTasaMonedaModelo[0]['monto'] == 0 ){
-						$respuesta = array(
-							'error' => true,
-							'data'  => array(),
-							'mensaje' => 'No se encrontro la tasa de cambio para la moneda del modelo :'. $value['mau_currency'].'en la fecha del documento '.$Data['coc_docdate']
-						);
-			
-						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-			
-						return;
-					}
-
-					$TotalDocumento =  $resTasaMonedaModelo[0]['monto'];
-
-
-					if ($condicion == ">") {
-
-						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
-								FROM tmau
-								INNER JOIN  mau1
-								on mau_docentry =  au1_docentry
-								AND :au1_doctotal > au1_doctotal
-								AND mau_doctype = :mau_doctype
-								AND mau_docentry = :mau_docentry";
-
-						$ressq = $this->pedeo->queryTable($sq, array(
-
-							':au1_doctotal' => $TotalDocumento,
-							':mau_doctype'  => $doctype,
-							':mau_docentry' => $modelo
-						));
-
-						if (isset($ressq[0])) {
-							
-							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'coc', 'oc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
-							
-							if ($resAprobacion['error'] == false){
-
-								$respuesta = array(
-									'error'   => false,
-									'data'    => [],
-									'mensaje' => $resAprobacion['mensaje'],
-									
-								);
-
-								return $this->response($respuesta);
-
-							}else{
-
-								$respuesta = array(
-									'error'   => true,
-									'data'    => $resAprobacion,
-									'mensaje' => $resAprobacion['mensaje'],
-									
-								);
-
-								return $this->response($respuesta);
-
-							}
-						}
-					} else if ($condicion == "BETWEEN") {
-
-						$sq = " SELECT mau_quantity,mau_approvers,mau_docentry
-								FROM tmau
-								INNER JOIN  mau1
-								on mau_docentry =  au1_docentry
-								AND cast(:doctotal as numeric) between au1_doctotal AND au1_doctotal2
-								AND mau_doctype = :mau_doctype
-								AND mau_docentry = :mau_docentry";
-
-						$ressq = $this->pedeo->queryTable($sq, array(
-
-							':doctotal' 	  => $TotalDocumento,
-							':mau_doctype'  => $doctype,
-							':mau_docentry' => $modelo
-						));
-
-						if (isset($ressq[0])) {
-
-							$resAprobacion = $this->aprobacion->setAprobacion($Data, $ContenidoDetalle, 'coc', 'oc1', $ressq[0]['mau_quantity'], count(explode(',', $ressq[0]['mau_approvers'])), $ressq[0]['mau_docentry'], $Data['business'], $Data['branch']);
-							
-							if ($resAprobacion['error'] == false){
-
-								$respuesta = array(
-									'error'   => false,
-									'data'    => [],
-									'mensaje' => $resAprobacion['mensaje'],
-									
-								);
-
-								return $this->response($respuesta);
-
-							}else{
-
-								$respuesta = array(
-									'error'   => true,
-									'data'    => $resAprobacion,
-									'mensaje' => $resAprobacion['mensaje'],
-									
-								);
-
-								return $this->response($respuesta);
-
-							}
-						}
-					}
-					//VERIFICAR MODELO DE PROBACION
-				}
+			} else  if ( isset($aprobacion['error']) && $aprobacion['error'] == true ) {
+				
+				return $this->response($aprobacion);
 			}
 		}
 		// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADOsw
