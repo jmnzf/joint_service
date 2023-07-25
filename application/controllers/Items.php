@@ -111,7 +111,7 @@ class Items extends REST_Controller
 						:dma_uom_sizedim,:dma_lotes_code, :dma_emisionmethod, :dma_long_description, :dma_item_mat,
 						:dma_accounting, :dma_acctin, :dma_acct_out, :dma_acct_inv, :dma_acct_stockn, :dma_acct_stockp, :dma_acct_redu, :dma_acct_amp,
 						:dma_acct_cost, :dma_acct_return, :dma_uom_width, :dma_uom_tall, :dma_uom_length, :dma_uom_vol, :dma_um_inventory, :dma_tax_sales_code, :dma_tax_purch_code,:dma_acct_invproc,
-						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base,:dma_type_art)";
+						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base, :dma_type_art)";
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(

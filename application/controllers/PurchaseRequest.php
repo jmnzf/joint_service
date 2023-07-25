@@ -40,6 +40,7 @@ class PurchaseRequest extends REST_Controller
 		$MONEDASYS = "";
 		
 		$Data = $this->post();
+		
 
 		if (!isset($Data['business']) OR
 			!isset($Data['branch'])) {
@@ -123,7 +124,7 @@ class PurchaseRequest extends REST_Controller
 		$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['csc_series'],$Data['csc_docdate'],$Data['csc_duedate']);
 		
 		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
-
+			
 		}else if ($DocNumVerificado['error']){
 
 			return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
@@ -151,6 +152,7 @@ class PurchaseRequest extends REST_Controller
 		$dataTasa = $this->tasa->Tasa($Data['csc_currency'],$Data['csc_docdate']);
 
 		if(isset($dataTasa['tasaLocal'])){
+			
 
 			$TasaDocLoc = $dataTasa['tasaLocal'];
 			$TasaLocSys = $dataTasa['tasaSys'];
@@ -176,14 +178,13 @@ class PurchaseRequest extends REST_Controller
 			':bed_status'   => 4 // 4 APROBADO SEGUN MODELO DE APROBACION
 		));
 
-
-
+		// VERIFICA EL MODELO DE APROBACION
 		if (!isset($resVerificarAprobacion[0])) {
 
 			$aprobacion = $this->aprobacion->validmodelaprobacion($Data,$ContenidoDetalle,'csc','sc1',$Data['business'],$Data['branch']);
-
-			if ( isset($aprobacion['error']) && $aprobacion['error'] == false || $aprobacion['data'] == 1 ){
-
+	
+			if ( isset($aprobacion['error']) && $aprobacion['error'] == false && $aprobacion['data'] == 1 ) {
+				
 				return $this->response($aprobacion);
 
 			} else  if ( isset($aprobacion['error']) && $aprobacion['error'] == true ) {
@@ -191,7 +192,6 @@ class PurchaseRequest extends REST_Controller
 				return $this->response($aprobacion);
 			}
 		}
-
 
 		// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
 
@@ -243,7 +243,7 @@ class PurchaseRequest extends REST_Controller
 			':csc_attch' => NULL,
 			':csc_internal_comments' => isset($Data['csc_internal_comments']) ? $Data['csc_internal_comments'] : NULL
 		));
-
+		// print_r($resInsert);exit;die;
 		if (is_numeric($resInsert) && $resInsert > 0) {
 
 			// Se actualiza la serie de la numeracion del documento
