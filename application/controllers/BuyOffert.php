@@ -27,6 +27,7 @@ class BuyOffert extends REST_Controller
 		$this->load->library('Aprobacion');
 		$this->load->library('DocumentNumbering');
 		$this->load->library('Tasa');
+		$this->load->library('DocumentDuplicate');
 	}
 
 	public function getOffert_get()
@@ -1252,6 +1253,91 @@ class BuyOffert extends REST_Controller
 				'mensaje'	=> 'busqueda sin resultados'
 			);
 		}
+
+		$this->response($respuesta);
+	}
+
+	// OBTENER ENCABEZADO PARA EL DUPLICADO
+	public function getDuplicateFrom_get() {
+
+		$Data = $this->get();
+
+		if (!isset($Data['dms_card_code'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$duplicateData = $this->documentduplicate->getDuplicate('dcoc','coc',$Data['dms_card_code'],$Data['business']);
+
+
+		if (isset($duplicateData[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $duplicateData,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+	
+	
+
+		$this->response($respuesta);
+
+	}
+
+	//OBTENER DETALLE PARA DUPLICADO
+	public function getDuplicateDt_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['oc1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+			$copy = $this->documentduplicate->getDuplicateDt($Data['oc1_docentry'],'dcoc','coc1','coc','oc1','');
+
+			if (isset($copy[0])) {
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $copy,
+					'mensaje' => ''
+				);
+			} else {
+	
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+			}
+		
+		
 
 		$this->response($respuesta);
 	}

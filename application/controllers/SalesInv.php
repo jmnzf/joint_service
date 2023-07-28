@@ -27,6 +27,7 @@ class SalesInv extends REST_Controller
 		$this->load->library('DocumentCopy');
 		$this->load->library('DocumentNumbering');
 		$this->load->library('Tasa');
+		$this->load->library('DocumentDuplicate');
 	}
 
 	//CREAR NUEVA FACTURA DE VENTAS
@@ -4929,6 +4930,94 @@ class SalesInv extends REST_Controller
 		} else {
 			return false;
 		}
+	}
+
+	// OBTENER ENCABEZADO PARA EL DUPLICADO
+	public function getDuplicateFrom_get() {
+
+		$Data = $this->get();
+
+		if (!isset($Data['dms_card_code'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+
+		print_r($Data);exit;
+
+		$duplicateData = $this->documentduplicate->getDuplicate('dvfv','dvf',$Data['dms_card_code'],$Data['business']);
+
+
+		if (isset($duplicateData[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $duplicateData,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+	
+	
+
+		$this->response($respuesta);
+
+	}
+
+	//OBTENER DETALLE PARA DUPLICADO
+	public function getDuplicateDt_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['fv1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+			$copy = $this->documentduplicate->getDuplicateDt($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1','detalle_modular::jsonb');
+
+			if (isset($copy[0])) {
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $copy,
+					'mensaje' => ''
+				);
+			} else {
+	
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+			}
+		
+		
+
+		$this->response($respuesta);
 	}
 
 

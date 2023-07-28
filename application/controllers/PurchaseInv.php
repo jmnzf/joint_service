@@ -27,13 +27,13 @@ class PurchaseInv extends REST_Controller
 		$this->load->library('DocumentCopy');
 		$this->load->library('DocumentNumbering');
 		$this->load->library('Tasa');
+		$this->load->library('DocumentDuplicate');
 	}
 
 	//CREAR NUEVA FACTURA DE compras
 	public function createPurchaseInv_post()
 	{
 		$Data = $this->post();
-
 		$TasaDocLoc = 0;
 		$TasaLocSys = 0;
 		$MONEDALOCAL = "";
@@ -97,19 +97,17 @@ class PurchaseInv extends REST_Controller
 		$MONEDALOCAL = 0;
 		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
 		$CANTUOMSALE = 0;
-
-
 		//
 		$DetalleAsientoDescuento = new stdClass();
 		$DetalleAsientoIvaDescuento = new stdClass();
 		$DetalleConsolidadoDescuento = [];
 		$DetalleConsolidadoIvaDescuento = [];
-		$llaveDescuento = ""; 
-		$llaveIvaDescuento = "";
-		$inArrayDescuento = array();
-		$inArrayIvaDescuento = array();
-		$posicionDescuento = 0; 
-		$posicionIvaDescuento = 0;
+
+
+		$IvaDescuentoAcumulado = 0;
+		$DescuentoAcumulado = 0;
+		
+
 		//
 		$FactorC = false; // Impuesto con factor de conversion
 		// VARIABLES PARA SUMAS
@@ -236,11 +234,11 @@ class PurchaseInv extends REST_Controller
 		$sqlInsert = "INSERT INTO dcfc(cfc_series, cfc_docnum, cfc_docdate, cfc_duedate, cfc_duedev, cfc_pricelist, cfc_cardcode,
                       cfc_cardname, cfc_currency, cfc_contacid, cfc_slpcode, cfc_empid, cfc_comment, cfc_doctotal, cfc_baseamnt, cfc_taxtotal,
                       cfc_discprofit, cfc_discount, cfc_createat, cfc_baseentry, cfc_basetype, cfc_doctype, cfc_idadd, cfc_adress, cfc_paytype,
-                      cfc_createby,cfc_totalret,cfc_totalretiva,cfc_correl, cfc_tax_control_num, business, branch,cfc_bankable,cfc_internal_comments)
+                      cfc_createby,cfc_totalret,cfc_totalretiva,cfc_correl, cfc_tax_control_num, business, branch,cfc_bankable,cfc_internal_comments,cfc_correl2)
 					  VALUES(:cfc_series, :cfc_docnum, :cfc_docdate, :cfc_duedate, :cfc_duedev, :cfc_pricelist, :cfc_cardcode, :cfc_cardname,
                       :cfc_currency, :cfc_contacid, :cfc_slpcode, :cfc_empid, :cfc_comment, :cfc_doctotal, :cfc_baseamnt, :cfc_taxtotal, :cfc_discprofit, :cfc_discount,
                       :cfc_createat, :cfc_baseentry, :cfc_basetype, :cfc_doctype, :cfc_idadd, :cfc_adress, :cfc_paytype,:cfc_createby,:cfc_totalret,:cfc_totalretiva,
-					  :cfc_correl, :cfc_tax_control_num, :business, :branch,:cfc_bankable,:cfc_internal_comments)";
+					  :cfc_correl, :cfc_tax_control_num, :business, :branch,:cfc_bankable,:cfc_internal_comments,:cfc_correl2)";
 
 
 		// Se Inicia la transaccion,
@@ -285,7 +283,8 @@ class PurchaseInv extends REST_Controller
 			':business' => $Data['business'],
 			':branch' => $Data['branch'],
 			':cfc_bankable' => is_numeric($Data['cfc_bankable']) ? $Data['cfc_bankable'] : 0,
-			':cfc_internal_comments' => isset($Data['cfc_internal_comments']) ? $Data['cfc_internal_comments'] : NULL
+			':cfc_internal_comments' => isset($Data['cfc_internal_comments']) ? $Data['cfc_internal_comments'] : NULL,
+			':cfc_correl2' => isset($Data['cfc_correl2']) ? $Data['cfc_correl2'] : NULL,
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -1769,19 +1768,19 @@ class PurchaseInv extends REST_Controller
 				}
 
 				// se valida si se esta usando factor de conversion en alguna de las lineas del documento
-				// if (!$FactorC){
+				if (!$FactorC){
 
-				// 	foreach ($ContenidoDetalle as $key => $detail) {
+					foreach ($ContenidoDetalle as $key => $detail) {
 
-				// 		$sqlFactorC = "SELECT * FROM dmtx WHERE dmi_type = :dmi_type AND dmi_use_fc = :dmi_use_fc AND dmi_code = :dmi_code";
-				// 		$resFactorC = $this->pedeo->queryTable($sqlFactorC, array(':dmi_type' => '2', ':dmi_use_fc' => 1, ':dmi_code' => $detail['fc1_codimp']));
+						$sqlFactorC = "SELECT * FROM dmtx WHERE dmi_type = :dmi_type AND dmi_use_fc = :dmi_use_fc AND dmi_code = :dmi_code";
+						$resFactorC = $this->pedeo->queryTable($sqlFactorC, array(':dmi_type' => '2', ':dmi_use_fc' => 1, ':dmi_code' => $detail['fc1_codimp']));
 
-				// 		if (isset($resFactorC[0])){
-				// 			$FactorC =  true;
-				// 			break;
-				// 		}
-				// 	}
-				// }
+						if (isset($resFactorC[0])){
+							$FactorC =  true;
+							break;
+						}
+					}
+				}
 				//
 
 				//LLENANDO DETALLE ASIENTO CONTABLES
@@ -1794,26 +1793,30 @@ class PurchaseInv extends REST_Controller
 
 				// ESTO SOLO APLICA PARA CUANDO SE MANEJA IMPUESTO CON FACTOR DE CONVERSION
 				// CASO PARA BOLIVIA
-				// if ($FactorC) {
+				if ($FactorC) {
 
-				// 	if ( isset( $detail['fc1_discount'] ) &&  isset( $detail['fc1_discount'] ) && $detail['fc1_discount'] > 0 ) {
+					if ( isset( $detail['fc1_discount'] ) &&  isset( $detail['fc1_discount'] ) && $detail['fc1_discount'] > 0 ) {
 						
-				// 		$DetalleAsientoDescuento = new stdClass();
-				// 		$DetalleAsientoIvaDescuento = new stdClass();
+						$DetalleAsientoDescuento = new stdClass();
+						$DetalleAsientoIvaDescuento = new stdClass();
 
-				// 		$DetalleAsientoDescuento->descuento = $detail['fc1_discount'];
+						$DetalleAsientoDescuento->descuento = ( ( ( $detail['fc1_discount'] * $detail['fc1_vat'] ) ) / 100 ) - $detail['fc1_discount'];
+
+						$DescuentoAcumulado = $DescuentoAcumulado + $DetalleAsientoDescuento->descuento;
 
 
-				// 		$DetalleAsientoIvaDescuento->ivadescuento = (($detail['fc1_discount'] * $detail['fc1_vat']) / 100);
+						$DetalleAsientoIvaDescuento->ivadescuento =  (  $detail['fc1_discount'] * $detail['fc1_vat'] ) / 100 ;
 
 
-				// 		array_push($DetalleConsolidadoDescuento, $DetalleAsientoDescuento);
-				// 		array_push($DetalleConsolidadoIvaDescuento, $DetalleAsientoIvaDescuento);
+						$IvaDescuentoAcumulado = $IvaDescuentoAcumulado + $DetalleAsientoIvaDescuento->ivadescuento;
 
-				// 	}
 
-				// }
+						array_push($DetalleConsolidadoDescuento, $DetalleAsientoDescuento);
+						array_push($DetalleConsolidadoIvaDescuento, $DetalleAsientoIvaDescuento);
 
+					}
+
+				}
 				//
 
 				$DetalleAsientoIngreso->ac1_account = is_numeric($detail['fc1_acctcode']) ? $detail['fc1_acctcode'] : 0;
@@ -2052,7 +2055,6 @@ class PurchaseInv extends REST_Controller
 
 			//Procedimiento para llenar Impuestos
 
-
 			$granTotalIva = 0;
 			$MontoSysCR = 0;
 			$MontoSysDB = 0;
@@ -2071,7 +2073,16 @@ class PurchaseInv extends REST_Controller
 					// }
 					$CodigoImp = $value->codimp;
 				}
+				// EN BASE A FACTOR DE CONVERSION CASO BOLIVIA
+				if ($FactorC) {
+					$granTotalIva = $granTotalIva + $IvaDescuentoAcumulado;
 
+					if ( $DescuentoAcumulado > 0 ){
+						$LineTotal = ( $Data['cfc_doctotal'] + $IvaDescuentoAcumulado + $DescuentoAcumulado );
+					}
+					
+				}
+				
 				$granTotalIvaOriginal = $granTotalIva;
 
 				if (trim($Data['cfc_currency']) != $MONEDALOCAL) {
@@ -2162,9 +2173,9 @@ class PurchaseInv extends REST_Controller
 
 			//FIN Procedimiento para llenar Impuestos
 
-
+			//Procedimiento para llenar costo inventario CUANDO ES FACTURA DIRECTA
 			if ($Data['cfc_basetype'] != 13) { // solo si el documento no viene de una entrada
-				//Procedimiento para llenar costo inventario CUANDO ES FACTURA DIRECTA
+				
 				foreach ($DetalleConsolidadoCostoInventario as $key => $posicion) {
 					$grantotalCostoInventario = 0;
 					$grantotalCostoInventarioOriginal = 0;
@@ -2190,6 +2201,10 @@ class PurchaseInv extends REST_Controller
 					// CON ESTA SABEMOS QUE ENTRO POR LO MENOS UNA VES EN LA CONDICION
 					// ANTERIOR OSEA QUE HAY UN ITEM INVENTARIABLE
 					if ($sinDatos > 0) {
+
+						if ( $FactorC ) {
+							$grantotalCostoInventario = $grantotalCostoInventario +  $DescuentoAcumulado;
+						}
 
 						$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
 
@@ -2327,10 +2342,9 @@ class PurchaseInv extends REST_Controller
 			}
 			//FIN Procedimiento para llenar costo inventario CUANDO ES FACTURA DIRECTA
 
-
+			//Procedimiento para llenar costo inventario Y NO ES FACTURA DIRECTA
 			if ($Data['cfc_basetype'] == 13) { // CUANDO VIENE DE UNA ENTRADA
-				//Procedimiento para llenar costo inventario Y NO ES FACTURA DIRECTA
-
+				
 				//CUENTA PUENTE DE INVENTARIO
 
 				$sqlcuentainventario = "SELECT coalesce(pge_bridge_inv_purch, 0) as pge_bridge_inv_purch, coalesce(pge_bridge_purch_int, 0) as pge_bridge_purch_int FROM pgem WHERE pge_id = :business";
@@ -2384,6 +2398,10 @@ class PurchaseInv extends REST_Controller
 					// CON ESTA SABEMOS QUE ENTRO POR LO MENOS UNA VES EN LA CONDICION
 					// ANTERIOR OSEA QUE HAY UN ITEM INVENTARIABLE
 					if ($sinDatos > 0) {
+
+						if ( $FactorC ){
+							$grantotalCostoInventario = $grantotalCostoInventario + $DescuentoAcumulado;
+						}
 
 						$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
 
@@ -2519,11 +2537,9 @@ class PurchaseInv extends REST_Controller
 				}
 			}
 
-
-
+			// FIN
 
 			// PROCEDIMIENTO PARA LLENAR ASIENTO ARTICULO NO INVENTARIABLE
-
 
 			foreach ($DetalleConsolidadoItemNoInventariable as $key => $posicion) {
 				$grantotalItemNoInventariable = 0;
@@ -2543,7 +2559,9 @@ class PurchaseInv extends REST_Controller
 					$grantotalItemNoInventariable = ($grantotalItemNoInventariable + $value->nc1_linetotal);
 				}
 
-
+				if ( $FactorC ){
+					$grantotalItemNoInventariable = $grantotalItemNoInventariable + $DescuentoAcumulado;
+				}
 
 				$grantotalItemNoInventariableOriginal = $grantotalItemNoInventariable;
 
@@ -2898,271 +2916,271 @@ class PurchaseInv extends REST_Controller
 
 
 			// ASIENTO PARA DESCUENTO
-			// if ($FactorC) {
+			if ($FactorC) {
 
-			// 	if (isset($DetalleConsolidadoDescuento[0])){
+				if (isset($DetalleConsolidadoDescuento[0])){
 
-			// 		$descuento = 0;
-			// 		$cuentadescuento = 0;
-			// 		$totalDescuento = 0;
-			// 		$totalDescuentoOriginal = 0;
+					$descuento = 0;
+					$cuentadescuento = 0;
+					$totalDescuento = 0;
+					$totalDescuentoOriginal = 0;
 
-			// 		// BUSCANDO CUENTA DE DESCUENTO PARA COMPRAS
+					// BUSCANDO CUENTA DE DESCUENTO PARA COMPRAS
 
-			// 		$cuentaDescuento = "SELECT coalesce(pge_shopping_discount_account, 0) as cuenta FROM pgem WHERE pge_id = :pge_id";
-			// 		$rescuentaDescuento = $this->pedeo->queryTable($cuentaDescuento, array(':pge_id' => $Data['business']));
+					$cuentaDescuento = "SELECT coalesce(pge_shopping_discount_account, 0) as cuenta FROM pgem WHERE pge_id = :pge_id";
+					$rescuentaDescuento = $this->pedeo->queryTable($cuentaDescuento, array(':pge_id' => $Data['business']));
 
-			// 		if (isset( $rescuentaDescuento[0] ) && $rescuentaDescuento[0]['cuenta'] > 0 ) {
+					if (isset( $rescuentaDescuento[0] ) && $rescuentaDescuento[0]['cuenta'] > 0 ) {
 
-			// 			$cuentadescuento = $rescuentaDescuento[0]['cuenta'];
+						$cuentadescuento = $rescuentaDescuento[0]['cuenta'];
 
-			// 		} else {
+					} else {
 
-			// 			$this->pedeo->trans_rollback();
+						$this->pedeo->trans_rollback();
 
-			// 			$respuesta = array(
-			// 				'error'   => true,
-			// 				'data'	  => $rescuentaDescuento,
-			// 				'mensaje'	=> 'No se pudo registrar la factura de compras, el no se encontro la cuenta para el descuento'
-			// 			);
+						$respuesta = array(
+							'error'   => true,
+							'data'	  => $rescuentaDescuento,
+							'mensaje'	=> 'No se pudo registrar la factura de compras, el no se encontro la cuenta para el descuento'
+						);
 
-			// 			return $this->response($respuesta);
+						return $this->response($respuesta);
 
 						
-			// 		}
+					}
 
-			// 		foreach ($DetalleConsolidadoDescuento as $key => $posicion) {
+					foreach ($DetalleConsolidadoDescuento as $key => $posicion) {
 
-			// 			$descuento = ( $descuento + $posicion->descuento );
+						$descuento = ( $descuento + $posicion->descuento );
 						
 		
-			// 		}
+					}
 
-			// 		$totalDescuento = $descuento;
-			// 		$totalDescuentoOriginal  = $totalDescuento;
+					$totalDescuento = $descuento;
+					$totalDescuentoOriginal  = $totalDescuento;
 
 
-			// 		if (trim($Data['cfc_currency']) != $MONEDALOCAL) {
-			// 			$totalDescuento = ($totalDescuento * $TasaDocLoc);
-			// 		}
+					if (trim($Data['cfc_currency']) != $MONEDALOCAL) {
+						$totalDescuento = ($totalDescuento * $TasaDocLoc);
+					}
 	
 	
-			// 		if (trim($Data['cfc_currency']) != $MONEDASYS) {
-			// 			$MontoSysCR = ($totalDescuento / $TasaLocSys);
-			// 		} else {
-			// 			$MontoSysCR = 	$totalDescuentoOriginal;
-			// 		}
+					if (trim($Data['cfc_currency']) != $MONEDASYS) {
+						$MontoSysCR = ($totalDescuento / $TasaLocSys);
+					} else {
+						$MontoSysCR = 	$totalDescuentoOriginal;
+					}
 	
-			// 		$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
-			// 		$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
-			// 		$AC1LINE = $AC1LINE + 1;
-			// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					$AC1LINE = $AC1LINE + 1;
+					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 	
-			// 			':ac1_trans_id' => $resInsertAsiento,
-			// 			':ac1_account' => $cuentadescuento,
-			// 			':ac1_debit' => 0,
-			// 			':ac1_credit' => round($totalDescuento, $DECI_MALES),
-			// 			':ac1_debit_sys' => 0,
-			// 			':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
-			// 			':ac1_currex' => 0,
-			// 			':ac1_doc_date' => $this->validateDate($Data['cfc_docdate']) ? $Data['cfc_docdate'] : NULL,
-			// 			':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate']) ? $Data['cfc_duedate'] : NULL,
-			// 			':ac1_debit_import' => 0,
-			// 			':ac1_credit_import' => 0,
-			// 			':ac1_debit_importsys' => 0,
-			// 			':ac1_credit_importsys' => 0,
-			// 			':ac1_font_key' => $resInsert,
-			// 			':ac1_font_line' => 1,
-			// 			':ac1_font_type' => is_numeric($Data['cfc_doctype']) ? $Data['cfc_doctype'] : 0,
-			// 			':ac1_accountvs' => 1,
-			// 			':ac1_doctype' => 18,
-			// 			':ac1_ref1' => "",
-			// 			':ac1_ref2' => "",
-			// 			':ac1_ref3' => "",
-			// 			':ac1_prc_code' => NULL,
-			// 			':ac1_uncode' => NULL,
-			// 			':ac1_prj_code' => NULL,
-			// 			':ac1_rescon_date' => NULL,
-			// 			':ac1_recon_total' => 0,
-			// 			':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-			// 			':ac1_accperiod' => 1,
-			// 			':ac1_close' => 0,
-			// 			':ac1_cord' => 0,
-			// 			':ac1_ven_debit' => 0,
-			// 			':ac1_ven_credit' => 0,
-			// 			':ac1_fiscal_acct' => 0,
-			// 			':ac1_taxid' => 0,
-			// 			':ac1_isrti' => 0,
-			// 			':ac1_basert' => 0,
-			// 			':ac1_mmcode' => 0,
-			// 			':ac1_legal_num' => isset($Data['cfc_cardcode']) ? $Data['cfc_cardcode'] : NULL,
-			// 			':ac1_codref' => 1,
-			// 			":ac1_line" => $AC1LINE,
-			// 			':ac1_base_tax' => 0,
-			// 			':business' => $Data['business'],
-			// 			':branch' 	=> $Data['branch'],
-			// 			':ac1_codret' => '0'
-			// 		));
+						':ac1_trans_id' => $resInsertAsiento,
+						':ac1_account' => $cuentadescuento,
+						':ac1_debit' => 0,
+						':ac1_credit' => round($totalDescuento, $DECI_MALES),
+						':ac1_debit_sys' => 0,
+						':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+						':ac1_currex' => 0,
+						':ac1_doc_date' => $this->validateDate($Data['cfc_docdate']) ? $Data['cfc_docdate'] : NULL,
+						':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate']) ? $Data['cfc_duedate'] : NULL,
+						':ac1_debit_import' => 0,
+						':ac1_credit_import' => 0,
+						':ac1_debit_importsys' => 0,
+						':ac1_credit_importsys' => 0,
+						':ac1_font_key' => $resInsert,
+						':ac1_font_line' => 1,
+						':ac1_font_type' => is_numeric($Data['cfc_doctype']) ? $Data['cfc_doctype'] : 0,
+						':ac1_accountvs' => 1,
+						':ac1_doctype' => 18,
+						':ac1_ref1' => "",
+						':ac1_ref2' => "",
+						':ac1_ref3' => "",
+						':ac1_prc_code' => NULL,
+						':ac1_uncode' => NULL,
+						':ac1_prj_code' => NULL,
+						':ac1_rescon_date' => NULL,
+						':ac1_recon_total' => 0,
+						':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
+						':ac1_accperiod' => 1,
+						':ac1_close' => 0,
+						':ac1_cord' => 0,
+						':ac1_ven_debit' => 0,
+						':ac1_ven_credit' => 0,
+						':ac1_fiscal_acct' => 0,
+						':ac1_taxid' => 0,
+						':ac1_isrti' => 0,
+						':ac1_basert' => 0,
+						':ac1_mmcode' => 0,
+						':ac1_legal_num' => isset($Data['cfc_cardcode']) ? $Data['cfc_cardcode'] : NULL,
+						':ac1_codref' => 1,
+						":ac1_line" => $AC1LINE,
+						':ac1_base_tax' => 0,
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch'],
+						':ac1_codret' => '0'
+					));
 		
 		
 		
-			// 		if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-			// 			// Se verifica que el detalle no de error insertando //
-			// 		} else {
+					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+						// Se verifica que el detalle no de error insertando //
+					} else {
 	
-			// 			// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
-			// 			// se retorna el error y se detiene la ejecucion del codigo restante.
-			// 			$this->pedeo->trans_rollback();
+						// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
+						// se retorna el error y se detiene la ejecucion del codigo restante.
+						$this->pedeo->trans_rollback();
 	
-			// 			$respuesta = array(
-			// 				'error'   => true,
-			// 				'data'	  => $resDetalleAsiento,
-			// 				'mensaje'	=> 'No se pudo registrar la factura de compras'
-			// 			);
+						$respuesta = array(
+							'error'   => true,
+							'data'	  => $resDetalleAsiento,
+							'mensaje'	=> 'No se pudo registrar la factura de compras'
+						);
 	
-			// 			$this->response($respuesta);
+						$this->response($respuesta);
 	
-			// 			return;
-			// 		}
+						return;
+					}
 
-			// 	}
+				}
 
-			// }
+			}
 			// FIN ASIENTO PARA DESCUENTO
 
 			// ASIENTO PARA IVA DEL DESCUENTO
-			// if ($FactorC) {
+			if ($FactorC) {
 
-			// 	if (isset($DetalleConsolidadoIvaDescuento[0])){
+				if (isset($DetalleConsolidadoIvaDescuento[0])){
 
-			// 		$ivadescuento = 0;
-			// 		$cuentaivadescuento = 0;
-			// 		$totalIvaDescuento = 0;
-			// 		$totalIvaDescuentoOriginal = 0;
+					$ivadescuento = 0;
+					$cuentaivadescuento = 0;
+					$totalIvaDescuento = 0;
+					$totalIvaDescuentoOriginal = 0;
 
-			// 		// BUSCANDO CUENTA DE DESCUENTO PARA COMPRAS
+					// BUSCANDO CUENTA DE DESCUENTO PARA COMPRAS
 
-			// 		$cuentaIvaDescuento = "SELECT coalesce(pge_tax_debit_account, 0) as cuenta FROM pgem WHERE pge_id = :pge_id";
-			// 		$rescuentaIvaDescuento = $this->pedeo->queryTable($cuentaDescuento, array(':pge_id' => $Data['business']));
+					$cuentaIvaDescuento = "SELECT coalesce(pge_tax_debit_account, 0) as cuenta FROM pgem WHERE pge_id = :pge_id";
+					$rescuentaIvaDescuento = $this->pedeo->queryTable($cuentaDescuento, array(':pge_id' => $Data['business']));
 
-			// 		if (isset( $rescuentaIvaDescuento[0] ) && $rescuentaIvaDescuento[0]['cuenta'] > 0 ) {
+					if (isset( $rescuentaIvaDescuento[0] ) && $rescuentaIvaDescuento[0]['cuenta'] > 0 ) {
 
-			// 			$cuentaivadescuento = $rescuentaIvaDescuento[0]['cuenta'];
+						$cuentaivadescuento = $rescuentaIvaDescuento[0]['cuenta'];
 
-			// 		} else {
+					} else {
 
-			// 			$this->pedeo->trans_rollback();
+						$this->pedeo->trans_rollback();
 
-			// 			$respuesta = array(
-			// 				'error'   => true,
-			// 				'data'	  => $rescuentaIvaDescuento,
-			// 				'mensaje'	=> 'No se pudo registrar la factura de compras, el no se encontro la cuenta para asociar el iva del descuento'
-			// 			);
+						$respuesta = array(
+							'error'   => true,
+							'data'	  => $rescuentaIvaDescuento,
+							'mensaje'	=> 'No se pudo registrar la factura de compras, el no se encontro la cuenta para asociar el iva del descuento'
+						);
 
-			// 			return $this->response($respuesta);
+						return $this->response($respuesta);
 
 						
-			// 		}
+					}
 
-			// 		foreach ($DetalleConsolidadoIvaDescuento as $key => $posicion) {
+					foreach ($DetalleConsolidadoIvaDescuento as $key => $posicion) {
 
-			// 			$ivadescuento = ( $ivadescuento + $posicion->ivadescuento );
+						$ivadescuento = ( $ivadescuento + $posicion->ivadescuento );
 						
 		
-			// 		}
+					}
 
-			// 		$totalIvaDescuento = $ivadescuento;
-			// 		$totalIvaDescuentoOriginal  = $totalIvaDescuento;
+					$totalIvaDescuento = $ivadescuento;
+					$totalIvaDescuentoOriginal  = $totalIvaDescuento;
 
 
-			// 		if (trim($Data['cfc_currency']) != $MONEDALOCAL) {
-			// 			$totalIvaDescuento = ($totalIvaDescuento * $TasaDocLoc);
-			// 		}
+					if (trim($Data['cfc_currency']) != $MONEDALOCAL) {
+						$totalIvaDescuento = ($totalIvaDescuento * $TasaDocLoc);
+					}
 	
 	
-			// 		if (trim($Data['cfc_currency']) != $MONEDASYS) {
-			// 			$MontoSysCR = ($totalIvaDescuento / $TasaLocSys);
-			// 		} else {
-			// 			$MontoSysCR = 	$totalIvaDescuentoOriginal;
-			// 		}
+					if (trim($Data['cfc_currency']) != $MONEDASYS) {
+						$MontoSysCR = ($totalIvaDescuento / $TasaLocSys);
+					} else {
+						$MontoSysCR = 	$totalIvaDescuentoOriginal;
+					}
 	
-			// 		$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
-			// 		$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
-			// 		$AC1LINE = $AC1LINE + 1;
-			// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					$AC1LINE = $AC1LINE + 1;
+					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 	
-			// 			':ac1_trans_id' => $resInsertAsiento,
-			// 			':ac1_account' => $cuentaivadescuento,
-			// 			':ac1_debit' => 0,
-			// 			':ac1_credit' => round($totalIvaDescuento, $DECI_MALES),
-			// 			':ac1_debit_sys' => 0,
-			// 			':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
-			// 			':ac1_currex' => 0,
-			// 			':ac1_doc_date' => $this->validateDate($Data['cfc_docdate']) ? $Data['cfc_docdate'] : NULL,
-			// 			':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate']) ? $Data['cfc_duedate'] : NULL,
-			// 			':ac1_debit_import' => 0,
-			// 			':ac1_credit_import' => 0,
-			// 			':ac1_debit_importsys' => 0,
-			// 			':ac1_credit_importsys' => 0,
-			// 			':ac1_font_key' => $resInsert,
-			// 			':ac1_font_line' => 1,
-			// 			':ac1_font_type' => is_numeric($Data['cfc_doctype']) ? $Data['cfc_doctype'] : 0,
-			// 			':ac1_accountvs' => 1,
-			// 			':ac1_doctype' => 18,
-			// 			':ac1_ref1' => "",
-			// 			':ac1_ref2' => "",
-			// 			':ac1_ref3' => "",
-			// 			':ac1_prc_code' => NULL,
-			// 			':ac1_uncode' => NULL,
-			// 			':ac1_prj_code' => NULL,
-			// 			':ac1_rescon_date' => NULL,
-			// 			':ac1_recon_total' => 0,
-			// 			':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-			// 			':ac1_accperiod' => 1,
-			// 			':ac1_close' => 0,
-			// 			':ac1_cord' => 0,
-			// 			':ac1_ven_debit' => 0,
-			// 			':ac1_ven_credit' => 0,
-			// 			':ac1_fiscal_acct' => 0,
-			// 			':ac1_taxid' => 0,
-			// 			':ac1_isrti' => 0,
-			// 			':ac1_basert' => 0,
-			// 			':ac1_mmcode' => 0,
-			// 			':ac1_legal_num' => isset($Data['cfc_cardcode']) ? $Data['cfc_cardcode'] : NULL,
-			// 			':ac1_codref' => 1,
-			// 			":ac1_line" => $AC1LINE,
-			// 			':ac1_base_tax' => 0,
-			// 			':business' => $Data['business'],
-			// 			':branch' 	=> $Data['branch'],
-			// 			':ac1_codret' => '0'
-			// 		));
+						':ac1_trans_id' => $resInsertAsiento,
+						':ac1_account' => $cuentaivadescuento,
+						':ac1_debit' => 0,
+						':ac1_credit' => round($totalIvaDescuento, $DECI_MALES),
+						':ac1_debit_sys' => 0,
+						':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+						':ac1_currex' => 0,
+						':ac1_doc_date' => $this->validateDate($Data['cfc_docdate']) ? $Data['cfc_docdate'] : NULL,
+						':ac1_doc_duedate' => $this->validateDate($Data['cfc_duedate']) ? $Data['cfc_duedate'] : NULL,
+						':ac1_debit_import' => 0,
+						':ac1_credit_import' => 0,
+						':ac1_debit_importsys' => 0,
+						':ac1_credit_importsys' => 0,
+						':ac1_font_key' => $resInsert,
+						':ac1_font_line' => 1,
+						':ac1_font_type' => is_numeric($Data['cfc_doctype']) ? $Data['cfc_doctype'] : 0,
+						':ac1_accountvs' => 1,
+						':ac1_doctype' => 18,
+						':ac1_ref1' => "",
+						':ac1_ref2' => "",
+						':ac1_ref3' => "",
+						':ac1_prc_code' => NULL,
+						':ac1_uncode' => NULL,
+						':ac1_prj_code' => NULL,
+						':ac1_rescon_date' => NULL,
+						':ac1_recon_total' => 0,
+						':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
+						':ac1_accperiod' => 1,
+						':ac1_close' => 0,
+						':ac1_cord' => 0,
+						':ac1_ven_debit' => 0,
+						':ac1_ven_credit' => 0,
+						':ac1_fiscal_acct' => 0,
+						':ac1_taxid' => 0,
+						':ac1_isrti' => 0,
+						':ac1_basert' => 0,
+						':ac1_mmcode' => 0,
+						':ac1_legal_num' => isset($Data['cfc_cardcode']) ? $Data['cfc_cardcode'] : NULL,
+						':ac1_codref' => 1,
+						":ac1_line" => $AC1LINE,
+						':ac1_base_tax' => 0,
+						':business' => $Data['business'],
+						':branch' 	=> $Data['branch'],
+						':ac1_codret' => '0'
+					));
 		
 		
 		
-			// 		if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-			// 			// Se verifica que el detalle no de error insertando //
-			// 		} else {
+					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+						// Se verifica que el detalle no de error insertando //
+					} else {
 	
-			// 			// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
-			// 			// se retorna el error y se detiene la ejecucion del codigo restante.
-			// 			$this->pedeo->trans_rollback();
+						// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
+						// se retorna el error y se detiene la ejecucion del codigo restante.
+						$this->pedeo->trans_rollback();
 	
-			// 			$respuesta = array(
-			// 				'error'   => true,
-			// 				'data'	  => $resDetalleAsiento,
-			// 				'mensaje'	=> 'No se pudo registrar la factura de compras'
-			// 			);
+						$respuesta = array(
+							'error'   => true,
+							'data'	  => $resDetalleAsiento,
+							'mensaje'	=> 'No se pudo registrar la factura de compras'
+						);
 	
-			// 			$this->response($respuesta);
+						$this->response($respuesta);
 	
-			// 			return;
-			// 		}
+						return;
+					}
 
-			// 	}
+				}
 
-			// }
+			}
 			// FIN ASIENTO PARA IVA DEL DESCUENTO
 
 
@@ -3686,7 +3704,7 @@ class PurchaseInv extends REST_Controller
 		$campos = ",CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalret,'999,999,999,999.00'))) {prefix}_totalret,
 		CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalretiva,'999,999,999,999.00'))) {prefix}_totalretiva";
 
-		$sqlSelect = self::getColumn('dcfc', 'cfc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$sqlSelect = self::getColumn('dcfc', 'cfc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'], 15);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -4005,5 +4023,91 @@ class PurchaseInv extends REST_Controller
 		} else {
 			return false;
 		}
+	}
+
+
+	// OBTENER ENCABEZADO PARA EL DUPLICADO
+	public function getDuplicateFrom_get() {
+
+		$Data = $this->get();
+
+		if (!isset($Data['dms_card_code'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$duplicateData = $this->documentduplicate->getDuplicate('dcfc','cfc',$Data['dms_card_code'],$Data['business']);
+
+
+		if (isset($duplicateData[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $duplicateData,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+	
+	
+
+		$this->response($respuesta);
+
+	}
+
+	//OBTENER DETALLE PARA DUPLICADO
+	public function getDuplicateDt_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['fc1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+			$copy = $this->documentduplicate->getDuplicateDt($Data['fc1_docentry'],'dcfc','cfc1','cfc','fc1','');
+
+			if (isset($copy[0])) {
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $copy,
+					'mensaje' => ''
+				);
+			} else {
+	
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+			}
+		
+		
+
+		$this->response($respuesta);
 	}
 }
