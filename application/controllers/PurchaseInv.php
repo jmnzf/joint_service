@@ -1800,7 +1800,7 @@ class PurchaseInv extends REST_Controller
 						$DetalleAsientoDescuento = new stdClass();
 						$DetalleAsientoIvaDescuento = new stdClass();
 
-						$DetalleAsientoDescuento->descuento = ( ( ( $detail['fc1_discount'] * $detail['fc1_vat'] ) ) / 100 ) - $detail['fc1_discount'];
+						$DetalleAsientoDescuento->descuento = $detail['fc1_discount'] - ( ( ( $detail['fc1_discount'] * $detail['fc1_vat'] ) ) / 100 ) ;
 
 						$DescuentoAcumulado = $DescuentoAcumulado + $DetalleAsientoDescuento->descuento;
 
@@ -2075,14 +2075,14 @@ class PurchaseInv extends REST_Controller
 				}
 				// EN BASE A FACTOR DE CONVERSION CASO BOLIVIA
 				if ($FactorC) {
-					$granTotalIva = $granTotalIva + $IvaDescuentoAcumulado;
+					$granTotalIva = $granTotalIva ;
 
 					if ( $DescuentoAcumulado > 0 ){
-						$LineTotal = ( $Data['cfc_doctotal'] + $IvaDescuentoAcumulado + $DescuentoAcumulado );
+						$LineTotal = ( $Data['cfc_doctotal']  + $DescuentoAcumulado + $IvaDescuentoAcumulado);
 					}
 					
 				}
-				
+
 				$granTotalIvaOriginal = $granTotalIva;
 
 				if (trim($Data['cfc_currency']) != $MONEDALOCAL) {
@@ -2202,9 +2202,9 @@ class PurchaseInv extends REST_Controller
 					// ANTERIOR OSEA QUE HAY UN ITEM INVENTARIABLE
 					if ($sinDatos > 0) {
 
-						if ( $FactorC ) {
-							$grantotalCostoInventario = $grantotalCostoInventario +  $DescuentoAcumulado;
-						}
+						// if ( $FactorC ) {
+						// 	$grantotalCostoInventario = $grantotalCostoInventario +  $DescuentoAcumulado;
+						// }
 
 						$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
 
@@ -2399,9 +2399,9 @@ class PurchaseInv extends REST_Controller
 					// ANTERIOR OSEA QUE HAY UN ITEM INVENTARIABLE
 					if ($sinDatos > 0) {
 
-						if ( $FactorC ){
-							$grantotalCostoInventario = $grantotalCostoInventario + $DescuentoAcumulado;
-						}
+						// if ( $FactorC ){
+						// 	$grantotalCostoInventario = $grantotalCostoInventario + $DescuentoAcumulado;
+						// }
 
 						$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
 
@@ -2559,9 +2559,9 @@ class PurchaseInv extends REST_Controller
 					$grantotalItemNoInventariable = ($grantotalItemNoInventariable + $value->nc1_linetotal);
 				}
 
-				if ( $FactorC ){
-					$grantotalItemNoInventariable = $grantotalItemNoInventariable + $DescuentoAcumulado;
-				}
+				// if ( $FactorC ){
+				// 	$grantotalItemNoInventariable = $grantotalItemNoInventariable + $DescuentoAcumulado;
+				// }
 
 				$grantotalItemNoInventariableOriginal = $grantotalItemNoInventariable;
 
