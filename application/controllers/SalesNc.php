@@ -26,6 +26,7 @@ class SalesNc extends REST_Controller
 		$this->load->library('account');
 		$this->load->library('DocumentNumbering');
 		$this->load->library('Tasa');
+		$this->load->library('DocumentDuplicate');
 
 	}
 
@@ -3620,5 +3621,91 @@ class SalesNc extends REST_Controller
 		} else {
 			return false;
 		}
+	}
+
+
+	// OBTENER ENCABEZADO PARA EL DUPLICADO
+	public function getDuplicateFrom_get() {
+
+		$Data = $this->get();
+
+		if (!isset($Data['dms_card_code'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$duplicateData = $this->documentduplicate->getDuplicate('dvnc','vnc',$Data['dms_card_code'],$Data['business']);
+
+
+		if (isset($duplicateData[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $duplicateData,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+	
+	
+
+		$this->response($respuesta);
+
+	}
+
+	//OBTENER DETALLE PARA DUPLICADO
+	public function getDuplicateDt_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['nc1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+			$copy = $this->documentduplicate->getDuplicateDt($Data['nc1_docentry'],'dvnc','vnc1','vnc','nc1','detalle_modular::jsonb');
+
+			if (isset($copy[0])) {
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $copy,
+					'mensaje' => ''
+				);
+			} else {
+	
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+			}
+		
+		
+
+		$this->response($respuesta);
 	}
 }

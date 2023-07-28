@@ -26,6 +26,7 @@ class SalesNd extends REST_Controller
 		$this->load->library('generic');
 		$this->load->library('DocumentNumbering');
 		$this->load->library('Tasa');
+		$this->load->library('DocumentDuplicate');
 	}
 
 	//CREAR NUEVA Nota debito de clientes
@@ -2136,5 +2137,91 @@ class SalesNd extends REST_Controller
 
 			return;
 		}
+	}
+
+
+	// OBTENER ENCABEZADO PARA EL DUPLICADO
+	public function getDuplicateFrom_get() {
+
+		$Data = $this->get();
+
+		if (!isset($Data['dms_card_code'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$duplicateData = $this->documentduplicate->getDuplicate('dvnd','vnd',$Data['dms_card_code'],$Data['business']);
+
+
+		if (isset($duplicateData[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $duplicateData,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+	
+	
+
+		$this->response($respuesta);
+
+	}
+
+	//OBTENER DETALLE PARA DUPLICADO
+	public function getDuplicateDt_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['nd1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+			$copy = $this->documentduplicate->getDuplicateDt($Data['nd1_docentry'],'dvnd','vnd1','vnd','nd1','detalle_modular::jsonb');
+
+			if (isset($copy[0])) {
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $copy,
+					'mensaje' => ''
+				);
+			} else {
+	
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+			}
+		
+		
+
+		$this->response($respuesta);
 	}
 }

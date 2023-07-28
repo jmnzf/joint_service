@@ -28,6 +28,7 @@ class Quotation extends REST_Controller
 		$this->load->library('DocumentNumbering');
 		$this->load->library('DocUpdate');
 		$this->load->library('Tasa');
+		$this->load->library('DocumentDuplicate');
 	}
 
 	//CREAR NUEVA COTIZACION
@@ -941,6 +942,91 @@ class Quotation extends REST_Controller
 		$this->response($respuesta);
 	}
 
+	// OBTENER ENCABEZADO PARA EL DUPLICADO
+	public function getDuplicateFrom_get() {
+
+		$Data = $this->get();
+
+		if (!isset($Data['dms_card_code'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$duplicateData = $this->documentduplicate->getDuplicate('dvct','dvc',$Data['dms_card_code'],$Data['business']);
+
+
+		if (isset($duplicateData[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $duplicateData,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+	
+	
+
+		$this->response($respuesta);
+
+	}
+
+	//OBTENER DETALLE PARA DUPLICADO
+	public function getDuplicateDt_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['vc1_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+			$copy = $this->documentduplicate->getDuplicateDt($Data['vc1_docentry'],'dvct','vct1','dvc','vc1','detalle_modular::jsonb');
+
+			if (isset($copy[0])) {
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $copy,
+					'mensaje' => ''
+				);
+			} else {
+	
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+			}
+		
+		
+
+		$this->response($respuesta);
+	}
+	
 
 	//OBTENER COTIZACION DETALLE POR ID
 	public function getQuotationDetailCopy_get()
