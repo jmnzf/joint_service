@@ -591,7 +591,7 @@ class Approvals extends REST_Controller
 
 			return;
 		}
-		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1','detalle_modular::jsonb');
+		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1','detalle_modular::jsonb,fechaentrega,tax_base');
 
 
 		if (isset($copy[0])) {

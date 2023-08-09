@@ -6,7 +6,7 @@ require_once(APPPATH . '/libraries/REST_Controller.php');
 
 use Restserver\libraries\REST_Controller;
 
-class PurchaseRet extends REST_Controller
+class PurchaseRetBO extends REST_Controller
 {
 
 	private $pdo;
@@ -27,6 +27,7 @@ class PurchaseRet extends REST_Controller
 		$this->load->library('DocumentNumbering');
 		$this->load->library('Tasa');
 		$this->load->library('DocumentDuplicate');
+		$this->load->library('CostoBO');
 	}
 
 	//CREAR NUEVA DEVOLUCION DE COMPRAS
@@ -77,6 +78,11 @@ class PurchaseRet extends REST_Controller
 		$resInsertAsiento = "";
 		$ResultadoInv = 0; // INDICA SI EXISTE AL MENOS UN ITEM QUE MANEJA INVENTARIO
 		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
+
+
+		$ManejaTasa = 0;
+		$MontoTasa = 0;
+
 		$ContadorItenmnoInv = 0;
 
 
@@ -614,14 +620,13 @@ class PurchaseRet extends REST_Controller
 
 				// SE VERIFICA SI EL ARTICULO ESTA MARCADO PARA MANEJARSE EN INVENTARIO
 				// Y LOTE
-				$sqlItemINV = "SELECT dma_item_inv FROM dmar WHERE dma_item_code = :dma_item_code AND dma_item_inv = :dma_item_inv";
+				$sqlItemINV = "SELECT coalesce(dma_item_inv, '0') as dma_item_inv,coalesce(dma_use_tbase,0) as dma_use_tbase, coalesce(dma_tasa_base,0) as dma_tasa_base FROM dmar WHERE dma_item_code = :dma_item_code";
 				$resItemINV = $this->pedeo->queryTable($sqlItemINV, array(
 
-					':dma_item_code' => $detail['dc1_itemcode'],
-					':dma_item_inv'  => 1
+					':dma_item_code' => $detail['dc1_itemcode']
 				));
 
-				if (isset($resItemINV[0])) {
+				if ( isset($resItemINV[0]) && $resItemINV[0]['dma_item_inv'] == '1' ) {
 
 					$ManejaInvetario = 1;
 					$ResultadoInv  = 1;
@@ -661,11 +666,18 @@ class PurchaseRet extends REST_Controller
 
 					$ManejaInvetario = 0;
 				}
-
-				
-
 				// FIN PROCESO ITEM MANEJA INVENTARIO
 				// Y LOTE
+
+				// SE VERIFICA SI EL ARTICULO MANEJA TASA
+				if ( isset($resItemINV[0]) && $resItemINV[0]['dma_use_tbase'] == 1 ) {
+					$ManejaTasa = 1;
+					$MontoTasa = $resItemINV[0]['dma_tasa_base'];
+				}else{
+					$ManejaTasa = 0;
+					$MontoTasa = 0;
+				}
+				// FIN PROCESO MANEJA TASA
 
 				// si el item es inventariable
 				if ($ManejaInvetario == 1) {
@@ -1099,7 +1111,7 @@ class PurchaseRet extends REST_Controller
 						}
 					}
 					//FIN VALIDACION DEL LOTE
-				}else { // VALIDA QUE NO SE ESTA HACIENDO DEVOLUCION A SOLO SERVICIOS, EN ESE CASO SE QUITA LA CABECERA GENERADA EN LA TMAC 
+				} else { // VALIDA QUE NO SE ESTA HACIENDO DEVOLUCION A SOLO SERVICIOS, EN ESE CASO SE QUITA LA CABECERA GENERADA EN LA TMAC 
 
 					$ContadorItenmnoInv++;
 						
@@ -1142,7 +1154,7 @@ class PurchaseRet extends REST_Controller
 					$DetalleCuentaPuente->dc1_linetotal = is_numeric($detail['dc1_linetotal']) ? $detail['dc1_linetotal'] : 0;
 					$DetalleCuentaPuente->dc1_vat = is_numeric($detail['dc1_vat']) ? $detail['dc1_vat'] : 0;
 					$DetalleCuentaPuente->dc1_vatsum = is_numeric($detail['dc1_vatsum']) ? $detail['dc1_vatsum'] : 0;
-					$DetalleCuentaPuente->dc1_price = is_numeric($detail['dc1_price']) ? $detail['dc1_price'] : 0;
+					$DetalleCuentaPuente->dc1_price = is_numeric($detail['dc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['dc1_price'], $detail['dc1_vat'],$detail['dc1_discount'],$detail['dc1_quantity'] ) : 0;
 					$DetalleCuentaPuente->dc1_itemcode = isset($detail['dc1_itemcode']) ? $detail['dc1_itemcode'] : NULL;
 					$DetalleCuentaPuente->dc1_quantity = is_numeric($detail['dc1_quantity']) ? ($detail['dc1_quantity'] * $CANTUOMPURCHASE) : 0;
 					$DetalleCuentaPuente->dc1_whscode = isset($detail['dc1_whscode']) ? $detail['dc1_whscode'] : NULL;
@@ -1155,7 +1167,7 @@ class PurchaseRet extends REST_Controller
 					$DetalleCuentaInvetario->dc1_linetotal = is_numeric($detail['dc1_linetotal']) ? $detail['dc1_linetotal'] : 0;
 					$DetalleCuentaInvetario->dc1_vat = is_numeric($detail['dc1_vat']) ? $detail['dc1_vat'] : 0;
 					$DetalleCuentaInvetario->dc1_vatsum = is_numeric($detail['dc1_vatsum']) ? $detail['dc1_vatsum'] : 0;
-					$DetalleCuentaInvetario->dc1_price = is_numeric($detail['dc1_price']) ? $detail['dc1_price'] : 0;
+					$DetalleCuentaInvetario->dc1_price = is_numeric($detail['dc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['dc1_price'], $detail['dc1_vat'],$detail['dc1_discount'],$detail['dc1_quantity'] ) : 0;
 					$DetalleCuentaInvetario->dc1_itemcode = isset($detail['dc1_itemcode']) ? $detail['dc1_itemcode'] : NULL;
 					$DetalleCuentaInvetario->dc1_quantity = is_numeric($detail['dc1_quantity']) ? ($detail['dc1_quantity'] * $CANTUOMPURCHASE) : 0;
 					$DetalleCuentaInvetario->dc1_whscode = isset($detail['dc1_whscode']) ? $detail['dc1_whscode'] : NULL;

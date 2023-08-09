@@ -609,10 +609,11 @@ class PurchOrder extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO cpo1(po1_docentry, po1_itemcode, po1_itemname, po1_quantity, po1_uom, po1_whscode,
                 po1_price, po1_vat, po1_vatsum, po1_discount, po1_linetotal, po1_costcode, po1_ubusiness, po1_project,
-                po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_linenum, po1_acciva, po1_codimp, po1_ubication,po1_baseline,ote_code)
+                po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_linenum, po1_acciva, po1_codimp, po1_ubication,
+				po1_baseline,ote_code,po1_tax_base)
 				VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,:po1_uom, :po1_whscode,:po1_price, :po1_vat, :po1_vatsum, 
 				:po1_discount, :po1_linetotal, :po1_costcode, :po1_ubusiness, :po1_project,:po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, 
-				:po1_inventory,:po1_linenum,:po1_acciva, :po1_codimp, :po1_ubication,:po1_baseline,:ote_code)";
+				:po1_inventory,:po1_linenum,:po1_acciva, :po1_codimp, :po1_ubication,:po1_baseline,:ote_code,:po1_tax_base)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':po1_docentry' => $resInsert,
@@ -639,7 +640,9 @@ class PurchOrder extends REST_Controller
 					':po1_codimp' => isset($detail['po1_codimp']) ? $detail['po1_codimp'] : NULL,
 					':po1_ubication' => isset($detail['po1_ubication']) ? $detail['po1_ubication'] : NULL,
 					':po1_baseline' => is_numeric($detail['po1_baseline']) ? $detail['po1_baseline'] : 0,
-					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
+					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':po1_tax_base' => is_numeric($detail['po1_tax_base']) ? $detail['po1_tax_base'] : 0
+
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1371,7 +1374,7 @@ class PurchOrder extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentduplicate->getDuplicateDt($Data['po1_docentry'],'dcpo','cpo1','cpo','po1','');
+			$copy = $this->documentduplicate->getDuplicateDt($Data['po1_docentry'],'dcpo','cpo1','cpo','po1','tax_base');
 
 			if (isset($copy[0])) {
 

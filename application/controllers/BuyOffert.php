@@ -775,11 +775,11 @@ class BuyOffert extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO coc1(oc1_docentry, oc1_linenum,oc1_itemcode, oc1_itemname, oc1_quantity, oc1_uom, oc1_whscode,
 									oc1_price, oc1_vat, oc1_vatsum, oc1_discount, oc1_linetotal, oc1_costcode, oc1_ubusiness, oc1_project,
 									oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva, oc1_codimp,oc1_baseline,oc1_fechaentrega,
-									ote_code)
+									ote_code,oc1_tax_base)
 									VALUES(:oc1_docentry, :oc1_linenum,:oc1_itemcode, :oc1_itemname, :oc1_quantity,
 									:oc1_uom, :oc1_whscode,:oc1_price, :oc1_vat, :oc1_vatsum, :oc1_discount, :oc1_linetotal, :oc1_costcode, :oc1_ubusiness, :oc1_project,
 									:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva, :oc1_codimp,:oc1_baseline,
-									:oc1_fechaentrega,:ote_code)";
+									:oc1_fechaentrega,:ote_code,:oc1_tax_base)";
 
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
@@ -807,7 +807,8 @@ class BuyOffert extends REST_Controller
 					':oc1_codimp'  => isset($detail['oc1_codimp']) ? $detail['oc1_codimp'] : NULL,
 					':oc1_baseline'  => is_numeric($detail['oc1_baseline']) ? $detail['oc1_baseline'] : 0,
 					':oc1_fechaentrega'  => isset($detail['oc1_fechaentrega']) ? $detail['oc1_fechaentrega'] : NULL,
-					':ote_code'  => isset($detail['ote_code']) && !empty($detail['ote_code']) ? $detail['ote_code'] : NULL
+					':ote_code'  => isset($detail['ote_code']) && !empty($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':oc1_tax_base'  => is_numeric($detail['oc1_tax_base']) && !empty($detail['oc1_tax_base']) ? $detail['oc1_tax_base'] : 0
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1319,7 +1320,7 @@ class BuyOffert extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentduplicate->getDuplicateDt($Data['oc1_docentry'],'dcoc','coc1','coc','oc1','');
+			$copy = $this->documentduplicate->getDuplicateDt($Data['oc1_docentry'],'dcoc','coc1','coc','oc1','tax_base');
 
 			if (isset($copy[0])) {
 

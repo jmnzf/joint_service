@@ -945,7 +945,7 @@ class PurchaseRequest extends REST_Controller
 			return;
 		}
 
-		$copy = $this->documentcopy->Copy($Data['sc1_docentry'],'dcsc','csc1','csc','sc1');
+		$copy = $this->documentcopy->Copy($Data['sc1_docentry'],'dcsc','csc1','csc','sc1','fechaentrega');
 
 		if (isset($copy[0])) {
 
