@@ -48,7 +48,7 @@ class Params extends REST_Controller {
 
 	public function getSiteParams_get(){
 
-		$sqlSelect = "SELECT main_folder, fixrate, coalesce(decimals, 0) as decimals, modular, anuncios, watermarked, textwatermarked, ask_download_language,acc_level FROM params";
+		$sqlSelect = "SELECT main_folder, fixrate, coalesce(decimals, 0) as decimals, modular, anuncios, watermarked, textwatermarked, ask_download_language, acc_level, use_tax_art FROM params";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

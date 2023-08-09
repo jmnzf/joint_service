@@ -4951,8 +4951,6 @@ class SalesInv extends REST_Controller
 		}
 
 
-		print_r($Data);exit;
-
 		$duplicateData = $this->documentduplicate->getDuplicate('dvfv','dvf',$Data['dms_card_code'],$Data['business']);
 
 

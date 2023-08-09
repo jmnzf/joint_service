@@ -48,13 +48,12 @@ class Items extends REST_Controller
 
 		));
 
-
 		if (isset($resSelect[0])) {
 
 			$respuesta = array(
 				'error' => true,
 				'data'  => $resSelect,
-				'mensaje' => 'ya existe un artículo con es codigo'. $Data['dma_item_code']
+				'mensaje' => 'ya existe un artículo con es código '. $resSelect[0]['dma_item_code']
 			);
 
 			$this->response($respuesta);
@@ -62,6 +61,29 @@ class Items extends REST_Controller
 			return;
 		}
 
+		// VALIDACION NUMERO DE SERIE FABRICANTE
+		$sqlSelect = "SELECT dma_serial_number, dma_item_code FROM dmar WHERE UPPER(trim(dma_serial_number)) = UPPER(trim(:dma_serial_number))";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+
+			':dma_serial_number' => $Data['dma_serial_number']
+
+		));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => $resSelect,
+				'mensaje' => 'ya existe un artículo con ese código de fabrica '. $resSelect[0]['dma_item_code']
+			);
+
+			$this->response($respuesta);
+
+			return;
+		}
+
+		
 		//VALIDACION ITEM MANEJA SERIAL
 		if (isset($Data['dma_series_code']) && $Data['dma_series_code'] == 1) {
 			if ($Data['dma_uom_purch'] == $Data['dma_uom_sale']) {
@@ -103,7 +125,7 @@ class Items extends REST_Controller
 						dma_uom_vqty, dma_uom_weightn, dma_uom_sizedim,dma_lotes_code, dma_emisionmethod, dma_long_description, dma_item_mat,
 						dma_accounting, dma_acctin, dma_acct_out, dma_acct_inv, dma_acct_stockn, dma_acct_stockp, dma_acct_redu, dma_acct_amp,
 						dma_acct_cost, dma_acct_return, dma_uom_width, dma_uom_tall, dma_uom_length, dma_uom_vol, dma_um_inventory, dma_tax_sales_code, dma_tax_purch_code,dma_acct_invproc,
-						dma_modular, dma_advertisement, dma_subscription, dma_use_tbase, dma_tasa_base, dma_type_art)
+						dma_modular, dma_advertisement, dma_subscription, dma_use_tbase, dma_tasa_base, dma_type_art, dma_serial_number)
 						VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
 						:dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,:dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set,
 						:dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,:dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty,
@@ -111,7 +133,7 @@ class Items extends REST_Controller
 						:dma_uom_sizedim,:dma_lotes_code, :dma_emisionmethod, :dma_long_description, :dma_item_mat,
 						:dma_accounting, :dma_acctin, :dma_acct_out, :dma_acct_inv, :dma_acct_stockn, :dma_acct_stockp, :dma_acct_redu, :dma_acct_amp,
 						:dma_acct_cost, :dma_acct_return, :dma_uom_width, :dma_uom_tall, :dma_uom_length, :dma_uom_vol, :dma_um_inventory, :dma_tax_sales_code, :dma_tax_purch_code,:dma_acct_invproc,
-						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base, :dma_type_art)";
+						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base, :dma_type_art, :dma_serial_number)";
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -181,9 +203,9 @@ class Items extends REST_Controller
 				':dma_use_tbase' => isset($Data['dma_use_tbase']) ? $Data['dma_use_tbase'] : 0,
 				':dma_tasa_base' => isset($Data['dma_tasa_base']) ? $Data['dma_tasa_base'] : 0,
 				//CAMPO PARA ALMACENAR SI ES ARTICULO DE ACTIVO FIJO
-				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0
-				
-
+				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0,
+				//
+				':dma_serial_number' => isset($Data['dma_serial_number']) ? $Data['dma_serial_number'] : NULL
 
 			));
 
@@ -264,6 +286,29 @@ class Items extends REST_Controller
 		}
 		//
 
+		// VALIDACION NUMERO DE SERIE FABRICANTE
+		$sqlSerie = "SELECT dma_serial_number, dma_item_code FROM dmar WHERE UPPER(trim(dma_serial_number)) = UPPER(trim(:dma_serial_number)) AND dma_id != :dma_id";
+
+		$resSerie = $this->pedeo->queryTable($sqlSerie, array(
+
+			':dma_serial_number' => $Data['dma_serial_number'],
+			':dma_id' => $Data['dma_id'],
+
+		));
+
+		if (isset($resSerie[0])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => $resSerie,
+				'mensaje' => 'ya existe un artículo con ese código de fabrica  '. $resSerie[0]['dma_item_code']
+			);
+
+			$this->response($respuesta);
+
+			return;
+		}
+
 
 		$this->pedeo->trans_begin();
 
@@ -284,7 +329,7 @@ class Items extends REST_Controller
 						dma_acct_amp = :dma_acct_amp, dma_acct_cost = :dma_acct_cost, dma_acct_return = :dma_acct_return,
 						dma_uom_width = :dma_uom_width, dma_uom_tall = :dma_uom_tall, dma_uom_length = :dma_uom_length, dma_uom_vol = :dma_uom_vol, dma_um_inventory = :dma_um_inventory,
 						dma_tax_sales_code = :dma_tax_sales_code, dma_tax_purch_code = :dma_tax_purch_code,dma_acct_invproc = :dma_acct_invproc, dma_modular = :dma_modular, dma_advertisement = :dma_advertisement,
-						dma_subscription = :dma_subscription, dma_use_tbase = :dma_use_tbase, dma_tasa_base = :dma_tasa_base, dma_type_art = :dma_type_art
+						dma_subscription = :dma_subscription, dma_use_tbase = :dma_use_tbase, dma_tasa_base = :dma_tasa_base, dma_type_art = :dma_type_art, dma_serial_number = :dma_serial_number
 						WHERE dma_id = :dma_id";
 
 
@@ -357,7 +402,9 @@ class Items extends REST_Controller
 				':dma_use_tbase' => isset($Data['dma_use_tbase']) ? $Data['dma_use_tbase'] : 0,
 				':dma_tasa_base' => isset($Data['dma_tasa_base']) ? $Data['dma_tasa_base'] : 0,
 				//SI ES ACTIVO FIJO
-				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0
+				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0,
+				//
+				':dma_serial_number' => isset($Data['dma_serial_number']) ? trim($Data['dma_serial_number']) : NULL
 				
 			));
 
@@ -794,6 +841,89 @@ class Items extends REST_Controller
 				'mensaje'	=> 'busqueda sin resultados'
 			);
 		}
+
+		$this->response($respuesta);
+	}
+
+
+	public function getItemBySC_get() {
+
+		$Data = $this->get();
+
+		if ( !isset($Data['code']) OR !isset($Data['type'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$complemento = "";
+
+		switch($Data['type']){
+			case 1:
+				$complemento = " AND dma_item_sales = :vc";
+				break;
+			case 2:
+				$complemento = " AND dma_item_purch = :vc";
+				break;
+		}
+
+
+		$sql1 = "SELECT * FROM dmar WHERE 1=1 ".$complemento."  AND trim(dma_item_code) = trim(:dma_item_code)";
+
+		$res1 = $this->pedeo->queryTable($sql1, array(
+			':vc' => '1',
+			':dma_item_code' => $Data['code']
+		));
+
+		if ( isset($res1[0]) ){
+
+			$respuesta = array(
+				'error'   => false,
+				'data'    => $res1,
+				'mensaje' => ''
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}else{
+
+			$sql2 = "SELECT * FROM dmar WHERE 1=1 ".$complemento."  AND trim(dma_serial_number) = trim(:dma_serial_number)";
+
+			$res2 = $this->pedeo->queryTable($sql2, array(
+				':vc' => '1',
+				':dma_serial_number' => $Data['code']
+			));
+
+			if ( isset($res2[0]) ) {
+
+				$respuesta = array(
+					'error'   => false,
+					'data'    => $res2,
+					'mensaje' => ''
+				);
+	
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+	
+				return;
+			}else{
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'Busquda sin resultaos'
+				);
+			}
+		}
+
+
 
 		$this->response($respuesta);
 	}
