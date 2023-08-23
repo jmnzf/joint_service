@@ -2977,7 +2977,7 @@ class PurchaseInvBO extends REST_Controller
 						$respuesta = array(
 							'error'   => true,
 							'data'	  => $rescuentaDescuento,
-							'mensaje'	=> 'No se pudo registrar la factura de compras, el no se encontro la cuenta para el descuento'
+							'mensaje'	=> 'No se pudo registrar la factura de compras, no se encontro la cuenta para el descuento'
 						);
 
 						return $this->response($respuesta);
@@ -3101,7 +3101,7 @@ class PurchaseInvBO extends REST_Controller
 					// BUSCANDO CUENTA DE DESCUENTO PARA COMPRAS
 
 					$cuentaIvaDescuento = "SELECT coalesce(pge_tax_debit_account, 0) as cuenta FROM pgem WHERE pge_id = :pge_id";
-					$rescuentaIvaDescuento = $this->pedeo->queryTable($cuentaDescuento, array(':pge_id' => $Data['business']));
+					$rescuentaIvaDescuento = $this->pedeo->queryTable($cuentaIvaDescuento, array(':pge_id' => $Data['business']));
 
 					if (isset( $rescuentaIvaDescuento[0] ) && $rescuentaIvaDescuento[0]['cuenta'] > 0 ) {
 
@@ -3143,7 +3143,7 @@ class PurchaseInvBO extends REST_Controller
 					} else {
 						$MontoSysCR = 	$totalIvaDescuentoOriginal;
 					}
-	
+
 					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 

@@ -2942,7 +2942,7 @@ class PurchaseInv extends REST_Controller
 						$respuesta = array(
 							'error'   => true,
 							'data'	  => $rescuentaDescuento,
-							'mensaje'	=> 'No se pudo registrar la factura de compras, el no se encontro la cuenta para el descuento'
+							'mensaje'	=> 'No se pudo registrar la factura de compras, no se encontro la cuenta para el descuento'
 						);
 
 						return $this->response($respuesta);

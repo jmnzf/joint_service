@@ -1606,7 +1606,7 @@ class PurchaseNcBO extends REST_Controller
 
 			//FIN Procedimiento para llenar Impuestos
 
-			if ($Data['cnc_basetype'] != 15) { // solo si el documento no viene de una factura
+			if ($Data['cnc_basetype'] != 13) { // solo si el documento no viene de una factura
 				//Procedimiento para llenar costo inventario
 				foreach ($DetalleConsolidadoCostoInventario as $key => $posicion) {
 					$grantotalCostoInventario = 0;
@@ -1719,113 +1719,113 @@ class PurchaseNcBO extends REST_Controller
 
 
 			// ASIENTO PARA GASTO CUANDO NO MUEVE INVENTARIO
-			// if (!isset($DetalleConsolidadoCostoInventario[0])) {
-			// 	foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
-			// 		$grantotalCostoInventario = 0;
-			// 		$grantotalCostoInventarioOriginal = 0;
-			// 		$cuentaInventario = "";
-			// 		$cdito = 0;
-			// 		$dbito = 0;
-			// 		$MontoSysDB = 0;
-			// 		$MontoSysCR = 0;
-			// 		$sinDatos = 0;
+			if (!isset($DetalleConsolidadoCostoInventario[0])) {
+				foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
+					$grantotalCostoInventario = 0;
+					$grantotalCostoInventarioOriginal = 0;
+					$cuentaInventario = "";
+					$cdito = 0;
+					$dbito = 0;
+					$MontoSysDB = 0;
+					$MontoSysCR = 0;
+					$sinDatos = 0;
 
-			// 		foreach ($posicion as $key => $value) {
+					foreach ($posicion as $key => $value) {
 
-			// 			if ($value->ac1_inventory == 1 || $value->ac1_inventory  == '1') {
-			// 				$sinDatos++;
-			// 				$cuentaInventario = $value->ac1_account;
-			// 				$grantotalCostoInventario = ($grantotalCostoInventario + ($value->nc1_price * $value->cantidad) );
-			// 				$grantotalCostoInventario = $grantotalCostoInventario + $value->descuento;
+						if ($value->ac1_inventory == 1 || $value->ac1_inventory  == '1') {
+							$sinDatos++;
+							$cuentaInventario = $value->ac1_account;
+							$grantotalCostoInventario = ($grantotalCostoInventario + ($value->nc1_price * $value->cantidad) );
+							$grantotalCostoInventario = $grantotalCostoInventario + $value->descuento;
 
-			// 			}
-			// 		}
+						}
+					}
 
-			// 		$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
+					$grantotalCostoInventarioOriginal = $grantotalCostoInventario;
 
-			// 		if (trim($Data['cnc_currency']) != $MONEDALOCAL) {
-			// 			$grantotalCostoInventario = ($grantotalCostoInventario * $TasaDocLoc);
-			// 		}
+					if (trim($Data['cnc_currency']) != $MONEDALOCAL) {
+						$grantotalCostoInventario = ($grantotalCostoInventario * $TasaDocLoc);
+					}
 
-			// 		$cdito = $grantotalCostoInventario;
+					$cdito = $grantotalCostoInventario;
 
-			// 		if (trim($Data['cnc_currency']) != $MONEDASYS) {
-			// 			$MontoSysCR = ($cdito / $TasaLocSys);
-			// 		} else {
-			// 			$MontoSysCR = $grantotalCostoInventarioOriginal;
-			// 		}
+					if (trim($Data['cnc_currency']) != $MONEDASYS) {
+						$MontoSysCR = ($cdito / $TasaLocSys);
+					} else {
+						$MontoSysCR = $grantotalCostoInventarioOriginal;
+					}
 
-			// 		$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
-			// 		$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
-			// 		$AC1LINE = $AC1LINE + 1;
-			// 		$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
+					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+					$AC1LINE = $AC1LINE + 1;
+					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
-			// 			':ac1_trans_id' => $resInsertAsiento,
-			// 			':ac1_account' => $cuentaInventario,
-			// 			':ac1_debit' => 0,
-			// 			':ac1_credit' => round($cdito, $DECI_MALES),
-			// 			':ac1_debit_sys' => 0,
-			// 			':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
-			// 			':ac1_currex' => 0,
-			// 			':ac1_doc_date' => $this->validateDate($Data['cnc_docdate']) ? $Data['cnc_docdate'] : NULL,
-			// 			':ac1_doc_duedate' => $this->validateDate($Data['cnc_duedate']) ? $Data['cnc_duedate'] : NULL,
-			// 			':ac1_debit_import' => 0,
-			// 			':ac1_credit_import' => 0,
-			// 			':ac1_debit_importsys' => 0,
-			// 			':ac1_credit_importsys' => 0,
-			// 			':ac1_font_key' => $resInsert,
-			// 			':ac1_font_line' => 1,
-			// 			':ac1_font_type' => is_numeric($Data['cnc_doctype']) ? $Data['cnc_doctype'] : 0,
-			// 			':ac1_accountvs' => 1,
-			// 			':ac1_doctype' => 18,
-			// 			':ac1_ref1' => "",
-			// 			':ac1_ref2' => "",
-			// 			':ac1_ref3' => "",
-			// 			':ac1_prc_code' => NULL,
-			// 			':ac1_uncode' => NULL,
-			// 			':ac1_prj_code' => NULL,
-			// 			':ac1_rescon_date' => NULL,
-			// 			':ac1_recon_total' => 0,
-			// 			':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-			// 			':ac1_accperiod' => 1,
-			// 			':ac1_close' => 0,
-			// 			':ac1_cord' => 0,
-			// 			':ac1_ven_debit' => 0,
-			// 			':ac1_ven_credit' => 0,
-			// 			':ac1_fiscal_acct' => 0,
-			// 			':ac1_taxid' => 1,
-			// 			':ac1_isrti' => 0,
-			// 			':ac1_basert' => 0,
-			// 			':ac1_mmcode' => 0,
-			// 			':ac1_legal_num' => isset($Data['cnc_cardcode']) ? $Data['cnc_cardcode'] : NULL,
-			// 			':ac1_codref' => 1,
-			// 			':ac1_line'   => 	$AC1LINE,
-			// 			':ac1_base_tax' => 0,
-			// 			':ac1_codret' => 0,
-			// 			':business' => $Data['business'],
-			// 			':branch' => $Data['branch']
-			// 		));
+						':ac1_trans_id' => $resInsertAsiento,
+						':ac1_account' => $cuentaInventario,
+						':ac1_debit' => 0,
+						':ac1_credit' => round($cdito, $DECI_MALES),
+						':ac1_debit_sys' => 0,
+						':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+						':ac1_currex' => 0,
+						':ac1_doc_date' => $this->validateDate($Data['cnc_docdate']) ? $Data['cnc_docdate'] : NULL,
+						':ac1_doc_duedate' => $this->validateDate($Data['cnc_duedate']) ? $Data['cnc_duedate'] : NULL,
+						':ac1_debit_import' => 0,
+						':ac1_credit_import' => 0,
+						':ac1_debit_importsys' => 0,
+						':ac1_credit_importsys' => 0,
+						':ac1_font_key' => $resInsert,
+						':ac1_font_line' => 1,
+						':ac1_font_type' => is_numeric($Data['cnc_doctype']) ? $Data['cnc_doctype'] : 0,
+						':ac1_accountvs' => 1,
+						':ac1_doctype' => 18,
+						':ac1_ref1' => "",
+						':ac1_ref2' => "",
+						':ac1_ref3' => "",
+						':ac1_prc_code' => NULL,
+						':ac1_uncode' => NULL,
+						':ac1_prj_code' => NULL,
+						':ac1_rescon_date' => NULL,
+						':ac1_recon_total' => 0,
+						':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
+						':ac1_accperiod' => 1,
+						':ac1_close' => 0,
+						':ac1_cord' => 0,
+						':ac1_ven_debit' => 0,
+						':ac1_ven_credit' => 0,
+						':ac1_fiscal_acct' => 0,
+						':ac1_taxid' => 1,
+						':ac1_isrti' => 0,
+						':ac1_basert' => 0,
+						':ac1_mmcode' => 0,
+						':ac1_legal_num' => isset($Data['cnc_cardcode']) ? $Data['cnc_cardcode'] : NULL,
+						':ac1_codref' => 1,
+						':ac1_line'   => 	$AC1LINE,
+						':ac1_base_tax' => 0,
+						':ac1_codret' => 0,
+						':business' => $Data['business'],
+						':branch' => $Data['branch']
+					));
 
-			// 		if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
-			// 			// Se verifica que el detalle no de error insertando //
-			// 		} else {
+					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+						// Se verifica que el detalle no de error insertando //
+					} else {
 
-			// 			// si falla algun insert del detalle  de nota credito se devuelven los cambios realizados por la transaccion,
-			// 			// se retorna el error y se detiene la ejecucion del codigo restante.
-			// 			$this->pedeo->trans_rollback();
+						// si falla algun insert del detalle  de nota credito se devuelven los cambios realizados por la transaccion,
+						// se retorna el error y se detiene la ejecucion del codigo restante.
+						$this->pedeo->trans_rollback();
 
-			// 			$respuesta = array(
-			// 				'error'   => true,
-			// 				'data'	  => $resDetalleAsiento,
-			// 				'mensaje'	=> 'No se pudo registrar la nota credito'
-			// 			);
+						$respuesta = array(
+							'error'   => true,
+							'data'	  => $resDetalleAsiento,
+							'mensaje'	=> 'No se pudo registrar la nota credito'
+						);
 
-			// 			$this->response($respuesta);
+						$this->response($respuesta);
 
-			// 			return;
-			// 		}
-			// 	}
-			// }
+						return;
+					}
+				}
+			}
 			//
 
 			foreach ($DetalleConsolidadoItemNoInventariable as $key => $posicion) {
@@ -1937,7 +1937,7 @@ class PurchaseNcBO extends REST_Controller
 			//FIN PROCEDIMIENTO PARA LLENAR ASIENTO DELVOLUCION COMPRA ARTICULO NO INVENTARIABLE
 
 
-			if ($Data['cnc_basetype'] == 15) {
+			if ($Data['cnc_basetype'] == 13) {
 
 				//CUENTA PUENTE DE INVENTARIO
 
@@ -2369,7 +2369,7 @@ class PurchaseNcBO extends REST_Controller
 						$respuesta = array(
 							'error'   => true,
 							'data'	  => $rescuentaDescuento,
-							'mensaje'	=> 'No se pudo registrar la factura de compras, el no se encontro la cuenta para el descuento'
+							'mensaje'	=> 'No se pudo registrar la nota credito de compras, no se encontro la cuenta para el descuento'
 						);
 
 						return $this->response($respuesta);
@@ -2493,7 +2493,7 @@ class PurchaseNcBO extends REST_Controller
 					// BUSCANDO CUENTA DE DESCUENTO PARA COMPRAS
 
 					$cuentaIvaDescuento = "SELECT coalesce(pge_tax_debit_account, 0) as cuenta FROM pgem WHERE pge_id = :pge_id";
-					$rescuentaIvaDescuento = $this->pedeo->queryTable($cuentaDescuento, array(':pge_id' => $Data['business']));
+					$rescuentaIvaDescuento = $this->pedeo->queryTable($cuentaIvaDescuento, array(':pge_id' => $Data['business']));
 
 					if (isset( $rescuentaIvaDescuento[0] ) && $rescuentaIvaDescuento[0]['cuenta'] > 0 ) {
 
