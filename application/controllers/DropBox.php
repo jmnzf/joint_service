@@ -11,6 +11,7 @@ class DropBox extends REST_Controller
 
   private $pdo;
   private $api_key = "sl.BVTBaAPcFXeE22ygH51X8he5DdyTp6g5vkcFZYph8tsyyKqNIpMkjajZZ2z1y52iFIZQwv8tl8hIXdRNXdu6_Xv3zuVyzk5WrPUkn4Fq35yuFWQOfd-n5_GiGiBgVdn3uAhB2R_F";
+  private $pass_secret = "Serpent$$2023@!";
   public function __construct()
   {
 
@@ -255,30 +256,69 @@ class DropBox extends REST_Controller
     $this->response($respuesta);
   }
 
-  private function getToken(){
+  private function getToken() {
+
+
+    $this->pedeo->queryTable('CREATE EXTENSION IF NOT EXISTS pgcrypto', array());
     
+    $sqlSelect = "SELECT pgp_sym_decrypt(rft_client_id::bytea, :data) AS rft_client_id, 
+                  pgp_sym_decrypt(rft_client_secret::bytea, :data) AS rft_client_secret,
+                  rft_token
+                  FROM trft";
 
-    $sqlSelect = "SELECT * from trft order by rft_id DESC LIMIT 1";
+    $refeshToken = null;
+    $token = null;
 
-    $respuesta = null;
-
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(':data' => $this->pass_secret));
 
     if(isset($resSelect[0])){
 
-      $respuesta = $resSelect[0]['rft_token'];
+      $refeshToken = $resSelect[0]['rft_token'];
+      $client = $resSelect[0]['rft_client_id'];
+      $secret = $resSelect[0]['rft_client_secret'];
 
+      $url = 'https://api.dropbox.com/oauth2/token';
+
+      // Datos que deseas enviar en la solicitud POST
+      $data = array(
+        "grant_type" => "refresh_token",
+        "refresh_token" => $refeshToken,
+        "client_id" => $client,
+        "client_secret" => $secret
+      );
+
+      // Inicializar cURL
+      $ch = curl_init($url);
+
+      // Configurar las opciones de cURL para una solicitud POST
+      curl_setopt($ch, CURLOPT_POST, 1);
+      curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+      // Ejecutar la solicitud y obtener la respuesta
+      $response = json_decode(curl_exec($ch), true);
+
+      // Verificar si ocurrieron errores
+      if (curl_errno($ch)) {
+          echo 'Error en la solicitud cURL: ' . curl_error($ch);
+      }
+
+      // Cerrar la sesión cURL
+      curl_close($ch);
+      $token = $response['access_token'];
     }
 
-    return $respuesta;
+    return $token;
   }
 
   public function getAccessToken_get(){
+
     $respuesta = array(
       'error' => true,
       'data' => [],
       'mensaje' => 'Busqueda sin resultados'
     );
+
     $token = $this->getToken();
 
     if(!is_null($token)){

@@ -2178,4 +2178,33 @@ class PurchaseNd extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dcnd SET cnd_comment = :cnd_comment, cnd_internal_comments = :cnd_internal_comments WHERE cnd_docentry = :cnd_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':cnd_comment' => $Data['cnd_comment'],
+			':cnd_internal_comments' => $Data['cnd_internal_comments'],
+			':cnd_docentry' => $Data['cnd_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

@@ -1327,4 +1327,33 @@ class PurchaseRequest extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dcsc SET csc_comment = :csc_comment, csc_internal_comments = :csc_internal_comments WHERE csc_docentry = :csc_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':csc_comment' => $Data['csc_comment'],
+			':csc_internal_comments' => $Data['csc_internal_comments'],
+			':csc_docentry' => $Data['csc_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

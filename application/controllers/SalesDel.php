@@ -2669,4 +2669,33 @@ class SalesDel extends REST_Controller
 			return;
 		}
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dvem SET vem_comment = :vem_comment, vem_internal_comments = :vem_internal_comments WHERE vem_docentry = :vem_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':vem_comment' => $Data['vem_comment'],
+			':vem_internal_comments' => $Data['vem_internal_comments'],
+			':vem_docentry' => $Data['vem_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

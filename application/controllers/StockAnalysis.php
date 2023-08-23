@@ -93,7 +93,7 @@ class StockAnalysis extends REST_Controller {
 
 		
 
-
+		  $conditions = str_replace("AND {$table}.symbol = :symbol","",$conditions);
 						$conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
 						$conditions = str_replace("AND ".$prefix."_currency = :dvf_currency","",$conditions);
 						$conditions = str_replace("AND symbol = :symbol","",$conditions);
@@ -170,8 +170,8 @@ class StockAnalysis extends REST_Controller {
 									full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 									".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum
 									left join dmrt on mrt_id = crt_type" : "")."
-									where ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-									group by {$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_doctype,cfc_docentry,fc1_linenum,":"").(($table =="dcnc")? "cnc_docentry,nc1_linenum,cnc_doctype,":"").(($table =="dcnd")? "cnd_docentry,nd1_linenum,cnd_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
+									where  ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
+									group by {$detailPrefix}_linenum,{$prefix}_docentry,{$prefix}_doctype,{$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_doctype,cfc_docentry,fc1_linenum,":"").(($table =="dcnc")? "cnc_docentry,nc1_linenum,cnc_doctype,":"").(($table =="dcnd")? "cnd_docentry,nd1_linenum,cnd_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
 									break;
 						}
 
@@ -191,7 +191,8 @@ class StockAnalysis extends REST_Controller {
 					$sqlSelect =	str_replace("{MAIN}","'".$main_currency."'",$sqlSelect);
 
 				}
-				unset($campos[':'.$prefix.'_currency']);
+				// print_r($sqlSelect);exit;
+				// unset($campos[':'.$prefix.'_currency']);
 				unset($campos[':dvf_currency']);
 				unset($campos[':symbol']);
 

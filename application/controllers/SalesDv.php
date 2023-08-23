@@ -2248,5 +2248,34 @@ class SalesDv extends REST_Controller {
       $this->response($respuesta);
     }
 
+    //ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dvdv SET vdv_comment = :vdv_comment, vdv_internal_comments = :vdv_internal_comments WHERE vdv_docentry = :vdv_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':vdv_comment' => $Data['vdv_comment'],
+			':vdv_internal_comments' => $Data['vdv_internal_comments'],
+			':vdv_docentry' => $Data['vdv_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
 
 }

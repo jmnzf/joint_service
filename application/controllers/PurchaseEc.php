@@ -2605,67 +2605,10 @@ class PurchaseEc extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT
-								t1.ec1_acciva,
-								t1.ec1_acctcode,
-								t1.ec1_avprice,
-								t1.ec1_basetype,
-								t1.ec1_costcode,
-								t1.ec1_discount,
-								t1.ec1_docentry,
-								t1.ec1_doctype,
-								t1.ec1_id,
-								t1.ec1_inventory,
-								t1.ec1_itemcode,
-								t1.ec1_itemname,
-								t1.ec1_linenum,
-								t1.ec1_linetotal linetotal_real,
-								(t1.ec1_quantity - (coalesce(SUM(t3.dc1_quantity),0) + coalesce(SUM(t5.fc1_quantity),0))) * t1.ec1_price ec1_linetotal,
-								t1.ec1_price,
-								t1.ec1_project,
-								t1.ec1_quantity can_real,
-								coalesce(SUM(t3.dc1_quantity),0) devolucion,
-								coalesce(SUM(t5.fc1_quantity),0) facturado,
-								t1.ec1_quantity - (coalesce(SUM(t3.dc1_quantity),0) + coalesce(SUM(t5.fc1_quantity),0)) ec1_quantity,
-								t1.ec1_ubusiness,
-								t1.ec1_uom,
-								t1.ec1_vat,
-								t1.ec1_vatsum iva_entrada,
-								(((t1.ec1_quantity - (coalesce(SUM(t3.dc1_quantity),0) + coalesce(SUM(t5.fc1_quantity),0))) * t1.ec1_price) * t1.ec1_vat) / 100 ec1_vatsum,
-								t1.ec1_whscode,
-								dmar.dma_series_code
-								from dcec t0
-								left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-								left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
-								left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
-								left join dcfc t4 on t0.cec_docentry = t4.cfc_baseentry and t0.cec_doctype = t4.cfc_basetype
-								left join cfc1 t5 on t4.cfc_docentry = t5.fc1_docentry and t1.ec1_itemcode = t5.fc1_itemcode
-								INNER JOIN dmar	ON t1.ec1_itemcode = dmar.dma_item_code
-								WHERE t1.ec1_docentry =:ec1_docentry
-								GROUP BY
-								t1.ec1_acciva,
-								t1.ec1_acctcode,
-								t1.ec1_avprice,
-								t1.ec1_basetype,
-								t1.ec1_costcode,
-								t1.ec1_discount,
-								t1.ec1_docentry,
-								t1.ec1_doctype,
-								t1.ec1_id,
-								t1.ec1_inventory,
-								t1.ec1_itemcode,
-								t1.ec1_itemname,
-								t1.ec1_linenum,
-								t1.ec1_linetotal,
-								t1.ec1_price,
-								t1.ec1_project,
-								t1.ec1_ubusiness,
-								t1.ec1_uom,
-								t1.ec1_vat,
-								t1.ec1_vatsum,
-								t1.ec1_whscode,
-								t1.ec1_quantity,
-								dmar.dma_series_code";
+		$sqlSelect = "SELECT t1.*,	dmar.dma_series_code
+					from cec1 t1 
+					INNER JOIN dmar	ON t1.ec1_itemcode = dmar.dma_item_code
+					WHERE t1.ec1_docentry =:ec1_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ec1_docentry" => $Data['ec1_docentry']));
 
@@ -3043,6 +2986,35 @@ class PurchaseEc extends REST_Controller
 			}
 		
 		
+
+		$this->response($respuesta);
+	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dcec SET cec_comment = :cec_comment, cec_internal_comments = :cec_internal_comments WHERE cec_docentry = :cec_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':cec_comment' => $Data['cec_comment'],
+			':cec_internal_comments' => $Data['cec_internal_comments'],
+			':cec_docentry' => $Data['cec_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
 
 		$this->response($respuesta);
 	}

@@ -1394,4 +1394,33 @@ class Quotation extends REST_Controller
 			return;
 		}
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dvct SET dvc_comment = :dvc_comment, dvc_internal_comments = :dvc_internal_comments WHERE dvc_docentry = :dvc_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':dvc_comment' => $Data['dvc_comment'],
+			':dvc_internal_comments' => $Data['dvc_internal_comments'],
+			':dvc_docentry' => $Data['dvc_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => true,
+				'data' => $resUpdate,
+				'mensaje' => 'No se pudo realizar la actualizacion de los comentarios'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

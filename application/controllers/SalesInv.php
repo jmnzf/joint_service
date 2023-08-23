@@ -5018,6 +5018,35 @@ class SalesInv extends REST_Controller
 		$this->response($respuesta);
 	}
 
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dvfv SET dvf_comment = :dvf_comment, dvf_internal_comments = :dvf_internal_comments WHERE dvf_docentry = :dvf_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':dvf_comment' => $Data['dvf_comment'],
+			':dvf_internal_comments' => $Data['dvf_internal_comments'],
+			':dvf_docentry' => $Data['dvf_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
 
 
 }
