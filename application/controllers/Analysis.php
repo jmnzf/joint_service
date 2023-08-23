@@ -92,14 +92,16 @@ class Analysis extends REST_Controller {
   $diff = array_diff($options,$req);
 
     foreach ($diff as $key => $value) {
-      if($Data[$value]!='' and $Data[$value]!=null){
+      if($Data[$value]!='' and $Data[$value]!=null and $value != $Data['symbol']){
           $conditions .='AND '.$table.'.'.str_replace("dvf",$prefix,$value).' = :'.$value.' ';
           $campos[':'.$value] = $Data[$value];
       }
     }
+    $conditions = str_replace("AND {$table}.symbol = :symbol","",$conditions);
 		$conditions = str_replace("AND ".$prefix."_currency = :".$prefix."_currency","",$conditions);
 		$conditions = str_replace("AND ".$prefix."_currency = :dvf_currency","",$conditions);
-		$conditions = str_replace("AND symbol = :symbol","",$conditions);
+		// $conditions = str_replace("AND symbol = :symbol","",$conditions);
+    // print_r($conditions);exit;
     $sqlSelect = " ";
     $cardcode = (isset( $Data['dvf_cardcode']) and $Data['dvf_cardcode'] !=null) ?  true: false;
 
@@ -186,11 +188,11 @@ class Analysis extends REST_Controller {
 					$sqlSelect =	str_replace("{MAIN}","'".$main_currency."'",$sqlSelect);
 
 				}
-
-				unset($campos[':'.$prefix.'_currency']);
-				unset($campos[':dvf_currency']);
+       
+				// unset($campos[':'.$prefix.'_currency']);
+				// unset($campos[':dvf_currency']);
         unset($campos[':symbol']);
-    
+
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
 
 

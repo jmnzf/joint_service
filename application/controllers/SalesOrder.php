@@ -1527,4 +1527,33 @@ class SalesOrder extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dvov SET vov_comment = :vov_comment, vov_internal_comments = :vov_internal_comments WHERE vov_docentry = :vov_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':vov_comment' => $Data['vov_comment'],
+			':vov_internal_comments' => $Data['vov_internal_comments'],
+			':vov_docentry' => $Data['vov_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

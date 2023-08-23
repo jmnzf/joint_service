@@ -1148,9 +1148,9 @@ class PurchOrder extends REST_Controller
 		}
 
 		$sqlSelect = " SELECT cpo1.*,dmar.dma_series_code
-											 FROM cpo1
-											 INNER JOIN dmar	ON cpo1.po1_itemcode = dmar.dma_item_code
-											 WHERE po1_docentry =:po1_docentry";
+					FROM cpo1
+					INNER JOIN dmar	ON cpo1.po1_itemcode = dmar.dma_item_code
+					WHERE po1_docentry =:po1_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":po1_docentry" => $Data['po1_docentry']));
 
@@ -1393,6 +1393,35 @@ class PurchOrder extends REST_Controller
 			}
 		
 		
+
+		$this->response($respuesta);
+	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dcpo SET cpo_comment = :cpo_comment, cpo_internal_comments = :cpo_internal_comments WHERE cpo_docentry = :cpo_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':cpo_comment' => $Data['cpo_comment'],
+			':cpo_internal_comments' => $Data['cpo_internal_comments'],
+			':cpo_docentry' => $Data['cpo_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
 
 		$this->response($respuesta);
 	}

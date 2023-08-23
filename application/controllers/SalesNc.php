@@ -3708,4 +3708,33 @@ class SalesNc extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dvnc SET vnc_comment = :vnc_comment, vnc_internal_comments = :vnc_internal_comments WHERE vnc_docentry = :vnc_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':vnc_comment' => $Data['vnc_comment'],
+			':vnc_internal_comments' => $Data['vnc_internal_comments'],
+			':vnc_docentry' => $Data['vnc_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

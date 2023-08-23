@@ -1135,4 +1135,38 @@ class BusinessPartner extends REST_Controller
 
     $this->response($respuesta);
   }
+
+  //OBTENER ANEXOS DE SN
+  public function getAttachSN_get()
+  {
+    $Data = $this->get();
+
+    $respuesta = array(
+      'error' => true,
+      'data' => [],
+      'mensaje' => 'No se encontraron datos en la busqueda'
+    );
+
+    if(!isset($Data['dma_card_code']) && empty($Data['dma_card_code'])){
+      $respuesta = array(
+        'error' => true,
+        'data' => [],
+        'mensaje' => 'Informacion enviada invalida'
+      );
+    }
+
+    $sql = "SELECT code AS cardcode, attach,description FROM dmsa WHERE code = :cardcode";
+    $resSql = $this->pedeo->queryTable($sql,array(
+      ':cardcode' => $Data['dma_card_code']
+    ));
+
+    if(isset($resSql[0])){
+      $respuesta = array(
+        'error' => false,
+        'data' => $resSql,
+        'mensaje' => 'OK'
+      );
+    }
+    $this->response($respuesta);
+  }
 }

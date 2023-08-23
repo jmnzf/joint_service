@@ -2224,4 +2224,33 @@ class SalesNd extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dvnd SET vnd_comment = :vnd_comment, vnd_internal_comments = :vnd_internal_comments WHERE vnd_docentry = :vnd_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':vnd_comment' => $Data['vnd_comment'],
+			':vnd_internal_comments' => $Data['vnd_internal_comments'],
+			':vnd_docentry' => $Data['vnd_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

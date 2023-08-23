@@ -3125,4 +3125,33 @@ class PurchaseNc extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dcnc SET cnc_comment = :cnc_comment, cnc_internal_comments = :cnc_internal_comments WHERE cnc_docentry = :cnc_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':cnc_comment' => $Data['cnc_comment'],
+			':cnc_internal_comments' => $Data['cnc_internal_comments'],
+			':cnc_docentry' => $Data['cnc_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

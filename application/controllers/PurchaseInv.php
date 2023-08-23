@@ -4111,4 +4111,33 @@ class PurchaseInv extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dcfc SET cfc_comment = :cfc_comment, cfc_internal_comments = :cfc_internal_comments WHERE cfc_docentry = :cfc_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':cfc_comment' => $Data['cfc_comment'],
+			':cfc_internal_comments' => $Data['cfc_internal_comments'],
+			':cfc_docentry' => $Data['cfc_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

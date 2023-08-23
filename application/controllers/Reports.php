@@ -266,19 +266,19 @@ class Reports extends REST_Controller {
 
 			$sql = 'SELECT
 							T3.MDT_DOCNAME "TipoDocumento",
-							T0.DPO_DOCNUM "NumeroFactura",
-							T0.DPO_CARDCODE "CodigoCLiente",
-							T0.DPO_CARDNAME "NombreCliente",
-							T0.DPO_DOCDATE "FechaFactura",
-							T0.DPO_BASEAMNT "BaseFactura",
-							ROUND((T0.DPO_BASEAMNT * 19) / 100) "IvaFactura",
-							COALESCE(T0.DPO_PAYTODAY,0) "ValorRecaudado",
+							T0.cpo_DOCNUM "NumeroFactura",
+							T0.cpo_CARDCODE "CodigoCLiente",
+							T0.cpo_CARDNAME "NombreCliente",
+							T0.cpo_DOCDATE "FechaFactura",
+							T0.cpo_BASEAMNT "BaseFactura",
+							ROUND((T0.cpo_BASEAMNT * 19) / 100) "IvaFactura",
+							COALESCE(T0.cpo_PAYTODAY,0) "ValorRecaudado",
 							T2.MGS_NAME "GrupoCliente"
 						FROM DCPO T0
-						LEFT JOIN DMSN T1 ON T0.DPO_CARDCODE = T1.DMS_CARD_CODE
+						LEFT JOIN DMSN T1 ON T0.cpo_CARDCODE = T1.DMS_CARD_CODE
 						LEFT JOIN DMGS T2 ON T1.DMS_GROUP_NUM = CAST(T2.MGS_ID AS VARCHAR)
-						LEFT JOIN DMDT T3 ON T0.DPO_DOCTYPE = T3.MDT_DOCTYPE
-						LEFT JOIN TBMI T4 ON T0.DPO_DOCTYPE = T4.BMY_DOCTYPE and t0.DPO_DOCENTRY = T4.BMY_BASEENTRY
+						LEFT JOIN DMDT T3 ON T0.cpo_DOCTYPE = T3.MDT_DOCTYPE
+						LEFT JOIN TBMI T4 ON T0.cpo_DOCTYPE = T4.BMY_DOCTYPE and t0.DPO_DOCENTRY = T4.BMY_BASEENTRY
 						where t0.business = :business';
 
 

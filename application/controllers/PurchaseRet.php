@@ -2276,4 +2276,33 @@ class PurchaseRet extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dcdc SET cdc_comment = :cdc_comment, cdc_internal_comments = :cdc_internal_comments WHERE cdc_docentry = :cdc_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':cdc_comment' => $Data['cdc_comment'],
+			':cdc_internal_comments' => $Data['cdc_internal_comments'],
+			':cdc_docentry' => $Data['cdc_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }

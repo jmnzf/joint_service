@@ -310,4 +310,56 @@ class Params extends REST_Controller {
 
 		$this->response($respuesta);
 	}
+
+	public function getPiePag_post() {
+
+		$Data = $this->post();
+
+		if( !isset($Data['type']) OR !isset($Data['ubication']) ){
+
+			$respuesta = array(
+			  'error' => true,
+			  'data'  => array(),
+			  'mensaje' =>'La informacion enviada no es valida'
+			);
+	
+			$this->response($respuesta);
+	
+			return;
+		}
+
+		$sqlParams = "SELECT country FROM params";
+		$country = $this->pedeo->queryTable($sqlParams, array())[0]['country'];
+
+		$sqlSelect = "SELECT ppd_html FROM cppd WHERE ppd_type = :ppd_type AND ppd_country = :ppd_country AND ppd_ubication = :ppd_ubication";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':ppd_type'  => $Data['type'],
+			':ppd_country' => $country,
+			':ppd_ubication' => $Data['ubication']
+		));
+
+			if(isset($resSelect[0])){
+
+				$respuesta = array(
+					'error' => false,
+					'data'  => $resSelect,
+					'mensaje' => ''
+				);
+
+			}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+			}
+
+		$this->response($respuesta);
+
+
+
+	}
 }

@@ -1342,4 +1342,33 @@ class BuyOffert extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	//ACTUALIZAR COMENTARIOS INTERNOS Y NORMAL
+	public function updateComments_post ()
+	{
+		$Data = $this->post();
+
+		$update = "UPDATE dcoc SET coc_comment = :coc_comment, coc_internal_comments = :coc_internal_comments WHERE coc_docentry = :coc_docentry";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':coc_comment' => $Data['coc_comment'],
+			':coc_internal_comments' => $Data['coc_internal_comments'],
+			':coc_docentry' => $Data['coc_docentry']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}else{
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+	}
 }
