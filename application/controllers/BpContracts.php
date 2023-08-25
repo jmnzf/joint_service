@@ -720,7 +720,7 @@ class BpContracts extends REST_Controller
 		$DECI_MALES =  $this->generic->getDecimals();
 
 		$sqlSelect = self::getColumn('tcsn', 'csn', '', '', $DECI_MALES, $Data['business'], $Data['branch'], $Data['docnum']);
-
+		// print_r($sqlSelect);exit;
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 		if (isset($resSelect[0])) {
