@@ -22,7 +22,7 @@ class RetFisc extends REST_Controller {
 
 	}
 
-  //CREAR RETENCION
+  	//CREAR RETENCION
 	public function createRetFisc_post(){
     $Data = $this->post();
 
@@ -72,8 +72,8 @@ class RetFisc extends REST_Controller {
             return;
         }
 
-        $sqlInsert = "INSERT INTO dmrt(mrt_code, mrt_enabled, mrt_name, mrt_type, mrt_action, mrt_dateini, mrt_base, mrt_tipobase, mrt_tasa, mrt_codeof, mrt_acctcode, mrt_mm, mrt_typeret, mrt_minbase, mrt_selftret, mrt_pos, mrt_selfttype, mrt_typetax, mrt_sustra, mrt_use_fc)
-	                    VALUES (:mrt_code, :mrt_enabled, :mrt_name, :mrt_type, :mrt_action, :mrt_dateini, :mrt_base, :mrt_tipobase, :mrt_tasa, :mrt_codeof, :mrt_acctcode, :mrt_mm, :mrt_typeret, :mrt_minbase, :mrt_selftret, :mrt_pos, :mrt_selfttype, :mrt_typetax, :mrt_sustra, :mrt_use_fc)";
+        $sqlInsert = "INSERT INTO dmrt(mrt_code, mrt_enabled, mrt_name, mrt_type, mrt_action, mrt_dateini, mrt_base, mrt_tipobase, mrt_tasa, mrt_codeof, mrt_acctcode, mrt_mm, mrt_typeret, mrt_minbase, mrt_selftret, mrt_pos, mrt_selfttype, mrt_typetax, mrt_sustra,mrt_use_fc)
+	                    VALUES (:mrt_code, :mrt_enabled, :mrt_name, :mrt_type, :mrt_action, :mrt_dateini, :mrt_base, :mrt_tipobase, :mrt_tasa, :mrt_codeof, :mrt_acctcode, :mrt_mm, :mrt_typeret, :mrt_minbase, :mrt_selftret, :mrt_pos, :mrt_selfttype, :mrt_typetax, :mrt_sustra,:mrt_use_fc)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -94,9 +94,9 @@ class RetFisc extends REST_Controller {
               ':mrt_selftret' => $Data['mrt_selftret'],
               ':mrt_pos' => $Data['mrt_pos'],
               ':mrt_selfttype' => $Data['mrt_selfttype'],
-              ':mrt_typetax' => @$Data['mrt_typetax'] ?: 0,
-              ':mrt_sustra' => @$Data['mrt_sustra'] ?: 0,
-              ':mrt_use_fc' => $Data['mrt_use_fc']
+              ':mrt_typetax' => $Data['mrt_typetax'],
+              ':mrt_sustra' => $Data['mrt_sustra'],
+			  ':mrt_use_fc' => $Data['mrt_use_fc']
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -142,8 +142,8 @@ class RetFisc extends REST_Controller {
 					tpdm.pdm_municipality AS municipio,
 					tdar.dar_name AS autoretencion,
 					trmm.rmm_name AS retencionmagnetica,
-					ttrt.trt_description AS mrt_description
-					--mrt_use_fc
+					ttrt.trt_description AS mrt_description,
+					mrt_use_fc
 					FROM dmrt
 					INNER JOIN ttrt
 					ON dmrt.mrt_type = ttrt.trt_id
@@ -281,10 +281,11 @@ class RetFisc extends REST_Controller {
 					':mrt_selftret' => $Data['mrt_selftret'],
 					':mrt_pos' => $Data['mrt_pos'],
 					':mrt_selfttype' => $Data['mrt_selfttype'],
-					':mrt_typetax' => @$Data['mrt_typetax'] ?: 0,
-					':mrt_sustra' => @$Data['mrt_sustra'] ?: 0,
+					':mrt_typetax' => $Data['mrt_typetax'],
+					':mrt_sustra' => $Data['mrt_sustra'],
 					':mrt_use_fc' => $Data['mrt_use_fc'],
-					':mrt_id' => $Data['mrt_id']));
+					':mrt_id' => $Data['mrt_id']
+				));
 
 		if(is_numeric($resUpdate) && $resUpdate == 1){
 

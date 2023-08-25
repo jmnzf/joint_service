@@ -2836,8 +2836,9 @@ class PurchaseNc extends REST_Controller
 		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
-
-		$sqlSelect = self::getColumn('dcnc', 'cnc', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$campos = ",CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalret,'999,999,999,999.00'))) {prefix}_totalret,
+		CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalretiva,'999,999,999,999.00'))) {prefix}_totalretiva";
+		$sqlSelect = self::getColumn('dcnc', 'cnc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -2881,7 +2882,7 @@ class PurchaseNc extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM dcnc WHERE cnc_docentry =:cnc_docentry";
+		$sqlSelect = "SELECT * FROM dcnc WHERE cnc_docentry =:cnc_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":cnc_docentry" => $Data['cnc_docentry']));
 
