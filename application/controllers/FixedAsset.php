@@ -212,7 +212,9 @@ class FixedAsset extends REST_Controller {
 
         $this->response($respuesta);
     }
-    //CREAR AREAS DE VALORACION ACTIVO FIJO
+    /**
+     * AREAS DE VALORACION ACTIVO FIJO
+     */
     public function createValuationArea_post()
     {
 
@@ -456,9 +458,9 @@ class FixedAsset extends REST_Controller {
         }
         //
         $insert = "INSERT INTO afcp (fcp_docnum, fcp_status, fcp_docdate, fcp_taxdate, fcp_dateval, fcp_areaval, fcp_ref, 
-        fcp_comments, fcp_doctotal, business, branch)
+        fcp_comments, fcp_doctotal, business, branch,fcp_doctype)
         VALUES (:fcp_docnum, :fcp_status, :fcp_docdate, :fcp_taxdate, :fcp_dateval, :fcp_areaval, :fcp_ref, :fcp_comments, :fcp_doctotal, 
-        :business, :branch)";
+        :business, :branch,:fcp_doctype)";
         //
         $this->pedeo->trans_begin();
         //
@@ -473,7 +475,8 @@ class FixedAsset extends REST_Controller {
             ':fcp_comments' => isset($Data['fcp_comments']) ? $Data['fcp_comments'] : NULL, 
             ':fcp_doctotal' => is_numeric($Data['fcp_doctotal']) ? $Data['fcp_doctotal'] : 0, 
             ':business' => $Data['business'], 
-            ':branch' => $Data['branch']
+            ':branch' => $Data['branch'],
+            ':fcp_doctype' => is_numeric($Data['fcp_doctype']) ? $Data['fcp_doctype'] : 0, 
         ));
         //
         if (is_numeric($resInsert) && $resInsert > 0){
@@ -529,6 +532,48 @@ class FixedAsset extends REST_Controller {
         $this->response($respuesta);        
 
     }
+        //OBTENER POR ID
+	public function getCapitalizationById_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['fcp_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM afcp WHERE fcp_docentry =:fcp_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fcp_docentry" => $Data['fcp_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
     //OBTENER DATOS DE CAPITALIZACION
     public function getCapitalization_get()
     {
@@ -614,9 +659,9 @@ class FixedAsset extends REST_Controller {
         }
         //
         $insert = "INSERT INTO afnc (fnc_docnum, fnc_status, fnc_docdate, fnc_taxdate, fnc_dateval, fnc_areaval, fnc_ref, 
-        fnc_comments, fnc_doctotal, business, branch)
+        fnc_comments, fnc_doctotal, business, branch,fnc_doctype)
         VALUES (:fnc_docnum, :fnc_status, :fnc_docdate, :fnc_taxdate, :fnc_dateval, :fnc_areaval, :fnc_ref, :fnc_comments, :fnc_doctotal, 
-        :business, :branch)";
+        :business, :branch,:fnc_doctype)";
         //
         $this->pedeo->trans_begin();
         //
@@ -631,7 +676,8 @@ class FixedAsset extends REST_Controller {
             ':fnc_comments' => isset($Data['fnc_comments']) ? $Data['fnc_comments'] : NULL, 
             ':fnc_doctotal' => is_numeric($Data['fnc_doctotal']) ? $Data['fnc_doctotal'] : 0, 
             ':business' => $Data['business'], 
-            ':branch' => $Data['branch']
+            ':branch' => $Data['branch'],
+            ':fnc_doctype' => is_numeric($Data['fnc_doctype']) ? $Data['fnc_doctype'] : 0, 
         ));
         //
         if (is_numeric($resInsert) && $resInsert > 0){
@@ -709,6 +755,46 @@ class FixedAsset extends REST_Controller {
         
         $this->response($respuesta);
     }
+    public function getNoteCreditCapById_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['fnc_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM afnc WHERE fnc_docentry =:fnc_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fnc_docentry" => $Data['fnc_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
     public function getDetailNoteCreditCap_get()
     {
         $Data = $this->get();
@@ -772,9 +858,9 @@ class FixedAsset extends REST_Controller {
         }
         //
         $insert = "INSERT INTO afba (fba_docnum, fba_status, fba_docdate, fba_taxdate, fba_dateval, fba_areaval, fba_ref, 
-        fba_comments, fba_doctotal, business, branch,fba_trans_type,fba_cardcode)
+        fba_comments, fba_doctotal, business, branch,fba_trans_type,fba_cardcode,fba_doctype)
         VALUES (:fba_docnum, :fba_status, :fba_docdate, :fba_taxdate, :fba_dateval, :fba_areaval, :fba_ref, :fba_comments, :fba_doctotal, 
-        :business, :branch,:fba_trans_type,:fba_cardcode)";
+        :business, :branch,:fba_trans_type,:fba_cardcode,:fba_doctype)";
         //
         $this->pedeo->trans_begin();
         //
@@ -791,7 +877,8 @@ class FixedAsset extends REST_Controller {
             ':business' => $Data['business'], 
             ':branch' => $Data['branch'],
             ':fba_trans_type' => isset($Data['fba_trans_type']) ? $Data['fba_trans_type'] : NULL, 
-            ':fba_cardcode' => isset($Data['fba_cardcode']) ? $Data['fba_cardcode'] : NULL
+            ':fba_cardcode' => isset($Data['fba_cardcode']) ? $Data['fba_cardcode'] : NULL,
+            ':fba_doctype' => is_numeric($Data['fba_doctype']) ? $Data['fba_doctype'] : 0, 
         ));
         //
         if (is_numeric($resInsert) && $resInsert > 0){
@@ -877,6 +964,46 @@ class FixedAsset extends REST_Controller {
         
         $this->response($respuesta);
     }
+    public function getLowById_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['fba_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM afba WHERE fba_docentry =:fba_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fba_docentry" => $Data['fba_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
     public function getDetailLow_get()
     {
         $Data = $this->get();
@@ -940,9 +1067,9 @@ class FixedAsset extends REST_Controller {
         }
         //
         $insert = "INSERT INTO afma (fma_docnum, fma_status, fma_docdate, fma_taxdate, fma_dateval, fma_areaval, fma_ref, 
-        fma_comments, fma_doctotal, business, branch)
+        fma_comments, fma_doctotal, business, branch,fma_doctype)
         VALUES (:fma_docnum, :fma_status, :fma_docdate, :fma_taxdate, :fma_dateval, :fma_areaval, :fma_ref, :fma_comments, :fma_doctotal, 
-        :business, :branch)";
+        :business, :branch,:fma_doctype)";
         //
         $this->pedeo->trans_begin();
         //
@@ -957,7 +1084,8 @@ class FixedAsset extends REST_Controller {
             ':fma_comments' => isset($Data['fma_comments']) ? $Data['fma_comments'] : NULL, 
             ':fma_doctotal' => is_numeric($Data['fma_doctotal']) ? $Data['fma_doctotal'] : 0, 
             ':business' => $Data['business'], 
-            ':branch' => $Data['branch']
+            ':branch' => $Data['branch'],
+            ':fma_doctype' => is_numeric($Data['fma_doctype']) ? $Data['fma_doctype'] : 0, 
         ));
         //
         if (is_numeric($resInsert) && $resInsert > 0){
@@ -1039,6 +1167,46 @@ class FixedAsset extends REST_Controller {
         
         $this->response($respuesta);
     }
+    public function getManualDepreciationyById_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['fma_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM afma WHERE fma_docentry =:fma_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":fma_docentry" => $Data['fma_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
     public function getDetailManualDepreciation_get()
     {
         $Data = $this->get();
@@ -1102,9 +1270,9 @@ class FixedAsset extends REST_Controller {
         }
         //
         $insert = "INSERT INTO aftf (ftf_docnum, ftf_status, ftf_docdate, ftf_taxdate, ftf_dateval, ftf_areaval, ftf_ref, 
-        ftf_comments, ftf_doctotal, business, branch,ftf_trans_type,ftf_cardcode)
+        ftf_comments, ftf_doctotal, business, branch,ftf_trans_type,ftf_cardcode,ftf_doctype)
         VALUES (:ftf_docnum, :ftf_status, :ftf_docdate, :ftf_taxdate, :ftf_dateval, :ftf_areaval, :ftf_ref, :ftf_comments, :ftf_doctotal, 
-        :business, :branch,:ftf_trans_type,:ftf_cardcode)";
+        :business, :branch,:ftf_trans_type,:ftf_cardcode,:ftf_doctype)";
         //
         $this->pedeo->trans_begin();
         //
@@ -1121,7 +1289,8 @@ class FixedAsset extends REST_Controller {
             ':business' => $Data['business'], 
             ':branch' => $Data['branch'],
             ':ftf_trans_type' => isset($Data['ftf_trans_type']) ? $Data['ftf_trans_type'] : NULL, 
-            ':ftf_cardcode' => isset($Data['ftf_cardcode']) ? $Data['ftf_cardcode'] : NULL
+            ':ftf_cardcode' => isset($Data['ftf_cardcode']) ? $Data['ftf_cardcode'] : NULL,
+            ':ftf_doctype' => is_numeric($Data['ftf_doctype']) ? $Data['ftf_doctype'] : 0, 
         ));
         //
         if (is_numeric($resInsert) && $resInsert > 0){
@@ -1204,6 +1373,46 @@ class FixedAsset extends REST_Controller {
         
         $this->response($respuesta);
     }
+    public function getTransferById_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['ftf_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM aftf WHERE ftf_docentry =:ftf_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ftf_docentry" => $Data['ftf_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
     public function getDetailTransfer_get()
     {
         $Data = $this->get();
@@ -1267,9 +1476,9 @@ class FixedAsset extends REST_Controller {
         }
         //
         $insert = "INSERT INTO afrv (frv_docnum, frv_docdate, frv_taxdate, frv_dateval, frv_ref, frv_comments, business, branch, frv_createby, 
-        frv_areaval, frv_cardcode, frv_porcent)
+        frv_areaval, frv_cardcode, frv_porcent,frv_doctype)
         VALUES (:frv_docnum, :frv_docdate, :frv_taxdate, :frv_dateval, :frv_ref, :frv_comments, :business, :branch, :frv_createby, 
-        :frv_areaval, :frv_cardcode,:frv_porcent)";
+        :frv_areaval, :frv_cardcode,:frv_porcent,:frv_doctype)";
         //
         $this->pedeo->trans_begin();
         //
@@ -1285,7 +1494,8 @@ class FixedAsset extends REST_Controller {
             ':frv_createby' => isset($Data['frv_createby']) ? $Data['frv_createby'] : NULL, 
             ':frv_areaval' => isset($Data['frv_areaval']) ? $Data['frv_areaval'] : NULL,
             ':frv_cardcode' => isset($Data['frv_cardcode']) ? $Data['frv_cardcode'] : NULL,
-            ':frv_porcent' => isset($Data['frv_porcent']) ? $Data['frv_porcent'] : NULL
+            ':frv_porcent' => isset($Data['frv_porcent']) ? $Data['frv_porcent'] : NULL,
+            ':frv_doctype' => is_numeric($Data['frv_doctype']) ? $Data['frv_doctype'] : 0, 
         ));
         //
         if (is_numeric($resInsert) && $resInsert > 0){
@@ -1365,6 +1575,46 @@ class FixedAsset extends REST_Controller {
         
         $this->response($respuesta);
     }
+    public function getRevalorizationById_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['frv_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = " SELECT * FROM afrv WHERE frv_docentry =:frv_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":frv_docentry" => $Data['frv_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
     public function getDetailRevalorization_get()
     {
         $Data = $this->get();

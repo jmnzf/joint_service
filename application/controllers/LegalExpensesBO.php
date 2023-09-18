@@ -5,7 +5,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 
-class LegalExpenses extends REST_Controller {
+class LegalExpensesBO extends REST_Controller {
 
 	private $pdo;
 
@@ -785,9 +785,11 @@ class LegalExpenses extends REST_Controller {
 					array_push($DetalleConsolidadoIva[$posicionIva], $DetalleAsientoIva);
 
 
-					$monto = $detail['lg1_price'];
+					$monto = ($detail['lg1_price'] - $detail['lg1_vatsum']);
 					$cuenta = $detail['lg1_account'];
 					$montosys = ($monto/$TasaLocSys);
+
+
 
 					// ASIENTOS DETALLE
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1347,6 +1349,11 @@ class LegalExpenses extends REST_Controller {
 					return;
 				}
 
+
+				// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
+				// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+				// print_r(json_encode($ressqlmac1));
+				// exit;
 
 
 				$this->pedeo->trans_commit();
