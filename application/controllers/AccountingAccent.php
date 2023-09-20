@@ -1266,7 +1266,7 @@ class AccountingAccent extends REST_Controller
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
 											and dacc.acc_enabled = 1
-											--- LEGALIZACION DE GASTO
+											-- LEGALIZACION DE GASTO
 											union all
 											select distinct
 											mac1.ac1_trans_id as docnum,

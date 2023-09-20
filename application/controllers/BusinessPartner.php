@@ -1169,4 +1169,69 @@ class BusinessPartner extends REST_Controller
     }
     $this->response($respuesta);
   }
+
+  // ACTUALIZAR CODIGO DE REFERENCIA
+  public function setPosCode_post(){
+
+    $Data = $this->post();
+
+    if (
+      !isset($Data['dms_card_code']) OR !isset($Data['dms_poscode'])
+    ) {
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'La informacion enviada no es valida'
+      );
+
+      return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+    }
+
+    $sql = "SELECT * FROM dmsn WHERE dms_poscode=:dms_poscode AND dms_card_code !=:dms_card_code AND dms_card_type =:dms_card_type";
+
+    $resSql = $this->pedeo->queryTable($sql, array(
+      ':dms_poscode' => $Data['dms_poscode'],
+      ':dms_card_code' => $Data['dms_card_code'],
+      ':dms_card_type' => '1'
+    ));
+
+    if (isset($resSql[0])){
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'Existe otro cliente con esa referencia'
+      );
+
+      return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+    }
+
+    $sqlUpdate = "UPDATE dmsn SET dms_poscode=:dms_poscode WHERE dms_card_code =:dms_card_code AND dms_card_type =:dms_card_type";
+
+    $resSqlUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+      ':dms_poscode' => $Data['dms_poscode'],
+      ':dms_card_code' => $Data['dms_card_code'],
+      ':dms_card_type' => '1'
+    ));
+
+
+    if (is_numeric($resSqlUpdate) && $resSqlUpdate == 1){
+      $respuesta = array(
+        'error' => false,
+        'data'  => array(),
+        'mensaje' => 'Referencia actualizada con exito'
+      );
+    }else{
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'No se pudo actualizar la referencia'
+      );
+    }
+
+
+    $this->response($respuesta);
+  }
 }
