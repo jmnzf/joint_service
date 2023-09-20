@@ -62,28 +62,29 @@ class Items extends REST_Controller
 		}
 
 		// VALIDACION NUMERO DE SERIE FABRICANTE
-		$sqlSelect = "SELECT dma_serial_number, dma_item_code FROM dmar WHERE UPPER(trim(dma_serial_number)) = UPPER(trim(:dma_serial_number))";
+		if (isset($Data['dma_serial_number']) && !empty($Data['dma_serial_number']) && $Data['dma_serial_number'] != 0){
+			$sqlSelect = "SELECT dma_serial_number, dma_item_code FROM dmar WHERE UPPER(trim(dma_serial_number)) = UPPER(trim(:dma_serial_number))";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-
-			':dma_serial_number' => $Data['dma_serial_number']
-
-		));
-
-		if (isset($resSelect[0])) {
-
-			$respuesta = array(
-				'error' => true,
-				'data'  => $resSelect,
-				'mensaje' => 'ya existe un artículo con ese código de fabrica '. $resSelect[0]['dma_item_code']
-			);
-
-			$this->response($respuesta);
-
-			return;
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+	
+				':dma_serial_number' => $Data['dma_serial_number']
+	
+			));
+	
+			if (isset($resSelect[0])) {
+	
+				$respuesta = array(
+					'error' => true,
+					'data'  => $resSelect,
+					'mensaje' => 'ya existe un artículo con ese código de fabrica '. $resSelect[0]['dma_serial_number']
+				);
+	
+				$this->response($respuesta);
+	
+				return;
+			}
 		}
 
-		
 		//VALIDACION ITEM MANEJA SERIAL
 		if (isset($Data['dma_series_code']) && $Data['dma_series_code'] == 1) {
 			if ($Data['dma_uom_purch'] == $Data['dma_uom_sale']) {
@@ -147,21 +148,21 @@ class Items extends REST_Controller
 				':dma_group_code' => is_numeric($Data['dma_group_code']) ? $Data['dma_group_code'] : 0,
 				':dma_attach' => is_numeric($Data['dma_attach']) ? $Data['dma_attach'] : 0,
 				':dma_enabled' => is_numeric($Data['dma_enabled']) ? $Data['dma_enabled'] : 0,
-				':dma_firm_code' => isset($Data['dma_firm_code']) ? $Data['dma_firm_code'] : NULL,
+				':dma_firm_code' => isset($Data['dma_firm_code']) ? $Data['dma_firm_code'] : '',
 				':dma_series_code' => isset($Data['dma_series_code']) ? $Data['dma_series_code'] : NULL,
-				':dma_sup_set' => isset($Data['dma_sup_set']) ? $Data['dma_sup_set'] : NULL,
-				':dma_sku_sup' => isset($Data['dma_sku_sup']) ? $Data['dma_sku_sup'] : NULL,
-				':dma_uom_purch' => $unidad == 0 ? $Data['dma_uom_purch'] : $unidad,
-				':dma_uom_pqty' => $cantidad1 == 0 ? $Data['dma_uom_pqty'] : $cantidad1,
-				':dma_uom_pemb' => $cantidad1 == 0 ? $Data['dma_uom_embqty'] : $cantidad1,
-				':dma_uom_pembqty' => $cantidad2 == 0 ? $Data['dma_uom_pembqty'] : $cantidad2,
+				':dma_sup_set' => isset($Data['dma_sup_set']) ? $Data['dma_sup_set'] : '',
+				':dma_sku_sup' => isset($Data['dma_sku_sup']) ? $Data['dma_sku_sup'] : '',
+				':dma_uom_purch' => $unidad == 0 && is_numeric($Data['dma_uom_purch']) ? $Data['dma_uom_purch'] : $unidad,
+				':dma_uom_pqty' => $cantidad1 == 0 && is_numeric($Data['dma_uom_pqty']) ? $Data['dma_uom_pqty'] : $cantidad1,
+				':dma_uom_pemb' => $cantidad1 == 0 && is_numeric($Data['dma_uom_pemb']) ? $Data['dma_uom_pemb'] : $cantidad1,
+				':dma_uom_pembqty' => $cantidad2 == 0 && is_numeric($Data['dma_uom_pembqty']) ? $Data['dma_uom_pembqty']  : $cantidad2,
 				':dma_tax_purch' => is_numeric($Data['dma_tax_purch']) ? $Data['dma_tax_purch'] : 0,
 				':dma_price_list' => isset($Data['dma_price_list']) ? $Data['dma_price_list'] : 0,
 				':dma_price' => is_numeric($Data['dma_price']) ? $Data['dma_price'] : 0,
-				':dma_uom_sale' => $unidad == 0 ? $Data['dma_uom_sale'] : $unidad,
-				':dma_uom_sqty' => $cantidad1 == 0 ? $Data['dma_uom_sqty'] : $cantidad1,
-				':dma_uom_semb' => $cantidad1 == 0 ? $Data['dma_uom_embqty'] : $cantidad1,
-				':dma_uom_embqty' => $cantidad2 == 0 ? $Data['dma_uom_embqty'] : $cantidad2,
+				':dma_uom_sale' => $unidad == 0 &&  is_numeric($Data['dma_uom_sale']) ? $Data['dma_uom_sale'] : $unidad,
+				':dma_uom_sqty' => $cantidad1 == 0 &&  is_numeric($Data['dma_uom_sqty']) ? $Data['dma_uom_sqty'] : $cantidad1,
+				':dma_uom_semb' => $cantidad1 == 0 &&  is_numeric($Data['dma_uom_semb']) ? $Data['dma_uom_semb'] : $cantidad1,
+				':dma_uom_embqty' => $cantidad2 == 0 &&  is_numeric($Data['dma_uom_embqty']) ? $Data['dma_uom_embqty'] : $cantidad2,
 				':dma_tax_sales' => is_numeric($Data['dma_tax_sales']) ? $Data['dma_tax_sales'] : 0,
 				':dma_acct_type' => is_numeric($Data['dma_acct_type']) ? $Data['dma_acct_type'] : 0,
 				':dma_avprice' => is_numeric($Data['dma_avprice']) ? $Data['dma_avprice'] : 0,
@@ -173,8 +174,9 @@ class Items extends REST_Controller
 				':dma_lotes_code' => isset($Data['dma_lotes_code']) ? $Data['dma_lotes_code'] : '0',
 				':dma_emisionmethod' => isset($Data['dma_emisionmethod']) ? $Data['dma_emisionmethod'] : 0,
 				':dma_long_description' => isset($Data['dma_long_description']) ? $Data['dma_long_description'] : NULL,
-				':dma_um_inventory' => $unidad == 0 ? $Data['dma_uom_purch'] : $unidad,
 				':dma_item_mat' => isset($Data['dma_item_mat']) ? $Data['dma_item_mat'] : 0,
+				
+				
 				//CUENTAS CONTABLES
 				':dma_accounting' => isset($Data['dma_accounting']) ? $Data['dma_accounting'] : NULL,
 				':dma_acctin' => isset($Data['dma_acctin']) ? $Data['dma_acctin'] : 0,
@@ -191,11 +193,12 @@ class Items extends REST_Controller
 				':dma_uom_tall' => isset($Data['dma_uom_tall']) && is_numeric($Data['dma_uom_tall']) ? $Data['dma_uom_tall'] : 0,
 				':dma_uom_length' => isset($Data['dma_uom_length']) && is_numeric($Data['dma_uom_length']) ? $Data['dma_uom_length'] : 0,
 				':dma_uom_vol' => isset($Data['dma_uom_vol']) && is_numeric($Data['dma_uom_vol']) ? $Data['dma_uom_vol'] : 0,
+				':dma_um_inventory' => $unidad == 0 && is_numeric($Data['dma_um_inventory']) ? $Data['dma_um_inventory'] : $unidad,
 				//CODIGO DE IMPUESTOS
-				':dma_tax_purch_code' => isset($Data['dma_tax_purch_code']) ? $Data['dma_tax_purch_code'] : NULL,
 				':dma_tax_sales_code' => isset($Data['dma_tax_sales_code']) ? $Data['dma_tax_sales_code'] : NULL,
+				':dma_tax_purch_code' => isset($Data['dma_tax_purch_code']) ? $Data['dma_tax_purch_code'] : NULL,
 				//CUENTA INVENTARIO EN PROCESO
-				':dma_acct_invproc' => isset($Data['dma_acct_invproc']) ? $Data['dma_acct_invproc'] : NULL,
+				':dma_acct_invproc' => isset($Data['dma_acct_invproc']) && is_numeric($Data['dma_acct_invproc']) ? $Data['dma_acct_invproc'] : 0,
 				':dma_modular'  => isset($Data['dma_modular']) && is_numeric($Data['dma_modular']) ? $Data['dma_modular'] : 0,
 				':dma_advertisement'  => isset($Data['dma_advertisement']) && is_numeric($Data['dma_advertisement']) ? $Data['dma_advertisement'] : 0,
 				':dma_subscription'  => isset($Data['dma_subscription']) && is_numeric($Data['dma_subscription']) ? $Data['dma_subscription'] : 0,
@@ -205,7 +208,7 @@ class Items extends REST_Controller
 				//CAMPO PARA ALMACENAR SI ES ARTICULO DE ACTIVO FIJO
 				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0,
 				//
-				':dma_serial_number' => isset($Data['dma_serial_number']) ? $Data['dma_serial_number'] : NULL
+				':dma_serial_number' => is_numeric($Data['dma_serial_number']) ? $Data['dma_serial_number'] : 0
 
 			));
 
@@ -287,27 +290,30 @@ class Items extends REST_Controller
 		//
 
 		// VALIDACION NUMERO DE SERIE FABRICANTE
-		$sqlSerie = "SELECT dma_serial_number, dma_item_code FROM dmar WHERE UPPER(trim(dma_serial_number)) = UPPER(trim(:dma_serial_number)) AND dma_id != :dma_id";
+		if (isset($Data['dma_serial_number']) && !empty($Data['dma_serial_number']) && $Data['dma_serial_number'] != 0){
+			$sqlSerie = "SELECT dma_serial_number, dma_item_code FROM dmar WHERE UPPER(trim(dma_serial_number)) = UPPER(trim(:dma_serial_number)) AND dma_id != :dma_id";
 
-		$resSerie = $this->pedeo->queryTable($sqlSerie, array(
-
-			':dma_serial_number' => $Data['dma_serial_number'],
-			':dma_id' => $Data['dma_id'],
-
-		));
-
-		if (isset($resSerie[0])) {
-
-			$respuesta = array(
-				'error' => true,
-				'data'  => $resSerie,
-				'mensaje' => 'ya existe un artículo con ese código de fabrica  '. $resSerie[0]['dma_item_code']
-			);
-
-			$this->response($respuesta);
-
-			return;
+			$resSerie = $this->pedeo->queryTable($sqlSerie, array(
+	
+				':dma_serial_number' => $Data['dma_serial_number'],
+				':dma_id' => $Data['dma_id'],
+	
+			));
+	
+			if (isset($resSerie[0])) {
+	
+				$respuesta = array(
+					'error' => true,
+					'data'  => $resSerie,
+					'mensaje' => 'ya existe un artículo con ese código de fabrica  '. $resSerie[0]['dma_serial_number']
+				);
+	
+				$this->response($respuesta);
+	
+				return;
+			}
 		}
+
 
 
 		$this->pedeo->trans_begin();
@@ -404,7 +410,7 @@ class Items extends REST_Controller
 				//SI ES ACTIVO FIJO
 				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0,
 				//
-				':dma_serial_number' => isset($Data['dma_serial_number']) ? trim($Data['dma_serial_number']) : NULL
+				':dma_serial_number' => is_numeric($Data['dma_serial_number']) ? $Data['dma_serial_number'] : 0
 				
 			));
 

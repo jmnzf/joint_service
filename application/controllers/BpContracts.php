@@ -499,9 +499,9 @@ class BpContracts extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO csn1(sn1_docentry, sn1_linenum,sn1_itemcode, sn1_itemname, sn1_quantity, sn1_uom, sn1_whscode,
                                     sn1_price, sn1_vat, sn1_vatsum, sn1_discount, sn1_linetotal, sn1_costcode, sn1_ubusiness, sn1_project,
-                                    sn1_acctcode, sn1_basetype, sn1_doctype, sn1_avprice, sn1_inventory, sn1_acciva, sn1_codimp,sn1_ubication)VALUES(:sn1_docentry,:sn1_linenum, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
+                                    sn1_acctcode, sn1_basetype, sn1_doctype, sn1_avprice, sn1_inventory, sn1_acciva, sn1_codimp,sn1_ubication,detalle_modular,sn1_tax_base)VALUES(:sn1_docentry,:sn1_linenum, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
                                     :sn1_uom, :sn1_whscode,:sn1_price, :sn1_vat, :sn1_vatsum, :sn1_discount, :sn1_linetotal, :sn1_costcode, :sn1_ubusiness, :sn1_project,
-                                    :sn1_acctcode, :sn1_basetype, :sn1_doctype, :sn1_avprice, :sn1_inventory, :sn1_acciva, :sn1_codimp,:sn1_ubication)";
+                                    :sn1_acctcode, :sn1_basetype, :sn1_doctype, :sn1_avprice, :sn1_inventory, :sn1_acciva, :sn1_codimp,:sn1_ubication,:detalle_modular,:sn1_tax_base)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sn1_docentry' => $resInsert,
@@ -526,7 +526,9 @@ class BpContracts extends REST_Controller
 					':sn1_inventory' => is_numeric($detail['sn1_inventory']) ? $detail['sn1_inventory'] : NULL,
 					':sn1_acciva' => is_numeric($detail['sn1_acciva']) ? $detail['sn1_acciva'] : NULL,
 					':sn1_codimp' => isset($detail['sn1_codimp']) ? $detail['sn1_codimp'] : NULL,
-					':sn1_ubication' => isset($detail['sn1_ubication']) ? $detail['sn1_ubication'] : NULL
+					':sn1_ubication' => isset($detail['sn1_ubication']) ? $detail['sn1_ubication'] : NULL,
+					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
+					':sn1_tax_base' => is_numeric($detail['sn1_tax_base']) ? $detail['sn1_tax_base'] : 0
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -934,7 +936,7 @@ class BpContracts extends REST_Controller
 			$respuesta = array(
 				'error'   => true,
 				'data' => array(),
-				'mensaje'	=> 'busqueda sin resultados'
+				'mensaje'	=> 'El filtro no es valido'
 			);
 		}
 

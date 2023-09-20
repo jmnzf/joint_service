@@ -63,8 +63,7 @@ class CashOperation extends REST_Controller {
 
         $sqlSelect = "SELECT bco_id, bco_boxid, bco_date, bco_time, bco_status, bco_amount, bco_total, current_date as factual
                         FROM tbco
-                        WHERE bco_date = current_date
-                        AND business = :business 
+                        WHERE business = :business 
                         AND branch = :branch 
                         AND bco_boxid = :bco_boxid
                         ORDER BY bco_id DESC LIMIT 1";
@@ -111,20 +110,23 @@ class CashOperation extends REST_Controller {
         }
 
 
-        $sql = "SELECT * FROM tbco WHERE bco_boxid = :bco_boxid AND bco_status = :bco_status ORDER BY bco_id DESC LIMIT 1";
+        $sql = "SELECT * FROM tbco WHERE bco_boxid = :bco_boxid ORDER BY bco_id DESC LIMIT 1";
         $resSql = $this->pedeo->queryTable($sql, array(
             ':bco_boxid'  => $Data['bco_boxid'],
-            ':bco_status' => 1
         ));
 
         if (isset($resSql[0])){
 
-            $respuesta = array(
-                'error' => true,
-                'data'  => [],
-                'mensaje' => 'La caja ya se encuentra en estado aperturado');
+            if ( $resSql[0]['bco_status'] == 1 ){
 
-            return $this->response($respuesta);
+                $respuesta = array(
+                    'error' => true,
+                    'data'  => [],
+                    'mensaje' => 'La caja ya se encuentra en estado aperturado');
+    
+                return $this->response($respuesta);
+            }
+
         }
 
         $sqlInsert = "INSERT INTO tbco(bco_boxid, bco_date, bco_time, bco_status, bco_amount, business, branch, bco_total)VALUES(:bco_boxid, :bco_date, :bco_time, :bco_status, :bco_amount, :business, :branch, :bco_total)";
@@ -157,6 +159,74 @@ class CashOperation extends REST_Controller {
         }
 
         $this->response($respuesta);
+
+    }
+
+
+    public function closeBox_post(){
+
+        $Data = $this->post();
+
+        if (!isset($Data['bco_boxid']) OR !isset($Data['bco_amount']) OR !isset($Data['bco_total'])){
+
+            $respuesta = array(
+                'error' => true,
+                'data'  => [],
+                'mensaje' => 'Faltan campos requeridos');
+
+            return $this->response($respuesta);
+        }
+
+        $sql = "SELECT * FROM tbco WHERE bco_boxid = :bco_boxid ORDER BY bco_id DESC LIMIT 1";
+        $resSql = $this->pedeo->queryTable($sql, array(
+            ':bco_boxid'  => $Data['bco_boxid'],
+        ));
+
+        if (isset($resSql[0])){
+
+            if ( $resSql[0]['bco_status'] == 0 ){
+
+                $respuesta = array(
+                    'error' => true,
+                    'data'  => [],
+                    'mensaje' => 'La caja ya se encuentra cerrada');
+    
+                return $this->response($respuesta);
+            }
+
+        }
+
+        $sqlInsert = "INSERT INTO tbco(bco_boxid, bco_date, bco_time, bco_status, bco_amount, business, branch, bco_total)VALUES(:bco_boxid, :bco_date, :bco_time, :bco_status, :bco_amount, :business, :branch, :bco_total)";
+
+        $resSqlInsert = $this->pedeo->insertRow($sqlInsert, array(
+            
+            ':bco_boxid' => $Data['bco_boxid'], 
+            ':bco_date' => date('Y-m-d'), 
+            ':bco_time' => date('H:i:s'), 
+            ':bco_status' => 0, 
+            ':bco_amount' => $Data['bco_amount'], 
+            ':business' => $Data['business'], 
+            ':branch' => $Data['branch'], 
+            ':bco_total' => $Data['bco_total']
+        ));
+
+        if (is_numeric($resSqlInsert) && $resSqlInsert > 0){
+
+            $respuesta = array(
+                'error' => false,
+                'data'  => [],
+                'mensaje' => 'Caja cerrada con exito');
+
+        }else {
+            $respuesta = array(
+                'error' => true,
+                'data'  => $resSqlInsert,
+                'mensaje' => 'No se pudo cerrar la caja');
+
+        }
+
+        $this->response($respuesta);
+
 
     }
 

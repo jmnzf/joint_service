@@ -486,10 +486,10 @@ class SalesOrder extends REST_Controller
 				
 				$sqlInsertDetail = "INSERT INTO vov1(ov1_docentry,ov1_linenum, ov1_itemcode, ov1_itemname, ov1_quantity, ov1_uom, ov1_whscode,
                                     ov1_price, ov1_vat, ov1_vatsum, ov1_discount, ov1_linetotal, ov1_costcode, ov1_ubusiness, ov1_project,
-                                    ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva, ov1_codimp,ov1_ubication,ote_code,ov1_baseline,detalle_modular)
+                                    ov1_acctcode, ov1_basetype, ov1_doctype, ov1_avprice, ov1_inventory, ov1_acciva, ov1_codimp,ov1_ubication,ote_code,ov1_baseline,detalle_modular,ov1_tax_base)
 									VALUES(:ov1_docentry, :ov1_linenum,:ov1_itemcode, :ov1_itemname, :ov1_quantity,:ov1_uom, :ov1_whscode,:ov1_price, :ov1_vat, 
 									:ov1_vatsum,:ov1_discount, :ov1_linetotal, :ov1_costcode, :ov1_ubusiness, :ov1_project,:ov1_acctcode, :ov1_basetype, :ov1_doctype, 
-									:ov1_avprice, :ov1_inventory, :ov1_acciva, :ov1_codimp,:ov1_ubication,:ote_code,:ov1_baseline,:detalle_modular)";
+									:ov1_avprice, :ov1_inventory, :ov1_acciva, :ov1_codimp,:ov1_ubication,:ote_code,:ov1_baseline,:detalle_modular,:ov1_tax_base)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ov1_docentry' => $resInsert,
@@ -517,7 +517,8 @@ class SalesOrder extends REST_Controller
 					':ov1_ubication' => isset($detail['ov1_ubication']) ? $detail['ov1_ubication'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':ov1_baseline' => is_numeric($detail['ov1_baseline']) ? $detail['ov1_baseline'] : 0,
-					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
+					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
+					':ov1_tax_base' => is_numeric($detail['ov1_tax_base']) ? $detail['ov1_tax_base'] : 0
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

@@ -577,10 +577,10 @@ class SalesDel extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
                                     em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp,em1_ubication,ote_code,em1_baseline,detalle_modular)
+                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp,em1_ubication,ote_code,em1_baseline,detalle_modular,em1_tax_base)
 									VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,:em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, 
 									:em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,:em1_acctcode, :em1_basetype, :em1_doctype, 
-									:em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp,:em1_ubication,:ote_code,:em1_baseline,:detalle_modular)";
+									:em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp,:em1_ubication,:ote_code,:em1_baseline,:detalle_modular,:em1_tax_base)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':em1_docentry' => $resInsert,
@@ -608,7 +608,8 @@ class SalesDel extends REST_Controller
 					':em1_ubication' => isset($detail['em1_ubication']) ? $detail['em1_ubication'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':em1_baseline' => isset($detail['em1_baseline']) && is_numeric($detail['em1_baseline']) ? $detail['em1_baseline'] : 0,
-					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
+					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
+					':em1_tax_base' =>  is_numeric($detail['em1_tax_base']) ? $detail['em1_tax_base'] : 0
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

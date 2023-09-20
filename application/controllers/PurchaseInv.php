@@ -3704,8 +3704,12 @@ class PurchaseInv extends REST_Controller
 
 		$campos = ",CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalret,'999,999,999,999.00'))) {prefix}_totalret,
 		CONCAT(T0.{prefix}_CURRENCY,' ',TRIM(TO_CHAR(t0.{prefix}_totalretiva,'999,999,999,999.00'))) {prefix}_totalretiva";
-
-		$sqlSelect = self::getColumn('dcfc', 'cfc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'], 15);
+		if($Data['docnum'] == 15){
+			$sqlSelect = self::getColumn('dcfc', 'cfc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'], 15);
+		}else if($Data['docnum'] == 46){
+			$sqlSelect = self::getColumn('dcfc', 'cfc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'], 46);
+		}
+		
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
