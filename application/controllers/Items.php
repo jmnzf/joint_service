@@ -204,7 +204,7 @@ class Items extends REST_Controller
 				//CAMPO PARA ALMACENAR SI ES ARTICULO DE ACTIVO FIJO
 				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0,
 				//
-				':dma_serial_number' => isset($Data['dma_serial_number']) ? $Data['dma_serial_number'] : NULL
+				':dma_serial_number' => isset($Data['dma_serial_number']) && !empty($Data['dma_serial_number']) ? trim($Data['dma_serial_number']) : NULL
 
 			));
 
