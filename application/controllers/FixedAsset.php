@@ -1655,4 +1655,181 @@ class FixedAsset extends REST_Controller {
 		}
 	}
 
+    //DETERMINACION DE CUENTAS DE ACTIVOS FIJOS
+    public function createAccountDetermination_post()
+    {
+        $Data = $this->post();
+
+        if(!isset($Data['bdc_code']) OR
+            !isset($Data['bdc_description']) OR
+            !isset($Data['business']) OR
+            !isset($Data['branch'])){
+
+                $respuesta = array(
+                    'error' => true,
+                    'data' => [],
+                    'mensaje' => 'Informacion enviada es invalida'
+                );
+                return $this->response($respuesta);
+            }
+        
+        $sqlValid = "SELECT * FROM tbcd WHERE bdc_code = :bdc_code";
+        $resValid = $this->pedeo->queryTable($sqlValid,array(':bdc_code' => $Data['bdc_code']));
+
+        if(isset($resValid[0])){
+            $respuesta = array(
+                'error' => true,
+                'data' => [],
+                'mensaje' => 'La determinacion de cuenta del codigo '.$Data['bdc_code'].' ya existe'
+            );
+
+            return $this->response($respuesta);
+        }
+
+        $insert = "INSERT INTO tbcd  (bdc_code, bdc_description, bdc_cbaf, bdc_cca, bdc_rr, bdc_cir, bdc_an, bdc_aao, bdc_anp, bdc_anpa, bdc_ae, bdc_aea, bdc_iba, bdc_bg, bdc_bi, bdc_gbvnc, bdc_cib, 
+                                bdc_cci, bdc_created_at, bdc_created_by,business,branch)
+                    VALUES (:bdc_code, :bdc_description, :bdc_cbaf, :bdc_cca, :bdc_rr, :bdc_cir, :bdc_an, :bdc_aao, :bdc_anp, :bdc_anpa, :bdc_ae, :bdc_aea, :bdc_iba, :bdc_bg, :bdc_bi, :bdc_gbvnc, :bdc_cib, 
+                            :bdc_cci, :bdc_created_at, :bdc_created_by,:business,:branch)";
+        
+        $resInsert = $this->pedeo->insertRow($insert,array(
+            ':bdc_code' => $Data['bdc_code'], 
+            ':bdc_description' => $Data['bdc_description'], 
+            ':bdc_cbaf' => $Data['bdc_cbaf'], 
+            ':bdc_cca' => $Data['bdc_cca'], 
+            ':bdc_rr' => $Data['bdc_rr'], 
+            ':bdc_cir' => $Data['bdc_cir'], 
+            ':bdc_an' => $Data['bdc_an'], 
+            ':bdc_aao' => $Data['bdc_aao'], 
+            ':bdc_anp' => $Data['bdc_anp'], 
+            ':bdc_anpa' => $Data['bdc_anpa'], 
+            ':bdc_ae' => $Data['bdc_ae'], 
+            ':bdc_aea' => $Data['bdc_aea'], 
+            ':bdc_iba' => $Data['bdc_iba'], 
+            ':bdc_bg' => $Data['bdc_bg'], 
+            ':bdc_bi' => $Data['bdc_bi'], 
+            ':bdc_gbvnc' => $Data['bdc_gbvnc'], 
+            ':bdc_cib' => $Data['bdc_cib'], 
+            ':bdc_cci' => $Data['bdc_cci'], 
+            ':bdc_created_at' => Date("Y-m-d H:s:i"), 
+            ':bdc_created_by' => $Data['bdc_created_by'],
+            ':business' => $Data['business'], 
+            ':branch' => $Data['branch']
+        ));
+        
+        if(is_numeric($resInsert) && $resInsert > 0){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resInsert,
+                'mensaje' => 'Dterminacion de cuenta del codigo '.$Data['bdc_code'].' registrado con exito'
+            );
+        }else {
+            $respuesta = array(
+                'error' => true,
+                'data' => $resInsert,
+                'mensaje' => 'No se puedo registrar la determinacion de cuenta del codigo '.$Data['bdc_code'].' al sistema'
+            );
+        }
+
+        $this->response($respuesta);
+    }
+
+    public function updateccountDetermination_post()
+    {
+        $Data = $this->post();
+
+        if(!isset($Data['business']) OR
+            !isset($Data['branch']) OR
+            !isset($Data['bdc_id'])){
+
+                $respuesta = array(
+                    'error' => true,
+                    'data' => [],
+                    'mensaje' => 'Informacion enviada es invalida'
+                );
+                return $this->response($respuesta);
+            }
+        
+
+        $update = "UPDATE 
+                        tbcd 
+                    SET 
+                        bdc_description = :bdc_description,
+                        bdc_cbaf = :bdc_cbaf, 
+                        bdc_cca = :bdc_cca, 
+                        bdc_rr = :bdc_rr, 
+                        bdc_cir = :bdc_cir, 
+                        bdc_an = :bdc_an, 
+                        bdc_aao = :bdc_aao, 
+                        bdc_anp = :bdc_anp, 
+                        bdc_anpa = :bdc_anpa, 
+                        bdc_ae = :bdc_ae, 
+                        bdc_aea = :bdc_aea, 
+                        bdc_iba = :bdc_iba, 
+                        bdc_bg = :bdc_bg, 
+                        bdc_bi = :bdc_bi, 
+                        bdc_gbvnc = :bdc_gbvnc, 
+                        bdc_cib = :bdc_cib, 
+                        bdc_cci = :bdc_cci
+                    WHERE bdc_id = :bdc_id";
+        
+        $resUpdate = $this->pedeo->updateRow($update,array(
+            ':bdc_description' => $Data['bdc_description'], 
+            ':bdc_cbaf' => $Data['bdc_cbaf'], 
+            ':bdc_cca' => $Data['bdc_cca'], 
+            ':bdc_rr' => $Data['bdc_rr'], 
+            ':bdc_cir' => $Data['bdc_cir'], 
+            ':bdc_an' => $Data['bdc_an'], 
+            ':bdc_aao' => $Data['bdc_aao'], 
+            ':bdc_anp' => $Data['bdc_anp'], 
+            ':bdc_anpa' => $Data['bdc_anpa'], 
+            ':bdc_ae' => $Data['bdc_ae'], 
+            ':bdc_aea' => $Data['bdc_aea'], 
+            ':bdc_iba' => $Data['bdc_iba'], 
+            ':bdc_bg' => $Data['bdc_bg'], 
+            ':bdc_bi' => $Data['bdc_bi'], 
+            ':bdc_gbvnc' => $Data['bdc_gbvnc'], 
+            ':bdc_cib' => $Data['bdc_cib'], 
+            ':bdc_cci' => $Data['bdc_cci'], 
+            ':bdc_id' => $Data['bdc_id']
+        ));
+        
+        if(is_numeric($resUpdate) && $resUpdate == 1){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resUpdate,
+                'mensaje' => 'Determinacion de cuenta del codigo '.$Data['bdc_code'].' actualizado con exito'
+            );
+        }else {
+            $respuesta = array(
+                'error' => true,
+                'data' => $resUpdate,
+                'mensaje' => 'No se puedo actualizar la determinacion de cuenta del codigo '.$Data['bdc_code'].' al sistema'
+            );
+        }
+
+        $this->response($respuesta);
+    }
+
+    public function getAccountDetermination_get()
+    {
+        $respuesta = array(
+            'error' => true,
+            'data' => [],
+            'mensaje' => 'No se encontraron datos en la busqueda'
+        );
+
+        $sql = "SELECT * FROM tbcd";
+        $resSql = $this->pedeo->queryTable($sql,array());
+
+        if(isset($resSql[0])){
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSql,
+                'mensaje' => 'OK'
+            );
+        }
+        
+        $this->response($respuesta);
+    }
+
 }
