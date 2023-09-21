@@ -565,7 +565,7 @@ class LegalExpenses extends REST_Controller {
 			return;
         }
 
-        $sql = "SELECT  abs(sum(ac1_debit-mac1.ac1_credit)) AS saldo FROM mac1 WHERE ac1_legal_num = :cardcode AND ac1_account = :account AND business = :business AND branch = :branch";
+        $sql = "SELECT  abs(sum(ac1_ven_debit-ac1_ven_credit)) AS saldo FROM mac1 WHERE ac1_legal_num = :cardcode AND ac1_account = :account AND business = :business AND branch = :branch";
         $resSql = $this->pedeo->queryTable($sql,array(
             ':business' => $Data['business'],
             ':branch' => $Data['branch'],
