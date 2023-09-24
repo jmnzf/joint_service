@@ -1025,342 +1025,346 @@ class SalesInvBO extends REST_Controller
 					}
 					// FIN PROCESO MANEJA TASA
 
-
-					if ($ManejaInvetario == 1) {
-
-
-						// se verifica de donde viene  el documento
-	
-						if ( $Data['dvf_basetype'] != 3 ) {
+					// SI ES FACTURA ANTICIPADA NO MUEVE INVENTARIO
+					if ( $Data['dvf_doctype'] !=  34 ){
+						// SI MANEJA INVENTARIO
+						if ($ManejaInvetario == 1) {
 
 
-							//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
-							$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
-							$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
-
-								':dma_item_code' => $detail['fv1_itemcode'],
-								':dma_series_code'  => 1
-							));
-
-							if (isset($resItemSerial[0])) {
-								$ManejaSerial = 1;
-
-								$AddSerial = $this->generic->addSerial($detail['serials'], $detail['fv1_itemcode'], $Data['dvf_doctype'], $resInsert, $DocNumVerificado, $Data['dvf_docdate'], 2, $Data['dvf_comment'], $detail['fv1_whscode'], $detail['fv1_quantity'], $Data['dvf_createby'], $resInsertDetail, $Data['business']);
-
-								if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
-								} else {
-									$respuesta = array(
-										'error'   => true,
-										'data'    => $AddSerial['data'],
-										'mensaje' => $AddSerial['mensaje']
-									);
-
-									$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-									return;
-								}
-							} else {
-								$ManejaSerial = 0;
-							}
-
-							//
-
-							// se busca el costo del item en el momento de la creacion del documento de venta
-							// para almacenar en el movimiento de inventario
-
-							// SI EL ALMACEN MANEJA UBICACION
-
-							$sqlCostoMomentoRegistro = "";
-							$resCostoMomentoRegistro = [];
-
-							if ( $ManejaUbicacion == 1 ) {
-								if( $ManejaLote == 1 ){
-									$sqlCostoMomentoRegistro =  "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication  AND bdi_lote = :bdi_lote AND business = :business";
-									$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-										':bdi_whscode'   => $detail['fv1_whscode'], 
-										':bdi_itemcode'  => $detail['fv1_itemcode'],
-										':bdi_ubication' => $detail['fv1_ubication'],
-									    ':bdi_lote' 	 => $detail['ote_code'],
-										':business' 	 => $Data['business']
-									));
-								}else{
-									$sqlCostoMomentoRegistro =  "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication AND business = :business";
-									$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-										':bdi_whscode'   => $detail['fv1_whscode'], 
-										':bdi_itemcode'  => $detail['fv1_itemcode'],
-										':bdi_ubication' => $detail['fv1_ubication'],
-										':business' 	 => $Data['business']
-									));
-								}
-
-							}else{
-								if( $ManejaLote == 1 ){
-									$sqlCostoMomentoRegistro =  "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND business = :business";
-
-									$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-										':bdi_whscode'  => $detail['fv1_whscode'], 
-										':bdi_itemcode' => $detail['fv1_itemcode'],
-										':bdi_lote' 	=> $detail['ote_code'],
-										':business' 	 => $Data['business']
-									));	
-								}else{
-									$sqlCostoMomentoRegistro =  "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND business = :business";
-
-									$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
-										':bdi_whscode'  => $detail['fv1_whscode'], 
-										':bdi_itemcode' => $detail['fv1_itemcode'],
-										':business' 	 => $Data['business']
-									));
+							// se verifica de donde viene  el documento
 		
-								}
-
-							}
-						
-							
-							if (isset($resCostoMomentoRegistro[0])) {
-
-								//VALIDANDO CANTIDAD DE ARTICULOS
-								if($Data['dvf_doctype'] == 34){
-
-								}else{
-
-									$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
-									
-									$CANT_ARTICULOLN = is_numeric($detail['fv1_quantity']) ? ($detail['fv1_quantity'] * $CANTUOMSALE) : 0;
-
-									if (($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0) {
-
-										$this->pedeo->trans_rollback();
-
+							if ( $Data['dvf_basetype'] != 3 ) {
+	
+	
+								//SE VERIFICA SI EL ARTICULO MANEJA SERIAL
+								$sqlItemSerial = "SELECT dma_series_code FROM dmar WHERE  dma_item_code = :dma_item_code AND dma_series_code = :dma_series_code";
+								$resItemSerial = $this->pedeo->queryTable($sqlItemSerial, array(
+	
+									':dma_item_code' => $detail['fv1_itemcode'],
+									':dma_series_code'  => 1
+								));
+	
+								if (isset($resItemSerial[0])) {
+									$ManejaSerial = 1;
+	
+									$AddSerial = $this->generic->addSerial($detail['serials'], $detail['fv1_itemcode'], $Data['dvf_doctype'], $resInsert, $DocNumVerificado, $Data['dvf_docdate'], 2, $Data['dvf_comment'], $detail['fv1_whscode'], $detail['fv1_quantity'], $Data['dvf_createby'], $resInsertDetail, $Data['business']);
+	
+									if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
+									} else {
 										$respuesta = array(
 											'error'   => true,
-											'data' => [],
-											'mensaje'	=> 'no puede crear el documento porque el articulo ' . $detail['fv1_itemcode'] . ' recae en inventario negativo (' . ($CANT_ARTICULOEX - $CANT_ARTICULOLN) . ')'
+											'data'    => $AddSerial['data'],
+											'mensaje' => $AddSerial['mensaje']
 										);
-
-										$this->response($respuesta);
-
+	
+										$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+	
 										return;
 									}
+								} else {
+									$ManejaSerial = 0;
+								}
+	
+								//
+	
+								// se busca el costo del item en el momento de la creacion del documento de venta
+								// para almacenar en el movimiento de inventario
+	
+								// SI EL ALMACEN MANEJA UBICACION
+	
+								$sqlCostoMomentoRegistro = "";
+								$resCostoMomentoRegistro = [];
+	
+								if ( $ManejaUbicacion == 1 ) {
+									if( $ManejaLote == 1 ){
+										$sqlCostoMomentoRegistro =  "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication  AND bdi_lote = :bdi_lote AND business = :business";
+										$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+											':bdi_whscode'   => $detail['fv1_whscode'], 
+											':bdi_itemcode'  => $detail['fv1_itemcode'],
+											':bdi_ubication' => $detail['fv1_ubication'],
+											':bdi_lote' 	 => $detail['ote_code'],
+											':business' 	 => $Data['business']
+										));
+									}else{
+										$sqlCostoMomentoRegistro =  "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_ubication = :bdi_ubication AND business = :business";
+										$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+											':bdi_whscode'   => $detail['fv1_whscode'], 
+											':bdi_itemcode'  => $detail['fv1_itemcode'],
+											':bdi_ubication' => $detail['fv1_ubication'],
+											':business' 	 => $Data['business']
+										));
+									}
+	
+								}else{
+									if( $ManejaLote == 1 ){
+										$sqlCostoMomentoRegistro =  "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND bdi_lote = :bdi_lote AND business = :business";
+	
+										$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+											':bdi_whscode'  => $detail['fv1_whscode'], 
+											':bdi_itemcode' => $detail['fv1_itemcode'],
+											':bdi_lote' 	=> $detail['ote_code'],
+											':business' 	 => $Data['business']
+										));	
+									}else{
+										$sqlCostoMomentoRegistro =  "SELECT * FROM tbdi WHERE bdi_whscode = :bdi_whscode  AND bdi_itemcode = :bdi_itemcode AND business = :business";
+	
+										$resCostoMomentoRegistro = $this->pedeo->queryTable($sqlCostoMomentoRegistro, array(
+											':bdi_whscode'  => $detail['fv1_whscode'], 
+											':bdi_itemcode' => $detail['fv1_itemcode'],
+											':business' 	 => $Data['business']
+										));
+			
+									}
+	
+								}
+							
+								
+								if (isset($resCostoMomentoRegistro[0])) {
+	
+									//VALIDANDO CANTIDAD DE ARTICULOS
+									if($Data['dvf_doctype'] == 34){
+	
+									}else{
+	
+										$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
+										
+										$CANT_ARTICULOLN = is_numeric($detail['fv1_quantity']) ? ($detail['fv1_quantity'] * $CANTUOMSALE) : 0;
+	
+										if (($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0) {
+	
+											$this->pedeo->trans_rollback();
+	
+											$respuesta = array(
+												'error'   => true,
+												'data' => [],
+												'mensaje'	=> 'no puede crear el documento porque el articulo ' . $detail['fv1_itemcode'] . ' recae en inventario negativo (' . ($CANT_ARTICULOEX - $CANT_ARTICULOLN) . ')'
+											);
+	
+											$this->response($respuesta);
+	
+											return;
+										}
+									}
+									
+	
+									//VALIDANDO CANTIDAD DE ARTICULOS
+	
+	
+	
+									//Se aplica el movimiento de inventario
+									$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,
+									bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_ubication,bmi_lote,business)
+									VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,
+									:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_ubication,:bmi_lote,:business)";
+	
+									$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
+	
+										':bmi_itemcode' => isset($detail['fv1_itemcode']) ? $detail['fv1_itemcode'] : NULL,
+										':bmi_quantity' => is_numeric($detail['fv1_quantity']) ? (($detail['fv1_quantity'] * $CANTUOMSALE) * $Data['invtype']) : 0,
+										':bmi_whscode'  => isset($detail['fv1_whscode']) ? $detail['fv1_whscode'] : NULL,
+										':bmi_createat' => $this->validateDate($Data['dvf_createat']) ? $Data['dvf_createat'] : NULL,
+										':bmi_createby' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
+										':bmy_doctype'  => is_numeric($Data['dvf_doctype']) ? $Data['dvf_doctype'] : 0,
+										':bmy_baseentry' => $resInsert,
+										':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
+										':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
+										':bmi_basenum'			=> $DocNumVerificado,
+										':bmi_docdate' => $this->validateDate($Data['dvf_docdate']) ? $Data['dvf_docdate'] : NULL,
+										':bmi_duedate' => $this->validateDate($Data['dvf_duedate']) ? $Data['dvf_duedate'] : NULL,
+										':bmi_duedev'  => $this->validateDate($Data['dvf_duedev']) ? $Data['dvf_duedev'] : NULL,
+										':bmi_comment' => isset($Data['dvf_comment']) ? $Data['dvf_comment'] : NULL,
+										':bmi_ubication' => isset($detail['fv1_ubication']) ? $detail['fv1_ubication'] : NULL,
+										':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+										':business' => isset($Data['business']) ? $Data['business'] : NULL
+	
+									));
+	
+									if (is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0) {
+										// Se verifica que el detalle no de error insertando //
+									} else {
+	
+										// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
+										// se retorna el error y se detiene la ejecucion del codigo restante.
+										$this->pedeo->trans_rollback();
+	
+										$respuesta = array(
+											'error'   => true,
+											'data' => $sqlInserMovimiento,
+											'mensaje'	=> 'No se pudo registrar la factura de ventas'
+										);
+	
+										$this->response($respuesta);
+	
+										return;
+									}
+								} else {
+	
+									$this->pedeo->trans_rollback();
+	
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resCostoMomentoRegistro,
+										'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro el costo del articulo'
+									);
+	
+									$this->response($respuesta);
+	
+									return;
+								}
+	
+								//FIN aplicacion de movimiento de inventario
+	
+	
+								//Se Aplica el movimiento en stock ***************
+								// Buscando item en el stock
+								$sqlCostoCantidad = "";
+								$resCostoCantidad = [];
+	
+								// SI EL ALMACEN MANEJA UBICACION
+	
+								if ( $ManejaUbicacion == 1 ){
+	
+									if ( $ManejaLote == 1 ) {
+										$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+										FROM tbdi
+										WHERE bdi_itemcode = :bdi_itemcode
+										AND bdi_whscode = :bdi_whscode
+										AND bdi_ubication = :bdi_ubication
+										AND bdi_lote = :bdi_lote
+										AND business = :business";
+	
+										$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+											':bdi_itemcode'  => $detail['fv1_itemcode'],
+											':bdi_whscode'   => $detail['fv1_whscode'],
+											':bdi_ubication' => $detail['fv1_ubication'],
+											':bdi_lote' => $detail['ote_code'],
+											':business' => $Data['business']
+										));
+									}else{
+										$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+										FROM tbdi
+										WHERE bdi_itemcode = :bdi_itemcode
+										AND bdi_whscode = :bdi_whscode
+										AND bdi_ubication = :bdi_ubication
+										AND business = :business";
+	
+	
+										$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+											':bdi_itemcode'  => $detail['fv1_itemcode'],
+											':bdi_whscode'   => $detail['fv1_whscode'],
+											':bdi_ubication' => $detail['fv1_ubication'],
+											':business' => $Data['business']
+										));
+									}
+	
+	
+								}else{
+									if ( $ManejaLote == 1 ) {
+										$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+										FROM tbdi
+										WHERE bdi_itemcode = :bdi_itemcode
+										AND bdi_whscode = :bdi_whscode
+										AND bdi_lote = :bdi_lote
+										AND business = :business";
+	
+										$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+											':bdi_itemcode' => $detail['fv1_itemcode'],
+											':bdi_whscode'  => $detail['fv1_whscode'],
+											':bdi_lote' => $detail['ote_code'],
+											':business' => $Data['business']
+										));
+									}else{
+										$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
+										FROM tbdi
+										WHERE bdi_itemcode = :bdi_itemcode
+										AND bdi_whscode = :bdi_whscode
+										AND business = :business";
+	
+										$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
+											':bdi_itemcode' => $detail['fv1_itemcode'],
+											':bdi_whscode'  => $detail['fv1_whscode'],
+											':business' => $Data['business']
+										));
+									}
+	
 								}
 								
-
-								//VALIDANDO CANTIDAD DE ARTICULOS
-
-
-
-								//Se aplica el movimiento de inventario
-								$sqlInserMovimiento = "INSERT INTO tbmi(bmi_itemcode,bmi_quantity,bmi_whscode,bmi_createat,bmi_createby,bmy_doctype,bmy_baseentry,
-								bmi_cost,bmi_currequantity,bmi_basenum,bmi_docdate,bmi_duedate,bmi_duedev,bmi_comment,bmi_ubication,bmi_lote,business)
-								VALUES (:bmi_itemcode,:bmi_quantity, :bmi_whscode,:bmi_createat,:bmi_createby,:bmy_doctype,:bmy_baseentry,:bmi_cost,:bmi_currequantity,
-								:bmi_basenum,:bmi_docdate,:bmi_duedate,:bmi_duedev,:bmi_comment,:bmi_ubication,:bmi_lote,:business)";
-
-								$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
-
-									':bmi_itemcode' => isset($detail['fv1_itemcode']) ? $detail['fv1_itemcode'] : NULL,
-									':bmi_quantity' => is_numeric($detail['fv1_quantity']) ? (($detail['fv1_quantity'] * $CANTUOMSALE) * $Data['invtype']) : 0,
-									':bmi_whscode'  => isset($detail['fv1_whscode']) ? $detail['fv1_whscode'] : NULL,
-									':bmi_createat' => $this->validateDate($Data['dvf_createat']) ? $Data['dvf_createat'] : NULL,
-									':bmi_createby' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-									':bmy_doctype'  => is_numeric($Data['dvf_doctype']) ? $Data['dvf_doctype'] : 0,
-									':bmy_baseentry' => $resInsert,
-									':bmi_cost'      => $resCostoMomentoRegistro[0]['bdi_avgprice'],
-									':bmi_currequantity' 	=> $resCostoMomentoRegistro[0]['bdi_quantity'],
-									':bmi_basenum'			=> $DocNumVerificado,
-									':bmi_docdate' => $this->validateDate($Data['dvf_docdate']) ? $Data['dvf_docdate'] : NULL,
-									':bmi_duedate' => $this->validateDate($Data['dvf_duedate']) ? $Data['dvf_duedate'] : NULL,
-									':bmi_duedev'  => $this->validateDate($Data['dvf_duedev']) ? $Data['dvf_duedev'] : NULL,
-									':bmi_comment' => isset($Data['dvf_comment']) ? $Data['dvf_comment'] : NULL,
-									':bmi_ubication' => isset($detail['fv1_ubication']) ? $detail['fv1_ubication'] : NULL,
-									':bmi_lote' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
-									':business' => isset($Data['business']) ? $Data['business'] : NULL
-
-								));
-
-								if (is_numeric($sqlInserMovimiento) && $sqlInserMovimiento > 0) {
-									// Se verifica que el detalle no de error insertando //
-								} else {
-
-									// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
-									// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data' => $sqlInserMovimiento,
-										'mensaje'	=> 'No se pudo registrar la factura de ventas'
-									);
-
-									$this->response($respuesta);
-
-									return;
-								}
-							} else {
-
-								$this->pedeo->trans_rollback();
-
-								$respuesta = array(
-									'error'   => true,
-									'data' => $resCostoMomentoRegistro,
-									'mensaje'	=> 'No se pudo registrar la factura de ventas, no se encontro el costo del articulo'
-								);
-
-								$this->response($respuesta);
-
-								return;
-							}
-
-							//FIN aplicacion de movimiento de inventario
-
-
-							//Se Aplica el movimiento en stock ***************
-							// Buscando item en el stock
-							$sqlCostoCantidad = "";
-							$resCostoCantidad = [];
-
-							// SI EL ALMACEN MANEJA UBICACION
-
-							if ( $ManejaUbicacion == 1 ){
-
-								if ( $ManejaLote == 1 ) {
-									$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-									FROM tbdi
-									WHERE bdi_itemcode = :bdi_itemcode
-									AND bdi_whscode = :bdi_whscode
-									AND bdi_ubication = :bdi_ubication
-									AND bdi_lote = :bdi_lote
-									AND business = :business";
-
-									$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
-										':bdi_itemcode'  => $detail['fv1_itemcode'],
-										':bdi_whscode'   => $detail['fv1_whscode'],
-										':bdi_ubication' => $detail['fv1_ubication'],
-										':bdi_lote' => $detail['ote_code'],
-										':business' => $Data['business']
-									));
-								}else{
-									$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-									FROM tbdi
-									WHERE bdi_itemcode = :bdi_itemcode
-									AND bdi_whscode = :bdi_whscode
-									AND bdi_ubication = :bdi_ubication
-									AND business = :business";
-
-
-									$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
-										':bdi_itemcode'  => $detail['fv1_itemcode'],
-										':bdi_whscode'   => $detail['fv1_whscode'],
-										':bdi_ubication' => $detail['fv1_ubication'],
-										':business' => $Data['business']
-									));
-								}
-
-
-							}else{
-								if ( $ManejaLote == 1 ) {
-									$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-									FROM tbdi
-									WHERE bdi_itemcode = :bdi_itemcode
-									AND bdi_whscode = :bdi_whscode
-									AND bdi_lote = :bdi_lote
-									AND business = :business";
-
-									$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
-										':bdi_itemcode' => $detail['fv1_itemcode'],
-										':bdi_whscode'  => $detail['fv1_whscode'],
-										':bdi_lote' => $detail['ote_code'],
-										':business' => $Data['business']
-									));
-								}else{
-									$sqlCostoCantidad = "SELECT bdi_id, bdi_itemcode, bdi_whscode, bdi_quantity, bdi_avgprice
-									FROM tbdi
-									WHERE bdi_itemcode = :bdi_itemcode
-									AND bdi_whscode = :bdi_whscode
-									AND business = :business";
-
-									$resCostoCantidad = $this->pedeo->queryTable($sqlCostoCantidad, array(
-										':bdi_itemcode' => $detail['fv1_itemcode'],
-										':bdi_whscode'  => $detail['fv1_whscode'],
-										':business' => $Data['business']
-									));
-								}
-
-							}
+	
 							
-
-						
-
-							if (isset($resCostoCantidad[0])) {
-
-								if ($resCostoCantidad[0]['bdi_quantity'] > 0) {
-
-									$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-									$CantidadNueva = ($detail['fv1_quantity'] * $CANTUOMSALE);
-
-
-									$CantidadTotal = ($CantidadActual - $CantidadNueva);
-
-									$sqlUpdateCostoCantidad =  "UPDATE tbdi
-																SET bdi_quantity = :bdi_quantity
-																WHERE  bdi_id = :bdi_id";
-
-									$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
-
-										':bdi_quantity' => $CantidadTotal,
-										':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
-									));
-
-									if (is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1) {
+	
+								if (isset($resCostoCantidad[0])) {
+	
+									if ($resCostoCantidad[0]['bdi_quantity'] > 0) {
+	
+										$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
+										$CantidadNueva = ($detail['fv1_quantity'] * $CANTUOMSALE);
+	
+	
+										$CantidadTotal = ($CantidadActual - $CantidadNueva);
+	
+										$sqlUpdateCostoCantidad =  "UPDATE tbdi
+																	SET bdi_quantity = :bdi_quantity
+																	WHERE  bdi_id = :bdi_id";
+	
+										$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
+	
+											':bdi_quantity' => $CantidadTotal,
+											':bdi_id' 			 => $resCostoCantidad[0]['bdi_id']
+										));
+	
+										if (is_numeric($resUpdateCostoCantidad) && $resUpdateCostoCantidad == 1) {
+										} else {
+	
+											$this->pedeo->trans_rollback();
+	
+											$respuesta = array(
+												'error'   => true,
+												'data'    => $resUpdateCostoCantidad,
+												'mensaje'	=> 'No se pudo crear la factura de Ventas'
+											);
+	
+	
+											$this->response($respuesta);
+	
+											return;
+										}
 									} else {
-
+	
 										$this->pedeo->trans_rollback();
-
+	
 										$respuesta = array(
 											'error'   => true,
-											'data'    => $resUpdateCostoCantidad,
-											'mensaje'	=> 'No se pudo crear la factura de Ventas'
+											'data'    => $resCostoCantidad,
+											'mensaje' => 'No hay existencia para el item: ' . $detail['fv1_itemcode']
 										);
-
-
+	
+	
 										$this->response($respuesta);
-
+	
 										return;
 									}
 								} else {
-
+	
 									$this->pedeo->trans_rollback();
-
+	
 									$respuesta = array(
 										'error'   => true,
-										'data'    => $resCostoCantidad,
-										'mensaje' => 'No hay existencia para el item: ' . $detail['fv1_itemcode']
+										'data' 		=> $resCostoCantidad,
+										'mensaje'	=> 'El item no existe en el stock ' . $detail['fv1_itemcode']
 									);
-
-
+	
 									$this->response($respuesta);
-
+	
 									return;
 								}
-							} else {
-
-								$this->pedeo->trans_rollback();
-
-								$respuesta = array(
-									'error'   => true,
-									'data' 		=> $resCostoCantidad,
-									'mensaje'	=> 'El item no existe en el stock ' . $detail['fv1_itemcode']
-								);
-
-								$this->response($respuesta);
-
-								return;
-							}
-
-							//FIN de  Aplicacion del movimiento en stock
-
-						} // EN CASO CONTRARIO NO SE MUEVE INVENTARIO
-
+	
+								//FIN de  Aplicacion del movimiento en stock
+	
+							} // EN CASO CONTRARIO NO SE MUEVE INVENTARIO
+	
+						}
 					}
+
 
 
 					//LLENANDO DETALLE ASIENTO CONTABLES

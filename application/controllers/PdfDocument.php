@@ -57,10 +57,13 @@ class PdfDocument extends REST_Controller {
 	public function PdfContract_post()
 	{
 		$Data = $this->post();
-		if(isset($Data['contract_type']) && $Data['contract_type'] == "N"){
-			$value = $this->documentcontract->format($Data);
-		}else if(isset($Data['contract_type']) && $Data['contract_type'] == "S"){
+
+		$sql = "SELECT * FROM csn2 WHERE sn2_docentry = :sn2_docentry";
+		$resSql = $this->pedeo->queryTable($sql,array(':sn2_docentry' => $Data['docentry']));
+		if(isset($resSql[0])){
 			$value = $this->documentcontract1->format($Data);
+		}else {
+			$value = $this->documentcontract->format($Data);
 		}
 		
 		return $this->response($value);
