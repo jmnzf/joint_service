@@ -192,7 +192,7 @@ class Analysis extends REST_Controller {
 				// unset($campos[':'.$prefix.'_currency']);
 				// unset($campos[':dvf_currency']);
         unset($campos[':symbol']);
-
+        // print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
 
 
