@@ -46,6 +46,10 @@ class Analysis extends REST_Controller {
 
     // print_r($Data);exit;
 
+    if (empty($Data['dvf_currency'])){
+      $Data['dvf_currency'] = $Data['main_currency'];
+    }
+
     $main_currency = $Data['main_currency'];
 
     $original  = $Data['original'];
@@ -190,7 +194,7 @@ class Analysis extends REST_Controller {
 				}
        
 				// unset($campos[':'.$prefix.'_currency']);
-				// unset($campos[':dvf_currency']);
+				unset($campos[':dvf_currency']);
         unset($campos[':symbol']);
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
