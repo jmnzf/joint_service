@@ -50,6 +50,10 @@ class Analysis extends REST_Controller {
       $Data['dvf_currency'] = $Data['main_currency'];
     }
 
+    if (empty($Data['symbol']) || !isset($Data['symbol']) ){
+      $Data['symbol'] = $Data['main_currency'];
+    }
+
     $main_currency = $Data['main_currency'];
 
     $original  = $Data['original'];

@@ -279,12 +279,30 @@ class DinamicCrud extends REST_Controller {
 
           return;
     }
+
+    $nvlCuenta = "SELECT acc_level FROM params";
+    $resNvlCuenta = $this->pedeo->queryTable($nvlCuenta, array());
+
+    $nvl = 0;
+
+    if (isset($resNvlCuenta[0])){
+      $nvl = $resNvlCuenta[0]['acc_level'];
+    }
+
+    
     $datawhere = '';
     if (isset($Data['where'])) {
       $datawhere = str_replace('|', ' ', $Data['where']);
       // print_r();exit;
     }
+
+    if ($Data['table'] == 'dacc'){
+      $datawhere = " where acc_level = ".$nvl;
+    }
+
     $sqlSelect = "SELECT ".$Data['id']." AS id, ".$Data['text']." AS text FROM ".$Data['table']. " ".$datawhere;
+
+    // print_r($sqlSelect);exit;
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
