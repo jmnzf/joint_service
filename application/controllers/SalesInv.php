@@ -4537,8 +4537,12 @@ class SalesInv extends REST_Controller
 		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
-
-		$sqlSelect = self::getColumn('dvfv', 'dvf', ',dvf_response_dian,dvf_cufe', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		if($Data['docnum'] == 5){
+			$sqlSelect = self::getColumn('dvfv', 'dvf', ',dvf_response_dian,dvf_cufe', '', $DECI_MALES, $Data['business'], $Data['branch'],5);
+		}else if($Data['docnum'] == 34){
+			$sqlSelect = self::getColumn('dvfv', 'dvf', ',dvf_response_dian,dvf_cufe', '', $DECI_MALES, $Data['business'], $Data['branch'],34);
+		}
+		
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

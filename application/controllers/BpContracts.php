@@ -874,26 +874,26 @@ class BpContracts extends REST_Controller
 		$copy = $this->documentcopy->Copy($Data['sn1_docentry'],'tcsn','csn1','csn','sn1');
 
 		$sqlSelect2 = "SELECT tcsn.csn_comment,
-						tcsn.csn_enddate,
-						tcsn.csn_signaturedate,
-						tcsn.csn_description,
-						tcsn.csn_prjcode,
-						ctpa.tpa_description AS csn_typeagreement,
-						ccdp.cdp_description AS csn_paymentcondition,
-						dmpf.mpf_name AS csn_waypay,
-						cfev.fev_description AS csn_shippingway,
-						cesc.esc_description AS csn_status,
-						dcsn.csn_probabilitypercentage,
-						dcsn.csn_renewal,
-						dcsn.csn_remember
-						FROM tcsn
-						INNER JOIN dcsn ON tcsn.csn_docentry = dcsn.csn_docentry
-						INNER JOIN ctpa ON ctpa.tpa_id = dcsn.csn_typeagreement
-						INNER JOIN ccdp ON ccdp.cdp_id = dcsn.csn_paymentcondition
-						INNER JOIN dmpf ON dmpf.mpf_id = dcsn.csn_waypay
-						INNER JOIN cfev ON cfev.fev_id = dcsn.csn_shippingway
-						INNER JOIN cesc ON cesc.esc_id = dcsn.csn_status
-						WHERE  tcsn.csn_docentry = :csn_docentry";
+												tcsn.csn_enddate,
+												tcsn.csn_signaturedate,
+												tcsn.csn_description,
+												tcsn.csn_prjcode,
+												ctpa.tpa_description AS csn_typeagreement,
+												ccdp.cdp_description AS csn_paymentcondition,
+												dmpf.mpf_name AS csn_waypay,
+												cfev.fev_description AS csn_shippingway,
+												cesc.esc_description AS csn_status,
+												dcsn.csn_probabilitypercentage,
+												dcsn.csn_renewal,
+												dcsn.csn_remember
+												FROM tcsn
+												INNER JOIN dcsn ON tcsn.csn_docentry = dcsn.csn_docentry
+												INNER JOIN ctpa ON ctpa.tpa_id = dcsn.csn_typeagreement
+												INNER JOIN ccdp ON ccdp.cdp_id = dcsn.csn_paymentcondition
+												INNER JOIN dmpf ON dmpf.mpf_id = dcsn.csn_waypay
+												INNER JOIN cfev ON cfev.fev_id = dcsn.csn_shippingway
+												INNER JOIN cesc ON cesc.esc_id = dcsn.csn_status
+												WHERE  tcsn.csn_docentry = :csn_docentry";
 		$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(
 			':csn_docentry' => $Data['sn1_docentry']
 		));
@@ -1339,7 +1339,7 @@ class BpContracts extends REST_Controller
 		//
 		$sqlInsert = "INSERT INTO hscs(scs_doctype, scs_docentry, scs_reason, scs_start_date, scs_end_date, scs_createdby, scs_createdat, scs_status)VALUES(:scs_doctype, :scs_docentry, :scs_reason, :scs_start_date, :scs_end_date, :scs_createdby, :scs_createdat, :scs_status)";
 		//
-		$this->pedeo->trans_being();
+		$this->pedeo->trans_begin();
 		//
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
 			
@@ -1381,7 +1381,7 @@ class BpContracts extends REST_Controller
 		VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 		//
 		$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-			':bed_docentry' => $resInsert,
+			':bed_docentry' => $Data['scs_docentry'],
 			':bed_doctype' => $Data['scs_doctype'],
 			':bed_status' => 9, //ESTADO CERRADO
 			':bed_createby' => $Data['scs_createdby'],

@@ -1394,7 +1394,7 @@ class LegalExpenses extends REST_Controller {
 	public  function getGbpe_post(){
 
 		$Data = $this->post();
-// print_r($Data);exit;
+
 		if( !isset($Data['business']) OR
 			!isset($Data['branch']) OR
 			!isset($Data['cardcode'])) {
@@ -1425,8 +1425,7 @@ class LegalExpenses extends REST_Controller {
 				from mac1
 				inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 				inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
-				inner join gbpe on gbpe.bpe_doctype = mac1.ac1_font_type and gbpe.bpe_docentry =
-				mac1.ac1_font_key
+				inner join gbpe on gbpe.bpe_doctype = mac1.ac1_font_type and gbpe.bpe_docentry = mac1.ac1_font_key
 				inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 				where mac1.ac1_legal_num = '".$Data['cardcode']."'
 				and dmsn.dms_card_type = '2'

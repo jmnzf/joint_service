@@ -1086,36 +1086,79 @@ class BusinessPartner extends REST_Controller
     //CONSULTA PARA OBTENER EL SALDO
     $moneda = "SELECT get_localcur() as moneda";
     $resMoneda = $this->pedeo->queryTable($moneda,array());
-
     $sql = "SELECT
-              concat('{moneda}',' ',COALESCE(SUM(mac1.ac1_ven_debit  - mac1.ac1_ven_credit) 
+              COALESCE(SUM(mac1.ac1_ven_debit  - mac1.ac1_ven_credit) 
               +
               COALESCE((select 
            		            sum({table_e}.{prefijo}_doctotal) as saldo
            	            from {table_e} 
            	            inner join responsestatus r on {table_e}.{prefijo}_doctype = r.tipo and {table_e}.{prefijo}_docentry = r.id
-           	            where {table_e}.{prefijo}_cardcode = :cardcode and r.estado = 'Abierto'),0),0))
+           	            where {table_e}.{prefijo}_cardcode = :cardcode and r.estado = 'Abierto'),0),0) as saldo
             FROM mac1
             INNER JOIN dmsn ON mac1.ac1_legal_num  = dmsn.dms_card_code
             WHERE mac1.ac1_legal_num = :cardcode AND mac1.business = :business AND mac1.branch = :branch AND dmsn.dms_card_type = '{card_type}'";
     //REEMPLAZAR DATOS DE LA CONSULTA
     $sql = str_replace("{moneda}",$resMoneda[0]['moneda'],$sql);
-    if($Data['doctype'] == 2 ){
+    if($Data['doctype'] == 1 ){
+      $sql = str_replace("{card_type}",1,$sql);
+      $sql = str_replace("{table_e}","dvct",$sql);
+      $sql = str_replace("{prefijo}","dvc",$sql);
+    }else if($Data['doctype'] == 2 ){
       $sql = str_replace("{card_type}",1,$sql);
       $sql = str_replace("{table_e}","dvov",$sql);
       $sql = str_replace("{prefijo}","vov",$sql);
+    }else if ($Data['doctype'] == 3){
+      $sql = str_replace("{card_type}",1,$sql);
+      $sql = str_replace("{table_e}","dvem",$sql);
+      $sql = str_replace("{prefijo}","vem",$sql);
+    }else if ($Data['doctype'] == 4){
+      $sql = str_replace("{card_type}",1,$sql);
+      $sql = str_replace("{table_e}","dvdv",$sql);
+      $sql = str_replace("{prefijo}","vdv",$sql);
     }else if ($Data['doctype'] == 5){
-      $sql = str_replace("{card_type}",1,$sql);
-      $sql = str_replace("{table_e}","dvov",$sql);
-      $sql = str_replace("{prefijo}","vov",$sql);
+        $sql = str_replace("{card_type}",1,$sql);
+        $sql = str_replace("{table_e}","dvfv",$sql);
+        $sql = str_replace("{prefijo}","dvf",$sql);
+    }else if ($Data['doctype'] == 6){
+        $sql = str_replace("{card_type}",1,$sql);
+        $sql = str_replace("{table_e}","dvnc",$sql);
+        $sql = str_replace("{prefijo}","vnc",$sql);
+    }else if ($Data['doctype'] == 7){
+        $sql = str_replace("{card_type}",1,$sql);
+        $sql = str_replace("{table_e}","dvnd",$sql);
+        $sql = str_replace("{prefijo}","vnd",$sql);
+    }else if ($Data['doctype'] == 10){
+      $sql = str_replace("{card_type}",2,$sql);
+      $sql = str_replace("{table_e}","dcpo",$sql);
+      $sql = str_replace("{prefijo}","cpo",$sql);
+    }else if ($Data['doctype'] == 11){
+      $sql = str_replace("{card_type}",2,$sql);
+      $sql = str_replace("{table_e}","dcoc",$sql);
+      $sql = str_replace("{prefijo}","coc",$sql);
     }else if ($Data['doctype'] == 12){
       $sql = str_replace("{card_type}",2,$sql);
       $sql = str_replace("{table_e}","dcpo",$sql);
       $sql = str_replace("{prefijo}","cpo",$sql);
+    }else if ($Data['doctype'] == 13){
+      $sql = str_replace("{card_type}",2,$sql);
+      $sql = str_replace("{table_e}","dcec",$sql);
+      $sql = str_replace("{prefijo}","cec",$sql);
+    }else if ($Data['doctype'] == 14){
+      $sql = str_replace("{card_type}",2,$sql);
+      $sql = str_replace("{table_e}","dcdc",$sql);
+      $sql = str_replace("{prefijo}","cdc",$sql);
     }else if ($Data['doctype'] == 15){
       $sql = str_replace("{card_type}",2,$sql);
-      $sql = str_replace("{table_e}","dcpo",$sql);
-      $sql = str_replace("{prefijo}","cpo",$sql);
+      $sql = str_replace("{table_e}","dcfc",$sql);
+      $sql = str_replace("{prefijo}","cfc",$sql);
+    }else if ($Data['doctype'] == 16){
+      $sql = str_replace("{card_type}",2,$sql);
+      $sql = str_replace("{table_e}","dcnc",$sql);
+      $sql = str_replace("{prefijo}","cnc",$sql);
+    }else if ($Data['doctype'] == 17){
+      $sql = str_replace("{card_type}",2,$sql);
+      $sql = str_replace("{table_e}","dcnd",$sql);
+      $sql = str_replace("{prefijo}","cnd",$sql);
     }
     //RESULTADO DE LA CONSULTA
     $resSql = $this->pedeo->queryTable($sql,array(
