@@ -112,10 +112,11 @@ class PosBox extends REST_Controller {
 			return;
 		}
 
-        $sql = "SELECT bcc_user FROM tbcc WHERE bcc_id != :bcc_id AND bcc_status = :bcc_status AND business = :business AND branch = :branch";
+        $sql = "SELECT bcc_user FROM tbcc WHERE bcc_id = :bcc_id AND bcc_status = :bcc_status AND business = :business AND branch = :branch AND bcc_user != :bcc_user";
         $resSql = $this->pedeo->queryTable($sql, array(
             ':bcc_id' => $Data['bcc_id'],
             ':bcc_status' => 1,
+            ':bcc_user' => $Data['bcc_user'],
             ':business' => $Data['business'],
             ':branch' => $Data['branch']
         ));
