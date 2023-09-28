@@ -453,7 +453,7 @@ class EstadoCuentaCl extends REST_Controller
         <tr>
             <th  width="33%" style="font-size: 8px;"> Documento generado por <span style="color: orange; font-weight: bolder;"> Joint ERP  </span> para: ' . $empresa[0]['pge_small_name'] . '. Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
         </tr>
-    </table>';
+    	</table>';
 
         $html = '
 
@@ -494,37 +494,37 @@ class EstadoCuentaCl extends REST_Controller
 							 </th>
 					 </tr>
 			 </table>
-        <br>
+			<br>
 
-        <table class="borde" style="width:100%">
-        <tr>
-				  <th class=""><b>Tipo Documento</b></th>
-          <th class=""><b>Numero Documento</b></th>
-          <th class=""><b>F. Documento</b></th>
-					<th class=""><b>Total Documento</b></th>
-          <th class=""><b>F. Ven Documento</b></th>
-          <th class=""><b>F. Corte</b></th>
-		  <th class=""><b>Referencia</b></th>
-		  <th class=""><b>Dias Vencidos</b></th>
-          <th class=""><b>0-30</b></th>
-          <th class=""><b>31-60</b></th>
-          <th class=""><b>61-90</b></th>
-          <th class=""><b>+90</b></th>
-        </tr>
-      	' . $totaldetalle . $total_valores . '
-        </table>
-        <br>
-        <table width="100%" style="vertical-align: bottom; font-family: serif;
-            font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-            <tr>
-                <th class="">
-                    <p></p>
-                </th>
-            </tr>
-        </table>
+			<table class="borde" style="width:100%">
+			<tr>
+					<th class=""><b>Tipo Documento</b></th>
+			<th class=""><b>Numero Documento</b></th>
+			<th class=""><b>F. Documento</b></th>
+						<th class=""><b>Total Documento</b></th>
+			<th class=""><b>F. Ven Documento</b></th>
+			<th class=""><b>F. Corte</b></th>
+			<th class=""><b>Referencia</b></th>
+			<th class=""><b>Dias Vencidos</b></th>
+			<th class=""><b>0-30</b></th>
+			<th class=""><b>31-60</b></th>
+			<th class=""><b>61-90</b></th>
+			<th class=""><b>+90</b></th>
+			</tr>
+			' . $totaldetalle . $total_valores . '
+			</table>
+			<br>
+			<table width="100%" style="vertical-align: bottom; font-family: serif;
+				font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
+				<tr>
+					<th class="">
+						<p></p>
+					</th>
+				</tr>
+			</table>
 
-        <br>
-        ';
+			<br>
+			';
 
         $stylesheet = file_get_contents(APPPATH . '/asset/vendor/style.css');
 
@@ -545,131 +545,341 @@ class EstadoCuentaCl extends REST_Controller
     public function getEstadoDeCuenta_post()
     {
         $Data = $this->post();
-        $sqlestadocuenta = "SELECT
-				'Factura' as tipo,
-				t0.dvf_cardcode CodigoProveedor,
-				t0.dvf_cardname NombreProveedor,
-				t0.dvf_docnum NumeroDocumento,
-				t0.dvf_docdate FechaDocumento,
-				t0.dvf_duedate FechaVencimiento,
-				t0.dvf_doctotal totalfactura,
-				coalesce(T0.dvf_paytoday,0) saldo,
-				trim('COP' FROM t0.dvf_currency) MonedaDocumento,
-				CURRENT_DATE FechaCorte,
-				(CURRENT_DATE - t0.dvf_duedate) dias,
-				CASE
-					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=0 and ( CURRENT_DATE - t0.dvf_duedate) <=30
-						then  (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
-						ELSE 0
-				END uno_treinta,
-				CASE
-					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=31 and ( CURRENT_DATE - t0.dvf_duedate) <=60
-						then (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
-						ELSE 0
-				END treinta_uno_secenta,
-				CASE
-					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=61 and ( CURRENT_DATE - t0.dvf_duedate) <=90
-						then  (t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0))
-						ELSE 0
-				END secenta_uno_noventa,
-				CASE
-					WHEN ( CURRENT_DATE - t0.dvf_duedate) >=91
-						then  t0.dvf_doctotal - COALESCE(t0.dvf_paytoday,0)
-						ELSE 0
-				END mayor_noventa
-
-			FROM dvfv t0
-			WHERE CURRENT_DATE >= t0.dvf_duedate  and t0.dvf_cardcode = :cardcode
-
-			union all
-
-			SELECT
-				'NotaCredito' as tipo,
-				t0.vnc_cardcode CodigoProveedor,
-				t0.vnc_cardname NombreProveedor,
-				t0.vnc_docnum NumeroDocumento,
-				t0.vnc_docdate FechaDocumento,
-				t0.vnc_duedate FechaVencimiento,
-				t0.vnc_doctotal * -1 totalfactura,
-				coalesce(t0.vnc_doctotal ,0) saldo,
-				trim('COP' FROM t0.vnc_currency) MonedaDocumento,
-				CURRENT_DATE FechaCorte,
-				(CURRENT_DATE - t0.vnc_duedate) dias,
-				CASE
-					WHEN ( CURRENT_DATE - t0.vnc_duedate) >=0 and ( CURRENT_DATE - t0.vnc_duedate) <=30
-						then (t0.vnc_doctotal * -1)
-						ELSE 0
-				END uno_treinta,
-				CASE
-					WHEN ( CURRENT_DATE - t0.vnc_duedate) >=31 and ( CURRENT_DATE - t0.vnc_duedate) <=60
-						then (t0.vnc_doctotal * -1)
-						ELSE 0
-				END treinta_uno_secenta,
-				CASE
-					WHEN ( CURRENT_DATE - t0.vnc_duedate) >=61 and ( CURRENT_DATE - t0.vnc_duedate) <=90
-						then (t0.vnc_doctotal * -1)
-						ELSE 0
-				END secenta_uno_noventa,
-				CASE
-					WHEN ( CURRENT_DATE - t0.vnc_duedate) >=91
-						then (t0.vnc_doctotal * -1)
-						ELSE 0
-				END mayor_noventa
-
-			FROM dvnc t0
-			WHERE CURRENT_DATE >= t0.vnc_duedate  and t0.vnc_cardcode = :cardcode
-
-			union all
-
-			SELECT
-				'NotaDebito' as tipo,
-				t0.vnd_cardcode CodigoProveedor,
-				t0.vnd_cardname NombreProveedor,
-				t0.vnd_docnum NumeroDocumento,
-				t0.vnd_docdate FechaDocumento,
-				t0.vnd_duedate FechaVencimiento,
-				t0.vnd_doctotal totalfactura,
-				coalesce(t0.vnd_doctotal ,0) saldo,
-				trim('COP' FROM t0.vnd_currency) MonedaDocumento,
-				CURRENT_DATE FechaCorte,
-				(CURRENT_DATE - t0.vnd_duedate) dias,
-				CASE
-					WHEN ( CURRENT_DATE - t0.vnd_duedate) >=0 and ( CURRENT_DATE - t0.vnd_duedate) <=30
-						then (t0.vnd_doctotal )
-						ELSE 0
-				END uno_treinta,
-				CASE
-					WHEN ( CURRENT_DATE - t0.vnd_duedate) >=31 and ( CURRENT_DATE - t0.vnd_duedate) <=60
-						then (t0.vnd_doctotal )
-						ELSE 0
-				END treinta_uno_secenta,
-				CASE
-					WHEN ( CURRENT_DATE - t0.vnd_duedate) >=61 and ( CURRENT_DATE - t0.vnd_duedate) <=90
-						then (t0.vnd_doctotal )
-						ELSE 0
-				END secenta_uno_noventa,
-				CASE
-					WHEN ( CURRENT_DATE - t0.vnd_duedate) >=91
-						then (t0.vnd_doctotal )
-						ELSE 0
-				END mayor_noventa
-
-			FROM dvnd t0
-			WHERE CURRENT_DATE >= t0.vnd_duedate  and t0.vnd_cardcode = :cardcode
-			ORDER BY NumeroDocumento";
+		$DECI_MALES = $this->generic->getDecimals();
+        $sqlestadocuenta = "SELECT distinct
+								dmdt.mdt_docname,
+								mac1.ac1_font_key,
+								mac1.ac1_legal_num as codigoproveedor,
+								dmsn.dms_card_name nombreproveedor,
+								mac1.ac1_account as cuenta,
+								dvfv.dvf_currency monedadocumento,
+								current_date fechacorte,
+								current_date - dvf_duedate dias,
+								dvfv.dvf_comment,
+								dvfv.dvf_currency,
+								mac1.ac1_font_key as dvf_docentry,
+								dvfv.dvf_docnum,
+								dvfv.dvf_docdate as FechaDocumento,
+								dvfv.dvf_duedate as FechaVencimiento,
+								dvf_docnum as NumeroDocumento,
+								mac1.ac1_font_type as numtype,
+								mdt_docname as tipo,
+								case
+									when mac1.ac1_font_type = 5 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvf_docdate,mac1.ac1_debit ,get_localcur())
+									else get_dynamic_conversion('{currency}',get_localcur(),dvf_docdate,mac1.ac1_credit ,get_localcur())
+								end as totalfactura,
+								get_dynamic_conversion('{currency}',get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
+								,get_localcur()) as saldo,
+								'' retencion,
+								get_tax_currency(dvfv.dvf_currency,dvfv.dvf_docdate) as tasa_dia,
+								case 
+									WHEN ( current_date - dvfv.dvf_duedate) >=0 and ( current_date - dvfv.dvf_duedate) <=30 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit),get_localcur()) 
+									ELSE 0 
+								END uno_treinta, 
+								CASE 
+									WHEN ( current_date - dvfv.dvf_duedate)>=31 and ( current_date - dvfv.dvf_duedate) <=60 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								END treinta_uno_secenta, 
+								CASE 
+									WHEN ( current_date - dvfv.dvf_duedate)>=61 and ( current_date - dvfv.dvf_duedate) <=90 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit),get_localcur()) 
+								ELSE 0 END secenta_uno_noventa, 
+								CASE 
+									WHEN ( current_date - dvfv.dvf_duedate)>=91 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
+									ELSE 0
+								END mayor_noventa,
+								'' as referencia
+							
+							
+							from mac1
+							inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+							inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+							inner join dvfv on dvfv.dvf_doctype = mac1.ac1_font_type and dvfv.dvf_docentry = mac1.ac1_font_key
+							inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+							where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+							and mac1.ac1_legal_num = '{cardcode}' and dmsn.dms_card_type = '1'
+							and dvf_docdate <= current_date 
+										
+										
+							union all 
+							
+							select distinct 
+								dmdt.mdt_docname, 
+								mac1.ac1_font_key,
+								mac1.ac1_legal_num as codigoproveedor, 
+								dmsn.dms_card_name nombreproveedor, 
+								mac1.ac1_account as cuenta,
+								gbpr.bpr_currency monedadocumento, 
+								current_date fechacorte, 
+								current_date - gbpr.bpr_docdate as dias,
+								gbpr.bpr_comments as bpr_comment, 
+								gbpr.bpr_currency, 
+								mac1.ac1_font_key as dvf_docentry, 
+								gbpr.bpr_docnum,
+								gbpr.bpr_docdate as FechaDocumento, 
+								gbpr.bpr_docdate as FechaVencimiento, 
+								gbpr.bpr_docnum as
+								NumeroDocumento, 
+								mac1.ac1_font_type as numtype, 
+								mdt_docname as tipo,
+								get_dynamic_conversion('{currency}',get_localcur(),gbpr.bpr_docdate,gbpr.bpr_doctotal,get_localcur()) as totalfactura, 
+								(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo, 
+								'' retencion,
+								get_tax_currency(gbpr.bpr_currency,gbpr.bpr_docdate) as tasa_dia, 
+								CASE 
+									WHEN ( current_date - gbpr.bpr_docdate)>=0 and ( current_date - gbpr.bpr_docdate) <=30 
+										then get_dynamic_conversion('{currency}',get_localcur(),gbpr.bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								END uno_treinta, 
+								CASE 
+									WHEN ( current_date - gbpr.bpr_docdate)>=31 and ( current_date - gbpr.bpr_docdate) <=60 
+										then get_dynamic_conversion('{currency}',get_localcur(),gbpr.bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								END treinta_uno_secenta, 
+								CASE 
+									WHEN ( current_date - gbpr.bpr_docdate)>=61 and ( current_date - gbpr.bpr_docdate) <=90 
+										then get_dynamic_conversion('{currency}',get_localcur(),gbpr.bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								END secenta_uno_noventa, 
+								CASE 
+									when (current_date - gbpr.bpr_docdate)>=91 
+										then get_dynamic_conversion('{currency}',get_localcur(),gbpr.bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
+									ELSE 0
+								END mayor_noventa,
+								'' as comentario_asiento
+							
+							from mac1
+							inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+							inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+							inner join gbpr on gbpr.bpr_doctype = mac1.ac1_font_type and gbpr.bpr_docentry =
+							mac1.ac1_font_key
+							inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+							where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+							and mac1.ac1_legal_num = '{cardcode}' and dmsn.dms_card_type = '1'
+							and bpr_docdate <= current_date 
+														
+							union all 
+							
+							select distinct 
+								dmdt.mdt_docname,
+								mac1.ac1_font_key, 
+								mac1.ac1_legal_num as codigoproveedor, 
+								dmsn.dms_card_name
+								nombreproveedor, 
+								mac1.ac1_account as cuenta, 
+								dvnc.vnc_currency
+								monedadocumento, 
+								current_date fechacorte, 
+								current_date - dvnc.vnc_docdate as dias,
+								dvnc.vnc_comment as bpr_comment,
+								dvnc.vnc_currency, 
+								mac1.ac1_font_key as dvf_docentry,
+								dvnc.vnc_docnum, 
+								dvnc.vnc_docdate as FechaDocumento, 
+								dvnc.vnc_duedate as FechaVencimiento, 
+								dvnc.vnc_docnum as NumeroDocumento, 
+								mac1.ac1_font_type as numtype,
+								mdt_docname as tipo, 
+								case 
+									when mac1.ac1_font_type=dvnc.vnc_doctype 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnc.vnc_docdate, mac1.ac1_debit,get_localcur()) 
+									else get_dynamic_conversion('{currency}',get_localcur(),dvnc.vnc_docdate,mac1.ac1_credit,get_localcur()) 
+								end as totalfactura, 
+								(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo, 
+								'' retencion,
+								get_tax_currency(dvnc.vnc_currency,dvnc.vnc_docdate) as tasa_dia, 
+								CASE 
+									when (current_date - dvnc.vnc_duedate)>=0 and ( current_date - dvnc.vnc_duedate) <=30 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnc.vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								END uno_treinta, 
+								CASE 
+									when (current_date - dvnc.vnc_duedate)>=31 and ( current_date - dvnc.vnc_duedate) <=60
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnc.vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								END treinta_uno_secenta, 
+								case 
+									WHEN (current_date - dvnc.vnc_duedate)>=61 and ( current_date - dvnc.vnc_duedate) <=90 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnc.vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								END secenta_uno_noventa,
+								CASE 
+									WHEN ( current_date - dvnc.vnc_duedate)>=91
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnc.vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
+									ELSE 0
+								END mayor_noventa,
+								'' as comentario_asiento
+							
+							from mac1
+							inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
+							inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+							inner join dvnc on dvnc.vnc_doctype = mac1.ac1_font_type and
+							dvnc.vnc_docentry = mac1.ac1_font_key
+							inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+							where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+							and mac1.ac1_legal_num = '{cardcode}' and dmsn.dms_card_type = '1'
+							and vnc_docdate <= current_date 
+																		
+							union all 
+							select distinct 
+								dmdt.mdt_docname,
+								mac1.ac1_font_key, 
+								mac1.ac1_legal_num as CodigoCliente,
+								dmsn.dms_card_name NombreCliente, 
+								mac1.ac1_account as cuenta,
+								dvnd.vnd_currency monedadocumento, 
+								current_date fechacorte, 
+								current_date - dvnd.vnd_docdate as dias, 
+								dvnd.vnd_comment as bpr_comment,
+								dvnd.vnd_currency, 
+								mac1.ac1_font_key as dvf_docentry, 
+								dvnd.vnd_docnum,
+								dvnd.vnd_docdate as FechaDocumento, 
+								dvnd.vnd_duedate as FechaVencimiento,
+								dvnd.vnd_docnum as NumeroDocumento,
+								mac1.ac1_font_type as numtype,
+								mdt_docname as tipo, 
+								case 
+									when mac1.ac1_font_type=dvnd.vnd_doctype 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnd.vnd_docdate,mac1.ac1_debit,get_localcur()) 
+									else get_dynamic_conversion('{currency}',get_localcur(),dvnd.vnd_docdate,mac1.ac1_credit,get_localcur()) 
+								end as totalfactura, 
+								(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo, 
+								'' retencion,
+								get_tax_currency(dvnd.vnd_currency,dvnd.vnd_docdate) as tasa_dia, 
+								CASE
+									WHEN (current_date - dvnd.vnd_duedate)>=0 and (current_date - dvnd.vnd_duedate) <=30 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnd.vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								END uno_treinta,
+								CASE 
+									WHEN (current_date - dvnd.vnd_duedate)>=31 and (current_date - dvnd.vnd_duedate) <=60 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnd.vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								end treinta_uno_secenta, 
+								CASE 
+									WHEN (current_date - dvnd.vnd_duedate)>=61 and ( current_date - dvnd.vnd_duedate) <=90 
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnd.vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								end secenta_uno_noventa,
+								case
+									WHEN ( current_date - dvnd.vnd_duedate)>=91
+										then get_dynamic_conversion('{currency}',get_localcur(),dvnd.vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
+									ELSE 0
+								END mayor_noventa,
+								'' as comentario_asiento
+							
+							from mac1
+							inner join dacc on mac1.ac1_account = dacc.acc_code and
+							acc_businessp = '1'
+							inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
+							inner join dvnd on dvnd.vnd_doctype = mac1.ac1_font_type and
+							dvnd.vnd_docentry = mac1.ac1_font_key
+							inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
+							where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0
+							and mac1.ac1_legal_num = '{cardcode}' and dmsn.dms_card_type
+							= '1'
+							and vnd_docdate <= current_date 
+																						
+							union all
+							select
+								dmdt.mdt_docname,
+								mac1.ac1_font_key, 
+								case 
+									when ac1_card_type='1' 
+										then mac1.ac1_legal_num 
+									when ac1_card_type='2'
+										then mac1.ac1_legal_num 
+								end as codigoproveedor, 
+								dmsn.dms_card_name NombreCliente,
+								mac1.ac1_account as cuenta,
+								tmac.mac_currency, current_date fechacorte, 
+								CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado, 
+								tmac.mac_comments,
+								tmac.mac_currency, 
+								mac_trans_id as dvf_docentry, 
+								0 as docnum, 
+								tmac.mac_doc_date as fecha_doc,
+								tmac.mac_doc_duedate as fecha_ven,
+								mac_trans_id as id_origen, 
+								18 as numtype, 
+								mdt_docname as tipo, 
+								case 
+									when mac1.ac1_cord=0 
+										then get_dynamic_conversion('{currency}',get_localcur(),tmac.mac_doc_date,mac1.ac1_debit,get_localcur()) 
+									when mac1.ac1_cord=1 
+										then (get_dynamic_conversion('{currency}',get_localcur(),tmac.mac_doc_date,mac1.ac1_credit,get_localcur()) * -1) 
+								end as total_doc,
+								(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) as saldo, 
+								'' retencion,
+								get_tax_currency(tmac.mac_currency,tmac.mac_doc_date) tasa_dia, 
+								CASE 
+									WHEN ( current_date - tmac.mac_doc_duedate)>=0 and ( current_date - tmac.mac_doc_duedate) <=30 
+										then get_dynamic_conversion('{currency}',get_localcur(),tmac.mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0 
+								END	uno_treinta, 
+								CASE 
+									WHEN ( current_date - tmac.mac_doc_duedate)>=31 and ( current_date - tmac.mac_doc_duedate) <=60 
+										then get_dynamic_conversion('{currency}',get_localcur(),tmac.mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) 
+									ELSE 0
+								END treinta_uno_secenta, 
+								CASE 
+									when ( current_date - tmac.mac_doc_duedate)>=61 and (current_date - tmac.mac_doc_duedate) <=90 
+										then get_dynamic_conversion('{currency}',get_localcur(),tmac.mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
+									ELSE 0 
+								END secenta_uno_noventa, 
+								CASE 
+									when ( current_date - tmac.mac_doc_duedate)>=91
+										then get_dynamic_conversion('{currency}',get_localcur(),tmac.mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
+									ELSE 0
+								END mayor_noventa,
+								ac1_comments as comentario_asiento
+							from mac1
+							inner join dacc on mac1.ac1_account =
+							dacc.acc_code and acc_businessp = '1'
+							inner join dmdt on mac1.ac1_font_type =
+							dmdt.mdt_doctype
+							inner join tmac on tmac.mac_trans_id =
+							mac1.ac1_font_key and tmac.mac_doctype =
+							mac1.ac1_font_type
+							inner join dmsn on mac1.ac1_card_type =
+							dmsn.dms_card_type and mac1.ac1_legal_num =
+							dmsn.dms_card_code
+							where dmsn.dms_card_type = '1' and
+							mac1.ac1_legal_num = '{cardcode}'
+							and ABS((mac1.ac1_ven_debit) -
+							(mac1.ac1_ven_credit)) > 0
+							and mac_doc_date <= current_date
+							order by numerodocumento asc";
         $respuesta = array();
-
-        $contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta, array(
-            ":cardcode" => $Data['cardcode'],
-        ));
-        $totalSaldo = array_sum(array_column($contenidoestadocuenta, 'uno_treinta'));
-        $totalSaldo += array_sum(array_column($contenidoestadocuenta, 'treinta_uno_secenta'));
-        $totalSaldo += array_sum(array_column($contenidoestadocuenta, 'secenta_uno_noventa'));
-        $totalSaldo += array_sum(array_column($contenidoestadocuenta, 'mayor_noventa'));
-
+		$sqlestadocuenta = str_replace("{cardcode}",$Data['cardcode'],$sqlestadocuenta);
+		if(isset($Data['currency']) && !empty($Data['currency'])){
+			$sqlestadocuenta = str_replace("{currency}",$Data['currency'],$sqlestadocuenta);
+		}else{
+			$moneda = "SELECT get_localcur() as moneda";
+			$restMoneda = $this->pedeo->queryTable($moneda,array());
+			$sqlestadocuenta = str_replace("{currency}",$restMoneda[0]['moneda'],$sqlestadocuenta);
+		}
+		
+		// print_r($sqlestadocuenta);exit;
+        $contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta, array());
+		$totalSaldo = [];
+		// print_r($contenidoestadocuenta);exit;
+        // $totalSaldo = array_sum(array_column($contenidoestadocuenta, 'uno_treinta'));
+        // $totalSaldo += array_sum(array_column($contenidoestadocuenta, 'treinta_uno_secenta'));
+        // $totalSaldo += array_sum(array_column($contenidoestadocuenta, 'secenta_uno_noventa'));
+        // $totalSaldo += array_sum(array_column($contenidoestadocuenta, 'mayor_noventa'));
+// print_r($totalSaldo);exit;
         // $contenidoestadocuenta['total_saldo'] = round($totalSaldo,2);
         // array_push($contenidoestadocuenta,['totalSaldo'=>$totalSaldo]);
         if (isset($contenidoestadocuenta[0])) {
+			// print_r(array_sum(array_column($contenidoestadocuenta, 'saldo')));exit;
+			$totalSaldo = array_sum(array_column($contenidoestadocuenta, 'saldo'));
+
             $respuesta = array(
                 'error' => false,
                 'data' => $contenidoestadocuenta,
@@ -679,7 +889,7 @@ class EstadoCuentaCl extends REST_Controller
         } else {
             $respuesta = array(
                 'error' => true,
-                'data' => [],
+                'data' => $contenidoestadocuenta,
                 'mensaje' => 'Datos no encontrados'
             );
         }

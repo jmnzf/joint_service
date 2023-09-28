@@ -1339,7 +1339,7 @@ class BpContracts extends REST_Controller
 		//
 		$sqlInsert = "INSERT INTO hscs(scs_doctype, scs_docentry, scs_reason, scs_start_date, scs_end_date, scs_createdby, scs_createdat, scs_status)VALUES(:scs_doctype, :scs_docentry, :scs_reason, :scs_start_date, :scs_end_date, :scs_createdby, :scs_createdat, :scs_status)";
 		//
-		$this->pedeo->trans_being();
+		$this->pedeo->trans_begin();
 		//
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
 			
@@ -1381,7 +1381,7 @@ class BpContracts extends REST_Controller
 		VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 		//
 		$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-			':bed_docentry' => $resInsert,
+			':bed_docentry' => $Data['scs_docentry'],
 			':bed_doctype' => $Data['scs_doctype'],
 			':bed_status' => 9, //ESTADO CERRADO
 			':bed_createby' => $Data['scs_createdby'],

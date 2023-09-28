@@ -46,6 +46,14 @@ class Analysis extends REST_Controller {
 
     // print_r($Data);exit;
 
+    if (empty($Data['dvf_currency'])){
+      $Data['dvf_currency'] = $Data['main_currency'];
+    }
+
+    if (empty($Data['symbol']) || !isset($Data['symbol']) ){
+      $Data['symbol'] = $Data['main_currency'];
+    }
+
     $main_currency = $Data['main_currency'];
 
     $original  = $Data['original'];
@@ -83,10 +91,10 @@ class Analysis extends REST_Controller {
 
     $conditions = '';
     $campos = [];
-  //   $campos = array(
-  //     ':business' => $Data['business'],
-  //     ':branch' => $Data['branch']
-  // );
+    $campos = array(
+      ':business' => $Data['business'],
+      ':branch' => $Data['branch']
+    );
 
   $req = array('dvf_doctype','dvf_docdate','dvf_duedate','date_filter');
   $diff = array_diff($options,$req);
@@ -125,11 +133,13 @@ class Analysis extends REST_Controller {
         $sqlSelect = $this->generalQuery($tables,['15','16','17'],$cardcode,-1,$original) ;
         $campos[':dvf_docdate'] = $Data['dvf_docdate'];
         $campos[':dvf_duedate'] = $Data['dvf_duedate'];
+        unset($campos[':dvf_currency']);
       break;
       case '0':
         $sqlSelect = $this->generalQuery($tables,['5','6','7'],$cardcode,0,$original);
         $campos[':dvf_docdate'] = $Data['dvf_docdate'];
         $campos[':dvf_duedate'] = $Data['dvf_duedate'];
+        unset($campos[':dvf_currency']);
       break;
 
       default:
@@ -190,9 +200,9 @@ class Analysis extends REST_Controller {
 				}
        
 				// unset($campos[':'.$prefix.'_currency']);
-				// unset($campos[':dvf_currency']);
+	
         unset($campos[':symbol']);
-        // print_r($sqlSelect);exit;
+
         $resSelect = $this->pedeo->queryTable($sqlSelect, $campos);
 
 

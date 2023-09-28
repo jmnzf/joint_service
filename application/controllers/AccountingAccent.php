@@ -667,6 +667,9 @@ class AccountingAccent extends REST_Controller
 						when coalesce(t0.mac_base_type,0) = 24 then 'Transferencia de Stock'
 						when coalesce(t0.mac_base_type,0) = 31 then 'Conciliación Bancaria'
 						when coalesce(t0.mac_base_type,0) = 26 then 'Revalorizacion de Inventario'
+						when coalesce(t0.mac_base_type,0) = 46 then 'Factura Anticipada de Compras'
+						when coalesce(t0.mac_base_type,0) = 34 then 'Factura Anticipada de Ventas'
+						when coalesce(t0.mac_base_type,0) = 37 then 'Legalización de Gastos'
 					end origen,
 					case
 						when coalesce(t0.mac_base_type,0) = 3 then t1.vem_docnum
@@ -689,6 +692,9 @@ class AccountingAccent extends REST_Controller
 						when coalesce(t0.mac_base_type,0) = 24 then t17.its_docnum
 						when coalesce(t0.mac_base_type,0) = 31 then t19.crb_docnum
 						when coalesce(t0.mac_base_type,0) = 26 then t20.iri_docnum
+						when coalesce(t0.mac_base_type,0) = 46 then t7.cfc_docnum
+						when coalesce(t0.mac_base_type,0) = 34 then t3.dvf_docnum
+						when coalesce(t0.mac_base_type,0) = 37 then t21.blg_docnum
 					end numero_origen,
 					case
 						when coalesce(t0.mac_base_type,0) = 3 then t1.vem_currency
@@ -711,6 +717,9 @@ class AccountingAccent extends REST_Controller
 						when coalesce(t0.mac_base_type,0) = 24 then t17.its_currency
 						when coalesce(t0.mac_base_type,0) = 31 then t19.crb_currency
 						when coalesce(t0.mac_base_type,0) = 26 then t20.iri_currency
+						when coalesce(t0.mac_base_type,0) = 46 then t7.cfc_currency
+						when coalesce(t0.mac_base_type,0) = 34 then t3.dvf_currency
+						when coalesce(t0.mac_base_type,0) = 37 then t21.blg_currency
 					end currency,
 					case
 						when coalesce(t0.mac_base_type,0) = 3 then get_tax_currency(t1.vem_currency,mac_doc_date)
@@ -732,6 +741,9 @@ class AccountingAccent extends REST_Controller
 						when coalesce(t0.mac_base_type,0) = 24 then get_tax_currency(t17.its_currency,mac_doc_date)
 						when coalesce(t0.mac_base_type,0) = 31 then get_tax_currency(t19.crb_currency,t19.crb_startdate)
 						when coalesce(t0.mac_base_type,0) = 26 then get_tax_currency(t20.iri_currency,t20.iri_docdate)
+						when coalesce(t0.mac_base_type,0) = 46 then get_tax_currency(t7.cfc_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 34 then get_tax_currency(t3.dvf_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 37 then get_tax_currency(t21.blg_currency,mac_doc_date)
 					end tsa_value,
 					t0.*
 					from tmac t0
@@ -753,6 +765,7 @@ class AccountingAccent extends REST_Controller
 					left join dcrc t18 on t0.mac_base_entry = t18.crc_docentry  and t0.mac_base_type = t18.crc_doctype
 					left join dcrb t19 on t0.mac_base_entry = t19.crb_id and t0.mac_base_type = t19.crb_doctype
 					left join diri t20 on t0.mac_base_entry = t20.iri_docentry and t0.mac_base_type = t20.iri_doctype
+					left join tblg t21 on t0.mac_base_entry = t21.blg_docentry and t0.mac_base_type = t21.blg_doctype
 					WHERE t0.business = :business AND t0.branch = :branch
 				ORDER BY mac_trans_id ASC";
 

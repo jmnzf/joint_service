@@ -565,7 +565,7 @@ class LegalExpensesBO extends REST_Controller {
 			return;
         }
 
-        $sql = "SELECT  abs(sum(ac1_debit-mac1.ac1_credit)) AS saldo FROM mac1 WHERE ac1_legal_num = :cardcode AND ac1_account = :account AND business = :business AND branch = :branch";
+        $sql = "SELECT  abs(sum(ac1_ven_debit-ac1_ven_credit)) AS saldo FROM mac1 WHERE ac1_legal_num = :cardcode AND ac1_account = :account AND business = :business AND branch = :branch";
         $resSql = $this->pedeo->queryTable($sql,array(
             ':business' => $Data['business'],
             ':branch' => $Data['branch'],
@@ -1419,10 +1419,10 @@ class LegalExpensesBO extends REST_Controller {
 		$fecha = date('Y-m-d');
 
 		$sql = "SELECT DISTINCT 
-				get_legalacct(mac1.ac1_line_num, mac1.ac1_trans_id) as cuentabanco,
+				get_legalacct2(mac1.ac1_line_num, mac1.ac1_trans_id) as cuentabanco,
 				upper('ANTICIPO  - ' || gbpe.bpe_comments || ' # ' || gbpe.bpe_docnum) as tipo, 
 				case
-				when mac1.ac1_font_type = 15 then get_dynamic_conversion(get_localcur(),get_localcur(),gbpe.bpe_docdate,sum(mac1.ac1_debit)
+				when mac1.ac1_font_type = 15 OR mac1.ac1_font_type = 46 then get_dynamic_conversion(get_localcur(),get_localcur(),gbpe.bpe_docdate,sum(mac1.ac1_debit)
 				,get_localcur())
 				else get_dynamic_conversion(get_localcur(),get_localcur(),gbpe.bpe_docdate,sum(mac1.ac1_debit) ,get_localcur())
 				end as totalfactura,
@@ -1432,8 +1432,7 @@ class LegalExpensesBO extends REST_Controller {
 				from mac1
 				inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 				inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
-				inner join gbpe on gbpe.bpe_doctype = mac1.ac1_font_type and gbpe.bpe_docentry =
-				mac1.ac1_font_key
+				inner join gbpe on gbpe.bpe_doctype = mac1.ac1_font_type and gbpe.bpe_docentry = mac1.ac1_font_key
 				inner join dmsn on mac1.ac1_legal_num = dmsn.dms_card_code
 				where mac1.ac1_legal_num = '".$Data['cardcode']."'
 				and dmsn.dms_card_type = '2'
