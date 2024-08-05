@@ -1,8 +1,8 @@
 <?php
 // REPORTES DE INVENTARIO
 defined('BASEPATH') OR exit('No direct script access allowed');
-
 require_once(APPPATH.'/libraries/REST_Controller.php');
+require_once(APPPATH.'/asset/vendor/autoload.php');
 use Restserver\libraries\REST_Controller;
 
 class Reports extends REST_Controller {
@@ -124,7 +124,6 @@ class Reports extends REST_Controller {
       	$this->response($respuesta);
 	}
 
-
 	//INFORME ANALISIS DE VENTAS
 	public function getAnalisisVenta_post(){
 
@@ -183,7 +182,6 @@ class Reports extends REST_Controller {
 
 			$this->response($respuesta);
 	}
-
 
 	//INFORME ANALISIS DE VENTAS DETALLADO
 	public function getAnalisisVentaDetallado_post(){
@@ -371,7 +369,6 @@ class Reports extends REST_Controller {
 			$this->response($respuesta);
 	}
 
-
 	//INFORME OPERACIONES DIARIAS
 	public function getOperacionesDiarias_post(){
 
@@ -508,6 +505,7 @@ class Reports extends REST_Controller {
 		$sql = "SELECT
 					t2.dma_item_code,
 					trim(t2.dma_item_name) as dma_item_name,
+					t2.dma_item_mat,
 					t3.dmu_nameum,
 					t1.bdi_whscode,
 					trim(to_char(t1.bdi_quantity, '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as bdi_quantity,
@@ -529,6 +527,80 @@ class Reports extends REST_Controller {
 						'data'    => $result,
 						'mensaje' =>''
 				 );
+
+			}else{
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => array(),
+					'mensaje'	=> 'busqueda sin resultados'
+				);
+
+			}
+
+			$this->response($respuesta);
+	}
+	//INFORME STATUS DE LISTA DE VENTAS
+	public function getStatusStockLv_post(){
+
+		$Data = $this->post();
+		$where = '';
+		$array = [];
+
+		if(!isset($Data['business']) or empty($Data['business'])){
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => [],
+				'mensaje'	=> 'Falta parametro de empresa'
+			);
+			
+			return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			
+		}else {
+			// ADD WHERE QUERY
+			$array[':business'] = $Data['business'];
+			$where .= " and t4.business = :business";
+		}
+
+		if(isset($Data['fil_almacenId']) && !empty($Data['fil_almacenId'])){
+			
+			$array[':wshcode'] = $Data['fil_almacenId'];
+
+		}if(isset($Data['fil_acticuloId']) && !empty($Data['fil_acticuloId'])){
+			// ADD WHERE QUERY
+			$where .= ' and t2.dma_item_code = :dma_item_code';
+			// ADD WHERE
+			$array[':dma_item_code'] = $Data['fil_acticuloId'];
+
+		}if(isset($Data['fil_grupoId']) && !empty($Data['fil_grupoId']) ){
+			// ADD WHERE QUERY
+			$where .= ' and t2.dma_group_code IN ('.$Data['fil_grupoId'].')';
+		}
+
+		$sql = "SELECT
+				t2.dma_item_code as  codigo_articulo,
+				trim(t2.dma_item_name) as articulo,
+				t2.dma_item_mat,
+				t3.dmu_nameum as nombre_unidad,
+				trim(to_char(coalesce(get_stock_lista_ventas(dma_item_code, :wshcode),0), '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as cantidad,
+				get_localcur()||' '||trim(to_char(coalesce(get_costo_lista_ventas(dma_item_code, :wshcode), 0), '999G999G999G999G999D'||lpad('9',get_decimals(),'9'))) as costo,
+				get_localcur()||' '||trim(to_char(coalesce(get_stock_lista_ventas(dma_item_code, :wshcode),0) * coalesce(get_costo_lista_ventas(dma_item_code, :wshcode),0), '999G999G999G999G999D'||lpad('9',get_decimals(),'9')))  as costo_total
+			from dmar t2
+			left join dmum t3 on t3.dmu_id =  t2.dma_uom_sale
+			inner join prlm t4 on t2.dma_item_code  = t4.rlm_item_code 
+			where 1 = 1
+			and t4.rlm_bom_type = 3 ".$where;
+
+			$result = $this->pedeo->queryTable($sql, $array);
+
+			if(isset($result[0])){
+
+					$respuesta = array(
+						'error'   => false,
+						'data'    => $result,
+						'mensaje' =>''
+					);
 
 			}else{
 
@@ -619,7 +691,6 @@ class Reports extends REST_Controller {
 			$this->response($respuesta);
 	}
 
-
 	// ESTADO DE CUENTA PARA CLIENTE Y PROVEEDOR
 	public function EstadoCuentaCl_post(){
 
@@ -661,23 +732,6 @@ class Reports extends REST_Controller {
 				return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 			}
 
-			for ($i=0; $i < count($Data['cardtype']); $i++) { 
-
-				if ( $Data['cardtype'][$i] == 1 ){
-
-					$cliente = $Data['cardcode'][$i];
-					
-
-				}else if ( $Data['cardtype'][$i] == 2 ){
-
-					$proveedor = $Data['cardcode'][$i];
-					
-				}
-				
-			}
-
-			
-
 		}else{
 
 			$respuesta = array(
@@ -699,18 +753,42 @@ class Reports extends REST_Controller {
 			}
 
 			$array = [];
+			$array2 = [];
+			$result = null;
 
-			$result1 = $this->accountstatus->getECC($cliente,$fecha,$Data['currency'],$Data['business']);
-			$result2 = $this->accountstatus->getECP($proveedor,$fecha,$Data['currency'],$Data['business']);
+			for ($i=0; $i < count($Data['cardtype']); $i++) { 
 
 
-			if ( isset($result1[0]) && isset($result2[0]) ){
-				$array = array_merge($result1, $result2);
-			}else if ( isset($result1[0]) ){
-				$array = $result1;
-			}else if(isset($result2[0])) {
-				$array = $result2;
+				$result = null;
+
+				if ( $Data['cardtype'][$i] == 1 ){
+
+					$cliente = $Data['cardcode'][$i];
+
+					$result = $this->accountstatus->getECC($cliente,$fecha,$Data['currency'],$Data['business']);
+					
+
+				}else if ( $Data['cardtype'][$i] == 2 ){
+
+					$proveedor = $Data['cardcode'][$i];
+
+					$result = $this->accountstatus->getECP($proveedor,$fecha,$Data['currency'],$Data['business']);
+					
+				}
+
+				if ( isset($result[0]) ){
+
+					array_push($array2, $result);
+				}
+				
 			}
+
+			if ( isset($array2[0]) && isset($array2[1]) ){
+				$array = array_merge($array2[0], $array2[1]);
+			} else {
+				$array = $result;
+			}
+
 
 			if(isset($array[0])){
 
@@ -733,7 +811,6 @@ class Reports extends REST_Controller {
 			$this->response($respuesta);
 		}
 	}	
-
 
 	// OBTENER ACIENTO CONTABLE POR ID
 	public function getLedger_get(){
@@ -770,6 +847,8 @@ class Reports extends REST_Controller {
 
 				}if(isset($Data['project']) && !empty($Data['project'])){
 					$where = $where. ' and t0.ac1_prj_code in ('.$Data['project'].')';
+				}if( isset($Data['anulados']) && $Data['anulados'] == 0 ){
+					$where = $where. ' and tmac.mac_status != 2';
 				}
 
 				$sqlSelect = "SELECT
@@ -792,11 +871,13 @@ class Reports extends REST_Controller {
 					when coalesce(t0.ac1_font_type,0) = 18 then row_to_json(t0.*)
 					when coalesce(t0.ac1_font_type,0) = 19 then (SELECT row_to_json(gbpe.*) FROM gbpe WHERE t0.ac1_font_key = gbpe.bpe_docentry and t0.ac1_font_type = gbpe.bpe_doctype)
 					when coalesce(t0.ac1_font_type,0) = 20 then (SELECT row_to_json(gbpr.*) FROM gbpr WHERE t0.ac1_font_key = gbpr.bpr_docentry and t0.ac1_font_type = gbpr.bpr_doctype)
+					when coalesce(t0.ac1_font_type,0) = 22 then (SELECT row_to_json(dcrc.*) FROM dcrc WHERE t0.ac1_font_key = dcrc.crc_docentry and t0.ac1_font_type = dcrc.crc_doctype)
 					end extras,
 					COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
 					FROM mac1 t0
 					INNER JOIN dacc t4 on t0.ac1_account = t4.acc_code
 					INNER JOIN dmdt t16 on coalesce(t0.ac1_font_type,0) = t16.mdt_doctype
+					inner join tmac  on t0.ac1_trans_id = tmac.mac_trans_id 
 					WHERE 1=1 ".$where;
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect,array());
@@ -823,17 +904,21 @@ class Reports extends REST_Controller {
 									// VALIDAR SI EL CAMPO ES DE COMENTARIO.
 									if ($prefijo[1] === 'comments') {
 										// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
-										$newObj['mac_comment'] = $obj;;
+										$newObj['mac_comment'] = $obj;
 									}else {
 										//
 										$newObj['mac_'.$prefijo[1]] = $obj;
 									}
+									if ($prefijo[1] === 'docnum') {
+										$newObj['docnumorg'] = $obj;
+									}
+					
 								}
 							}
 							/**
 							 * VALIDACIONES PARA CUANDO EL REGISTRO VIENE DE UN ASIENTO.
 							 */
-							if (!isset($newObj['mac_cardcode'])) {
+							if (!isset($newObj['mac_cardcode']) OR !isset($newObj['mac_cardname'])) {
 								// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
 								$newObj['mac_cardcode'] = $data['ac1_legal_num'];
 								$newObj['mac_cardname'] = $data['ac1_legal_num'];
@@ -868,7 +953,6 @@ class Reports extends REST_Controller {
 
 				 $this->response($respuesta);
 	}
-
 
 	// PARA REPORTE LIBRO DIARIO DE VENTAS
 	public function  logBook_post(){
@@ -1513,7 +1597,6 @@ class Reports extends REST_Controller {
 		 $this->response($respuesta);
 	}
 
-
 	//listado de cuentas debito - credito por
 	//rango de fechas
 	public function AccountBalanceByDateRange_post(){
@@ -1605,9 +1688,151 @@ class Reports extends REST_Controller {
 		 $this->response($respuesta);
 	}
 
+	public function getPurch_get()
+	{
+		$request = $this->get();
 
+		if(!isset($request['cardcode']) && !isset($request['business']) && !isset($request['branch'])){
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'Informacion enviada es invalida'
+			);
 
+			$this->response($respuesta);
+			return;
+		}
 
-	
+		$DECI_MALES =  $this->generic->getDecimals();
+
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+		$sqlSelect = self::getColumn('dcpo', 'cpo', $campos, '', $DECI_MALES, $request['business'], $request['branch'],0,0,0," AND cpo_cardcode = :cpo_cardcode");
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':cpo_cardcode' => $request['cardcode']
+		));
+
+		if(isset($resSelect[0])){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resSelect,
+				'mensaje' => 'OK'
+			);
+		}else{
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'No se encontraron datos en la busqueda'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function generatePdf_post(){
+		$Data = $this->post();
+		$mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','default_font' => 'dejavusans']);
+		//INFORMACION DE LA EMPRESA
+		$sqlEmpresa = "SELECT pge_id, pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc,
+		pge_cou_soc, CONCAT(bti_name,' ',pge_id_soc) AS pge_id_type , pge_web_site, pge_logo,
+		CONCAT(pge_phone1,' ',pge_phone2,' ',pge_cel) AS pge_phone1, pge_branch, pge_mail,
+		pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def,pge_bank_acct, pge_acc_type,pge_id_soc,pge_phone2,pge_page_social,
+		concat(main_folder,'/',pge_logo) AS \"companyLogo\"
+		FROM pgem 
+		inner join tbti on pge_id_type = tbti.bti_id 
+		left join params  on 1=1
+		WHERE pge_id = :pge_id";
+
+		$empresa = $this->pedeo->queryTable($sqlEmpresa, array(':pge_id' => $Data['business']));
+
+		if(!isset($empresa[0])){
+			$respuesta = array(
+				'error' => true,
+		        'data'  => $empresa,
+	       		'mensaje' =>'no esta registrada la información de la empresa'
+			);
+
+	         $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+	        return;
+		}
+
+		$pdfBloques = $this->pedeo->queryTable("SELECT * FROM tpdf where pdf_doctype = :pdf_doctype", array(':pdf_doctype' => $Data['doctype']));
+		
+		if(!isset($pdfBloques[0])){
+			$respuesta = array(
+				'error' => true,
+				'data'  => $pdfBloques,
+				'mensaje' =>'no se encontro la plantilla para este documento'
+			);
+
+			return $respuesta;
+		}
+		$stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
+
+		$sections = self::getSections($pdfBloques);
+		
+		$mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
+		$header = self::makeHtml($sections["top"], $empresa);
+		
+		$footer = self::makeHtml($sections["footer"], $empresa);
+		$detailsql = $this->pedeo->queryTable("SELECT pe1_vlrtotal as total from bpe1 b where pe1_docentry =  :docentry ", array(':docentry' => $Data['docentry']));
+
+		$detail = self::makeDetail($sections["body"],$sections["table-detail"], $detailsql );
+		//print_r($detail);exit;
+		$mpdf->SetHTMLHeader($header);
+		$mpdf->SetHTMLFooter($footer);
+		$html = "<!DOCTYPE html>
+				<html lang='en'>
+				<head>
+					<meta charset='UTF-8'>
+					<meta name='viewport' content='width=device-width, initial-scale=1.0'>
+				</head>
+				<body>
+					".$detail."
+				</body>
+				</html>";
+
+		$mpdf->WriteHTML($html.$footer,\Mpdf\HTMLParserMode::HTML_BODY);
+
+		$filename = 'Doc.pdf';
+		print_r($mpdf->output());exit;
+	}
+
+	private function makeHtml($section, $data){
+		$html = $section;
+		// print_r($data);exit;
+		$dataKeys = array_keys($data[0]);
+		foreach ($data as $key => $info) {
+			foreach ($dataKeys as $key => $value) {
+			
+				$html = str_replace("{".$value."}",$info[$value],$html);
+			}
+		}	
+
+		return $html;
+
+	}
+
+	private function makeDetail($detailTable,$detailContent,$detailData){
+		$html = $detailTable;
+
+		$content = self::makeHtml($detailContent, $detailData);
+
+		$html = str_replace("{detail_body}",$content,$html);
+
+		return $html;
+	}
+
+	private function getSections($sections){
+		$resutl = array();
+		foreach ($sections as $key => $value) {
+			$resutl[$value['pdf_section']] = $value["pdf_template"];
+		}
+
+		return $resutl;
+
+	}
 
 }

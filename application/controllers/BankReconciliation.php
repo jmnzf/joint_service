@@ -1,7 +1,7 @@
 <?php
 // RECONCIALIACION BANCARIA
 defined('BASEPATH') OR exit('No direct script access allowed');
-
+// exit;
 require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
 
@@ -18,13 +18,14 @@ class BankReconciliation extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
+		$this->load->library('account');
 
 	}
 
   //CREAR NUEVA RECONCIALIACION BANCARIA
-	public function createBankReconciliation_post(){
+	public function createBankReconciliation_post() {
 
 			$DECI_MALES =  $this->generic->getDecimals();
       		$Data = $this->post();
@@ -47,15 +48,18 @@ class BankReconciliation extends REST_Controller {
 			$RequiereGasto = 0;
 			$RequiereInteresBancario = 0;
 
+			
+
+
 			// Se globaliza la variable sqlDetalleAsiento
 			$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax, ac1_codret)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, ac1_base_tax, ac1_codret, business, branch)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line, :ac1_base_tax, :ac1_codret)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref,:ac1_line, :ac1_base_tax, :ac1_codret, :business, :branch)";
 
 
 
@@ -74,13 +78,14 @@ class BankReconciliation extends REST_Controller {
 
 
 			$ContenidoDetalle = json_decode($Data['detail'], true);
+			$ConceptosBancarios = json_decode($Data['crb_concepts'],true);
 
 
 			if(!is_array($ContenidoDetalle)){
 					$respuesta = array(
 						'error' => true,
 						'data'  => array(),
-						'mensaje' =>'No se encontro el detalle de la cotización'
+						'mensaje' =>'No se encontro el detalle de la reconciliación'
 					);
 
 					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -101,7 +106,7 @@ class BankReconciliation extends REST_Controller {
 					return;
 			}
 			//
-
+			
 			//VALIDANDO PERIODO CONTABLE
 			$periodo = $this->generic->ValidatePeriod($Data['crb_docdate'], $Data['crb_posting_stardate'],$Data['crb_posting_enddate'],0);
 
@@ -125,7 +130,6 @@ class BankReconciliation extends REST_Controller {
 			$sqlNumeracion = " SELECT pgs_nextnum,pgs_last_num FROM  pgdn WHERE pgs_id = :pgs_id";
 
 			$resNumeracion = $this->pedeo->queryTable($sqlNumeracion, array(':pgs_id' => $Data['crb_series']));
-
 			if(isset($resNumeracion[0])){
 
 					$numeroActual = $resNumeracion[0]['pgs_nextnum'];
@@ -179,7 +183,6 @@ class BankReconciliation extends REST_Controller {
 					return;
 			}
 
-
 			// PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 			// SE BUSCA LA MONEDA LOCAL PARAMETRIZADA
 			$sqlMonedaLoc = "SELECT pgm_symbol FROM pgec WHERE pgm_principal = :pgm_principal";
@@ -204,7 +207,7 @@ class BankReconciliation extends REST_Controller {
 			// SE BUSCA LA MONEDA DE SISTEMA PARAMETRIZADA
 			$sqlMonedaSys = "SELECT pgm_symbol FROM pgec WHERE pgm_system = :pgm_system";
 			$resMonedaSys = $this->pedeo->queryTable($sqlMonedaSys, array(':pgm_system' => 1));
-
+			
 			if(isset($resMonedaSys[0])){
 
 			}else{
@@ -269,8 +272,8 @@ class BankReconciliation extends REST_Controller {
 
 			// FIN DEL PROCEDIMIENTO PARA USAR LA TASA DE LA MONEDA DEL DOCUMENTO
 
-			$sqlInsert = "INSERT INTO dcrb(crb_description, crb_docdate, crb_createby, crb_startdate, crb_enddate, crb_account, crb_gbaccount, crb_ivaccount, crb_cost, crb_tax, crb_posting_stardate, crb_posting_enddate, crb_docnum, crb_currency, crb_series, crb_cardcode, crb_doctype, crb_bankint)
-										VALUES (:crb_description, :crb_docdate, :crb_createby, :crb_startdate, :crb_enddate, :crb_account, :crb_gbaccount, :crb_ivaccount, :crb_cost, :crb_tax, :crb_posting_stardate, :crb_posting_enddate, :crb_docnum, :crb_currency, :crb_series, :crb_cardcode, :crb_doctype, :crb_bankint)";
+			$sqlInsert = "INSERT INTO dcrb(crb_description, crb_docdate, crb_createby, crb_startdate, crb_enddate, crb_account, crb_gbaccount, crb_ivaccount, crb_cost, crb_tax, crb_posting_stardate, crb_posting_enddate, crb_docnum, crb_currency, crb_series, crb_cardcode, crb_doctype, crb_bankint, business, branch)
+						VALUES (:crb_description, :crb_docdate, :crb_createby, :crb_startdate, :crb_enddate, :crb_account, :crb_gbaccount, :crb_ivaccount, :crb_cost, :crb_tax, :crb_posting_stardate, :crb_posting_enddate, :crb_docnum, :crb_currency, :crb_series, :crb_cardcode, :crb_doctype, :crb_bankint, :business, :branch)";
 
 
 			// Se Inicia la transaccion,
@@ -290,10 +293,10 @@ class BankReconciliation extends REST_Controller {
 				':crb_startdate'   => $Data['crb_startdate'],
 				':crb_enddate'     => $Data['crb_enddate'],
 				':crb_account'     => $Data['crb_account'],
-				':crb_gbaccount'   => $Data['crb_gbaccount'],
-				':crb_ivaccount'   => $Data['crb_ivaccount'],
-				':crb_cost'     => $Data['crb_cost'],
-				':crb_tax'     => $Data['crb_tax'],
+				':crb_gbaccount'   => is_numeric($Data['crb_gbaccount']) ? $Data['crb_gbaccount'] : NULL,
+				':crb_ivaccount'   => is_numeric($Data['crb_ivaccount']) ? $Data['crb_ivaccount'] : NULL,
+				':crb_cost'     => is_numeric($Data['crb_cost']) ? $Data['crb_cost'] : NULL,
+				':crb_tax'     => is_numeric($Data['crb_tax']) ? $Data['crb_tax'] : NULL,
 				':crb_posting_stardate'     => $Data['crb_posting_stardate'],
 				':crb_posting_enddate'     => $Data['crb_posting_enddate'],
 				':crb_docnum' => $DocNumVerificado,
@@ -301,9 +304,10 @@ class BankReconciliation extends REST_Controller {
 				':crb_series' => $Data['crb_series'],
 				':crb_cardcode' => $Data['crb_cardcode'],
 				':crb_doctype' => $Data['crb_doctype'],
-				':crb_bankint' => $Data['crb_bankint']
+				':crb_bankint' => is_numeric($Data['crb_bankint'])?$Data['crb_bankint']: 0,
+				':business' => $Data['business'], 
+				':branch' => $Data['branch']
 			));
-
 			if(is_numeric($resInsert) && $resInsert > 0){
 
 				// Se actualiza la serie de la numeracion del documento
@@ -404,12 +408,12 @@ class BankReconciliation extends REST_Controller {
 
 
 
-				if ( $RequiereContabilidad == 1 ){
+				if (isset($ConceptosBancarios[0])){
 					//CABECERA ASIENTO
 					//Se agregan los asientos contables*/*******
 
-					$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, mac_currency,mac_accperiod)
-															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :mac_currency,:mac_accperiod)";
+					$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, mac_currency,mac_accperiod, business, branch)
+															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :mac_currency,:mac_accperiod, :business, :branch)";
 
 
 					$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
@@ -442,7 +446,9 @@ class BankReconciliation extends REST_Controller {
 							':mac_update_date' => date("Y-m-d"),
 							':mac_update_user' => isset($Data['crb_createby'])?$Data['crb_createby']:NULL,
 							':mac_currency' => isset($Data['crb_currency'])?$Data['crb_currency']:NULL,
-							':mac_accperiod' => $periodo['data']
+							':mac_accperiod' => $periodo['data'],
+							':business' => $Data['business'], 
+							':branch' => $Data['branch']
 					));
 
 
@@ -466,40 +472,290 @@ class BankReconciliation extends REST_Controller {
 					}
 
 					// GENERANDO ASIENTOS contables
-
+					
 					//GASTOS
+					$creditoAcum = 0;
+					$debitoAcum = 0;
+					foreach ($ConceptosBancarios as $key => $concepto) {
+						$MontoSysCR = 0;
+						$MontoSysDB = 0;
+						
+						$sqlConcept = "SELECT icm_cord, icm_acctcode FROM micm where icm_id = :icm_id";
+						$resConcept = $this->pedeo->queryTable($sqlConcept, array(":icm_id" => $concepto['id']));
 
+						if(isset($resConcept[0])){
+							$naturaleza = $resConcept[0]['icm_cord'];
+							$costo = $concepto['value'];
+							$costoOriginal = $concepto['value'];
+							$Sn = $Data['crb_cardcode'];				
+							$accountCode = $resConcept[0]['icm_acctcode'];
+							$cordTypeNumber = ($naturaleza == "DEBIT") ? 1 : 2 ;
+
+							if(trim($Data['crb_currency']) != $MONEDALOCAL ){
+								$costo = ($costo * $TasaDocLoc);
+								}
+
+
+							if(trim($Data['crb_currency']) != $MONEDASYS ){
+								$valueCalculated = ($costo / $TasaLocSys);
+								$MontoSysDB = ($naturaleza == "DEBIT") ? $valueCalculated : 0;
+								$MontoSysCR = ($naturaleza == "CREDIT") ? $valueCalculated : 0;
+							}else{
+									$MontoSysDB = ($naturaleza == "DEBIT") ? $costoOriginal : 0;
+									$MontoSysCR = ($naturaleza == "CREDIT") ? $costoOriginal : 0;
+							}
+
+							$BALANCE = $this->account->addBalance($periodo['data'], round($costo, $DECI_MALES), $accountCode, $cordTypeNumber, $Data['crb_posting_stardate'], $Data['business'], $Data['branch']);
+							
+							if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+								$this->pedeo->trans_rollback();
+	
+								$respuesta = array(
+									'error' => true,
+									'data' => $BALANCE,
+									'mensaje' => $BALANCE['mensaje']
+								);
+		
+								return $this->response($respuesta);
+							}
+
+							if($naturaleza == 'CREDIT'){
+								$creditoAcum = $creditoAcum + $costo;
+							}
+
+							if($naturaleza == 'DEBIT'){
+								$debitoAcum = $debitoAcum + $costo;
+							}
+							
+							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+									':ac1_trans_id' => $resInsertAsiento,
+									':ac1_account' => $accountCode,
+									':ac1_debit' =>($naturaleza == "DEBIT") ? round($costo, $DECI_MALES) : 0,
+									':ac1_credit' =>($naturaleza == "CREDIT") ? round($costo, $DECI_MALES) : 0,
+									':ac1_debit_sys' => ($MontoSysDB > 0)? round($MontoSysDB, $DECI_MALES) : 0,
+									':ac1_credit_sys' => ($MontoSysCR > 0)? round($MontoSysCR, $DECI_MALES): 0,
+									':ac1_currex' => 0,
+									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
+									':ac1_debit_import' => 0,
+									':ac1_credit_import' => 0,
+									':ac1_debit_importsys' => 0,
+									':ac1_credit_importsys' => 0,
+									':ac1_font_key' => $resInsert,
+									':ac1_font_line' => 1,
+									':ac1_font_type' => is_numeric($Data['crb_doctype'])?$Data['crb_doctype']:0,
+									':ac1_accountvs' => 1,
+									':ac1_doctype' => 18,
+									':ac1_ref1' => "",
+									':ac1_ref2' => "",
+									':ac1_ref3' => "",
+									':ac1_prc_code' => NULL,
+									':ac1_uncode' => NULL,
+									':ac1_prj_code' => NULL,
+									':ac1_rescon_date' => NULL,
+									':ac1_recon_total' => 0,
+									':ac1_made_user' => isset($Data['crb_createby'])?$Data['crb_createby']:NULL,
+									':ac1_accperiod' => $periodo['data'],
+									':ac1_close' => 0,
+									':ac1_cord' => 0,
+									':ac1_ven_debit' => 0,
+									':ac1_ven_credit' => 0,
+									':ac1_fiscal_acct' => 0,
+									':ac1_taxid' => 0,
+									':ac1_isrti' => 0,
+									':ac1_basert' => 0,
+									':ac1_mmcode' => 0,
+									':ac1_legal_num' => $Sn,
+									':ac1_codref' => 1,
+									':ac1_line' => 0,
+									':ac1_base_tax' => 0,
+									':ac1_codret' => 0,
+									':business' => $Data['business'], 
+									':branch' => $Data['branch']
+						));
+
+						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+							// Se verifica que el detalle no de error insertando //
+						}else{
+
+								// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resDetalleAsiento,
+										'mensaje'	=> 'No se pudo registrar la conciliación de bancos'
+									);
+
+									$this->response($respuesta);
+
+									return;
+						}
+
+						}
+					}
+				}
+
+					// // CUENTA DE BANCO
 					$MontoSysCR = 0;
 					$MontoSysDB = 0;
-					if ( $RequiereGasto == 1 ) {
-							$granTotalGasto = $Data['crb_cost'];
-							$granTotalGastoOriginal = $Data['crb_cost'];
-							$Sn = $Data['crb_cardcode'];
-							$Cuenta = $Data['crb_gbaccount'];
+					if ( true){
 
+							$monto = $debitoAcum;
+							$montoOriginal = $monto;
+							$Cuenta = $Data['crb_account'];
 
 
 							if(trim($Data['crb_currency']) != $MONEDALOCAL ){
-									$granTotalGasto = ($granTotalGasto * $TasaDocLoc);
+									$monto = ($monto * $TasaDocLoc);
 							}
 
 
 							if(trim($Data['crb_currency']) != $MONEDASYS ){
 
-									$MontoSysDB = ($granTotalGasto / $TasaLocSys);
+									$MontoSysCR = ($monto / $TasaLocSys);
 
 							}else{
-									$MontoSysDB = $granTotalGastoaOriginal;
+									$MontoSysCR = $montoOriginal;
 							}
 
+							// SE AGREGA AL BALANCE
 
-							$RequiereGasto = 1;
+							$BALANCE = $this->account->addBalance($periodo['data'], round($monto, $DECI_MALES), $Cuenta, 2, $Data['crb_posting_stardate'], $Data['business'], $Data['branch']);
+							if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+								$this->pedeo->trans_rollback();
+	
+								$respuesta = array(
+									'error' => true,
+									'data' => $BALANCE,
+									'mensaje' => $BALANCE['mensaje']
+								);
+		
+								return $this->response($respuesta);
+							}	
+							//
 
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
 									':ac1_account' => $Cuenta,
-									':ac1_debit' => round($granTotalGasto, $DECI_MALES),
+									':ac1_debit' => 0,
+									':ac1_credit' => round($monto, $DECI_MALES),
+									':ac1_debit_sys' => 0,
+									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
+									':ac1_currex' => 0,
+									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
+									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
+									':ac1_debit_import' => 0,
+									':ac1_credit_import' => 0,
+									':ac1_debit_importsys' => 0,
+									':ac1_credit_importsys' => 0,
+									':ac1_font_key' => $resInsert,
+									':ac1_font_line' => 1,
+									':ac1_font_type' => is_numeric($Data['crb_doctype'])?$Data['crb_doctype']:0,
+									':ac1_accountvs' => 1,
+									':ac1_doctype' => 18,
+									':ac1_ref1' => "",
+									':ac1_ref2' => "",
+									':ac1_ref3' => "",
+									':ac1_prc_code' => NULL,
+									':ac1_uncode' => NULL,
+									':ac1_prj_code' => NULL,
+									':ac1_rescon_date' => NULL,
+									':ac1_recon_total' => 0,
+									':ac1_made_user' => isset($Data['crb_createby'])?$Data['crb_createby']:NULL,
+									':ac1_accperiod' => $periodo['data'],
+									':ac1_close' => 0,
+									':ac1_cord' => 0,
+									':ac1_ven_debit' => 0,
+									':ac1_ven_credit' => 0,
+									':ac1_fiscal_acct' => 0,
+									':ac1_taxid' => 0,
+									':ac1_isrti' => 0,
+									':ac1_basert' => 0,
+									':ac1_mmcode' => 0,
+									':ac1_legal_num' => $Sn,
+									':ac1_codref' => 1,
+									':ac1_line' => 0,
+									':ac1_base_tax' => 0,
+									':ac1_codret' => 0,
+									':business' => $Data['business'], 
+									':branch' => $Data['branch']
+						));
+
+
+
+						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
+								// Se verifica que el detalle no de error insertando //
+						}else{
+
+								// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
+								// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data'	  => $resDetalleAsiento,
+										'mensaje'	=> 'No se pudo registrar la conciliación de bancos'
+									);
+
+									 $this->response($respuesta);
+
+									 return;
+						}
+					}
+
+					// //FIN  CUENTA DE BANCO
+
+					// CUENTA DE BANCO CONTRAPARTIDA DE BANCOS el lado del debito
+					$MontoSysCR = 0;
+					$MontoSysDB = 0;
+					if ( $creditoAcum > 0 ){
+
+							$monto = $creditoAcum;
+							$montoOriginal = $monto;
+							$Cuenta = $Data['crb_account'];
+
+
+							if(trim($Data['crb_currency']) != $MONEDALOCAL ){
+									$monto = ($monto * $TasaDocLoc);
+							}
+
+
+							if(trim($Data['crb_currency']) != $MONEDASYS ){
+
+									$MontoSysDB = ($monto / $TasaLocSys);
+
+							}else{
+									$MontoSysDB = $montoOriginal;
+							}
+
+							// SE AGREGA AL BALANCE
+
+							$BALANCE = $this->account->addBalance($periodo['data'], round($monto, $DECI_MALES), $Cuenta, 1, $Data['crb_posting_stardate'], $Data['business'], $Data['branch']);
+							if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+								$this->pedeo->trans_rollback();
+	
+								$respuesta = array(
+									'error' => true,
+									'data' => $BALANCE,
+									'mensaje' => $BALANCE['mensaje']
+								);
+		
+								return $this->response($respuesta);
+							}	
+							//
+
+							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+									':ac1_trans_id' => $resInsertAsiento,
+									':ac1_account' => $Cuenta,
+									':ac1_debit' =>  round($monto, $DECI_MALES),
 									':ac1_credit' => 0,
 									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
 									':ac1_credit_sys' => 0,
@@ -538,390 +794,9 @@ class BankReconciliation extends REST_Controller {
 									':ac1_codref' => 1,
 									':ac1_line' => 0,
 									':ac1_base_tax' => 0,
-									':ac1_codret' => 0
-						));
-
-
-
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-
-								// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la conciliación de bancos'
-									);
-
-									 $this->response($respuesta);
-
-									 return;
-						}
-					}
-
-					//FIN Procedimiento para llenar GASTOS
-
-					//IMPUESTOS
-
-					$MontoSysCR = 0;
-					$MontoSysDB = 0;
-					if ( $RequiereImpuesto == 1 ) {
-							$granTotalImpuesto = $Data['crb_tax'];
-							$granTotalImpuestoOriginal = $Data['crb_tax'];
-							$Sn = $Data['crb_cardcode'];
-							$Cuenta = $Data['crb_ivaccount'];
-
-
-							if(trim($Data['crb_currency']) != $MONEDALOCAL ){
-									$granTotalImpuesto = ($granTotalImpuesto * $TasaDocLoc);
-							}
-
-
-							if(trim($Data['crb_currency']) != $MONEDASYS ){
-
-									$MontoSysDB = ($granTotalImpuesto / $TasaLocSys);
-
-							}else{
-									$MontoSysDB = $granTotalImpuestoOriginal;
-							}
-
-							$RequiereImpuesto = 1;
-
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $Cuenta,
-									':ac1_debit' => round($granTotalImpuesto, $DECI_MALES),
-									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
-									':ac1_credit_sys' => 0,
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['crb_doctype'])?$Data['crb_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => NULL,
-									':ac1_uncode' => NULL,
-									':ac1_prj_code' => NULL,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['crb_createby'])?$Data['crb_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 0,
-									':ac1_ven_credit' => 0,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 0,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => $Sn,
-									':ac1_codref' => 1,
-									':ac1_line' => 0,
-									':ac1_base_tax' => 0,
-									':ac1_codret' => 0
-						));
-
-
-
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-
-								// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la conciliación de bancos'
-									);
-
-									 $this->response($respuesta);
-
-									 return;
-						}
-					}
-
-					//FIN Procedimiento para llenar IMPUESTOS
-
-
-					//INTERESES BANCARIOS
-
-					$MontoSysCR = 0;
-					$MontoSysDB = 0;
-					if ( $RequiereInteresBancario == 1 ) {
-							$granTotalInteres = $Data['crb_bankint'];
-							$granTotalInteresOriginal = $Data['crb_bankint'];
-							$Sn = $Data['crb_cardcode'];
-							$Cuenta = $Data['crb_inbccount'];
-
-
-							if(trim($Data['crb_currency']) != $MONEDALOCAL ){
-									$granTotalInteres = ($granTotalInteres * $TasaDocLoc);
-							}
-
-
-							if(trim($Data['crb_currency']) != $MONEDASYS ){
-
-									$MontoSysCR = ($granTotalInteres / $TasaLocSys);
-
-							}else{
-									$MontoSysCR = $granTotalInteresOriginal;
-							}
-
-							$RequiereImpuesto = 1;
-
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $Cuenta,
-									':ac1_debit' => 0,
-									':ac1_credit' => round($granTotalInteres, $DECI_MALES),
-									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' =>  round($MontoSysCR, $DECI_MALES),
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['crb_doctype'])?$Data['crb_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => NULL,
-									':ac1_uncode' => NULL,
-									':ac1_prj_code' => NULL,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['crb_createby'])?$Data['crb_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 0,
-									':ac1_ven_credit' => 0,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 0,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => $Sn,
-									':ac1_codref' => 1,
-									':ac1_line' => 0,
-									':ac1_base_tax' => 0,
-									':ac1_codret' => 0
-						));
-
-
-
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-
-								// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la conciliación de bancos'
-									);
-
-									 $this->response($respuesta);
-
-									 return;
-						}
-					}
-
-					//FIN PROCEDIMIENTO  PARA LLENAR INTERESES BANCARIOS
-
-					// CUENTA DE BANCO
-					$MontoSysCR = 0;
-					$MontoSysDB = 0;
-					if ( $RequiereGasto == 1 || $RequiereImpuesto == 1 ){
-
-							$monto = ( $Data['crb_cost'] + $Data['crb_tax'] );
-							$montoOriginal = $monto;
-							$Cuenta = $Data['crb_account'];
-
-
-							if(trim($Data['crb_currency']) != $MONEDALOCAL ){
-									$monto = ($monto * $TasaDocLoc);
-							}
-
-
-							if(trim($Data['crb_currency']) != $MONEDASYS ){
-
-									$MontoSysCR = ($monto / $TasaLocSys);
-
-							}else{
-									$MontoSysCR = $montoOriginal;
-							}
-
-
-
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $Cuenta,
-									':ac1_debit' => 0,
-									':ac1_credit' => round($monto, $DECI_MALES),
-									':ac1_debit_sys' => 0,
-									':ac1_credit_sys' => round($MontoSysCR, $DECI_MALES),
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['crb_doctype'])?$Data['crb_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => NULL,
-									':ac1_uncode' => NULL,
-									':ac1_prj_code' => NULL,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['crb_createby'])?$Data['crb_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 0,
-									':ac1_ven_credit' => 0,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 0,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => $Sn,
-									':ac1_codref' => 1,
-									':ac1_line' => 0,
-									':ac1_base_tax' => 0,
-									':ac1_codret' => 0
-						));
-
-
-
-						if(is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0){
-								// Se verifica que el detalle no de error insertando //
-						}else{
-
-								// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
-								// se retorna el error y se detiene la ejecucion del codigo restante.
-									$this->pedeo->trans_rollback();
-
-									$respuesta = array(
-										'error'   => true,
-										'data'	  => $resDetalleAsiento,
-										'mensaje'	=> 'No se pudo registrar la conciliación de bancos'
-									);
-
-									 $this->response($respuesta);
-
-									 return;
-						}
-					}
-
-					//FIN  CUENTA DE BANCO
-
-					// CUENTA DE BANCO CONTRAPARTIDA DE INTERESES BANCARIOS
-					$MontoSysCR = 0;
-					$MontoSysDB = 0;
-					if ( $RequiereInteresBancario == 1 ){
-
-							$monto = $Data['crb_bankint'];
-							$montoOriginal = $monto;
-							$Cuenta = $Data['crb_account'];
-
-
-							if(trim($Data['crb_currency']) != $MONEDALOCAL ){
-									$monto = ($monto * $TasaDocLoc);
-							}
-
-
-							if(trim($Data['crb_currency']) != $MONEDASYS ){
-
-									$MontoSysDB = ($monto / $TasaLocSys);
-
-							}else{
-									$MontoSysDB = $montoOriginal;
-							}
-
-
-
-							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
-
-									':ac1_trans_id' => $resInsertAsiento,
-									':ac1_account' => $Cuenta,
-									':ac1_debit' =>  round($monto, $DECI_MALES),
-									':ac1_credit' => 0,
-									':ac1_debit_sys' => round($MontoSysDB, $DECI_MALES),
-									':ac1_credit_sys' => 0,
-									':ac1_currex' => 0,
-									':ac1_doc_date' => $this->validateDate($Data['crb_posting_stardate'])?$Data['crb_posting_stardate']:NULL,
-									':ac1_doc_duedate' => $this->validateDate($Data['crb_posting_enddate'])?$Data['crb_posting_enddate']:NULL,
-									':ac1_debit_import' => 0,
-									':ac1_credit_import' => 0,
-									':ac1_debit_importsys' => 0,
-									':ac1_credit_importsys' => 0,
-									':ac1_font_key' => $resInsert,
-									':ac1_font_line' => 1,
-									':ac1_font_type' => is_numeric($Data['crb_doctype'])?$Data['crb_doctype']:0,
-									':ac1_accountvs' => 1,
-									':ac1_doctype' => 18,
-									':ac1_ref1' => "",
-									':ac1_ref2' => "",
-									':ac1_ref3' => "",
-									':ac1_prc_code' => NULL,
-									':ac1_uncode' => NULL,
-									':ac1_prj_code' => NULL,
-									':ac1_rescon_date' => NULL,
-									':ac1_recon_total' => 0,
-									':ac1_made_user' => isset($Data['crb_createby'])?$Data['crb_createby']:NULL,
-									':ac1_accperiod' => 1,
-									':ac1_close' => 0,
-									':ac1_cord' => 0,
-									':ac1_ven_debit' => 0,
-									':ac1_ven_credit' => 0,
-									':ac1_fiscal_acct' => 0,
-									':ac1_taxid' => 0,
-									':ac1_isrti' => 0,
-									':ac1_basert' => 0,
-									':ac1_mmcode' => 0,
-									':ac1_legal_num' => $Sn,
-									':ac1_codref' => 1,
-									':ac1_line' => 0,
-									':ac1_base_tax' => 0,
-									':ac1_codret' => 0
+									':ac1_codret' => 0,
+									':business' => $Data['business'], 
+									':branch' => $Data['branch']
 						));
 
 
@@ -1026,7 +901,7 @@ class BankReconciliation extends REST_Controller {
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
 									':ac1_made_user' => isset($Data['crb_createby'])?$Data['crb_createby']:NULL,
-									':ac1_accperiod' => 1,
+									':ac1_accperiod' => $periodo['data'],
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
 									':ac1_ven_debit' => 0,
@@ -1040,7 +915,9 @@ class BankReconciliation extends REST_Controller {
 									':ac1_codref' => 1,
 									':ac1_line' => 0,
 									':ac1_base_tax' => 0,
-									':ac1_codret' => 0
+									':ac1_codret' => 0,
+									':business' => $Data['business'], 
+									':branch' => $Data['branch']
 						));
 
 
@@ -1098,6 +975,27 @@ class BankReconciliation extends REST_Controller {
 							$lcredito = 0;
 						}
 
+						// SE AGREGA AL BALANCE
+						if ( $ldebito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($ldebito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 1, $Data['crb_posting_stardate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($lcredito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 2, $Data['crb_posting_stardate'], $Data['business'], $Data['branch']);
+						}
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
+
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 									':ac1_trans_id' => $resInsertAsiento,
@@ -1127,7 +1025,7 @@ class BankReconciliation extends REST_Controller {
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
 									':ac1_made_user' => isset($Data['crb_createby'])?$Data['crb_createby']:NULL,
-									':ac1_accperiod' => 1,
+									':ac1_accperiod' => $periodo['data'],
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
 									':ac1_ven_debit' => 0,
@@ -1141,7 +1039,9 @@ class BankReconciliation extends REST_Controller {
 									':ac1_codref' => 1,
 									':ac1_line' => 0,
 									':ac1_base_tax' => 0,
-									':ac1_codret' => 0
+									':ac1_codret' => 0,
+									':business' => $Data['business'], 
+									':branch' => $Data['branch']
 						));
 
 
@@ -1172,30 +1072,35 @@ class BankReconciliation extends REST_Controller {
 
 
 					//SE VALIDA LA CONTABILIDAD CREADA
+					
 					$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
-
 
 					if( isset($validateCont['error']) && $validateCont['error'] == false ){
 
 					}else{
 
+						$ressqlmac1 = [];
+						$sqlmac1 = "SELECT acc_name, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys FROM  mac1 inner join dacc on ac1_account = acc_code WHERE ac1_trans_id = :ac1_trans_id";
+						$ressqlmac1['contabilidad'] = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+
 						$this->pedeo->trans_rollback();
 
 						$respuesta = array(
 							'error'   => true,
-							'data' 	 => $validateCont['data'],
-							'mensaje' => $validateCont['mensaje']
+							'data' 	  => $ressqlmac1,
+							'mensaje' => $validateCont['mensaje'],
+							
 						);
 
 						$this->response($respuesta);
 
 						return;
 					}
-				}
+				// }
 
 			  //
-				$sqlInsertDetail2 = "INSERT INTO crb2 (rb2_date, rb2_ref, rb2_amuont, rb2_expense, rb2_tax, rb2_bankinterest, rb2_docentry, rb2_linestatus) 
-				values (:rb2_date, :rb2_ref, :rb2_amuont, :rb2_expense, :rb2_tax, :rb2_bankinterest, :rb2_docentry, :rb2_linestatus)";
+				$sqlInsertDetail2 = "INSERT INTO crb2 (rb2_date, rb2_ref, rb2_amuont, rb2_expense, rb2_tax, rb2_bankinterest, rb2_docentry, rb2_linestatus, rb2_concept) 
+				values (:rb2_date, :rb2_ref, :rb2_amuont, :rb2_expense, :rb2_tax, :rb2_bankinterest, :rb2_docentry, :rb2_linestatus, :rb2_concept)";
 
 				$detail2 = json_decode($Data['detail2'], true);
 				
@@ -1208,6 +1113,7 @@ class BankReconciliation extends REST_Controller {
 						":rb2_tax" => $value['rb2_tax'],
 						":rb2_bankinterest" => $value['rb2_bankinterest'],
 						":rb2_linestatus" => $value['rb2_linestatus'],
+						":rb2_concept" => $value['rb2_concept'],
 						":rb2_docentry" => $resInsert
 					));
 
@@ -1243,7 +1149,7 @@ class BankReconciliation extends REST_Controller {
 				$respuesta = array(
 					'error'   => true,
 					'data'    => $resInsert,
-					'mensaje'	=> 'No se pudo crear la conciliación de bancos'
+					'mensaje'	=> 'No se pudo crear la reconciliación de bancos'
 				);
 
 				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -1284,35 +1190,32 @@ class BankReconciliation extends REST_Controller {
 		 $this->response($respuesta);
 	}
 
+	// Obtener Cuentas de Banco
+	public function getBankAccounts_get(){
 
+			$sqlSelect = "SELECT * FROM dacc WHERE acc_cash = 1 AND acc_digit = 10 AND cast(acc_code AS VARCHAR)  LIKE '1101021%' ORDER BY acc_code ASC";
 
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-  // Obtener Cuentas de Banco
-  public function getBankAccounts_get(){
+			if(isset($resSelect[0])){
 
-        $sqlSelect = "SELECT * FROM dacc WHERE acc_cash = 1 AND acc_digit = 10 AND cast(acc_code AS VARCHAR)  LIKE '1101021%' ORDER BY acc_code ASC";
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => '');
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+			}else{
 
-        if(isset($resSelect[0])){
+				$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+				);
 
-          $respuesta = array(
-            'error' => false,
-            'data'  => $resSelect,
-            'mensaje' => '');
+			}
 
-        }else{
-
-            $respuesta = array(
-              'error'   => true,
-              'data' => array(),
-              'mensaje'	=> 'busqueda sin resultados'
-            );
-
-        }
-
-         $this->response($respuesta);
-  }
+			$this->response($respuesta);
+	}
 
 	// OBTENER MOVIMIENTO DE CUENTAS POR RANGO DE FECHAS
 	public function getAccountRange_get(){
@@ -1347,13 +1250,13 @@ class BankReconciliation extends REST_Controller {
 											ON tmac.mac_base_type = gbpr.bpr_doctype AND tmac.mac_base_entry = gbpr.bpr_docentry
 											INNER JOIN mac1
 											ON mac1.ac1_trans_id = tmac.mac_trans_id
-											WHERE ac1_account = :ac1_account AND ac1_doc_date BETWEEN  :startdate AND :enddate
+											WHERE ac1_account = :ac1_account AND bpr_datetransfer BETWEEN  :startdate AND :enddate
 											and ac1_line_num not in (select distinct rb1_linenumcod from  crb1 where rb1_linenumcod {comp} 0)
 											UNION ALL
 											SELECT mac1.ac1_trans_id as id,
 											gbpe.bpe_datetransfer as fecha,
 											mac1.ac1_debit as debit,
-											mac1.ac1_credit as credit,
+											mac1.ac1_credit * -1 as credit,
 											tmac.mac_base_type as basetype,
 											tmac.mac_base_entry as baseentry,
 											gbpe.bpe_reftransfer as ref,
@@ -1363,12 +1266,11 @@ class BankReconciliation extends REST_Controller {
 											ON tmac.mac_base_type = gbpe.bpe_doctype AND tmac.mac_base_entry = gbpe.bpe_docentry
 											INNER JOIN mac1
 											ON mac1.ac1_trans_id = tmac.mac_trans_id
-											WHERE ac1_account = :ac1_account AND ac1_doc_date BETWEEN  :startdate AND :enddate
+											WHERE ac1_account = :ac1_account AND bpe_datetransfer BETWEEN  :startdate AND :enddate
 											and ac1_line_num not in (select distinct rb1_linenumcod from  crb1 where rb1_linenumcod {comp} 0)";
 
 				// $sqlSelect = "SELECT * FROM mac1 WHERE ac1_account = :ac1_account AND ac1_doc_date BETWEEN :startdate AND :enddate ";
 				$sqlSelect = str_replace("{comp}",$opeComp, $sqlSelect);
-				
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 					':ac1_account' => $Data['account'],
 					':startdate'   => $Data['startdate'],
@@ -1392,16 +1294,16 @@ class BankReconciliation extends REST_Controller {
 
 				}
 
-				 $this->response($respuesta);
+					$this->response($respuesta);
 	}
 
 
 	public function getExpenseCostAcct_get(){
 
 		$sqlSelect = "SELECT *
-									FROM dacc
-									WHERE acc_cash = 1
-									ORDER BY acc_code ASC";
+				FROM dacc
+				WHERE acc_enabled = 1
+				ORDER BY acc_code ASC";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1564,6 +1466,180 @@ class BankReconciliation extends REST_Controller {
 			}
 	}
 
+	public function updateBankReconciliation_post()
+	{
 
+			$Data = $this->post();
+
+			$sqlUpdate = "UPDATE dcrb SET crb_description = :crb_description,
+				crb_docdate = :crb_docdate ,
+				crb_createby = :crb_createby ,
+				crb_startdate = :crb_startdate ,
+				crb_enddate = :crb_enddate ,
+				crb_account = :crb_account ,
+				crb_gbaccount = :crb_gbaccount ,
+				crb_ivaccount = :crb_ivaccount ,
+				crb_cost = :crb_cost ,
+				crb_tax = :crb_tax ,
+				crb_posting_stardate = :crb_posting_stardate ,
+				crb_posting_enddate = :crb_posting_enddate ,
+				crb_currency = :crb_currency ,
+				crb_series = :crb_series ,
+				crb_cardcode = :crb_cardcode ,
+				crb_doctype = :crb_doctype ,
+				crb_bankint = :crb_bankint
+				where crb_id = :crb_id";
+
+				$ContenidoDetalle = json_decode($Data['detail'], true);
+
+
+				if (!is_array($ContenidoDetalle)) {
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' => 'No se encontro el detalle de la conciliacion bancaria'
+					);
+
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+				}
+
+				if (!is_array($ContenidoDetalle)) {
+					$respuesta = array(
+						'error' => true,
+						'data'  => array(),
+						'mensaje' => 'No se encontro el detalle de la conciliacion bancaria'
+					);
+		
+					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+		
+					return;
+				}
+
+			$this->pedeo->trans_begin();
+
+
+			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+				':crb_description' => $Data['crb_description'],
+				':crb_docdate'		 => $Data['crb_docdate'],
+				':crb_createby' 	 => $Data['crb_createby'],
+				':crb_startdate'   => $Data['crb_startdate'],
+				':crb_enddate'     => $Data['crb_enddate'],
+				':crb_account'     => $Data['crb_account'],
+				':crb_gbaccount'   => is_numeric($Data['crb_gbaccount']) ? $Data['crb_gbaccount'] : NULL,
+				':crb_ivaccount'   => is_numeric($Data['crb_ivaccount']) ? $Data['crb_ivaccount'] : NULL,
+				':crb_cost'     => is_numeric($Data['crb_cost']) ? $Data['crb_cost'] : NULL,
+				':crb_tax'     => is_numeric($Data['crb_tax']) ? $Data['crb_tax'] : NULL,
+				':crb_posting_stardate'     => $Data['crb_posting_stardate'],
+				':crb_posting_enddate'     => $Data['crb_posting_enddate'],
+				':crb_currency' => $Data['crb_currency'],
+				':crb_series' => $Data['crb_series'],
+				':crb_cardcode' => $Data['crb_cardcode'],
+				':crb_doctype' => $Data['crb_doctype'],
+				':crb_id' => $Data['crb_id'],
+				':crb_bankint' => is_numeric($Data['crb_bankint'])?$Data['crb_bankint']: 0
+			));
+			if (is_numeric($resUpdate) && $resUpdate == 1) {
+				$this->pedeo->queryTable("DELETE FROM crb1 WHERE rb1_crbid = :rb1_crbid", array(':rb1_crbid' => $Data['crb_id']));
+
+				foreach ($ContenidoDetalle as $key => $detail) {
+					$sqlInsertDetail = "INSERT INTO crb1(rb1_crbid, rb1_date, rb1_ref, rb1_debit, rb1_credit, rb1_gastob, rb1_imp, rb1_linenumcod, rb1_accounted)
+														  VALUES (:rb1_crbid, :rb1_date, :rb1_ref, :rb1_debit, :rb1_credit, :rb1_gastob, :rb1_imp, :rb1_linenumcod, :rb1_accounted)";
+
+
+					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
+
+						':rb1_crbid'      => $Data['crb_id'],
+						':rb1_date'       => $detail['rb1_date'],
+						':rb1_ref'        => $detail['rb1_ref'],
+						':rb1_debit'      => $detail['rb1_debit'],
+						':rb1_credit'     => $detail['rb1_credit'],
+						':rb1_gastob'     => $detail['rb1_gastob'],
+						':rb1_imp'        => $detail['rb1_imp'],
+						':rb1_linenumcod' => $detail['rb1_linenumcod'],
+						':rb1_accounted'  => $detail['rb1_accounted']
+					));
+
+
+					if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+						// Se verifica que el detalle no de error insertando //
+					}else{
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => $resInsertDetail,
+							'mensaje'	=> 'No se pudo actualizar la conciliación bancaria'
+						);
+
+						 $this->response($respuesta);
+
+						 return;
+					}
+				}
+
+				$this->pedeo->queryTable("DELETE FROM crb2 WHERE rb2_docentry=:rb2_docentry", array(':rb2_docentry' => $Data['crb_id']));
+ 
+				$sqlInsertDetail2 = "INSERT INTO crb2 (rb2_date, rb2_ref, rb2_amuont, rb2_expense, rb2_tax, rb2_bankinterest, rb2_docentry, rb2_linestatus, rb2_concept) 
+				values (:rb2_date, :rb2_ref, :rb2_amuont, :rb2_expense, :rb2_tax, :rb2_bankinterest, :rb2_docentry, :rb2_linestatus, :rb2_concept)";
+
+				$detail2 = json_decode($Data['detail2'], true);
+				
+				foreach ($detail2 as $key => $value) {
+					$resInsert2 = $this->pedeo->insertRow($sqlInsertDetail2, array(
+						":rb2_date" => $value['rb2_date'],
+						":rb2_ref" => $value['rb2_ref'],
+						":rb2_amuont" => $value['rb2_amount'],
+						":rb2_expense" => $value['rb2_expense'],
+						":rb2_tax" => $value['rb2_tax'],
+						":rb2_bankinterest" => $value['rb2_bankinterest'],
+						":rb2_linestatus" => $value['rb2_linestatus'],
+						":rb2_concept" => $value['rb2_concept'],
+						":rb2_docentry" => $Data['crb_id']
+					));
+
+					if(is_numeric($resInsert2) && $resInsert2 > 0  ){
+						
+					}else{
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data'    => $resInsert2,
+							'mensaje'	=> 'No se pudo crear la conciliación bancaria'
+						);
+
+						$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+						return;
+					}
+				}
+
+
+				$this->pedeo->trans_commit();
+
+				$respuesta = array(
+					'error' => false,
+					'data' => $resUpdate,
+					'mensaje' =>'Conciliación registrada con exito'
+				);
+
+			}else{
+				$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error'   => true,
+				'data'    => $resUpdate,
+				'mensaje'	=> 'No se pudo actualizar la conciliacion bancaria'
+			);
+
+			$this->response($respuesta);
+
+			return;
+			}
+
+			$this->response($respuesta);
+	}
 
 }

@@ -70,8 +70,7 @@
 			// OBTENER DATOS REQUEST.
 			$request = $this->post();
 
-			if( !isset($request['rol_nombre']) OR
-			    !isset($request['rol_controller'])){
+			if( !isset($request['rol_nombre']) ){
 
 				$this->response(array(
 					'error'  => true,
@@ -91,7 +90,7 @@
 			$insertId = $this->pedeo->insertRow("INSERT INTO rol (rol_nombre, rol_controller, rol_id_estado) VALUES (:rol_nombre, :rol_controller, :rol_id_estado)",
 				array(
 					':rol_nombre'   => $request['rol_nombre'],
-					':rol_controller'    => $request['rol_controller'],
+					':rol_controller'    => "Home",
 					':rol_id_estado'  => 1
 				)
 			);

@@ -170,9 +170,9 @@ class StockTransfer extends REST_Controller
 		$sqlInsert = "INSERT INTO dist(ist_series, ist_docnum, ist_docdate, ist_duedate, ist_duedev, ist_pricelist, ist_cardcode,
 							ist_cardname, ist_currency, ist_contacid, ist_slpcode, ist_empid, ist_comment, ist_doctotal, ist_baseamnt, ist_taxtotal,
 							ist_discprofit, ist_discount, ist_createat, ist_baseentry, ist_basetype, ist_doctype, ist_idadd, ist_adress, ist_paytype,
-							ist_createby, business, branch)VALUES(:ist_series, :ist_docnum, :ist_docdate, :ist_duedate, :ist_duedev, :ist_pricelist, :ist_cardcode, :ist_cardname,
+							ist_createby, business, branch, ist_user_m, ist_activity_type)VALUES(:ist_series, :ist_docnum, :ist_docdate, :ist_duedate, :ist_duedev, :ist_pricelist, :ist_cardcode, :ist_cardname,
 							:ist_currency, :ist_contacid, :ist_slpcode, :ist_empid, :ist_comment, :ist_doctotal, :ist_baseamnt, :ist_taxtotal, :ist_discprofit, :ist_discount,
-							:ist_createat, :ist_baseentry, :ist_basetype, :ist_doctype, :ist_idadd, :ist_adress, :ist_paytype,:ist_createby, :business, :branch)";
+							:ist_createat, :ist_baseentry, :ist_basetype, :ist_doctype, :ist_idadd, :ist_adress, :ist_paytype,:ist_createby, :business, :branch, :ist_user_m ,:ist_activity_type )";
 
 		// SE INICIA TRANSACCION
 
@@ -206,7 +206,9 @@ class StockTransfer extends REST_Controller
 			':ist_paytype' => is_numeric($Data['ist_paytype']) ? $Data['ist_paytype'] : 0,
 			':ist_createby' => isset($Data['ist_createby']) ? $Data['ist_createby'] : NULL,
 			':business' => $Data['business'],
-			':branch' => $Data['branch']
+			':branch' => $Data['branch'],
+			':ist_user_m' => isset($Data['ist_user_m']) ?  $Data['ist_user_m']: NULL,
+			':ist_activity_type' => isset($Data['ist_activity_type']) ?  $Data['ist_activity_type']: NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -277,12 +279,32 @@ class StockTransfer extends REST_Controller
 			// SI EL DOCTYPE = 21
 			if ($Data['ist_basetype'] == 21) {
 
+
+				// SE VALIDA SI HAY ANEXOS EN EL DOCUMENTO APROBADO 
+				// SE CAMBIEN AL DOCUMENTO EN CREACION
+				$anexo = $this->aprobacion->CambiarAnexos($Data,'ist',$DocNumVerificado);
+	
+				if ( isset($anexo['error']) && $anexo['error'] == false ) {
+				}else{
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $anexo,
+						'mensaje'	=> 'No se pudo registrar el documento:'. $anexo['mensaje']
+					);
+
+
+					return $this->response($respuesta);
+
+				}
+				// FIN VALIDACION
+
 				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 															VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
 					':bed_docentry' => $Data['ist_baseentry'],
 					':bed_doctype' => $Data['ist_basetype'],
 					':bed_status' => 3, //ESTADO CERRADO
@@ -320,11 +342,11 @@ class StockTransfer extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO ist1(st1_docentry, st1_itemcode, st1_itemname, st1_quantity, st1_uom, st1_whscode,
 													st1_price, st1_vat, st1_vatsum, st1_discount, st1_linetotal, st1_costcode, st1_ubusiness, st1_project,
 													st1_acctcode, st1_basetype, st1_doctype, st1_avprice, st1_inventory, st1_acciva, st1_whscode_dest,ote_code,
-													st1_linenum,st1_ubication2,st1_ubication)
+													st1_linenum,st1_ubication2,st1_ubication, st1_serials)
 													VALUES(:st1_docentry, :st1_itemcode, :st1_itemname, :st1_quantity,:st1_uom, :st1_whscode,:st1_price, :st1_vat, 
 													:st1_vatsum, :st1_discount, :st1_linetotal, :st1_costcode, :st1_ubusiness, :st1_project,:st1_acctcode, 
 													:st1_basetype, :st1_doctype, :st1_avprice, :st1_inventory, :st1_acciva, :st1_whscode_dest,:ote_code,
-													:st1_linenum,:st1_ubication2,:st1_ubication)";
+													:st1_linenum,:st1_ubication2,:st1_ubication, :st1_serials)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':st1_docentry' => $resInsert,
@@ -351,7 +373,8 @@ class StockTransfer extends REST_Controller
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':st1_linenum' => is_numeric($detail['st1_linenum']) ? $detail['st1_linenum'] : NULL,
 					':st1_ubication2' => isset($detail['st1_ubication2']) ? $detail['st1_ubication2'] : NULL,
-					':st1_ubication' => isset($detail['st1_ubication']) ? $detail['st1_ubication'] : NULL
+					':st1_ubication' => isset($detail['st1_ubication']) ? $detail['st1_ubication'] : NULL,
+					':st1_serials' => isset($detail['serials']) ? join(",",$detail['serials']) : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -380,7 +403,7 @@ class StockTransfer extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data' => $resInsert,
-				'mensaje' => 'Solicitud de transferencia de stock registrada con exito'
+				'mensaje' => 'Solicitud de transferencia de stock #'.$DocNumVerificado.' registrada con exito'
 			);
 		} else {
 			// Se devuelven los cambios realizados en la transaccion
@@ -418,8 +441,10 @@ class StockTransfer extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dist', 'ist', '', '', $DECI_MALES, $Data['business'], $Data['branch'], 23);
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
 
+		$sqlSelect = self::getColumn('dist', 'ist', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'],23);
+		// print_r($sqlSelect);exit;
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 		if (isset($resSelect[0])) {
@@ -460,6 +485,9 @@ class StockTransfer extends REST_Controller
 		$ManejaSerial = 0;
 		$ManejaUbicacion = 0;
 		$ManejaUbicacion2 = 0;
+
+		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA COMPRAS
+		$CANTUOMSALE = 0; // CANTIDAD EN UNIDAD DE MEDIDA VENTAS
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
@@ -627,8 +655,8 @@ class StockTransfer extends REST_Controller
 
 			// Se actualiza la serie de la numeracion del documento
 
-			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
-							 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
+			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user,mac_accperiod,business,branch)
+															 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user,:mac_accperiod,:business,:branch)";
 
 			$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
 
@@ -659,6 +687,7 @@ class StockTransfer extends REST_Controller
 				':mac_made_usuer' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
 				':mac_update_date' => date("Y-m-d"),
 				':mac_update_user' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
+				':mac_accperiod' => $periodo['data'],
 				':business' => $Data['business'],
 				':branch' => $Data['branch']
 			));
@@ -785,6 +814,27 @@ class StockTransfer extends REST_Controller
 			//FIN PROCESO ESTADO DEL DOCUMENTO
 
 			foreach ($ContenidoDetalle as $key => $detail) {
+
+
+				$CANTUOMPURCHASE = $this->generic->getUomPurchase($detail['ts1_itemcode']);
+				$CANTUOMSALE = $this->generic->getUomSale($detail['ts1_itemcode']);
+
+
+
+				if ($CANTUOMPURCHASE == 0 || $CANTUOMSALE == 0) {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' 		=> $detail['ts1_itemcode'],
+						'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: ' . $detail['ts1_itemcode']
+					);
+
+					$this->response($respuesta);
+
+					return;
+				}
 
 				$sqlInsertDetail = "INSERT INTO its1(ts1_docentry, ts1_itemcode, ts1_itemname, ts1_quantity, ts1_uom, ts1_whscode,
 							                    ts1_price, ts1_vat, ts1_vatsum, ts1_discount, ts1_linetotal, ts1_costcode, ts1_ubusiness, ts1_project,
@@ -983,7 +1033,7 @@ class StockTransfer extends REST_Controller
 					//VALIDANDO CANTIDAD DE ARTICULOS
 
 					$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
-					$CANT_ARTICULOLN = is_numeric($detail['ts1_quantity']) ? $detail['ts1_quantity'] : 0;
+					$CANT_ARTICULOLN =  $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 
 					if (($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0) {
 
@@ -1024,7 +1074,7 @@ class StockTransfer extends REST_Controller
 				$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 					':bmi_itemcode' => isset($detail['ts1_itemcode']) ? $detail['ts1_itemcode'] : NULL,
-					':bmi_quantity' => is_numeric($detail['ts1_quantity']) ? $detail['ts1_quantity'] * 1 : 0,
+					':bmi_quantity' => $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * 1,
 					':bmi_whscode'  => isset($detail['ts1_whscode_dest']) ? $detail['ts1_whscode_dest'] : NULL,
 					':bmi_createat' => $this->validateDate($Data['its_createat']) ? $Data['its_createat'] : NULL,
 					':bmi_createby' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
@@ -1073,7 +1123,7 @@ class StockTransfer extends REST_Controller
 				$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 					':bmi_itemcode' => isset($detail['ts1_itemcode']) ? $detail['ts1_itemcode'] : NULL,
-					':bmi_quantity' => is_numeric($detail['ts1_quantity']) ? $detail['ts1_quantity'] * -1 : 0,
+					':bmi_quantity' => $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * -1,
 					':bmi_whscode'  => isset($detail['ts1_whscode']) ? $detail['ts1_whscode'] : NULL,
 					':bmi_createat' => $this->validateDate($Data['its_createat']) ? $Data['its_createat'] : NULL,
 					':bmi_createby' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
@@ -1205,7 +1255,7 @@ class StockTransfer extends REST_Controller
 
 					$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
 
-						':bdi_quantity' =>  $detail['ts1_quantity'],
+						':bdi_quantity' =>  $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 						':bdi_id' 		=>  $ResProductoDestino[0]['bdi_id']
 					));
 
@@ -1244,7 +1294,7 @@ class StockTransfer extends REST_Controller
 	
 								':bdi_itemcode' => $detail['ts1_itemcode'],
 								':bdi_whscode'  => $detail['ts1_whscode_dest'],
-								':bdi_quantity' => $detail['ts1_quantity'],
+								':bdi_quantity' => $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 								':bdi_avgprice' => $detail['ts1_price'],
 								':bdi_lote' 	=> $detail['ote_code'],
 								':bdi_ubication' => $detail['ts1_ubication2'],
@@ -1261,7 +1311,7 @@ class StockTransfer extends REST_Controller
 
 							':bdi_itemcode' => $detail['ts1_itemcode'],
 							':bdi_whscode'  => $detail['ts1_whscode_dest'],
-							':bdi_quantity' => $detail['ts1_quantity'],
+							':bdi_quantity' => $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 							':bdi_avgprice' => $detail['ts1_price'],
 							':bdi_ubication' => $detail['ts1_ubication2'],
 							':business' 	=> $Data['business']));
@@ -1278,7 +1328,7 @@ class StockTransfer extends REST_Controller
 	
 								':bdi_itemcode' => $detail['ts1_itemcode'],
 								':bdi_whscode'  => $detail['ts1_whscode_dest'],
-								':bdi_quantity' => $detail['ts1_quantity'],
+								':bdi_quantity' => $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 								':bdi_avgprice' => $detail['ts1_price'],
 								':bdi_lote' 	=> $detail['ote_code'],
 								':business' 	=> $Data['business']
@@ -1292,7 +1342,7 @@ class StockTransfer extends REST_Controller
 	
 								':bdi_itemcode' => $detail['ts1_itemcode'],
 								':bdi_whscode'  => $detail['ts1_whscode_dest'],
-								':bdi_quantity' => $detail['ts1_quantity'],
+								':bdi_quantity' => $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 								':bdi_avgprice' => $detail['ts1_price'],
 								':business' 	=> $Data['business']
 							));
@@ -1339,7 +1389,7 @@ class StockTransfer extends REST_Controller
 
 						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
 
-							':bdi_quantity' =>  $detail['ts1_quantity'],
+							':bdi_quantity' =>  $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 							':bdi_itemcode' =>  $detail['ts1_itemcode'],
 							':bdi_whscode'  =>  $detail['ts1_whscode'],
 							':bdi_lote' 	=>  $detail['ote_code'],
@@ -1356,7 +1406,7 @@ class StockTransfer extends REST_Controller
 
 						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
 
-							':bdi_quantity' =>  $detail['ts1_quantity'],
+							':bdi_quantity' =>  $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 							':bdi_itemcode' =>  $detail['ts1_itemcode'],
 							':bdi_whscode'  =>  $detail['ts1_whscode'],
 							':bdi_ubication' =>  $detail['ts1_ubication'],
@@ -1376,7 +1426,7 @@ class StockTransfer extends REST_Controller
 
 						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
 
-							':bdi_quantity' =>  $detail['ts1_quantity'],
+							':bdi_quantity' =>  $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 							':bdi_itemcode' =>  $detail['ts1_itemcode'],
 							':bdi_whscode'  =>  $detail['ts1_whscode'],
 							':bdi_lote' 	=>  $detail['ote_code'],
@@ -1391,7 +1441,7 @@ class StockTransfer extends REST_Controller
 
 						$resUpdateProductoEnAlmacen = $this->pedeo->updateRow($sqlUpdateProductoEnAlmacen, array(
 
-							':bdi_quantity' =>  $detail['ts1_quantity'],
+							':bdi_quantity' =>  $this->generic->getCantInv($detail['ts1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 							':bdi_itemcode' =>  $detail['ts1_itemcode'],
 							':bdi_whscode'  =>  $detail['ts1_whscode'],
 							':business' 	=>  $Data['business']
@@ -1515,7 +1565,20 @@ class StockTransfer extends REST_Controller
 				}
 
 				$MontoSysCR = ($grantotalAcumulado / $TasaLocSys);
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($grantotalAcumulado, $DECI_MALES), $cuentaInventario, 2, $Data['its_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
 
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1545,7 +1608,7 @@ class StockTransfer extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 1,
@@ -1607,7 +1670,20 @@ class StockTransfer extends REST_Controller
 				}
 
 				$MontoSysDB = ($grantotalAcumulado / $TasaLocSys);
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($grantotalAcumulado, $DECI_MALES), $cuentaInventario, 1, $Data['its_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
 
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1637,7 +1713,7 @@ class StockTransfer extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['its_createby']) ? $Data['its_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 1,
@@ -1700,7 +1776,7 @@ class StockTransfer extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data' => $resInsert,
-				'mensaje' => 'Transferencia de stock registrada con exito'
+				'mensaje' => 'Transferencia de stock #'.$DocNumVerificado.' registrada con exito'
 			);
 		} else {
 			// Se devuelven los cambios realizados en la transaccion
@@ -1737,8 +1813,9 @@ class StockTransfer extends REST_Controller
 		}
 
 		$DECI_MALES =  $this->generic->getDecimals();
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
 
-		$sqlSelect = self::getColumn('dits', 'its', '', '', $DECI_MALES, $Data['business'], $Data['branch'],24);
+		$sqlSelect = self::getColumn('dits', 'its', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'],24);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -1821,7 +1898,7 @@ class StockTransfer extends REST_Controller
 		}
 
 		$copy = $this->documentcopy->Copy($Data['st1_docentry'],'dist','ist1','ist','st1');
-		
+		// print_r($)
 		if (isset($copy[0])) {
 
 			$respuesta = array(
@@ -1901,23 +1978,13 @@ class StockTransfer extends REST_Controller
 
 			return;
 		}
+		$copyData = $this->documentcopy->copyData('dist','ist',$Data['dms_card_code'],$Data['business'],$Data['branch']);
 
-		$sqlSelect = "SELECT
-						t0.*
-					FROM dist t0
-					left join estado_doc t1 on t0.ist_docentry = t1.entry and t0.ist_doctype = t1.tipo
-					left join responsestatus t2 on t1.entry = t2.id and t1.tipo = t2.tipo
-					where t2.estado = 'Abierto' and t0.ist_cardcode =:dms_card_code
-					AND t0.business = :business
-					AND t0.branch = :branch";
-
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dms_card_code" => $Data['dms_card_code'], ":business" => $Data['business'], ":branch" => $Data['branch']));
-
-		if (isset($resSelect[0])) {
+		if (isset($copyData[0])) {
 
 			$respuesta = array(
 				'error' => false,
-				'data'  => $resSelect,
+				'data'  => $copyData,
 				'mensaje' => ''
 			);
 		} else {

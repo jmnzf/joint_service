@@ -51,34 +51,48 @@ class Gestion extends REST_Controller
 	{
 
 		$Data = $this->post();
-		if (
-			!isset($Data['mgt_type']) or
-			!isset($Data['mgt_issue']) or
-			!isset($Data['mgt_userto']) or
-			!isset($Data['mgt_userfrom']) or
-			!isset($Data['mgt_sn']) or
-			!isset($Data['mgt_date']) or
-			!isset($Data['mgt_duedate']) or
-			!isset($Data['mgt_priority']) or
-			!isset($Data['mgt_content']) or
-			!isset($Data['mgt_comments']) or
-			!isset($Data['mgt_num'])
-		) {
+		// if (
+		// 	!isset($Data['mgt_type']) or
+		// 	!isset($Data['mgt_issue']) or
+		// 	!isset($Data['mgt_userto']) or
+		// 	!isset($Data['mgt_userfrom']) or
+		// 	!isset($Data['mgt_sn']) or
+		// 	!isset($Data['mgt_date']) or
+		// 	!isset($Data['mgt_duedate']) or
+		// 	!isset($Data['mgt_priority']) or
+		// 	!isset($Data['mgt_content']) or
+		// 	!isset($Data['mgt_comments']) or
+		// 	!isset($Data['mgt_num'])
+		// ) {
 
+		// 	$respuesta = array(
+		// 		'error' => true,
+		// 		'data'  => array(),
+		// 		'mensaje' => 'La informacion enviada no es valida'
+		// 	);
+
+		// 	$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+		// 	return;
+		// }
+		$fecha_hora_inicio = strtotime($Data['mgt_date']);
+		$fecha_hora_fin = strtotime($Data['mgt_duedate']);
+		$convert_fi = date("Y-m-d",$fecha_hora_inicio);
+		$convert_ff = date("Y-m-d",$fecha_hora_fin);
+		if($convert_ff < $convert_fi){
 			$respuesta = array(
 				'error' => true,
-				'data'  => array(),
-				'mensaje' => 'La informacion enviada no es valida'
+				'data' => [],
+				'mensaje' => 'La fecha de vencimiento ('.$convert_ff.') no puede ser inferior a la fecha del documento ('.$convert_fi.')'
 			);
 
 			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
 			return;
 		}
-
 		$respuesta = array();
-		$sqlInsert = "INSERT INTO dmgt ( mgt_type, mgt_issue, mgt_userfrom, mgt_userto, mgt_sn, mgt_contact, mgt_date, mgt_duedate, mgt_priority, mgt_content, mgt_dclass, mgt_dnumber,mgt_comments,mgt_centerc,mgt_docnum)
-		VALUES ( :mgt_type, :mgt_issue, :mgt_userfrom, :mgt_userto, :mgt_sn, :mgt_contact, :mgt_date, :mgt_duedate, :mgt_priority, :mgt_content, :mgt_dclass, :mgt_dnumber,:mgt_comments,:mgt_centerc,:mgt_docnum )";
+		$sqlInsert = "INSERT INTO dmgt ( mgt_type, mgt_issue, mgt_userfrom, mgt_userto, mgt_sn, mgt_contact, mgt_date, mgt_duedate, mgt_priority, mgt_content, mgt_dclass, mgt_dnumber,mgt_comments,mgt_centerc,mgt_docnum,mgt_stage, business)
+		VALUES ( :mgt_type, :mgt_issue, :mgt_userfrom, :mgt_userto, :mgt_sn, :mgt_contact, :mgt_date, :mgt_duedate, :mgt_priority, :mgt_content, :mgt_dclass, :mgt_dnumber,:mgt_comments,:mgt_centerc,:mgt_docnum,:mgt_stage, :business)";
 
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
 			":mgt_type" => $Data['mgt_type'],
@@ -95,7 +109,9 @@ class Gestion extends REST_Controller
 			":mgt_dnumber" => isset($Data['mgt_dnumber']) ? $Data['mgt_dnumber'] :0,
 			":mgt_comments" => $Data['mgt_comments'],
 			":mgt_centerc" => $Data['mgt_centerc'],
-			":mgt_docnum" => (!empty($Data['mgt_num']) ? $Data['mgt_num'] : 1)
+			":mgt_docnum" => (!empty($Data['mgt_num']) ? $Data['mgt_num'] : 1),
+			":mgt_stage" => isset($Data['mgt_stage']) ? $Data['mgt_stage'] : 0,
+			":business" => $Data['business']
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -142,7 +158,10 @@ class Gestion extends REST_Controller
 			'18' =>  array('table' => 'dacc', 'prefix' => 'acc', 'detailTable' => 'acc1', 'detailPrefix' => 'cc1'),
 			'19' =>  array('table' => 'gbpe', 'prefix' => 'bpe', 'detailTable' => 'bpe1', 'detailPrefix' => 'pe1'),
 			'20' =>  array('table' => 'gbpr', 'prefix' => 'bpr', 'detailTable' => 'bpr1', 'detailPrefix' => 'pr1'),
-			'22' =>  array('table' => 'dcrc', 'prefix' => 'crc', 'detailTable' => 'crc1', 'detailPrefix' => 'rc1')
+			'22' =>  array('table' => 'dcrc', 'prefix' => 'crc', 'detailTable' => 'crc1', 'detailPrefix' => 'rc1'),
+			'46' =>  array('table' => 'dcfc', 'prefix' => 'cfc', 'detailTable' => 'cfc1', 'detailPrefix' => 'fc1'),
+			'34' =>  array('table' => 'dvfv', 'prefix' => 'dvf', 'detailTable' => 'vfv1', 'detailPrefix' => 'fv1'),
+			'36' =>  array('table' => 'dcsa', 'prefix' => 'csa', 'detailTable' => 'csa1', 'detailPrefix' => 'sa1'),
 		);
 		$table = $tables[$type]['table'];
 		$prefix = $tables[$type]['prefix'];
@@ -173,12 +192,20 @@ class Gestion extends REST_Controller
 
 	public function getGestion_get()
 	{
+		
+		$Data = $this->get();
 
-		$sqlSelect = "SELECT distinct on (mgt_id) mgt_id as id, dmgt.*,dms_card_name
+		$sqlSelect = "SELECT distinct on (mgt_id) mgt_id as id, dmgt.*,dms_card_name,mgt_stage
 		from dmgt
-		join dmsn on dms_card_code  = mgt_sn";
+		inner join dmsn on dms_card_code  = mgt_sn
+		where dmgt.business = :business
+		union all 
+		SELECT distinct on (mgt_id) mgt_id as id, dmgt.*, mev_names as dms_card_name,mgt_stage
+		from dmgt
+		inner join dmev on mev_id  = mgt_sn::numeric
+		where dmgt.business = :business";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business']));
 
 		if (isset($resSelect[0])) {
 			$respuesta = array(
@@ -220,10 +247,11 @@ class Gestion extends REST_Controller
 
 	public function getSequence_get()
 	{
+		$Data = $this->get();
 
-		$sqlSelect = "SELECT (mgt_id + 1) next from dmgt order by mgt_id desc limit 1";
+		$sqlSelect = "SELECT (mgt_id + 1) next from dmgt where dmgt.business = :business order by mgt_id desc limit 1";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business']));
 
 		if (isset($resSelect[0])) {
 			$respuesta = array(

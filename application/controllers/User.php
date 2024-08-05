@@ -64,8 +64,10 @@ class User extends REST_Controller
 			return;
 		}
 
-		$sqlInsert = "INSERT INTO pgus(pgu_code_user,pgu_pass,pgu_name_user,pgu_lname_user,pgu_email,pgu_phone,pgu_branch,pgu_role,pgu_curr,pgu_id_vendor,pgu_enabled, pgu_pass_change)
-					VALUES(:Pgu_CodeUser,:Pgu_Pass,:Pgu_NameUser,:Pgu_LnameUser,:Pgu_Email,:Pgu_Phone,:Pgu_Branch,:Pgu_Role,:Pgu_Curr,:pgu_id_vendor,:pgu_enabled, :pgu_pass_change)";
+		$sqlInsert = "INSERT INTO pgus(pgu_code_user,pgu_pass,pgu_name_user,pgu_lname_user,pgu_email,pgu_phone,pgu_branch,pgu_role,pgu_curr,pgu_id_vendor,pgu_enabled,
+					 pgu_pass_change, pgu_datechangepassword)
+					VALUES(:Pgu_CodeUser,:Pgu_Pass,:Pgu_NameUser,:Pgu_LnameUser,:Pgu_Email,:Pgu_Phone,:Pgu_Branch,:Pgu_Role,:Pgu_Curr,:pgu_id_vendor,:pgu_enabled, 
+					:pgu_pass_change, :pgu_datechangepassword)";
 
 
 		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -81,7 +83,8 @@ class User extends REST_Controller
 			':Pgu_Curr' => $DataUser['Pgu_Curr'],
 			':pgu_id_vendor' => isset($DataUser['pgu_id_vendor']) ? $DataUser['pgu_id_vendor'] : NULL,
 			':pgu_enabled' => 0,
-			':pgu_pass_change' => 0
+			':pgu_pass_change' => 0,
+			':pgu_datechangepassword' => date('Y-m-d')
 
 		));
 
@@ -180,12 +183,13 @@ class User extends REST_Controller
 			return;
 		}
 
-		$sqlUpdate = "UPDATE pgus SET pgu_pass = :Pgu_Pass, pgu_pass_change = :pgu_pass_change WHERE pgu_id_usuario = :Pgu_IdUsuario";
+		$sqlUpdate = "UPDATE pgus SET pgu_pass = :Pgu_Pass, pgu_pass_change = :pgu_pass_change, pgu_datechangepassword = :pgu_datechangepassword  WHERE pgu_id_usuario = :Pgu_IdUsuario";
 
 		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 			':Pgu_Pass' => password_hash($DataUser['Pgu_Pass'], PASSWORD_DEFAULT),
 			':Pgu_IdUsuario' => $DataUser['Pgu_IdUsuario'],
-			':pgu_pass_change' => 1
+			':pgu_pass_change' => 1,
+			':pgu_datechangepassword' => date('Y-m-d')
 
 		));
 
@@ -302,6 +306,22 @@ class User extends REST_Controller
 			return;
 		}
 
+		$params = "SELECT * FROM params";
+		$resParams = $this->pedeo->queryTable($params, array());
+
+		if (!isset($resParams[0])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se cargo la configuracion inicial, intente nuevamente'
+			);
+
+			return $this->response($respuesta);
+			
+		}
+
+
 		$sqlExiste = " SELECT * FROM pgus WHERE pgu_code_user = :Pgu_CodeUser";
 
 		$resExiste = $this->pedeo->queryTable($sqlExiste, array(':Pgu_CodeUser' => $DataUser['Pgu_CodeUser']));
@@ -334,8 +354,8 @@ class User extends REST_Controller
 			return;
 		}
 
-		$sqlEmpresaUser = "SELECT * FROM rbbu WHERE bbu_user = :bbu_user";
-		$resEmpresaUser = $this->pedeo->queryTable($sqlEmpresaUser, array(':bbu_user' => $resExiste[0]['pgu_id_usuario']));
+		$sqlEmpresaUser = "SELECT * FROM rbbu WHERE bbu_user = :bbu_user AND bbu_main = :bbu_main";
+		$resEmpresaUser = $this->pedeo->queryTable($sqlEmpresaUser, array(':bbu_user' => $resExiste[0]['pgu_id_usuario'], ':bbu_main' => 1));
 
 		if (isset($resEmpresaUser[0])){
 
@@ -389,7 +409,7 @@ class User extends REST_Controller
 				// VALOR POR DEFECTO DEL DATO DE LA EMPRESA.
 				$company = [];
 				// OBTENER DATOS DE LA EMPRESA RELACIONADA AL USUARIO.
-				$sqlresultCompany = "SELECT pge_id,pge_small_name,pge_name_soc,pgs_id,pgs_small_name,pge_useigtf,pge_client_default
+				$sqlresultCompany = "SELECT pge_id,pge_small_name,pge_name_soc,pgs_id,pgs_small_name,pge_useigtf,pge_client_default,pge_variable
 								 FROM rbbu
 								 INNER JOIN pgem
 								 ON bbu_business = pgem.pge_id 
@@ -403,6 +423,12 @@ class User extends REST_Controller
 				if (isset($resultCompany[0])) {
 					# code...
 					$company = $resultCompany[0];
+				}else{
+					$respuesta = array(
+						'error'   => true,
+						'data' => array(),
+						'mensaje'	=> 'Usuario no tiene empresa y/o sucursal'
+					);
 				}
 
 				$respuesta = array(
@@ -410,6 +436,7 @@ class User extends REST_Controller
 					'data'    => $resSelect,
 					'sessionId' => $sessionId,
 					'company' => $company,
+					'paramdata' => $resParams[0],
 					'mensaje' => ''
 				);
 			} else {
@@ -417,7 +444,7 @@ class User extends REST_Controller
 				$respuesta = array(
 					'error'   => true,
 					'data' => array(),
-					'mensaje'	=> 'usuario y/o password inválidos'
+					'mensaje'	=> 'Usuario y/o contraseña inválidos'
 				);
 			}
 		} else {
@@ -425,7 +452,7 @@ class User extends REST_Controller
 			$respuesta = array(
 				'error'   => true,
 				'data' => array(),
-				'mensaje'	=> 'usuario y/o password invalidos'
+				'mensaje'	=> 'Usuario y/o contraseña invalidos'
 			);
 		}
 
@@ -673,19 +700,22 @@ class User extends REST_Controller
 		$this->response($respuesta);
 	}
 
-	public function verifyPassword_post(){
+	public function verifyPassword_post() {
+
 		$Data = $this->post();
 
-		$sqlSelect = 'SELECT pgu_pass_change from pgus where pgu_id_usuario = :pgu_id_usuario';
+		$sqlSelect = 'SELECT pgu_pass_change, pgu_datechangepassword from pgus where pgu_id_usuario = :pgu_id_usuario';
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgu_id_usuario' => $Data['pgu_id_usuario']));
 
 		if(isset($resSelect[0])){
+
 				$respuesta = array(
 					'error' => false,
 					'data'  => $resSelect,
 					'mensaje' => 'Debe cambiar la contraseña'
 				);
+
 			}else{
 				$respuesta = array(
 					'error' => true,

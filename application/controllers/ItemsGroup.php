@@ -53,47 +53,30 @@ class ItemsGroup extends REST_Controller {
 
 
 
-    //   $sqlSelect = "SELECT mga_code FROM dmga WHERE mga_code = :mga_code";
-		//
-    //   $resSelect = $this->pedeo->queryTable($sqlSelect, array(
-		//
-    //       ':mga_code' => $Data['mga_code']
-		//
-    //   ));
-		//
-		//
-    //   if(isset($resSelect[0])){
-		//
-    //     $respuesta = array(
-    //       'error' => true,
-    //       'data'  => array($Data['mga_code'], $Data['mga_code']),
-    //       'mensaje' => 'ya existe un grupo con ese código');
-		//
-    //     $this->response($respuesta);
-		//
-    //     return;
-		//
-    // }
+
 
 
         $sqlInsert = "INSERT INTO dmga (mga_code, mga_name, mga_acctin, mga_acct_out, mga_acct_inv, mga_acct_stockn, mga_acct_stockp, mga_acct_redu, mga_acct_amp, 
-		mga_acct_cost, mga_enabled,mga_acct_invproc) VALUES(:mga_code, :mga_name, :mga_acctin, :mga_acct_out, :mga_acct_inv, :mga_acct_stockn, :mga_acct_stockp, :mga_acct_redu, 
-		:mga_acct_amp, :mga_acct_cost, :mga_enabled,:mga_acct_invproc)";
+		mga_acct_cost, mga_enabled,mga_acct_invproc,deductible_spent,taxable_income, mga_acct_return) VALUES(:mga_code, :mga_name, :mga_acctin, :mga_acct_out, :mga_acct_inv, :mga_acct_stockn, :mga_acct_stockp, :mga_acct_redu, 
+		:mga_acct_amp, :mga_acct_cost, :mga_enabled,:mga_acct_invproc,:deductible_spent,:taxable_income, :mga_acct_return)";
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-              ':mga_code'    => $Data['mga_code'],
-              ':mga_name'    => $Data['mga_name'],
-              ':mga_acctin'    => $Data['mga_acctin'],
-              ':mga_acct_out'    => $Data['mga_acct_out'],
-              ':mga_acct_inv'    => $Data['mga_acct_inv'],
-              ':mga_acct_stockn'    => $Data['mga_acct_stockn'],
-              ':mga_acct_stockp'    => $Data['mga_acct_stockp'],
-              ':mga_acct_redu'    => $Data['mga_acct_redu'],
-              ':mga_acct_amp'  => $Data['mga_acct_amp'],
-              ':mga_acct_cost'  => $Data['mga_acct_cost'],
-              ':mga_enabled'  => $Data['mga_enabled'],
-			  ':mga_acct_invproc' => $Data['mga_acct_invproc']
+			':mga_code'    => $Data['mga_code'],
+			':mga_name'    => $Data['mga_name'],
+			':mga_acctin'    => $Data['mga_acctin'],
+			':mga_acct_out'    => $Data['mga_acct_out'],
+			':mga_acct_inv'    => $Data['mga_acct_inv'],
+			':mga_acct_stockn'    => $Data['mga_acct_stockn'],
+			':mga_acct_stockp'    => $Data['mga_acct_stockp'],
+			':mga_acct_redu'    => $Data['mga_acct_redu'],
+			':mga_acct_amp'  => $Data['mga_acct_amp'],
+			':mga_acct_cost'  => $Data['mga_acct_cost'],
+			':mga_enabled'  => $Data['mga_enabled'],
+			':mga_acct_invproc' => $Data['mga_acct_invproc'],
+			':deductible_spent' => isset($Data['deductible_spent']) ? $Data['deductible_spent'] : 0,
+			':taxable_income' => isset($Data['taxable_income']) ? $Data['taxable_income'] : 0,
+			':mga_acct_return' => isset($Data['mga_acct_return']) ? $Data['mga_acct_return'] : null
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -121,79 +104,53 @@ class ItemsGroup extends REST_Controller {
  //crear familia de articulo
  public function createItemsFamily_post(){
 
-		 $Data = $this->post();
+		$Data = $this->post();
 
-		 if(!isset($Data['mfa_pref']) OR
-				!isset($Data['mfa_name']) or
-				!isset($Data['mfa_gid'])){
+		if(!isset($Data['mfa_pref']) OR
+			!isset($Data['mfa_name']) or
+			!isset($Data['mfa_gid'])){
 
-			 $respuesta = array(
-				 'error' => true,
-				 'data'  => array(),
-				 'mensaje' =>'La informacion enviada no es valida'
-			 );
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' =>'La informacion enviada no es valida'
+			);
 
-			 $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-			 return;
-		 }
+			return;
+		}
 
+		$sqlInsert = "INSERT INTO dmfa (mfa_pref, mfa_name,mfa_gcode)
+									VALUES(:mfa_pref, :mfa_name,:mfa_gcode)";
 
+		$resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
+					':mfa_pref'    => trim($Data['mfa_pref']),
+					':mfa_name'    => trim($Data['mfa_name']),
+					':mfa_gcode'			=> trim($Data['mfa_gid'])
 
-		//  $sqlSelect = "SELECT mfa_pref FROM dmfa WHERE mfa_pref = :mfa_pref";
-	 //
-		//  $resSelect = $this->pedeo->queryTable($sqlSelect, array(
-	 //
-		// 		 ':mfa_pref' => $Data['mfa_pref']
-	 //
-		//  ));
-	 //
-	 //
-		//  if(isset($resSelect[0])){
-	 //
-		// 	 $respuesta = array(
-		// 		 'error' => true,
-		// 		 'data'  => array($Data['mfa_pref'], $Data['mfa_pref']),
-		// 		 'mensaje' => 'ya existe un grupo con ese código');
-	 //
-		// 	 $this->response($respuesta);
-	 //
-		// 	 return;
-	 //
-	 // }
+		));
 
+		if(is_numeric($resInsert) && $resInsert > 0){
 
-			 $sqlInsert = "INSERT INTO dmfa (mfa_pref, mfa_name,mfa_gcode)
-										 VALUES(:mfa_pref, :mfa_name,:mfa_gcode)";
+				$respuesta = array(
+					'error'		=> false,
+					'data' 		=> $resInsert,
+					'mensaje' =>'Familia de articulo registrado con exito'
+				);
 
-			 $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+		}else{
 
-						 ':mfa_pref'    => trim($Data['mfa_pref']),
-						 ':mfa_name'    => trim($Data['mfa_name']),
-						 ':mfa_gcode'			=> trim($Data['mfa_gid'])
+			$respuesta = array(
+				'error'   => true,
+				'data' 	 => $resInsert,
+				'mensaje' => 'No se pudo registrar la familia de articulo'
+			);
 
-			 ));
+		}
 
-			 if(is_numeric($resInsert) && $resInsert > 0){
-
-					 $respuesta = array(
-						 'error'		=> false,
-						 'data' 		=> $resInsert,
-						 'mensaje' =>'Familia de articulo registrado con exito'
-					 );
-
-				}else{
-
-					$respuesta = array(
-						'error'   => true,
-						'data' 	 => $resInsert,
-						'mensaje' => 'No se pudo registrar la familia de articulo'
-					);
-
-				}
-
-				$this->response($respuesta);
+		$this->response($respuesta);
 
 }
 
@@ -231,18 +188,21 @@ class ItemsGroup extends REST_Controller {
 
 
       $sqlUpdate = "UPDATE dmga SET mga_code = :mga_code,
-                                    mga_name = :mga_name,
-                                    mga_acctin = :mga_acctin,
-                                    mga_acct_out = :mga_acct_out,
-                                    mga_acct_inv = :mga_acct_inv,
-                                    mga_acct_stockn = :mga_acct_stockn,
-                                    mga_acct_stockp = :mga_acct_stockp,
-                                    mga_acct_redu = :mga_acct_redu,
-                                    mga_acct_amp = :mga_acct_amp,
-                                    mga_acct_cost = :mga_acct_cost,
-                                    mga_enabled = :mga_enabled,
-									mga_acct_invproc = :mga_acct_invproc
-                                    WHERE mga_id = :mga_id";
+					mga_name = :mga_name,
+					mga_acctin = :mga_acctin,
+					mga_acct_out = :mga_acct_out,
+					mga_acct_inv = :mga_acct_inv,
+					mga_acct_stockn = :mga_acct_stockn,
+					mga_acct_stockp = :mga_acct_stockp,
+					mga_acct_redu = :mga_acct_redu,
+					mga_acct_amp = :mga_acct_amp,
+					mga_acct_cost = :mga_acct_cost,
+					mga_enabled = :mga_enabled,
+					mga_acct_invproc = :mga_acct_invproc,
+					deductible_spent= :deductible_spent,
+					taxable_income = :taxable_income,
+					mga_acct_return = :mga_acct_return
+					WHERE mga_id = :mga_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -260,7 +220,10 @@ class ItemsGroup extends REST_Controller {
         ':mga_acct_cost'  => $Data['mga_acct_cost'],
         ':mga_enabled'  => $Data['mga_enabled'],
         ':mga_id'  => $Data['mga_id'],
-		':mga_acct_invproc' => $Data['mga_acct_invproc']
+		':mga_acct_invproc' => $Data['mga_acct_invproc'],
+		':deductible_spent' => isset($Data['deductible_spent']) ? $Data['deductible_spent'] : 0,
+		':taxable_income' => isset($Data['taxable_income']) ? $Data['taxable_income'] : 0,
+		':mga_acct_return' => isset($Data['mga_acct_return']) ? $Data['mga_acct_return'] : null
       ));
 
 

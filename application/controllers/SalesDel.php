@@ -30,7 +30,7 @@ class SalesDel extends REST_Controller
 		$this->load->library('Tasa');
 		$this->load->library('DocumentDuplicate');
 	}
-
+	
 	//CREAR NUEVA Entrega de Ventas
 	public function createSalesDel_post()
 	{	
@@ -240,18 +240,28 @@ class SalesDel extends REST_Controller
 		}
 
 		// FIN PROESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
+		// VALIDACION FECHA DE VENCIMIENTO 
+		if($Data['vem_duedate'] < $Data['vem_docdate']){
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'La fecha de vencimiento ('.$Data['vem_duedate'].') no puede ser inferior a la fecha del documento ('.$Data['vem_docdate'].')'
+			);
 
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
+			return;
+		}
 		$sqlInsert = "INSERT INTO dvem(vem_series, vem_docnum, vem_docdate, vem_duedate, vem_duedev, vem_pricelist, vem_cardcode,
                       vem_cardname, vem_currency, vem_contacid, vem_slpcode, vem_empid, vem_comment, vem_doctotal, vem_baseamnt, vem_taxtotal,
                       vem_discprofit, vem_discount, vem_createat, vem_baseentry, vem_basetype, vem_doctype, vem_idadd, vem_adress, vem_paytype,
                       vem_createby,vem_transport,vem_sup_transport,vem_ci,vem_t_vehiculo,vem_guia,vem_opl,vem_placa,vem_precinto,vem_placav,vem_modelv,
-					  vem_driverv,vem_driverid,business,branch,vem_internal_comments)
+					  vem_driverv,vem_driverid,business,branch,vem_internal_comments,vem_taxtotal_ad)
 					  VALUES(:vem_series, :vem_docnum, :vem_docdate, :vem_duedate, :vem_duedev, :vem_pricelist, :vem_cardcode, :vem_cardname,
                       :vem_currency, :vem_contacid, :vem_slpcode, :vem_empid, :vem_comment, :vem_doctotal, :vem_baseamnt, :vem_taxtotal, :vem_discprofit, :vem_discount,
                       :vem_createat, :vem_baseentry, :vem_basetype, :vem_doctype, :vem_idadd, :vem_adress, :vem_paytype,:vem_createby,
 					  :vem_transport,:vem_sup_transport,:vem_ci,:vem_t_vehiculo,:vem_guia,:vem_opl,:vem_placa,:vem_precinto,:vem_placav,:vem_modelv,
-					  :vem_driverv,:vem_driverid,:business,:branch, :vem_internal_comments)";
+					  :vem_driverv,:vem_driverid,:business,:branch, :vem_internal_comments,:vem_taxtotal_ad)";
 
 
 
@@ -307,11 +317,9 @@ class SalesDel extends REST_Controller
 			':vem_driverid' => isset($Data['vem_driverid']) ? $Data['vem_driverid'] : NULL,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
-			':vem_internal_comments' => isset($Data['vem_internal_comments']) ? $Data['vem_internal_comments'] : NULL
-
-
-
-
+			':vem_internal_comments' => isset($Data['vem_internal_comments']) ? $Data['vem_internal_comments'] : NULL,
+			':vem_taxtotal_ad' => is_numeric($Data['vem_taxtotal_ad']) ? $Data['vem_taxtotal_ad'] : 0
+		
 
 		));
 
@@ -381,6 +389,27 @@ class SalesDel extends REST_Controller
 			// SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
 			// SI EL DOCTYPE = 21
 			if ($Data['vem_basetype'] == 21) {
+
+				// SE VALIDA SI HAY ANEXOS EN EL DOCUMENTO APROBADO 
+				// SE CAMBIEN AL DOCUMENTO EN CREACION
+				$anexo = $this->aprobacion->CambiarAnexos($Data,'vem',$DocNumVerificado);
+	
+				if ( isset($anexo['error']) && $anexo['error'] == false ) {
+				}else{
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $anexo,
+						'mensaje'	=> 'No se pudo registrar el documento:'. $anexo['mensaje']
+					);
+
+
+					return $this->response($respuesta);
+
+				}
+				// FIN VALIDACION
 
 				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -577,10 +606,14 @@ class SalesDel extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
                                     em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp,em1_ubication,ote_code,em1_baseline,detalle_modular,em1_tax_base)
+                                    em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory, em1_acciva, em1_linenum,em1_codimp,em1_ubication,ote_code,
+									em1_baseline,detalle_modular,em1_tax_base,detalle_anuncio,imponible,em1_clean_quantity,em1_accimp_ad,em1_codimp_ad,em1_vat_ad,
+									em1_vatsum_ad)
 									VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,:em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, 
 									:em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,:em1_acctcode, :em1_basetype, :em1_doctype, 
-									:em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp,:em1_ubication,:ote_code,:em1_baseline,:detalle_modular,:em1_tax_base)";
+									:em1_avprice, :em1_inventory, :em1_acciva, :em1_linenum,:em1_codimp,:em1_ubication,:ote_code,:em1_baseline,:detalle_modular,
+									:em1_tax_base,:detalle_anuncio,:imponible,:em1_clean_quantity,:em1_accimp_ad,:em1_codimp_ad,:em1_vat_ad,:em1_vatsum_ad)";
+
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':em1_docentry' => $resInsert,
@@ -608,8 +641,16 @@ class SalesDel extends REST_Controller
 					':em1_ubication' => isset($detail['em1_ubication']) ? $detail['em1_ubication'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':em1_baseline' => isset($detail['em1_baseline']) && is_numeric($detail['em1_baseline']) ? $detail['em1_baseline'] : 0,
-					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
-					':em1_tax_base' =>  is_numeric($detail['em1_tax_base']) ? $detail['em1_tax_base'] : 0
+					':detalle_modular' => (isset($detail['detalle_modular']) && is_string($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
+					':em1_tax_base' =>  is_numeric($detail['em1_tax_base']) ? $detail['em1_tax_base'] : 0,
+					':detalle_anuncio' => (isset($detail['detalle_anuncio']) && is_string($detail['detalle_anuncio'])) ? json_encode($detail['detalle_anuncio']) : NULL,
+					':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL,
+					':em1_clean_quantity' => isset($detail['em1_clean_quantity']) && is_numeric($detail['em1_clean_quantity']) ? $detail['em1_clean_quantity'] : 0,
+
+					':em1_vat_ad' 	 => is_numeric($detail['em1_vat_ad']) ? $detail['em1_vat_ad'] : 0,
+					':em1_vatsum_ad' => is_numeric($detail['em1_vatsum_ad']) ? $detail['em1_vatsum_ad'] : 0,
+					':em1_accimp_ad' => is_numeric($detail['em1_accimp_ad']) ? $detail['em1_accimp_ad'] : 0,
+					':em1_codimp_ad' => isset($detail['em1_codimp_ad']) ? $detail['em1_codimp_ad'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -752,8 +793,8 @@ class SalesDel extends REST_Controller
 
 					if ($AgregarAsiento) {
 
-						$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
-										 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
+						$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch, mac_accperiod)
+										 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch, :mac_accperiod)";
 
 
 						$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
@@ -786,7 +827,8 @@ class SalesDel extends REST_Controller
 							':mac_update_date' => date("Y-m-d"),
 							':mac_update_user' => isset($Data['vem_createby']) ? $Data['vem_createby'] : NULL,
 							':business'	  => $Data['business'],
-							':branch' 	  => $Data['branch']
+							':branch' 	  => $Data['branch'],
+							':mac_accperiod' => $periodo['data'],
 						));
 
 
@@ -1288,6 +1330,7 @@ class SalesDel extends REST_Controller
 
 						if (isset($resCosto[0])) {
 
+
 							$cuentaInventario = $CUENTASINV['data']['acct_inv'];
 
 
@@ -1357,6 +1400,25 @@ class SalesDel extends REST_Controller
 					$MontoSysCR = ($cdito / $TasaLocSys);
 				}
 
+				// SE AGREGA AL BALANCE
+				if ( $dbito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaInventario, 1, $Data['vem_docdate'], $Data['business'], $Data['branch']);
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaInventario, 2, $Data['vem_docdate'], $Data['business'], $Data['branch']);
+				}
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}	
+				//
 
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1387,7 +1449,7 @@ class SalesDel extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['vem_createby']) ? $Data['vem_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 1,
@@ -1432,61 +1494,90 @@ class SalesDel extends REST_Controller
 				$cuentaCosto = "";
 				foreach ($posicion as $key => $value) {
 
-					// $sqlArticulo = "SELECT f2.dma_item_code,  f1.mga_acct_inv, f1.mga_acct_cost FROM dmga f1 JOIN dmar f2 ON f1.mga_id  = f2.dma_group_code WHERE dma_item_code = :dma_item_code";
-					// $resArticulo = $this->pedeo->queryTable($sqlArticulo, array(":dma_item_code" => $value->em1_itemcode));
 
-					$sqlArticulo = "SELECT pge_bridge_inv FROM pgem WHERE pge_id = :business";
-					$resArticulo = $this->pedeo->queryTable($sqlArticulo, array(':business' => $Data['business']));
+					$sqlCuentaArticulo = "";
+					$resCuentaArticulo = "";
+					 
 
+					if ( $Data['vem_basetype'] == 34 ){
 
-					if (isset($resArticulo[0])) {
-						$dbito = 0;
-						$cdito = 0;
-						$MontoSysDB = 0;
-						$MontoSysCR = 0;
-
-						$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode AND  business = :business";
-
-						$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bdi_itemcode' => $value->em1_itemcode, ':bdi_whscode' => $value->em1_whscode, ':business' => $Data['business']));
-
-
-						if (isset($resCosto[0])) {
-
-							$cuentaCosto = $resArticulo[0]['pge_bridge_inv']; // En la entrega se coloca la cuenta puente
-
-
-							$costoArticulo = $resCosto[0]['bdi_avgprice'];
-							$cantidadArticulo = $value->em1_quantity;
-							$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
-						} else {
-
+						$CUENTASINV = $this->account->getAccountItem($value->em1_itemcode, $value->em1_whscode);
+						if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
+							$cuentaCosto = $CUENTASINV['data']['acct_cost'];
+						}else{
 							$this->pedeo->trans_rollback();
 
 							$respuesta = array(
 								'error'   => true,
-								'data'	  => $resArticulo,
-								'mensaje'	=> 'No se encontro el costo para el item: ' . $value->em1_itemcode
+								'data'	  => $CUENTASINV['mensaje'],
+								'mensaje'	=> 'No se encontro la cuenta de costo para el item ' . $value->em1_itemcode
 							);
-
+	
 							$this->response($respuesta);
-
+	
 							return;
 						}
+
+					}else{
+
+						$sqlCuentaArticulo = "SELECT pge_bridge_inv FROM pgem WHERE pge_id = :business";
+						$resCuentaArticulo = $this->pedeo->queryTable($sqlCuentaArticulo, array(':business' => $Data['business']));
+
+						if (isset($resCuentaArticulo[0])) {
+							$cuentaCosto = $resCuentaArticulo[0]['pge_bridge_inv']; // En la entrega se coloca la cuenta puente
+						}else{
+							
+							$this->pedeo->trans_rollback();
+	
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resCuentaArticulo,
+								'mensaje'	=> 'No se encontro la cuenta puente para costo'
+							);
+	
+							$this->response($respuesta);
+	
+							return;
+						}
+					}
+
+
+				
+					$dbito = 0;
+					$cdito = 0;
+					$MontoSysDB = 0;
+					$MontoSysCR = 0;
+
+					$sqlCosto = "SELECT bdi_itemcode, bdi_avgprice FROM tbdi WHERE bdi_itemcode = :bdi_itemcode AND bdi_whscode = :bdi_whscode AND  business = :business";
+
+					$resCosto = $this->pedeo->queryTable($sqlCosto, array(':bdi_itemcode' => $value->em1_itemcode, ':bdi_whscode' => $value->em1_whscode, ':business' => $Data['business']));
+
+
+					if (isset($resCosto[0])) {
+
+						
+
+
+						$costoArticulo = $resCosto[0]['bdi_avgprice'];
+						$cantidadArticulo = $value->em1_quantity;
+						$grantotalCostoCosto = ($grantotalCostoCosto + ($costoArticulo * $cantidadArticulo));
+
 					} else {
-						// si falla algun insert del detalle de la Entrega de Ventas se devuelven los cambios realizados por la transaccion,
-						// se retorna el error y se detiene la ejecucion del codigo restante.
+
 						$this->pedeo->trans_rollback();
 
 						$respuesta = array(
 							'error'   => true,
-							'data'	  => $resArticulo,
-							'mensaje'	=> 'No se encontro la cuenta puente para costo'
+							'data'	  => $resCuentaArticulo,
+							'mensaje'	=> 'No se encontro el costo para el item: ' . $value->em1_itemcode
 						);
 
 						$this->response($respuesta);
 
 						return;
 					}
+
+					
 				}
 
 				$codigo3 = substr($cuentaCosto, 0, 1);
@@ -1544,6 +1635,26 @@ class SalesDel extends REST_Controller
 			
 				}
 
+				// SE AGREGA AL BALANCE
+				if ( $dbito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaCosto, 1, $Data['vem_docdate'], $Data['business'], $Data['branch']);
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaCosto, 2, $Data['vem_docdate'], $Data['business'], $Data['branch']);
+				}
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}	
+				//
+
 				$AC1LINE = $AC1LINE + 1;
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1574,7 +1685,7 @@ class SalesDel extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['vem_createby']) ? $Data['vem_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 1,
@@ -1885,7 +1996,7 @@ class SalesDel extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data' => $resInsert,
-				'mensaje' => 'Entrega de ventas registrada con exito'
+				'mensaje' => 'Entrega de ventas # '.$DocNumVerificado.' registrada con exito'
 			);
 		} else {
 			// Se devuelven los cambios realizados en la transaccion
@@ -2016,10 +2127,10 @@ class SalesDel extends REST_Controller
 			foreach ($ContenidoDetalle as $key => $detail) {
 
 				$sqlInsertDetail = "INSERT INTO vem1(em1_docentry, em1_itemcode, em1_itemname, em1_quantity, em1_uom, em1_whscode,
-																			em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
-																			em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory,em1_acciva,em1_ubication)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
-																			:em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
-																			:em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva,:em1_ubication)";
+									em1_price, em1_vat, em1_vatsum, em1_discount, em1_linetotal, em1_costcode, em1_ubusiness, em1_project,
+									em1_acctcode, em1_basetype, em1_doctype, em1_avprice, em1_inventory,em1_acciva,em1_ubication, em1_clean_quantity)VALUES(:em1_docentry, :em1_itemcode, :em1_itemname, :em1_quantity,
+									:em1_uom, :em1_whscode,:em1_price, :em1_vat, :em1_vatsum, :em1_discount, :em1_linetotal, :em1_costcode, :em1_ubusiness, :em1_project,
+									:em1_acctcode, :em1_basetype, :em1_doctype, :em1_avprice, :em1_inventory, :em1_acciva,:em1_ubication, :em1_clean_quantity)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':em1_docentry' => $Data['vem_docentry'],
@@ -2043,6 +2154,7 @@ class SalesDel extends REST_Controller
 					':em1_inventory' => is_numeric($detail['em1_inventory']) ? $detail['em1_inventory'] : NULL,
 					':em1_acciva' => is_numeric($detail['em1_cuentaIva']) ? $detail['em1_cuentaIva'] : 0,
 					':em1_ubication' => isset($detail['em1_ubication']) ? $detail['em1_ubication'] : NULL,
+					':em1_clean_quantity' => isset($detail['em1_clean_quantity']) && is_numeric($detail['em1_clean_quantity']) ? $detail['em1_clean_quantity'] : NULL,
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -2101,7 +2213,9 @@ class SalesDel extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvem', 'vem', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+		$sqlSelect = self::getColumn('dvem', 'vem', $campos, '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -2131,7 +2245,7 @@ class SalesDel extends REST_Controller
 	{
 
 		$Data = $this->get();
-
+		$DECI_MALES =  $this->generic->getDecimals();
 		if (!isset($Data['vem_docentry'])) {
 
 			$respuesta = array(
@@ -2145,8 +2259,10 @@ class SalesDel extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM dvem WHERE vem_docentry =:vem_docentry";
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
 
+		$sqlSelect = self::getColumn('dvem', 'vem', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'],0,0,0," AND vem_docentry = :vem_docentry");
+		// print_r($sqlSelect);exit;
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vem_docentry" => $Data['vem_docentry']));
 
 		if (isset($resSelect[0])) {
@@ -2188,7 +2304,7 @@ class SalesDel extends REST_Controller
 			return;
 		}
 
-		$copy = $this->documentcopy->Copy($Data['em1_docentry'],'dvem','vem1','vem','em1','detalle_modular::jsonb');
+		$copy = $this->documentcopy->Copy($Data['em1_docentry'],'dvem','vem1','vem','em1','detalle_modular::jsonb,imponible,clean_quantity');
 
 		if (isset($copy[0])) {
 
@@ -2228,65 +2344,10 @@ class SalesDel extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT
-						t1.em1_acciva,
-						t1.em1_acctcode,
-						t1.em1_avprice,
-						t1.em1_basetype,
-						t1.em1_costcode,
-						t1.em1_discount,
-						t1.em1_docentry,
-						t1.em1_doctype,
-						t1.em1_id,
-						t1.em1_inventory,
-						t1.em1_itemcode,
-						t1.em1_itemname,
-						t1.em1_linenum,
-						t1.em1_linetotal line_total_real,
-						(t1.em1_quantity ) * t1.em1_price em1_linetotal,
-						t1.em1_price,
-						t1.em1_project,
-						(t1.em1_quantity ) em1_quantity,
-						t1.em1_ubusiness,
-						t1.em1_uom,
-						t1.em1_vat,
-						t1.em1_vatsum,
-						t1.em1_quantity cant_real,
-						(((t1.em1_quantity ) * t1.em1_price) * t1.em1_vat) / 100 em1_vatsum,
-						t1.em1_whscode,
-						dmar.dma_series_code,
-						t1.em1_ubication,
-						t1.detalle_modular::jsonb
-						from dvem t0
-						left join vem1 t1 on t0.vem_docentry = t1.em1_docentry
-						INNER JOIN dmar ON em1_itemcode = dmar.dma_item_code
-						WHERE t1.em1_docentry = :em1_docentry
-						GROUP BY
-						t1.em1_acciva,
-						t1.em1_acctcode,
-						t1.em1_avprice,
-						t1.em1_basetype,
-						t1.em1_costcode,
-						t1.em1_discount,
-						t1.em1_docentry,
-						t1.em1_doctype,
-						t1.em1_id,
-						t1.em1_inventory,
-						t1.em1_itemcode,
-						t1.em1_itemname,
-						t1.em1_linenum,
-						t1.em1_linetotal,
-						t1.em1_price,
-						t1.em1_project,
-						t1.em1_ubusiness,
-						t1.em1_uom,
-						t1.em1_vat,
-						t1.em1_vatsum,
-						t1.em1_whscode,
-						t1.em1_quantity,
-						dmar.dma_series_code,
-						t1.em1_ubication,
-						t1.detalle_modular::jsonb";
+		$sqlSelect = "SELECT *, dmar.dma_series_code,t1.detalle_modular::jsonb,t1.detalle_anuncio::jsonb 
+		from dvem t0 left join vem1 t1 on t0.vem_docentry = t1.em1_docentry 
+		INNER JOIN dmar ON em1_itemcode = dmar.dma_item_code
+		WHERE t1.em1_docentry = :em1_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':em1_docentry' => $Data['em1_docentry']));
 
@@ -2415,7 +2476,7 @@ class SalesDel extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentduplicate->getDuplicateDt($Data['em1_docentry'],'dvem','vem1','vem','em1','detalle_modular::jsonb');
+			$copy = $this->documentduplicate->getDuplicateDt($Data['em1_docentry'],'dvem','vem1','vem','em1','detalle_modular::jsonb,imponible,clean_quantity');
 
 			if (isset($copy[0])) {
 

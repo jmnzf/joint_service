@@ -63,6 +63,9 @@ class ExitInventory extends REST_Controller
 		$ManejaLote = 0;
 		$ManejaSerial = 0;
 		$ManejaUbicacion = 0;
+
+		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA COMPRAS
+		$CANTUOMSALE = 0; // CANTIDAD EN UNIDAD DE MEDIDA VENTAS
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -401,6 +404,26 @@ class ExitInventory extends REST_Controller
 
 			foreach ($ContenidoDetalle as $key => $detail) {
 
+				$CANTUOMPURCHASE = $this->generic->getUomPurchase($detail['si1_itemcode']);
+				$CANTUOMSALE = $this->generic->getUomSale($detail['si1_itemcode']);
+
+
+
+				if ($CANTUOMPURCHASE == 0 || $CANTUOMSALE == 0) {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' 		=> $detail['si1_itemcode'],
+						'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: ' . $detail['si1_itemcode']
+					);
+
+					$this->response($respuesta);
+
+					return;
+				}
+
 				$sqlInsertDetail = "INSERT INTO isi1 (si1_docentry, si1_itemcode, si1_itemname, si1_quantity, si1_uom, si1_whscode, si1_price, si1_vat, si1_vatsum, si1_discount, si1_linetotal,
 									si1_costcode, si1_ubusiness,si1_project, si1_acctcode, si1_basetype, si1_doctype, si1_avprice, si1_inventory, si1_linenum, si1_acciva,si1_concept, si1_ubication)
 									VALUES
@@ -523,6 +546,8 @@ class ExitInventory extends REST_Controller
 						$ManejaSerial = 1;
 
 						if (!isset($detail['serials'])) {
+							$this->pedeo->trans_rollback();
+
 							$respuesta = array(
 								'error'   => true,
 								'data'    => [],
@@ -538,6 +563,8 @@ class ExitInventory extends REST_Controller
 
 						if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
 						} else {
+							$this->pedeo->trans_rollback();
+
 							$respuesta = array(
 								'error'   => true,
 								'data'    => $AddSerial['data'],
@@ -554,9 +581,9 @@ class ExitInventory extends REST_Controller
 
 					//
 
-					//se busca el costo del item en el momento de la creacion del documento de venta
+					// se busca el costo del item en el momento de la creacion del documento de venta
 					// para almacenar en el movimiento de inventario
-					//SI EL ARTICULO MANEJA LOTE SE BUSCA POR LOTE Y ALMACEN
+					// SI EL ARTICULO MANEJA LOTE SE BUSCA POR LOTE Y ALMACEN
 					$sqlCostoMomentoRegistro = '';
 					$resCostoMomentoRegistro = [];
 
@@ -610,7 +637,7 @@ class ExitInventory extends REST_Controller
 						//VALIDANDO CANTIDAD DE ARTICULOS
 
 						$CANT_ARTICULOEX = $resCostoMomentoRegistro[0]['bdi_quantity'];
-						$CANT_ARTICULOLN = is_numeric($detail['si1_quantity']) ? $detail['si1_quantity'] : 0;
+						$CANT_ARTICULOLN =  $this->generic->getCantInv($detail['si1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 
 						if (($CANT_ARTICULOEX - $CANT_ARTICULOLN) < 0) {
 
@@ -640,7 +667,7 @@ class ExitInventory extends REST_Controller
 						$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 							':bmi_itemcode' => isset($detail['si1_itemcode']) ? $detail['si1_itemcode'] : NULL,
-							':bmi_quantity' => is_numeric($detail['si1_quantity']) ? $detail['si1_quantity'] * $Data['invtype'] : 0,
+							':bmi_quantity' => ($this->generic->getCantInv($detail['si1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * $Data['invtype']),
 							':bmi_whscode'  => isset($detail['si1_whscode']) ? $detail['si1_whscode'] : NULL,
 							':bmi_createat' => $this->validateDate($Data['isi_createat']) ? $Data['isi_createat'] : NULL,
 							':bmi_createby' => isset($Data['isi_createby']) ? $Data['isi_createby'] : NULL,
@@ -672,7 +699,7 @@ class ExitInventory extends REST_Controller
 							$respuesta = array(
 								'error'   => true,
 								'data' => $resInserMovimiento,
-								'mensaje'	=> 'No se pudo registra la salida de inventario'
+								'mensaje'	=> 'No se pudo registrar la salida de inventario'
 							);
 
 							$this->response($respuesta);
@@ -778,7 +805,7 @@ class ExitInventory extends REST_Controller
 						$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
 						$CostoActual    = $resCostoCantidad[0]['bdi_avgprice'];
 
-						$CantidadDevolucion = $detail['si1_quantity'];
+						$CantidadDevolucion =  $this->generic->getCantInv($detail['si1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 						$CostoDevolucion = $detail['si1_price'];
 
 						$CantidadTotal = ($CantidadActual - $CantidadDevolucion);
@@ -883,7 +910,7 @@ class ExitInventory extends REST_Controller
 				$DetalleCuentaLineaDocumento->si1_vatsum = is_numeric($detail['si1_vatsum']) ? $detail['si1_vatsum'] : 0;
 				$DetalleCuentaLineaDocumento->si1_price = is_numeric($detail['si1_price']) ? $detail['si1_price'] : 0;
 				$DetalleCuentaLineaDocumento->si1_itemcode = isset($detail['si1_itemcode']) ? $detail['si1_itemcode'] : NULL;
-				$DetalleCuentaLineaDocumento->si1_quantity = is_numeric($detail['si1_quantity']) ? $detail['si1_quantity'] : 0;
+				$DetalleCuentaLineaDocumento->si1_quantity = $this->generic->getCantInv($detail['si1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 				$DetalleCuentaLineaDocumento->si1_whscode = isset($detail['si1_whscode']) ? $detail['si1_whscode'] : NULL;
 
 
@@ -920,7 +947,7 @@ class ExitInventory extends REST_Controller
 				$DetalleCuentaGrupo->si1_itemcode = isset($detail['si1_itemcode']) ? $detail['si1_itemcode'] : NULL;
 				$DetalleCuentaGrupo->si1_whscode = isset($detail['si1_whscode']) ? $detail['si1_whscode'] : NULL;
 				$DetalleCuentaGrupo->si1_acctcode = is_numeric($detail['si1_acctcode']) ? $detail['si1_acctcode'] : 0;
-				$DetalleCuentaGrupo->si1_quantity = is_numeric($detail['si1_quantity']) ? $detail['si1_quantity'] : 0;
+				$DetalleCuentaGrupo->si1_quantity = $this->generic->getCantInv($detail['si1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 				$DetalleCuentaGrupo->si1_price = is_numeric($detail['si1_price']) ? $detail['si1_price'] : 0;
 				$DetalleCuentaGrupo->si1_linetotal = is_numeric($detail['si1_linetotal']) ? $detail['si1_linetotal'] : 0;
 
@@ -1008,9 +1035,47 @@ class ExitInventory extends REST_Controller
 						$debito = $grantotalLinea;
 						$MontoSysDB = ($debito / $TasaLocSys);
 						break;
+					case 8:
+						$debito = $grantotalLinea;
+						$MontoSysDB = ($debito / $TasaLocSys);
+						break;
+					case 9:
+						$debito = $grantotalLinea;
+						$MontoSysDB = ($debito / $TasaLocSys);
+						break;
+				}
+
+				// SE AGREGA AL BALANCE
+				if ( $debito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['isi_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['isi_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
 				}
 
 
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1140,8 +1205,42 @@ class ExitInventory extends REST_Controller
 				} else if ($codigo3 == 7 || $codigo3 == "7") {
 					$cdito = $grantotalCuentaGrupo;
 					$MontoSysCR = ($cdito / $TasaLocSys);
+				} else if ($codigo3 == 8 || $codigo3 == "8") {
+					$cdito = $grantotalCuentaGrupo;
+					$MontoSysCR = ($cdito / $TasaLocSys);
+				} else if ($codigo3 == 9 || $codigo3 == "9") {
+					$cdito = $grantotalCuentaGrupo;
+					$MontoSysCR = ($cdito / $TasaLocSys);
 				}
-
+				// SE AGREGA AL BALANCE
+				if ( $dbito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaGrupo, 1, $Data['isi_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaGrupo, 2, $Data['isi_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1171,7 +1270,7 @@ class ExitInventory extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['isi_createby']) ? $Data['isi_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 1,

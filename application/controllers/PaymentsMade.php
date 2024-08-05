@@ -26,6 +26,7 @@ class PaymentsMade extends REST_Controller
 		$this->load->library('generic');
 		$this->load->library('DocumentNumbering');
 		$this->load->library('CancelPay');
+		$this->load->library('account');
 	}
 
 	//OBTENER PAGOS REALIZADOS
@@ -63,12 +64,43 @@ class PaymentsMade extends REST_Controller
 
 
 		$sqlSelect = "SELECT 
-						concat(bpe_currency,' ',trim(to_char(bpe_vlrpaid,'999,999,999.00'))) as bpe_vlrpaid,
-						bpe_docentry,bpe_cardcode,bpe_cardname,bpe_address,bpe_perscontact,bpe_series,bpe_docnum,
-						bpe_docdate,bpe_taxdate,bpe_ref,bpe_transid,bpe_comments,bpe_memo,bpe_acctransfer,bpe_datetransfer,
-						bpe_reftransfer,bpe_doctotal,bpe_project,bpe_createby,bpe_createat,bpe_payment,
-						bpe_doctype,bpe_currency,bpe_paytoday,business,branch
-					FROM gbpe WHERE 1 = 1 AND business = :business AND branch = :branch" . $filtro;
+						coalesce(r.estado,'Cerrado') as estado  ,
+						concat(bpe_currency,' ',trim(to_char(bpe_vlrpaid, '999,999,999.00'))) as bpe_vlrpaid,
+						bpe_docentry,
+						bpe_cardcode,
+						bpe_cardname,
+						bpe_address,
+						bpe_perscontact,
+						bpe_series,
+						bpe_docnum,
+						bpe_docdate,
+						bpe_taxdate,
+						bpe_ref,
+						bpe_transid,
+						bpe_comments,
+						bpe_memo,
+						bpe_acctransfer,
+						bpe_datetransfer,
+						bpe_reftransfer,
+						bpe_doctotal,
+						bpe_project,
+						bpe_createby,
+						bpe_createat,
+						bpe_payment,
+						bpe_doctype,
+						bpe_currency,
+						bpe_paytoday,
+						business,
+						branch,
+						bpe_revalued
+					from
+						gbpe
+					left join
+						responsestatus r on gbpe.bpe_docentry = r.id and gbpe.bpe_doctype = r.tipo 
+					where
+						1 = 1
+						and business = :business
+						and branch = :branch " . $filtro;
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array( ':business' => $Data['business'], ':branch' => $Data['branch'] ));
 
@@ -114,6 +146,7 @@ class PaymentsMade extends REST_Controller
 		$DFPCS = 0; // del sistema
 		$DFPDS = 0; // del sistema
 		$TasaOrg = 0;
+
 
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -300,10 +333,10 @@ class PaymentsMade extends REST_Controller
 		$sqlInsert = "INSERT INTO
                             	gbpe (bpe_cardcode,bpe_doctype,bpe_cardname,bpe_address,bpe_perscontact,bpe_series,bpe_docnum,bpe_docdate,bpe_taxdate,bpe_ref,bpe_transid,
                                 bpe_comments,bpe_memo,bpe_acctransfer,bpe_datetransfer,bpe_reftransfer,bpe_doctotal,bpe_vlrpaid,bpe_project,bpe_createby,
-                                bpe_createat,bpe_payment,bpe_currency, business, branch)
+                                bpe_createat,bpe_payment,bpe_currency, business, branch,bpe_levelcash)
                       VALUES (:bpe_cardcode,:bpe_doctype,:bpe_cardname,:bpe_address,:bpe_perscontact,:bpe_series,:bpe_docnum,:bpe_docdate,:bpe_taxdate,:bpe_ref,:bpe_transid,
                               :bpe_comments,:bpe_memo,:bpe_acctransfer,:bpe_datetransfer,:bpe_reftransfer,:bpe_doctotal,:bpe_vlrpaid,:bpe_project,:bpe_createby,
-                              :bpe_createat,:bpe_payment,:bpe_currency, :business, :branch)";
+                              :bpe_createat,:bpe_payment,:bpe_currency, :business, :branch,:bpe_levelcash)";
 
 
 		// Se Inicia la transaccion,
@@ -339,7 +372,8 @@ class PaymentsMade extends REST_Controller
 			':bpe_payment' => isset($Data['bpe_payment']) ? $Data['bpe_payment'] : NULL,
 			':bpe_currency' => isset($Data['bpe_currency']) ? $Data['bpe_currency'] : NULL,
 			':business' => $Data['business'], 
-			':branch' => $Data['branch']
+			':branch' => $Data['branch'],
+			':bpe_levelcash' => $Data['bpe_levelcash']
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -370,6 +404,40 @@ class PaymentsMade extends REST_Controller
 			}
 
 			// FIN PROCESO PARA ACTUALIZAR NUMERACION
+
+			// se agregar el estado del documento cerrado por defecto
+			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+				':bed_docentry' => $resInsert,
+				':bed_doctype' => $Data['bpe_doctype'],
+				':bed_status' => 3, //ESTADO CERRADO
+				':bed_createby' => $Data['bpe_createby'],
+				':bed_date' => date('Y-m-d'),
+				':bed_baseentry' => NULL,
+				':bed_basetype' => NULL
+			));
+
+
+			if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+			} else {
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => $resInsertEstado,
+					'mensaje'	=> 'No se pudo registrar el pago'
+				);
+
+
+				$this->response($respuesta);
+
+				return;
+			}
 
 			//Se agregan los asientos contables*/*******
 
@@ -443,13 +511,13 @@ class PaymentsMade extends REST_Controller
 
 				if ($Data['bpe_billpayment'] == '0' || $Data['bpe_billpayment'] == 0) {
 					//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
-					if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17 || $detail['pe1_doctype'] == 19 || $detail['pe1_doctype'] == 18 || $detail['pe1_doctype'] == 36 ) {
+					if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 46 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17 || $detail['pe1_doctype'] == 19 || $detail['pe1_doctype'] == 18 || $detail['pe1_doctype'] == 36) {
 
 
 						$pf = "";
 						$tb  = "";
 
-						if ($detail['pe1_doctype'] == 15) {
+						if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 46) {
 							$pf = "cfc";
 							$tb  = "dcfc";
 						} else if ($detail['pe1_doctype'] == 16) {
@@ -518,9 +586,9 @@ class PaymentsMade extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO
                                         	bpe1 (pe1_docnum,pe1_docentry,pe1_numref,pe1_docdate,pe1_vlrtotal,pe1_vlrpaid,pe1_comments,pe1_porcdiscount,pe1_doctype,
-                                            pe1_docduedate,pe1_daysbackw,pe1_vlrdiscount,pe1_ocrcode)
+                                            pe1_docduedate,pe1_daysbackw,pe1_vlrdiscount,pe1_ocrcode,pe1_line_num)
                                     VALUES (:pe1_docnum,:pe1_docentry,:pe1_numref,:pe1_docdate,:pe1_vlrtotal,:pe1_vlrpaid,:pe1_comments,:pe1_porcdiscount,
-                                            :pe1_doctype,:pe1_docduedate,:pe1_daysbackw,:pe1_vlrdiscount,:pe1_ocrcode)";
+                                            :pe1_doctype,:pe1_docduedate,:pe1_daysbackw,:pe1_vlrdiscount,:pe1_ocrcode,:pe1_line_num)";
 
 
 
@@ -537,7 +605,8 @@ class PaymentsMade extends REST_Controller
 					':pe1_docduedate' => $this->validateDate($detail['pe1_docduedate']) ? $detail['pe1_docduedate'] : NULL,
 					':pe1_daysbackw' => is_numeric($detail['pe1_daysbackw']) ? $detail['pe1_daysbackw'] : 0,
 					':pe1_vlrdiscount' => is_numeric($detail['pe1_vlrdiscount']) ? $detail['pe1_vlrdiscount'] : 0,
-					':pe1_ocrcode' => isset($detail['pe1_ocrcode']) ? $detail['pe1_ocrcode'] : NULL
+					':pe1_ocrcode' => isset($detail['pe1_ocrcode']) ? $detail['pe1_ocrcode'] : NULL,
+					':pe1_line_num' => isset($detail['ac1_line_num']) && is_numeric($detail['ac1_line_num']) ? $detail['ac1_line_num'] : 0
 					// ':pe1_ocrcode1' => isset($detail['pe1_ocrcode1'])?$detail['pe1_ocrcode1']:NULL
 				));
 
@@ -550,7 +619,7 @@ class PaymentsMade extends REST_Controller
 
 
 						//MOVIMIENTO DE DOCUMENTOS
-						if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17 || $detail['pe1_doctype'] == 36) {
+						if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 46 || $detail['pe1_doctype'] == 16 || $detail['pe1_doctype'] == 17 || $detail['pe1_doctype'] == 36) {
 							//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 							if (isset($detail['pe1_docentry']) && is_numeric($detail['pe1_docentry']) && isset($detail['pe1_doctype']) && is_numeric($detail['pe1_doctype'])) {
 
@@ -609,7 +678,7 @@ class PaymentsMade extends REST_Controller
 
 						//ACTUALIZAR VALOR PAGADO DE LA FACTURA DE COMPRA
 
-						if ($detail['pe1_doctype'] == 15) {
+						if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 46) {
 
 
 
@@ -701,23 +770,16 @@ class PaymentsMade extends REST_Controller
 						//
 
 						// ACTUALIZAR REFERENCIA DE PAGO EN ASIENTO CONTABLE DE LA FACTURA
-						if ($detail['pe1_doctype'] == 15) { // SOLO CUANDO ES UNA FACTURA
+						if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 46) { // SOLO CUANDO ES UNA FACTURA
 
 							$slqUpdateVenDebit = "UPDATE mac1
 												SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
-												WHERE ac1_legal_num = :ac1_legal_num
-												AND ac1_font_key = :ac1_font_key
-												AND ac1_font_type = :ac1_font_type
-												AND ac1_account = :ac1_account";
+												WHERE ac1_line_num = :ac1_line_num";
 
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
 								':ac1_ven_debit'  => round($VlrTotalOpc, $DECI_MALES),
-								':ac1_legal_num'  => $detail['pe1_tercero'],
-								':ac1_font_key'   => $detail['pe1_docentry'],
-								':ac1_font_type'  => $detail['pe1_doctype'],
-								':ac1_account'    => $detail['pe1_cuenta']
-
+								':ac1_line_num'  => $detail['ac1_line_num'],
 							));
 
 							if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
@@ -777,17 +839,11 @@ class PaymentsMade extends REST_Controller
 
 							$slqUpdateVenDebit = "UPDATE mac1
 												SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
-												WHERE ac1_legal_num = :ac1_legal_num
-												AND ac1_font_key = :ac1_font_key
-												AND ac1_font_type = :ac1_font_type
-												AND ac1_account = :ac1_account";
+												WHERE ac1_line_num = :ac1_line_num";
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
 								':ac1_ven_credit' => round($VlrTotalOpc, $DECI_MALES),
-								':ac1_legal_num'  => $detail['pe1_tercero'],
-								':ac1_font_key'   => $detail['pe1_docentry'],
-								':ac1_font_type'  => $detail['pe1_doctype'],
-								':ac1_account'    => $detail['pe1_cuenta']
+								':ac1_line_num'  => $detail['ac1_line_num'],
 
 							));
 
@@ -809,7 +865,7 @@ class PaymentsMade extends REST_Controller
 
 
 						// validar si se cierra el documento
-						if ($detail['pe1_doctype'] == 15) {
+						if ($detail['pe1_doctype'] == 15 || $detail['pe1_doctype'] == 46) {
 
 							$resEstado = $this->generic->validateBalanceAndClose($detail['pe1_docentry'], $detail['pe1_doctype'], 'dcfc', 'cfc');
 
@@ -1167,6 +1223,26 @@ class PaymentsMade extends REST_Controller
 			$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
 			$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
+			
+			// SE AGREGA AL BALANCE
+			if ( $debito > 0 ){
+				$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+			}else{
+				$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+			}
+			if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error' => true,
+					'data' => $BALANCE,
+					'mensaje' => $BALANCE['mensaje']
+				);
+
+				return $this->response($respuesta);
+			}
+			//
 			$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 				':ac1_trans_id' => $resInsertAsiento,
@@ -1196,7 +1272,7 @@ class PaymentsMade extends REST_Controller
 				':ac1_rescon_date' => NULL,
 				':ac1_recon_total' => 0,
 				':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-				':ac1_accperiod' => 1,
+				':ac1_accperiod' => $periodo['data'],
 				':ac1_close' => 0,
 				':ac1_cord' => 0,
 				':ac1_ven_debit' => 0,
@@ -1275,7 +1351,7 @@ class PaymentsMade extends REST_Controller
 
 
 
-					if ($doctype == 19 || $doctype == 16 ) {
+					if ($doctype == 19 || $doctype == 16) {
 						switch ($cuenta) {
 							case 1:
 								$credito = $TotalPagoRecibido;
@@ -1468,6 +1544,26 @@ class PaymentsMade extends REST_Controller
 					$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
 					$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
+					// SE AGREGA AL BALANCE
+					if ( $debito > 0 ){
+						$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuentaLinea, 1, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+					}else{
+						$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuentaLinea, 2, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+					}
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					//
+
 
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1498,11 +1594,11 @@ class PaymentsMade extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
-						':ac1_ven_debit' => round($credito, $DECI_MALES),
-						':ac1_ven_credit' => round($credito, $DECI_MALES),
+						':ac1_ven_debit' => $doctype == 36 ? round($debito, $DECI_MALES) : round($credito, $DECI_MALES),
+						':ac1_ven_credit' => $doctype == 36 ? round(0, $DECI_MALES) : round($credito, $DECI_MALES),
 						':ac1_fiscal_acct' => 0,
 						':ac1_taxid' => 1,
 						':ac1_isrti' => 0,
@@ -1661,7 +1757,25 @@ class PaymentsMade extends REST_Controller
 					$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
 					$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
+					// SE AGREGA AL BALANCE
+					if ( $debito > 0 ){
+						$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuentaLinea, 1, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+					}else{
+						$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuentaLinea, 2, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+					}
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
 
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+					//
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 						':ac1_trans_id' => $resInsertAsiento,
@@ -1691,7 +1805,7 @@ class PaymentsMade extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => round($debito, $DECI_MALES),
@@ -1711,6 +1825,26 @@ class PaymentsMade extends REST_Controller
 
 					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
 						// Se verifica que el detalle no de error insertando //
+
+						$sqlUpdatePagoE = "UPDATE bpe1 set pe1_line_num = :pe1_line_num WHERE pe1_docnum = :pe1_docnum AND pe1_doctype = :pe1_doctype";
+						$resUpdatePagoE = $this->pedeo->updateRow($sqlUpdatePagoE, array(
+							':pe1_line_num' => $resDetalleAsiento,
+							':pe1_docnum'   => $resInsert,
+							':pe1_doctype'  => 19
+						));
+
+						if (is_numeric($resUpdatePagoE) && $resUpdatePagoE == 1){
+						}else{
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'	  => $resUpdatePagoE,
+								'mensaje' => 'No se pudo registrar el pago efectuado, occurio un error al actualizar el pago'
+							);
+
+							return $this->response($respuesta);
+						}
 					} else {
 						// si falla algun insert del detalle de la factura de Ventas se devuelven los cambios realizados por la transaccion,
 						// se retorna el error y se detiene la ejecucion del codigo restante.
@@ -1801,6 +1935,24 @@ class PaymentsMade extends REST_Controller
 						$DFPDS = $DFPDS + 0;
 
 
+						// SE AGREGA AL BALANCE
+						
+						$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuentaD, 2, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
+
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -1830,7 +1982,7 @@ class PaymentsMade extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -1889,6 +2041,22 @@ class PaymentsMade extends REST_Controller
 						$DFPCS = $DFPCS + 0;
 						$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
+						// SE AGREGA AL BALANCE
+					
+						$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuentaD, 1, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+						//
 
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1919,7 +2087,7 @@ class PaymentsMade extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -2034,7 +2202,7 @@ class PaymentsMade extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -2101,6 +2269,26 @@ class PaymentsMade extends REST_Controller
 					$lcredito = 0;
 				}
 
+				// SE AGREGA AL BALANCE
+				if ( $ldebito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($ldebito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 1, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($lcredito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 2, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+				}
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}	
+				//
+
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -2130,7 +2318,7 @@ class PaymentsMade extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -2176,7 +2364,7 @@ class PaymentsMade extends REST_Controller
 
 
 			//SE VALIDA LA CONTABILIDAD CREADA
-			$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+			$validateCont = $this->generic->validateAccountingAccent2($resInsertAsiento);
 
 
 			if (isset($validateCont['error']) && $validateCont['error'] == false) {
@@ -2400,7 +2588,50 @@ class PaymentsMade extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = "SELECT bpe1.*, dmdt.mdt_docname FROM bpe1 INNER JOIN dmdt ON dmdt.mdt_doctype = bpe1.pe1_doctype WHERE pe1_docnum = :pe1_docnum";
+		$sqlSelect = "-- FACTURA DE PROVEEDOR
+		SELECT bpe1.*, dmdt.mdt_docname, dcfc.cfc_docnum  as docnumoriginal
+		FROM bpe1 
+		INNER JOIN dmdt 
+		ON dmdt.mdt_doctype = bpe1.pe1_doctype
+		inner join dcfc 
+		on bpe1.pe1_docentry = dcfc.cfc_docentry and bpe1.pe1_doctype = dcfc.cfc_doctype 
+		WHERE pe1_docnum = :pe1_docnum
+		-- PAGOS EFECTUADO
+		union all 
+		SELECT bpe1.*, dmdt.mdt_docname, gbpe.bpe_docnum  as docnumoriginal
+		FROM bpe1 
+		INNER JOIN dmdt 
+		ON dmdt.mdt_doctype = bpe1.pe1_doctype
+		inner join gbpe 
+		on bpe1.pe1_docnum = gbpe.bpe_docentry and bpe1.pe1_doctype = gbpe.bpe_doctype 
+		WHERE pe1_docnum = :pe1_docnum
+		-- NOTA CREDITO
+		union all 
+		SELECT bpe1.*, dmdt.mdt_docname, dcnc.cnc_docnum  as docnumoriginal
+		FROM bpe1 
+		INNER JOIN dmdt 
+		ON dmdt.mdt_doctype = bpe1.pe1_doctype
+		inner join dcnc 
+		on bpe1.pe1_docentry = dcnc.cnc_docentry and bpe1.pe1_doctype = dcnc.cnc_doctype 
+		WHERE pe1_docnum = :pe1_docnum
+		-- ASIENTO MANUAL
+		union all 
+		SELECT bpe1.*, dmdt.mdt_docname, tmac.mac_doc_num  as docnumoriginal
+		FROM bpe1 
+		INNER JOIN dmdt 
+		ON dmdt.mdt_doctype = bpe1.pe1_doctype
+		inner join tmac 
+		on bpe1.pe1_docentry = tmac.mac_trans_id  and bpe1.pe1_doctype = tmac.mac_doctype 
+		WHERE pe1_docnum = :pe1_docnum
+		-- SOLICITUD DE ANTICIPOS
+		union all 
+		SELECT bpe1.*, dmdt.mdt_docname, dcsa.csa_docnum  as docnumoriginal
+		FROM bpe1 
+		INNER JOIN dmdt 
+		ON dmdt.mdt_doctype = bpe1.pe1_doctype
+		inner join dcsa 
+		on bpe1.pe1_docentry = dcsa.csa_docentry  and bpe1.pe1_doctype = dcsa.csa_doctype  
+		WHERE pe1_docnum = :pe1_docnum";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pe1_docnum" => $Data['pe1_docnum']));
 
@@ -2426,6 +2657,7 @@ class PaymentsMade extends REST_Controller
 	public function setRevalue_post(){
 
 		$Data = $this->post();
+
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
@@ -2633,10 +2865,10 @@ class PaymentsMade extends REST_Controller
 				$sqlInsert = "INSERT INTO
                             	gbpe (bpe_cardcode,bpe_doctype,bpe_cardname,bpe_address,bpe_perscontact,bpe_series,bpe_docnum,bpe_docdate,bpe_taxdate,bpe_ref,bpe_transid,
                                 bpe_comments,bpe_memo,bpe_acctransfer,bpe_datetransfer,bpe_reftransfer,bpe_doctotal,bpe_vlrpaid,bpe_project,bpe_createby,
-                                bpe_createat,bpe_payment,bpe_currency, business, branch)
+                                bpe_createat,bpe_payment,bpe_currency, business, branch, bpe_revalued)
                       		VALUES (:bpe_cardcode,:bpe_doctype,:bpe_cardname,:bpe_address,:bpe_perscontact,:bpe_series,:bpe_docnum,:bpe_docdate,:bpe_taxdate,:bpe_ref,:bpe_transid,
                               :bpe_comments,:bpe_memo,:bpe_acctransfer,:bpe_datetransfer,:bpe_reftransfer,:bpe_doctotal,:bpe_vlrpaid,:bpe_project,:bpe_createby,
-                              :bpe_createat,:bpe_payment,:bpe_currency, :business, :branch)";
+                              :bpe_createat,:bpe_payment,:bpe_currency, :business, :branch, :bpe_revalued)";
 
 				$resInsert = $this->pedeo->insertRow($sqlInsert, array(
 					':bpe_cardcode' => isset($Data['bpe_cardcode']) ? $Data['bpe_cardcode'] : NULL,
@@ -2663,7 +2895,8 @@ class PaymentsMade extends REST_Controller
 					':bpe_payment' => isset($Data['bpe_payment']) ? $Data['bpe_payment'] : NULL,
 					':bpe_currency' => isset($Data['bpe_currency']) ? $Data['bpe_currency'] : NULL,
 					':business' => $Data['business'], 
-					':branch' => $Data['branch']
+					':branch' => $Data['branch'],
+					':bpe_revalued' => 1
 				));
 
 
@@ -2760,9 +2993,9 @@ class PaymentsMade extends REST_Controller
 
 						$sqlInsertDetail = "INSERT INTO
 						bpe1 (pe1_docnum,pe1_docentry,pe1_numref,pe1_docdate,pe1_vlrtotal,pe1_vlrpaid,pe1_comments,pe1_porcdiscount,pe1_doctype,
-						pe1_docduedate,pe1_daysbackw,pe1_vlrdiscount,pe1_ocrcode)
+						pe1_docduedate,pe1_daysbackw,pe1_vlrdiscount,pe1_ocrcode,pe1_line_num)
 						VALUES (:pe1_docnum,:pe1_docentry,:pe1_numref,:pe1_docdate,:pe1_vlrtotal,:pe1_vlrpaid,:pe1_comments,:pe1_porcdiscount,
-						:pe1_doctype,:pe1_docduedate,:pe1_daysbackw,:pe1_vlrdiscount,:pe1_ocrcode)";
+						:pe1_doctype,:pe1_docduedate,:pe1_daysbackw,:pe1_vlrdiscount,:pe1_ocrcode,:pe1_line_num)";
 
 
 
@@ -2779,7 +3012,8 @@ class PaymentsMade extends REST_Controller
 						':pe1_docduedate' => $this->validateDate($detail['pe1_docduedate']) ? $detail['pe1_docduedate'] : NULL,
 						':pe1_daysbackw' => is_numeric($detail['pe1_daysbackw']) ? $detail['pe1_daysbackw'] : 0,
 						':pe1_vlrdiscount' => is_numeric($detail['pe1_vlrdiscount']) ? $detail['pe1_vlrdiscount'] : 0,
-						':pe1_ocrcode' => isset($detail['pe1_ocrcode']) ? $detail['pe1_ocrcode'] : NULL
+						':pe1_ocrcode' => isset($detail['pe1_ocrcode']) ? $detail['pe1_ocrcode'] : NULL,
+						':pe1_line_num' => isset($detail['ac1_line_num']) && is_numeric($detail['ac1_line_num']) ? $detail['ac1_line_num'] : 0
 						));
 
 						if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -2805,6 +3039,25 @@ class PaymentsMade extends REST_Controller
 						$monto  = $resSaldoAsientoActual[0]['resta'];
 						$cuenta = $resSaldoAsientoActual[0]['ac1_account'];
 						$montosys = ( $monto / $TasaLocSys );
+
+						// SE AGREGA AL BALANCE
+					
+						$BALANCE = $this->account->addBalance($periodo['data'], round($monto, $DECI_MALES), $cuenta, 2, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+
+						//
 
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2835,7 +3088,7 @@ class PaymentsMade extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -2893,7 +3146,25 @@ class PaymentsMade extends REST_Controller
 	
 							$montosys = $montosysorg;
 						}
-			
+						
+						// SE AGREGA AL BALANCE
+						
+						$BALANCE = $this->account->addBalance($periodo['data'], round($monto, $DECI_MALES), $cuenta, 2, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+
+						//
 
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2924,7 +3195,7 @@ class PaymentsMade extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -2982,7 +3253,24 @@ class PaymentsMade extends REST_Controller
 	
 							$montosys = $montosysorg;
 						}
-			
+						
+						// SE AGREGA AL BALANCE
+					
+						$BALANCE = $this->account->addBalance($periodo['data'], round($monto, $DECI_MALES), $cuenta, 1, $Data['bpe_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
 
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -3013,7 +3301,7 @@ class PaymentsMade extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['bpe_createby']) ? $Data['bpe_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($monto, $DECI_MALES),

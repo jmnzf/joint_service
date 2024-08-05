@@ -28,7 +28,7 @@ class ToFileExcel extends REST_Controller
     }
 
 
-    public function createExcel_post(){
+    public function createExcel_post() {
 
         $Data = $this->post();
 
@@ -57,9 +57,14 @@ class ToFileExcel extends REST_Controller
         $EQUIVALE = json_decode($Data['equivalence'], true);   
 
 
+        if (isset( $EQUIVALE[0] )){
+            $EQUIVALE = $EQUIVALE[0];
+        }
+
+
         $USEDCOLUMNS = [];
 
-        
+     
 
         $respuesta = array( 
             'error'  => true,
@@ -85,20 +90,22 @@ class ToFileExcel extends REST_Controller
 
         $campos = array_keys($resSelect[0]);
 
-
+  
         $spreadsheet = new Spreadsheet();
 
         $sheet = $spreadsheet->getActiveSheet();
         
         for ($i=0; $i < count($campos) ; $i++) { 
-            $sheet->setCellValue($COLUMNS[$i].'1', $EQUIVALE[$campos[$i]]);    
-            array_push($USEDCOLUMNS, $COLUMNS[$i]);
-        }
 
+            $sheet->setCellValue($COLUMNS[$i].'1', isset($EQUIVALE[$campos[$i]]) ? $EQUIVALE[$campos[$i]] :$campos[$i] );    
+            array_push($USEDCOLUMNS, $COLUMNS[$i]);
+
+        }
+     
         $acc = 2; // SEGUNDA FILA YA LA PRIMERA SE RESERVA PARA LOS ENCABEZADOS
         for ($i=0; $i < count($resSelect); $i++) { 
 
-            for ($a=0; $a < count($USEDCOLUMNS); $a++) { 
+            for ( $a=0; $a < count($USEDCOLUMNS); $a++ ) { 
 
                 $sheet->setCellValue($USEDCOLUMNS[$a].$acc, $resSelect[$i][$campos[$a]]);  
 

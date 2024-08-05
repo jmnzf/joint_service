@@ -30,6 +30,7 @@ class PdfDocument extends REST_Controller {
 		$this->load->library('DocumentPayment');
 		$this->load->library('DocumentContract');
 		$this->load->library('DocumentContract1');
+		$this->load->library('DocumentCash');
 
 	}
 	
@@ -66,6 +67,34 @@ class PdfDocument extends REST_Controller {
 			$value = $this->documentcontract->format($Data);
 		}
 		
+		return $this->response($value);
+	}
+
+	public function PdfTermicaD_post()
+	{
+		$Data = $this->post();
+		$value = $this->documentmarketing->formatTermicaDelivery($Data);
+		return $this->response($value);
+	}
+
+	public function PdfTermicaV_post()
+	{
+		$Data = $this->post();
+		$value = $this->documentmarketing->formatTermicaVenta($Data);
+		return $this->response($value);
+	}
+
+	public function PdfCash_post()
+	{
+		$Data = $this->post();
+		$value = $this->documentcash->formatCash($Data);
+		return $this->response($value);
+	}
+
+	public function PdfLegalExpenses_post()
+	{
+		$Data = $this->post();
+		$value = $this->documentmarketing->formatLegalExpenses($Data);
 		return $this->response($value);
 	}
 

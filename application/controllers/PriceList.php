@@ -59,7 +59,7 @@ class PriceList extends REST_Controller
 		$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', 'dma_item_inv' => '1'));
 
 		// NO INVENTARIABLES
-		$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo
+		$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo, dma_price
 							FROM dmar
 							WHERE dma_item_sales = :dma_item_sales
 							AND dma_enabled = :dma_enabled
@@ -184,10 +184,44 @@ class PriceList extends REST_Controller
 
 					$BaseList = isset($Data['dmlp_baselist']) ? $Data['dmlp_baselist'] : 0;
 					$Precio = 0;
-
+					
 					foreach ($resProductosNinv as $key => $prod) {
-
 						$Precio = 0;
+						if ($BaseList == "0" || $BaseList == 0) {
+
+							$valor = $prod['dma_price'];
+							$porcent = 0;
+							$subtt = 0;
+	
+							$valorProfit = isset($Data['dmlp_profit']) ? $Data['dmlp_profit'] : 0;
+	
+							if ($valorProfit > 0) {
+								$porcent = ($valorProfit / 100);
+								$subtt = ($valor * $porcent);
+							}
+	
+							$Precio = ($subtt + $valor);
+						} else {
+	
+							$res = $this->getPrecio($prod['dma_item_code'], $BaseList);
+							if (isset($res[0]['pl1_price'])) {
+								$valor = $res[0]['pl1_price'];
+								$porcent = 0;
+								$subtt = 0;
+								$valorProfit = isset($Data['dmlp_profit']) ? $Data['dmlp_profit'] : 0;
+	
+								if ($valorProfit > 0) {
+									$porcent = ($valorProfit / 100);
+									$subtt = ($valor * $porcent);
+								}
+	
+								$Precio = ($subtt + $valor);
+							} else {
+	
+								$Precio = 0;
+							}
+						}
+	
 						$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
 
 							':pl1_id_price_list' => $resInsert,
@@ -291,7 +325,7 @@ class PriceList extends REST_Controller
 		$resProductos = $this->pedeo->queryTable($sqlProductos, array(":dma_enabled" => 1, ':dma_item_sales' => '1', ':dma_item_inv' => '1', ':pl1_id_price_list' => $Data['dmlp_id']));
 
 		// NO INVENTARIABLES
-		$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_item_code, 0 AS costo
+		$sqlProductosNinv = "SELECT DISTINCT dma_item_name, dma_price, dma_item_code, 0 AS costo
 								FROM dmar
 								WHERE dma_item_sales = :dma_item_sales
 								AND dma_enabled = :dma_enabled
@@ -299,6 +333,11 @@ class PriceList extends REST_Controller
 								AND dma_item_inv = :dma_item_inv";
 
 		$resProductosNinv = $this->pedeo->queryTable($sqlProductosNinv, array(':dma_item_sales' => '1', ':dma_enabled' => 1, ':dma_item_inv' => '0', ':pl1_id_price_list' => $Data['dmlp_id']));
+
+
+		// EXISTENTES
+		$sqlProductosExist = "SELECT pl1_id, pl1_item_code, pl1_item_name, pl1_price FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list";
+		$resProductosExist = $this->pedeo->queryTable($sqlProductosExist, array(':pl1_id_price_list' => $Data['dmlp_id']));
 
 
 		if (!isset($resProductos[0]) && !isset($resProductosNinv[0])) {
@@ -341,12 +380,7 @@ class PriceList extends REST_Controller
 			}
 		}
 
-		// FIN BUSQUEDA DE PRODUCTOS
-		// Se Inicia la transaccion,
-		// Todas las consultas de modificacion siguientes
-		// aplicaran solo despues que se confirme la transaccion,
-		// de lo contrario no se aplicaran los cambios y se devolvera
-		// la base de datos a su estado original.
+		
 		$this->pedeo->trans_begin();
 
 		try {
@@ -367,6 +401,11 @@ class PriceList extends REST_Controller
 
 				$sqlDetail = "INSERT INTO mpl1(pl1_id_price_list, pl1_item_code, pl1_item_name, pl1_profit, pl1_price)
 							VALUES(:pl1_id_price_list, :pl1_item_code, :pl1_item_name, :pl1_profit, :pl1_price)";
+
+				$sqlDetailUpdate = "UPDATE mpl1 SET pl1_id_price_list = :pl1_id_price_list, pl1_profit = :pl1_profit, pl1_price =:pl1_price WHERE pl1_id =:pl1_id)";
+			
+
+
 
 				// $this->pedeo->queryTable("DELETE FROM mpl1 WHERE pl1_id_price_list = :pl1_id_price_list",array(':pl1_id_price_list' => $Data['dmlp_id']));
 				if (isset($resProductos[0])) {
@@ -449,6 +488,44 @@ class PriceList extends REST_Controller
 					foreach ($resProductosNinv as $key => $prod) {
 
 						$Precio = 0;
+
+						if ($BaseList == "0" || $BaseList == 0) {
+
+							$valor = $prod['dma_price'];
+							$porcent = 0;
+							$subtt = 0;
+
+							$valorProfit = isset($Data['dmlp_profit']) ? $Data['dmlp_profit'] : 0;
+
+							if ($valorProfit > 0) {
+								$porcent = ($valorProfit / 100);
+								$subtt = ($valor * $porcent);
+							}
+
+							$Precio = ($subtt + $valor);
+						} else {
+
+							$res = $this->getPrecio($prod['dma_item_code'], $BaseList);
+							if (isset($res[0]['pl1_price'])) {
+								$valor = $res[0]['pl1_price'];
+								$porcent = 0;
+								$subtt = 0;
+
+								$valorProfit = isset($Data['dmlp_profit']) ? $Data['dmlp_profit'] : 0;
+
+								if ($valorProfit > 0) {
+									$porcent = ($valorProfit / 100);
+									$subtt = ($valor * $porcent);
+								}
+
+
+								$Precio = ($subtt + $valor);
+							} else {
+
+								$Precio = 0;
+							}
+						}
+
 						$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
 
 							':pl1_id_price_list' => $Data['dmlp_id'],
@@ -467,7 +544,7 @@ class PriceList extends REST_Controller
 							$respuesta = array(
 								'error'   => true,
 								'data' 		=> $resInsertDetail,
-								'mensaje'	=> 'No se pudo registrar la lista'
+								'mensaje'	=> 'No se pudo actualizar la lista'
 							);
 
 							$this->response($respuesta);
@@ -477,6 +554,80 @@ class PriceList extends REST_Controller
 					}
 				}
 
+
+				if ( isset($Data['change_profit']) && $Data['change_profit'] == 1 ){
+					if ( isset($resProductosExist[0]) ) {
+
+						$BaseList = isset($Data['dmlp_baselist']) ? $Data['dmlp_baselist'] : 0;
+						$Precio = 0;
+	
+						foreach ($resProductosExist as $key => $prod) {
+							$Precio = 0;
+	
+							if ($BaseList == "0" || $BaseList == 0) {
+	
+								$valor = $prod['pl1_price'];
+								$porcent = 0;
+								$subtt = 0;
+	
+								$valorProfit = isset($Data['dmlp_profit']) ? $Data['dmlp_profit'] : 0;
+	
+								if ($valorProfit > 0) {
+									$porcent = ($valorProfit / 100);
+									$subtt = ($valor * $porcent);
+								}
+	
+								$Precio = ($subtt + $valor);
+							} else {
+	
+								$res = $this->getPrecio($prod['pl1_item_code'], $BaseList);
+								if (isset($res[0]['pl1_price'])) {
+									$valor = $res[0]['pl1_price'];
+									$porcent = 0;
+									$subtt = 0;
+	
+									$valorProfit = isset($Data['dmlp_profit']) ? $Data['dmlp_profit'] : 0;
+	
+									if ($valorProfit > 0) {
+										$porcent = ($valorProfit / 100);
+										$subtt = ($valor * $porcent);
+									}
+	
+	
+									$Precio = ($subtt + $valor);
+								} else {
+	
+									$Precio = 0;
+								}
+							}
+	
+							$resDetailUpdate = $this->pedeo->updateRow($sqlDetailUpdate, array(
+								':pl1_id_price_list' => $Data['pl1_id_price_list'],
+								':pl1_profit' => $Data['dmlp_profit'],
+								':pl1_price' => $Precio,
+								':pl1_id' => $prod['pl1_id']
+	
+							));
+	
+							if ( is_numeric($rersDetailUpdate) && $resDetailUpdate == 1 ){
+	
+							}else{
+								$this->pedeo->trans_rollback();
+	
+								$respuesta = array(
+									'error'   => true,
+									'data' 		=> $resDetailUpdate,
+									'mensaje'	=> 'No se pudo actualizar la lista de precios'
+								);
+	
+								$this->response($respuesta);
+	
+								return;
+							}
+	
+						}
+					}
+				}
 
 				// Si todo sale bien despues de insertar el detalle de la cotizacion
 				// se confirma la trasaccion  para que los cambios apliquen permanentemente
@@ -863,8 +1014,6 @@ class PriceList extends REST_Controller
 	}
 
 
-
-
 	// OBTENER PRECIO DE PRODUCTOS POR LISTA
 	public function getPrecioByList_get()
 	{
@@ -929,7 +1078,19 @@ class PriceList extends REST_Controller
 
 			return;
 		}
-
+		$columns = array(
+			"dmpl.dmlp_id",
+			"dmpl.dmlp_name_list",
+			"dmar.dma_item_code",
+			"dmar.dma_item_name",
+			"mpl1.pl1_price",
+			"mpl1.pl1_id"
+		);
+		$variableSql = "";
+		if (!empty($request['search']['value'])) {
+			// OBTENER CONDICIONALES.
+			$variableSql .= " AND  " . self::get_Filter($columns, strtoupper($request['search']['value']));
+		}
 
 		$sqlSelect = "SELECT DISTINCT dmlp_id, dmlp_name_list,
 										dma_item_code, dma_item_name,
@@ -940,19 +1101,28 @@ class PriceList extends REST_Controller
 										INNER JOIN dmar
 										ON trim(mpl1.pl1_item_code) =  trim(dma_item_code)
 										WHERE dmlp_id = :dmlp_id
-										AND dmpl.business = :business";
+										AND dmpl.business = :business ";
+		// OBTENER NÚMERO DE REGISTROS DE LA TABLA.
+		$numRows = $this->pedeo->queryTable($sqlSelect.$variableSql, [
+											':dmlp_id'  => $Data['dmlp_id'],
+											':business' => $Data['business']
+										]);	
+		
+		
+		$sqlSelect .=" ORDER BY ".$columns[$Data['order'][0]['column']]." ".$Data['order'][0]['dir']." LIMIT ".$Data['length']." OFFSET ".$Data['start'];
 
+		//print_r($sqlSelect);exit;
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 
 			':dmlp_id'  => $Data['dmlp_id'],
 			':business' => $Data['business']
 		));
 
-
 		if (isset($resSelect[0])) {
 
 			$respuesta = array(
 				'error' => false,
+				'rows'  => count($numRows),
 				'data'  => $resSelect,
 				'mensaje' => ''
 			);
@@ -1076,10 +1246,7 @@ class PriceList extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
-
 	// METODOS PRIVADOS
-
 
 
 	// OBTENER PRECIO PRODUCTO
@@ -1095,5 +1262,28 @@ class PriceList extends REST_Controller
 		));
 
 		return $resSelect;
+	}
+
+	/** * FUNCTION PARA CONTRUIR EL CONDICIONAL DEL FILTRO DEL DATATABLE. */
+	public function get_Filter($columns, $value)
+	{
+		//
+		$resultSet = "";
+		// CONDICIONAL.
+		$where = " {campo} LIKE '%" . $value . "%' OR";
+		//
+		try {
+			//
+			foreach ($columns as $column) {
+				// REEMPLAZAR CAMPO.
+				$resultSet .= str_replace('{campo}', $column, $where);
+			}
+			// REMOVER ULTIMO OR DE LA CADENA.
+			$resultSet = substr($resultSet, 0, -2);
+		} catch (Exception $e) {
+			$resultSet = $e->getMessage();
+		}
+		//
+		return $resultSet;
 	}
 }

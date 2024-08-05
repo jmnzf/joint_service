@@ -68,7 +68,7 @@ class Currency extends REST_Controller {
 		':pgm_system' => strtoupper($DataCurrency['pgm_system'])
 	  ));
 
-	  if(isset($resCurSys[0])){
+	  if(isset($resCurSys[0]) && (strtoupper($DataCurrency['pgm_system'] == 1))){
 		$respuesta = array(
 			'error' => true,
 			'data'  => array(),
@@ -385,7 +385,6 @@ class Currency extends REST_Controller {
 					$fecha = date('Y-m-d');
 					$moneda = "";
 
-
 					if(isset($Data['fecha']) && !empty($Data['fecha'])){
 
 							$fecha = $Data['fecha'];
@@ -410,7 +409,7 @@ class Currency extends REST_Controller {
 							$respuesta = array(
 								'error' => true,
 								'data'  => array(),
-								'mensaje' =>'No se encrontro la tasa de cambio'
+								'mensaje' =>'No se encontro la tasa de cambio'
 							);
 							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 							return;
@@ -424,7 +423,6 @@ class Currency extends REST_Controller {
 						':fecha' => $fecha
 
 				  ));
-
 
 
 					if(  isset($resBusTasa[0]) &&  $resBusTasa[0]['tsa_value'] > 0 ){
@@ -441,7 +439,7 @@ class Currency extends REST_Controller {
 						$respuesta = array(
 							'error' => true,
 							'data'  => array(),
-							'mensaje' =>'No se encrontro la tasa de cambio'
+							'mensaje' =>'No se encontro la tasa de cambio'
 						);
 
 

@@ -19,7 +19,7 @@ class StockAnalysis extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 
 	}
@@ -27,19 +27,19 @@ class StockAnalysis extends REST_Controller {
   public function getStockAnalysis_post(){
 		$MONEDA_LOCAL = $this->generic->getLocalCurrency();
 
-    $Data = $this->post();
-    if((!isset($Data['dvf_doctype']) or $Data['dvf_doctype'] == '' or $Data['dvf_doctype'] == null) or
-      (!isset($Data['dvf_docdate']) or $Data['dvf_docdate'] == '' or $Data['dvf_docdate'] == null) or
-      (!isset($Data['date_filter']) or $Data['date_filter'] == '' or $Data['date_filter'] == null) or
-      (!isset($Data['dvf_duedate']) or $Data['dvf_docdate'] == '' or $Data['dvf_docdate'] == null)){
+		$Data = $this->post();
+		if((!isset($Data['dvf_doctype']) or $Data['dvf_doctype'] == '' or $Data['dvf_doctype'] == null) or
+		(!isset($Data['dvf_docdate']) or $Data['dvf_docdate'] == '' or $Data['dvf_docdate'] == null) or
+		(!isset($Data['date_filter']) or $Data['date_filter'] == '' or $Data['date_filter'] == null) or
+		(!isset($Data['dvf_duedate']) or $Data['dvf_docdate'] == '' or $Data['dvf_docdate'] == null)){
 
-      $this->response(array(
-        'error'  => true,
-        'data'   => [],
-        'mensaje'=>'La informacion enviada no es valida'
-      ), REST_Controller::HTTP_BAD_REQUEST);
+		$this->response(array(
+			'error'  => true,
+			'data'   => [],
+			'mensaje'=>'La informacion enviada no es valida'
+		), REST_Controller::HTTP_BAD_REQUEST);
 
-      return ;
+		return ;
     }
 
 	$main_currency = $Data['main_currency'];
@@ -145,6 +145,7 @@ class StockAnalysis extends REST_Controller {
 									to_char(min({$prefix}_duedev),'DD-MM-YYYY') fecha_doc,
 									to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
 									to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
+									coalesce(pdm_municipality, 'Sin direccion establecida') as ciudad,
 									{$prefix}_docnum docnum,
 									{$detailPrefix}_itemname item_name,
 									{$prefix}_cardname cliente_name,
@@ -167,11 +168,13 @@ class StockAnalysis extends REST_Controller {
 									join dmar on {$detailPrefix}_itemcode = dma_item_code
 									join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
 									join dmga on mga_id = dma_group_code
+									left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
+									left join tpdm on dmsd.dmd_city  = pdm_codmunicipality
 									full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 									".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum
 									left join dmrt on mrt_id = crt_type" : "")."
 									where  ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-									group by {$detailPrefix}_linenum,{$prefix}_docentry,{$prefix}_doctype,{$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_doctype,cfc_docentry,fc1_linenum,":"").(($table =="dcnc")? "cnc_docentry,nc1_linenum,cnc_doctype,":"").(($table =="dcnd")? "cnd_docentry,nd1_linenum,cnd_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
+									group by pdm_municipality,{$detailPrefix}_linenum,{$prefix}_docentry,{$prefix}_doctype,{$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_doctype,cfc_docentry,fc1_linenum,":"").(($table =="dcnc")? "cnc_docentry,nc1_linenum,cnc_doctype,":"").(($table =="dcnd")? "cnd_docentry,nd1_linenum,cnd_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
 									break;
 						}
 
@@ -316,5 +319,119 @@ class StockAnalysis extends REST_Controller {
 		return $all;
 
 	  }
+
+	public function getStockAnalysisDist_get()
+  	{
+		$request = $this->get();
+
+		if(!isset($request['date_start']) OR !isset($request['date_end']) OR !isset($request['business']) OR !isset($request['branch'])){
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'Informacion enviada invalida'
+			);
+
+			$this->response($respuesta);
+			return;
+		}
+
+		$sql = "SELECT distinct
+				mdt_docname tipo_doc_name,
+				rc1_itemcode item_code,
+				to_char(min(vrc_docdate),'DD-MM-YYYY') fecha_inicio,
+				to_char(min(vrc_duedate),'DD-MM-YYYY') fecha_fin,
+				to_char(min(vrc_duedev),'DD-MM-YYYY') fecha_doc,
+				to_char(min(vrc_docdate),'DD-MM-YYYY') fecha_cont,
+				to_char(min(vrc_createat),'DD-MM-YYYY') created,
+				vrc_docnum docnum,
+				rc1_itemname item_name,
+				vrc_cardname cliente_name,
+				round(get_dynamic_conversion(get_localcur(),vrc_currency,vrc_docdate, sum(rc1_linetotal * 1 ), get_localcur() ),get_decimals())   val_factura,
+				--to_char(get_dynamic_conversion('BS',vrc_currency,vrc_docdate, sum(rc1_price::numeric * 1 ), 'BS' ) , '999,999,999,999.00')  price,
+				--to_char(get_dynamic_conversion('BS',vrc_currency,vrc_docdate, sum(rc1_vatsum * 1), 'BS' ) , '999,999,999,999.00')   val_impuesto,
+				--to_char(get_dynamic_conversion('BS',vrc_currency,vrc_docdate, (sum(rc1_linetotal) + sum(rc1_vatsum) * 1 - coalesce(get_retperline(vrc_doctype,vrc_docentry,rc1_linenum),0) ),'BS' ) , '999,999,999,999.00')  total_docums,
+				mga_name,
+				get_tax_currency('BS', vrc_docdate) tasa,
+				vrc_createby createby,
+				sum(rc1_quantity) cantidad,
+				(SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = vrc_createby) us_name,
+				(SELECT vrc_docnum FROM dvrc WHERE vrc_docentry  = vrc_baseentry AND vrc_doctype  = vrc_basetype) doc_afectado,
+				rc1_uom  unidad
+				,'N/A' rt_name,
+				to_char(round(0,2), '999,999,999,999.00') rt_total,
+				rc1_itemdev
+				from dvrc
+				join vrc1 on vrc_docentry = rc1_docentry
+				join dmdt on vrc_doctype = mdt_doctype
+				join dmar on rc1_itemcode = dma_item_code
+				join dmsn on vrc_cardcode  = dms_card_code  AND dms_card_type = '1'
+				join dmga on mga_id = dma_group_code
+				full join tasa on vrc_currency = tasa.tsa_curro and vrc_docdate = tsa_date
+				
+				where  (vrc_docdate BETWEEN :vrc_docdate and  :vrc_duedate) AND dvrc.business = :business AND dvrc.branch = :branch and rc1_itemdev = 0
+				group by rc1_linenum,vrc_docentry,vrc_doctype,vrc_docdate,rc1_itemname,vrc_currency,mga_name,mdt_docname,mdt_doctype,rc1_itemcode,vrc_cardname, tsa_value,vrc_docnum,rc1_uom,vrc_createby,rc1_itemdev
+				union all
+				SELECT distinct
+				concat(mdt_docname,' - Devolucion') tipo_doc_name,
+				rc1_itemcode item_code,
+				to_char(min(vrc_docdate),'DD-MM-YYYY') fecha_inicio,
+				to_char(min(vrc_duedate),'DD-MM-YYYY') fecha_fin,
+				to_char(min(vrc_duedev),'DD-MM-YYYY') fecha_doc,
+				to_char(min(vrc_docdate),'DD-MM-YYYY') fecha_cont,
+				to_char(min(vrc_createat),'DD-MM-YYYY') created,
+				vrc_docnum docnum,
+				rc1_itemname item_name,
+				vrc_cardname cliente_name,
+				round(get_dynamic_conversion(get_localcur(),vrc_currency,vrc_docdate, sum(rc1_linetotal * 1 ), get_localcur() ),get_decimals()) * -1   val_factura,
+				--to_char(get_dynamic_conversion('BS',vrc_currency,vrc_docdate, sum(rc1_price::numeric * 1 ), 'BS' ) , '999,999,999,999.00')  price,
+				--to_char(get_dynamic_conversion('BS',vrc_currency,vrc_docdate, sum(rc1_vatsum * 1), 'BS' ) , '999,999,999,999.00')   val_impuesto,
+				--to_char(get_dynamic_conversion('BS',vrc_currency,vrc_docdate, (sum(rc1_linetotal) + sum(rc1_vatsum) * 1 - coalesce(get_retperline(vrc_doctype,vrc_docentry,rc1_linenum),0) ),'BS' ) , '999,999,999,999.00')  total_docums,
+				mga_name,
+				get_tax_currency('BS', vrc_docdate) tasa,
+				vrc_createby createby,
+				sum(rc1_quantity) cantidad,
+				(SELECT concat(pgu_name_user,' ',pgu_lname_user) from pgus where pgu_code_user  = vrc_createby) us_name,
+				(SELECT vrc_docnum FROM dvrc WHERE vrc_docentry  = vrc_baseentry AND vrc_doctype  = vrc_basetype) doc_afectado,
+				rc1_uom  unidad
+				,'N/A' rt_name,
+				to_char(round(0,2), '999,999,999,999.00') rt_total,
+				rc1_itemdev
+				from dvrc
+				join vrc1 on vrc_docentry = rc1_docentry
+				join dmdt on vrc_doctype = mdt_doctype
+				join dmar on rc1_itemcode = dma_item_code
+				join dmsn on vrc_cardcode  = dms_card_code  AND dms_card_type = '1'
+				join dmga on mga_id = dma_group_code
+				full join tasa on vrc_currency = tasa.tsa_curro and vrc_docdate = tsa_date
+				
+				where  (vrc_docdate BETWEEN :vrc_docdate and  :vrc_duedate) AND dvrc.business = :business AND dvrc.branch = :branch and rc1_itemdev = 1
+				group by rc1_linenum,vrc_docentry,vrc_doctype,vrc_docdate,rc1_itemname,vrc_currency,mga_name,mdt_docname,mdt_doctype,rc1_itemcode,vrc_cardname, tsa_value,vrc_docnum,rc1_uom,vrc_createby,rc1_itemdev
+				
+				order by docnum asc
+				";
+
+			$resSql = $this->pedeo->queryTable($sql,array(
+			':vrc_docdate' => $request['date_start'],
+			':vrc_duedate' => $request['date_end'],
+			':business' => $request['business'],
+			':branch' => $request['branch']
+			));
+
+			if(isset($resSql[0])){
+				$respuesta = array(
+					'error' => false,
+					'data' => $resSql,
+					'mensaje' => 'OK'
+				);
+			}else{
+				$respuesta = array(
+					'error' => true,
+					'data' => [],
+					'mensaje' => 'No se encontraron datos en la busqueda'
+				);
+			}
+
+		$this->response($respuesta);	
+	}
 
 }

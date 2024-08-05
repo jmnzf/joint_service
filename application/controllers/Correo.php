@@ -120,6 +120,255 @@ class Correo extends REST_Controller {
 		";
 		return $html;
 	}
+
+	public function CodeGenAprovals_get()
+	{
+		$respuesta = array(
+			'error' => true,
+			'data' => [],
+			'mensaje' => 'No se encontraron datos en la busqueda'
+		);
+		$code = "";
+		//
+		$sql = "SELECT 
+				d.pap_origen ,
+				d.pap_docentry,
+				d2.mdt_docname ,
+				p.pgu_code_user ,
+				p.pgu_email 
+			from dpap d 
+			inner join tmau t on d.pap_origen = t.mau_doctype 
+			inner join dmdt d2 on d.pap_origen = d2.mdt_doctype 
+			inner join pgus p on p.pgu_id_usuario::text in (t.mau_approvers) ";
+
+		$resSql = $this->pedeo->queryTable($sql);
+		// print_r($resSql[0]);exit;die;
+		if ( isset($resSql[0]) && !empty($resSql[0]) ){
+			//INICIO DE CODIGO PARA INSERTAR CODIGO DE AUTORIZACION
+			foreach ($resSql as $key => $value) {
+				$code = $this->code();
+				// print_r($code);exit;
+				//INSERT
+				$insert = "INSERT INTO trne(rne_doctype,rne_docentry,rne_code,rne_email,created_by,created_at)
+				VALUES (:rne_doctype,:rne_docentry,:rne_code,:rne_email,:created_by,:created_at)";
+
+				$resInsert = $this->pedeo->insertRow($insert,array(
+					':rne_doctype' => $value["pap_origen"],
+					':rne_docentry' => $value["pap_docentry"],
+					':rne_code' => $code,
+					':rne_email' => $value["pgu_email"],
+					':created_by' => "system",
+					':created_at' => Date("Y-m-d h:m:s")
+					
+				));
+				// print_r($resInsert);exit;
+				if (is_numeric($resInsert) && $resInsert > 0){
+					$respuesta = array(
+						'error' => false,
+						'data' => $code,
+						'mensaje' => 'Codigo de autorizacion generado con exito'
+					);
+				}else {
+					$respuesta = array(
+						'error' => true,
+						'data' => $resInsert,
+						'mensaje' => 'No se puedo insertar el registro'
+					);
+				}
+			}
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function Notification_post()
+	{
+		$respuesta = array(
+			'error' => true,
+			'data' => [],
+			'mensaje' => 'No se encontraron registros para envio'
+		);
+
+		$asunto = "";
+		$mensaje = "";
+		$detalle_html = "";
+		$sql = "SELECT 
+				t.*, 
+				d.mdt_docname ,
+				d2.pap_docdate ,
+				d2.pap_doctotal ,
+				d2.pap_createby ,
+				concat(p.pgu_name_user,' ',p.pgu_lname_user) as name
+			from trne t 
+			inner join dmdt d on t.rne_doctype = d.mdt_doctype 
+			inner join dpap d2 on t.rne_doctype = d2.pap_origen 
+			inner join pgus p on d2.pap_createby  = p.pgu_code_user 
+			where t.rne_status = 0";
+		$resSql = $this->pedeo->queryTable($sql);
+
+		if (isset($resSql[0]) && !empty($resSql[0])){
+			foreach ($resSql as $key => $value) {
+				$detalle = "select * from pap1 p where p.ap1_docentry = ".$value["rne_docentry"];
+				$resDetalle = $this->pedeo->queryTable($detalle);
+
+				if(isset($resDetalle[0]) && !empty($resDetalle[0])){
+					foreach ($resDetalle as $key => $detail) {
+						$detalle_html .='<tr>
+						<td>'.$detail["ap1_itemcode"].'</td>
+						<td>'.$detail["ap1_itemname"].' A</td>
+						<td>'.$detail["ap1_quantity"].'</td>
+					</tr>';
+					}
+				}
+				//
+				$asunto = 'Solicitud de aprobacion - '.$value["mdt_docname"];
+				$mensaje = '<!DOCTYPE html>
+				<html lang="es">
+				
+				<head>
+					<meta charset="UTF-8">
+					<meta name="viewport" content="width=device-width, initial-scale=1.0">
+					<title>Documento de Aprobación</title>
+					<style>
+						body {
+							font-family: Arial, sans-serif;
+							margin: 0;
+							padding: 0;
+							background-color: #f9f9f9;
+						}
+				
+						.container {
+							width: 80%;
+							margin: 20px auto;
+							background-color: #fff;
+							padding: 20px;
+							border-radius: 8px;
+							box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+						}
+				
+						h2 {
+							color: #333;
+							text-align: center;
+						}
+				
+						table {
+							width: 100%;
+							border-collapse: collapse;
+							margin-bottom: 20px;
+						}
+				
+						th,
+						td {
+							border: 1px solid #ddd;
+							padding: 10px;
+							text-align: left;
+						}
+				
+						th {
+							background-color: #f2f2f2;
+						}
+				
+						.btn-group {
+							display: flex;
+							justify-content: center;
+							margin-top: 20px;
+						}
+				
+						.btn {
+							padding: 10px 20px;
+							margin: 0 10px;
+							border: none;
+							border-radius: 5px;
+							cursor: pointer;
+							text-decoration: none; /* Evitar subrayado */
+							color: white; /* Color del texto negro */
+							display: inline-block;
+							text-align: center;
+							background-color: #ccc; /* Color de fondo gris por defecto */
+						}
+				
+						.btn-approve {
+							background-color: green;
+						}
+				
+						.btn-reject {
+							background-color: red;
+						}
+				
+						/* Estilos para los enlaces */
+						a {
+							text-decoration: none; /* Evitar subrayado */
+							color: inherit; /* Heredar el color del texto */
+						}
+					</style>
+				</head>
+				
+				<body>
+					<div class="container">
+						<h2>Solicitud de Aprobación</h2>
+						<p>El usuario '.$value["name"].', solicita la aprobación del siguiente documento:</p>
+						<ul>
+							<li>Documento: '.$value["mdt_docname"].'</li>
+							<li>Total: $'.number_format($value["pap_doctotal"]).'</li>
+						</ul>
+				
+						<table>
+							<thead>
+								<tr>
+									<th>Código</th>
+									<th>Descripción</th>
+									<th>Cantidad</th>
+								</tr>
+							</thead>
+							<tbody>
+							'.$detalle_html.'
+							</tbody>
+						</table>
+				
+						<div class="btn-group">
+							<a href="https://joint.jointerp.com/?c=Aprob&a=Index&res=1&token='.$value["rne_code"].'" class="btn btn-approve">APROBAR</a>
+							<a href="https://joint.jointerp.com/?c=Rechaz&a=Index&res=0&token='.$value["rne_code"].'" class="btn btn-reject">RECHAZAR</a>
+						</div>
+				
+						<p>No responder a este correo.</p>
+					</div>
+				</body>
+				
+				</html>
+				';
+
+				// print_r($mensaje);exit;
+				if($this->emailsend->send($value["rne_email"],"",$asunto,$mensaje)){
+					
+				};
+			}
+
+			$respuesta = array(
+				'error' => false,
+				'data' => [],
+				'mensaje' => 'Correos enviados con exito'
+			);
+
+			$this->response($respuesta);
+		}
+
+		// print_r($this->emailsend->send($resSql[0]["rne_email"]));exit;
+	}
+
+	private function Code()
+	{
+		$longitud = 20; // Longitud del código
+		$caracteres = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		$codigo_aleatorio = '';
+		$longitud_caracteres = strlen($caracteres);
+
+		for ($i = 0; $i < $longitud; $i++) {
+			$indice_aleatorio = mt_rand(0, $longitud_caracteres - 1);
+			$codigo_aleatorio .= $caracteres[$indice_aleatorio];
+		}
+
+		return $codigo_aleatorio;
+	}
 }
 
 // <p>Estimado(a) ".strtolower($type)." ".$cardname."</p>
@@ -127,3 +376,5 @@ class Correo extends REST_Controller {
 // 					<p>Se adjunta documento de ".$document." # ".$docnum.", por el valor de  ".$total."</p>
 // $type,$cardname,$document,$docnum,$total
 // $value['data']['type'],$value['data']['cardname'],$resSql[0]['mdt_docname'],$value['data']['docnum'],$value['data']['total']
+
+

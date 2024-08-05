@@ -22,14 +22,32 @@ class ClasifyDisc extends REST_Controller {
 
 	}
 
-  //Crear nueva moneda
+  // CREAR NUEVA CLASIFICACION DE DESCUENTO
 	public function createClasifyDisc_post(){
 
       $Data = $this->post();
 
 
+      $sqlSearch = "SELECT bdc_clasify FROM tbdc WHERE trim(bdc_clasify) = :bdc_clasify";
 
-      $sqlInsert = "INSERT INTO tbdc(bdc_clasify, bdc_concept, bdc_disc1, bdc_disc2)VALUES(:bdc_clasify, :bdc_concept, :bdc_disc1, :bdc_disc2)";
+      $resSearch = $this->pedeo->queryTable($sqlSearch, array(
+        ':bdc_clasify'     => trim($Data['business'])
+      ));
+
+
+      if (isset($resSearch[0])){
+
+        $respuesta = array(
+          'error'		=> true,
+          'data' 		=> [],
+          'mensaje' =>'Ya existe el codigo de la clasificación'
+        );
+
+        return $this->response($respuesta);
+      }
+
+
+      $sqlInsert = "INSERT INTO tbdc(bdc_clasify, bdc_concept, bdc_disc1, bdc_disc2, business)VALUES(:bdc_clasify, :bdc_concept, :bdc_disc1, :bdc_disc2, :business)";
 
 
 
@@ -39,7 +57,8 @@ class ClasifyDisc extends REST_Controller {
             ':bdc_clasify' => isset($Data['bdc_clasify']) ? $Data['bdc_clasify'] : NULL,
             ':bdc_concept' => isset($Data['bdc_concept']) ? $Data['bdc_concept']: NULL,
             ':bdc_disc1'   => is_numeric($Data['bdc_disc1']) ? $Data['bdc_disc1'] : 0,
-            ':bdc_disc2'   => is_numeric($Data['bdc_disc2']) ? $Data['bdc_disc2'] : 0
+            ':bdc_disc2'   => is_numeric($Data['bdc_disc2']) ? $Data['bdc_disc2'] : 0,
+            ':business'    => $Data['business']
       ));
 
       if(is_numeric($resInsert) && $resInsert > 0){
@@ -84,6 +103,25 @@ class ClasifyDisc extends REST_Controller {
 
 
 
+      $sqlSearch = "SELECT bdc_clasify FROM tbdc WHERE trim(bdc_clasify) = :bdc_clasify AND bdc_id != :bdc_id";
+
+      $resSearch = $this->pedeo->queryTable($sqlSearch, array (
+        ':bdc_clasify' => trim($Data['business']),
+        ':bdc_id'      => $Data['bdc_id']
+      ) );
+
+
+      if (isset($resSearch[0])) {
+
+        $respuesta = array(
+          'error'		=> true,
+          'data' 		=> [],
+          'mensaje' => 'Ya existe el codigo de la clasificación'
+        );
+
+        return $this->response($respuesta);
+      }
+
 
       $sqlUpdate = "UPDATE tbdc	SET bdc_clasify =:bdc_clasify, bdc_concept =:bdc_concept, bdc_disc1=:bdc_disc1, bdc_disc2=:bdc_disc2
 	                  WHERE bdc_id =:bdc_id";
@@ -123,69 +161,71 @@ class ClasifyDisc extends REST_Controller {
   //OBTENER CLACIFICACION DE DESCUENTOS
   public function getClasifyDisc_get(){
 
-        $sqlSelect = " SELECT * FROM tbdc";
+    $Data = $this->get();
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+    $sqlSelect = " SELECT * FROM tbdc WHERE business = :business";
 
-        if(isset($resSelect[0])){
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 
-          $respuesta = array(
-            'error' => false,
-            'data'  => $resSelect,
-            'mensaje' => '');
+    if(isset($resSelect[0])){
 
-        }else{
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
 
-            $respuesta = array(
-              'error'   => true,
-              'data' => array(),
-              'mensaje'	=> 'busqueda sin resultados'
-            );
+    }else{
 
-        }
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje'	=> 'busqueda sin resultados'
+        );
 
-         $this->response($respuesta);
+    }
+
+    $this->response($respuesta);
   }
 
-	public function getClasifyDiscBYSN_get(){
+	public function getClasifyDiscBYSN_get() {
 
-			$Data = $this->get();
+    $Data = $this->get();
 
-			if(!isset($Data['dms_card_code'])){
-					$respuesta = array(
-						'error' => true,
-						'data'  => array(),
-						'mensaje' =>'Falta el campo dms_card_code'
-					);
+    if(!isset($Data['dms_card_code'])){
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' =>'Falta el campo dms_card_code'
+        );
 
-					$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 
-					return;
-			}
+        return;
+    }
 
-			$sqlSelect = "SELECT DISTINCT bdc_clasify, bdc_disc1, bdc_disc2 FROM tbdc INNER JOIN dmsn ON  TRIM(tbdc.bdc_clasify) = TRIM(dmsn.dms_classtype) WHERE dms_card_code = :dms_card_code";
-			$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-							':dms_card_code' => $Data['dms_card_code']
-			));
+    $sqlSelect = "SELECT DISTINCT bdc_clasify, bdc_disc1, bdc_disc2 FROM tbdc INNER JOIN dmsn ON TRIM(tbdc.bdc_clasify) = TRIM(dmsn.dms_classtype) WHERE dms_card_code = :dms_card_code";
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+            ':dms_card_code' => $Data['dms_card_code']
+    ));
 
-			if(isset($resSelect[0])){
+    if(isset($resSelect[0])){
 
-				$respuesta = array(
-					'error' => false,
-					'data'  => $resSelect,
-					'mensaje' => '');
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
 
-			}else{
+    }else{
 
-					$respuesta = array(
-						'error'   => true,
-						'data' => array(),
-						'mensaje'	=> 'busqueda sin resultados'
-					);
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje'	=> 'busqueda sin resultados'
+        );
 
-			}
+    }
 
-			 $this->response($respuesta);
+    $this->response($respuesta);
 	}
 
 

@@ -22,6 +22,7 @@ class LegalExpensesBO extends REST_Controller {
         $this->load->library('DocumentNumbering');
 		$this->load->library('Tasa');
 		$this->load->library('generic');
+		$this->load->library('account');
 
 	}
 
@@ -440,8 +441,8 @@ class LegalExpensesBO extends REST_Controller {
         //     ':business' => $Data['business'],
         //     ':branch' => $Data['branch']
         // ));
-
-		$sqlSelect = self::getColumn('tblg', 'blg', '', '', $DECI_MALES, $Data['business'], $Data['branch'], 37);
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+		$sqlSelect = self::getColumn('tblg', 'blg', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'], 37);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -789,7 +790,23 @@ class LegalExpensesBO extends REST_Controller {
 					$cuenta = $detail['lg1_account'];
 					$montosys = ($monto/$TasaLocSys);
 
+					// SE AGREGA AL BALANCE
+					
+					$BALANCE = $this->account->addBalance($periodo['data'], round($monto, $DECI_MALES), $cuenta, 1, date('Y-m-d'), $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
 
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+
+					//
 
 					// ASIENTOS DETALLE
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -821,7 +838,7 @@ class LegalExpensesBO extends REST_Controller {
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['blg_createby']) ? $Data['blg_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -893,6 +910,24 @@ class LegalExpensesBO extends REST_Controller {
 							return;
 						}
 
+						// SE AGREGA AL BALANCE
+					
+						$BALANCE = $this->account->addBalance($periodo['data'], round($granTotalIva, $DECI_MALES), $resiva[0]['dmi_acctcode'], 1, date('Y-m-d'), $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
+
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -922,7 +957,7 @@ class LegalExpensesBO extends REST_Controller {
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['blg_createby']) ? $Data['blg_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -974,6 +1009,24 @@ class LegalExpensesBO extends REST_Controller {
 				$montosys = ($monto / $TasaLocSys);
 				$cuenta = $resLegalizacion[0]['blg_acc'];
 
+				// SE AGREGA AL BALANCE
+
+				$BALANCE = $this->account->addBalance($periodo['data'], round($monto, $DECI_MALES), $cuenta, 2, date('Y-m-d'), $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}	
+
+				//
+
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1003,7 +1056,7 @@ class LegalExpensesBO extends REST_Controller {
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['blg_createby']) ? $Data['blg_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -1116,7 +1169,7 @@ class LegalExpensesBO extends REST_Controller {
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['blg_createby']) ? $Data['blg_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -1186,6 +1239,26 @@ class LegalExpensesBO extends REST_Controller {
 					$lcredito = 0;
 				}
 
+				// SE AGREGA AL BALANCE
+				if ( $ldebito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($ldebito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 1, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($lcredito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 2, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+				}
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}	
+				//
+
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1215,7 +1288,7 @@ class LegalExpensesBO extends REST_Controller {
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['blg_createby']) ? $Data['blg_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -1418,6 +1491,28 @@ class LegalExpensesBO extends REST_Controller {
 
 		$fecha = date('Y-m-d');
 
+
+		// BUSCANDO ANTICIPO SEGUN LAS CUENTAS ASOCIADAS EN EL EMPLEADO DE VENTAS
+
+		$empleadoventas = $this->pedeo->queryTable("SELECT * FROM dmev WHERE mev_card_code = :mev_card_code", array(":mev_card_code" => $Data['cardcode']));
+		$cuentas = "";
+
+		if ( isset($empleadoventas[0]) && count($empleadoventas) == 1 ){
+
+			$cuentas = $empleadoventas[0]['mev_account_cm'];
+
+		}else{
+
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'El usuario actual no tiene asociado un  empleado, o esta faltando un paso en el proceso de parametrización'
+			);
+
+			return $this->response($respuesta);
+		}
+		//
+
 		$sql = "SELECT DISTINCT 
 				get_legalacct2(mac1.ac1_line_num, mac1.ac1_trans_id) as cuentabanco,
 				upper('ANTICIPO  - ' || gbpe.bpe_comments || ' # ' || gbpe.bpe_docnum) as tipo, 
@@ -1437,6 +1532,7 @@ class LegalExpensesBO extends REST_Controller {
 				where mac1.ac1_legal_num = '".$Data['cardcode']."'
 				and dmsn.dms_card_type = '2'
 				and gbpe.business = ".$Data['business']."
+				and mac1.ac1_account in(".$cuentas.") 
 				GROUP BY dmdt.mdt_docname,
 				mac1.ac1_font_key,
 				mac1.ac1_legal_num,

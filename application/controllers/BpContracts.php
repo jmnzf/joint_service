@@ -39,6 +39,10 @@ class BpContracts extends REST_Controller
 		$MONEDALOCAL = "";
 		$MONEDASYS = "";
 		$DatosCS = ""; // DATOS DEL CONTRATO DE SUSCRIPCION
+		$TotalAcuRentencion = 0;
+		$inArrayRetencion = array();
+		$DetalleRetencion = new stdClass();
+		$DetalleConsolidadoRetencion = [];
 
 
 		if (!isset($Data['detail']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
@@ -240,8 +244,16 @@ class BpContracts extends REST_Controller
 
 
 
-		$sqlInsert = "INSERT INTO tcsn(	csn_docnum, csn_docdate, csn_duedate, csn_duedev, csn_pricelist, csn_cardcode, csn_cardname, csn_contacid, csn_slpcode, csn_empid, csn_comment, csn_doctotal, csn_baseamnt, csn_taxtotal, csn_discprofit, csn_discount, csn_createat, csn_baseentry, csn_basetype, csn_doctype, csn_idadd, csn_adress, csn_paytype, csn_series, csn_createby, csn_currency, csn_origen, csn_ref, csn_canceled, csn_enddate, csn_signaturedate, csn_description, csn_prjcode, business,branch,csn_bankable,csn_internal_comments)
-					VALUES (:csn_docnum, :csn_docdate, :csn_duedate, :csn_duedev, :csn_pricelist, :csn_cardcode, :csn_cardname, :csn_contacid, :csn_slpcode, :csn_empid, :csn_comment, :csn_doctotal, :csn_baseamnt, :csn_taxtotal, :csn_discprofit, :csn_discount, :csn_createat, :csn_baseentry, :csn_basetype, :csn_doctype, :csn_idadd, :csn_adress, :csn_paytype, :csn_series, :csn_createby, :csn_currency, :csn_origen, :csn_ref, :csn_canceled, :csn_enddate, :csn_signaturedate, :csn_description, :csn_prjcode, :business,:branch,:csn_bankable,:csn_internal_comments)";
+		$sqlInsert = "INSERT INTO tcsn(	csn_docnum, csn_docdate, csn_duedate, csn_duedev, csn_pricelist, csn_cardcode, csn_cardname, csn_contacid, csn_slpcode, 
+					csn_empid, csn_comment, csn_doctotal, csn_baseamnt, csn_taxtotal, csn_discprofit, csn_discount, csn_createat, csn_baseentry, csn_basetype, 
+					csn_doctype, csn_idadd, csn_adress, csn_paytype, csn_series, csn_createby, csn_currency, csn_origen, csn_ref, csn_canceled, csn_enddate, 
+					csn_signaturedate, csn_description, csn_prjcode, business,branch,csn_bankable,csn_internal_comments,csn_taxtotal_ad,csn_billingday,
+					csn_cleantotal, csn_weeklytoilets,csn_totalret, csn_totalretiva )
+					VALUES (:csn_docnum, :csn_docdate, :csn_duedate, :csn_duedev, :csn_pricelist, :csn_cardcode, :csn_cardname, :csn_contacid, :csn_slpcode,
+					:csn_empid, :csn_comment, :csn_doctotal, :csn_baseamnt, :csn_taxtotal, :csn_discprofit, :csn_discount, :csn_createat, :csn_baseentry,
+					:csn_basetype, :csn_doctype, :csn_idadd, :csn_adress, :csn_paytype, :csn_series, :csn_createby, :csn_currency, :csn_origen, :csn_ref,
+					:csn_canceled, :csn_enddate, :csn_signaturedate, :csn_description, :csn_prjcode, :business,:branch,:csn_bankable,:csn_internal_comments,
+					:csn_taxtotal_ad,:csn_billingday, :csn_cleantotal, :csn_weeklytoilets, :csn_totalret, :csn_totalretiva)";
 
 
 		// Se Inicia la transaccion,
@@ -289,7 +301,14 @@ class BpContracts extends REST_Controller
 			':business' => $Data['business'],
 			':branch' => isset($Data['branch']),
 			':csn_bankable' => is_numeric($Data['csn_bankable']) ? $Data['csn_bankable'] : 0,
-			':csn_internal_comments'  => isset($Data['csn_internal_comments']) ? $Data['csn_internal_comments'] : NULL
+			':csn_internal_comments'  => isset($Data['csn_internal_comments']) ? $Data['csn_internal_comments'] : NULL,
+			':csn_taxtotal_ad' => isset($Data['csn_taxtotal_ad']) && is_numeric($Data['csn_taxtotal_ad']) ? $Data['csn_taxtotal_ad'] : 0,
+			':csn_billingday' => isset($Data['csn_billingday']) && is_numeric($Data['csn_billingday']) ? $Data['csn_billingday'] : 0,
+			':csn_cleantotal' => isset($Data['csn_cleantotal']) && is_numeric($Data['csn_cleantotal']) ? $Data['csn_cleantotal'] : 0,
+			':csn_weeklytoilets' => isset($Data['csn_weeklytoilets']) && is_numeric($Data['csn_weeklytoilets']) ? $Data['csn_weeklytoilets'] : 0,
+			':csn_totalretiva' => isset($Data['csn_totalretiva']) && is_numeric($Data['csn_totalretiva']) ? $Data['csn_totalretiva'] : 0,
+			':csn_totalret' => isset($Data['csn_totalret']) && is_numeric($Data['csn_totalret']) ? $Data['csn_totalret'] : 0
+			
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -499,9 +518,11 @@ class BpContracts extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO csn1(sn1_docentry, sn1_linenum,sn1_itemcode, sn1_itemname, sn1_quantity, sn1_uom, sn1_whscode,
                                     sn1_price, sn1_vat, sn1_vatsum, sn1_discount, sn1_linetotal, sn1_costcode, sn1_ubusiness, sn1_project,
-                                    sn1_acctcode, sn1_basetype, sn1_doctype, sn1_avprice, sn1_inventory, sn1_acciva, sn1_codimp,sn1_ubication,detalle_modular,sn1_tax_base)VALUES(:sn1_docentry,:sn1_linenum, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
+                                    sn1_acctcode, sn1_basetype, sn1_doctype, sn1_avprice, sn1_inventory, sn1_acciva, sn1_codimp,sn1_ubication,detalle_modular,sn1_tax_base,
+									sn1_clean_quantity,sn1_vat_ad,sn1_vatsum_ad,sn1_accimp_ad,sn1_codimp_ad)VALUES(:sn1_docentry,:sn1_linenum, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
                                     :sn1_uom, :sn1_whscode,:sn1_price, :sn1_vat, :sn1_vatsum, :sn1_discount, :sn1_linetotal, :sn1_costcode, :sn1_ubusiness, :sn1_project,
-                                    :sn1_acctcode, :sn1_basetype, :sn1_doctype, :sn1_avprice, :sn1_inventory, :sn1_acciva, :sn1_codimp,:sn1_ubication,:detalle_modular,:sn1_tax_base)";
+                                    :sn1_acctcode, :sn1_basetype, :sn1_doctype, :sn1_avprice, :sn1_inventory, :sn1_acciva, :sn1_codimp,:sn1_ubication,:detalle_modular,:sn1_tax_base,
+									:sn1_clean_quantity,:sn1_vat_ad,:sn1_vatsum_ad,:sn1_accimp_ad,:sn1_codimp_ad)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sn1_docentry' => $resInsert,
@@ -528,7 +549,13 @@ class BpContracts extends REST_Controller
 					':sn1_codimp' => isset($detail['sn1_codimp']) ? $detail['sn1_codimp'] : NULL,
 					':sn1_ubication' => isset($detail['sn1_ubication']) ? $detail['sn1_ubication'] : NULL,
 					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
-					':sn1_tax_base' => is_numeric($detail['sn1_tax_base']) ? $detail['sn1_tax_base'] : 0
+					':sn1_tax_base' => is_numeric($detail['sn1_tax_base']) ? $detail['sn1_tax_base'] : 0,
+					':sn1_clean_quantity' => isset($detail['sn1_clean_quantity']) && is_numeric($detail['sn1_clean_quantity']) ? $detail['sn1_clean_quantity'] : 0,
+
+					':sn1_vat_ad' => is_numeric($detail['sn1_vat_ad']) ? $detail['sn1_vat_ad'] : 0,
+					':sn1_vatsum_ad' => is_numeric($detail['sn1_vatsum_ad']) ? $detail['sn1_vatsum_ad'] : 0,
+					':sn1_accimp_ad' => is_numeric($detail['sn1_accimp_ad']) ? $detail['sn1_accimp_ad'] : NULL,
+					':sn1_codimp_ad' => isset($detail['sn1_codimp_ad']) ? $detail['sn1_codimp_ad'] : NULL,
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -549,6 +576,89 @@ class BpContracts extends REST_Controller
 
 					return;
 				}
+
+				// PROCESO PARA INSERTAR RETENCIONES VENTAS
+
+				if (isset($detail['detail'])) {
+
+					$ContenidoRentencion = $detail['detail'];
+
+					if (is_array($ContenidoRentencion)) {
+						if (intval(count($ContenidoRentencion)) > 0) {
+
+							foreach ($ContenidoRentencion as $key => $value) {
+
+								$DetalleRetencion = new stdClass();
+
+								$sqlInsertRetenciones = "INSERT INTO fcrt(crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret)
+														VALUES (:crt_baseentry, :crt_basetype, :crt_typert, :crt_basert, :crt_profitrt, :crt_totalrt, :crt_base, :crt_type, :crt_linenum, :crt_codret)";
+
+								$resInsertRetenciones = $this->pedeo->insertRow($sqlInsertRetenciones, array(
+
+									':crt_baseentry' => $resInsert,
+									':crt_basetype'  => $Data['csn_doctype'],
+									':crt_typert'    => $value['crt_typert'],
+									':crt_basert'    => $value['crt_basert'],
+									':crt_profitrt'  => $value['crt_profitrt'],
+									':crt_totalrt'   => $value['crt_totalrt'],
+									':crt_base'		 => $value['crt_base'],
+									':crt_type'		 => $value['crt_type'],
+									':crt_linenum'   => $detail['sn1_linenum'],
+									':crt_codret'	 => $value['crt_typert']
+								));
+
+
+								if (is_numeric($resInsertRetenciones) && $resInsertRetenciones > 0) {
+
+									$TotalAcuRentencion = $TotalAcuRentencion + $value['crt_totalrt'];
+
+									$DetalleRetencion->crt_typert   = $value['crt_typert'];
+									$DetalleRetencion->crt_basert   = $value['crt_totalrt'];
+									$DetalleRetencion->crt_profitrt = $value['crt_profitrt'];
+									$DetalleRetencion->crt_totalrt  = $value['crt_totalrt'];
+									$DetalleRetencion->crt_codret   = $value['crt_typert'];
+									$DetalleRetencion->crt_baseln 	= $value['crt_basert'];
+
+
+									$llaveRetencion = $DetalleRetencion->crt_typert . $DetalleRetencion->crt_profitrt;
+
+									if (in_array($llaveRetencion, $inArrayRetencion)) {
+
+										$posicionRetencion = $this->buscarPosicion($llaveRetencion, $inArrayRetencion);
+									} else {
+
+										array_push($inArrayRetencion, $llaveRetencion);
+										$posicionRetencion = $this->buscarPosicion($llaveRetencion, $inArrayRetencion);
+									}
+
+									if (isset($DetalleConsolidadoRetencion[$posicionRetencion])) {
+
+										if (!is_array($DetalleConsolidadoRetencion[$posicionRetencion])) {
+											$DetalleConsolidadoRetencion[$posicionRetencion] = array();
+										}
+									} else {
+										$DetalleConsolidadoRetencion[$posicionRetencion] = array();
+									}
+
+									array_push($DetalleConsolidadoRetencion[$posicionRetencion], $DetalleRetencion);
+								} else {
+									// si falla algun insert del detalle de la factura de compras se devuelven los cambios realizados por la transaccion,
+									// se retorna el error y se detiene la ejecucion del codigo restante.
+									$this->pedeo->trans_rollback();
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertDetail,
+										'mensaje'	=> 'No se pudo registrar el contrato, fallo el proceso para insertar las retenciones'
+									);
+									$this->response($respuesta);
+									return;
+								}
+							}
+						}
+					}
+				}
+
+				// FIN PROCESO PARA INSERTAR RETENCIONES
 			}
 			//FIN DETALLE CONTRATO
 
@@ -698,8 +808,6 @@ class BpContracts extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
-
 	//OBTENER CONTRATOS
 	public function getContracts_get()
 	{
@@ -719,10 +827,29 @@ class BpContracts extends REST_Controller
 			return;
 		}
 
+
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('tcsn', 'csn', '', '', $DECI_MALES, $Data['business'], $Data['branch'], $Data['docnum']);
-		// print_r($sqlSelect);exit;
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel, coalesce(get_geoubicaciones(t0.csn_docentry, t0.csn_doctype), 0) as ubicado, t0.csn_contacid, t0.csn_idadd, t0.csn_duedev, t0.csn_enddate, t0.csn_signaturedate, t0.csn_prjcode, t0.csn_description, t0.csn_billingday, t0.csn_cleantotal, t0.csn_weeklytoilets, t0.csn_totalret, t0.csn_totalretiva";
+
+		$variableSql = "";
+		$innerjoin = "";
+
+		if(isset($Data['slt_paycondition']) && !empty($Data['slt_paycondition'])){
+			$campos .= ", d.csn_paymentcondition";
+			$variableSql .= "AND d.csn_paymentcondition = ".$Data['slt_paycondition'];
+		}
+
+		if(isset($Data['slt_typeagreement']) && !empty($Data['slt_typeagreement'])){
+			$campos .= ", d.csn_typeagreement";
+			$variableSql .= "AND d.csn_typeagreement = ".$Data['slt_typeagreement'];
+		}
+		if(!empty($variableSql)){
+			$innerjoin = "INNER JOIN dcsn d ON t0.csn_docentry = d.csn_docentry";
+		}
+
+		$sqlSelect = self::getColumn('tcsn', 'csn', $campos, $innerjoin, $DECI_MALES, $Data['business'], $Data['branch'], $Data['docnum'],0,0,$variableSql);
+		
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 		if (isset($resSelect[0])) {
@@ -809,29 +936,43 @@ class BpContracts extends REST_Controller
 
 
 		$sqlSelect2 = "SELECT tcsn.csn_comment,
-												tcsn.csn_enddate,
-												tcsn.csn_signaturedate,
-												tcsn.csn_description,
-												tcsn.csn_prjcode,
-												ctpa.tpa_description AS csn_typeagreement,
-												ccdp.cdp_description AS csn_paymentcondition,
-												dmpf.mpf_name AS csn_waypay,
-												cfev.fev_description AS csn_shippingway,
-												cesc.esc_description AS csn_status,
-												dcsn.csn_probabilitypercentage,
-												dcsn.csn_renewal,
-												dcsn.csn_remember
-												FROM tcsn
-												INNER JOIN dcsn ON tcsn.csn_docentry = dcsn.csn_docentry
-												INNER JOIN ctpa ON ctpa.tpa_id = dcsn.csn_typeagreement
-												INNER JOIN ccdp ON ccdp.cdp_id = dcsn.csn_paymentcondition
-												INNER JOIN dmpf ON dmpf.mpf_id = dcsn.csn_waypay
-												INNER JOIN cfev ON cfev.fev_id = dcsn.csn_shippingway
-												INNER JOIN cesc ON cesc.esc_id = dcsn.csn_status
-												WHERE  tcsn.csn_docentry = :csn_docentry";
+					tcsn.csn_enddate,
+					tcsn.csn_signaturedate,
+					tcsn.csn_description,
+					tcsn.csn_prjcode,
+					ctpa.tpa_description AS csn_typeagreement,
+					ccdp.cdp_description AS csn_paymentcondition,
+					tmdp.mdp_name AS csn_waypay,
+					cfev.fev_description AS csn_shippingway,
+					cesc.esc_description AS csn_status,
+					dcsn.csn_probabilitypercentage,
+					dcsn.csn_renewal,
+					dcsn.csn_remember
+					FROM tcsn
+					INNER JOIN dcsn ON tcsn.csn_docentry = dcsn.csn_docentry
+					INNER JOIN ctpa ON ctpa.tpa_id = dcsn.csn_typeagreement
+					INNER JOIN ccdp ON ccdp.cdp_id = dcsn.csn_paymentcondition
+					INNER JOIN tmdp ON tmdp.mdp_id = dcsn.csn_waypay
+					INNER JOIN cfev ON cfev.fev_id = dcsn.csn_shippingway
+					INNER JOIN cesc ON cesc.esc_id = dcsn.csn_status
+					WHERE  tcsn.csn_docentry = :csn_docentry";
 		$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(
 			':csn_docentry' => $Data['sn1_docentry']
 		));
+
+		
+		foreach ($resSelect as $key => $value) {
+			$sqlRetenciones = "SELECT crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret FROM fcrt 
+			WHERE crt_baseentry = :crt_baseentry 
+			and crt_linenum = :crt_linenum";
+			$resSelectRetenciones = $this->pedeo->queryTable($sqlRetenciones, array(
+				':crt_baseentry' => $Data['sn1_docentry'],
+				':crt_linenum' => $value['sn1_linenum'],
+			));
+
+			$resSelect[$key]['ret'] = $resSelectRetenciones;
+		}
+
 
 		if (isset($resSelect[0])) {
 
@@ -871,34 +1012,72 @@ class BpContracts extends REST_Controller
 			return;
 		}
 
-		$copy = $this->documentcopy->Copy($Data['sn1_docentry'],'tcsn','csn1','csn','sn1');
+		$copy = $this->documentcopy->Copy($Data['sn1_docentry'],'tcsn','csn1','csn','sn1','clean_quantity,enabled');
+
 
 		$sqlSelect2 = "SELECT tcsn.csn_comment,
-												tcsn.csn_enddate,
-												tcsn.csn_signaturedate,
-												tcsn.csn_description,
-												tcsn.csn_prjcode,
-												ctpa.tpa_description AS csn_typeagreement,
-												ccdp.cdp_description AS csn_paymentcondition,
-												dmpf.mpf_name AS csn_waypay,
-												cfev.fev_description AS csn_shippingway,
-												cesc.esc_description AS csn_status,
-												dcsn.csn_probabilitypercentage,
-												dcsn.csn_renewal,
-												dcsn.csn_remember
-												FROM tcsn
-												INNER JOIN dcsn ON tcsn.csn_docentry = dcsn.csn_docentry
-												INNER JOIN ctpa ON ctpa.tpa_id = dcsn.csn_typeagreement
-												INNER JOIN ccdp ON ccdp.cdp_id = dcsn.csn_paymentcondition
-												INNER JOIN dmpf ON dmpf.mpf_id = dcsn.csn_waypay
-												INNER JOIN cfev ON cfev.fev_id = dcsn.csn_shippingway
-												INNER JOIN cesc ON cesc.esc_id = dcsn.csn_status
-												WHERE  tcsn.csn_docentry = :csn_docentry";
+				tcsn.csn_enddate,
+				tcsn.csn_signaturedate,
+				tcsn.csn_description,
+				tcsn.csn_prjcode,
+				ctpa.tpa_description AS csn_typeagreement,
+				ccdp.cdp_description AS csn_paymentcondition,
+				dmpf.mpf_name AS csn_waypay,
+				cfev.fev_description AS csn_shippingway,
+				cesc.esc_description AS csn_status,
+				dcsn.csn_probabilitypercentage,
+				dcsn.csn_renewal,
+				dcsn.csn_remember
+				FROM tcsn
+				INNER JOIN dcsn ON tcsn.csn_docentry = dcsn.csn_docentry
+				INNER JOIN ctpa ON ctpa.tpa_id = dcsn.csn_typeagreement
+				INNER JOIN ccdp ON ccdp.cdp_id = dcsn.csn_paymentcondition
+				INNER JOIN dmpf ON dmpf.mpf_id = dcsn.csn_waypay
+				INNER JOIN cfev ON cfev.fev_id = dcsn.csn_shippingway
+				INNER JOIN cesc ON cesc.esc_id = dcsn.csn_status
+				WHERE  tcsn.csn_docentry = :csn_docentry";
 		$resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(
 			':csn_docentry' => $Data['sn1_docentry']
 		));
 
 		if (isset($copy[0])) {
+
+			
+			foreach ($copy as $key => $value) {
+
+				$artic = $this->pedeo->queryTable("select t1.*, dmum.dmu_code, dmtx.dmi_code, dmtx.dmi_rate_tax,
+					costo_por_almacen(:item, :almacen) as costo
+					from dmar as t1
+					inner join dmum on t1.dma_uom_sale = dmum.dmu_id 
+					inner join dmtx on t1.dma_tax_sales_code  = dmtx.dmi_code 
+					where t1.dma_item_code in (select t0.dma_item_asset from dmar as t0 where  t0.dma_item_code =:dma_item_code)"
+					, array(":dma_item_code" => $value['sn1_itemcode'], ":item" => $value['sn1_itemcode'], ":almacen" => $value['sn1_whscode']));
+
+				if ( isset($artic[0]) ) {
+					$copy[$key]['item_asociado'] = $artic[0]['dma_item_name'];
+					$copy[$key]['item_asociado_codigo'] = $artic[0]['dma_item_code'];
+					$copy[$key]['item_asociado_codigo_impuesto'] = $artic[0]['dmi_code'];
+					$copy[$key]['item_asociado_codigo_unidad'] = $artic[0]['dmu_code'];
+					$copy[$key]['item_asociado_codigo_tasa_impuesto'] = $artic[0]['dmi_rate_tax'];
+					$copy[$key]['item_asociado_menejainventario'] = $artic[0]['dma_item_inv'];
+					$copy[$key]['item_asociado_manejalote'] = $artic[0]['dma_lotes_code'];
+					$copy[$key]['item_asociado_manejaserial'] = $artic[0]['dma_series_code'];
+					$copy[$key]['item_asociado_costo'] = $artic[0]['costo'];
+				}
+
+
+				$sqlRetenciones = "SELECT crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret FROM fcrt 
+				WHERE crt_baseentry = :crt_baseentry 
+				and crt_linenum = :crt_linenum";
+
+				$resSelectRetenciones = $this->pedeo->queryTable($sqlRetenciones, array(
+					':crt_baseentry' => $Data['sn1_docentry'],
+					':crt_linenum' => $value['sn1_linenum'],
+				));
+	
+				$copy[$key]['retenciones'] = $resSelectRetenciones;
+				
+			}
 
 			$respuesta = array(
 				'error' => false,
@@ -1017,56 +1196,6 @@ class BpContracts extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
-	private function getUrl($data, $caperta)
-	{
-		$url = "";
-
-		if ($data == NULL) {
-
-			return $url;
-		}
-
-		if (!base64_decode($data, true)) {
-			return $url;
-		}
-
-		$ruta = '/var/www/html/' . $caperta . '/assets/img/anexos/';
-
-		$milliseconds = round(microtime(true) * 1000);
-
-
-		$nombreArchivo = $milliseconds . ".pdf";
-
-		touch($ruta . $nombreArchivo);
-
-		$file = fopen($ruta . $nombreArchivo, "wb");
-
-		if (!empty($data)) {
-
-			fwrite($file, base64_decode($data));
-
-			fclose($file);
-
-			$url = "assets/img/anexos/" . $nombreArchivo;
-		}
-
-		return $url;
-	}
-
-	private function buscarPosicion($llave, $inArray)
-	{
-		$res = 0;
-		for ($i = 0; $i < count($inArray); $i++) {
-			if ($inArray[$i] == "$llave") {
-				$res =  $i;
-				break;
-			}
-		}
-
-		return $res;
-	}
-
 	private function validateDate($fecha)
 	{
 		if (strlen($fecha) == 10 or strlen($fecha) > 10) {
@@ -1075,8 +1204,6 @@ class BpContracts extends REST_Controller
 			return false;
 		}
 	}
-
-
 
 	private function setAprobacion($Encabezado, $Detalle, $Carpeta, $prefijoe, $prefijod)
 	{
@@ -1411,4 +1538,623 @@ class BpContracts extends REST_Controller
 		//
 		return $this->response($respuesta);
 	}
+
+	// ACTUALIZAR CONDICIONES DEL CONTRATO DE SOCIOS
+	public function updateContractConditions_post() {
+
+
+		$Data = $this->post();
+
+		if(
+            !isset($Data['csn_docentry']) OR
+            !isset($Data['csn_doctype']) OR
+            !isset($Data['csn_typeagreement']) OR
+            !isset($Data['csn_paymentcondition']) OR
+			!isset($Data['csn_waypay']) OR
+			!isset($Data['csn_shippingway']) OR
+			!isset($Data['csn_probabilitypercentage']) OR
+			!isset($Data['csn_status']) OR
+			!isset($Data['csn_renewal']) OR
+			!isset($Data['csn_remember']) OR
+			!isset($Data['detail'])
+        ){
+
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'Faltan parametros'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+
+        }
+
+
+		$ContenidoDetalle = json_decode($Data['detail'], true);
+
+		if ( is_array($ContenidoDetalle) && count($ContenidoDetalle) > 0 ) {
+
+		} else {
+
+			$respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'No se encontro el detalle'
+            );
+
+            $this->response($respuesta);
+
+            return;
+
+		}
+
+		$this->pedeo->trans_begin();
+
+		$this->pedeo->deleteRow("DELETE FROM dcsn WHERE csn_docentry = :csn_docentry", array(":csn_docentry" => $Data['csn_docentry']));
+
+
+		// DATOS COMPLEMNETARIO DEL CONTRATOS
+		$sqlInsertDetail2 = "INSERT INTO dcsn(csn_docentry, csn_doctype, csn_typeagreement, csn_paymentcondition, csn_waypay, csn_shippingway, csn_probabilitypercentage, csn_status, csn_renewal, csn_remember)
+							VALUES (:csn_docentry, :csn_doctype, :csn_typeagreement, :csn_paymentcondition, :csn_waypay, :csn_shippingway, :csn_probabilitypercentage, :csn_status, :csn_renewal, :csn_remember)";
+
+		$resInsertDetail2 = $this->pedeo->insertRow($sqlInsertDetail2, array(
+
+			':csn_docentry' => $Data['csn_docentry'],
+			':csn_doctype' => isset($Data['csn_doctype']) ? $Data['csn_doctype'] : NULL,
+			':csn_typeagreement' =>  is_numeric($Data['csn_typeagreement']) ? $Data['csn_typeagreement'] : NULL,
+			':csn_paymentcondition' =>  is_numeric($Data['csn_paymentcondition']) ? $Data['csn_paymentcondition'] : NULL,
+			':csn_waypay' =>  is_numeric($Data['csn_waypay']) ? $Data['csn_waypay'] : NULL,
+			':csn_shippingway' =>  is_numeric($Data['csn_shippingway']) ? $Data['csn_shippingway'] : NULL,
+			':csn_probabilitypercentage' =>  is_numeric($Data['csn_probabilitypercentage']) ? $Data['csn_probabilitypercentage'] : NULL,
+			':csn_status' =>  is_numeric($Data['csn_status']) ? $Data['csn_status'] : NULL,
+			':csn_renewal' =>  is_numeric($Data['csn_renewal']) ? $Data['csn_renewal'] : NULL,
+			':csn_remember' =>  is_numeric($Data['csn_remember']) ? $Data['csn_remember'] : NULL
+
+		));
+
+
+		if (is_numeric($resInsertDetail2) && $resInsertDetail2 > 0) {
+
+			$respuesta = array (
+				'error'   => false,
+				'data' 	  => [],
+				'mensaje' => 'Condiciones actualizadas con exito'
+			);
+
+			
+		} else {
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => $resInsertDetail2,
+				'mensaje'	=> 'No se pudo actualizar la condición del contrato'
+			);
+
+			$this->response($respuesta);
+
+			return;
+
+		}
+
+		$datosCabera = "UPDATE tcsn SET  csn_docdate = :csn_docdate, csn_duedate = :csn_duedate, csn_duedev = :csn_duedev, csn_contacid = :csn_contacid, 
+				csn_comment = :csn_comment, csn_idadd = :csn_idadd, csn_adress = :csn_adress, csn_enddate = :csn_enddate, csn_signaturedate = :csn_signaturedate,
+				csn_description = :csn_description, csn_prjcode = :csn_prjcode, csn_internal_comments = :csn_internal_comments, csn_billingday = :csn_billingday,
+				csn_cleantotal = :csn_cleantotal, csn_weeklytoilets = :csn_weeklytoilets
+				WHERE csn_docentry = :csn_docentry";
+
+		$resDatosCabecera = $this->pedeo->updateRow($datosCabera, array(
+			
+			':csn_docdate' => $Data['csn_docdate'], 
+			':csn_duedate' => $Data['csn_duedate'], 
+			':csn_duedev' => $Data['csn_duedev'], 
+			':csn_contacid' => $Data['csn_contacid'], 
+			':csn_comment' => $Data['csn_comment'], 
+			':csn_idadd' => $Data['csn_idadd'], 
+			':csn_adress' => $Data['csn_adress'], 
+			':csn_enddate' => $Data['csn_enddate'], 
+			':csn_signaturedate' => $Data['csn_signaturedate'], 
+			':csn_description' => $Data['csn_description'], 
+			':csn_prjcode' => $Data['csn_prjcode'], 
+			':csn_internal_comments' => $Data['csn_internal_comments'], 
+			':csn_billingday' => $Data['csn_billingday'],
+			':csn_cleantotal' => $Data['csn_cleantotal'],
+			':csn_docentry' => $Data['csn_docentry'],
+			':csn_weeklytoilets' => $Data['csn_weeklytoilets']
+		));
+
+		if ( is_numeric($resDatosCabecera) &&  $resDatosCabecera == 1 ) {
+
+			$respuesta = array (
+				'error'   => false,
+				'data' 	  => [],
+				'mensaje' => 'Contrato actualizado con exito'
+			);
+		
+		} else {
+
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => $resInsertDetail2,
+				'mensaje'	=> 'No se pudo actualizar el contrato'
+			);
+
+			return $this->response($respuesta);
+			
+		}
+
+		foreach ($ContenidoDetalle as $key => $detail) {
+			
+			$sqlUpdate = "UPDATE csn1 set  sn1_clean_quantity = :sn1_clean_quantity, sn1_enabled = :sn1_enabled WHERE sn1_id = :sn1_id";
+
+
+			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+				
+				':sn1_id' => $detail['sn1_id'], 
+				':sn1_clean_quantity' => $detail['sn1_clean_quantity'], 
+				':sn1_enabled' => $detail['sn1_enabled']
+			));
+
+			if ( is_numeric($resUpdate) &&  $resUpdate == 1 ) {
+
+				$respuesta = array (
+					'error'   => false,
+					'data' 	  => [],
+					'mensaje' => 'Contrato actualizado con exito'
+				);
+			
+			} else {
+	
+				$this->pedeo->trans_rollback();
+	
+				$respuesta = array(
+					'error'   => true,
+					'data' => $resInsertDetail2,
+					'mensaje'	=> 'No se pudo actualizar el contrato'
+				);
+	
+				return $this->response($respuesta);
+				
+			}
+		}
+
+		$this->pedeo->trans_commit();
+
+
+		$this->response($respuesta);
+
+	}
+
+	// OBTENER CONDICIONES DE CONTRATO
+	public function getContractConditions_post() {
+
+
+		$Data = $this->post();
+
+		if(
+			!isset($Data['csn_docentry'])
+		){
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'Faltan parametros'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+
+		}
+
+		$sqlSelect = "SELECT * FROM dcsn WHERE csn_docentry = :csn_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array (
+
+			':csn_docentry' => $Data['csn_docentry']
+		));
+
+
+		if ( isset($resSelect[0]) ) {
+
+			$respuesta = array (
+				'error'   => false,
+				'data' 	  => $resSelect,
+				'mensaje' => ''
+			);
+
+			
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' 	  => [],
+				'mensaje' => 'Busqueda sin resultados'
+			);
+
+		}
+
+
+		$this->response($respuesta);
+
+	}
+
+	// MOSTRAR CONTRATOS VS FACTURAS
+	public function getContractInvoice_post(){
+
+		$Data = $this->post();
+
+		$complementoSQL = "";
+
+
+		if ( $Data['s_f'] == 1 ){
+
+			$complementoSQL = " AND dvf_docdate is null ";
+
+			if( isset($Data['fi']) && !empty($Data['fi']) ) {
+
+				if( isset($Data['ff']) && !empty($Data['ff']) ) {
+	
+					$complementoSQL.= " AND csn_docdate between '".$Data['fi']."' AND '".$Data['ff']."' ";
+	
+				}
+			}
+
+		}else{
+
+			if( isset($Data['fi']) && !empty($Data['fi']) ) {
+
+				if( isset($Data['ff']) && !empty($Data['ff']) ) {
+	
+					if ( $Data['f_c'] == 1 ){
+						$complementoSQL.= " AND csn_docdate between '".$Data['fi']."' AND '".$Data['ff']."' ";
+	
+					}else{
+						$complementoSQL.= " AND dvf_docdate between '".$Data['fi']."' AND '".$Data['ff']."' ";
+					}
+				
+				}
+			}
+		}
+
+		
+
+		$sqlSelect = "SELECT csn_docnum as numero_contrato,
+					csn_docentry as codigo_contrato,
+					csn_cardcode as identificacion_cliente,
+					csn_cardname  as nombre_cliente,
+					dvf_docnum as numero_factura,
+					dvf_docentry as codigo_factura,
+					dvf_docdate as fecha_factura
+					FROM tcsn
+					LEFT JOIN dvfv  on dvf_baseentry = csn_docentry and dvf_basetype = csn_doctype 
+					INNER JOIN responsestatus on responsestatus.id = tcsn.csn_docentry and responsestatus.tipo = tcsn.csn_doctype 
+					WHERE csn_doctype = 32
+					AND responsestatus.estado = '".$Data['estado']."'
+					AND tcsn.business = ".$Data['business']."
+					".$complementoSQL."";
+
+					
+		
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+
+		if ( isset($resSelect[0]) ) {
+
+			$respuesta = array (
+				'error'   => false,
+				'data' 	  => $resSelect,
+				'mensaje' => ''
+			);
+
+			
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' 	  => [],
+				'mensaje' => 'Busqueda sin resultados'
+			);
+
+		}
+
+
+		$this->response($respuesta);
+
+	}
+
+	// MOSTRAR VISTA PREVIA DE LOS CONTRATOS A FACTURAR AUTOMATICAMENTE
+	public function getContratToInvoice_post() {
+		$Data = $this->post();
+
+
+		$sqlSelect = "SELECT tcsn.*,
+					case 
+						when csn_billingday is null OR csn_billingday = 0 then 0
+						else 1
+					end as sefactura
+					FROM tcsn
+					inner join responsestatus on csn_docentry = id and csn_doctype = tipo
+					inner join tbed on bed_docentry = csn_docentry and bed_doctype = csn_doctype
+					inner join dcsn on  tcsn.csn_docentry = dcsn.csn_docentry
+					WHERE tcsn.csn_cardcode in (select dmsn.dms_card_code  
+					FROM dmsn inner join dmgs on dmsn.dms_group_num = dmgs.mgs_id::text where dmgs.mgs_code != '99' and dmsn.dms_card_type  = '1')
+					AND responsestatus.estado = 'Abierto'
+					AND tcsn.csn_doctype = 32
+					AND dcsn.csn_typeagreement = 3";
+		
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+	
+
+		foreach ($resSelect as $key => $value) {
+
+
+			if ($value['sefactura'] == 1) {
+
+				$valido = false;
+				$des = 0;
+				$acu = 0;
+				while (!$valido) {
+
+					$fecha = date("Y").'-'.date("m").'-'.str_pad(( $value['csn_billingday'] - $des ).'', 2, '0', STR_PAD_LEFT);
+
+					if ( self::esFechaValida($fecha) ) {
+
+						$resSelect[$key]['comentariosistema'] = "La Facturación de este documento se ejecutara de forma automatica en el dia: ".$fecha;
+						$resSelect[$key]['fechafacturacion']  = $fecha;
+						$valido = true;
+
+					} else {
+
+						$des++;
+					}
+
+					$acu++;
+
+					if ( $acu > 9 ) {
+
+						$valido = true;
+						$resSelect[$key]['comentariosistema'] = "No es posible facturar este documento, no posee el dia de factura";
+						$resSelect[$key]['fechafacturacion']  = "";
+					}
+					
+				}
+
+			} else {
+
+				$resSelect[$key]['comentariosistema'] = "No es posible facturar este documento, no posee el dia de factura";
+				$resSelect[$key]['fechafacturacion']  = "";
+			}
+
+
+		}
+
+		if ( isset($resSelect[0]) ) {
+
+			$respuesta = array (
+				'error'   => false,
+				'data' 	  => $resSelect,
+				'mensaje' => ''
+			);
+
+			
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' 	  => [],
+				'mensaje' => 'Busqueda sin resultados'
+			);
+
+		}
+
+
+		$this->response($respuesta);
+	}
+
+	public function updateContratRetentions_post(){
+		$Data = $this->post();
+
+		if (
+			!isset($Data['csn_docentry']) or
+			!isset($Data['csn_doctype']) or
+			!isset($Data['csn_typeagreement']) or
+			!isset($Data['csn_paymentcondition']) or
+			!isset($Data['csn_waypay']) or
+			!isset($Data['csn_shippingway']) or
+			!isset($Data['csn_probabilitypercentage']) or
+			!isset($Data['csn_status']) or
+			!isset($Data['csn_renewal']) or
+			!isset($Data['csn_remember']) or
+			!isset($Data['detail'])
+		) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'Faltan parametros'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$ContenidoDetalle = json_decode($Data['detail'], true);
+		
+		if ( is_array($ContenidoDetalle) && count($ContenidoDetalle) > 0 ) {
+
+		} else {
+
+			$respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' => 'No se encontro el detalle'
+            );
+
+            $this->response($respuesta);
+
+            return;
+
+		}
+
+		$sqlSelect = "SELECT * from tcsn where csn_docentry =:csn_docentry and business = :business and branch =:branch";
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			":csn_docentry" => $Data['csn_docentry'],
+			":business" => $Data['business'],
+			":branch" => $Data['branch']
+		));
+
+		if (!isset($resSelect[0])) {
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No existe el contrato asociado'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$this->pedeo->trans_begin();
+
+		$updateContrat = "UPDATE tcsn SET 
+		csn_totalret = :csn_totalret,
+		csn_totalretiva = :csn_totalretiva,
+		csn_doctotal = :csn_doctotal,
+		csn_baseamnt = :csn_baseamnt,
+		csn_taxtotal = :csn_taxtotal,
+		csn_discprofit = :csn_discprofit,
+		csn_discount = :csn_discount,
+		csn_taxtotal_ad = :csn_taxtotal_ad
+		where 
+		csn_docentry =:csn_docentry";
+
+
+		$resUpdateContrat = $this->pedeo->updateRow($updateContrat, array(
+			":csn_totalret" => $Data['csn_totalret'],
+			":csn_totalretiva" => $Data['csn_totalretiva'],
+			":csn_doctotal" => $Data['csn_doctotal'],
+			":csn_baseamnt" => $Data['csn_baseamnt'],
+			":csn_taxtotal" => $Data['csn_taxtotal'],
+			":csn_discprofit" => $Data['csn_discprofit'],
+			":csn_discount" => $Data['csn_discount'],
+			":csn_taxtotal_ad" => $Data['csn_taxtotal_ad'],
+			":csn_docentry" => $Data['csn_docentry'],
+		));
+
+		if (is_numeric($resUpdateContrat) &&  $resUpdateContrat == 1) {
+
+			$this->pedeo->DeleteRow(
+				"DELETE FROM fcrt where crt_baseentry = :crt_baseentry and crt_basetype =:crt_basetype",
+				array(
+					':crt_baseentry' => $Data['csn_docentry'],
+					':crt_basetype'  => $Data['csn_doctype']
+				)
+			);
+
+			
+
+			foreach ($ContenidoDetalle as $key => $detail) {
+				if (isset($detail['detail'])) {
+					$retenciones = $detail['detail'];
+					foreach ($retenciones as $key => $value) {
+						$sqlInsertRetenciones = "INSERT INTO fcrt(crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret)
+											VALUES (:crt_baseentry, :crt_basetype, :crt_typert, :crt_basert, :crt_profitrt, :crt_totalrt, :crt_base, :crt_type, :crt_linenum, :crt_codret)";
+
+						$resInsertRetenciones = $this->pedeo->insertRow($sqlInsertRetenciones, array(
+
+							':crt_baseentry' => $Data['csn_docentry'],
+							':crt_basetype'  => $Data['csn_doctype'],
+							':crt_typert'    => $value['crt_typert'],
+							':crt_basert'    => $value['crt_basert'],
+							':crt_profitrt'  => $value['crt_profitrt'],
+							':crt_totalrt'   => $value['crt_totalrt'],
+							':crt_base'		 => $value['crt_base'],
+							':crt_type'		 => $value['crt_type'],
+							':crt_linenum'   => $detail['sn1_linenum'],
+							':crt_codret'	 => $value['crt_codret']
+						));
+
+						if (is_numeric($resInsertRetenciones) && $resInsertRetenciones > 0) {
+						} else {
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data'  => array(),
+								'mensaje' => 'No se puede registrar retencion'
+							);
+
+							$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+							return;
+						}
+					}
+				}
+			}
+			$this->pedeo->trans_commit();
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => [],
+				'mensaje' => 'Contrato actualizado con exito'
+			);
+		} else {
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se pudo actualizar contrato'
+			);
+
+			return;
+		}
+
+		$this->response($respuesta);
+
+	}
+
+
+
+	// VALIDA SI UNA FECHA ESTA EN EL CALENDARIO
+	private static function esFechaValida($fecha) {
+		// Separa la fecha en componentes (día, mes, año)
+		$componentes = explode('-', $fecha);
+	
+		// Verifica si la fecha tiene el formato correcto (YYYY-MM-DD)
+		if (count($componentes) !== 3) {
+			return false;
+		}
+	
+		$año = (int)$componentes[0];
+		$mes = (int)$componentes[1];
+		$día = (int)$componentes[2];
+	
+		// Usa checkdate para verificar si la fecha es válida
+		return checkdate($mes, $día, $año);
+	}
+
+	private function buscarPosicion($llave, $inArray)
+	{
+		$res = 0;
+		for ($i = 0; $i < count($inArray); $i++) {
+			if ($inArray[$i] == "$llave") {
+				$res =  $i;
+				break;
+			}
+		}
+
+		return $res;
+	}
+
+
+
 }

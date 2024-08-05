@@ -34,7 +34,6 @@ class EstadoCartera extENDs REST_Controller {
 		$DECI_MALES =  $this->generic->getDecimals();
 
     	$Data = $this->post();
-	
 		$totalfactura = 0;
 
 		$formatter = new NumeroALetras();
@@ -109,22 +108,26 @@ class EstadoCartera extENDs REST_Controller {
 		'' retencion,
 		get_tax_currency(dvfv.dvf_currency,dvfv.dvf_docdate) as tasa_dia,
 		CASE
-		WHEN ABS('".$Data['fecha']."' - dvfv.dvf_duedate) >=0 and ABS('".$Data['fecha']."' - dvfv.dvf_duedate) <=30 then
-		get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-		,get_localcur()) ELSE 0 END uno_treinta,
-		CASE WHEN ABS('".$Data['fecha']."' - dvfv.dvf_duedate)>=31 and ABS('".$Data['fecha']."' - dvfv.dvf_duedate)
-		<=60 then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)
-		,get_localcur()) ELSE 0 END treinta_uno_secenta,
-		 CASE WHEN ABS('".$Data['fecha']."' - dvfv.dvf_duedate)>=61 and ABS('".$Data['fecha']."' -	dvfv.dvf_duedate) <=90 then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) -	(mac1.ac1_ven_credit) ,get_localcur())
-		ELSE 0 END secenta_uno_noventa,
-		CASE WHEN ABS('".$Data['fecha']."' -
-		dvfv.dvf_duedate)>=91
-		then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_ven_debit) -	(mac1.ac1_ven_credit) ,get_localcur())
+		WHEN '".$Data['fecha']."' <= dvfv.dvf_duedate THEN get_dynamic_conversion(:currency, get_localcur(), dvf_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
 		ELSE 0
-		END mayor_noventa,
+		END AS sin_vencer,
+		CASE
+		WHEN '".$Data['fecha']."' > dvfv.dvf_duedate AND '".$Data['fecha']."' <= dvfv.dvf_duedate + INTERVAL '30 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), dvf_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS uno_treinta,
+		CASE
+		WHEN '".$Data['fecha']."' > dvfv.dvf_duedate + INTERVAL '30 DAY' AND '".$Data['fecha']."' <= dvfv.dvf_duedate + INTERVAL '60 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), dvf_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS treinta_uno_secenta,
+		CASE
+		WHEN '".$Data['fecha']."' > dvfv.dvf_duedate + INTERVAL '60 DAY' AND '".$Data['fecha']."' <= dvfv.dvf_duedate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), dvf_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS secenta_uno_noventa,
+		CASE
+		WHEN '".$Data['fecha']."' > dvfv.dvf_duedate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), dvf_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS mayor_noventa,
 		'' as comentario_asiento
-
-
 		from mac1
 		inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 		inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
@@ -133,7 +136,6 @@ class EstadoCartera extENDs REST_Controller {
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ) > 0 and dmsn.dms_card_type = '1'
 		".$grupo."
 		and dvf_docdate <= '".$Data['fecha']."'
-
 		union all
 		select distinct
 		dmdt.mdt_docname,
@@ -160,22 +162,26 @@ class EstadoCartera extENDs REST_Controller {
 		'' retencion,
 		get_tax_currency(gbpr.bpr_currency,gbpr.bpr_docdate) as tasa_dia,
 		CASE
-		WHEN ABS('".$Data['fecha']."' - gbpr.bpr_docdate) >=0 and ABS('".$Data['fecha']."' - gbpr.bpr_docdate) <=30 then
-		get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,(mac1.ac1_ven_debit) -
-		(mac1.ac1_ven_credit),get_localcur()) ELSE 0 END uno_treinta,
-		CASE WHEN ABS('".$Data['fecha']."' - gbpr.bpr_docdate)>=31	and ABS('".$Data['fecha']."' - gbpr.bpr_docdate) <=60 then
-		get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,(mac1.ac1_ven_debit) -
-		(mac1.ac1_ven_credit),get_localcur())
-		ELSE 0 END treinta_uno_secenta,
-		CASE WHEN ABS('".$Data['fecha']."' -	gbpr.bpr_docdate)>=61 and ABS('".$Data['fecha']."' - gbpr.bpr_docdate) <=90 then
-		get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,(mac1.ac1_ven_debit) -
-		(mac1.ac1_ven_credit),get_localcur())
-		ELSE 0 END secenta_uno_noventa, CASE WHEN ABS('".$Data['fecha']."' -	gbpr.bpr_docdate)>=91
-		then get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,(mac1.ac1_ven_debit) -	(mac1.ac1_ven_credit),get_localcur())
+		WHEN '".$Data['fecha']."' <= gbpr.bpr_docdate THEN get_dynamic_conversion(:currency, get_localcur(), bpr_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
 		ELSE 0
-		END mayor_noventa,
+		END AS sin_vencer,
+		CASE
+		WHEN '".$Data['fecha']."' > gbpr.bpr_docdate AND '".$Data['fecha']."' <= gbpr.bpr_docdate + INTERVAL '30 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), bpr_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS uno_treinta,
+		CASE
+		WHEN '".$Data['fecha']."' > gbpr.bpr_docdate + INTERVAL '30 DAY' AND '".$Data['fecha']."' <= gbpr.bpr_docdate + INTERVAL '60 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), bpr_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS treinta_uno_secenta,
+		CASE
+		WHEN '".$Data['fecha']."' > gbpr.bpr_docdate + INTERVAL '60 DAY' AND '".$Data['fecha']."' <= gbpr.bpr_docdate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), bpr_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS secenta_uno_noventa,
+		CASE
+		WHEN '".$Data['fecha']."' > gbpr.bpr_docdate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), bpr_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS mayor_noventa,
 		'' as comentario_asiento
-
 		from mac1
 		inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 		inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
@@ -184,9 +190,7 @@ class EstadoCartera extENDs REST_Controller {
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '1'
 		".$grupo."
 		and bpr_docdate <= '".$Data['fecha']."'
-
 		union all
-
 		select distinct
 		dmdt.mdt_docname,
 		mac1.ac1_font_key,
@@ -214,20 +218,26 @@ class EstadoCartera extENDs REST_Controller {
 		'' retencion,
 		get_tax_currency(dvnc.vnc_currency,dvnc.vnc_docdate) as tasa_dia,
 		CASE
-		WHEN ABS('".$Data['fecha']."' - dvnc.vnc_duedate) >=0 and ABS('".$Data['fecha']."' - dvnc.vnc_duedate) <=30 then
-		get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,(mac1.ac1_ven_debit) -	(mac1.ac1_ven_credit),get_localcur())
-		ELSE 0 END uno_treinta,
-		CASE WHEN ABS('".$Data['fecha']."' - dvnc.vnc_duedate)>=31 and ABS('".$Data['fecha']."' - dvnc.vnc_duedate) <=60 then
-		get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) ELSE 0 END treinta_uno_secenta,
-		 CASE WHEN ABS('".$Data['fecha']."' - dvnc.vnc_duedate)>=61 and ABS('".$Data['fecha']."' - dvnc.vnc_duedate) <=90 then
-		get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,(mac1.ac1_ven_debit) -	(mac1.ac1_ven_credit),get_localcur()) ELSE 0 END secenta_uno_noventa,
-		CASE WHEN ABS(	'".$Data['fecha']."' - dvnc.vnc_duedate)>=91
-		then
-		get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit),get_localcur())
-		ELSE 0
-		END mayor_noventa,
+			WHEN '".$Data['fecha']."' <= dvnc.vnc_duedate THEN get_dynamic_conversion(:currency, get_localcur(), vnc_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS sin_vencer,
+		CASE
+			WHEN '".$Data['fecha']."' > dvnc.vnc_duedate AND '".$Data['fecha']."' <= dvnc.vnc_duedate + INTERVAL '30 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vnc_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS uno_treinta,
+		CASE
+			WHEN '".$Data['fecha']."' > dvnc.vnc_duedate + INTERVAL '30 DAY' AND '".$Data['fecha']."' <= dvnc.vnc_duedate + INTERVAL '60 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vnc_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS treinta_uno_secenta,
+		CASE
+			WHEN '".$Data['fecha']."' > dvnc.vnc_duedate + INTERVAL '60 DAY' AND '".$Data['fecha']."' <= dvnc.vnc_duedate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vnc_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS secenta_uno_noventa,
+		CASE
+			WHEN '".$Data['fecha']."' > dvnc.vnc_duedate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vnc_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS mayor_noventa,
 		'' comentario_asiento
-
 		from mac1
 		inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 		inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
@@ -237,7 +247,6 @@ class EstadoCartera extENDs REST_Controller {
 		where ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0 and dmsn.dms_card_type = '1'
 		".$grupo."
 		and vnc_docdate <= '".$Data['fecha']."'
-
 		union all
 		select distinct
 		dmdt.mdt_docname,
@@ -267,22 +276,26 @@ class EstadoCartera extENDs REST_Controller {
 		'' retencion,
 		get_tax_currency(dvnd.vnd_currency,dvnd.vnd_docdate) as tasa_dia,
 		CASE
-		WHEN ABS('".$Data['fecha']."' - dvnd.vnd_duedate) >=0 and ABS('".$Data['fecha']."' - dvnd.vnd_duedate) <=30
-		 then get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,(mac1.ac1_ven_debit)	- (mac1.ac1_ven_credit),get_localcur())
-		ELSE 0 END uno_treinta,
-		CASE WHEN ABS(	'".$Data['fecha']."' - dvnd.vnd_duedate)>=31 and ABS('".$Data['fecha']."' - dvnd.vnd_duedate) <=60 then
-		get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
-		 ELSE 0 END treinta_uno_secenta,
-		CASE WHEN ABS('".$Data['fecha']."' - dvnd.vnd_duedate)>=61 and ABS('".$Data['fecha']."' - dvnd.vnd_duedate)	<=90 then
-		get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit),get_localcur())
-		ELSE 0 END secenta_uno_noventa,
-		CASE WHEN ABS('".$Data['fecha']."' - dvnd.vnd_duedate)>=91
-		then
-		get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
-		ELSE 0
-		END mayor_noventa,
+			WHEN '".$Data['fecha']."' <= dvnd.vnd_duedate THEN get_dynamic_conversion(:currency, get_localcur(), vnd_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS sin_vencer,
+		CASE
+			WHEN '".$Data['fecha']."' > dvnd.vnd_duedate AND '".$Data['fecha']."' <= dvnd.vnd_duedate + INTERVAL '30 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vnd_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS uno_treinta,
+		CASE
+			WHEN '".$Data['fecha']."' > dvnd.vnd_duedate + INTERVAL '30 DAY' AND '".$Data['fecha']."' <= dvnd.vnd_duedate + INTERVAL '60 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vnd_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS treinta_uno_secenta,
+		CASE
+			WHEN '".$Data['fecha']."' > dvnd.vnd_duedate + INTERVAL '60 DAY' AND '".$Data['fecha']."' <= dvnd.vnd_duedate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vnd_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS secenta_uno_noventa,
+		CASE
+			WHEN '".$Data['fecha']."' > dvnd.vnd_duedate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vnd_docdate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+			ELSE 0
+		END AS mayor_noventa,
 		'' as comentario_asiento
-
 		from mac1
 		inner join dacc on mac1.ac1_account = dacc.acc_code and acc_businessp = '1'
 		inner join dmdt on mac1.ac1_font_type = dmdt.mdt_doctype
@@ -293,9 +306,7 @@ class EstadoCartera extENDs REST_Controller {
 		dmsn.dms_card_type = '1'
 		".$grupo."
 		and vnd_docdate <= '".$Data['fecha']."'
-
 		union all
-
 		select
 		dmdt.mdt_docname,
 		mac1.ac1_font_key,
@@ -309,7 +320,7 @@ class EstadoCartera extENDs REST_Controller {
 		mac1.ac1_account as cuenta,
 		tmac.mac_currency,
 		'".$Data['fecha']."' fechacorte,
-		CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
+		'".$Data['fecha']."' - tmac.mac_doc_duedate dias_atrasado,
 		tmac.mac_comments,
 		tmac.mac_currency,
 		mac_trans_id as dvf_docentry,
@@ -334,24 +345,26 @@ class EstadoCartera extENDs REST_Controller {
 		'' retencion,
 		get_tax_currency(tmac.mac_currency,tmac.mac_doc_date) as tasa_dia,
 		CASE
-		WHEN ABS('".$Data['fecha']."' - tmac.mac_doc_duedate) >=0 and ABS('".$Data['fecha']."' - tmac.mac_doc_duedate) <= 30 then
-		get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
-		 ELSE 0 END uno_treinta,
-		CASE WHEN ABS('".$Data['fecha']."' - tmac.mac_doc_duedate)>=31 and ABS('".$Data['fecha']."' - tmac.mac_doc_duedate) <=60 then
-		get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit),get_localcur())
-		 ELSE 0
-		 END treinta_uno_secenta,
-		CASE WHEN ABS('".$Data['fecha']."' - tmac.mac_doc_duedate) >= 61 and ABS('".$Data['fecha']."' - tmac.mac_doc_duedate) <= 90 then
-		get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur()) ELSE 0 END
-		secenta_uno_noventa,
-		CASE WHEN ABS('".$Data['fecha']."' - tmac.mac_doc_duedate) >= 91
-		then
-		get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) ,get_localcur())
+		WHEN '".$Data['fecha']."' <= tmac.mac_doc_duedate THEN get_dynamic_conversion(:currency, get_localcur(), mac_doc_duedate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
 		ELSE 0
-		END mayor_noventa,
+		END AS sin_vencer,
+		CASE
+		WHEN '".$Data['fecha']."' > tmac.mac_doc_duedate AND '".$Data['fecha']."' <= tmac.mac_doc_duedate + INTERVAL '30 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), tmac.mac_doc_duedate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS uno_treinta,
+		CASE
+		WHEN '".$Data['fecha']."' > tmac.mac_doc_duedate + INTERVAL '30 DAY' AND '".$Data['fecha']."' <= tmac.mac_doc_duedate + INTERVAL '60 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), tmac.mac_doc_duedate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS treinta_uno_secenta,
+		CASE
+		WHEN '".$Data['fecha']."' > tmac.mac_doc_duedate + INTERVAL '60 DAY' AND '".$Data['fecha']."' <= tmac.mac_doc_duedate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), tmac.mac_doc_duedate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS secenta_uno_noventa,
+		CASE
+		WHEN '".$Data['fecha']."' > tmac.mac_doc_duedate + INTERVAL '90 DAY' AND '".$Data['fecha']."' <= tmac.mac_doc_duedate + INTERVAL '120 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), tmac.mac_doc_duedate, (mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur())
+		ELSE 0
+		END AS mayor_noventa,
 		ac1_comments as comentario_asiento
-
-
 		from mac1
 		inner join dacc on mac1.ac1_account = dacc.acc_code and
 		acc_businessp = '1'
@@ -364,23 +377,117 @@ class EstadoCartera extENDs REST_Controller {
 		and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
 		".$grupo."
 		and mac_doc_date <= '".$Data['fecha']."'
+		union all
+		select
+		dmdt.mdt_docname,
+		dvrc.vrc_docentry as ac1_font_key,
+		dvrc.vrc_cardcode as codigoproveedor,
+		dvrc.vrc_cardname as NombreCliente,
+		dacc.acc_code as cuenta,
+		dvrc.vrc_currency ,
+		'".$Data['fecha']."' fechacorte,
+		'".$Data['fecha']."' - dvrc.vrc_docdate dias_atrasado,
+		dvrc.vrc_comment ,
+		dvrc.vrc_currency,
+		dvrc.vrc_docentry  as dvf_docentry,
+		dvrc.vrc_docnum  as docnum,
+		dvrc.vrc_docdate  as fecha_doc,
+		dvrc.vrc_duedate  as fecha_ven,
+		dvrc.vrc_docnum as id_origen,
+		47 as numtype,
+		mdt_docname as tipo,
+		dvrc.vrc_total_c as  total_doc,
+		get_dynamic_conversion(:currency,get_localcur(),dvrc.vrc_docdate, dvrc.vrc_total_c,get_localcur()) as saldo_venc,
+		'' retencion,
+		get_tax_currency(dvrc.vrc_currency  ,dvrc.vrc_docdate) as tasa_dia,
+		CASE
+		WHEN '".$Data['fecha']."' <= dvrc.vrc_duedate THEN get_dynamic_conversion(:currency, get_localcur(), vrc_docdate, dvrc.vrc_total_c, get_localcur())
+		ELSE 0
+		END AS sin_vencer,
+		CASE
+		WHEN '".$Data['fecha']."' > dvrc.vrc_duedate AND '".$Data['fecha']."' <= dvrc.vrc_duedate + INTERVAL '30 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vrc_docdate, dvrc.vrc_total_c , get_localcur())
+		ELSE 0
+		END AS uno_treinta,
+		CASE
+		WHEN '".$Data['fecha']."' > dvrc.vrc_duedate + INTERVAL '30 DAY' AND '".$Data['fecha']."' <= dvrc.vrc_duedate + INTERVAL '60 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vrc_docdate, dvrc.vrc_total_c, get_localcur())
+		ELSE 0
+		END AS treinta_uno_secenta,
+		CASE
+		WHEN '".$Data['fecha']."' > dvrc.vrc_duedate + INTERVAL '60 DAY' AND '".$Data['fecha']."' <= dvrc.vrc_duedate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vrc_docdate, dvrc.vrc_total_c , get_localcur())
+		ELSE 0
+		END AS secenta_uno_noventa,
+		CASE
+		WHEN '".$Data['fecha']."' > dvrc.vrc_duedate + INTERVAL '90 DAY' THEN get_dynamic_conversion(:currency, get_localcur(), vrc_docdate, dvrc.vrc_total_c, get_localcur())
+		ELSE 0
+		END AS mayor_noventa,
+		dvrc.vrc_comment as comentario_asiento
+		from dvrc
+		inner join dmdt on dvrc.vrc_doctype = dmdt.mdt_doctype
+		inner join dmsn on trim(dvrc.vrc_cardcode) = trim(dmsn.dms_card_code) 
+		inner join dmgs on dmsn.dms_group_num = dmgs.mgs_id::text 
+		inner join dacc on dmgs.mgs_acct = dacc.acc_code and acc_businessp = '1'
+		inner join responsestatus on dvrc.vrc_docentry = responsestatus.id and dvrc.vrc_doctype = responsestatus.tipo 
+		where dvrc.vrc_docdate <= '".$Data['fecha']."'
+		".$grupo."
+		and responsestatus.estado = 'Abierto'
+		and dmsn.dms_card_type = '1'
 		order by NombreCliente asc";
 
-		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta,
-		array(
-			":currency" =>$Data['currency']));
+		$contenidoestadocuenta = $this->pedeo->queryTable($sqlestadocuenta, array(":currency" => $Data['currency']));
 
 		// print_r($sqlestadocuenta);exit();die();
-		if(!isset($contenidoestadocuenta[0])){
+		// if(!isset($contenidoestadocuenta[0])){
+		// 	$respuesta = array(
+		// 		 'error' => true,
+		// 		 'data'  => $contenidoestadocuenta,
+		// 		 'mensaje' =>'No tiene pagos realizados'
+		// 	);
+
+		// 	$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+		// 	return;
+		// }
+
+		if ( isset($Data['formato']) && $Data['formato']  == 'EXCEL') {
+
+			$query = str_replace(":currency", "'".$Data['currency']."'", $sqlestadocuenta);
+
 			$respuesta = array(
-				 'error' => true,
-				 'data'  => $contenidoestadocuenta,
-				 'mensaje' =>'No tiene pagos realizados'
+
+				'error' => false,
+				'data'  => ['sql' => $query, 'equivalence' => array(
+					"mdt_docname"=> "Nombre Documento",
+					"codigocliente"=> "Codigo Cliente",
+					"nombrecliente"=> "Nombre Cliente",
+					"cuenta"=> "Cuenta Contable",
+					"monedadocumento"=> "Moneda Documento",
+					"fechacorte"=> "Fecha de Corte",
+					"dias"=> "Dias",
+					"dvf_comment"=> "Comentario",
+					"dvf_docnum"=> "Numero de Documento",
+					"fechadocumento"=> "Fecha de Documento",
+					"fechavencimiento"=> "Fecha de Vencimiento",
+					"tipo"=> "Nombre Documento",
+					"totalfactura"=> "Valor total del Documento",
+					"saldo"=> "Saldo",
+					"retencion"=> "Valor Retencion",
+					"tasa_dia"=> "Tasa del Dia",
+					"sin_vencer"=> "Valor sin Vencer",
+					"uno_treinta"=> "Valor a 30 dias",
+					"treinta_uno_secenta"=> "Valor 31 a 60 dias",
+					"secenta_uno_noventa"=> "Valor 61 a 90 dias",
+					"mayor_noventa"=> "Valor mayor a 90 dias",
+					"ac1_font_key"=> "Id Documento",
+					"dvf_currency"=> "Simbolo Moneda",
+					"dvf_docentry"=> "Id Autoincremental",
+					"numerodocumento"=> "# Doc",
+					"numtype"=> "Id Tipo",
+					"comentario_asiento"=> "Comentario Asiento"
+				)],
+				'mensaje' =>''
 			);
 
-			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
-
-			return;
+			return $this->response($respuesta);
 		}
 
         $cliente = "";
@@ -392,6 +499,8 @@ class EstadoCartera extENDs REST_Controller {
 		$gCliente  = "";
 		$hacer = true;
 
+
+		$total_sin_vencer = 0;
 		$total_0_30 = 0;
 		$total_30_60 = 0;
 		$total_60_90 = 0;
@@ -416,7 +525,7 @@ class EstadoCartera extENDs REST_Controller {
 			}else{
 				$cliente = $value['codigocliente'];
 
-				$gCliente = '<th class=""><b>RIF:</b> '.$value['codigocliente'].'</th>
+				$gCliente = '<th class=""><b>NIT:</b> '.$value['codigocliente'].'</th>
 										 <th class=""><b>CLIENTE:</b> '.$value['nombrecliente'].'</th>
 										 <th class=""><b>FECHA CORTE:</b> '.$this->dateformat->Date($value['fechacorte']).'</th>
 
@@ -435,6 +544,7 @@ class EstadoCartera extENDs REST_Controller {
 			</table>';
 
 			$totaldetalle = "";
+			$detail_sin_vencer = 0;
 			$detail_0_30 = 0;
 			$detail_30_60 = 0;
 			$detail_60_90 = 0;
@@ -443,14 +553,15 @@ class EstadoCartera extENDs REST_Controller {
 			if($hacer){
 
 				$cabecera = '
-									<th class=""><b>Tipo Documento</b></th>
-									<th class=""><b>Numero Documento</b></th>
-									<th class=""><b>F. Documento</b></th>
-									<th class=""><b>Total Documento</b></th>
-									<th class=""><b>F. Ven Documento</b></th>
+									<th class=""><b>Tipo Doc.</b></th>
+									<th class=""><b># Doc.</b></th>
+									<th class=""><b>F. Doc.</b></th>
+									<th class=""><b>T. Doc.</b></th>
+									<th class=""><b>F. V. Doc.</b></th>
 									<th class=""><b>F. Corte</b></th>
-									<th class=""><b>referencia</b></th>
-									<th class=""><b>Dias Vencidos</b></th>
+									<th class=""><b>Ref.</b></th>
+									<th class=""><b>Dias V.</b></th>
+									<th class=""><b>S.V.</b></th>
 									<th class=""><b>0-30</b></th>
 									<th class=""><b>31-60</b></th>
 									<th class=""><b>61-90</b></th>
@@ -463,14 +574,15 @@ class EstadoCartera extENDs REST_Controller {
 
 
 						$detalle = '
-									<td  style="border-bottom: dotted;padding-top: 10px;">'.$value1['mdt_docname'].'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px; width: 18%;">'.$value1['mdt_docname'].'</td>
 									<td  style="border-bottom: dotted;padding-top: 10px;">'.$value1['numerodocumento'].'</td>
 									<td  style="border-bottom: dotted;padding-top: 10px;">'.$this->dateformat->Date($value1['fechadocumento']).'</td>
 									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['totalfactura'], $DECI_MALES, ',', '.').'</td>
 									<td  style="border-bottom: dotted;padding-top: 10px;">'.$this->dateformat->Date($value1['fechavencimiento']).'</td>
 									<td  style="border-bottom: dotted;padding-top: 10px;">'.$this->dateformat->Date($value['fechacorte']).'</td>
 									<td  style="border-bottom: dotted;padding-top: 10px;">'.$value1['comentario_asiento'].'</td>
-									<td  style="border-bottom: dotted;padding-top: 10px;">'.$value1['dias'].'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px; width: 5%;">'.$value1['dias'].'</td>
+									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['sin_vencer'], $DECI_MALES, ',', '.').'</td>
 									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['uno_treinta'], $DECI_MALES, ',', '.').'</td>
 									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['treinta_uno_secenta'], $DECI_MALES, ',', '.').'</td>
 									<td  style="border-bottom: dotted;padding-top: 10px;">'.$Data['currency']." ".number_format($value1['secenta_uno_noventa'], $DECI_MALES, ',', '.').'</td>
@@ -480,6 +592,7 @@ class EstadoCartera extENDs REST_Controller {
 
 						$totaldetalle .= '<tr>'.$detalle.'</tr>';
 
+						$detail_sin_vencer = $detail_sin_vencer + $value1['sin_vencer'];
 						$detail_0_30 =  $detail_0_30 + $value1['uno_treinta'];
  					   	$detail_30_60 =  $detail_30_60 + ($value1['treinta_uno_secenta']);
  						$detail_60_90 =  $detail_60_90 + ($value1['secenta_uno_noventa']);
@@ -487,6 +600,7 @@ class EstadoCartera extENDs REST_Controller {
 					}
 				}
 
+				$total_sin_vencer = $total_sin_vencer + $detail_sin_vencer;
 				$total_0_30 =  $total_0_30 + $detail_0_30;
 			   	$total_30_60 =  $total_30_60 + $detail_30_60;
 				$total_60_90 =  $total_60_90 + $detail_60_90;
@@ -496,37 +610,38 @@ class EstadoCartera extENDs REST_Controller {
 							<tr>
 							<th>&nbsp;</th>
 							<th>&nbsp;</th>
-							<th>&nbsp;</th>
 							<th><b>Total</b></th>
-							<th style="width: 10%;" class=""><b>'.$monedadocumento.' '.number_format(($detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), $DECI_MALES, ',', '.').'</b></th>
+							<th style="width: 10%;" class=""><b>'.$monedadocumento.' '.number_format(($detail_sin_vencer+$detail_0_30+$detail_30_60+$detail_60_90+$detail_mayor_90), $DECI_MALES, ',', '.').'</b></th>
 							<th>&nbsp;</th>
 							<th>&nbsp;</th>
 							<th>&nbsp;</th>
+							<th>&nbsp;</th>
+							<th class=""><b>'.$monedadocumento.' '.number_format($detail_sin_vencer, $DECI_MALES, ',', '.').'</b></th>
 							<th class=""><b>'.$monedadocumento.' '.number_format($detail_0_30, $DECI_MALES, ',', '.').'</b></th>
 							<th class=""><b>'.$monedadocumento.' '.number_format($detail_30_60, $DECI_MALES, ',', '.').'</b></th>
 							<th class=""><b>'.$monedadocumento.' '.number_format($detail_60_90, $DECI_MALES, ',', '.').'</b></th>
 							<th class=""><b>'.$monedadocumento.' '.number_format($detail_mayor_90, $DECI_MALES, ',', '.').'</b></th>
 							</tr>';
 
-				$cuerpo .= $encabezado."<table width='100%'><tr>".$cabecera."</tr>".$totaldetalle.$detail_total."</table><br><br>";
+				$cuerpo .= $encabezado."<table width='100%'><thead><tr>".$cabecera."</tr></thead>".$totaldetalle.$detail_total."</table><br><br>";
 			}
         }
 
-        $cuerpo .= '
-        			<table width="100%">
-						<tr>
-							<th style="width: 10%;">&nbsp;</th>
-							<th style="width: 10%;">&nbsp;</th>
-							<th style="width: 10%;">&nbsp;</th>
-							<th style="width: 24%;">&nbsp;</th>
-							<th><b>Total</th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format(($total_0_30+$total_30_60+$total_60_90+$total_mayor_90), $DECI_MALES, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_0_30, $DECI_MALES, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_30_60, $DECI_MALES, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_60_90, $DECI_MALES, ',', '.').'</b></th>
-							<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_mayor_90, $DECI_MALES, ',', '.').'</b></th>
-							</tr>
-					</table>';
+        // $cuerpo .= '
+        // 			<table width="100%">
+		// 				<tr>
+		// 					<th style="width: 10%;">&nbsp;</th>
+		// 					<th style="width: 10%;">&nbsp;</th>
+		// 					<th style="width: 10%;">&nbsp;</th>
+		// 					<th style="width: 24%;">&nbsp;</th>
+		// 					<th><b>Total</th>
+		// 					<th class=" centro"><b>'.$monedadocumento.' '.number_format(($total_sin_vencer+$total_0_30+$total_30_60+$total_60_90+$total_mayor_90), $DECI_MALES, ',', '.').'</b></th>
+		// 					<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_0_30, $DECI_MALES, ',', '.').'</b></th>
+		// 					<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_30_60, $DECI_MALES, ',', '.').'</b></th>
+		// 					<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_60_90, $DECI_MALES, ',', '.').'</b></th>
+		// 					<th class=" centro"><b>'.$monedadocumento.' '.number_format($total_mayor_90, $DECI_MALES, ',', '.').'</b></th>
+		// 					</tr>
+		// 			</table>';
 
         $header = '
         <table width="100%" style="text-align: left;">
@@ -541,29 +656,80 @@ class EstadoCartera extENDs REST_Controller {
 				</th>
 	        </tr>
         </table>';
+		
+		$generalTotalTable = "
+		<br>
+		<div style='width:100%;margin-left:85%;'>
+		<table>
+			<tbody>
+				<tr>
+					<th style='text-align:right; width:20%;' ><b>S.V: </b></th>
+					<td class='centro' style='text-align: left; white-space: normal; '><b>".$monedadocumento.' '.number_format(($total_sin_vencer+$total_0_30+$total_30_60+$total_60_90+$total_mayor_90), $DECI_MALES, ',', '.')."</b></td>
+				</tr>
+				<tr>
+					<th style='text-align:right;'><b>0-30: </b></th>
+					<td class='centro' style='text-align: left; white-space: normal; '><b>".$monedadocumento.' '.number_format($total_0_30, $DECI_MALES, ',', '.')."</b></td>
+				</tr>
+				<tr>
+					<th style='text-align:right;'><b>31-60: </b></th>
+					<td class='centro' style='text-align: left; white-space: normal; '><b>".$monedadocumento.' '.number_format($total_30_60, $DECI_MALES, ',', '.')."</b></td>
+				</tr>
+				<tr>
+					<th style='text-align:right;'><b>61-90: </b></th>
+					<td class='centro' style='text-align: left; white-space: normal; '><b>".$monedadocumento.' '.number_format($total_60_90, $DECI_MALES, ',', '.')."</b></td>
+				</tr>
+				<tr>
+					<th style='text-align:right;'><b>+90: </b></th>
+					<td class='centro' style='text-align: left; white-space: normal; '><b>".$monedadocumento.' '.number_format($total_mayor_90, $DECI_MALES, ',', '.')."</b></td>
+				</tr>
+				<tr >
+					<th style='text-align:right; border-top: 1px solid black;'><b>Total: </b></th>
+					<td class='centro' style='text-align: left; white-space: normal; border-top: 1px solid black;'><b>".$monedadocumento.' '.number_format(($total_sin_vencer+$total_0_30+$total_30_60+$total_60_90+$total_mayor_90)+$total_0_30+$total_30_60+$total_60_90+$total_mayor_90 , $DECI_MALES, ',', '.')."</b></td>
+				</tr>
+			</tbody>
+			</table>
+		</div>
+		";
+
+			$cuerpo.= $generalTotalTable;
 
         $footer = '<table width="100%" style="vertical-align: bottom; font-family: serif; font-size: 8pt; color: #000000; font-weight: bold; font-style: italic;">
-		<tr>
-			<th  width="33%" style="font-size: 8px;"> Documento generado por <span style="color: orange; font-weight: bolder;"> Joint ERP  </span> para: '.$empresa[0]['pge_small_name'].'. Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
-		</tr>
-	</table>';
+			<tr>
+				<th  width="33%" style="font-size: 8px;"> Documento generado por <span style="color: #fcc038; font-weight: bolder;"> JOINTERP  </span> para: '.$empresa[0]['pge_small_name'].'. Pagina: {PAGENO}/{nbpg}  Fecha: {DATE j-m-Y}  </th>
+			</tr>
+		</table>';
 
 		$html = ''.$cuerpo.'';
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
 
-        $mpdf->SetHTMLHeader($header);
-        $mpdf->SetHTMLFooter($footer);
-		$mpdf->SetDefaultBodyCSS('background', "url('/var/www/html/".$company[0]['company']."/assets/img/W-background.png')");
+        if(isset($contenidoestadocuenta[0])){
+			
+            $mpdf->SetHTMLHeader($header);
+            $mpdf->SetHTMLFooter($footer);
+            $mpdf->SetDefaultBodyCSS('background', "url('/var/www/html/".$company[0]['company']."/assets/img/W-background.png')");
+    
+            $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
 
-        $mpdf->WriteHTML($stylesheet,\Mpdf\HTMLParserMode::HEADER_CSS);
-        $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
-
-
-        $mpdf->Output('EstadoCartera_'.$contenidoestadocuenta[0]['fechacorte'].'.pdf', 'D');
-
-		header('Content-type: application/force-download');
-		header('Content-Disposition: attachment; filename='.$filename);
+            $mpdf->WriteHTML($html,\Mpdf\HTMLParserMode::HTML_BODY);
+    
+    
+            $mpdf->Output('EstadoCartera_'.$contenidoestadocuenta[0]['fechacorte'].'.pdf', 'D');
+    
+            header('Content-type: application/force-download');
+            header('Content-Disposition: attachment; filename='.$filename);
+        }else{
+            // Crea una instancia de mPDF con configuraciones personalizadas
+            $mpdf1 = new \Mpdf\Mpdf([
+                'mode' => 'utf-8',
+                'format' => [140,216] // Establece el formato en media carta
+            ]);
+            $mpdf1->SetHTMLHeader($header);
+            $mpdf1->SetHTMLFooter($footer);
+            $found = '<br><br><br><br><br><br><table width="100%"> <tr> <th style="text-align: center;"> <h1>No se encontraron datos</h1></th></tr></table>';
+            $mpdf1->WriteHTML($found);
+            $mpdf1->Output();
+        }
 	}
 
 }

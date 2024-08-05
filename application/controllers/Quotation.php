@@ -175,14 +175,25 @@ class Quotation extends REST_Controller
 			return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
 		}
 
+		if($Data['dvc_duedate'] < $Data['dvc_docdate']){
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'La fecha de vencimiento ('.$Data['dvc_duedate'].') no puede ser inferior a la fecha del documento ('.$Data['dvc_docdate'].')'
+			);
 
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 
 		$sqlInsert = "INSERT INTO dvct(dvc_series, dvc_docnum, dvc_docdate, dvc_duedate, dvc_duedev, dvc_pricelist, dvc_cardcode,
                       dvc_cardname, dvc_currency, dvc_contacid, dvc_slpcode, dvc_empid, dvc_comment, dvc_doctotal, dvc_baseamnt, dvc_taxtotal,
                       dvc_discprofit, dvc_discount, dvc_createat, dvc_baseentry, dvc_basetype, dvc_doctype, dvc_idadd, dvc_adress, dvc_paytype,
-                      dvc_createby,business,branch, dvc_internal_comments)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
+                      dvc_createby,business,branch, dvc_internal_comments, dvc_taxtotal_ad)VALUES(:dvc_series, :dvc_docnum, :dvc_docdate, :dvc_duedate, :dvc_duedev, :dvc_pricelist, :dvc_cardcode, :dvc_cardname,
                       :dvc_currency, :dvc_contacid, :dvc_slpcode, :dvc_empid, :dvc_comment, :dvc_doctotal, :dvc_baseamnt, :dvc_taxtotal, :dvc_discprofit, :dvc_discount,
-                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype,:dvc_createby,:business,:branch, :dvc_internal_comments)";
+                      :dvc_createat, :dvc_baseentry, :dvc_basetype, :dvc_doctype, :dvc_idadd, :dvc_adress, :dvc_paytype,:dvc_createby,:business,:branch,
+					  :dvc_internal_comments, :dvc_taxtotal_ad)";
 
 
 		// Se Inicia la transaccion,
@@ -222,7 +233,8 @@ class Quotation extends REST_Controller
 			':dvc_createby' => isset($Data['dvc_createby']) ? $Data['dvc_createby'] : NULL,
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
-			':dvc_internal_comments' => isset($Data['dvc_internal_comments']) ? $Data['dvc_internal_comments'] : NULL
+			':dvc_internal_comments' => isset($Data['dvc_internal_comments']) ? $Data['dvc_internal_comments'] : NULL,
+			':dvc_taxtotal_ad' => is_numeric($Data['dvc_taxtotal_ad']) ? $Data['dvc_taxtotal_ad'] : 0
 		
 		));
 
@@ -293,6 +305,27 @@ class Quotation extends REST_Controller
 			// SI EL DOCTYPE = 21
 			if ($Data['dvc_basetype'] == 21) {
 
+				// SE VALIDA SI HAY ANEXOS EN EL DOCUMENTO APROBADO 
+				// SE CAMBIEN AL DOCUMENTO EN CREACION
+				$anexo = $this->aprobacion->CambiarAnexos($Data,'dvc',$DocNumVerificado);
+	
+				if ( isset($anexo['error']) && $anexo['error'] == false ) {
+				}else{
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $anexo,
+						'mensaje'	=> 'No se pudo registrar el documento:'. $anexo['mensaje']
+					);
+
+
+					return $this->response($respuesta);
+
+				}
+				// FIN VALIDACION
+
 				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
@@ -322,9 +355,7 @@ class Quotation extends REST_Controller
 					);
 
 
-					$this->response($respuesta);
-
-					return;
+					return $this->response($respuesta);
 				}
 			}
 
@@ -466,7 +497,6 @@ class Quotation extends REST_Controller
 
 			foreach ($ContenidoDetalle as $key => $detail) {
 
-
 				$CANTUOMSALE = $this->generic->getUomSale($detail['vc1_itemcode']);
 
 				if ($CANTUOMSALE == 0) {
@@ -483,14 +513,15 @@ class Quotation extends REST_Controller
 
 					return;
 				}
-
+				// print_r($detail['imponible']);exit;
 				$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry,vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
                                     vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
                                     vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_linenum, vc1_acciva, vc1_codimp, vc1_ubication, 
-									ote_code,vc1_baseline,detalle_modular,vc1_tax_base)
+									ote_code,vc1_baseline,detalle_modular,vc1_tax_base,detalle_anuncio,imponible,vc1_clean_quantity,vc1_vat_ad,vc1_vatsum_ad,vc1_accimp_ad,vc1_codimp_ad)
 									VALUES(:vc1_docentry,:vc1_itemcode, :vc1_itemname, :vc1_quantity,:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, 
 									:vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory,
-									:vc1_linenum,:vc1_acciva,:vc1_codimp, :vc1_ubication, :ote_code,:vc1_baseline,:detalle_modular,:vc1_tax_base)";
+									:vc1_linenum,:vc1_acciva,:vc1_codimp, :vc1_ubication, :ote_code,:vc1_baseline,:detalle_modular,:vc1_tax_base,:detalle_anuncio,:imponible,
+									:vc1_clean_quantity, :vc1_vat_ad, :vc1_vatsum_ad, :vc1_accimp_ad, :vc1_codimp_ad)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':vc1_docentry' => $resInsert,
@@ -518,8 +549,16 @@ class Quotation extends REST_Controller
 					':vc1_ubication' => isset($detail['vc1_ubication']) ? $detail['vc1_ubication'] : NULL,
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':vc1_baseline' => is_numeric($detail['vc1_baseline']) ? $detail['vc1_baseline'] : 0,
-					':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
-					':vc1_tax_base' => is_numeric($detail['vc1_tax_base']) ? $detail['vc1_tax_base'] : 0
+					':vc1_tax_base' => is_numeric($detail['vc1_tax_base']) ? $detail['vc1_tax_base'] : 0,
+					':detalle_modular' => isset($detail['detalle_modular']) && is_string($detail['detalle_modular']) ? json_encode(json_decode($detail['detalle_modular'],true)) : NULL,
+					':detalle_anuncio' => isset($detail['detalle_anuncio']) && is_string($detail['detalle_anuncio']) ? json_encode(json_decode($detail['detalle_anuncio'],true)) : NULL,
+					':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL,
+					':vc1_clean_quantity' => isset($detail['vc1_clean_quantity']) && is_numeric($detail['vc1_clean_quantity']) ? $detail['vc1_clean_quantity'] : 0,
+
+					':vc1_vat_ad' => is_numeric($detail['vc1_vat_ad']) ? $detail['vc1_vat_ad'] : 0,
+					':vc1_vatsum_ad' => is_numeric($detail['vc1_vatsum_ad']) ? $detail['vc1_vatsum_ad'] : 0,
+					':vc1_accimp_ad' => is_numeric($detail['vc1_accimp_ad']) ? $detail['vc1_accimp_ad'] : NULL,
+					':vc1_codimp_ad' => isset($detail['vc1_codimp_ad']) ? $detail['vc1_codimp_ad'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -554,7 +593,7 @@ class Quotation extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data' => $resInsert,
-				'mensaje' => 'Cotización registrada con exito'
+				'mensaje' => 'Cotización # '.$DocNumVerificado.' registrada con exito'
 			);
 		} else {
 			// Se devuelven los cambios realizados en la transaccion
@@ -651,7 +690,7 @@ class Quotation extends REST_Controller
 						(SELECT json_agg(json_build_object('vc1_docentry', campo1, 'vc1_itemcode', campo2,'vc1_itemname', campo3,'vc1_quantity',campo4,'vc1_uom',campo5,'vc1_whscode',campo6,
 								'vc1_price',campo7,'vc1_vat',campo8,'vc1_vatsum',campo9,'vc1_linetotal',campo10,'vc1_linetotal',campo11,'vc1_costcode',campo12,
 								'vc1_ubusiness',campo13,'vc1_project',campo14,'vc1_project',campo15,'vc1_basetype',campo16,'vc1_doctype',campo17,'vc1_avprice',campo18,
-								'vc1_inventory',campo19,'vc1_acciva',campo20,'vc1_linenum',campo21,'vc1_ubication',campo22)) AS detail
+								'vc1_inventory',campo19,'vc1_acciva',campo20,'vc1_linenum',campo21,'vc1_ubication',campo22,campo23,campo24,campo25,campo26,campo27,campo28)) AS detail
 						FROM (SELECT 
 									vc1_docentry as campo1, 
 									vc1_itemcode as campo2, 
@@ -674,7 +713,13 @@ class Quotation extends REST_Controller
 									vc1_inventory as campo19, 
 									vc1_acciva as campo20, 
 									vc1_linenum as campo21, 
-									vc1_ubication as campo22 
+									vc1_ubication as campo22 ,
+									vc1_codimp as campo23,
+									ote_code as campo24,
+									vc1_baseline as campo25,
+									detalle_anuncio as campo26,
+									detalle_modular as campo27,
+									vc1_tax_base as campo28
 								FROM vct1 Where vct1.vc1_docentry = dvc_docentry) as subconsulta)
 					FROM dvct
 					WHERE dvc_docentry = :dvc_docentry";
@@ -685,12 +730,12 @@ class Quotation extends REST_Controller
 		
 
 		$sqlUpdate = "UPDATE dvct	SET dvc_docdate=:dvc_docdate,dvc_duedate=:dvc_duedate, dvc_duedev=:dvc_duedev, dvc_pricelist=:dvc_pricelist, dvc_cardcode=:dvc_cardcode,
-			  						dvc_cardname=:dvc_cardname, dvc_currency=:dvc_currency, dvc_contacid=:dvc_contacid, dvc_slpcode=:dvc_slpcode,
-										dvc_empid=:dvc_empid, dvc_comment=:dvc_comment, dvc_doctotal=:dvc_doctotal, dvc_baseamnt=:dvc_baseamnt,
-										dvc_taxtotal=:dvc_taxtotal, dvc_discprofit=:dvc_discprofit, dvc_discount=:dvc_discount, dvc_baseentry=:dvc_baseentry, 
-										dvc_basetype=:dvc_basetype, dvc_doctype=:dvc_doctype, dvc_idadd=:dvc_idadd,dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype ,
-										business = :business,branch = :branch, dvc_internal_comments = :dvc_internal_comments
-										WHERE dvc_docentry=:dvc_docentry";
+					dvc_cardname=:dvc_cardname, dvc_currency=:dvc_currency, dvc_contacid=:dvc_contacid, dvc_slpcode=:dvc_slpcode,
+					dvc_empid=:dvc_empid, dvc_comment=:dvc_comment, dvc_doctotal=:dvc_doctotal, dvc_baseamnt=:dvc_baseamnt,
+					dvc_taxtotal=:dvc_taxtotal, dvc_discprofit=:dvc_discprofit, dvc_discount=:dvc_discount, dvc_baseentry=:dvc_baseentry, 
+					dvc_basetype=:dvc_basetype, dvc_doctype=:dvc_doctype, dvc_idadd=:dvc_idadd,dvc_adress=:dvc_adress, dvc_paytype=:dvc_paytype ,
+					business = :business,branch = :branch, dvc_internal_comments = :dvc_internal_comments, dvc_taxtotal_ad =:dvc_taxtotal_ad
+					WHERE dvc_docentry=:dvc_docentry";
 
 		$this->pedeo->trans_begin();
 		$doc_update = $this->docupdate->updatedDoc($Data['dvc_doctype'],$Data['dvc_docentry'],$json_Before,$json_after,$Data['dvc_createby']);
@@ -727,7 +772,8 @@ class Quotation extends REST_Controller
 			':business' => isset($Data['business']) ? $Data['business'] : NULL,
 			':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 			':dvc_internal_comments' => isset($Data['dvc_internal_comments']) ? $Data['dvc_internal_comments'] : NULL,
-			':dvc_docentry' => $Data['dvc_docentry']
+			':dvc_docentry' => $Data['dvc_docentry'],
+			':dvc_taxtotal_ad' => is_numeric($Data['dvc_taxtotal_ad']) ? $Data['dvc_taxtotal_ad'] : 0
 		));
 		
 		if (is_numeric($resUpdate) && $resUpdate == 1) {
@@ -735,12 +781,15 @@ class Quotation extends REST_Controller
 			$this->pedeo->queryTable("DELETE FROM vct1 WHERE vc1_docentry=:vc1_docentry", array(':vc1_docentry' => $Data['dvc_docentry']));
 
 			foreach ($ContenidoDetalle as $key => $detail) {
+				$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry,vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
+                                    vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
+                                    vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_linenum, vc1_acciva, vc1_codimp, vc1_ubication, 
+									ote_code,vc1_baseline,detalle_modular,vc1_tax_base,detalle_anuncio,imponible,vc1_clean_quantity,vc1_vat_ad,vc1_vatsum_ad,vc1_accimp_ad,vc1_codimp_ad)
+									VALUES(:vc1_docentry,:vc1_itemcode, :vc1_itemname, :vc1_quantity,:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, 
+									:vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory,
+									:vc1_linenum,:vc1_acciva,:vc1_codimp, :vc1_ubication, :ote_code,:vc1_baseline,:detalle_modular,:vc1_tax_base,:detalle_anuncio,:imponible,
+									:vc1_clean_quantity, :vc1_vat_ad, :vc1_vatsum_ad, :vc1_accimp_ad, :vc1_codimp_ad)";
 
-				$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry, vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
-								vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
-								vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_acciva, vc1_linenum, vc1_ubication)VALUES(:vc1_docentry, :vc1_itemcode, :vc1_itemname, :vc1_quantity,
-								:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, :vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,
-								:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory, :vc1_acciva,:vc1_linenum, :vc1_ubication)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':vc1_docentry' => $Data['dvc_docentry'],
@@ -764,7 +813,20 @@ class Quotation extends REST_Controller
 					':vc1_inventory' => is_numeric($detail['vc1_inventory']) ? $detail['vc1_inventory'] : NULL,
 					':vc1_acciva' => is_numeric($detail['vc1_acciva']) ? $detail['vc1_acciva'] : NULL,
 					':vc1_linenum' => is_numeric($detail['vc1_linenum']) ? $detail['vc1_linenum'] : NULL,
-					':vc1_ubication' => is_numeric($detail['vc1_ubication']) ? $detail['vc1_ubication'] : NULL
+					':vc1_codimp' => isset($detail['vc1_codimp']) ? $detail['vc1_codimp'] : NULL,
+					':vc1_ubication' => isset($detail['vc1_ubication']) ? $detail['vc1_ubication'] : NULL,
+					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':vc1_baseline' => is_numeric($detail['vc1_baseline']) ? $detail['vc1_baseline'] : 0,
+					':detalle_modular' => (isset($detail['detalle_modular']) && !empty($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
+					':vc1_tax_base' => is_numeric($detail['vc1_tax_base']) ? $detail['vc1_tax_base'] : 0,
+					':detalle_anuncio' => (isset($detail['detalle_anuncio']) && !empty($detail['detalle_anuncio'])) ? json_encode($detail['detalle_anuncio']) : NULL,
+					':imponible' => is_numeric($detail['imponible']) ? $detail['imponible'] : 0,
+					':vc1_clean_quantity' =>  isset($detail['vc1_clean_quantity']) && is_numeric($detail['vc1_clean_quantity']) ? $detail['vc1_clean_quantity'] : 0,
+
+					':vc1_vat_ad' => is_numeric($detail['vc1_vat_ad']) ? $detail['vc1_vat_ad'] : 0,
+					':vc1_vatsum_ad' => is_numeric($detail['vc1_vatsum_ad']) ? $detail['vc1_vatsum_ad'] : 0,
+					':vc1_accimp_ad' => is_numeric($detail['vc1_accimp_ad']) ? $detail['vc1_accimp_ad'] : NULL,
+					':vc1_codimp_ad' => isset($detail['vc1_codimp_ad']) ? $detail['vc1_codimp_ad'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -832,7 +894,9 @@ class Quotation extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvct', 'dvc', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+		$sqlSelect = self::getColumn('dvct', 'dvc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -877,7 +941,9 @@ class Quotation extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvct', 'dvc', '', '', $DECI_MALES, $Data['business'], $Data['branch'], 0, $Data['page'], 1);
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+		$sqlSelect = self::getColumn('dvct', 'dvc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'], 0, $Data['page'], 1);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -906,7 +972,7 @@ class Quotation extends REST_Controller
 	{
 
 		$Data = $this->get();
-
+		$DECI_MALES =  $this->generic->getDecimals();
 		if (!isset($Data['dvc_docentry'])) {
 
 			$respuesta = array(
@@ -920,7 +986,52 @@ class Quotation extends REST_Controller
 			return;
 		}
 
+		// $sqlSelect = self::getColumn('dvct', 'dvc', '', '', $DECI_MALES, $Data['business'], $Data['branch'],0,0,0," AND dvc_docentry = :dvc_docentry");
 		$sqlSelect = "SELECT dvct.* FROM dvct WHERE dvc_docentry =:dvc_docentry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_docentry" => $Data['dvc_docentry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function getQuotationByIdTr_get()
+	{
+
+		$Data = $this->get();
+		$DECI_MALES =  $this->generic->getDecimals();
+		if (!isset($Data['dvc_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+		$sqlSelect = self::getColumn('dvct', 'dvc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'],0,0,0," AND dvc_docentry = :dvc_docentry");
+		// $sqlSelect = "SELECT dvct.* FROM dvct WHERE dvc_docentry =:dvc_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":dvc_docentry" => $Data['dvc_docentry']));
 
@@ -1005,7 +1116,7 @@ class Quotation extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentduplicate->getDuplicateDt($Data['vc1_docentry'],'dvct','vct1','dvc','vc1','detalle_modular::jsonb');
+			$copy = $this->documentduplicate->getDuplicateDt($Data['vc1_docentry'],'dvct','vct1','dvc','vc1','detalle_modular::jsonb,imponible,clean_quantity');
 
 			if (isset($copy[0])) {
 
@@ -1048,7 +1159,7 @@ class Quotation extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentcopy->Copy($Data['vc1_docentry'],'dvct','vct1','dvc','vc1','detalle_modular::jsonb',1);
+			$copy = $this->documentcopy->Copy($Data['vc1_docentry'],'dvct','vct1','dvc','vc1','detalle_modular::jsonb,imponible,clean_quantity',1);
 
 			if (isset($copy[0])) {
 

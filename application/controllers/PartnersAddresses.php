@@ -27,8 +27,7 @@ class PartnersAddresses extends REST_Controller {
 
       $Data = $this->post();
 
-      if(!isset($Data['dmd_state_mm']) OR
-         !isset($Data['dmd_state']) OR
+      if(!isset($Data['dmd_state']) OR
          !isset($Data['dmd_id_add']) OR
          !isset($Data['dmd_delivery_add']) OR
          !isset($Data['dmd_country']) OR
@@ -58,19 +57,18 @@ class PartnersAddresses extends REST_Controller {
         $respuesta = array(
         'error' => true,
         'data'  => [],
-        'mensaje' => 'Ya existe un id de dirección con ese codigo, no es posible crear. '
+        'mensaje' => 'Ya existe una dirección con el id .'.$Data['dmd_id_add']. ' para el Cliente/Proveedor '.$Data['dmd_card_code']
         );
         $this->response($respuesta);
         return;
         }
 
-      $sqlInsert = "INSERT INTO dmsd(dmd_state_mm, dmd_state, dmd_id_add, dmd_delivery_add, dmd_country, dmd_city,
-                    dmd_card_code, dmd_adress, dmd_tonw, dmd_lat, dmd_long)VALUES(:dmd_state_mm, :dmd_state, :dmd_id_add, :dmd_delivery_add,
+      $sqlInsert = "INSERT INTO dmsd(dmd_state, dmd_id_add, dmd_delivery_add, dmd_country, dmd_city,
+                    dmd_card_code, dmd_adress, dmd_tonw, dmd_lat, dmd_long)VALUES(:dmd_state, :dmd_id_add, :dmd_delivery_add,
                     :dmd_country, :dmd_city, :dmd_card_code, :dmd_adress, :dmd_tonw, :dmd_lat, :dmd_long)";
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-             ':dmd_state_mm' => $Data['dmd_state_mm'],
              ':dmd_state' => $Data['dmd_state'],
              ':dmd_id_add' => $Data['dmd_id_add'],
              ':dmd_delivery_add' => $Data['dmd_delivery_add'],
@@ -199,7 +197,7 @@ class PartnersAddresses extends REST_Controller {
         $sqlSelect = "SELECT DISTINCT pais.pdm_country AS pais,
                       depar.pdm_states AS departamento,
                       ciudad.pdm_municipality AS ciudad,
-                      mun.pdm_municipality AS municipio,
+                      ciudad.pdm_municipality AS municipio,
                       dmsd.* FROM dmsd
                       INNER JOIN tpdm pais
                           ON pais.pdm_codcountry = dmsd.dmd_country
@@ -207,8 +205,6 @@ class PartnersAddresses extends REST_Controller {
                           ON  depar.pdm_codstates = dmsd.dmd_state
                       INNER JOIN tpdm ciudad
                           ON ciudad.pdm_codmunicipality = dmsd.dmd_city
-                      INNER JOIN tpdm mun
-                          ON mun.pdm_codmunicipality = dmsd.dmd_state_mm
                           WHERE dmd_card_code =  :dmd_card_code";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dmd_card_code' => $Data['dmd_card_code']));

@@ -18,10 +18,10 @@ class Periods extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-      $this->load->library('pedeo', [$this->pdo]);
+    $this->load->library('pedeo', [$this->pdo]);
 	}
 
-   //CREAR NUEVO PERIODO CONTABLE
+  //CREAR NUEVO PERIODO CONTABLE
 	public function createPeriods_post()
   {
     $Data = $this->post();
@@ -194,7 +194,7 @@ class Periods extends REST_Controller {
        $this->response($respuesta);
   }
 
-// OBTENER CABECERA DE PERIDO CONTABLE POR ID
+  // OBTENER CABECERA DE PERIDO CONTABLE POR ID
   public function getPeriodById_get(){
 
     $Data = $this->get();
@@ -312,6 +312,52 @@ class Periods extends REST_Controller {
         'data' => $resUpdate,
         'mensaje'  => 'No se pudo actualizar el periodo'
       );
+    }
+
+    $this->response($respuesta);
+  }
+
+  // CREAR SUBPERIODO SOLO
+
+  public function createSubPeriod_post() {
+
+    $Data = $this->post();
+
+
+    $sqlInsert = "INSERT INTO bpc1(pc1_subperiod, pc1_fid, pc1_ffd, pc1_fic, pc1_ffc, pc1_fiv, pc1_ffv, pc1_status,pc1_period_id)
+                  VALUES (:pc1_subperiod, :pc1_fid, :pc1_ffd, :pc1_fic, :pc1_ffc, :pc1_fiv, :pc1_ffv, :pc1_status, :pc1_period_id)";
+
+
+    $resInsert = $this->pedeo->insertRow($sqlInsert, array(
+      
+      ':pc1_subperiod'  => $Data['pc1_subperiod'],
+      ':pc1_fid'  => $Data['pc1_fid'],
+      ':pc1_ffd'  => $Data['pc1_ffd'],
+      ':pc1_fic'  => $Data['pc1_fic'],
+      ':pc1_ffc'  => $Data['pc1_ffc'],
+      ':pc1_fiv'  => $Data['pc1_fiv'],
+      ':pc1_ffv'  => $Data['pc1_ffv'],
+      ':pc1_status'  => $Data['pc1_status'],
+      ':pc1_period_id' => $Data['pc1_period_id']
+    ));
+
+
+    if ( is_numeric($resInsert) && $resInsert > 0 ) {
+
+      $respuesta = array(
+        'error'   => false,
+        'data'    => $resInsert,
+        'mensaje' => 'Subperiodo creado con exito'
+      );
+
+    } else {
+
+      $respuesta = array(
+        'error' => true,
+        'data' => $resInsert,
+        'mensaje' => 'No se pudo crear el subperiodo'
+      );
+
     }
 
     $this->response($respuesta);

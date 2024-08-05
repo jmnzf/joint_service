@@ -171,7 +171,7 @@ class RDelivery extends REST_Controller {
                     FROM rded
                     INNER JOIN csmd ON rded.ded_smdid = csmd.smd_id
                     INNER JOIN csde ON rded.ded_sdeid = csde.sde_id
-                    WHERE rded.business = :business AND ded_status = 1";
+                    WHERE rded.business = :business AND csde.sde_status = 1";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 

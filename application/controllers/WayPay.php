@@ -41,16 +41,15 @@ class WayPay extends REST_Controller {
         return;
       }
 
-        $sqlInsert = "INSERT INTO dmpf(mpf_name, mpf_days, mpf_pay)
-                      VALUES(:mpf_name, :mpf_days, :mpf_pay)";
+        $sqlInsert = "INSERT INTO dmpf(mpf_name, mpf_days, mpf_pay, mpf_status)
+                      VALUES(:mpf_name, :mpf_days, :mpf_pay, :mpf_status)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
-              ':mpf_name' => $Data['mpf_name'],
-              ':mpf_days' => $Data['mpf_days'],
-              'mpf_pay'   => $Data['mpf_pay']
-
-
+            ':mpf_name' => $Data['mpf_name'],
+            ':mpf_days' => $Data['mpf_days'],
+            ':mpf_pay'   => $Data['mpf_pay'],
+            ":mpf_status" => $Data['mpf_status']
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -95,14 +94,16 @@ class WayPay extends REST_Controller {
         return;
       }
 
-      $sqlUpdate = "UPDATE dmpf SET mpf_name = :mpf_name, mpf_days = :mpf_days, mpf_pay = :mpf_pay WHERE mpf_id = :mpf_id";
+      $sqlUpdate = "UPDATE dmpf SET mpf_name = :mpf_name, mpf_days = :mpf_days, mpf_pay = :mpf_pay, mpf_status = :mpf_status WHERE mpf_id = :mpf_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
               ':mpf_name' => $Data['mpf_name'],
               ':mpf_days' => $Data['mpf_days'],
               ':mpf_pay'  => $Data['mpf_pay'],
-              ':mpf_id'   => $Data['mpf_id']
+              ":mpf_status" => $Data['mpf_status'],
+              ':mpf_id'   => $Data['mpf_id'],
+              
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -110,7 +111,7 @@ class WayPay extends REST_Controller {
             $respuesta = array(
               'error' => false,
               'data' => $resUpdate,
-              'mensaje' =>'Impuesto actualizado con exito'
+              'mensaje' =>'Forma de pago actualizada con exito'
             );
 
 
@@ -119,7 +120,7 @@ class WayPay extends REST_Controller {
             $respuesta = array(
               'error'   => true,
               'data'    => $resUpdate,
-              'mensaje'	=> 'No se pudo actualizar el impuesto'
+              'mensaje'	=> 'No se pudo actualizar la forma de pago'
             );
 
       }

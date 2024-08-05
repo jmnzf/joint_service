@@ -1,5 +1,3 @@
-asset
-/application/asset
+/application/asset/vendor
 /application/config
-/application/libraries
 /application/views/errors/html

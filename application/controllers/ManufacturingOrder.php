@@ -1,5 +1,6 @@
 <?php
-// MODELO DE APROBACIONES
+
+// ORDER DE FABRICACION
 defined('BASEPATH') or exit('No direct script access allowed');
 
 require_once APPPATH . '/libraries/REST_Controller.php';
@@ -125,7 +126,10 @@ class ManufacturingOrder extends REST_Controller
         }
         //   FIN DE NUMERACION DEL DOCUMENTO
 
-        $sqlInsert = "INSERT INTO tbof(bof_docnum, bof_doctype,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, bof_baseentry, bof_basetype, bof_status, bof_createat, bof_createby, bof_docnum_order, bof_docentry_order, business) VALUES (:bof_docnum, :bof_doctype, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, :bof_baseentry, :bof_basetype, :bof_status, :bof_createat, :bof_createby, :bof_docnum_order, :bof_docentry_order, :business)";
+        $sqlInsert = "INSERT INTO tbof(bof_docnum, bof_doctype,bof_item_code ,bof_item_description ,bof_quantity ,bof_cardcode, bof_fatorydate, bof_date, bof_duedate, bof_user, bof_cust_order, bof_ccost, bof_project, bof_type, 
+                        bof_baseentry, bof_basetype, bof_status, bof_createat, bof_createby, bof_docnum_order, bof_docentry_order, bof_comment, business, branch, bof_whscode) 
+                        VALUES (:bof_docnum, :bof_doctype, :bof_item_code,:bof_item_description,:bof_quantity,:bof_cardcode,:bof_fatorydate,:bof_date,:bof_duedate,:bof_user, :bof_cust_order, :bof_ccost, :bof_project, :bof_type, 
+                        :bof_baseentry, :bof_basetype, :bof_status, :bof_createat, :bof_createby, :bof_docnum_order, :bof_docentry_order, :bof_comment, :business, :branch, :bof_whscode)";
 
         $this->pedeo->trans_begin();
 
@@ -140,7 +144,7 @@ class ManufacturingOrder extends REST_Controller
             ":bof_date" => $Data['bof_date'],
             ":bof_duedate" => $Data['bof_duedate'],
             ":bof_user" => $Data['bof_user'],
-            ":bof_cust_order" => $Data['bof_cust_order'] ?? null,
+            ":bof_cust_order" => isset($Data['bof_cust_order']) ? $Data['bof_cust_order'] : NULL,
             ":bof_ccost" => $Data['bof_ccost'],
             ":bof_project" => $Data['bof_project'],
             ":bof_type" => $Data['bof_type'],
@@ -149,9 +153,12 @@ class ManufacturingOrder extends REST_Controller
             ":bof_basetype" => is_numeric($Data['bof_basetype']) ? $Data['bof_basetype'] : 0,
             ":bof_createat" => isset($Data['bof_createat']) ? $Data['bof_createat'] : null,
             ":bof_createby" => isset($Data['bof_createby']) ? $Data['bof_createby'] : null,
-            ":bof_docnum_order" => is_numeric($Data['bof_docnum_order']) ? $Data['bof_docnum_order'] : 0,
-            ":bof_docentry_order" => is_numeric($Data['bof_docentry_order']) ? $Data['bof_docentry_order'] : 0,
-            ":business" => $Data['business']
+            ":bof_docnum_order" => isset($Data['bof_docnum_order']) && !empty($Data['bof_docnum_order']) ? $Data['bof_docnum_order'] : 0,
+            ":bof_docentry_order" => isset($Data['bof_docentry_order']) && !empty($Data['bof_docentry_order']) ? $Data['bof_docentry_order'] : 0,
+            ":bof_comment" => isset($Data['bof_comment']) ? $Data['bof_comment'] : null,
+            ":business" => $Data['business'],
+            ":branch" => $Data['branch'],
+            ":bof_whscode" => isset($Data['bof_whscode']) ? $Data['bof_whscode'] : null,
         ));
 
         if (is_numeric($resInsert) and $resInsert > 0) {
@@ -214,7 +221,7 @@ class ManufacturingOrder extends REST_Controller
                 return;
             }
 
-            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum, of1_item_code, of1_item_cost) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum, :of1_item_code, :of1_item_cost)";
+            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum, of1_item_code, of1_item_cost, of1_required_quantity) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum, :of1_item_code, :of1_item_cost, :of1_required_quantity)";
             foreach ($ContenidoDetalle as $key => $detail) {
                 // print_r($detail);exit;
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2,
@@ -234,7 +241,8 @@ class ManufacturingOrder extends REST_Controller
                         ":of1_basenum" => isset($detail['of1_basenum']) ? $detail['of1_basenum'] : null,
                         ":of1_item_code" => isset($detail['of1_item_code']) ? $detail['of1_item_code'] : null,
                         ":of1_item_cost" => isset($detail['of1_item_cost']) ? $detail['of1_item_cost'] : null,
-                        ":of1_docentry" => $resInsert));
+                        ":of1_docentry" => $resInsert,
+                        ":of1_required_quantity" => is_numeric($detail['of1_required_quantity']) ? $detail['of1_required_quantity'] : 0));
 
                 if (is_numeric($resInsert2) and $resInsert2 > 0) {
 
@@ -282,7 +290,18 @@ class ManufacturingOrder extends REST_Controller
     {
         $Data = $this->get();
 
-        $sqlSelect = "SELECT * from tbof WHERE business = :business";
+        $sqlSelect = "SELECT tbof.*, dmsn.dms_card_name as empresa, 
+                    teof.eof_name  as estado_ordenf,
+                    coalesce(customer.dms_card_name, 'NA') as cliente,
+                    pgus.pgu_name_user || ' ' || pgus.pgu_lname_user as usuario,
+                    t1.estado as estado
+                    FROM tbof 
+                    inner join dmsn on bof_cardcode = dmsn.dms_card_code and dmsn.dms_card_type = '2'
+                    left join dmsn customer on bof_cust_order = customer.dms_card_code and customer.dms_card_type = '1'
+                    inner join teof on bof_status = eof_id
+                    inner join pgus on bof_user = pgus.pgu_id_usuario 
+                    INNER JOIN responsestatus t1 ON bof_docentry = t1.id AND bof_doctype = t1.tipo
+                    WHERE tbof.business = :business";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business']));
 
@@ -359,6 +378,24 @@ class ManufacturingOrder extends REST_Controller
             return;
         }
 
+        // VALIDAR SI YA SE REALIZÓ ALGUNA EMISION DE ESTA ORDEN 
+        $sqlValidateEmision = "SELECT bep_baseentry FROM tbep WHERE bep_baseentry = :bep_baseentry";
+        $resValidateEmision = $this->pedeo->queryTable($sqlValidateEmision, array(
+            ":bep_baseentry" => $Data['bof_docentry']
+        ));
+
+        if ( isset($resValidateEmision[0])){
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'No se puede modificar una orden de fabricación, si ya tiene una emisión realizada',
+            );
+
+            return $this->response($respuesta);
+
+        }
+        //
+
         $sqlUpdate = "UPDATE tbof set
                         bof_type = :bof_type,
                         bof_docnum = :bof_docnum,
@@ -376,10 +413,10 @@ class ManufacturingOrder extends REST_Controller
                         bof_baseentry = :bof_baseentry,
                         bof_basetype = :bof_basetype,
                         bof_status = :bof_status,
-                        bof_status = :bof_status,
-                        bof_status = :bof_status,
                         bof_docnum_order = :bof_docnum_order,
-                        bof_docentry_order =:bof_docentry_order
+                        bof_docentry_order =:bof_docentry_order,
+                        bof_comment = :bof_comment,
+                        bof_whscode = :bof_whscode
                         where bof_docentry = :bof_docentry";
 
         $this->pedeo->trans_begin();
@@ -401,21 +438,23 @@ class ManufacturingOrder extends REST_Controller
             ":bof_docentry" => $Data['bof_docentry'],
             ":bof_baseentry" => isset($Data['bof_baseentry']) ? $Data['bof_baseentry'] : 0,
             ":bof_basetype" => isset($Data['bof_basetype']) ? $Data['bof_basetype'] : 0,
-            ":bof_docnum_order" => isset($Data['bof_docnum_order']) ? $Data['bof_docnum_order'] : 0,
-            ":bof_docentry_order" => isset($Data['bof_docentry_order']) ? $Data['bof_docentry_order'] : 0,
-            ":bof_status" => $Data['bof_status']));
+            ":bof_docnum_order" => isset($Data['bof_docnum_order']) && !empty($Data['bof_docnum_order']) ? $Data['bof_docnum_order'] : 0,
+            ":bof_docentry_order" => isset($Data['bof_docentry_order']) && !empty($Data['bof_docentry_order']) ? $Data['bof_docentry_order'] : 0,
+            ":bof_status" => $Data['bof_status'],
+            ":bof_comment" => $Data['bof_comment'],
+            ":bof_whscode" => isset($Data['bof_whscode']) ? $Data['bof_whscode'] : null,));
 
         if (is_numeric($resUpdate) and $resUpdate > 0) {
 
             $this->pedeo->queryTable("DELETE FROM bof1 WHERE of1_docentry = :of1_docentry", array(':of1_docentry' => $Data['bof_docentry']));
 
-            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum, of1_item_code, of1_item_cost) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum, :of1_item_code, :of1_item_cost)";
+            $sqlInsert2 = "INSERT INTO bof1 (of1_type, of1_description, of1_quantitybase, of1_ratiobase, of1_uom, of1_whscode, of1_emimet, of1_costcode, of1_unity, of1_docentry, of1_acc, of1_ing, of1_uom_code, of1_listmat, of1_basenum, of1_item_code, of1_item_cost, of1_required_quantity) VALUES (:of1_type, :of1_description, :of1_quantitybase, :of1_ratiobase, :of1_uom, :of1_whscode, :of1_emimet, :of1_costcode, :of1_unity, :of1_docentry, :of1_acc, :of1_ing, :of1_uom_code, :of1_listmat, :of1_basenum, :of1_item_code, :of1_item_cost, :of1_required_quantity)";
             foreach ($ContenidoDetalle as $key => $detail) {
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2,
                     array(":of1_type" => $detail['of1_type'],
                         ":of1_description" => $detail['of1_description'],
                         ":of1_quantitybase" => $detail['of1_quantitybase'],
-                        ":of1_ratiobase" => $detail['of1_ratiobase'],
+                        ":of1_ratiobase" => is_numeric($detail['of1_ratiobase']) ? $detail['of1_ratiobase'] : 0,
                         ":of1_uom" => $detail['of1_uom'],
                         ":of1_whscode" => $detail['of1_whscode'],
                         ":of1_emimet" => $detail['of1_emimet'],
@@ -426,9 +465,10 @@ class ManufacturingOrder extends REST_Controller
                         ":of1_uom_code" => $detail['of1_uom_code'],
                         ":of1_listmat" => isset($detail['of1_listmat']) ? $detail['of1_listmat'] : null,
                         ":of1_basenum" => isset($detail['of1_basenum']) ? $detail['of1_basenum'] : null,
-                        ":of1_item_code" => isset($Data['of1_item_code']) ? $detail['of1_item_code'] : null,
-                        ":of1_item_cost" => isset($Data['of1_item_cost']) ? $detail['of1_item_cost'] : null,
-                        ":of1_docentry" => $Data['bof_docentry']));
+                        ":of1_item_code" => isset($detail['of1_item_code']) ? $detail['of1_item_code'] : null,
+                        ":of1_item_cost" => isset($detail['of1_item_cost']) ? $detail['of1_item_cost'] : null,
+                        ":of1_docentry" => $Data['bof_docentry'],
+                        "of1_required_quantity" => is_numeric($detail['of1_required_quantity']) ? $detail['of1_required_quantity'] : 0));
 
                 if (is_numeric($resInsert2) and $resInsert2 > 0) {
 
@@ -528,7 +568,13 @@ class ManufacturingOrder extends REST_Controller
             return;
         }
 
-        $sqlSelect = "SELECT * FROM bof1 WHERE of1_docentry = :of1_docentry";
+        $sqlSelect = "SELECT bof1.*, cantidad_acumulada_emision(of1_item_code, :of1_docentry) as cantidad_acumulada,
+                    costo_por_almacen(of1_item_code, of1_whscode) as costo_articulo,
+                    dmar.dma_uom_semb as cantidad_umv,
+                    dmar.dma_emisionmethod as metodo_emision
+                    FROM bof1 
+                    inner join dmar on  of1_item_code = dma_item_code 
+                    WHERE of1_docentry = :of1_docentry";
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(":of1_docentry" => $Data['of1_docentry']));
 
         if (isset($resSelect[0])) {
@@ -538,6 +584,7 @@ class ManufacturingOrder extends REST_Controller
                 'data' => $resSelect,
                 'mensaje' => '',
             );
+            
         } else {
 
             $respuesta = array(
@@ -554,9 +601,13 @@ class ManufacturingOrder extends REST_Controller
     public function getManufacturingOrderReleased_get()
     {
 
-        $sqlSelect = "SELECT * from tbof WHERE bof_status = :bof_status";
+        $sqlSelect = "SELECT dmum.dmu_code as um,* 
+        from tbof 
+        inner join dmar on tbof.bof_item_code = dmar.dma_item_code 
+        inner join dmum on dmar.dma_um_inventory = dmum.dmu_id 
+        WHERE bof_status = :bof_status";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':bof_status' => 1));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':bof_status' => 2));
 
         if (isset($resSelect[0])) {
             $respuesta = array(
@@ -575,5 +626,84 @@ class ManufacturingOrder extends REST_Controller
 
         $this->response($respuesta);
 
+    }
+
+    public function addTiraje_post() {
+
+        $Data = $this->post();
+
+        $sqlUpdate = "UPDATE tbof SET bof_start_tiraje = :bof_start_tiraje, bof_start_time = :bof_start_time WHERE bof_docentry = :bof_docentry";
+
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':bof_start_tiraje' => $Data['bof_start_tiraje'],
+            ':bof_start_time' => $Data['bof_start_time'].':00',
+            ':bof_docentry' => $Data['bof_docentry']
+           
+        ));
+
+        if ( is_numeric($resUpdate) && $resUpdate == 1 ) {
+
+            $respuesta = array(
+                'error'     => false,
+                'data'      => $resUpdate,
+                'mensaje'   => 'Actualización exitosa',
+            );
+        } else {
+
+            $respuesta = array(
+                'error'     => true,
+                'data'      => $resUpdate,
+                'mensaje'   => 'No se pudo agregar el tiraje',
+            );
+        }
+
+        $this->response($respuesta);
+    }
+    // ACTAULIZA EL ESTADO DE LA ORDEN DE FABRICACION
+    public function changeProductionStatus_post() {
+
+        $Data = $this->post();
+
+
+        if (
+            !isset($Data['bof_status']) or
+            !isset($Data['bof_docentry'])) {
+
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'La informacion enviada no es valida',
+            );
+
+            return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+        }
+
+
+        $sqlUpdate = "UPDATE tbof SET bof_status = :bof_status WHERE bof_docentry = :bof_docentry";
+
+        $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+            ':bof_status' => $Data['bof_status'],
+            ':bof_docentry' => $Data['bof_docentry']
+           
+        ));
+
+        if ( is_numeric($resUpdate) && $resUpdate == 1 ) {
+
+            $respuesta = array(
+                'error'     => false,
+                'data'      => $resUpdate,
+                'mensaje'   => 'Estado actualizado con exito',
+            );
+        } else {
+
+            $respuesta = array(
+                'error'     => true,
+                'data'      => $resUpdate,
+                'mensaje'   => 'No se pudo agregar el tiraje',
+            );
+        }
+
+        $this->response($respuesta);
     }
 }

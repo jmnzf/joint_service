@@ -227,6 +227,46 @@ class Ubicaciones extends REST_Controller
 
         $this->response($respuesta);
     }
+    public function getUbicationByWarehouseId_get()
+    {
+        $Data = $this->get();
+        
+        if(!isset($Data['whscode']) OR !isset($Data['business'])){
+
+            $respuesta = array(
+                'error' => true,
+                'data'  => array(),
+                'mensaje' =>'La informacion enviada no es valida'
+            );
+
+            $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+            return;
+        }
+        // $sqlSelect = "SELECT tbdi.bdi_lote as ote_duedate ,tbdi.* FROM tbdi
+        //                 WHERE bdi_itemcode = :itemcode
+        //                 AND bdi_whscode = :codewarehouse
+        //                 AND tbdi.business = :business
+        //                 AND bdi_quantity > 0";
+        $sqlSelect = "SELECT concat(ubc_code, ' - ', tdub.dub_name) AS nombrecode, ubc_type , ubc_code , ubc_alto_cm , ubc_ancho_cm , ubc_largo_cm , ubc_resistencia_kg , ubc_id , CASE  WHEN ubc_status::numeric = 1 THEN 'Activo' WHEN ubc_status::numeric = 0 THEN 'Inactivo' END AS ubc_status, ubc_warehouse, dmws.dws_name AS nombre_almacen, tdub.dub_name AS nombre_tipo FROM tubc LEFT JOIN dmws ON dmws.whscode = tubc.ubc_warehouse LEFT JOIN tdub ON tdub.dub_code = tubc.ubc_type WHERE ubc_warehouse = :codewarehouse AND ubc_status = 1 AND tubc.business = :business ";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':codewarehouse' => $Data['whscode'], ':business' => $Data['business']));
+
+        if (isset($resSelect[0])) {
+            $respuesta = array(
+                'error' => false,
+                'data'  => $resSelect,
+                'mensaje' => ''
+            );
+        } else {
+            $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'    => 'busqueda sin resultados'
+            );
+        }
+
+        $this->response($respuesta);
+    }
 
     // OBTENER TIPOS DE UBICACIONES
     public function getTypeUbication_get()

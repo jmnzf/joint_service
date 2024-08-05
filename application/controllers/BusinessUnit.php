@@ -62,8 +62,8 @@ class BusinessUnit extends REST_Controller {
         return $this->response($respuesta);
       }
 
-        $sqlInsert = "INSERT INTO dmun(dun_un_code, dun_un_name, dun_date_ini, dun_un_end_date,business)
-                      VALUES (:dun_un_code, :dun_un_name, :dun_date_ini, :dun_un_end_date,:business)";
+        $sqlInsert = "INSERT INTO dmun(dun_un_code, dun_un_name, dun_date_ini, dun_un_end_date,business, dun_un_enabled)
+                      VALUES (:dun_un_code, :dun_un_name, :dun_date_ini, :dun_un_end_date,:business, :dun_un_enabled)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -72,6 +72,7 @@ class BusinessUnit extends REST_Controller {
               ':dun_un_name' => $Data['dun_un_name'],
               ':dun_date_ini' => $Data['dun_date_ini'],
               ':dun_un_end_date' => $Data['dun_un_end_date'],
+              ':dun_un_enabled' => $Data['dun_un_enabled'],
               ':business' => $Data['business']
         ));
 
@@ -121,13 +122,14 @@ class BusinessUnit extends REST_Controller {
       }
 
       $sqlUpdate = "UPDATE dmun SET dun_un_name = :dun_un_name, dun_date_ini = :dun_date_ini,
-                    dun_un_end_date = :dun_un_end_date,business = :business WHERE dun_id = :dun_id";
+                    dun_un_end_date = :dun_un_end_date,business = :business , dun_un_enabled = :dun_un_enabled WHERE dun_id = :dun_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
           ':dun_un_name' => $Data['dun_un_name'],
           ':dun_date_ini' => $Data['dun_date_ini'],
           ':dun_un_end_date' => $Data['dun_un_end_date'],
+          ':dun_un_enabled' => $Data['dun_un_enabled'],
           ':dun_id' => $Data['dun_id'],
           ':business' => $Data['business']
       ));

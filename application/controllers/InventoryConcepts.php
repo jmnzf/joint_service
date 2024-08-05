@@ -73,8 +73,8 @@ class InventoryConcepts extends REST_Controller
     }
 
 
-    $sqlInsert = "INSERT INTO micm (icm_name , icm_description, icm_acctcode, icm_type, icm_enabled)
-                  VALUES (:icm_name, :icm_description, :icm_acctcode, :icm_type, :icm_enabled)";
+    $sqlInsert = "INSERT INTO micm (icm_name , icm_description, icm_acctcode, icm_type, icm_enabled, icm_cord)
+                  VALUES (:icm_name, :icm_description, :icm_acctcode, :icm_type, :icm_enabled, :icm_cord)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -82,7 +82,8 @@ class InventoryConcepts extends REST_Controller
       ':icm_description'          => $Data['icm_description'],
       ':icm_acctcode'             => $Data['icm_acctcode'],
       ':icm_type'                 => $Data['icm_type'],
-      ':icm_enabled'              => $Data['icm_enabled']
+      ':icm_enabled'              => $Data['icm_enabled'],
+      ':icm_cord'              => (isset($Data['icm_cord']) && !empty($Data['icm_cord']))? $Data['icm_cord'] : null
     ));
 
     if (is_numeric($resInsert) && $resInsert > 0) {
@@ -157,7 +158,8 @@ class InventoryConcepts extends REST_Controller
                                     icm_description = :icm_description,
                                     icm_acctcode = :icm_acctcode,
                                     icm_enabled = :icm_enabled,
-                                    icm_type = :icm_type
+                                    icm_type = :icm_type,
+                                    icm_cord = :icm_cord
                                     WHERE icm_id = :icm_id";
 
 
@@ -167,7 +169,8 @@ class InventoryConcepts extends REST_Controller
       ':icm_description'          => $Data['icm_description'],
       ':icm_acctcode'             => $Data['icm_acctcode'],
       ':icm_type'                 => $Data['icm_type'],
-      ':icm_enabled'              => $Data['icm_enabled']
+      ':icm_enabled'              => $Data['icm_enabled'],
+      ':icm_cord'              => (isset($Data['icm_cord']) && !empty($Data['icm_cord']))? $Data['icm_cord'] : null
     ));
 
 

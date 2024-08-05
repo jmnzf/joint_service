@@ -49,12 +49,15 @@ class DocumentNumbering extends REST_Controller {
         return;
       }
 
-      //VALIDAR QUE EL NUMERO INICIAL NO ESTE EN UN RAGO DE NUMERACION YA CREADO
-      $validDoc = "SELECT * FROM pgdn WHERE pgs_id_doc_type = :doctype AND pgs_enabled = :status AND pgs_cancel = :cancel";
+      //VALIDAR QUE EL NUMERO INICIAL NO ESTE EN UN RANGO DE NUMERACION YA CREADO
+      $validDoc = "SELECT * FROM pgdn WHERE pgs_id_doc_type = :doctype AND pgs_enabled = :status AND pgs_cancel = :cancel AND business = :business AND branch = :branch AND pgs_pref_num = :pgs_pref_num";
       $resValidDoc = $this->pedeo->queryTable($validDoc,array(
-        ':status' => 1,
-        ':cancel' => $Data['pgs_cancel'],
-        ':doctype' => $Data['pgs_id_doc_type']
+        ':status'       => 1,
+        ':cancel'       => $Data['pgs_cancel'],
+        ':doctype'      => $Data['pgs_id_doc_type'],
+        ':business'     => $Data['business'],
+        ':branch'       => $Data['branch'],
+        ':pgs_pref_num' => $Data['pgs_pref_num']
       ));
 
       if( isset( $resValidDoc[0] ) ){
@@ -117,8 +120,8 @@ class DocumentNumbering extends REST_Controller {
           return;
       }
 
-      $sqlInsert = "INSERT INTO pgdn(pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, pgs_is_due, pgs_doc_date,  pgs_doc_due_date, pgs_enabled, pgs_nextnum, pgs_doctype, pgs_mpfn, pgs_mde, business, branch)
-                    VALUES(:Pgs_IdDocType,  :Pgs_NumName,  :Pgs_FirstNum,  :Pgs_LastNum,  :Pgs_PrefNum,  :Pgs_Cancel,  :Pgs_IsDue,  :Pgs_DocDate,  :Pgs_DocDueDate,  :Pgs_Enabled, :pgs_nextnum, :pgs_doctype, :pgs_mpfn, :pgs_mde, :business, :branch)";
+      $sqlInsert = "INSERT INTO pgdn(pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, pgs_is_due, pgs_doc_date,  pgs_doc_due_date, pgs_enabled, pgs_nextnum, pgs_doctype, pgs_mpfn, pgs_mde, business, branch,pgs_doc_pre)
+                    VALUES(:Pgs_IdDocType,  :Pgs_NumName,  :Pgs_FirstNum,  :Pgs_LastNum,  :Pgs_PrefNum,  :Pgs_Cancel,  :Pgs_IsDue,  :Pgs_DocDate,  :Pgs_DocDueDate,  :Pgs_Enabled, :pgs_nextnum, :pgs_doctype, :pgs_mpfn, :pgs_mde, :business, :branch,:pgs_doc_pre)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -138,7 +141,8 @@ class DocumentNumbering extends REST_Controller {
 						':pgs_mpfn'       => $Data['pgs_mpfn'],
 						':pgs_mde'        => $Data['pgs_mde'],
             ':business'       => $Data['business'],
-            ':branch'         => $Data['branch']
+            ':branch'         => $Data['branch'],
+						':pgs_doc_pre'    => $Data['pgs_doc_pre'],
 
       ));
 
@@ -220,8 +224,8 @@ class DocumentNumbering extends REST_Controller {
           return;
       }
       if ($Data['pgs_doc_pre'] == 1) {
-        $sqlSelect = "SELECT pgs_id, pgs_doc_pre FROM pgdn WHERE pgs_id_doc_type = :pgs_id_doc_type AND business = :business AND branch = :branch";
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgs_id_doc_type' => $Data['pgs_id_doc_type'],':business' => $Data['business'], ':branch' => $Data['branch']));
+        $sqlSelect = "SELECT pgs_id, pgs_doc_pre FROM pgdn WHERE pgs_id_doc_type = :pgs_id_doc_type AND business = :business AND branch = :branch AND pgs_pref_num = :pgs_pref_num";
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgs_id_doc_type' => $Data['pgs_id_doc_type'],':business' => $Data['business'], ':branch' => $Data['branch'], 'pgs_pref_num' => $Data['pgs_pref_num']));
         if (isset($resSelect[0])) {
           foreach ($resSelect as $key => $value) {
               $sqlUpdatePre = "UPDATE pgdn SET pgs_doc_pre = 0 WHERE pgs_id = :pgs_id";
@@ -232,10 +236,54 @@ class DocumentNumbering extends REST_Controller {
         }
       }
 
+      //VALIDAR QUE LA NUMERACION NO SE PUEDA EDITAR SI YA SE CONSUMIO EL NUMERO INICIAL O FINAL
+      $nuevosDatos = array(
+        "pgs_id"=> intval($Data['pgs_id']),
+        "pgs_id_doc_type"=>intval($Data['pgs_id_doc_type']),
+        "pgs_num_name"=>$Data['pgs_num_name'],
+        "pgs_first_num"=>intval($Data['pgs_first_num']),
+        "pgs_last_num"=>intval(trim($Data['pgs_last_num'])),
+        "pgs_pref_num"=>$Data['pgs_pref_num'],
+        "pgs_doc_date"=>$Data['pgs_doc_date'],
+        "pgs_doc_due_date"=>$Data['pgs_doc_due_date'],
+        "pgs_enabled"=>intval($Data['pgs_enabled']),
+        "pgs_nextnum"=>intval($Data['pgs_nextnum']),
+        "pgs_doctype"=>intval($Data['pgs_id_doc_type']),
+        "pgs_cancel"=>intval($Data['pgs_cancel']),
+        "pgs_is_due"=>intval($Data['pgs_is_due']),
+        "pgs_mpfn"=>intval($Data['pgs_mpfn']),
+        "pgs_mde"=>intval($Data['pgs_mde']),
+        "business"=>intval($Data['business']),
+        "branch"=>intval($Data['branch']),
+        "pgs_doc_pre"=>intval($Data['pgs_doc_pre'])
+      );
+
+      $jsonNewData = json_encode($nuevosDatos);
+      $numInicial = "SELECT verificar_cambios({tabla_name},{campo_id},{registro_id},{campos_excluir},{nuevos_datos},{valid}) as bool";
+      $numInicial = str_replace("{tabla_name}","'pgdn'",$numInicial);
+      $numInicial = str_replace("{campo_id}","'pgs_id'",$numInicial);
+      $numInicial = str_replace("{registro_id}",$Data['pgs_id'],$numInicial);
+      $numInicial = str_replace("{campos_excluir}","array['pgs_doc_pre', 'pgs_enabled','pgs_id','pgs_nextnum']",$numInicial);
+      $numInicial = str_replace("{nuevos_datos}","'".$jsonNewData."'",$numInicial);
+      $numInicial = str_replace("{valid}","'AND pgs_nextnum > pgs_first_num'",$numInicial);
+
+      $resNumInicial = $this->pedeo->queryTable($numInicial,array());
+      if($resNumInicial[0]['bool']){
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' =>'La numeración no se puede actualizar porque está en uso o porque se ha agotado el rango de numeración. Para solucionar este problema, debe solicitar una nueva numeración'
+        );
+
+        $this->response($respuesta);
+
+        return;
+      }
+      //FIN DE LA VALIDACION
       $sqlUpdate = "UPDATE pgdn SET pgs_id_doc_type = :Pgs_IdDocType, pgs_num_name = :Pgs_NumName, pgs_first_num = :Pgs_FirstNum,
                     pgs_last_num = :Pgs_LastNum, pgs_pref_num = :Pgs_PrefNum, pgs_cancel = :Pgs_Cancel, pgs_is_due = :Pgs_IsDue,
                     pgs_doc_date = :Pgs_DocDate, pgs_doc_due_date = :Pgs_DocDueDate, pgs_enabled = :Pgs_Enabled, pgs_doctype = :pgs_doctype,
-										pgs_mpfn = :pgs_mpfn, pgs_mde = :pgs_mde, pgs_doc_pre = :pgs_doc_pre
+										pgs_mpfn = :pgs_mpfn, pgs_mde = :pgs_mde, pgs_doc_pre = :pgs_doc_pre, pgs_nextnum = :pgs_nextnum
                     WHERE pgs_id = :Pgs_Id";
 
 
@@ -254,8 +302,9 @@ class DocumentNumbering extends REST_Controller {
             ':Pgs_Id'         => $Data['pgs_id'],
 						':pgs_doctype'		=> $Data['pgs_id_doc_type'],
 						':pgs_mpfn'       => $Data['pgs_mpfn'],
-						':pgs_doc_pre' => $Data['pgs_doc_pre'],
-						':pgs_mde'        => is_numeric($Data['pgs_mde']) ? $Data['pgs_mde'] : NULL
+						':pgs_doc_pre'    => $Data['pgs_doc_pre'],
+						':pgs_mde'        => is_numeric($Data['pgs_mde']) ? $Data['pgs_mde'] : NULL,
+            ':pgs_nextnum'    => $Data['pgs_nextnum'] - 1
 
       ));
 
@@ -300,7 +349,8 @@ class DocumentNumbering extends REST_Controller {
         }
         // $sqlSelect = " SELECT * FROM pgdn";
         $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_doc_pre, pgs_num_name, to_char(pgs_first_num, '999G999G999G999G999G999') as pgs_first_num, to_char(pgs_last_num, '999G999G999G999G999G999') as pgs_last_num, pgs_pref_num, pgs_cancel,
-        pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, to_char(pgs_nextnum +1, '999G999G999G999G999G999') as ultimo_numero, pgs_mpfn, pgs_mde FROM pgdn WHERE business = :business AND branch = :branch";
+        pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, to_char(pgs_nextnum +1, '999G999G999G999G999G999') as ultimo_numero, pgs_mpfn, pgs_mde, dmdt.mdt_docname as pgs_docname
+        FROM pgdn inner join dmdt on pgdn.pgs_id_doc_type = dmdt.mdt_doctype  WHERE pgdn.business = :business AND pgdn.branch = :branch";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
 
@@ -366,7 +416,7 @@ class DocumentNumbering extends REST_Controller {
          $this->response($respuesta);
   }
 
-  //Actualiza el estado de una moneda
+    //Actualiza el estado de una moneda
    public function updateStatus_post(){
 
   	 			$Data = $this->post();
@@ -475,8 +525,8 @@ class DocumentNumbering extends REST_Controller {
             pgs_doc_due_date
           FROM pgdn
           WHERE pgs_id_doc_type = :doctype AND business = :business AND branch = :branch
-          and (extract(month from pgs_doc_date) <= extract(month from current_date) or extract(month from pgs_doc_due_date) <= extract(month from current_date))
-          and (extract(year from pgs_doc_date) <= extract(year from current_date) or extract(year from pgs_doc_due_date) <= extract(year from current_date))
+          and (extract(month from pgs_doc_date) <= extract(month from current_date) or extract(month from pgs_doc_due_date) >= extract(month from current_date))
+          and (extract(year from pgs_doc_date) <= extract(year from current_date) or extract(year from pgs_doc_due_date) >= extract(year from current_date))
           ORDER BY pgs_num_name ASC";
 
     $resSql = $this->pedeo->queryTable($sql,array(

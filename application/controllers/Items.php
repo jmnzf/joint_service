@@ -23,6 +23,7 @@ class Items extends REST_Controller
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('account');
+		
 	}
 
 	//Crear nuevo articulo
@@ -126,7 +127,8 @@ class Items extends REST_Controller
 						dma_uom_vqty, dma_uom_weightn, dma_uom_sizedim,dma_lotes_code, dma_emisionmethod, dma_long_description, dma_item_mat,
 						dma_accounting, dma_acctin, dma_acct_out, dma_acct_inv, dma_acct_stockn, dma_acct_stockp, dma_acct_redu, dma_acct_amp,
 						dma_acct_cost, dma_acct_return, dma_uom_width, dma_uom_tall, dma_uom_length, dma_uom_vol, dma_um_inventory, dma_tax_sales_code, dma_tax_purch_code,dma_acct_invproc,
-						dma_modular, dma_advertisement, dma_subscription, dma_use_tbase, dma_tasa_base, dma_type_art, dma_serial_number)
+						dma_modular, dma_advertisement, dma_subscription, dma_use_tbase, dma_tasa_base, dma_type_art, dma_serial_number,deductible_spent,taxable_income,
+						dma_asset,dma_clean,dma_multipletax,dma_multipletax_purchcode,dma_multipletax_salescode,dma_item_asset)
 						VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
 						:dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,:dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set,
 						:dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,:dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty,
@@ -134,7 +136,8 @@ class Items extends REST_Controller
 						:dma_uom_sizedim,:dma_lotes_code, :dma_emisionmethod, :dma_long_description, :dma_item_mat,
 						:dma_accounting, :dma_acctin, :dma_acct_out, :dma_acct_inv, :dma_acct_stockn, :dma_acct_stockp, :dma_acct_redu, :dma_acct_amp,
 						:dma_acct_cost, :dma_acct_return, :dma_uom_width, :dma_uom_tall, :dma_uom_length, :dma_uom_vol, :dma_um_inventory, :dma_tax_sales_code, :dma_tax_purch_code,:dma_acct_invproc,
-						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base, :dma_type_art, :dma_serial_number)";
+						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base, :dma_type_art, :dma_serial_number,:deductible_spent,:taxable_income,:dma_asset,:dma_clean,
+						:dma_multipletax,:dma_multipletax_purchcode,:dma_multipletax_salescode,:dma_item_asset)";
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -207,7 +210,18 @@ class Items extends REST_Controller
 				//CAMPO PARA ALMACENAR SI ES ARTICULO DE ACTIVO FIJO
 				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0,
 				//
-				':dma_serial_number' => is_numeric($Data['dma_serial_number']) ? $Data['dma_serial_number'] : 0
+				':dma_serial_number' => is_numeric($Data['dma_serial_number']) ? $Data['dma_serial_number'] : 0,
+				//CUENTAS DEDUCIBLES
+				':deductible_spent' => isset($Data['deductible_spent']) ? $Data['deductible_spent'] : 0,
+				':taxable_income' => isset($Data['taxable_income']) ? $Data['taxable_income'] : 0,
+				':dma_asset' => isset($Data['dma_asset']) && is_numeric($Data['dma_asset']) ? $Data['dma_asset'] : 0,
+				':dma_clean' => isset($Data['dma_clean']) && is_numeric($Data['dma_clean']) ? $Data['dma_clean'] : 0,
+				// MULTIPLE IMPUESTO
+				':dma_multipletax' => is_numeric($Data['dma_multipletax']) ? $Data['dma_multipletax'] : 0,
+				':dma_multipletax_purchcode' => isset($Data['dma_multipletax_purchcode']) ? $Data['dma_multipletax_purchcode'] : 0,
+				':dma_multipletax_salescode' => isset($Data['dma_multipletax_salescode']) ? $Data['dma_multipletax_salescode'] : 0,
+
+				':dma_item_asset' => isset($Data['dma_item_asset']) ? $Data['dma_item_asset'] : NULL
 
 			));
 
@@ -334,7 +348,10 @@ class Items extends REST_Controller
 						dma_acct_amp = :dma_acct_amp, dma_acct_cost = :dma_acct_cost, dma_acct_return = :dma_acct_return,
 						dma_uom_width = :dma_uom_width, dma_uom_tall = :dma_uom_tall, dma_uom_length = :dma_uom_length, dma_uom_vol = :dma_uom_vol, dma_um_inventory = :dma_um_inventory,
 						dma_tax_sales_code = :dma_tax_sales_code, dma_tax_purch_code = :dma_tax_purch_code,dma_acct_invproc = :dma_acct_invproc, dma_modular = :dma_modular, dma_advertisement = :dma_advertisement,
-						dma_subscription = :dma_subscription, dma_use_tbase = :dma_use_tbase, dma_tasa_base = :dma_tasa_base, dma_type_art = :dma_type_art, dma_serial_number = :dma_serial_number
+						dma_subscription = :dma_subscription, dma_use_tbase = :dma_use_tbase, dma_tasa_base = :dma_tasa_base, dma_type_art = :dma_type_art, dma_serial_number = :dma_serial_number,
+						deductible_spent = :deductible_spent,taxable_income = :taxable_income,
+						dma_asset = :dma_asset , dma_clean = :dma_clean, dma_multipletax =:dma_multipletax, dma_multipletax_purchcode =:dma_multipletax_purchcode,
+						dma_multipletax_salescode = :dma_multipletax_salescode, dma_item_asset = :dma_item_asset
 						WHERE dma_id = :dma_id";
 
 			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -405,7 +422,19 @@ class Items extends REST_Controller
 				//SI ES ACTIVO FIJO
 				':dma_type_art' => is_numeric($Data['dma_type_art']) ? $Data['dma_type_art'] : 0,
 				//
-				':dma_serial_number' => is_numeric($Data['dma_serial_number']) ? $Data['dma_serial_number'] : 0
+				':dma_serial_number' => is_numeric($Data['dma_serial_number']) ? $Data['dma_serial_number'] : 0,
+				//CUENTAS DEDUCIBLES
+				':deductible_spent' =>  isset($Data['deductible_spent']) ? $Data['deductible_spent'] : 0,
+				':taxable_income' =>  isset($Data['taxable_income']) ? $Data['taxable_income'] : 0,
+				':dma_asset' => isset($Data['dma_asset']) && is_numeric($Data['dma_asset']) ? $Data['dma_asset'] : 0,
+				':dma_clean' => isset($Data['dma_clean']) && is_numeric($Data['dma_clean']) ? $Data['dma_clean'] : 0,
+				// MULTIPLE IMPUESTO
+				':dma_multipletax' => is_numeric($Data['dma_multipletax']) ? $Data['dma_multipletax'] : 0,
+				':dma_multipletax_purchcode' => isset($Data['dma_multipletax_purchcode']) ? $Data['dma_multipletax_purchcode'] : 0,
+				':dma_multipletax_salescode' => isset($Data['dma_multipletax_salescode']) ? $Data['dma_multipletax_salescode'] : 0,
+
+				':dma_item_asset' => isset($Data['dma_item_asset']) ? $Data['dma_item_asset'] : NULL
+
 				
 			));
 
@@ -468,20 +497,20 @@ class Items extends REST_Controller
 		}
 
 		$sqlSelect = "SELECT distinct
-												t0.*,
-												t2.mga_name,
-												sum(t1.bdi_quantity) stock
-											from dmar t0
-											left join tbdi t1 on t0.dma_item_code = t1.bdi_itemcode
-											left join dmga t2 on t0.dma_group_code = t2.mga_id
-											" . $variableSql . "
-											group by
-											t0.dma_id, t0.dma_item_code, t0.dma_item_name, t0.dma_generic_name, t0.dma_item_purch, t0.dma_item_inv,
-											t0.dma_item_sales, t0.dma_group_code, t0.dma_attach, t0.dma_enabled, t0.dma_firm_code, t0.dma_series_code,
-											t0.dma_sup_set, t0.dma_sku_sup, t0.dma_uom_purch, t0.dma_uom_pqty, t0.dma_uom_pemb, t0.dma_uom_pembqty,
-											t0.dma_tax_purch, t0.dma_price_list,t0.dma_price, t0.dma_uom_sale, t0.dma_uom_sqty, t0.dma_uom_semb,
-											t0.dma_uom_embqty, t0.dma_tax_sales, t0.dma_acct_type, t0.dma_avprice, t0.dma_uom_weight, t0.dma_uom_umvol,
-											t0.dma_uom_vqty, t0.dma_uom_weightn, t0.dma_uom_sizedim,t2.mga_name LIMIT 500";
+					t0.*,
+					t2.mga_name,
+					sum(t1.bdi_quantity) stock
+				from dmar t0
+				left join tbdi t1 on t0.dma_item_code = t1.bdi_itemcode
+				left join dmga t2 on t0.dma_group_code = t2.mga_id
+				" . $variableSql . "
+				group by
+				t0.dma_id, t0.dma_item_code, t0.dma_item_name, t0.dma_generic_name, t0.dma_item_purch, t0.dma_item_inv,
+				t0.dma_item_sales, t0.dma_group_code, t0.dma_attach, t0.dma_enabled, t0.dma_firm_code, t0.dma_series_code,
+				t0.dma_sup_set, t0.dma_sku_sup, t0.dma_uom_purch, t0.dma_uom_pqty, t0.dma_uom_pemb, t0.dma_uom_pembqty,
+				t0.dma_tax_purch, t0.dma_price_list,t0.dma_price, t0.dma_uom_sale, t0.dma_uom_sqty, t0.dma_uom_semb,
+				t0.dma_uom_embqty, t0.dma_tax_sales, t0.dma_acct_type, t0.dma_avprice, t0.dma_uom_weight, t0.dma_uom_umvol,
+				t0.dma_uom_vqty, t0.dma_uom_weightn, t0.dma_uom_sizedim,t2.mga_name LIMIT 500";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -492,6 +521,7 @@ class Items extends REST_Controller
 				'data'  => $resSelect,
 				'mensaje' => ''
 			);
+			
 		} else {
 
 			$respuesta = array(
@@ -565,13 +595,13 @@ class Items extends REST_Controller
 
 
 		$sqlSelect = "SELECT distinct
-											bdi_itemcode,
-											bdi_whscode,
-											bdi_avgprice
-											from tbdi
-											WHERE bdi_itemcode = :bdi_itemcode and
-											bdi_whscode = :bdi_whscode
-											GROUP BY bdi_whscode, bdi_itemcode, bdi_avgprice";
+						bdi_itemcode,
+						bdi_whscode,
+						bdi_avgprice
+						from tbdi
+						WHERE bdi_itemcode = :bdi_itemcode and
+						bdi_whscode = :bdi_whscode
+						GROUP BY bdi_whscode, bdi_itemcode, bdi_avgprice";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 			':bdi_itemcode' => $Data['bdi_itemcode'],
@@ -846,7 +876,6 @@ class Items extends REST_Controller
 		$this->response($respuesta);
 	}
 
-
 	public function getItemBySC_get() {
 
 		$Data = $this->get();
@@ -925,6 +954,158 @@ class Items extends REST_Controller
 		}
 
 
+
+		$this->response($respuesta);
+	}
+
+	// RELACION DE SERVICIO Y ARTICULOS
+	// SOLO 
+	public function setItemR_post(){
+
+		$Data = $this->post();
+
+		if (!isset($Data['rsa_itemcode']) || !isset($Data['detail'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$Contenido = $Data['detail'];
+
+
+		if ( !is_array($Contenido) || count($Contenido) == 0 ){
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se encontraron los articulos relacionados'
+			);
+
+			$this->response($respuesta);
+
+			return;
+		}
+
+		$sqlInsert = "INSERT INTO trsa(rsa_itemcode,rsa_itemcode2)VALUES(:rsa_itemcode,:rsa_itemcode2)";
+
+		$this->pedeo->trans_begin();
+
+		$this->pedeo->deleteRow("DELETE FROM trsa WHERE rsa_itemcode = :rsa_itemcode", array(":rsa_itemcode" => $Data['rsa_itemcode']));
+
+		foreach ($Contenido as $key => $item) {
+
+			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
+
+				':rsa_itemcode' => $Data['rsa_itemcode'],
+				':rsa_itemcode2' => $item
+			));
+
+
+			if (is_numeric($resInsert) && $resInsert > 0 ){
+
+			}else{
+
+				$this->pedeo->trans_rollback();
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'No se pudo insertar la relación'
+				);
+			}
+		}
+
+
+		$this->pedeo->trans_commit();
+
+		$respuesta = array(
+			'error' => false,
+			'data' => $resInsert,
+			'mensaje' => 'Relación registrada con exito'
+		);
+
+
+		$this->response($respuesta);
+
+	}
+	// LISTAR RELACION DE SERVICIOS Y ARTICULOS	
+	public function getItemR_post() {
+
+		$Data = $this->post();
+
+		$sqlSelect = "SELECT * FROM trsa WHERE rsa_itemcode = :rsa_itemcode";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':rsa_itemcode' => $Data['rsa_itemcode']
+		));
+
+
+		if ( isset($resSelect[0])){
+
+			$respuesta = array(
+				'error' => false,
+				'data' => $resSelect,
+				'mensaje' => ''
+			);
+
+		}else{
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'Sin resultados'
+			);
+		}
+
+	
+
+
+		$this->response($respuesta);
+	}
+
+	// OBTENER LOS 10 ULTIMOS PRECIOS DE COMPRA PARA UN ARTICULO
+	public function getItemsPrice_get()
+	{
+
+		$Data = $this->get();
+
+
+		$sqlSelect = "SELECT cfc_cardcode AS codigo_proveedor, 
+					cfc_cardname AS nombre_proveedor, 
+					cfc_docnum AS numero_documento, 
+					fc1_price AS precio, 
+					cfc_duedev AS fecha_documento
+					FROM dcfc
+					INNER JOIN cfc1 ON fc1_docentry = cfc_docentry
+					WHERE fc1_itemcode = :fc1_itemcode 
+					AND dcfc.business = :business
+					ORDER BY cfc_docentry DESC LIMIT 10";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':fc1_itemcode' => $Data['fc1_itemcode'],
+			':business' 	=> $Data['business']
+		));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
 
 		$this->response($respuesta);
 	}

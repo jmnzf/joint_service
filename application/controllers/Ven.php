@@ -234,7 +234,6 @@ class Ven extends REST_Controller
     $resSelect = $this->pedeo->queryTable($Data['sql'], array());
 
     if (isset($resSelect[0])) {
-
       $respuesta = array(
         'error' => false,
         'data'  => $resSelect,

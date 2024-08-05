@@ -47,6 +47,9 @@ class InventoryEntry extends REST_Controller
 		$ManejaLote = 0;
 		$ManejaUbicacion = 0;
 		$ManejaSerial = 0;
+
+		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA COMPRAS
+		$CANTUOMSALE = 0; // CANTIDAD EN UNIDAD DE MEDIDA VENTAS
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
@@ -398,6 +401,26 @@ class InventoryEntry extends REST_Controller
 
 			foreach ($ContenidoDetalle as $key => $detail) {
 
+				$CANTUOMPURCHASE = $this->generic->getUomPurchase($detail['ei1_itemcode']);
+				$CANTUOMSALE = $this->generic->getUomSale($detail['ei1_itemcode']);
+
+
+
+				if ($CANTUOMPURCHASE == 0 || $CANTUOMSALE == 0) {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' 		=> $detail['ei1_itemcode'],
+						'mensaje'	=> 'No se encontro la equivalencia de la unidad de medida para el item: ' . $detail['ei1_itemcode']
+					);
+
+					$this->response($respuesta);
+
+					return;
+				}
+
 				$sqlInsertDetail = "INSERT INTO iei1 (ei1_docentry, ei1_itemcode, ei1_itemname, ei1_quantity, ei1_uom, ei1_whscode, ei1_price, ei1_vat, ei1_vatsum, ei1_discount, ei1_linetotal,
 									ei1_costcode, ei1_ubusiness,ei1_project, ei1_acctcode, ei1_basetype, ei1_doctype, ei1_avprice, ei1_inventory,  ei1_linenum, ei1_acciva,ei1_concept, ei1_ubication)
                                     VALUES(:ei1_docentry, :ei1_itemcode, :ei1_itemname, :ei1_quantity, :ei1_uom, :ei1_whscode, :ei1_price, :ei1_vat, :ei1_vatsum, :ei1_discount, :ei1_linetotal,
@@ -607,8 +630,8 @@ class InventoryEntry extends REST_Controller
 							$CostoActual = 	$resCostoMomentoRegistro[0]['bdi_avgprice'];
 
 
-							$CantidadNueva = $detail['ei1_quantity'];
-							$CostoNuevo = $detail['ei1_price'];
+							$CantidadNueva = $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
+							$CostoNuevo = round((($detail['ei1_price'] / $CANTUOMPURCHASE) * $CANTUOMSALE), $DECI_MALES);
 
 							$CantidadTotal = ($CantidadActual + $CantidadNueva);
 
@@ -620,7 +643,7 @@ class InventoryEntry extends REST_Controller
 							$NuevoCostoPonderado = round(($NuevoCostoPonderado / $CantidadTotal), $DECI_MALES);
 						} else {
 
-							$CostoNuevo = $detail['ei1_price'];
+							$CostoNuevo = round((($detail['ei1_price'] / $CANTUOMPURCHASE) * $CANTUOMSALE), $DECI_MALES);
 
 							if (trim($Data['iei_currency']) != $MONEDALOCAL) {
 								$CostoNuevo = ($CostoNuevo * $TasaDocLoc);
@@ -640,13 +663,13 @@ class InventoryEntry extends REST_Controller
 						$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 							':bmi_itemcode' => isset($detail['ei1_itemcode']) ? $detail['ei1_itemcode'] : NULL,
-							':bmi_quantity' => is_numeric($detail['ei1_quantity']) ? $detail['ei1_quantity'] * $Data['invtype'] : 0,
+							':bmi_quantity' => ($this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * $Data['invtype']),
 							':bmi_whscode'  => isset($detail['ei1_whscode']) ? $detail['ei1_whscode'] : NULL,
 							':bmi_createat' => $this->validateDate($Data['iei_createat']) ? $Data['iei_createat'] : NULL,
 							':bmi_createby' => isset($Data['iei_createby']) ? $Data['iei_createby'] : NULL,
 							':bmy_doctype'  => is_numeric($Data['iei_doctype']) ? $Data['iei_doctype'] : 0,
 							':bmy_baseentry' => $resInsert,
-							':bmi_cost'      => $NuevoCostoPonderado,
+							':bmi_cost'      => round($NuevoCostoPonderado, $DECI_MALES),
 							':bmi_currequantity' => $resCostoMomentoRegistro[0]['bdi_quantity'],
 							':bmi_basenum'			=> $DocNumVerificado,
 							':bmi_docdate' => $this->validateDate($Data['iei_docdate']) ? $Data['iei_docdate'] : NULL,
@@ -692,15 +715,15 @@ class InventoryEntry extends REST_Controller
 						$resInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 							':bmi_itemcode'  => isset($detail['ei1_itemcode']) ? $detail['ei1_itemcode'] : NULL,
-							':bmi_quantity'  => is_numeric($detail['ei1_quantity']) ? $detail['ei1_quantity'] * $Data['invtype'] : 0,
+							':bmi_quantity'  =>  ($this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * $Data['invtype']),
 							':bmi_whscode'   => isset($detail['ei1_whscode']) ? $detail['ei1_whscode'] : NULL,
 							':bmi_createat'  => $this->validateDate($Data['iei_createat']) ? $Data['iei_createat'] : NULL,
 							':bmi_createby'  => isset($Data['iei_createby']) ? $Data['iei_createby'] : NULL,
 							':bmy_doctype'   => is_numeric($Data['iei_doctype']) ? $Data['iei_doctype'] : 0,
 							':bmy_baseentry' => $resInsert,
-							':bmi_cost'      => $detail['ei1_price'],
-							':bmi_currequantity' => $detail['ei1_quantity'],
-							':bmi_basenum'			=> $DocNumVerificado,
+							':bmi_cost'      => round((($detail['ei1_price'] / $CANTUOMPURCHASE) * $CANTUOMSALE), $DECI_MALES),
+							':bmi_currequantity' => 0,
+							':bmi_basenum' => $DocNumVerificado,
 							':bmi_docdate' => $this->validateDate($Data['iei_docdate']) ? $Data['iei_docdate'] : NULL,
 							':bmi_duedate' => $this->validateDate($Data['iei_duedate']) ? $Data['iei_duedate'] : NULL,
 							':bmi_duedev'  => $this->validateDate($Data['iei_duedev']) ? $Data['iei_duedev'] : NULL,
@@ -881,8 +904,8 @@ class InventoryEntry extends REST_Controller
 							$CostoActual = $CostoPorAlmacen;
 
 
-							$CantidadNueva = $detail['ei1_quantity'];
-							$CostoNuevo = $detail['ei1_price'];
+							$CantidadNueva = $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
+							$CostoNuevo = round((($detail['ei1_price'] / $CANTUOMPURCHASE) * $CANTUOMSALE), $DECI_MALES);
 
 
 							$CantidadTotal = ($CantidadActual + $CantidadNueva);
@@ -933,7 +956,7 @@ class InventoryEntry extends REST_Controller
 												AND business = :business";
 							
 							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
-								':bdi_avgprice' => $NuevoCostoPonderado,
+								':bdi_avgprice' => round($NuevoCostoPonderado, $DECI_MALES),
 								':bdi_itemcode' => $detail['ei1_itemcode'],
 								':bdi_whscode'  => $detail['ei1_whscode'],
 								':business' 	=> $Data['business']
@@ -966,7 +989,7 @@ class InventoryEntry extends REST_Controller
 
 								$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
-									':bdi_avgprice' => $NuevoCostoPonderado,
+									':bdi_avgprice' => round($NuevoCostoPonderado, $DECI_MALES),
 									':bdi_itemcode' => $detail['ei1_itemcode'],
 									':bdi_whscode'  => $detail['ei1_whscode'],
 									':business' 	=> $Data['business']
@@ -991,8 +1014,8 @@ class InventoryEntry extends REST_Controller
 						} else {
 
 							$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-							$CantidadNueva = $detail['ei1_quantity'];
-							$CostoNuevo = $detail['ei1_price'];
+							$CantidadNueva = $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
+							$CostoNuevo = round((($detail['ei1_price'] / $CANTUOMPURCHASE) * $CANTUOMSALE), $DECI_MALES);
 
 							if (trim($Data['iei_currency']) != $MONEDALOCAL) {
 								$CostoNuevo = ($CostoNuevo * $TasaDocLoc);
@@ -1008,7 +1031,7 @@ class InventoryEntry extends REST_Controller
 							$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
 								':bdi_quantity' => $CantidadTotal,
-								':bdi_avgprice' => $CostoNuevo,
+								':bdi_avgprice' => round($CostoNuevo, $DECI_MALES),
 								':bdi_id' 		=> $resCostoCantidad[0]['bdi_id']
 							));
 
@@ -1038,7 +1061,7 @@ class InventoryEntry extends REST_Controller
 												AND business = :business";
 							
 							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
-								':bdi_avgprice' => $NuevoCostoPonderado,
+								':bdi_avgprice' => round($NuevoCostoPonderado, $DECI_MALES),
 								':bdi_itemcode' => $detail['ei1_itemcode'],
 								':bdi_whscode'  => $detail['ei1_whscode'],
 								':business' 	=> $Data['business']
@@ -1071,7 +1094,7 @@ class InventoryEntry extends REST_Controller
 
 								$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
-									':bdi_avgprice' => $CostoNuevo,
+									':bdi_avgprice' => round($CostoNuevo, $DECI_MALES),
 									':bdi_itemcode' => $detail['ei1_itemcode'],
 									':bdi_whscode'  => $detail['ei1_whscode'],
 									':business' 	=> $Data['business']
@@ -1105,8 +1128,8 @@ class InventoryEntry extends REST_Controller
 							$CantidadActual = $CantidadPorAlmacen;
 							$CostoActual = $CostoPorAlmacen;
 
-							$CantidadNueva = $detail['ei1_quantity'];
-							$CostoNuevo = $detail['ei1_price'];
+							$CantidadNueva = $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
+							$CostoNuevo = round((($detail['ei1_price'] / $CANTUOMPURCHASE) * $CANTUOMSALE), $DECI_MALES);
 
 							$CantidadTotal = ($CantidadActual + $CantidadNueva);
 							$CantidadTotalItemSolo = ($CantidadItem + $CantidadNueva);
@@ -1134,8 +1157,8 @@ class InventoryEntry extends REST_Controller
 
 										':bdi_itemcode'  => $detail['ei1_itemcode'],
 										':bdi_whscode'   => $detail['ei1_whscode'],
-										':bdi_quantity'  => $detail['ei1_quantity'],
-										':bdi_avgprice'  => $NuevoCostoPonderado,
+										':bdi_quantity'  => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
+										':bdi_avgprice'  => round($NuevoCostoPonderado, $DECI_MALES),
 										':bdi_lote' 	 => $detail['ote_code'],
 										':bdi_ubication' => $detail['ei1_ubication'],
 										':business' 	 => $Data['business']
@@ -1149,8 +1172,8 @@ class InventoryEntry extends REST_Controller
 
 										':bdi_itemcode'  => $detail['ei1_itemcode'],
 										':bdi_whscode'   => $detail['ei1_whscode'],
-										':bdi_quantity'  => $detail['ei1_quantity'],
-										':bdi_avgprice'  => $NuevoCostoPonderado,
+										':bdi_quantity'  => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
+										':bdi_avgprice'  => round($NuevoCostoPonderado, $DECI_MALES),
 										':bdi_ubication' => $detail['ei1_ubication'],
 										':business' 	 => $Data['business']
 									));
@@ -1168,8 +1191,8 @@ class InventoryEntry extends REST_Controller
 
 											':bdi_itemcode' => $detail['ei1_itemcode'],
 											':bdi_whscode'  => $detail['ei1_whscode'],
-											':bdi_quantity' => $detail['ei1_quantity'],
-											':bdi_avgprice' => $NuevoCostoPonderado,
+											':bdi_quantity' => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
+											':bdi_avgprice' => round($NuevoCostoPonderado, $DECI_MALES),
 											':bdi_lote' 	=> $detail['ote_code'],
 											':bdi_ubication' => $detail['ei1_ubication'],
 											':business'		 => $Data['business']
@@ -1183,8 +1206,8 @@ class InventoryEntry extends REST_Controller
 
 											':bdi_itemcode' => $detail['ei1_itemcode'],
 											':bdi_whscode'  => $detail['ei1_whscode'],
-											':bdi_quantity' => $detail['ei1_quantity'],
-											':bdi_avgprice' => $NuevoCostoPonderado,
+											':bdi_quantity' => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
+											':bdi_avgprice' => round($NuevoCostoPonderado, $DECI_MALES),
 											':bdi_ubication' => $detail['ei1_ubication'],
 											':business'		 => $Data['business']
 										));
@@ -1200,8 +1223,8 @@ class InventoryEntry extends REST_Controller
 		
 											':bdi_itemcode' => $detail['ei1_itemcode'],
 											':bdi_whscode'  => $detail['ei1_whscode'],
-											':bdi_quantity' => $detail['ei1_quantity'],
-											':bdi_avgprice' => $NuevoCostoPonderado,
+											':bdi_quantity' => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
+											':bdi_avgprice' => round($NuevoCostoPonderado, $DECI_MALES),
 											':bdi_lote' 	=> $detail['ote_code'],
 											':business' 	=> $Data['business']
 										));
@@ -1215,8 +1238,8 @@ class InventoryEntry extends REST_Controller
 		
 											':bdi_itemcode' => $detail['ei1_itemcode'],
 											':bdi_whscode'  => $detail['ei1_whscode'],
-											':bdi_quantity' => $detail['ei1_quantity'],
-											':bdi_avgprice' => $NuevoCostoPonderado,
+											':bdi_quantity' => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
+											':bdi_avgprice' => round($NuevoCostoPonderado, $DECI_MALES),
 											':business' 	=> $Data['business']
 										));
 									}
@@ -1253,7 +1276,7 @@ class InventoryEntry extends REST_Controller
 												AND business = :business";
 							
 							$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
-								':bdi_avgprice' => $NuevoCostoPonderado,
+								':bdi_avgprice' => round($NuevoCostoPonderado, $DECI_MALES),
 								':bdi_itemcode' => $detail['ei1_itemcode'],
 								':bdi_whscode'  => $detail['ei1_whscode'],
 								':business' 	=> $Data['business']
@@ -1288,7 +1311,7 @@ class InventoryEntry extends REST_Controller
 
 								$resUpdateCostoCantidad = $this->pedeo->updateRow($sqlUpdateCostoCantidad, array(
 
-									':bdi_avgprice' => $NuevoCostoPonderado,
+									':bdi_avgprice' => round($NuevoCostoPonderado, $DECI_MALES),
 									':bdi_itemcode' => $detail['ei1_itemcode'],
 									':bdi_whscode'  => $detail['ei1_whscode'],
 									':business' 	=> $Data['business']
@@ -1313,7 +1336,7 @@ class InventoryEntry extends REST_Controller
 								}
 							}
 						} else {
-							$CostoNuevo =  $detail['ei1_price'];
+							$CostoNuevo =  round((($detail['ei1_price'] / $CANTUOMPURCHASE) * $CANTUOMSALE), $DECI_MALES);
 
 							if (trim($Data['iei_currency']) != $MONEDALOCAL) {
 								$CostoNuevo = ($CostoNuevo * $TasaDocLoc);
@@ -1336,7 +1359,7 @@ class InventoryEntry extends REST_Controller
 
 										':bdi_itemcode'  => $detail['ei1_itemcode'],
 										':bdi_whscode'   => $detail['ei1_whscode'],
-										':bdi_quantity'  => $detail['ei1_quantity'],
+										':bdi_quantity'  => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 										':bdi_avgprice'  => $CostoNuevo,
 										':bdi_lote' 	 => $detail['ote_code'],
 										':bdi_ubication' => $detail['ei1_ubication'],
@@ -1351,7 +1374,7 @@ class InventoryEntry extends REST_Controller
 
 										':bdi_itemcode'  => $detail['ei1_itemcode'],
 										':bdi_whscode'   => $detail['ei1_whscode'],
-										':bdi_quantity'  => $detail['ei1_quantity'],
+										':bdi_quantity'  => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 										':bdi_avgprice'  => $CostoNuevo,
 										':bdi_ubication' => $detail['ei1_ubication'],
 										':business' 	 => $Data['business']
@@ -1369,7 +1392,7 @@ class InventoryEntry extends REST_Controller
 
 										':bdi_itemcode' => $detail['ei1_itemcode'],
 										':bdi_whscode'  => $detail['ei1_whscode'],
-										':bdi_quantity' => $detail['ei1_quantity'],
+										':bdi_quantity' => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 										':bdi_avgprice' => $CostoNuevo,
 										':bdi_lote' 	=> $detail['ote_code'],
 										':business' 	=> $Data['business']
@@ -1384,7 +1407,7 @@ class InventoryEntry extends REST_Controller
 
 										':bdi_itemcode' => $detail['ei1_itemcode'],
 										':bdi_whscode'  => $detail['ei1_whscode'],
-										':bdi_quantity' => $detail['ei1_quantity'],
+										':bdi_quantity' => $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 										':bdi_avgprice' => $CostoNuevo,
 										':business'		=> $Data['business']
 									));
@@ -1552,9 +1575,9 @@ class InventoryEntry extends REST_Controller
 				$DetalleCuentaLineaDocumento->ei1_linetotal = is_numeric($detail['ei1_linetotal']) ? $detail['ei1_linetotal'] : 0;
 				$DetalleCuentaLineaDocumento->ei1_vat = is_numeric($detail['ei1_vat']) ? $detail['ei1_vat'] : 0;
 				$DetalleCuentaLineaDocumento->ei1_vatsum = is_numeric($detail['ei1_vatsum']) ? $detail['ei1_vatsum'] : 0;
-				$DetalleCuentaLineaDocumento->ei1_price = is_numeric($detail['ei1_price']) ? $detail['ei1_price'] : 0;
+				$DetalleCuentaLineaDocumento->ei1_price = round((($detail['ei1_price'] / $CANTUOMPURCHASE) * $CANTUOMSALE), $DECI_MALES);
 				$DetalleCuentaLineaDocumento->ei1_itemcode = isset($detail['ei1_itemcode']) ? $detail['ei1_itemcode'] : NULL;
-				$DetalleCuentaLineaDocumento->ei1_quantity = is_numeric($detail['ei1_quantity']) ? $detail['ei1_quantity'] : 0;
+				$DetalleCuentaLineaDocumento->ei1_quantity = $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 				$DetalleCuentaLineaDocumento->ei1_whscode = isset($detail['ei1_whscode']) ? $detail['ei1_whscode'] : NULL;
 
 
@@ -1590,7 +1613,7 @@ class InventoryEntry extends REST_Controller
 
 				$DetalleCuentaGrupo->ei1_itemcode = isset($detail['ei1_itemcode']) ? $detail['ei1_itemcode'] : NULL;
 				$DetalleCuentaGrupo->ei1_acctcode = is_numeric($detail['ei1_acctcode']) ? $detail['ei1_acctcode'] : 0;
-				$DetalleCuentaGrupo->ei1_quantity = is_numeric($detail['ei1_quantity']) ? $detail['ei1_quantity'] : 0;
+				$DetalleCuentaGrupo->ei1_quantity = $this->generic->getCantInv($detail['ei1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 
 				$llaveCuentaGrupo = $DetalleCuentaGrupo->ei1_acctcode;
 				//********************************
@@ -1679,9 +1702,45 @@ class InventoryEntry extends REST_Controller
 						$credito = $grantotalLinea;
 						$MontoSysCR = ($credito / $TasaLocSys);
 						break;
+					case 8:
+						$credito = $grantotalLinea;
+						$MontoSysCR = ($credito / $TasaLocSys);
+						break;
+					case 9:
+						$credito = $grantotalLinea;
+						$MontoSysCR = ($credito / $TasaLocSys);
+						break;
 				}
 
-
+				// SE AGREGA AL BALANCE
+				if ( $debito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['iei_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['iei_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1829,9 +1888,45 @@ class InventoryEntry extends REST_Controller
 						$debito = $grantotalLinea;
 						$MontoSysDB = ($debito / $TasaLocSys);
 						break;
+					case 8:
+						$debito = $grantotalLinea;
+						$MontoSysDB = ($debito / $TasaLocSys);
+						break;
+					case 9:
+						$debito = $grantotalLinea;
+						$MontoSysDB = ($debito / $TasaLocSys);
+						break;
 				}
 
-
+				// SE AGREGA AL BALANCE
+				if ( $debito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['iei_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['iei_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1861,7 +1956,7 @@ class InventoryEntry extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['iei_createby']) ? $Data['iei_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 1,

@@ -46,8 +46,7 @@ class Business extends REST_Controller
       !isset($DataCompany['Pge_Mail']) or
       !isset($DataCompany['Pge_CouBank']) or
       !isset($DataCompany['Pge_BankDef']) or
-      !isset($DataCompany['Pge_BankAcct']) or
-      !isset($DataCompany['Pge_AccType'])
+      !isset($DataCompany['Pge_BankAcct'])
     ) {
 
       $respuesta = array(
@@ -60,22 +59,23 @@ class Business extends REST_Controller
 
       return;
     }
-
+    $this->pedeo->trans_begin();
     $sqlInsert = "INSERT INTO pgem(pge_name_soc, pge_small_name, pge_add_soc, pge_state_soc, pge_city_soc, 
                     pge_cou_soc, pge_id_type, pge_id_soc, pge_web_site, pge_phone1, pge_phone2, pge_cel, 
-                    pge_branch, pge_mail, pge_curr_first, pge_curr_sys, pge_cou_bank, pge_bank_def, 
+                    pge_branch, pge_mail, pge_cou_bank, pge_bank_def, 
                     pge_bank_acct, pge_acc_type, pge_bridge_inv, pge_bridge_inv_purch,pge_acc_dcp, 
                     pge_acc_dcn,pge_acc_ajp,pge_page_social,pge_client_default,pge_supplier_default,
                     pge_bridge_purch_int,pge_tax_debit_account, pge_tax_credit_account, 
-                    pge_shopping_discount_account, pge_sales_discount_account)
+                    pge_shopping_discount_account, pge_sales_discount_account, pge_variable,
+                    pge_gateway_account,pge_treasury_level,pge_pmpg)
                    VALUES(:Pge_NameSoc, :Pge_SmallName, :Pge_AddSoc, :Pge_StateSoc, :Pge_CitySoc, 
                    :Pge_CouSoc, :Pge_IdType, :Pge_IdSoc, :Pge_WebSite, :Pge_Phone1, :Pge_Phone2, 
-                   :Pge_Cel, :Pge_Branch, :Pge_Mail, :Pge_CurrFirst, :Pge_CurrSys, :Pge_CouBank, 
+                   :Pge_Cel, :Pge_Branch, :Pge_Mail, :Pge_CouBank, 
                    :Pge_BankDef, :Pge_BankAcct, :Pge_AccType, :pge_bridge_inv, :pge_bridge_inv_purch,
                    :pge_acc_dcp, :pge_acc_dcn,:pge_acc_ajp,:pge_page_social,:pge_client_default,
                    :pge_supplier_default,:pge_bridge_purch_int,:pge_tax_debit_account, :pge_tax_credit_account,
-                   :pge_shopping_discount_account, :pge_sales_discount_account)";
-
+                   :pge_shopping_discount_account, :pge_sales_discount_account, :pge_variable,
+                   :pge_gateway_account,:pge_treasury_level,:pge_pmpg)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
       ':Pge_NameSoc' => $DataCompany['Pge_NameSoc'],
@@ -92,12 +92,10 @@ class Business extends REST_Controller
       ':Pge_Cel' => $DataCompany['Pge_Cel'],
       ':Pge_Branch' => $DataCompany['Pge_Branch'],
       ':Pge_Mail' => $DataCompany['Pge_Mail'],
-      ':Pge_CurrFirst' => $DataCompany['Pge_CurrFirst'],
-      ':Pge_CurrSys' => $DataCompany['Pge_CurrSys'],
       ':Pge_CouBank' => $DataCompany['Pge_CouBank'],
       ':Pge_BankDef' => $DataCompany['Pge_BankDef'],
       ':Pge_BankAcct' => $DataCompany['Pge_BankAcct'],
-      ':Pge_AccType' => $DataCompany['Pge_AccType'],
+      ':Pge_AccType' => isset($DataCompany['Pge_AccType']) ? $DataCompany['Pge_AccType'] : NULL,
       ':pge_bridge_inv' => $DataCompany['pge_bridge_inv'],
       ':pge_bridge_inv_purch' => $DataCompany['pge_bridge_inv_purch'],
       ':pge_acc_dcp' => $DataCompany['pge_acc_dcp'],
@@ -110,18 +108,64 @@ class Business extends REST_Controller
       ':pge_tax_debit_account' => isset($DataCompany['pge_tax_debit_account']) && is_numeric($DataCompany['pge_tax_debit_account']) ? $DataCompany['pge_tax_debit_account'] : NULL,
       ':pge_tax_credit_account' => isset($DataCompany['pge_tax_credit_account']) && is_numeric($DataCompany['pge_tax_credit_account']) ? $DataCompany['pge_tax_credit_account'] : NULL,
       ':pge_shopping_discount_account' => isset($DataCompany['pge_shopping_discount_account']) && is_numeric($DataCompany['pge_shopping_discount_account']) ? $DataCompany['pge_shopping_discount_account'] : NULL,
-      ':pge_sales_discount_account' => isset($DataCompany['pge_sales_discount_account']) && is_numeric($DataCompany['pge_sales_discount_account']) ? $DataCompany['pge_sales_discount_account'] : NULL
+      ':pge_sales_discount_account' => isset($DataCompany['pge_sales_discount_account']) && is_numeric($DataCompany['pge_sales_discount_account']) ? $DataCompany['pge_sales_discount_account'] : NULL,
+      ':pge_variable' =>  $DataCompany['pge_variable'],
+      ':pge_gateway_account' => $DataCompany['pge_gateway_account'],
+      ':pge_treasury_level' => $DataCompany['pge_treasury_level'],
+      ':pge_pmpg' => $DataCompany['pge_pmpg']
     ));
 
 
     if (is_numeric($resInsert) && $resInsert > 0) {
+      
+      if(is_bool($DataCompany['Pge_Branch']) && $DataCompany['Pge_Branch'] == false OR $DataCompany['Pge_Branch'] == 0){
+        
+        $sql = "SELECT * FROM pges WHERE pgs_company_id = :pgs_company_id";
+        $resSql = $this->pedeo->queryTable($sql,array(':pgs_company_id' => $resInsert));
+        
+        //
+        if(!isset($resSql[0])){
+
+          $sqlInsertBranch = "INSERT INTO pges(pgs_company_id, pgs_name_soc, pgs_small_name, pgs_add_soc, pgs_state_soc, pgs_city_soc, pgs_cou_soc, pgs_phone1, pgs_phone2, pgs_cel, pgs_mail)
+                   VALUES(:Pgs_CompanyID,  :Pgs_NameSoc,  :Pgs_SmallName,  :Pgs_AddSoc,  :Pgs_StateSoc,  :Pgs_CitySoc,  :Pgs_CouSoc, :Pgs_Phone1,  :Pgs_Phone2,  :Pgs_Cel,  :Pgs_Mail)";
+          $resInsertBranch  = $this->pedeo->insertRow($sqlInsertBranch, array(
+                ':Pgs_CompanyID' => $resInsert,
+                ':Pgs_NameSoc'  => "Predeterminada",
+                ':Pgs_SmallName'  => $DataCompany['Pge_SmallName'],
+                ':Pgs_AddSoc'  => $DataCompany['Pge_AddSoc'],
+                ':Pgs_StateSoc'  => $DataCompany['Pge_StateSoc'],
+                ':Pgs_CitySoc'  => $DataCompany['Pge_CitySoc'],
+                ':Pgs_CouSoc'  => $DataCompany['Pge_CouSoc'],
+                ':Pgs_Phone1'  => $DataCompany['Pge_Phone1'],
+                ':Pgs_Phone2'  => $DataCompany['Pge_Phone2'],
+                ':Pgs_Cel'  => $DataCompany['Pge_Cel'],
+                ':Pgs_Mail'  => $DataCompany['Pge_Mail']
+          ));
+
+          if(is_numeric($resInsertBranch) && $resInsertBranch > 0){
+            
+          }else{
+            $this->pedeo->trans_rollback();
+            $respuesta = array(
+              'error'   => true,
+              'data'    => $resInsertBranch,
+              'mensaje' => 'Empresa registrada con exito'
+            );
+            $this->response($respuesta);
+            return;
+          }
+        }
+        
+
+      }
+      $this->pedeo->trans_commit();
       $respuesta = array(
         'error'   => false,
         'data'    => $resInsert,
         'mensaje' => 'Empresa registrada con exito'
       );
     } else {
-
+      $this->pedeo->trans_rollback();
       $respuesta = array(
         'error'   => true,
         'data'     => $resInsert,
@@ -183,8 +227,9 @@ class Business extends REST_Controller
                     pge_page_social = :pge_page_social ,pge_client_default = :pge_client_default,
                     pge_supplier_default = :pge_supplier_default,pge_bridge_purch_int = :pge_bridge_purch_int,
                     pge_tax_debit_account = :pge_tax_debit_account, pge_tax_credit_account = :pge_tax_credit_account, 
-                    pge_shopping_discount_account = :pge_shopping_discount_account, pge_sales_discount_account = :pge_sales_discount_account
-                    WHERE pge_id = :Pge_Id" ;
+                    pge_shopping_discount_account = :pge_shopping_discount_account, pge_sales_discount_account = :pge_sales_discount_account,
+                    pge_variable = :pge_variable, pge_gateway_account = :pge_gateway_account, pge_treasury_level = :pge_treasury_level, 
+                    pge_pmpg = :pge_pmpg WHERE pge_id = :Pge_Id";
 
 
     $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -220,7 +265,11 @@ class Business extends REST_Controller
       ':pge_tax_debit_account' => isset($DataCompany['pge_tax_debit_account']) && is_numeric($DataCompany['pge_tax_debit_account']) ? $DataCompany['pge_tax_debit_account'] : NULL,
       ':pge_tax_credit_account' => isset($DataCompany['pge_tax_credit_account']) && is_numeric($DataCompany['pge_tax_credit_account']) ? $DataCompany['pge_tax_credit_account'] : NULL,
       ':pge_shopping_discount_account' => isset($DataCompany['pge_shopping_discount_account']) && is_numeric($DataCompany['pge_shopping_discount_account']) ? $DataCompany['pge_shopping_discount_account'] : NULL,
-      ':pge_sales_discount_account' => isset($DataCompany['pge_sales_discount_account']) && is_numeric($DataCompany['pge_sales_discount_account']) ? $DataCompany['pge_sales_discount_account'] : NULL
+      ':pge_sales_discount_account' => isset($DataCompany['pge_sales_discount_account']) && is_numeric($DataCompany['pge_sales_discount_account']) ? $DataCompany['pge_sales_discount_account'] : NULL,
+      ':pge_variable' => $DataCompany['pge_variable'],
+      ':pge_gateway_account' => $DataCompany['pge_gateway_account'],
+      ':pge_treasury_level' => $DataCompany['pge_treasury_level'],
+      ':pge_pmpg' => $DataCompany['pge_pmpg']
     ));
 
     if (is_numeric($resUpdate) && $resUpdate == 1) {
@@ -246,9 +295,10 @@ class Business extends REST_Controller
   public function getCompany_get()
   {
 
-    $sqlSelect = "SELECT pgem.*, tbti.bti_name, t1.pdm_states, t1.pdm_municipality  FROM pgem
-    INNER JOIN tbti ON tbti.bti_id = pgem.pge_id_type
-    INNER JOIN tpdm t1 ON t1.pdm_codstates = pgem.pge_state_soc AND t1.pdm_codmunicipality = pgem.pge_city_soc";
+    $sqlSelect = "SELECT pgem.*, tbti.bti_name, t1.pdm_states, t1.pdm_municipality,t1.pdm_country  
+                  FROM pgem
+                  INNER JOIN tbti ON tbti.bti_id = pgem.pge_id_type
+                  INNER JOIN tpdm t1 ON t1.pdm_codstates = pgem.pge_state_soc AND t1.pdm_codmunicipality = pgem.pge_city_soc";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

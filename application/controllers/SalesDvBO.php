@@ -193,8 +193,18 @@ class SalesDvBO extends REST_Controller {
         return;
       }
       // FIN PROCESO PARA OBTENER LA CARPETA PRINCIPAL DEL PROYECTO
-
-
+      // VALIDACION DE FECHA DE VENCIMIENTO
+      if($Data['vdv_duedate'] < $Data['vdv_docdate']){
+        $respuesta = array(
+          'error' => true,
+          'data' => [],
+          'mensaje' => 'La fecha de vencimiento ('.$Data['vdv_duedate'].') no puede ser inferior a la fecha del documento ('.$Data['vdv_docdate'].')'
+        );
+  
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+  
+        return;
+      }
 
       $sqlInsert = "INSERT INTO dvdv(vdv_series, vdv_docnum, vdv_docdate, vdv_duedate, vdv_duedev, vdv_pricelist, vdv_cardcode,
           vdv_cardname, vdv_currency, vdv_contacid, vdv_slpcode, vdv_empid, vdv_comment, vdv_doctotal, vdv_baseamnt, vdv_taxtotal,
@@ -471,10 +481,11 @@ class SalesDvBO extends REST_Controller {
 
           $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                               dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp, dv1_ubication, ote_code,dv1_baseline,detalle_modular,dv1_tax_base)
+                              dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp, dv1_ubication, 
+                              ote_code,dv1_baseline,detalle_modular,dv1_tax_base,detalle_anuncio,imponible)
                               VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,:dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, 
                               :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,:dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, 
-                              :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp, :dv1_ubication, :ote_code,:dv1_baseline,:detalle_modular,:dv1_tax_base)";
+                              :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp, :dv1_ubication, :ote_code,:dv1_baseline,:detalle_modular,:dv1_tax_base,:detalle_anuncio,:imponible)";
 
           $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail,array(
             ':dv1_docentry' => $resInsert,
@@ -502,8 +513,10 @@ class SalesDvBO extends REST_Controller {
             ':dv1_ubication' => isset($detail['dv1_ubication'])?$detail['dv1_ubication']:NULL,
             ':ote_code' => isset($detail['ote_code'])?$detail['ote_code']:NULL,
             ':dv1_baseline' => isset($detail['dv1_baseline']) && is_numeric($detail['dv1_baseline']) ? $detail['dv1_baseline'] : 0,
-            ':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
-            ':dv1_tax_base' => is_numeric($detail['dv1_tax_base']) ? $detail['dv1_tax_base'] : 0
+            ':dv1_tax_base' => is_numeric($detail['dv1_tax_base']) ? $detail['dv1_tax_base'] : 0,
+            ':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode(json_decode($detail['detalle_modular'],true)) : NULL,
+					  ':detalle_anuncio' => (json_encode($detail['detalle_anuncio'])) ? json_encode(json_decode($detail['detalle_anuncio'],true)) : NULL,
+            ':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL
           ));
 
           if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1212,6 +1225,28 @@ class SalesDvBO extends REST_Controller {
                   }
                 }
 
+
+                // SE AGREGA AL BALANCE
+                if ( $dbito > 0 ){
+                  $BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaPuente, 1, $Data['vdv_docdate'], $Data['business'], $Data['branch']);
+                }else{
+                  $BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaPuente, 2, $Data['vdv_docdate'], $Data['business'], $Data['branch']);
+                }
+                if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+                  $this->pedeo->trans_rollback();
+    
+                  $respuesta = array(
+                    'error' => true,
+                    'data' => $BALANCE,
+                    'mensaje' => $BALANCE['mensaje']
+                  );
+      
+                  return $this->response($respuesta);
+                }	
+    
+                //
+
                 $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
                 ':ac1_trans_id' => $resInsertAsiento,
@@ -1241,7 +1276,7 @@ class SalesDvBO extends REST_Controller {
                 ':ac1_rescon_date' => NULL,
                 ':ac1_recon_total' => 0,
                 ':ac1_made_user' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL,
-                ':ac1_accperiod' => 1,
+                ':ac1_accperiod' => $periodo['data'],
                 ':ac1_close' => 0,
                 ':ac1_cord' => 0,
                 ':ac1_ven_debit' => 1,
@@ -1428,6 +1463,27 @@ class SalesDvBO extends REST_Controller {
                                 $MontoSysDB = $grantotalCuentaIventarioOriginal;
                             }
                         }
+
+                        // SE AGREGA AL BALANCE
+                        if ( $dbito > 0 ){
+                          $BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaInventario, 1, $Data['vdv_docdate'], $Data['business'], $Data['branch']);
+                        }else{
+                          $BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaInventario, 2, $Data['vdv_docdate'], $Data['business'], $Data['branch']);
+                        }
+                        if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+                          $this->pedeo->trans_rollback();
+            
+                          $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                          );
+              
+                          return $this->response($respuesta);
+                        }	
+            
+                        //
                         $AC1LINE = $AC1LINE+1;
                         $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1458,7 +1514,7 @@ class SalesDvBO extends REST_Controller {
                         ':ac1_rescon_date' => NULL,
                         ':ac1_recon_total' => 0,
                         ':ac1_made_user' => isset($Data['vdv_createby'])?$Data['vdv_createby']:NULL,
-                        ':ac1_accperiod' => 1,
+                        ':ac1_accperiod' => $periodo['data'],
                         ':ac1_close' => 0,
                         ':ac1_cord' => 0,
                         ':ac1_ven_debit' => 1,
@@ -1714,7 +1770,7 @@ class SalesDvBO extends REST_Controller {
       $respuesta = array(
       'error' => false,
       'data' => $resInsert,
-      'mensaje' =>'Devolución de clientes registrada con exito'
+      'mensaje' =>'Devolución de clientes #'.$DocNumVerificado.' registrada con exito'
       );
 
 
@@ -1942,7 +1998,9 @@ class SalesDvBO extends REST_Controller {
 
       $DECI_MALES =  $this->generic->getDecimals();
 
-      $sqlSelect = self::getColumn('dvdv','vdv','','',$DECI_MALES, $Data['business'], $Data['branch']);
+      $campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+      $sqlSelect = self::getColumn('dvdv','vdv',$campos,'',$DECI_MALES, $Data['business'], $Data['branch']);
 
 
       $resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -2226,7 +2284,7 @@ class SalesDvBO extends REST_Controller {
         return;
       }
 
-        $copy = $this->documentduplicate->getDuplicateDt($Data['dv1_docentry'],'dvdv','vdv1','vdv','dv1','detalle_modular::jsonb');
+        $copy = $this->documentduplicate->getDuplicateDt($Data['dv1_docentry'],'dvdv','vdv1','vdv','dv1','detalle_modular::jsonb,imponible');
 
         if (isset($copy[0])) {
 

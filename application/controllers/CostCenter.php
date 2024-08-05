@@ -61,8 +61,8 @@ class CostCenter extends REST_Controller {
         return $this->response($respuesta);
       }
 
-      $sqlInsert = "INSERT INTO dmcc(dcc_prc_code, dcc_prc_name, dcc_prc_date_ini, dcc_prc_end_date,business)
-                    VALUES (:dcc_prc_code, :dcc_prc_name, :dcc_prc_date_ini, :dcc_prc_end_date,:business)";
+      $sqlInsert = "INSERT INTO dmcc(dcc_prc_code, dcc_prc_name, dcc_prc_date_ini, dcc_prc_end_date,business, dcc_prc_enabled)
+                    VALUES (:dcc_prc_code, :dcc_prc_name, :dcc_prc_date_ini, :dcc_prc_end_date,:business, :dcc_prc_enabled)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -71,6 +71,7 @@ class CostCenter extends REST_Controller {
             ':dcc_prc_name' => $Data['dcc_prc_name'],
             ':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
             ':dcc_prc_end_date' => $Data['dcc_prc_end_date'],
+            ':dcc_prc_enabled' => $Data['dcc_prc_enabled'],
             ':business' => $Data['business']
         ));
 
@@ -118,7 +119,7 @@ class CostCenter extends REST_Controller {
       }
 
       $sqlUpdate = "UPDATE dmcc SET  dcc_prc_name = :dcc_prc_name, dcc_prc_date_ini = :dcc_prc_date_ini,
-                    dcc_prc_end_date = :dcc_prc_end_date,business = :business WHERE dcc_id = :dcc_id";
+                    dcc_prc_end_date = :dcc_prc_end_date,business = :business , dcc_prc_enabled = :dcc_prc_enabled WHERE dcc_id = :dcc_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -126,6 +127,7 @@ class CostCenter extends REST_Controller {
             ':dcc_prc_name' => $Data['dcc_prc_name'],
             ':dcc_prc_date_ini' => $Data['dcc_prc_date_ini'],
             ':dcc_prc_end_date' => $Data['dcc_prc_end_date'],
+            ':dcc_prc_enabled' => $Data['dcc_prc_enabled'],
             ':dcc_id' => $Data['dcc_id'],
             ':business' => $Data['business']
       ));

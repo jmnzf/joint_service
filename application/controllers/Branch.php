@@ -33,8 +33,6 @@ class Branch extends REST_Controller {
          !isset($DataBranch['Pgs_StateSoc']) OR
          !isset($DataBranch['Pgs_CitySoc']) OR
          !isset($DataBranch['Pgs_CouSoc']) OR
-         !isset($DataBranch['Pgs_IdSoc']) OR
-				 !isset($DataBranch['Pgs_IdType']) OR
          !isset($DataBranch['Pgs_WebSite']) OR
          !isset($DataBranch['Pgs_Phone1']) OR
          !isset($DataBranch['Pgs_Phone2']) OR
@@ -52,8 +50,8 @@ class Branch extends REST_Controller {
         return;
       }
 
-      $sqlInsert = "INSERT INTO pges(pgs_company_id, pgs_name_soc, pgs_small_name, pgs_add_soc, pgs_state_soc, pgs_city_soc, pgs_cou_soc, pgs_id_soc, pgs_id_type, pgs_web_site, pgs_phone1, pgs_phone2, pgs_cel, pgs_mail)
-                   VALUES(:Pgs_CompanyID,  :Pgs_NameSoc,  :Pgs_SmallName,  :Pgs_AddSoc,  :Pgs_StateSoc,  :Pgs_CitySoc,  :Pgs_CouSoc,  :Pgs_IdSoc, :Pgs_IdType,  :Pgs_WebSite, :Pgs_Phone1,  :Pgs_Phone2,  :Pgs_Cel,  :Pgs_Mail)";
+      $sqlInsert = "INSERT INTO pges(pgs_company_id, pgs_name_soc, pgs_small_name, pgs_add_soc, pgs_state_soc, pgs_city_soc, pgs_cou_soc, pgs_web_site, pgs_phone1, pgs_phone2, pgs_cel, pgs_mail)
+                   VALUES(:Pgs_CompanyID,  :Pgs_NameSoc,  :Pgs_SmallName,  :Pgs_AddSoc,  :Pgs_StateSoc,  :Pgs_CitySoc,  :Pgs_CouSoc, :Pgs_WebSite, :Pgs_Phone1,  :Pgs_Phone2,  :Pgs_Cel,  :Pgs_Mail)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -64,8 +62,6 @@ class Branch extends REST_Controller {
             ':Pgs_StateSoc'  => $DataBranch['Pgs_StateSoc'],
             ':Pgs_CitySoc'  => $DataBranch['Pgs_CitySoc'],
             ':Pgs_CouSoc'  => $DataBranch['Pgs_CouSoc'],
-            ':Pgs_IdSoc'  => $DataBranch['Pgs_IdSoc'],
-						':Pgs_IdType' => $DataBranch['Pgs_IdType'],
             ':Pgs_WebSite'  => $DataBranch['Pgs_WebSite'],
             ':Pgs_Phone1'  => $DataBranch['Pgs_Phone1'],
             ':Pgs_Phone2'  => $DataBranch['Pgs_Phone2'],
@@ -106,8 +102,6 @@ class Branch extends REST_Controller {
          !isset($DataBranch['Pgs_StateSoc']) OR
          !isset($DataBranch['Pgs_CitySoc']) OR
          !isset($DataBranch['Pgs_CouSoc']) OR
-         !isset($DataBranch['Pgs_IdSoc']) OR
-				 !isset($DataBranch['Pgs_IdType']) OR
          !isset($DataBranch['Pgs_WebSite']) OR
          !isset($DataBranch['Pgs_Phone1']) OR
          !isset($DataBranch['Pgs_Phone2']) OR
@@ -129,7 +123,7 @@ class Branch extends REST_Controller {
 
       $sqlUpdate = "UPDATE pges SET pgs_company_id = :Pgs_CompanyID, pgs_name_soc =  :Pgs_NameSoc, pgs_small_name = :Pgs_SmallName,
                     pgs_add_soc = :Pgs_AddSoc, pgs_state_soc = :Pgs_StateSoc, pgs_city_soc = :Pgs_CitySoc, pgs_cou_soc = :Pgs_CouSoc,
-                    pgs_id_soc = :Pgs_IdSoc, pgs_id_type = :Pgs_IdType, pgs_web_site = :Pgs_WebSite, pgs_phone1 = :Pgs_Phone1, pgs_phone2 = :Pgs_Phone2,
+                    pgs_web_site = :Pgs_WebSite, pgs_phone1 = :Pgs_Phone1, pgs_phone2 = :Pgs_Phone2,
                     pgs_cel = :Pgs_Cel, pgs_mail = :Pgs_Mail WHERE pgs_id = :Pgs_Id";
 
 
@@ -142,8 +136,6 @@ class Branch extends REST_Controller {
             ':Pgs_StateSoc'  => $DataBranch['Pgs_StateSoc'],
             ':Pgs_CitySoc'  => $DataBranch['Pgs_CitySoc'],
             ':Pgs_CouSoc'  => $DataBranch['Pgs_CouSoc'],
-            ':Pgs_IdSoc'  => $DataBranch['Pgs_IdSoc'],
-						':Pgs_IdType'  => $DataBranch['Pgs_IdType'],
             ':Pgs_WebSite'  => $DataBranch['Pgs_WebSite'],
             ':Pgs_Phone1'  => $DataBranch['Pgs_Phone1'],
             ':Pgs_Phone2'  => $DataBranch['Pgs_Phone2'],

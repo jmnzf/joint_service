@@ -25,6 +25,7 @@ class AccountingAccent extends REST_Controller
 		$this->load->library('pedeo', [$this->pdo]);
 		$this->load->library('generic');
 		$this->load->library('DocumentNumbering');
+		$this->load->library('account');
 
 	}
 
@@ -170,7 +171,7 @@ class AccountingAccent extends REST_Controller
 			// Se actualiza la serie de la numeracion del documento
 
 			$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
-																				 WHERE pgs_id = :pgs_id";
+									WHERE pgs_id = :pgs_id";
 			$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
 				':pgs_nextnum' => $DocNumVerificado,
 				':pgs_id'      => $Data['mac_serie']
@@ -255,8 +256,6 @@ class AccountingAccent extends REST_Controller
 					}
 				}
 
-
-				
 				if (!empty(($detail['ac1_prc_code']))) {
 
 					if (!isset($ValidateDmcc[0])) {
@@ -291,8 +290,53 @@ class AccountingAccent extends REST_Controller
 					}
 				}
 
-				
+				// SE AGREGA AL BALANCE
+				if ( $detail['ac1_debit'] > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($detail['ac1_debit'], $DECI_MALES), is_numeric($detail['ac1_account']) ? $detail['ac1_account'] : 0, 1, $detail['ac1_doc_date'], $Data['business'], $Data['branch']);
 
+					$BUDGET = $this->account->validateBudgetAmount( $detail['ac1_account'], $detail['ac1_doc_date'], isset($detail['ac1_prc_code']) ? $detail['ac1_prc_code'] : NULL, isset($detail['ac1_uncode']) ? $detail['ac1_uncode'] : NULL, isset($detail['ac1_prj_code']) ? $detail['ac1_prj_code'] : NULL, round($detail['ac1_debit']), 1, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+	
+						return $this->response($respuesta);
+					}
+					
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($detail['ac1_credit'], $DECI_MALES), is_numeric($detail['ac1_account']) ? $detail['ac1_account'] : 0, 2, $detail['ac1_doc_date'], $Data['business'], $Data['branch']);
+
+					$BUDGET = $this->account->validateBudgetAmount( $detail['ac1_account'], $detail['ac1_doc_date'], isset($detail['ac1_prc_code']) ? $detail['ac1_prc_code'] : NULL, isset($detail['ac1_uncode']) ? $detail['ac1_uncode'] : NULL, isset($detail['ac1_prj_code']) ? $detail['ac1_prj_code'] : NULL, round($detail['ac1_credit'], $DECI_MALES), 2, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+	
+						return $this->response($respuesta);
+					}
+				}
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}	
+
+				//
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
 					':ac1_trans_id' => $resInsert,
@@ -504,6 +548,53 @@ class AccountingAccent extends REST_Controller
 					$lcredito = 0;
 				}
 
+				// SE AGREGA AL BALANCE
+				if ( $ldebito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($ldebito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 1, $detail['ac1_doc_date'], $Data['business'], $Data['branch']);
+
+					$BUDGET = $this->account->validateBudgetAmount( $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], $detail['ac1_doc_date'], '', '', '', round($ldebito, $DECI_MALES), 1, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+	
+						return $this->response($respuesta);
+					}
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($lcredito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 2, $detail['ac1_doc_date'], $Data['business'], $Data['branch']);
+
+					$BUDGET = $this->account->validateBudgetAmount( $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], $detail['ac1_doc_date'], '', '', '', round($lcredito, $DECI_MALES), 2, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+	
+						return $this->response($respuesta);
+					}
+				}
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}	
+
+				//
+
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlInsertDetail, array(
 
 					':ac1_trans_id' => $resInsert,
@@ -583,7 +674,7 @@ class AccountingAccent extends REST_Controller
 
 
 			//SE VALIDA LA CONTABILIDAD CREADA
-			$validateCont = $this->generic->validateAccountingAccent($resInsert);
+			$validateCont = $this->generic->validateAccountingAccent2($resInsert);
 
 
 			if (isset($validateCont['error']) && $validateCont['error'] == false) {
@@ -670,6 +761,14 @@ class AccountingAccent extends REST_Controller
 						when coalesce(t0.mac_base_type,0) = 46 then 'Factura Anticipada de Compras'
 						when coalesce(t0.mac_base_type,0) = 34 then 'Factura Anticipada de Ventas'
 						when coalesce(t0.mac_base_type,0) = 37 then 'Legalización de Gastos'
+						when coalesce(t0.mac_base_type,0) = 27 then 'Emisión de Fabricación'
+						when coalesce(t0.mac_base_type,0) = 47 then 'Recibo de Caja Distribución'
+						when coalesce(t0.mac_base_type,0) = 48 then 'Cierre de Caja'
+						when coalesce(t0.mac_base_type,0) = 49 then 'Anulación de Cierre de Caja'
+						when coalesce(t0.mac_base_type,0) = 50 then 'Anulación de Pagos'
+						when coalesce(t0.mac_base_type,0) = 30 then 'Recepción de Fabricación'
+						when coalesce(t0.mac_base_type,0) = 51 then 'Cierre de Periodos'
+						when coalesce(t0.mac_base_type,0) = 33 then 'Pago Masivo'
 					end origen,
 					case
 						when coalesce(t0.mac_base_type,0) = 3 then t1.vem_docnum
@@ -695,6 +794,14 @@ class AccountingAccent extends REST_Controller
 						when coalesce(t0.mac_base_type,0) = 46 then t7.cfc_docnum
 						when coalesce(t0.mac_base_type,0) = 34 then t3.dvf_docnum
 						when coalesce(t0.mac_base_type,0) = 37 then t21.blg_docnum
+						when coalesce(t0.mac_base_type,0) = 27 then t22.bep_docnum
+						when coalesce(t0.mac_base_type,0) = 47 then t23.vrc_docnum
+						when coalesce(t0.mac_base_type,0) = 48 then t24.bco_docnum
+						when coalesce(t0.mac_base_type,0) = 48 then t25.bco_docnum
+						when coalesce(t0.mac_base_type,0) = 50 then t26.ban_docnum
+						when coalesce(t0.mac_base_type,0) = 30 then t27.brp_docnum
+						when coalesce(t0.mac_base_type,0) = 51 then t28.mcp_docnum
+						when coalesce(t0.mac_base_type,0) = 33 then t29.spm_docnum
 					end numero_origen,
 					case
 						when coalesce(t0.mac_base_type,0) = 3 then t1.vem_currency
@@ -720,6 +827,14 @@ class AccountingAccent extends REST_Controller
 						when coalesce(t0.mac_base_type,0) = 46 then t7.cfc_currency
 						when coalesce(t0.mac_base_type,0) = 34 then t3.dvf_currency
 						when coalesce(t0.mac_base_type,0) = 37 then t21.blg_currency
+						when coalesce(t0.mac_base_type,0) = 27 then get_localcur()
+						when coalesce(t0.mac_base_type,0) = 47 then t23.vrc_currency
+						when coalesce(t0.mac_base_type,0) = 48 then t24.bco_currency
+						when coalesce(t0.mac_base_type,0) = 48 then t25.bco_currency
+						when coalesce(t0.mac_base_type,0) = 50 then t26.ban_currency
+						when coalesce(t0.mac_base_type,0) = 30 then t27.brp_currency
+						when coalesce(t0.mac_base_type,0) = 51 then t28.mcp_currency
+						when coalesce(t0.mac_base_type,0) = 33 then t29.spm_currency
 					end currency,
 					case
 						when coalesce(t0.mac_base_type,0) = 3 then get_tax_currency(t1.vem_currency,mac_doc_date)
@@ -744,6 +859,14 @@ class AccountingAccent extends REST_Controller
 						when coalesce(t0.mac_base_type,0) = 46 then get_tax_currency(t7.cfc_currency,mac_doc_date)
 						when coalesce(t0.mac_base_type,0) = 34 then get_tax_currency(t3.dvf_currency,mac_doc_date)
 						when coalesce(t0.mac_base_type,0) = 37 then get_tax_currency(t21.blg_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 27 then get_tax_currency(get_localcur(),mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 47 then get_tax_currency(t23.vrc_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 48 then get_tax_currency(t24.bco_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 48 then get_tax_currency(t25.bco_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 50 then get_tax_currency(t26.ban_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 30 then get_tax_currency(t27.brp_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 51 then get_tax_currency(t28.mcp_currency,mac_doc_date)
+						when coalesce(t0.mac_base_type,0) = 33 then get_tax_currency(t29.spm_currency,mac_doc_date)
 					end tsa_value,
 					t0.*
 					from tmac t0
@@ -766,6 +889,14 @@ class AccountingAccent extends REST_Controller
 					left join dcrb t19 on t0.mac_base_entry = t19.crb_id and t0.mac_base_type = t19.crb_doctype
 					left join diri t20 on t0.mac_base_entry = t20.iri_docentry and t0.mac_base_type = t20.iri_doctype
 					left join tblg t21 on t0.mac_base_entry = t21.blg_docentry and t0.mac_base_type = t21.blg_doctype
+					left join tbep t22 on t0.mac_base_entry = t22.bep_docentry and t0.mac_base_type = t22.bep_doctype
+					left join dvrc t23 on t0.mac_base_entry = t23.vrc_docentry and t0.mac_base_type = t23.vrc_doctype
+					left join tbco t24 on t0.mac_base_entry = t24.bco_id and t0.mac_base_type = t24.bco_doctype
+					left join tbco t25 on t0.mac_base_entry = t25.bco_id and t0.mac_base_type = t25.bco_doctype
+					left join tban t26 on t0.mac_base_entry = t26.ban_docentry and t0.mac_base_type = t26.ban_doctype
+					left join tbrp t27 on t0.mac_base_entry = t27.brp_docentry and t0.mac_base_type = t27.brp_doctype
+					left join tmcp t28 on t0.mac_base_entry = t28.mcp_docentry and t0.mac_base_type = t28.mcp_doctype
+					left join tspm t29 on t0.mac_base_entry = t29.spm_docentry and t0.mac_base_type = t29.spm_doctype
 					WHERE t0.business = :business AND t0.branch = :branch
 				ORDER BY mac_trans_id ASC";
 
@@ -1242,7 +1373,7 @@ class AccountingAccent extends REST_Controller
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id
-											--- REVALORIZACION DE INVERNTARIO
+											--- REVALORIZACION DE INVENTARIO
 											union all
 											select distinct
 											mac1.ac1_trans_id as docnum,
@@ -1281,6 +1412,166 @@ class AccountingAccent extends REST_Controller
 											and tblg.blg_docentry = mac1.ac1_font_key
 											left join dacc
 											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											-- EMISIÓN DE FABRICACIÓN
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											tbep.bep_docnum as numero_origen,
+											get_localcur() as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(get_localcur(),tbep.bep_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join tbep
+											on tbep.bep_doctype = mac1.ac1_font_type
+											and tbep.bep_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											-- TRASLADO DE MERCANCIA
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dits.its_docnum as numero_origen,
+											dits.its_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dits.its_currency,dits.its_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dits
+											on dits.its_doctype = mac1.ac1_font_type
+											and dits.its_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											-- RECIBO DE CAJA CHICA
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											dvrc.vrc_docnum as numero_origen,
+											dvrc.vrc_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(dvrc.vrc_currency,dvrc.vrc_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join dvrc
+											on dvrc.vrc_doctype = mac1.ac1_font_type
+											and dvrc.vrc_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--CIERRES DE CAJA
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											tbco.bco_docnum as numero_origen,
+											tbco.bco_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(tbco.bco_currency,tbco.bco_date) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join tbco
+											on tbco.bco_doctype = mac1.ac1_font_type
+											and tbco.bco_id = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											-- ANULACION DE PAGOS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											tban.ban_docnum as numero_origen,
+											tban.ban_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(tban.ban_currency,tban.ban_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join tban
+											on tban.ban_doctype = mac1.ac1_font_type
+											and tban.ban_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											-- RECEPCIÓN DE FABRICACIÓN
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											tbrp.brp_docnum as numero_origen,
+											tbrp.brp_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(tbrp.brp_currency,tbrp.brp_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join tbrp
+											on tbrp.brp_doctype = mac1.ac1_font_type
+											and tbrp.brp_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											-- CIERRE DE PERIODOS
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											tmcp.mcp_docnum as numero_origen,
+											tmcp.mcp_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(tmcp.mcp_currency,tmcp.mcp_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join tmcp
+											on tmcp.mcp_doctype = mac1.ac1_font_type
+											and tmcp.mcp_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
+											where mac1.ac1_trans_id = :ac1_trans_id
+											--PAGO MASIVO
+											union all
+											select distinct
+											mac1.ac1_trans_id as docnum,
+											mac1.ac1_trans_id as numero_transaccion,
+											dmdt.mdt_docname as origen,
+											tspm.spm_docnum as numero_origen,
+											tspm.spm_currency as currency,
+											coalesce(dacc.acc_name,'Cuenta puente') nombre_cuenta,
+											get_tax_currency(tspm.spm_currency,tspm.spm_docdate) as tsa_value,
+											mac1.*
+											from mac1
+											inner join dmdt
+											on mac1.ac1_font_type = dmdt.mdt_doctype
+											inner join tspm
+											on tspm.spm_doctype = mac1.ac1_font_type
+											and tspm.spm_docentry = mac1.ac1_font_key
+											left join dacc
+											on mac1.ac1_account = dacc.acc_code
 											where mac1.ac1_trans_id = :ac1_trans_id";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':ac1_trans_id' => $Data['ac1_trans_id']));
@@ -1309,6 +1600,114 @@ class AccountingAccent extends REST_Controller
 		$Data = $this->post();
 
 		if (!isset($Data['mac_base_type']) or !isset($Data['mac_base_entry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT distinct t0.*,
+		dmdt.mdt_docname as origen,
+		case
+		when coalesce(t0.mac_base_type,0) = 3 then t1.vem_currency
+		when coalesce(t0.mac_base_type,0) = 4 then t2.vdv_currency
+		when coalesce(t0.mac_base_type,0) = 5 then t3.dvf_currency
+		when coalesce(t0.mac_base_type,0) = 6 then t10.vnc_currency
+		when coalesce(t0.mac_base_type,0) = 7 then t11.vnd_currency
+		when coalesce(t0.mac_base_type,0) = 8 then t5.isi_currency
+		when coalesce(t0.mac_base_type,0) = 9 then t6.iei_currency
+		when coalesce(t0.mac_base_type,0) = 13 then t12.cec_currency
+		when coalesce(t0.mac_base_type,0) = 14 then t13.cdc_currency
+		when coalesce(t0.mac_base_type,0) = 15 then t7.cfc_currency
+		when coalesce(t0.mac_base_type,0) = 16 then t14.cnc_currency
+		when coalesce(t0.mac_base_type,0) = 17 then t15.cnd_currency
+		when coalesce(t0.mac_base_type,0) = 18 then get_localcur()
+		when coalesce(t0.mac_base_type,0) = 19 then t8.bpe_currency
+		when coalesce(t0.mac_base_type,0) = 20 then t9.bpr_currency
+		when coalesce(t0.mac_base_type,0) = 22 then t17.crc_currency
+		when coalesce(t0.mac_base_type,0) = 26 then t18.iri_currency
+		when coalesce(t0.mac_base_type,0) = 37 then t19.blg_currency
+		when coalesce(t0.mac_base_type,0) = 46 then t7.cfc_currency
+		when coalesce(t0.mac_base_type,0) = 27 then get_localcur()
+		end  as currency,
+		case
+		when coalesce(t0.mac_base_type,0) = 3 then get_tax_currency(t1.vem_currency,t1.vem_docdate)
+		when coalesce(t0.mac_base_type,0) = 4 then get_tax_currency(t2.vdv_currency,t2.vdv_docdate)
+		when coalesce(t0.mac_base_type,0) = 5 then get_tax_currency(t3.dvf_currency,t3.dvf_docdate)
+		when coalesce(t0.mac_base_type,0) = 6 then get_tax_currency(t10.vnc_currency,t10.vnc_docdate)
+		when coalesce(t0.mac_base_type,0) = 7 then get_tax_currency(t11.vnd_currency,t11.vnd_docdate)
+		when coalesce(t0.mac_base_type,0) = 8 then get_tax_currency(t5.isi_currency,t5.isi_docdate)
+		when coalesce(t0.mac_base_type,0) = 9 then get_tax_currency(t6.iei_currency,t6.iei_docdate)
+		when coalesce(t0.mac_base_type,0) = 13 then get_tax_currency(t12.cec_currency,t12.cec_docdate)
+		when coalesce(t0.mac_base_type,0) = 14 then get_tax_currency(t13.cdc_currency,t13.cdc_docdate)
+		when coalesce(t0.mac_base_type,0) = 15 then get_tax_currency(t7.cfc_currency,t7.cfc_docdate)
+		when coalesce(t0.mac_base_type,0) = 16 then get_tax_currency(t14.cnc_currency,t14.cnc_docdate)
+		when coalesce(t0.mac_base_type,0) = 17 then get_tax_currency(t15.cnd_currency,t15.cnd_docdate)
+		when coalesce(t0.mac_base_type,0) = 18 then get_tax_currency(get_localcur(),t0.mac_doc_date)
+		when coalesce(t0.mac_base_type,0) = 19 then get_tax_currency(t8.bpe_currency,t8.bpe_docdate)
+		when coalesce(t0.mac_base_type,0) = 20 then get_tax_currency(t9.bpr_currency,t9.bpr_docdate)
+		when coalesce(t0.mac_base_type,0) = 22 then get_tax_currency(t17.crc_currency,t17.crc_docdate)
+		when coalesce(t0.mac_base_type,0) = 26 then get_tax_currency(t18.iri_currency,t18.iri_docdate)
+		when coalesce(t0.mac_base_type,0) = 37 then get_tax_currency(t19.blg_currency,t19.blg_docdate)
+		when coalesce(t0.mac_base_type,0) = 46 then get_tax_currency(t7.cfc_currency,t7.cfc_docdate)
+		when coalesce(t0.mac_base_type,0) = 27 then get_tax_currency(get_localcur(),t0.mac_doc_date)
+		end  as tsa_value
+		from tmac t0
+		LEFT JOIN dvem t1 ON t0.mac_base_entry = t1.vem_docentry AND t0.mac_base_type= t1.vem_doctype
+		LEFT JOIN dvdv t2 ON t0.mac_base_entry = t2.vdv_docentry AND t0.mac_base_type= t2.vdv_doctype
+		LEFT JOIN dvfv t3 ON t0.mac_base_entry = t3.dvf_docentry AND t0.mac_base_type= t3.dvf_doctype
+		LEFT JOIN misi t5 ON t0.mac_base_entry = t5.isi_docentry AND t0.mac_base_type= t5.isi_doctype
+		LEFT JOIN miei t6 ON t0.mac_base_entry = t6.iei_docentry AND t0.mac_base_type= t6.iei_doctype
+		LEFT JOIN dcfc t7 ON t0.mac_base_entry = t7.cfc_docentry AND t0.mac_base_type= t7.cfc_doctype
+		LEFT JOIN gbpe t8 ON t0.mac_base_entry = t8.bpe_docentry AND t0.mac_base_type= t8.bpe_doctype
+		LEFT JOIN gbpr t9 ON t0.mac_base_entry = t9.bpr_docentry AND t0.mac_base_type= t9.bpr_doctype
+		LEFT JOIN dvnc t10 ON t0.mac_base_entry = t10.vnc_docentry AND t0.mac_base_type= t10.vnc_doctype
+		LEFT JOIN dvnd t11 ON t0.mac_base_entry = t11.vnd_docentry AND t0.mac_base_type= t11.vnd_doctype
+		LEFT JOIN dcec t12 ON t0.mac_base_entry = t12.cec_docentry AND t0.mac_base_type= t12.cec_doctype
+		LEFT JOIN dcdc t13 ON t0.mac_base_entry = t13.cdc_docentry AND t0.mac_base_type= t13.cdc_doctype
+		LEFT JOIN dcnc t14 ON t0.mac_base_entry = t14.cnc_docentry AND t0.mac_base_type= t14.cnc_doctype
+		LEFT JOIN dcnd t15 ON t0.mac_base_entry = t15.cnd_docentry AND t0.mac_base_type= t15.cnd_doctype
+		LEFT JOIN dmdt ON dmdt.mdt_doctype = t0.mac_base_type
+		LEFT JOIN tasa t16 ON t0.mac_doc_date = t16.tsa_date and t0.mac_currency = t16.tsa_currd
+		LEFT JOIN dcrc t17 ON t0.mac_base_entry = t17.crc_docentry AND t0.mac_base_type= t17.crc_doctype
+		LEFT JOIN diri t18 ON t0.mac_base_entry = t18.iri_docentry AND t0.mac_base_type= t18.iri_doctype
+		LEFT JOIN tblg t19 ON t0.mac_base_entry = t19.blg_docentry AND t0.mac_base_type= t19.blg_doctype
+		LEFT JOIN tbrp t20 ON t0.mac_base_entry = t20.brp_docentry AND t0.mac_base_type= t20.brp_doctype
+		WHERE t0.mac_base_type = :mac_base_type
+		AND t0.mac_base_entry = :mac_base_entry";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_base_type' => $Data['mac_base_type'], ':mac_base_entry' => $Data['mac_base_entry']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'El documento en cuestión no incluye un registro o asiento contable'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function getAccentByTransID_post()
+	{
+		$Data = $this->post();
+
+		if (!isset($Data['mac_trans_id'])) {
 
 			$respuesta = array(
 				'error' => true,
@@ -1385,10 +1784,9 @@ class AccountingAccent extends REST_Controller
 		LEFT JOIN dcrc t17 ON t0.mac_base_entry = t17.crc_docentry AND t0.mac_base_type= t17.crc_doctype
 		LEFT JOIN diri t18 ON t0.mac_base_entry = t18.iri_docentry AND t0.mac_base_type= t18.iri_doctype
 		LEFT JOIN tblg t19 ON t0.mac_base_entry = t19.blg_docentry AND t0.mac_base_type= t19.blg_doctype
-		WHERE t0.mac_base_type = :mac_base_type
-		AND t0.mac_base_entry = :mac_base_entry";
+		WHERE t0.mac_trans_id = :mac_trans_id";
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_base_type' => $Data['mac_base_type'], ':mac_base_entry' => $Data['mac_base_entry']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':mac_trans_id' => $Data['mac_trans_id']));
 
 		if (isset($resSelect[0])) {
 
@@ -1402,13 +1800,12 @@ class AccountingAccent extends REST_Controller
 			$respuesta = array(
 				'error'   => true,
 				'data' => array(),
-				'mensaje'	=> 'busqueda sin resultados'
+				'mensaje'	=> 'El documento en cuestión no incluye un registro o asiento contable'
 			);
 		}
 
 		$this->response($respuesta);
 	}
-
 
 
 	private function validateDate($fecha)
@@ -1529,9 +1926,78 @@ class AccountingAccent extends REST_Controller
 
 				if ( isset( $resDetalleAsiento[0] ) ) {
 
+					// SE VERIFICA QUE LAS LINEAS DEL ASIENTO NO SE UTILIZARON EN LOS PROCESOS DE PAGO O RECONCILIACION
+					
+					foreach ($resDetalleAsiento as $key => $value) {
+
+						// VALIDANDO SI SE USO EN UN PAGO RECIBIDO
+						$sqlPr = "SELECT bpr1.pr1_docnum, bpr_docnum, case when responsestatus.estado = 'Anulado' then 1 else 0 end as estado
+								FROM bpr1 
+								INNER JOIN gbpr ON pr1_docnum = bpr_docentry
+								INNER JOIN responsestatus ON responsestatus.id = pr1_docnum  AND  responsestatus.tipo = 20
+								WHERE pr1_line_num = :pr1_line_num";
+
+						$resPr = $this->pedeo->queryTable($sqlPr, array(":pr1_line_num" => $value['ac1_line_num']));
+
+						if ( isset($resPr[0]) && $resPr[0]['estado'] == 0 ){
+
+							$respuesta = array(
+							'error'   => true,
+							'data'    => [],
+							'mensaje' => 'Revisando operaciones anteriores, se encontró que en el Pago recibido # '. $resPr[0]['bpr_docnum'] . 
+										" ha sido utilizado parcial o total el asiento que intenta anular. Es necesario que anule los documentos anteriores donde esta involucrado el asiento actual si desea anular dicho asiento."
+							);
+
+							return $this->response($respuesta);
+						}
+
+						//VALIDANDO SI SE USO EN UN PAGO EFECTUADO
+						$sqlPe = "SELECT bpe1.pe1_docnum, bpe_docnum, case when responsestatus.estado = 'Anulado' then 1 else 0 end as estado
+								FROM bpe1 
+								INNER JOIN gbpe ON pe1_docnum = bpe_docentry
+								INNER JOIN responsestatus ON responsestatus.id = pe1_docnum  AND  responsestatus.tipo = 19
+								WHERE pe1_line_num = :pe1_line_num";
+
+						$resPe = $this->pedeo->queryTable($sqlPe, array(":pe1_line_num" => $value['ac1_line_num']));
+						
+						if ( isset($resPe[0]) && $resPe[0]['estado'] == 0 ){
+
+							$respuesta = array(
+							'error'   => true,
+							'data'    => [],
+							'mensaje' => 'Revisando operaciones anteriores, se encontró que en el Pago efectuado # '. $resPe[0]['bpe_docnum'] . 
+										" ha sido utilizado parcial o total el asiento que intenta anular. Es necesario que anule los documentos anteriores donde esta involucrado el asiento actual si desea anular dicho asiento."
+							);
+
+							return $this->response($respuesta);
+						}
+
+						$sqlRc = "SELECT crc1.rc1_docentry, crc_docnum, case when responsestatus.estado = 'Anulado' then 1 else 0 end as estado
+								FROM crc1 
+								INNER JOIN dcrc ON rc1_docentry = dcrc.crc_docentry 
+								INNER JOIN responsestatus ON responsestatus.id = rc1_docentry  AND  responsestatus.tipo = 22
+								WHERE rc1_line_num = :rc1_line_num";
+
+						$resRc = $this->pedeo->queryTable($sqlRc, array(":rc1_line_num" => $value['ac1_line_num']));
+
+						if ( isset($resRc[0]) && $resRc[0]['estado'] == 0 ){
+
+							$respuesta = array(
+							'error'   => true,
+							'data'    => [],
+							'mensaje' => 'Revisando operaciones anteriores, se encontró que en la Reconciliación # '. $resRc[0]['crc_docnum'] . 
+										" ha sido utilizado parcial o total el asiento que intenta anular. Es necesario que anule los documentos anteriores donde esta involucrado el asiento actual si desea anular dicho asiento."
+							);
+
+							return $this->response($respuesta);
+						}
+						
+					}
+					//
+
 					$this->pedeo->trans_begin();
 
-					// //BUSCANDO LA NUMERACION DEL DOCUMENTO
+					// BUSCANDO LA NUMERACION DEL DOCUMENTO
 					$DocNumVerificado = $this->documentnumbering->NumberDoc($resAsiento[0]['mac_serie'],$resAsiento[0]['mac_doc_date'],$resAsiento[0]['mac_doc_duedate']);
 
 					if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
@@ -1821,6 +2287,355 @@ class AccountingAccent extends REST_Controller
 		}
 
 		$this->response($respuesta);
+	}
+
+	// LLENAR BALANCE DIARIO
+	public function addBalanceDaily_post() {
+
+		$sqlSelect = "SELECT * FROM mac1 where sync = 0 LIMIT 1000";
+
+		$ron_ID = 0;
+
+		$respuesta = array(
+			"error" => false,
+			"data"  => [],
+			"mensaje" => "Proceso finalizado"
+		);
+
+		// COMPROBANDO ESTADO DE EJECUCION
+		$estadoCron = $this->pedeo->queryTable("SELECT * FROM cron WHERE ron_code = 'BALANCECONTABLEDIARIO' ");
+		if (isset($estadoCron[0])) {
+
+			$ron_ID = $estadoCron[0]['ron_id'];
+
+			if ($estadoCron[0]['ron_status'] == 1) {
+
+				$respuesta = array(
+					"error" => false,
+					"data"  => [],
+					"mensaje" => "Proceso en ejecución"
+				);
+
+				return $this->response($respuesta);
+
+			} else {
+
+				$resUpdateEstadoCron = $this->pedeo->updateRow(" UPDATE cron set ron_status = :ron_status, ron_date = :ron_date WHERE ron_id = :ron_id", array(
+					':ron_status' => 1,
+					':ron_date' => date('Y-m-d'),
+					':ron_id'=> $estadoCron[0]['ron_id']
+				));
+
+				if ( is_numeric($resUpdateEstadoCron) && $resUpdateEstadoCron == 1){
+				}else{
+					$respuesta = array(
+						"error" => true,
+						"data"  => $resUpdateEstadoCron,
+						"mensaje" => "No se pudo actualizar el estado del proceso"
+					);
+	
+					return $this->response($respuesta);
+				}
+			}
+
+		} else {
+
+			$resInsertEstadoCron = $this->pedeo->insertRow(" INSERT INTO cron(ron_code, ron_status, ron_date)VALUES(:ron_code, :ron_status, :ron_date)", array(
+				':ron_code'=> 'BALANCECONTABLEDIARIO',
+				':ron_status'=> 1,
+				':ron_date'=> date('Y-m-d')
+			));
+
+			if ( is_numeric($resInsertEstadoCron) && $resInsertEstadoCron > 0){
+			} else {
+				$respuesta = array(
+					"error" => true,
+					"data"  => $resInsertEstadoCron,
+					"mensaje" => "No se pudo crear el estado del proceso"
+				);
+
+				return $this->response($respuesta);
+			}
+
+			$ron_ID = $resInsertEstadoCron;
+		}
+		//
+
+		$resCuentas = $this->pedeo->queryTable($sqlSelect, array());
+
+		$this->pedeo->trans_begin();
+
+		foreach ($resCuentas as $key => $cuenta) {
+
+
+			$sqlDoc = "SELECT * FROM cdoc WHERE 1=1 AND doc_account = :doc_account AND doc_date = :doc_date  AND business = :business";
+
+			$arra =  array (
+				':doc_account' => $cuenta['ac1_account'],
+				':doc_date' => $cuenta['ac1_doc_date'],
+				':business' => $cuenta['business']
+			);
+
+			if (!empty($cuenta['ac1_prc_code']) ) {
+
+				$sqlDoc .= "  AND dco_prc_code = :dco_prc_code";
+				$arra[':dco_prc_code'] = $cuenta['ac1_prc_code'];
+			}
+
+			if (!empty($cuenta['ac1_uncode']) ) {
+
+				$sqlDoc .= "  AND dco_uncode = :dco_uncode";
+				$arra[':dco_uncode'] = $cuenta['ac1_uncode'];
+
+			}
+
+			if (!empty($cuenta['ac1_prj_code']) ) {
+
+				$sqlDoc .= "  AND dco_prj_code = :dco_prj_code";
+				$arra[':dco_prj_code'] = $cuenta['ac1_prj_code'];
+
+			}
+			
+
+			$resDoc = $this->pedeo->queryTable($sqlDoc, $arra);
+
+			$sqlNivel = "SELECT acc_l1, acc_l2, acc_l3, acc_l4, acc_l5 FROM dacc WHERE acc_code = :acc_code";
+
+			$resNivel = $this->pedeo->queryTable($sqlNivel, array(":acc_code" => $cuenta['ac1_account']));
+
+			//
+
+			$cuentasUsadas = [];
+
+			
+
+			if (isset($resNivel[0])) {
+
+				$niveles = [];
+
+				array_push($niveles, $resNivel[0]['acc_l1']);
+				array_push($niveles, $resNivel[0]['acc_l2']);
+				array_push($niveles, $resNivel[0]['acc_l3']);
+				array_push($niveles, $resNivel[0]['acc_l4']);
+				array_push($niveles, $resNivel[0]['acc_l5']);
+				// array_push($niveles, $resNivel[0]['acc_l6']);
+
+				for ($i=0; $i < count($niveles); $i++) { 
+
+
+					if (!in_array($niveles[$i], $cuentasUsadas)){
+
+						array_push($cuentasUsadas, $niveles[$i]);
+
+						$array =  array(
+							':doc_account' => $niveles[$i],
+							':doc_date' => $cuenta['ac1_doc_date'],
+							':business' => $cuenta['business']
+						);
+
+						$sqlDocN = "SELECT * FROM cdoc WHERE 1=1 AND doc_account = :doc_account AND doc_date = :doc_date  AND business = :business";
+						
+						
+						if (!empty($cuenta['ac1_prc_code']) ) {
+
+							$sqlDocN .= "  AND dco_prc_code = :dco_prc_code";
+							$array[':dco_prc_code'] = $cuenta['ac1_prc_code'];
+						}
+
+						if (!empty($cuenta['ac1_uncode']) ) {
+
+							$sqlDocN .= "  AND dco_uncode = :dco_uncode";
+							$array[':dco_uncode'] = $cuenta['ac1_uncode'];
+
+						}
+
+						if (!empty($cuenta['ac1_prj_code']) ) {
+
+							$sqlDocN .= "  AND dco_prj_code = :dco_prj_code";
+							$array[':dco_prj_code'] = $cuenta['ac1_prj_code'];
+
+						}
+
+						
+						$resDocN = $this->pedeo->queryTable($sqlDocN, $array);
+						
+						//
+						if (isset($resDocN[0])){
+
+							$sqlUpdate = "UPDATE cdoc SET doc_debit = doc_debit + :doc_debit, doc_credit = doc_credit + :doc_credit WHERE doc_id = :doc_id";
+
+							$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+								':doc_debit' => $cuenta['ac1_debit'],
+								':doc_credit' => $cuenta['ac1_credit'],
+								':doc_id' => $resDocN[0]['doc_id']
+							));
+
+
+							if (is_numeric($resUpdate) && $resUpdate == 1){
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error' => true,
+									'data' => $resUpdate,
+									'mensaje' => 'No se pudo actualizar la cuenta'
+								);
+
+								return $this->response($respuesta);
+							}
+
+						}else{
+
+							$sqlInsert = " INSERT INTO cdoc(doc_account, doc_debit, doc_credit, doc_date, business, branch, dco_prc_code, dco_uncode, dco_prj_code)
+										VALUES(:doc_account, :doc_debit, :doc_credit, :doc_date, :business, :branch, :dco_prc_code, :dco_uncode, :dco_prj_code)";
+
+							$resInsert = $this->pedeo->InsertRow($sqlInsert, array(
+								
+								':doc_account' => $niveles[$i], 
+								':doc_debit' => $cuenta['ac1_debit'], 
+								':doc_credit' => $cuenta['ac1_credit'], 
+								':doc_date' => $cuenta['ac1_doc_date'], 
+								':business' => $cuenta['business'], 
+								':branch' => $cuenta['branch'],
+								':dco_prc_code' => $cuenta['ac1_prc_code'], 
+								':dco_uncode' => $cuenta['ac1_uncode'], 
+								':dco_prj_code' => $cuenta['ac1_prj_code']
+							));
+
+
+							if (is_numeric($resInsert) && $resInsert > 0){
+							} else {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error' => true,
+									'data' => $resInsert,
+									'mensaje' => 'No se pudo insertar la cuenta'
+								);
+
+								return $this->response($respuesta);
+							}
+
+						}
+					}
+
+
+				}
+
+			} 
+
+			if (!in_array($cuenta['ac1_account'], $cuentasUsadas)) {
+
+				array_push($cuentasUsadas, $cuenta['ac1_account']);
+				
+				if (isset($resDoc[0])){
+
+					$sqlUpdate = "UPDATE cdoc SET doc_debit = doc_debit + :doc_debit, doc_credit = doc_credit + :doc_credit WHERE doc_id = :doc_id";
+	
+					$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+						':doc_debit' => $cuenta['ac1_debit'],
+						':doc_credit' => $cuenta['ac1_credit'],
+						':doc_id' => $resDoc[0]['doc_id']
+					));
+
+					if (is_numeric($resUpdate) && $resUpdate == 1){
+					} else {
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $resUpdate,
+							'mensaje' => 'No se pudo actualizar la cuenta'
+						);
+
+						return $this->response($respuesta);
+					}
+	
+				} else {
+
+
+					$sqlInsert = " INSERT INTO cdoc(doc_account, doc_debit, doc_credit, doc_date, business, branch, dco_prc_code, dco_uncode, dco_prj_code)
+								VALUES(:doc_account, :doc_debit, :doc_credit, :doc_date, :business, :branch, :dco_prc_code, :dco_uncode, :dco_prj_code)";
+
+					$resInsert = $this->pedeo->InsertRow($sqlInsert, array(
+						
+						':doc_account' => $cuenta['ac1_account'], 
+						':doc_debit' => $cuenta['ac1_debit'], 
+						':doc_credit' => $cuenta['ac1_credit'], 
+						':doc_date' => $cuenta['ac1_doc_date'], 
+						':business' => $cuenta['business'], 
+						':branch' => $cuenta['branch'],
+						':dco_prc_code' => $cuenta['ac1_prc_code'], 
+						':dco_uncode' => $cuenta['ac1_uncode'], 
+						':dco_prj_code' => $cuenta['ac1_prj_code']
+					));
+
+					if (is_numeric($resInsert) && $resInsert > 0){
+					} else {
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $resInsert,
+							'mensaje' => 'No se pudo insertar la cuenta'
+						);
+
+						return $this->response($respuesta);
+					}
+	
+				}
+			}
+
+
+
+			$updateSync = "UPDATE mac1 set sync = 1 WHERE ac1_line_num = :ac1_line_num";
+			$resUpdateSync = $this->pedeo->updateRow($updateSync, array(":ac1_line_num" => $cuenta['ac1_line_num']));
+
+			if (is_numeric($resUpdateSync) && $resUpdateSync == 1){
+			} else {
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error' => true,
+					'data' => $resUpdateSync,
+					'mensaje' => 'No se pudo actualizar el campo sync'
+				);
+
+				return $this->response($respuesta);
+			}
+			
+		}
+
+
+		$resUpdateEstadoCron = $this->pedeo->updateRow(" UPDATE cron set ron_status = :ron_status, ron_date = :ron_date WHERE ron_id = :ron_id", array(
+			':ron_status' => 0,
+			':ron_date' => date('Y-m-d'),
+			':ron_id'=> $ron_ID
+		));
+
+		if ( is_numeric($resUpdateEstadoCron) && $resUpdateEstadoCron == 1){
+		}else{
+
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				"error" => true,
+				"data"  => [],
+				"mensaje" => "No se pudo actualizar el estado del proceso"
+			);
+
+			return $this->response($respuesta);
+		}
+
+		$this->pedeo->trans_commit();
+
+		$this->response($respuesta);
+
 	}
 
 }

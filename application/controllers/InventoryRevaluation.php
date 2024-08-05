@@ -528,7 +528,35 @@ class InventoryRevaluation extends REST_Controller
 					
 				}
 				
-
+				// SE AGREGA AL BALANCE
+				if ( $debito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['iri_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['iri_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}
+				//
 				// ASIENTO DE LINEA
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -620,7 +648,35 @@ class InventoryRevaluation extends REST_Controller
 					$MontoSysDB = abs(( $debito / $TasaLocSys ));
 				}
 
-
+				// SE AGREGA AL BALANCE
+				if ( $debito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $INVACCT, 1, $Data['iri_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $INVACCT, 2, $Data['iri_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+                        $this->pedeo->trans_rollback();
+ 
+                        $respuesta = array(
+                            'error' => true,
+                            'data' => $BALANCE,
+                            'mensaje' => $BALANCE['mensaje']
+                        );
+ 
+                        return $this->response($respuesta);
+                    }
+				}
+				//
 				// ASIENTO DE LINEA
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -651,7 +707,7 @@ class InventoryRevaluation extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['ri1_createby']) ? $Data['ri1_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,

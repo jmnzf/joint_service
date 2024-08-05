@@ -61,8 +61,8 @@ class Project extends REST_Controller {
         return $this->response($respuesta);
       }
 
-      $sqlInsert = "INSERT INTO dmpj(dpj_pj_code, dpj_pj_name, dpj_pj_date_ini, dpj_pj_end_date,business)
-                    VALUES (:dpj_pj_code, :dpj_pj_name, :dpj_pj_date_ini, :dpj_pj_end_date,:business)";
+      $sqlInsert = "INSERT INTO dmpj(dpj_pj_code, dpj_pj_name, dpj_pj_date_ini, dpj_pj_end_date,business,dpj_enabled)
+                    VALUES (:dpj_pj_code, :dpj_pj_name, :dpj_pj_date_ini, :dpj_pj_end_date,:business, dpj_enabled)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -71,7 +71,8 @@ class Project extends REST_Controller {
             ':dpj_pj_name' => $Data['dpj_pj_name'],
             ':dpj_pj_date_ini' => $Data['dpj_pj_date_ini'],
             ':dpj_pj_end_date' => $Data['dpj_pj_end_date'],
-            ':business' => $Data['business']
+            ':business' => $Data['business'],
+            ':dpj_enabled' => $Data['dpj_enabled'],
       ));
 
       if(is_numeric($resInsert) && $resInsert > 0){
@@ -121,7 +122,7 @@ class Project extends REST_Controller {
       }
 
       $sqlUpdate = "UPDATE dmpj SET dpj_pj_name = :dpj_pj_name, dpj_pj_date_ini = :dpj_pj_date_ini,
-                    dpj_pj_end_date = :dpj_pj_end_date,business = :business WHERE dpj_id = :dpj_id";
+                    dpj_pj_end_date = :dpj_pj_end_date,business = :business, dpj_enabled = :dpj_enabled WHERE dpj_id = :dpj_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -129,7 +130,8 @@ class Project extends REST_Controller {
           ':dpj_pj_date_ini' => $Data['dpj_pj_date_ini'],
           ':dpj_pj_end_date' => $Data['dpj_pj_end_date'],
           ':dpj_id' => $Data['dpj_id'],
-          ':business' => $Data['business']
+          ':business' => $Data['business'],
+          ':dpj_enabled' => $Data['dpj_enabled']
 
       ));
 

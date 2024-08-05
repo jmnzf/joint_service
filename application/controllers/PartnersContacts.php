@@ -49,8 +49,9 @@ class PartnersContacts extends REST_Controller {
 
 
       $sqlInsert = "INSERT INTO dmsc(dmc_card_code, dmc_contac_id, dmc_name, dmc_last_name, dmc_status, dmc_email,
-                    dmc_phone1, dmc_cel)VALUES (:dmc_card_code, :dmc_contac_id, :dmc_name, :dmc_last_name, :dmc_status,
-                    :dmc_email, :dmc_phone1, :dmc_cel)";
+                    dmc_phone1, dmc_cel, dmc_cardtype, dmc_uso)
+                    VALUES (:dmc_card_code, :dmc_contac_id, :dmc_name, :dmc_last_name, :dmc_status,
+                    :dmc_email, :dmc_phone1, :dmc_cel, :dmc_cardtype, :dmc_uso)";
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -61,7 +62,9 @@ class PartnersContacts extends REST_Controller {
              ':dmc_status' => $Data['dmc_status'],
              ':dmc_email' => $Data['dmc_email'],
              ':dmc_phone1' => $Data['dmc_phone1'],
-             ':dmc_cel' => $Data['dmc_cel']
+             ':dmc_cel' => $Data['dmc_cel'],
+             ':dmc_cardtype' => isset($Data['dmc_cardtype']) ? $Data['dmc_cardtype'] : null,
+             ':dmc_uso' => isset($Data['dmc_uso']) ? $Data['dmc_uso'] : null
 
       ));
 
@@ -118,7 +121,8 @@ class PartnersContacts extends REST_Controller {
       $sqlUpdate = "UPDATE dmsc
                   	SET dmc_card_code = :dmc_card_code, dmc_contac_id = :dmc_contac_id, dmc_name = :dmc_name,
                     dmc_last_name = :dmc_last_name, dmc_status = :dmc_status, dmc_email = :dmc_email,
-                    dmc_phone1 = :dmc_phone1, dmc_cel = :dmc_cel WHERE dmc_id = :dmc_id";
+                    dmc_phone1 = :dmc_phone1, dmc_cel = :dmc_cel, dmc_cardtype = :dmc_cardtype, dmc_uso = :dmc_uso 
+                    WHERE dmc_id = :dmc_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -131,7 +135,9 @@ class PartnersContacts extends REST_Controller {
             ':dmc_email' => $Data['dmc_email'],
             ':dmc_phone1' => $Data['dmc_phone1'],
             ':dmc_cel' => $Data['dmc_cel'],
-            ':dmc_id' => $Data['dmc_id']
+            ':dmc_id' => $Data['dmc_id'],
+            ':dmc_cardtype' => isset($Data['dmc_cardtype']) ? $Data['dmc_cardtype'] : null,
+            ':dmc_uso' => isset($Data['dmc_uso']) ? $Data['dmc_uso'] : null
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){
@@ -174,8 +180,8 @@ class PartnersContacts extends REST_Controller {
           return;
         }
 
-        $sqlSelect = " SELECT * FROM dmsc WHERE dmc_card_code = :dmc_card_code";
-
+        $sqlSelect = "SELECT * FROM dmsc WHERE dmc_card_code = :dmc_card_code";
+        
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dmc_card_code' => $Data['dmc_card_code']));
 
         if(isset($resSelect[0])){

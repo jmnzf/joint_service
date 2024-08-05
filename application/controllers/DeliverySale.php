@@ -241,7 +241,7 @@ class DeliverySale extends REST_Controller {
               ':dve_id_add' => $Data['dve_id_add'],
               ':dve_adress' => $Data['dve_adress'],
               ':dve_pay_type' => $Data['dve_pay_type'],
-              ':dve_attch' => $this->getUrl($Data['dve_attch'])
+              ':dve_attch' => $this->getUrl($Data['dve_attch']),
 							':dve_doc_entry' => $Data['dve_doc_entry'],
       ));
 

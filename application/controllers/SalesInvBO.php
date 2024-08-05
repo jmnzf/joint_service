@@ -40,7 +40,6 @@ class SalesInvBO extends REST_Controller
 		$MONEDALOCAL = "";
 		$MONEDASYS = "";
 
-
 		if (!isset($Data['business']) OR
 			!isset($Data['branch'])) {
 
@@ -312,8 +311,18 @@ class SalesInvBO extends REST_Controller
 			}
 		}
 		//VERIFICAR TASA FIJA DE DESCUENTO
+		// VERIFICAR FECHA DE VENCIMIENTO
+		if($Data['dvf_duedate'] < $Data['dvf_docdate']){
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'La fecha de vencimiento ('.$Data['dvf_duedate'].') no puede ser inferior a la fecha del documento ('.$Data['dvf_docdate'].')'
+			);
 
-	
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 		$sqlInsert = "INSERT INTO dvfv(dvf_series, dvf_docnum, dvf_docdate, dvf_duedate, dvf_duedev, dvf_pricelist, dvf_cardcode,
 						dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
 						dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
@@ -420,8 +429,8 @@ class SalesInvBO extends REST_Controller
 				//Se agrega encabezado del asiento contable
 
 
-				$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
-																 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
+				$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch, mac_accperiod)
+									VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch, :mac_accperiod)";
 
 
 				$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
@@ -453,7 +462,8 @@ class SalesInvBO extends REST_Controller
 					':mac_update_date' => date("Y-m-d"),
 					':mac_update_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
 					':business' => $Data['business'],
-					':branch' 	=> $Data['branch']
+					':branch' 	=> $Data['branch'],
+					':mac_accperiod' => $periodo['data']
 				));
 
 
@@ -687,10 +697,10 @@ class SalesInvBO extends REST_Controller
 					$sqlInsertDetail = "INSERT INTO vfv1(fv1_docentry, fv1_itemcode, fv1_itemname, fv1_quantity, fv1_uom, fv1_whscode,
 										fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
 										fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate, fv1_codimp,fv1_ubication,
-										fv1_linenum,fv1_baseline,ote_code,fv1_gift,detalle_modular,fv1_tax_base)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
+										fv1_linenum,fv1_baseline,ote_code,fv1_gift,detalle_modular,fv1_tax_base,detalle_anuncio,imponible)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
 										:fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,:fv1_acctcode, :fv1_basetype, 
 										:fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate, :fv1_codimp,:fv1_ubication,:fv1_linenum,
-										:fv1_baseline,:ote_code,:fv1_gift,:detalle_modular,:fv1_tax_base)";
+										:fv1_baseline,:ote_code,:fv1_gift,:detalle_modular,:fv1_tax_base,:detalle_anuncio,:imponible)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':fv1_docentry' => $resInsert,
@@ -720,8 +730,10 @@ class SalesInvBO extends REST_Controller
 						':fv1_baseline' => isset($detail['fv1_baseline']) && is_numeric($detail['fv1_baseline']) ? $detail['fv1_baseline'] : 0,
 						':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 						':fv1_gift' => isset($detail['fv1_gift']) && is_numeric($detail['fv1_gift']) ? $detail['fv1_gift'] : 0,
-						':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
-						':fv1_tax_base' =>  is_numeric($detail['fv1_tax_base']) ? $detail['fv1_tax_base'] : 0
+						':fv1_tax_base' =>  is_numeric($detail['fv1_tax_base']) ? $detail['fv1_tax_base'] : 0,
+						':detalle_modular' => (isset($detail['detalle_modular']) && is_string($detail['detalle_modular'])) ? json_encode(json_decode($detail['detalle_modular'],true)) : NULL,
+						':detalle_anuncio' => (isset($detail['detalle_anuncio']) && is_string($detail['detalle_anuncio'])) ? json_encode(json_decode($detail['detalle_anuncio'],true)) : NULL,
+						':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1412,6 +1424,7 @@ class SalesInvBO extends REST_Controller
 	
 					}
 
+					$descUnit = ( $detail['fv1_discount'] / $detail['fv1_quantity'] );
 
 					$DetalleAsientoIngreso->ac1_account = is_numeric($detail['fv1_acctcode']) ? $detail['fv1_acctcode'] : 0;
 					$DetalleAsientoIngreso->ac1_prc_code = isset($detail['fv1_costcode']) ? $detail['fv1_costcode'] : NULL;
@@ -1420,7 +1433,8 @@ class SalesInvBO extends REST_Controller
 					$DetalleAsientoIngreso->fv1_linetotal = is_numeric($detail['fv1_linetotal']) ? $detail['fv1_linetotal'] : 0;
 					$DetalleAsientoIngreso->fv1_vat = is_numeric($detail['fv1_vat']) ? $detail['fv1_vat'] : 0;
 					$DetalleAsientoIngreso->fv1_vatsum = is_numeric($detail['fv1_vatsum']) ? $detail['fv1_vatsum'] : 0;
-					$DetalleAsientoIngreso->fv1_price = is_numeric($detail['fv1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fv1_price'], $detail['fv1_vat'],$detail['fv1_discount'],$detail['fv1_quantity'] ) : 0;
+					// $DetalleAsientoIngreso->fv1_price = is_numeric($detail['fv1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fv1_price'], $detail['fv1_vat'],$detail['fv1_discount'],$detail['fv1_quantity'] ) : 0;
+					$DetalleAsientoIngreso->fv1_price = is_numeric($detail['fv1_price']) ? ($detail['fv1_price'] - $descUnit) : 0;
 					$DetalleAsientoIngreso->fv1_itemcode = isset($detail['fv1_itemcode']) ? $detail['fv1_itemcode'] : NULL;
 					$DetalleAsientoIngreso->fv1_quantity = is_numeric($detail['fv1_quantity']) ? $detail['fv1_quantity'] : 0;
 					$DetalleAsientoIngreso->em1_whscode = isset($detail['fv1_whscode']) ? $detail['fv1_whscode'] : NULL;
@@ -1434,7 +1448,8 @@ class SalesInvBO extends REST_Controller
 					$DetalleAsientoIva->fv1_linetotal = is_numeric($detail['fv1_linetotal']) ? $detail['fv1_linetotal'] : 0;
 					$DetalleAsientoIva->fv1_vat = is_numeric($detail['fv1_vat']) ? $detail['fv1_vat'] : 0;
 					$DetalleAsientoIva->fv1_vatsum = is_numeric($detail['fv1_vatsum']) ? $detail['fv1_vatsum'] : 0;
-					$DetalleAsientoIva->fv1_price = is_numeric($detail['fv1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fv1_price'], $detail['fv1_vat'],$detail['fv1_discount'],$detail['fv1_quantity'] ) : 0;
+					// $DetalleAsientoIva->fv1_price = is_numeric($detail['fv1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fv1_price'], $detail['fv1_vat'],$detail['fv1_discount'],$detail['fv1_quantity'] ) : 0;
+					$DetalleAsientoIva->fv1_price = is_numeric($detail['fv1_price']) ? ($detail['fv1_price'] - $descUnit) : 0;
 					$DetalleAsientoIva->fv1_itemcode = isset($detail['fv1_itemcode']) ? $detail['fv1_itemcode'] : NULL;
 					$DetalleAsientoIva->fv1_quantity = is_numeric($detail['fv1_quantity']) ? $detail['fv1_quantity'] : 0;
 					$DetalleAsientoIva->fv1_cuentaIva = is_numeric($detail['fv1_cuentaIva']) ? $detail['fv1_cuentaIva'] : NULL;
@@ -1452,7 +1467,8 @@ class SalesInvBO extends REST_Controller
 						$DetalleCostoInventario->fv1_linetotal = is_numeric($detail['fv1_linetotal']) ? $detail['fv1_linetotal'] : 0;
 						$DetalleCostoInventario->fv1_vat = is_numeric($detail['fv1_vat']) ? $detail['fv1_vat'] : 0;
 						$DetalleCostoInventario->fv1_vatsum = is_numeric($detail['fv1_vatsum']) ? $detail['fv1_vatsum'] : 0;
-						$DetalleCostoInventario->fv1_price = is_numeric($detail['fv1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fv1_price'], $detail['fv1_vat'],$detail['fv1_discount'],$detail['fv1_quantity'] ) : 0;
+						// $DetalleCostoInventario->fv1_price = is_numeric($detail['fv1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fv1_price'], $detail['fv1_vat'],$detail['fv1_discount'],$detail['fv1_quantity'] ) : 0;
+						$DetalleCostoInventario->fv1_price = is_numeric($detail['fv1_price']) ? ($detail['fv1_price'] - $descUnit) : 0;
 						$DetalleCostoInventario->fv1_itemcode = isset($detail['fv1_itemcode']) ? $detail['fv1_itemcode'] : NULL;
 						$DetalleCostoInventario->fv1_quantity = is_numeric($detail['fv1_quantity']) ? $detail['fv1_quantity'] : 0;
 						$DetalleCostoInventario->em1_whscode = isset($detail['fv1_whscode']) ? $detail['fv1_whscode'] : NULL;
@@ -1466,7 +1482,8 @@ class SalesInvBO extends REST_Controller
 						$DetalleCostoCosto->fv1_linetotal = is_numeric($detail['fv1_linetotal']) ? $detail['fv1_linetotal'] : 0;
 						$DetalleCostoCosto->fv1_vat = is_numeric($detail['fv1_vat']) ? $detail['fv1_vat'] : 0;
 						$DetalleCostoCosto->fv1_vatsum = is_numeric($detail['fv1_vatsum']) ? $detail['fv1_vatsum'] : 0;
-						$DetalleCostoCosto->fv1_price = is_numeric($detail['fv1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fv1_price'], $detail['fv1_vat'],$detail['fv1_discount'],$detail['fv1_quantity'] ) : 0;
+						// $DetalleCostoCosto->fv1_price = is_numeric($detail['fv1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fv1_price'], $detail['fv1_vat'],$detail['fv1_discount'],$detail['fv1_quantity'] ) : 0;
+						$DetalleCostoCosto->fv1_price = is_numeric($detail['fv1_price']) ? ($detail['fv1_price'] - $descUnit) : 0;
 						$DetalleCostoCosto->fv1_itemcode = isset($detail['fv1_itemcode']) ? $detail['fv1_itemcode'] : NULL;
 						$DetalleCostoCosto->fv1_quantity = is_numeric($detail['fv1_quantity']) ? $detail['fv1_quantity'] : 0;
 						$DetalleCostoCosto->em1_whscode = isset($detail['fv1_whscode']) ? $detail['fv1_whscode'] : NULL;
@@ -1494,7 +1511,7 @@ class SalesInvBO extends REST_Controller
 
 
 					$llave = $DetalleAsientoIngreso->ac1_uncode . $DetalleAsientoIngreso->ac1_prc_code . $DetalleAsientoIngreso->ac1_prj_code . $DetalleAsientoIngreso->ac1_account;
-					$llaveIva = $DetalleAsientoIva->fv1_vat;
+					$llaveIva = $DetalleAsientoIva->fv1_cuentaIva;
 
 
 
@@ -1618,8 +1635,8 @@ class SalesInvBO extends REST_Controller
 
 						if (  $value->gift == 0 ) {
 
-							$granTotalIngreso = ($granTotalIngreso + ($value->fv1_price * $value->fv1_quantity));
-							$granTotalTasaFija = ($granTotalTasaFija + ($value->fv1_price * $value->fv1_quantity));
+							$granTotalIngreso = ($granTotalIngreso + (($value->fv1_price * $value->fv1_quantity) - $value->fv1_vatsum) );
+							$granTotalTasaFija = ($granTotalTasaFija + (($value->fv1_price * $value->fv1_quantity) - $value->fv1_vatsum) );
 
 							$granTotalIngreso = ($granTotalIngreso + $value->descuento);
 							$granTotalTasaFija = ($granTotalTasaFija + $value->descuento);
@@ -1629,7 +1646,6 @@ class SalesInvBO extends REST_Controller
 							$unidad = $value->ac1_uncode;
 							$proyecto = $value->ac1_prj_code;
 							$cuenta = $value->ac1_account;
-
 						} else {
 
 							// $VALUE_GIFT = $VALUE_GIFT + ($VALUE_GIFT + $value->fv1_linetotal);
@@ -1769,6 +1785,26 @@ class SalesInvBO extends REST_Controller
 						$TOTALCXCLOC = ($TOTALCXCLOC + ($debito + $credito));
 						$TOTALCXCSYS = ($TOTALCXCSYS + ($MontoSysDB + $MontoSysCR));
 
+						// SE AGREGA AL BALANCE
+						if ( $debito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
+
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -1798,7 +1834,7 @@ class SalesInvBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($debito, $DECI_MALES),
@@ -1938,6 +1974,24 @@ class SalesInvBO extends REST_Controller
 
 					$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva) - $VALUE_GIFT_IVA;
 					$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysCR) - $VALUE_GIFT_IVA_SYS;
+
+
+					// SE AGREGA AL BALANCE
+					
+					$BALANCE = $this->account->addBalance($periodo['data'], round($granTotalIva, $DECI_MALES), $value->fv1_cuentaIva, 2, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+					
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					//
 					
 
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1969,7 +2023,7 @@ class SalesInvBO extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -2012,6 +2066,7 @@ class SalesInvBO extends REST_Controller
 				//FIN Procedimiento para llenar Impuestos
 
 
+				// SI ES FACTURA ANTICIPADA NO MUEVE COSTO
 				if ( $Data['dvf_doctype'] ==  34 ){
 					$DetalleConsolidadoCostoInventario = [];
 				}
@@ -2144,9 +2199,26 @@ class SalesInvBO extends REST_Controller
 							}
 						}
 
+						// SE AGREGA AL BALANCE
+						if ( $dbito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaInventario, 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaInventario, 2, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}
 
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
 
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
 	
+							return $this->response($respuesta);
+						}
+						//
 						$AC1LINE = $AC1LINE + 1;
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2177,7 +2249,7 @@ class SalesInvBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -2218,6 +2290,11 @@ class SalesInvBO extends REST_Controller
 					}
 				}	//FIN Procedimiento para llenar costo inventario
 
+
+				// SI ES FACTURA ANTICIPADA NO MUEVE COSTO
+				if ( $Data['dvf_doctype'] ==  34 ){
+					$DetalleConsolidadoCostoCosto = [];
+				}
 
 				foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
 					$grantotalCostoCosto = 0;
@@ -2563,6 +2640,27 @@ class SalesInvBO extends REST_Controller
 					}
 
 					if ( $dbito > 0 || $cdito > 0 ){
+
+
+						// SE AGREGA AL BALANCE
+						if ( $dbito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaCosto, 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaCosto, 2, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}
+						//
 						
 						$AC1LINE = $AC1LINE + 1;
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -2594,7 +2692,7 @@ class SalesInvBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -2641,6 +2739,11 @@ class SalesInvBO extends REST_Controller
 
 				if ( $Data['dvf_doctype'] == 5 ){
 					$DetalleConsolidadoCostoCostoEntrega = $DetalleConsolidadoCostoCosto;
+					$DetalleConsolidadoCostoCosto = [];
+				}
+
+				// SI ES FACTURA ANTICIPADA NO MUEVE COSTO
+				if ( $Data['dvf_doctype'] ==  34 ){
 					$DetalleConsolidadoCostoCosto = [];
 				}
 
@@ -2797,6 +2900,27 @@ class SalesInvBO extends REST_Controller
 
 					if ( $dbito > 0 || $cdito > 0 ){
 
+						// SE AGREGA AL BALANCE
+						if ( $dbito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaCosto, 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaCosto, 2, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}
+
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
+
 						$AC1LINE = $AC1LINE + 1;
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 	
@@ -2827,7 +2951,7 @@ class SalesInvBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -2866,6 +2990,12 @@ class SalesInvBO extends REST_Controller
 							return;
 						}
 					}
+				}
+
+
+				// SI ES FACTURA ANTICIPADA NO MUEVE COSTO
+				if ( $Data['dvf_doctype'] ==  34 ){
+					$DetalleConsolidadoCostoCostoEntrega = [];
 				}
 
 
@@ -3038,6 +3168,27 @@ class SalesInvBO extends REST_Controller
 
 						if ( $dbito > 0 || $cdito > 0 ){
 
+							// SE AGREGA AL BALANCE
+							if ( $dbito > 0 ){
+								$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaCosto, 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+							}else{
+								$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaCosto, 2, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+							}
+							if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error' => true,
+									'data' => $BALANCE,
+									'mensaje' => $BALANCE['mensaje']
+								);
+		
+								return $this->response($respuesta);
+							}	
+		
+							//
+
 							$AC1LINE = $AC1LINE + 1;
 							$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 	
@@ -3068,7 +3219,7 @@ class SalesInvBO extends REST_Controller
 								':ac1_rescon_date' => NULL,
 								':ac1_recon_total' => 0,
 								':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-								':ac1_accperiod' => 1,
+								':ac1_accperiod' => $periodo['data'],
 								':ac1_close' => 0,
 								':ac1_cord' => 0,
 								':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -3289,55 +3440,55 @@ class SalesInvBO extends REST_Controller
 					$RetencionDescuentoSYS = 0;
 					$RetencionDescuentoLOC = 0;
 
-					if (is_array($ContenidoRentencion)) {
-						if (intval(count($ContenidoRentencion)) > 0) {
+					// if (is_array($ContenidoRentencion)) {
+					// 	if (intval(count($ContenidoRentencion)) > 0) {
 							
-							if (isset($Data['dvf_totalretiva']) && is_numeric($Data['dvf_totalretiva']) && ( $Data['dvf_totalretiva'] * -1  > 0 ) ){
+					// 		if (isset($Data['dvf_totalretiva']) && is_numeric($Data['dvf_totalretiva']) && ( $Data['dvf_totalretiva'] * -1  > 0 ) ){
 
-								if (trim($Data['dvf_currency']) != $MONEDALOCAL) {
+					// 			if (trim($Data['dvf_currency']) != $MONEDALOCAL) {
 
-									$RetencionDescuentoLOC = $RetencionDescuentoLOC + ( ( $Data['dvf_totalretiva'] * -1 ) * $TasaDocLoc);
+					// 				$RetencionDescuentoLOC = $RetencionDescuentoLOC + ( ( $Data['dvf_totalretiva'] * -1 ) * $TasaDocLoc);
 								
-								}else{
-									$RetencionDescuentoLOC = $Data['dvf_totalretiva'] * -1;
-								}
+					// 			}else{
+					// 				$RetencionDescuentoLOC = $Data['dvf_totalretiva'] * -1;
+					// 			}
 
 				
 
-								if (trim($Data['dvf_currency']) != $MONEDASYS) {
+					// 			if (trim($Data['dvf_currency']) != $MONEDASYS) {
 
-									$RetencionDescuentoSYS = $RetencionDescuentoSYS + ( ( $Data['dvf_totalretiva'] * -1 ) / $TasaLocSys );
-								} else {
+					// 				$RetencionDescuentoSYS = $RetencionDescuentoSYS + ( ( $Data['dvf_totalretiva'] * -1 ) / $TasaLocSys );
+					// 			} else {
 		
-									$RetencionDescuentoSYS = ( $Data['dvf_totalretiva'] * -1 );
-								}
+					// 				$RetencionDescuentoSYS = ( $Data['dvf_totalretiva'] * -1 );
+					// 			}
 
 		
-							}
+					// 		}
 
 
-							if (isset($Data['dvf_totalret']) && is_numeric($Data['dvf_totalret']) && ( $Data['dvf_totalret'] * -1  > 0 ) ){
+					// 		if (isset($Data['dvf_totalret']) && is_numeric($Data['dvf_totalret']) && ( $Data['dvf_totalret'] * -1  > 0 ) ){
 
-								if (trim($Data['dvf_currency']) != $MONEDALOCAL) {
+					// 			if (trim($Data['dvf_currency']) != $MONEDALOCAL) {
 
-									$RetencionDescuentoLOC = $RetencionDescuentoLOC + ( ( $Data['dvf_totalret'] * -1 ) * $TasaDocLoc);
+					// 				$RetencionDescuentoLOC = $RetencionDescuentoLOC + ( ( $Data['dvf_totalret'] * -1 ) * $TasaDocLoc);
 								
-								}else{
-									$RetencionDescuentoLOC = $RetencionDescuentoLOC + ($Data['dvf_totalret'] * -1);
-								}
+					// 			}else{
+					// 				$RetencionDescuentoLOC = $RetencionDescuentoLOC + ($Data['dvf_totalret'] * -1);
+					// 			}
 
 
-								if (trim($Data['dvf_currency']) != $MONEDASYS) {
+					// 			if (trim($Data['dvf_currency']) != $MONEDASYS) {
 
-									$RetencionDescuentoSYS = $RetencionDescuentoSYS + ( ( $Data['dvf_totalret'] * -1 ) / $TasaLocSys );
-								} else {
+					// 				$RetencionDescuentoSYS = $RetencionDescuentoSYS + ( ( $Data['dvf_totalret'] * -1 ) / $TasaLocSys );
+					// 			} else {
 		
-									$RetencionDescuentoSYS =  $Data['dvf_totalret'] * -1 ;
-								}
-							}
+					// 				$RetencionDescuentoSYS =  $Data['dvf_totalret'] * -1 ;
+					// 			}
+					// 		}
 							
-						}
-					}
+					// 	}
+					// }
 
 					if ( $debitoo > 0 || $creditoo > 0 ){
 
@@ -3357,7 +3508,26 @@ class SalesInvBO extends REST_Controller
 							$MontoSysCR = $MontoSysCR - round($RetencionDescuentoSYS, $DECI_MALES);
 						}
 	
-		
+						// SE AGREGA AL BALANCE
+						if ( $debitoo > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($debitoo, $DECI_MALES), $cuentaCxC, 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($creditoo, $DECI_MALES), $cuentaCxC, 2, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+
+						//
 			
 						$AC1LINE = $AC1LINE + 1;
 	
@@ -3390,7 +3560,7 @@ class SalesInvBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($debitoo, $DECI_MALES),
@@ -3510,6 +3680,24 @@ class SalesInvBO extends REST_Controller
 						$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 						$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
+							
+						// SE AGREGA AL BALANCE
+						
+						$BALANCE = $this->account->addBalance($periodo['data'], round($totalDescuento, $DECI_MALES), $cuentadescuento, 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+						//
+
 						$AC1LINE = $AC1LINE + 1;
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 		
@@ -3540,7 +3728,7 @@ class SalesInvBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -3647,6 +3835,24 @@ class SalesInvBO extends REST_Controller
 						$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 						$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
+						// SE AGREGA AL BALANCE
+
+						$BALANCE = $this->account->addBalance($periodo['data'], round($totalIvaDescuento, $DECI_MALES), $cuentaivadescuento, 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+						//
+						
+
 						$AC1LINE = $AC1LINE + 1;
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 		
@@ -3677,7 +3883,7 @@ class SalesInvBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -3794,6 +4000,27 @@ class SalesInvBO extends REST_Controller
 							$MontoSysCR = $Data['dvf_igtf'];
 						}
 
+						// SE AGREGA AL BALANCE
+						if ( $dbito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $resCuentaIGTF[0]['imm_acctcode'], 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $resCuentaIGTF[0]['imm_acctcode'], 2, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+						}
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}
+						//
+
 						$AC1LINE = $AC1LINE + 1;
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -3824,7 +4051,7 @@ class SalesInvBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -3942,6 +4169,23 @@ class SalesInvBO extends REST_Controller
 					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
+					// SE AGREGA AL BALANCE
+				
+					$BALANCE = $this->account->addBalance($periodo['data'], round($totalRetencion, $DECI_MALES), $cuenta, 1, $Data['dvf_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					//
+
 					$AC1LINE = $AC1LINE + 1;
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -3972,7 +4216,7 @@ class SalesInvBO extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -4116,7 +4360,7 @@ class SalesInvBO extends REST_Controller
 				// 				':ac1_rescon_date' => NULL,
 				// 				':ac1_recon_total' => 0,
 				// 				':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-				// 				':ac1_accperiod' => 1,
+				// 				':ac1_accperiod' => $periodo['data'],
 				// 				':ac1_close' => 0,
 				// 				':ac1_cord' => 0,
 				// 				':ac1_ven_debit' => 0,
@@ -4566,7 +4810,7 @@ class SalesInvBO extends REST_Controller
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
 									':ac1_made_user' => isset($Data['dvf_createby']) ? $Data['dvf_createby'] : NULL,
-									':ac1_accperiod' => 1,
+									':ac1_accperiod' => $periodo['data'],
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
 									':ac1_ven_debit' => 0,
@@ -4720,7 +4964,7 @@ class SalesInvBO extends REST_Controller
 				$respuesta = array(
 					'error' => false,
 					'data' => $resInsert,
-					'mensaje' => 'Factura de ventas registrada con exito'
+					'mensaje' => 'Factura de ventas #'.$DocNumVerificado.' registrada con exito'
 				);
 
 
@@ -4952,7 +5196,9 @@ class SalesInvBO extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvfv', 'dvf', ',dvf_response_dian,dvf_cufe', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		
+
+		$sqlSelect = self::getColumn('dvfv', 'dvf', ',dvf_response_dian,dvf_cufe,T4.dms_phone1, T4.dms_phone2, T4.dms_cel', '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -5180,7 +5426,7 @@ class SalesInvBO extends REST_Controller
 
 			}else if($resCopyBy[0]['dvf_doctype'] == 5){
 				
-				$copy = $this->documentcopy->Copy($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1','gift,detalle_modular::jsonb');
+				$copy = $this->documentcopy->Copy($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1','gift,detalle_modular::jsonb,imponible');
 
 				$sqlSelectFv = "SELECT round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtf,get_localcur()), get_decimals()) as dvf_igtf, round(get_dynamic_conversion(dvf_currency,dvf_currency,dvf_docdate,dvf_igtfapplyed,get_localcur()), get_decimals()) as dvf_igtfapplyed,dvf_igtfcode, igtf.*
 								FROM dvfv
@@ -5266,8 +5512,12 @@ class SalesInvBO extends REST_Controller
 
 			return;
 		}
-
-		$copyData = $this->documentcopy->copyData('dvfv','dvf',$Data['dms_card_code'],$Data['business'],$Data['branch']);
+		if($Data['doctype'] == 34){
+			$copyData = $this->documentcopy->copyData('dvfv','dvf',$Data['dms_card_code'],$Data['business'],$Data['branch'],34);
+		}else{
+			$copyData = $this->documentcopy->copyData('dvfv','dvf',$Data['dms_card_code'],$Data['business'],$Data['branch']);
+		}
+		
 
 		if (isset($copyData[0])) {
 
@@ -5409,7 +5659,7 @@ class SalesInvBO extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentduplicate->getDuplicateDt($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1','detalle_modular::jsonb');
+			$copy = $this->documentduplicate->getDuplicateDt($Data['fv1_docentry'],'dvfv','vfv1','dvf','fv1','detalle_modular::jsonb,imponible');
 
 			if (isset($copy[0])) {
 

@@ -18,7 +18,7 @@ class RetFisc extends REST_Controller {
 		parent::__construct();
 		$this->load->database();
 		$this->pdo = $this->load->database('pdo', true)->conn_id;
-    $this->load->library('pedeo', [$this->pdo]);
+    	$this->load->library('pedeo', [$this->pdo]);
 
 	}
 

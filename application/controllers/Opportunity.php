@@ -102,33 +102,35 @@ class Opportunity extends REST_Controller
             return;
         }
 
-        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason, bop_stage, bop_mponderado, bop_currency)
-                        VALUES ( :bop_type, :bop_invamount, :bop_slpcode, :bop_agent, :bop_balance, :bop_name, :bop_docnum, :bop_status, :bop_date, :bop_duedate, :bop_days, :bop_dateprev, :bop_pvalue, :bop_interestl, :bop_rstatus, :bop_cardcode, :bop_cardcode_name, :bop_reason, :bop_stage, :bop_mponderado, :bop_currency)";
+        $sqlInsert = "INSERT INTO tbop( bop_type, bop_invamount, bop_slpcode, bop_agent, bop_balance, bop_name, bop_docnum, bop_status, bop_date, bop_duedate, bop_days, bop_dateprev, bop_pvalue, bop_interestl, bop_rstatus,bop_cardcode, bop_cardcode_name, bop_reason, bop_stage, bop_mponderado, bop_currency, business, branch)
+                        VALUES ( :bop_type, :bop_invamount, :bop_slpcode, :bop_agent, :bop_balance, :bop_name, :bop_docnum, :bop_status, :bop_date, :bop_duedate, :bop_days, :bop_dateprev, :bop_pvalue, :bop_interestl, :bop_rstatus, :bop_cardcode, :bop_cardcode_name, :bop_reason, :bop_stage, :bop_mponderado, :bop_currency, :business, :branch)";
         $this->pedeo->trans_begin();
         $resInsert = $this->pedeo->insertRow(
             $sqlInsert,
             array(
-                ":bop_type" => $Data['bop_type'],
-                ":bop_invamount" => $Data['bop_invamount'],
-                ":bop_slpcode" => $Data['bop_slpcode'],
+                ":bop_type" => isset($Data['bop_type']) && is_numeric($Data['bop_type']) ? $Data['bop_type'] : 0,
+                ":bop_invamount" => isset($Data['bop_invamount']) ? $Data['bop_invamount'] : '',
+                ":bop_slpcode" => isset($Data['bop_slpcode']) && is_numeric($Data['bop_slpcode']) ? $Data['bop_slpcode'] : NULL,
                 ":bop_agent" => (!empty($Data['bop_agent'])) ? $Data['bop_agent'] : 0,
                 ":bop_balance" => (!empty($Data['bop_balance'])) ? $Data['bop_balance'] : 0,
-                ":bop_name" => $Data['bop_name'],
-                ":bop_docnum" => (!empty($Data['docnum'])) ? $Data['bop_docnum'] : 0,
-                ":bop_status" => $Data['bop_status'],
-                ":bop_date" => $Data['bop_date'],
-                ":bop_duedate" => $Data['bop_duedate'],
-                ":bop_days" => $Data['bop_days'],
-                ":bop_dateprev" => $Data['bop_dateprev'],
-                ":bop_pvalue" => $Data['bop_pvalue'],
-                ":bop_interestl" => $Data['bop_interestl'],
-                ":bop_rstatus" => $Data['bop_rstatus'],
-                ":bop_cardcode" => $Data['bop_cardcode'],
-                ":bop_cardcode_name" => $Data['bop_cardcode_name'],
+                ":bop_name" => isset($Data['bop_name']) ? $Data['bop_name'] : NULL,
+                ":bop_docnum" => (!empty($Data['bop_docnum'])) ? $Data['bop_docnum'] : 0,
+                ":bop_status" => isset($Data['bop_status']) && is_numeric($Data['bop_status']) ? $Data['bop_status'] : NULL,
+                ":bop_date" =>  isset($Data['bop_date']) && !empty($Data['bop_date']) ? $Data['bop_date'] : NULL,
+                ":bop_duedate" => isset($Data['bop_duedate']) && !empty($Data['bop_duedate']) ? $Data['bop_duedate'] : NULL,
+                ":bop_days" => isset($Data['bop_days']) && is_numeric($Data['bop_days']) ? $Data['bop_days'] : NULL,
+                ":bop_dateprev" => isset($Data['bop_dateprev']) && !empty($Data['bop_dateprev']) ? $Data['bop_dateprev'] : NULL,
+                ":bop_pvalue" => isset($Data['bop_pvalue']) && is_numeric($Data['bop_pvalue']) ? $Data['bop_pvalue'] : NULL,
+                ":bop_interestl" => isset($Data['bop_interestl']) && is_numeric($Data['bop_interestl']) ? $Data['bop_interestl'] : NULL,
+                ":bop_rstatus" =>  isset($Data['bop_rstatus']) && is_numeric($Data['bop_rstatus']) ? $Data['bop_rstatus'] : NULL,
+                ":bop_cardcode" =>  isset($Data['bop_cardcode']) ? $Data['bop_cardcode'] : NULL,
+                ":bop_cardcode_name" => isset($Data['bop_cardcode_name']) ? $Data['bop_cardcode_name'] : NULL,
                 ":bop_reason" => (isset($Data['bop_reason'])) ? $Data['bop_reason'] : null,
-                ":bop_stage" => $Data['bop_stage'],
-                ":bop_mponderado" => $Data['bop_mponderado'],
-                ":bop_currency" => $Data['bop_currency']
+                ":bop_stage" => isset($Data['bop_stage']) && is_numeric($Data['bop_stage']) ? $Data['bop_stage'] : NULL,
+                ":bop_mponderado" => isset($Data['bop_mponderado']) && is_numeric($Data['bop_mponderado']) ? $Data['bop_mponderado'] : 0,
+                ":bop_currency" => isset($Data['bop_currency']) ? $Data['bop_currency'] : '',
+                ":business" => $Data['business'],
+                ":branch" => $Data['branch']
             )
         );
 
@@ -140,22 +142,22 @@ class Opportunity extends REST_Controller
             foreach ($ContenidoDetalle as $key => $detail) {
                 $duracion = (!empty($detail['op1_duracion'])) ? explode(' ', $detail['op1_duracion']) : 0;
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
-                    ":op1_centerc"  => $detail['op1_centerc'],
-                    ":op1_comments" => $detail['op1_comments'],
-                    ":op1_contact_tel" => $detail['op1_contact_tel'],
-                    ":op1_content" => $detail['op1_content'],
-                    ":op1_date" => $detail['op1_date'],
-                    ":op1_dclass" => $detail['op1_dclass'],
-                    ":op1_duedate" => $detail['op1_duedate'],
+                    ":op1_centerc"  => isset($detail['op1_centerc']) ? $detail['op1_centerc'] : '',
+                    ":op1_comments" => isset($detail['op1_comments']) ? $detail['op1_comments'] : '',
+                    ":op1_contact_tel" => isset($detail['op1_contact_tel']) ? $detail['op1_contact_tel'] : '',
+                    ":op1_content" => isset($detail['op1_content']) ? $detail['op1_content'] : '',
+                    ":op1_date" => isset($detail['op1_date']) && !empty($detail['op1_date']) ? $detail['op1_date'] : NULL,
+                    ":op1_dclass" => isset($detail['op1_dclass']) && is_numeric($detail['op1_dclass']) ? $detail['op1_dclass'] : 0,
+                    ":op1_duedate" => isset($detail['op1_duedate']) && !empty($detail['op1_duedate']) ? $detail['op1_duedate'] : NULL,
                     ":op1_duracion" => (!empty($detail['op1_duracion'])) ? $duracion[0] : 0,
-                    ":op1_issue" => $detail['op1_issue'],
+                    ":op1_issue" => isset($detail['op1_issue']) ? $detail['op1_issue'] : '',
                     ":op1_num" => (!empty($detail['op1_num'])) ? $detail['op1_num'] : 0,
                     ":op1_priority" => (!empty($detail['op1_priority'])) ? $detail['op1_priority'] : 1,
-                    ":op1_sn" => $detail['op1_sn'],
-                    ":op1_sn_name" => $detail['op1_sn_name'],
-                    ":op1_type" => $detail['op1_type'],
-                    ":op1_userfrom" => $detail['op1_userfrom'],
-                    ":op1_userto" => $detail['op1_userto'],
+                    ":op1_sn" => isset($detail['op1_sn']) ? $detail['op1_sn'] : '',
+                    ":op1_sn_name" => isset($detail['op1_sn_name']) ? $detail['op1_sn_name'] : '',
+                    ":op1_type" => isset($detail['op1_type']) && is_numeric($detail['op1_type']) ? $detail['op1_type'] : 0,
+                    ":op1_userfrom" => isset($detail['op1_userfrom']) && is_numeric($detail['op1_userfrom']) ? $detail['op1_userfrom'] : 0,
+                    ":op1_userto" => isset($detail['op1_userto']) && is_numeric($detail['op1_userto']) ? $detail['op1_userto'] : 0,
                     ':op1_opportunity' => $resInsert
                 ));
 
@@ -166,7 +168,7 @@ class Opportunity extends REST_Controller
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se puso realizar operacion'
+                        'mensaje' => 'No se pudo realizar operacion'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -187,7 +189,7 @@ class Opportunity extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data' => $resInsert,
-                'mensaje' => 'No se puso realizar operacion'
+                'mensaje' => 'No se pudo realizar operacion'
             );
         }
 
@@ -415,25 +417,25 @@ class Opportunity extends REST_Controller
         $this->pedeo->trans_begin();
 
         $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-            ":bop_type" => $Data['bop_type'],
-            ":bop_invamount" => $Data['bop_invamount'],
-            ":bop_slpcode" => $Data['bop_slpcode'],
-            ":bop_agent" => $Data['bop_agent'],
-            ":bop_balance" => $Data['bop_balance'],
-            ":bop_name" => $Data['bop_name'],
-            ":bop_docnum" => $Data['bop_docnum'],
-            ":bop_status" => $Data['bop_status'],
-            ":bop_date" => $Data['bop_date'],
-            ":bop_duedate" => $Data['bop_duedate'],
-            ":bop_days" => $Data['bop_days'],
-            ":bop_dateprev" => $Data['bop_dateprev'],
-            ":bop_pvalue" => $Data['bop_pvalue'],
-            ":bop_interestl" => $Data['bop_interestl'],
-            ":bop_rstatus" => $Data['bop_rstatus'],
-            ":bop_cardcode" => $Data['bop_cardcode'],
-            ":bop_cardcode_name" => $Data['bop_cardcode_name'],
+            ":bop_type" => isset($Data['bop_type']) && is_numeric($Data['bop_type']) ? $Data['bop_type'] : 0,
+            ":bop_invamount" => isset($Data['bop_invamount']) ? $Data['bop_invamount'] : '',
+            ":bop_slpcode" => isset($Data['bop_slpcode']) && is_numeric($Data['bop_slpcode']) ? $Data['bop_slpcode'] : NULL,
+            ":bop_agent" => (!empty($Data['bop_agent'])) ? $Data['bop_agent'] : 0,
+            ":bop_balance" => (!empty($Data['bop_balance'])) ? $Data['bop_balance'] : 0,
+            ":bop_name" => isset($Data['bop_name']) ? $Data['bop_name'] : NULL,
+            ":bop_docnum" => (!empty($Data['docnum'])) ? $Data['bop_docnum'] : 0,
+            ":bop_status" => isset($Data['bop_status']) && is_numeric($Data['bop_status']) ? $Data['bop_status'] : NULL,
+            ":bop_date" =>  isset($Data['bop_date']) && !empty($Data['bop_date']) ? $Data['bop_date'] : NULL,
+            ":bop_duedate" => isset($Data['bop_duedate']) && !empty($Data['bop_duedate']) ? $Data['bop_duedate'] : NULL,
+            ":bop_days" => isset($Data['bop_days']) && is_numeric($Data['bop_days']) ? $Data['bop_days'] : NULL,
+            ":bop_dateprev" => isset($Data['bop_dateprev']) && !empty($Data['bop_dateprev']) ? $Data['bop_dateprev'] : NULL,
+            ":bop_pvalue" => isset($Data['bop_pvalue']) && is_numeric($Data['bop_pvalue']) ? $Data['bop_pvalue'] : NULL,
+            ":bop_interestl" => isset($Data['bop_interestl']) && is_numeric($Data['bop_interestl']) ? $Data['bop_interestl'] : NULL,
+            ":bop_rstatus" =>  isset($Data['bop_rstatus']) && is_numeric($Data['bop_rstatus']) ? $Data['bop_rstatus'] : NULL,
+            ":bop_cardcode" =>  isset($Data['bop_cardcode']) ? $Data['bop_cardcode'] : NULL,
+            ":bop_cardcode_name" => isset($Data['bop_cardcode_name']) ? $Data['bop_cardcode_name'] : NULL,
             ":bop_reason" => (isset($Data['bop_reason'])) ? $Data['bop_reason'] : null,
-            ":bop_stage" => $Data['bop_stage'],
+            ":bop_stage" => isset($Data['bop_stage']) && is_numeric($Data['bop_stage']) ? $Data['bop_stage'] : NULL,
             ":bop_id" => $Data['bop_id']
         ));
 
@@ -448,22 +450,22 @@ class Opportunity extends REST_Controller
             foreach ($ContenidoDetalle as $key => $detail) {
                 $duracion = (!empty($detail['op1_duracion'])) ? explode(' ', $detail['op1_duracion']) : 0;
                 $resInsert2 = $this->pedeo->insertRow($sqlInsert2, array(
-                    ":op1_centerc"  => $detail['op1_centerc'],
-                    ":op1_comments" => $detail['op1_comments'],
-                    ":op1_contact_tel" => $detail['op1_contact_tel'],
-                    ":op1_content" => $detail['op1_content'],
-                    ":op1_date" => $detail['op1_date'],
-                    ":op1_dclass" => $detail['op1_dclass'],
-                    ":op1_duedate" => $detail['op1_duedate'],
+                    ":op1_centerc"  => isset($detail['op1_centerc']) ? $detail['op1_centerc'] : '',
+                    ":op1_comments" => isset($detail['op1_comments']) ? $detail['op1_comments'] : '',
+                    ":op1_contact_tel" => isset($detail['op1_contact_tel']) ? $detail['op1_contact_tel'] : '',
+                    ":op1_content" => isset($detail['op1_content']) ? $detail['op1_content'] : '',
+                    ":op1_date" => isset($detail['op1_date']) && !empty($detail['op1_date']) ? $detail['op1_date'] : NULL,
+                    ":op1_dclass" => isset($detail['op1_dclass']) && is_numeric($detail['op1_dclass']) ? $detail['op1_dclass'] : 0,
+                    ":op1_duedate" => isset($detail['op1_duedate']) && !empty($detail['op1_duedate']) ? $detail['op1_duedate'] : NULL,
                     ":op1_duracion" => (!empty($detail['op1_duracion'])) ? $duracion[0] : 0,
-                    ":op1_issue" => $detail['op1_issue'],
+                    ":op1_issue" => isset($detail['op1_issue']) ? $detail['op1_issue'] : '',
                     ":op1_num" => (!empty($detail['op1_num'])) ? $detail['op1_num'] : 0,
                     ":op1_priority" => (!empty($detail['op1_priority'])) ? $detail['op1_priority'] : 1,
-                    ":op1_sn" => $detail['op1_sn'],
-                    ":op1_sn_name" => $detail['op1_sn_name'],
-                    ":op1_type" => $detail['op1_type'],
-                    ":op1_userfrom" => $detail['op1_userfrom'],
-                    ":op1_userto" => $detail['op1_userto'],
+                    ":op1_sn" => isset($detail['op1_sn']) ? $detail['op1_sn'] : '',
+                    ":op1_sn_name" => isset($detail['op1_sn_name']) ? $detail['op1_sn_name'] : '',
+                    ":op1_type" => isset($detail['op1_type']) && is_numeric($detail['op1_type']) ? $detail['op1_type'] : 0,
+                    ":op1_userfrom" => isset($detail['op1_userfrom']) && is_numeric($detail['op1_userfrom']) ? $detail['op1_userfrom'] : 0,
+                    ":op1_userto" => isset($detail['op1_userto']) && is_numeric($detail['op1_userto']) ? $detail['op1_userto'] : 0,
                     ":op1_opportunity" => $Data['bop_id'],
                     ":op1_stage" => $detail['op1_stage'],
                     ":op1_dnumber" => $detail['op1_dnumber']
@@ -477,7 +479,7 @@ class Opportunity extends REST_Controller
                     $respuesta = array(
                         'error' => true,
                         'data' => $resInsert2,
-                        'mensaje' => 'No se puso realizar operacion'
+                        'mensaje' => 'No se pudo realizar operacion'
                     );
 
                     $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
@@ -499,7 +501,7 @@ class Opportunity extends REST_Controller
             $respuesta = array(
                 'error' => true,
                 'data' => $resUpdate,
-                'mensaje' => 'No se puso realizar operacion'
+                'mensaje' => 'No se pudo realizar operacion'
             );
         }
 
@@ -596,7 +598,7 @@ class Opportunity extends REST_Controller
                 GROUP BY t.total,bop_rstatus";
 
         $sqlOpProfit = str_replace("{{filter}}",$info['filters'],$sqlOpProfit);
-
+  
         $resProfit = $this->pedeo->queryTable($sqlOpProfit,$info['fields']);
 
         // porcentaje de oportunidades por vendedor
@@ -609,7 +611,7 @@ class Opportunity extends REST_Controller
         GROUP BY mev_names";
 
         $sqlOpvend = str_replace("{{filter}}",$info['filters'],$sqlOpvend);
-        
+ 
         $resvend = $this->pedeo->queryTable($sqlOpvend,$info['fields']);
 
         // grafica de valores esperados
@@ -625,7 +627,7 @@ class Opportunity extends REST_Controller
                         GROUP BY bop_rstatus";
 
         $sqlValores = str_replace("{{filter}}",$info['filters'],$sqlValores);
-
+  
         $resValores = $this->pedeo->queryTable($sqlValores, $info['fields']);
         // se agregan los porcentajes a la respuesta
         array_push($resSelect,$resProfit,$resvend,$resValores);
@@ -658,7 +660,7 @@ class Opportunity extends REST_Controller
             foreach ($keys as $key => $value) {
                 if (!in_array($value,['bop_date','bop_duedate','c','a'],true)) {
                 $fields[":{$value}"] = $Data[$value];
-                $filters .= " AND {$value} = :{$value}";
+                $filters .= " AND tbop.{$value} = :{$value}";
             }
 
             }

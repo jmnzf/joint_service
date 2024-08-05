@@ -307,10 +307,12 @@ class PurchSolAntProv extends REST_Controller
 		$sqlInsert = "INSERT INTO dcsa(csa_series, csa_docnum, csa_docdate, csa_duedate, csa_duedev, csa_pricelist, csa_cardcode,
                       csa_cardname, csa_currency, csa_contacid, csa_slpcode, csa_empid, csa_comment, csa_doctotal, csa_baseamnt, csa_taxtotal,
                       csa_discprofit, csa_discount, csa_createat, csa_baseentry, csa_basetype, csa_doctype, csa_idadd, csa_adress, csa_paytype,
-                      csa_createby,csa_correl, csa_date_inv, csa_date_del, csa_place_del,business,branch, csa_anticipate_total, csa_anticipate_type, csa_anticipate_value, csa_paytoday)VALUES(:csa_series, :csa_docnum, :csa_docdate, :csa_duedate, :csa_duedev, :csa_pricelist, :csa_cardcode, :csa_cardname,
+                      csa_createby,csa_correl, csa_date_inv, csa_date_del, csa_place_del,business,branch, csa_anticipate_total, csa_anticipate_type, 
+					  csa_anticipate_value, csa_paytoday,csa_taxtotal_ad)VALUES(:csa_series, :csa_docnum, :csa_docdate, :csa_duedate, :csa_duedev, :csa_pricelist, :csa_cardcode, :csa_cardname,
                       :csa_currency, :csa_contacid, :csa_slpcode, :csa_empid, :csa_comment, :csa_doctotal, :csa_baseamnt, :csa_taxtotal, :csa_discprofit, :csa_discount,
                       :csa_createat, :csa_baseentry, :csa_basetype, :csa_doctype, :csa_idadd, :csa_adress, :csa_paytype,:csa_createby,:csa_correl, 
-					  :csa_date_inv, :csa_date_del, :csa_place_del,:business,:branch, :csa_anticipate_total, :csa_anticipate_type, :csa_anticipate_value , :csa_paytoday)";
+					  :csa_date_inv, :csa_date_del, :csa_place_del,:business,:branch, :csa_anticipate_total, :csa_anticipate_type, :csa_anticipate_value , 
+					  :csa_paytoday,:csa_taxtotal_ad)";
 
 
 		// Se Inicia la transaccion,
@@ -357,7 +359,9 @@ class PurchSolAntProv extends REST_Controller
 			':csa_anticipate_total' => is_numeric($Data['csa_anticipate_total']) ? $Data['csa_anticipate_total'] : 0,
 			':csa_anticipate_type' => is_numeric($Data['csa_anticipate_type']) ? $Data['csa_anticipate_type'] : 0,
 			':csa_anticipate_value' => is_numeric($Data['csa_anticipate_value']) ? $Data['csa_anticipate_value'] : 0,
-			':csa_paytoday' => 0
+			':csa_paytoday' => 0,
+
+			':csa_taxtotal_ad' => is_numeric($Data['csa_taxtotal_ad']) ? $Data['csa_taxtotal_ad'] : 0
 
 		));
 
@@ -429,6 +433,27 @@ class PurchSolAntProv extends REST_Controller
 			// SE CIERRA EL DOCUMENTO PRELIMINAR SI VIENE DE UN MODELO DE APROBACION
 			// SI EL DOCTYPE = 21
 			if ($Data['csa_basetype'] == 21) {
+
+				// SE VALIDA SI HAY ANEXOS EN EL DOCUMENTO APROBADO 
+				// SE CAMBIEN AL DOCUMENTO EN CREACION
+				$anexo = $this->aprobacion->CambiarAnexos($Data,'csa',$DocNumVerificado);
+	
+				if ( isset($anexo['error']) && $anexo['error'] == false ) {
+				}else{
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $anexo,
+						'mensaje'	=> 'No se pudo registrar el documento:'. $anexo['mensaje']
+					);
+
+
+					return $this->response($respuesta);
+
+				}
+				// FIN VALIDACION
 
 				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
 																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
@@ -741,10 +766,11 @@ class PurchSolAntProv extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO csa1(sa1_docentry, sa1_itemcode, sa1_itemname, sa1_quantity, sa1_uom, sa1_whscode,
                 sa1_price, sa1_vat, sa1_vatsum, sa1_discount, sa1_linetotal, sa1_costcode, sa1_ubusiness, sa1_project,
-                sa1_acctcode, sa1_basetype, sa1_doctype, sa1_avprice, sa1_inventory, sa1_linenum, sa1_acciva, sa1_codimp, sa1_ubication,sa1_baseline,ote_code)
+                sa1_acctcode, sa1_basetype, sa1_doctype, sa1_avprice, sa1_inventory, sa1_linenum, sa1_acciva, sa1_codimp, sa1_ubication,sa1_baseline,ote_code,
+				sa1_vat_ad,sa1_vatsum_ad,sa1_accimp_ad,sa1_codimp_ad)
 				VALUES(:sa1_docentry, :sa1_itemcode, :sa1_itemname, :sa1_quantity,:sa1_uom, :sa1_whscode,:sa1_price, :sa1_vat, :sa1_vatsum, 
 				:sa1_discount, :sa1_linetotal, :sa1_costcode, :sa1_ubusiness, :sa1_project,:sa1_acctcode, :sa1_basetype, :sa1_doctype, :sa1_avprice, 
-				:sa1_inventory,:sa1_linenum,:sa1_acciva, :sa1_codimp, :sa1_ubication,:sa1_baseline,:ote_code)";
+				:sa1_inventory,:sa1_linenum,:sa1_acciva, :sa1_codimp, :sa1_ubication,:sa1_baseline,:ote_code,:sa1_vat_ad,:sa1_vatsum_ad,:sa1_accimp_ad,:sa1_codimp_ad)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sa1_docentry' => $resInsert,
@@ -771,7 +797,12 @@ class PurchSolAntProv extends REST_Controller
 					':sa1_codimp' => isset($detail['sa1_codimp']) ? $detail['sa1_codimp'] : NULL,
 					':sa1_ubication' => isset($detail['sa1_ubication']) ? $detail['sa1_ubication'] : NULL,
 					':sa1_baseline' => is_numeric($detail['sa1_baseline']) ? $detail['sa1_baseline'] : 0,
-					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL
+					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
+
+					':sa1_vat_ad'    => is_numeric($detail['sa1_vat_ad']) ? $detail['sa1_vat_ad'] : 0,
+					':sa1_vatsum_ad' => is_numeric($detail['sa1_vatsum_ad']) ? $detail['sa1_vatsum_ad'] : 0,
+					':sa1_accimp_ad' => is_numeric($detail['sa1_accimp_ad']) ? $detail['sa1_accimp_ad'] : NULL,
+					':sa1_codimp_ad' => isset($detail['sa1_codimp_ad']) ? $detail['sa1_codimp_ad'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -908,7 +939,7 @@ class PurchSolAntProv extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data' => $resInsert,
-				'mensaje' => 'Solicitud de anticipo de proveedor registrada con exito'
+				'mensaje' => 'Solicitud de anticipo de proveedor #'.$DocNumVerificado.' registrada con exito'
 			);
 		} else {
 			// Se devuelven los cambios realizados en la transaccion
@@ -1116,7 +1147,9 @@ class PurchSolAntProv extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dcsa', 'csa', ",CONCAT(T0.csa_CURRENCY,' ',TRIM(TO_CHAR(csa_anticipate_total,'{format}'))) as csa_anticipate_total", '', $DECI_MALES, $Data['business'], $Data['branch'],36);
+		
+
+		$sqlSelect = self::getColumn('dcsa', 'csa', ",CONCAT(T0.csa_CURRENCY,' ',TRIM(TO_CHAR(csa_anticipate_total,'{format}'))) as csa_anticipate_total ,T4.dms_phone1, T4.dms_phone2, T4.dms_cel", '', $DECI_MALES, $Data['business'], $Data['branch'],36);
         // print_r($sqlSelect);exit;
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

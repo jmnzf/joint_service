@@ -22,11 +22,12 @@ class BalanceThird extends REST_Controller {
 
 	}
     // OBTENER VALOR DE PEDIDO DE VENTAS, MES Y AÑO PRESENTE
-    public function BalanceThird_post(){
+    public function BalanceThird_post()
+	{
 
 		$Data = $this->post();
 
-		if($Data['tipo'] == 'L'){
+		if($Data['tipo'] == 'L') {
 			$where = '';
 			if(!empty($Data['account'])){
 				$array = array_map(function($acc){
@@ -35,7 +36,7 @@ class BalanceThird extends REST_Controller {
 
 			$account = implode(',',$array);
 			$where = "AND t0.acc_code IN ({$account})";
-		}
+			}
 
 		$saldo_inicial = 0;
 		$saldo_cero = 0;
@@ -70,84 +71,84 @@ class BalanceThird extends REST_Controller {
 							when t0.acc_level = 6
 									then (select sum(a.sal_i) from balance_si(:from_date,'a')  a where a.account = t0.acc_code )
 							end,0))";
-				}else if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] == 'S'){
+		}else if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] == 'S'){
 
-					$saldo_inicial = '0 saldo_inicial,';
-					$saldo_cero = 0;
-				}
+			$saldo_inicial = '0 saldo_inicial,';
+			$saldo_cero = 0;
+		}
 
-      	$sqlSelect = "SELECT
-                    t0.acc_level,
-                    t0.acc_code,
-                    t0.acc_name,
-					$saldo_inicial
-                    case
-                        when t0.acc_level = 1
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1) + $saldo_cero
-                        when t0.acc_level = 2
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2) + $saldo_cero
-                        when t0.acc_level = 3
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3) + $saldo_cero
-                        when t0.acc_level = 4
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 ) + $saldo_cero
-                        when t0.acc_level = 5
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code ) + $saldo_cero
-                        when t0.acc_level = 6
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code ) + $saldo_cero
-                    end saldo,
-                    case
-                        when t0.acc_level = 1
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-                        when t0.acc_level = 2
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-                        when t0.acc_level = 3
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3)
-                        when t0.acc_level = 4
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-                        when t0.acc_level = 5
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code )
-                        when t0.acc_level = 6
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code )
-                    end debito,
-                    case
-                        when t0.acc_level = 1
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-                        when t0.acc_level = 2
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-                        when t0.acc_level = 3
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3)
-                        when t0.acc_level = 4
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-                        when t0.acc_level = 5
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code   )
-                        when t0.acc_level = 6
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code )
-                    end credito
-                from dacc t0
-                where t0.acc_level <= :level $where
-                GROUP by
-					t0.acc_level,t0.acc_code,t0.acc_name,t0.acc_l1,t0.acc_level,t0.acc_l2,t0.acc_l3,t0.acc_l4,t0.acc_l5
-                having (case
-                        when t0.acc_level = 1
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-                        when t0.acc_level = 2
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-                        when t0.acc_level = 3
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3)
-                        when t0.acc_level = 4
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-                        when t0.acc_level = 5
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code  )
-                        when t0.acc_level = 6
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code  )
-                    	end) <> 0
-                order by cast(t0.acc_code as varchar) asc";
-
-      	$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-        	':from_date' => $Data['from_date'],
-        	':to_date' => $Data['to_date'],
-        	':level' => $Data['level']
-      	));
+		$sqlSelect = "SELECT
+				t0.acc_level,
+				t0.acc_code,
+				t0.acc_name,
+				$saldo_inicial
+				case
+					when t0.acc_level = 1
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1) + $saldo_cero
+					when t0.acc_level = 2
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2) + $saldo_cero
+					when t0.acc_level = 3
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3) + $saldo_cero
+					when t0.acc_level = 4
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 ) + $saldo_cero
+					when t0.acc_level = 5
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code ) + $saldo_cero
+					when t0.acc_level = 6
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code ) + $saldo_cero
+				end saldo,
+				case
+					when t0.acc_level = 1
+						then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+					when t0.acc_level = 2
+						then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+					when t0.acc_level = 3
+						then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3)
+					when t0.acc_level = 4
+						then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+					when t0.acc_level = 5
+						then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code )
+					when t0.acc_level = 6
+						then (select sum(a.deb) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code )
+				end debito,
+				case
+					when t0.acc_level = 1
+						then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+					when t0.acc_level = 2
+						then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+					when t0.acc_level = 3
+						then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3)
+					when t0.acc_level = 4
+						then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+					when t0.acc_level = 5
+						then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code   )
+					when t0.acc_level = 6
+						then (select sum(a.cre) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code )
+				end credito
+			from dacc t0
+			where t0.acc_level <= :level $where
+			GROUP by
+				t0.acc_level,t0.acc_code,t0.acc_name,t0.acc_l1,t0.acc_level,t0.acc_l2,t0.acc_l3,t0.acc_l4,t0.acc_l5
+			having (case
+					when t0.acc_level = 1
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+					when t0.acc_level = 2
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+					when t0.acc_level = 3
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3)
+					when t0.acc_level = 4
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+					when t0.acc_level = 5
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code  )
+					when t0.acc_level = 6
+						then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code  )
+					end) <> 0
+			order by cast(t0.acc_code as varchar) asc";
+// print_r($sqlSelect);exit;
+			$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+				':from_date' => $Data['from_date'],
+				':to_date' => $Data['to_date'],
+				':level' => $Data['level']
+			));
 
 
 		}
@@ -352,31 +353,31 @@ class BalanceThird extends REST_Controller {
 				':from_date' => $Data['from_date'],
 				':to_date' => $Data['to_date']
 			));
-// print_r($sqlSelect);exit();
-}else if($Data['tipo'] == 'A'  && $Data['level'] <= 4){
+
+		}else if($Data['tipo'] == 'A'  && $Data['level'] <= 4){
 
 
-	$saldo_inicial = 0;
-	$saldo_cero = 0;
-	if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] != 'S'){
-		$saldo_inicial = "coalesce(case
-				when t0.acc_level = 1
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1)
-				when t0.acc_level = 2
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-				when t0.acc_level = 3
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-								 and a.l3 = t0.acc_l3)
-				when t0.acc_level = 4
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-								 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-				when t0.acc_level = 5
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.account = t0.acc_code  )
-				when t0.acc_level = 6
-						then (select sum(a.sal_i) from balance_si(:from_date,'a')  a where a.account = t0.acc_code  )
-		end,0) saldo_inicial,";
+		$saldo_inicial = 0;
+		$saldo_cero = 0;
+		if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] != 'S'){
+			$saldo_inicial = "coalesce(case
+					when t0.acc_level = 1
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1)
+					when t0.acc_level = 2
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+					when t0.acc_level = 3
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3)
+					when t0.acc_level = 4
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+					when t0.acc_level = 5
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.account = t0.acc_code  )
+					when t0.acc_level = 6
+							then (select sum(a.sal_i) from balance_si(:from_date,'a')  a where a.account = t0.acc_code  )
+					end,0) saldo_inicial,";
 
-		$saldo_cero = "(coalesce(case
+			$saldo_cero = "(coalesce(case
 				when t0.acc_level = 1
 						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1)
 				when t0.acc_level = 2
@@ -391,53 +392,53 @@ class BalanceThird extends REST_Controller {
 						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.account = t0.acc_code )
 				when t0.acc_level = 6
 						then (select sum(a.sal_i) from balance_si(:from_date,'a')  a where a.account = t0.acc_code  )
-		end,0))";
-	}else if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] == 'S'){
+				end,0))";
+		}else if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] == 'S'){
 
-		$saldo_inicial = '0 saldo_inicial,';
-		$saldo_cero = 0;
-	}
-
-
-	$where = '';
-	if(!empty($Data['account'])){
-		$array = array_map(function($acc){
-			return "'{$acc}'";
+			$saldo_inicial = '0 saldo_inicial,';
+			$saldo_cero = 0;
 		}
-			,$Data['account']);
-
-		 $account = implode(',',$array);
-		$where = "AND t0.acc_code IN ({$account})";
-	}
 
 
+		$where = '';
+		if(!empty($Data['account'])){
+			$array = array_map(function($acc){
+				return "'{$acc}'";
+			}
+				,$Data['account']);
 
-	$sqlSelect = "SELECT
-								t0.acc_level,
-								t0.acc_code,
-								t0.acc_name,
-								$saldo_inicial
-								case
-										when t0.acc_level = 1
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-												+ $saldo_cero
-										when t0.acc_level = 2
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-												+ $saldo_cero
-										when t0.acc_level = 3
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-														 and a.l3 = t0.acc_l3)
-												+ $saldo_cero
-										when t0.acc_level = 4
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-														 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-												+ $saldo_cero
-										when t0.acc_level = 5
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code   )
-												+ $saldo_cero
-										when t0.acc_level = 6
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code   )
-												+ $saldo_cero
+			$account = implode(',',$array);
+			$where = "AND t0.acc_code IN ({$account})";
+		}
+
+
+
+		$sqlSelect = "SELECT
+						t0.acc_level,
+						t0.acc_code,
+						t0.acc_name,
+						$saldo_inicial
+						case
+								when t0.acc_level = 1
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+										+ $saldo_cero
+								when t0.acc_level = 2
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+										+ $saldo_cero
+								when t0.acc_level = 3
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+													and a.l3 = t0.acc_l3)
+										+ $saldo_cero
+								when t0.acc_level = 4
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+													and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+										+ $saldo_cero
+								when t0.acc_level = 5
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code   )
+										+ $saldo_cero
+								when t0.acc_level = 6
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code   )
+										+ $saldo_cero
 								end saldo,
 								case
 										when t0.acc_level = 1
@@ -446,62 +447,62 @@ class BalanceThird extends REST_Controller {
 												then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
 										when t0.acc_level = 3
 												then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-														 and a.l3 = t0.acc_l3)
+															and a.l3 = t0.acc_l3)
 										when t0.acc_level = 4
 												then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-														 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+															and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
 										when t0.acc_level = 5
 												then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code  )
 										when t0.acc_level = 6
 												then (select sum(a.deb) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code  )
-								end debito,
+								end debito,	
 								case
-										when t0.acc_level = 1
-												then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-										when t0.acc_level = 2
-												then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-										when t0.acc_level = 3
-												then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-														 and a.l3 = t0.acc_l3)
-										when t0.acc_level = 4
-												then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-														 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-										when t0.acc_level = 5
-												then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code  )
-										when t0.acc_level = 6
-												then (select sum(a.cre) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code  )
+									when t0.acc_level = 1
+											then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+									when t0.acc_level = 2
+											then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+									when t0.acc_level = 3
+											then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+														and a.l3 = t0.acc_l3)
+									when t0.acc_level = 4
+											then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+														and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+									when t0.acc_level = 5
+											then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code  )
+									when t0.acc_level = 6
+											then (select sum(a.cre) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code  )
 								end credito
-						from dacc t0
-						where t0.acc_level <= :level $where
-						GROUP by
-						t0.acc_level,t0.acc_code,t0.acc_name,t0.acc_l1,t0.acc_level,t0.acc_l2,t0.acc_l3,t0.acc_l4,t0.acc_l5
-						having (case
-										when t0.acc_level = 1
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-										when t0.acc_level = 2
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-										when t0.acc_level = 3
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-														 and a.l3 = t0.acc_l3)
-										when t0.acc_level = 4
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-														 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-										when t0.acc_level = 5
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code  )
-										when t0.acc_level = 6
-												then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code  )
-								end) <> 0
+							from dacc t0
+							where t0.acc_level <= :level $where
+							GROUP by
+							t0.acc_level,t0.acc_code,t0.acc_name,t0.acc_l1,t0.acc_level,t0.acc_l2,t0.acc_l3,t0.acc_l4,t0.acc_l5
+							having (case
+								when t0.acc_level = 1
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+								when t0.acc_level = 2
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+								when t0.acc_level = 3
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+													and a.l3 = t0.acc_l3)
+								when t0.acc_level = 4
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+													and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+								when t0.acc_level = 5
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code  )
+								when t0.acc_level = 6
+										then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code  )
+									end) <> 0
 
-						order by cast(t0.acc_code as varchar) asc";
+							order by cast(t0.acc_code as varchar) asc";
 
-	$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-		':from_date' => $Data['from_date'],
-		':to_date' => $Data['to_date'],
-		':level' => $Data['level']
-	));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':from_date' => $Data['from_date'],
+			':to_date' => $Data['to_date'],
+			':level' => $Data['level']
+		));
 
 
-}else if($Data['tipo'] == 'A' && $Data['level'] >= 5){
+		}else if($Data['tipo'] == 'A' && $Data['level'] >= 5){
 
 
 
@@ -510,15 +511,32 @@ class BalanceThird extends REST_Controller {
 		if(!empty($Data['account'])){
 			$array = array_map(function($acc){
 				return "'{$acc}'";
+			},$Data['account']);
+
+			// print_r($array);exit;
+			$coma = "";
+			$levels_acc = "";
+			foreach ($array as $key => $value) {
+				$value = str_replace("'","",$value);
+				// print_r($value);exit;
+				$l1 = substr($value, 0, 1);
+				$l2 = substr($value, 0, 2);
+				$l3 = substr($value, 0, 4);
+				$l4 = substr($value, 0, 6);
+				$l5 = substr($value, 0, 7);
+				$levels_acc .= "{$coma}'{$l1}','{$l2}','{$l3}','{$l4}','{$l5}'";
+				$coma = ",";
 			}
-				,$Data['account']);
-			 $account = implode(',',$array);
-			$where = "AND t0.acc_code IN ({$account})";
+			// $levels_acc = substr($levels_acc, 0, -1);
+			// print_r($levels_acc);exit;
+			$account = implode(',',$array);
+			$where = "AND t0.acc_code IN ({$levels_acc},{$account})";
+			// print_r($where);exit;
 			$account_sub = "AND a.account = ({$account})";
 		}
-
+		// print_r($where." ".$account_sub);exit;
 		$where_tercero = "";
-	  $tercero_sub = "";
+	  	$tercero_sub = "";
 		$tercero = "";
 		$join_2 = "";
 		if(!empty($Data['tercero'])){
@@ -541,223 +559,223 @@ class BalanceThird extends REST_Controller {
 			$join_3 = "left join (select * from balancess(:from_date,:to_date,'b')) t1 on t0.acc_code = t1.account";
 		}
 
-	$saldo_inicial = 0;
-	$saldo_cero = 0;
-	if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] != 'S'){
-		$saldo_inicial = "coalesce(case
-				when t0.acc_level = 1
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1)
-				when t0.acc_level = 2
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-				when t0.acc_level = 3
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-								 and a.l3 = t0.acc_l3)
-				when t0.acc_level = 4
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-								 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-				when t0.acc_level = 5
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-				when t0.acc_level = 6
-						then (select sum(a.sal_i) from balance_si(:from_date,'a')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-		end,0) saldo_inicial,";
-
-		$saldo_cero = "(coalesce(case
-				when t0.acc_level = 1
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1)
-				when t0.acc_level = 2
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-				when t0.acc_level = 3
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-								 and a.l3 = t0.acc_l3)
-				when t0.acc_level = 4
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-								 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-				when t0.acc_level = 5
-						then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-				when t0.acc_level = 6
-						then (select sum(a.sal_i) from balance_si(:from_date,'a')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-		end,0))";
-	}else if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] == 'S'){
-
-		$saldo_inicial = '0 saldo_inicial,';
+		$saldo_inicial = 0;
 		$saldo_cero = 0;
-	}
+		if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] != 'S'){
+			$saldo_inicial = "coalesce(case
+					when t0.acc_level = 1
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1)
+					when t0.acc_level = 2
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+					when t0.acc_level = 3
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3)
+					when t0.acc_level = 4
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+					when t0.acc_level = 5
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+					when t0.acc_level = 6
+							then (select sum(a.sal_i) from balance_si(:from_date,'a')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+					end,0) saldo_inicial,";
 
-	//SELECT CC,UN,PR
-	$cc = '';
-	$un = '';
-	$pr = '';
+			$saldo_cero = "(coalesce(case
+					when t0.acc_level = 1
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1)
+					when t0.acc_level = 2
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+					when t0.acc_level = 3
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3)
+					when t0.acc_level = 4
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+					when t0.acc_level = 5
+							then (select sum(a.sal_i) from balance_si(:from_date,'a') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+					when t0.acc_level = 6
+							then (select sum(a.sal_i) from balance_si(:from_date,'a')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+					end,0))";
+		}else if(!empty($Data['saldo_inicial']) && $Data['saldo_inicial'] == 'S'){
 
-	if(!empty($Data['cc']) && $Data['cc'] == 'S'){
-			$cc = 't1.cc,';
+			$saldo_inicial = '0 saldo_inicial,';
+			$saldo_cero = 0;
+		}
 
-	}
-	//where cc
-	$where_cc = '';
+		//SELECT CC,UN,PR
+		$cc = '';
+		$un = '';
+		$pr = '';
 
-	if(!empty($Data['filter_cc'])){
-		$array_cc = implode(',',array($Data['filter_cc']));
-		$where_cc = "AND t1.cc IN ({$array_cc})";
-	}
+		if(!empty($Data['cc']) && $Data['cc'] == 'S'){
+				$cc = 't1.cc,';
+
+		}
+		//where cc
+		$where_cc = '';
+
+		if(!empty($Data['filter_cc'])){
+			$array_cc = implode(',',array($Data['filter_cc']));
+			$where_cc = "AND t1.cc IN ({$array_cc})";
+		}
 
 
-	if(!empty($Data['un']) && $Data['un'] == 'S'){
-		$un = 't1.un,';
+		if(!empty($Data['un']) && $Data['un'] == 'S'){
+			$un = 't1.un,';
 
-	}
-	//where un
-	$where_un = '';
+		}
+		//where un
+		$where_un = '';
 
-	if(!empty($Data['filter_un'])){
-		$array_un = implode(',',array($Data['filter_un']));
-		$where_un = "AND t1.cc IN ({$array_un})";
-	}
+		if(!empty($Data['filter_un'])){
+			$array_un = implode(',',array($Data['filter_un']));
+			$where_un = "AND t1.cc IN ({$array_un})";
+		}
 
-	if(!empty($Data['pr']) && $Data['pr'] == 'S'){
-		$pr = 't1.pr,';
+		if(!empty($Data['pr']) && $Data['pr'] == 'S'){
+			$pr = 't1.pr,';
 
-	}
-	//where pr
-	$where_pr = '';
+		}
+		//where pr
+		$where_pr = '';
 
-	if(!empty($Data['filter_pr'])){
-		$array_pr = implode(',',array($Data['filter_pr']));
-		$where_pr = "AND t1.cc IN ({$array_pr})";
-	}
-// print_r($where);exit();
-	$sqlSelect = "SELECT
-                    t0.acc_level,
-                    t0.acc_code,
-                    t0.acc_name,
-                    $tercero
-										$cc
-										$un
-										$pr
-                    $ver_doc
-										$saldo_inicial
-                    case
-                        when t0.acc_level = 1
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-                            + $saldo_cero
-                        when t0.acc_level = 2
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-                            + $saldo_cero
-                        when t0.acc_level = 3
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-                                 and a.l3 = t0.acc_l3)
-                            + $saldo_cero
-                        when t0.acc_level = 4
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-                                 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-                            + $saldo_cero
-                        when t0.acc_level = 5
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-                            + $saldo_cero
-                        when t0.acc_level = 6
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-                            + $saldo_cero
-                    end saldo,
-                    case
-                        when t0.acc_level = 1
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-                        when t0.acc_level = 2
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-                        when t0.acc_level = 3
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-                                 and a.l3 = t0.acc_l3)
-                        when t0.acc_level = 4
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-                                 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-                        when t0.acc_level = 5
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-                        when t0.acc_level = 6
-                            then (select sum(a.deb) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-                    end debito,
-                    case
-                        when t0.acc_level = 1
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-                        when t0.acc_level = 2
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-                        when t0.acc_level = 3
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-                                 and a.l3 = t0.acc_l3)
-                        when t0.acc_level = 4
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-                                 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-                        when t0.acc_level = 5
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-                        when t0.acc_level = 6
-                            then (select sum(a.cre) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-                    end credito
-                from dacc t0
-								$join_1
-								$join_3
-								$join_2
-                where t0.acc_level  >= :level
-								$where
-								$where_tercero
-								$where_cc
-								$where_un
-								$where_pr
-                GROUP by
-								t0.acc_level,
-								t0.acc_code,
-								t0.acc_name,
-								$tercero
-								$cc
-								$un
-								$pr
-                $ver_doc
-                t0.acc_l1,
-                t0.acc_level,
-                t0.acc_l2,
-                t0.acc_l3,
-                t0.acc_l4,
-                t0.acc_l5
-                having (case
-                        when t0.acc_level = 1
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
-                        when t0.acc_level = 2
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
-                        when t0.acc_level = 3
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-                                 and a.l3 = t0.acc_l3)
-                        when t0.acc_level = 4
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
-                                 and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
-                        when t0.acc_level = 5
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-                        when t0.acc_level = 6
-                            then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
-                    end) <> 0
+		if(!empty($Data['filter_pr'])){
+			$array_pr = implode(',',array($Data['filter_pr']));
+			$where_pr = "AND t1.cc IN ({$array_pr})";
+		}
 
-                order by cast(t0.acc_code as varchar) asc";
+		$sqlSelect = "SELECT
+						t0.acc_level,
+						t0.acc_code,
+						t0.acc_name,
+						$tercero
+						$cc
+						$un
+						$pr
+						$ver_doc
+						$saldo_inicial
+						case
+							when t0.acc_level = 1
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+								+ $saldo_cero
+							when t0.acc_level = 2
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+								+ $saldo_cero
+							when t0.acc_level = 3
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3)
+								+ $saldo_cero
+							when t0.acc_level = 4
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+								+ $saldo_cero
+							when t0.acc_level = 5
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+								+ $saldo_cero
+							when t0.acc_level = 6
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+								+ $saldo_cero
+						end saldo,
+						case
+							when t0.acc_level = 1
+								then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+							when t0.acc_level = 2
+								then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+							when t0.acc_level = 3
+								then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3)
+							when t0.acc_level = 4
+								then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+							when t0.acc_level = 5
+								then (select sum(a.deb) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+							when t0.acc_level = 6
+								then (select sum(a.deb) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+						end debito,
+						case
+							when t0.acc_level = 1
+								then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+							when t0.acc_level = 2
+								then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+							when t0.acc_level = 3
+								then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3)
+							when t0.acc_level = 4
+								then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+							when t0.acc_level = 5
+								then (select sum(a.cre) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+							when t0.acc_level = 6
+								then (select sum(a.cre) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+						end credito
+					from dacc t0
+					$join_1
+					$join_3
+					$join_2
+					where t0.acc_level  <= :level
+					$where
+					$where_tercero
+					$where_cc
+					$where_un
+					$where_pr
+					GROUP by
+					t0.acc_level,
+					t0.acc_code,
+					t0.acc_name,
+					$tercero
+					$cc
+					$un
+					$pr
+					$ver_doc
+					t0.acc_l1,
+					t0.acc_level,
+					t0.acc_l2,
+					t0.acc_l3,
+					t0.acc_l4,
+					t0.acc_l5
+					having (case
+							when t0.acc_level = 1
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1)
+							when t0.acc_level = 2
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2)
+							when t0.acc_level = 3
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3)
+							when t0.acc_level = 4
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.l1 = t0.acc_l1 and a.l2 = t0.acc_l2
+									and a.l3 = t0.acc_l3 and a.l4 = t0.acc_l4 )
+							when t0.acc_level = 5
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b') a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+							when t0.acc_level = 6
+								then (select sum(a.sal) from balancess(:from_date,:to_date,'b')  a where a.account = t0.acc_code $tercero_sub $where_sub_doc)
+						end) <> 0
 
-	$resSelect = $this->pedeo->queryTable($sqlSelect, array(
-		':from_date' => $Data['from_date'],
-		':to_date' => $Data['to_date'],
-		':level' => $Data['level']
-	));
+					order by cast(t0.acc_code as varchar) asc";
+					//print_r($sqlSelect);exit;
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+			':from_date' => $Data['from_date'],
+			':to_date' => $Data['to_date'],
+			':level' => $Data['level']
+		));
 
-// print_r($sqlSelect);exit;
-}
-      if(isset($resSelect[0])){
+
+		}
+      	if(isset($resSelect[0])){
 
         $respuesta = array(
           'error' => false,
           'data'  => $resSelect,
           'mensaje' => '');
 
-      }else{
+      	}else{
 
-          $respuesta = array(
-            'error'   => true,
-            'data' => array(),
-            'mensaje'	=> 'busqueda sin resultados'
-          );
+			$respuesta = array(
+			'error'   => true,
+			'data' => array(),
+			'mensaje'	=> 'busqueda sin resultados'
+			);
 
-      }
+      	}
 
        $this->response($respuesta);
-     }
+    }
 }

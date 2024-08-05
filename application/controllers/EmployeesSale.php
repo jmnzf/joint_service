@@ -25,7 +25,7 @@ class EmployeesSale extends REST_Controller {
   //CREAR NUEVO EMPLEADO DE VENTA
 	public function createEmployeesSale_post(){
       $Data = $this->post();
-
+     
       if(!isset($Data['mev_names']) OR
          !isset($Data['mev_position']) OR
          !isset($Data['mev_phone']) OR
@@ -38,6 +38,8 @@ class EmployeesSale extends REST_Controller {
          !isset($Data['mev_dun_un_code']) OR
          !isset($Data['mev_id_sal_per']) OR
          !isset($Data['mev_whs_code']) OR 
+         !isset($Data['mev_id_type']) OR 
+         !isset($Data['mev_card_code']) OR 
          !isset($Data['business']) OR
          !isset($Data['branch'])){
 
@@ -53,8 +55,9 @@ class EmployeesSale extends REST_Controller {
       }
 
         $sqlInsert = "INSERT INTO dmev(mev_names, mev_position, mev_phone, mev_cel_phone, mev_mail, mev_enabled, mev_prc_code,
-                      mev_dpj_pj_code, mev_dun_un_code, mev_id_sal_per, mev_whs_code, business, branch)VALUES (:mev_names, :mev_position, :mev_phone,
-                      :mev_cel_phone, :mev_mail, :mev_enabled, :mev_prc_code, :mev_dpj_pj_code, :mev_dun_un_code, :mev_id_sal_per, :mev_whs_code, :business, :branch)";
+                      mev_dpj_pj_code, mev_dun_un_code, mev_id_sal_per, mev_whs_code, business, branch,  mev_id_type, mev_card_code, mev_account_cm)
+                      VALUES (:mev_names, :mev_position, :mev_phone, :mev_cel_phone, :mev_mail, :mev_enabled, :mev_prc_code, :mev_dpj_pj_code,
+                      :mev_dun_un_code, :mev_id_sal_per, :mev_whs_code, :business, :branch,  :mev_id_type, :mev_card_code, :mev_account_cm)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -70,8 +73,10 @@ class EmployeesSale extends REST_Controller {
               ':mev_id_sal_per' => $Data['mev_id_sal_per'],
               ':mev_whs_code' =>  $Data['mev_whs_code'],
               ':business' =>  $Data['business'],
-              ':branch' =>  $Data['branch']
-
+              ':branch' =>  $Data['branch'],
+              ':mev_id_type' =>  $Data['mev_id_type'],
+              ':mev_card_code' =>  $Data['mev_card_code'],
+              ':mev_account_cm' => $Data['mev_account_cm']
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -79,7 +84,7 @@ class EmployeesSale extends REST_Controller {
               $respuesta = array(
                 'error'		=> false,
                 'data' 		=> $resInsert,
-                'mensaje' =>'Centro de costo registrado con exito'
+                'mensaje' =>'Empleado registrado con exito'
               );
 
 
@@ -88,7 +93,7 @@ class EmployeesSale extends REST_Controller {
               $respuesta = array(
                 'error'   => true,
                 'data' 		=> $resInsert,
-                'mensaje'	=> 'No se pudo registrar el centro de costo'
+                'mensaje'	=> 'No se pudo registrar el empleado'
               );
 
         }
@@ -113,6 +118,8 @@ class EmployeesSale extends REST_Controller {
          !isset($Data['mev_dun_un_code']) OR
          !isset($Data['mev_id_sal_per']) OR
          !isset($Data['mev_whs_code']) OR
+         !isset($Data['mev_id_type']) OR 
+         !isset($Data['mev_card_code']) OR 
          !isset($Data['mev_id'])){
 
 
@@ -129,7 +136,8 @@ class EmployeesSale extends REST_Controller {
 
       $sqlUpdate = "UPDATE dmev SET mev_names = :mev_names, mev_position = :mev_position, mev_phone = :mev_phone, mev_cel_phone = :mev_cel_phone,
                    mev_mail = :mev_mail, mev_enabled = :mev_enabled, mev_prc_code = :mev_prc_code, mev_dpj_pj_code = :mev_dpj_pj_code,
-                   mev_dun_un_code = :mev_dun_un_code, mev_id_sal_per = :mev_id_sal_per, mev_whs_code = :mev_whs_code	WHERE mev_id =:mev_id";
+                   mev_dun_un_code = :mev_dun_un_code, mev_id_sal_per = :mev_id_sal_per, mev_whs_code = :mev_whs_code, mev_id_type = :mev_id_type, 
+                   mev_card_code = :mev_card_code, mev_account_cm = :mev_account_cm WHERE mev_id =:mev_id";
 
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -145,6 +153,9 @@ class EmployeesSale extends REST_Controller {
             ':mev_dun_un_code' => $Data['mev_dun_un_code'],
             ':mev_id_sal_per' => $Data['mev_id_sal_per'],
             ':mev_whs_code' =>  $Data['mev_whs_code'],
+            ':mev_id_type' =>  $Data['mev_id_type'],
+            ':mev_card_code' =>  $Data['mev_card_code'],
+            ':mev_account_cm' => $Data['mev_account_cm'],
             ':mev_id' =>  $Data['mev_id']
       ));
 

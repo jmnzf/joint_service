@@ -22,6 +22,7 @@ class MaterialList extends REST_Controller {
 
 	}
 
+	// CREAR UNA LITA DE MATERIALES
 	public function createMaterialList_post(){
 
 		$Data = $this->post();
@@ -73,6 +74,7 @@ class MaterialList extends REST_Controller {
 		$sqlMainFolder = " SELECT * FROM params";
 		$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
 
+
 		if(!isset($resMainFolder[0])){
 				$respuesta = array(
 				'error' => true,
@@ -85,6 +87,7 @@ class MaterialList extends REST_Controller {
 				return;
 		}
 		//
+		$this->pedeo->trans_begin();
 
 		$sqlInsert = "INSERT INTO prlm(rlm_item_code, rlm_quantity, rlm_bom_type, rlm_whscode, rlm_pricelist, rlm_nom_dist,
 					rlm_project, rlm_comment, rlm_costoprod, rlm_total, rlm_createat, rlm_createby, rlm_item_name, rlm_doctype, business)
@@ -112,15 +115,15 @@ class MaterialList extends REST_Controller {
 
 		if( is_numeric($resInsert) && $resInsert > 0 ){
 
-			 $this->pedeo->trans_begin();
+			
 
 			foreach ($ContenidoDetalle as $key => $detail) {
 
 				$sqlInsertDetail = "INSERT INTO public.rlm1(lm1_iddoc, lm1_linenum, lm1_type, lm1_itemcode, lm1_itemname, lm1_quantity,
 					 									lm1_uom, lm1_whscode, lm1_emission_method, lm1_standard_cost, lm1_standard_costt, lm1_pricelist,
-														lm1_price, lm1_total, lm1_comment)VALUES(:lm1_iddoc, :lm1_linenum, :lm1_type, :lm1_itemcode, :lm1_itemname, :lm1_quantity,
+														lm1_price, lm1_total, lm1_comment, lm1_acct_in, lm1_acct_invproc, business)VALUES(:lm1_iddoc, :lm1_linenum, :lm1_type, :lm1_itemcode, :lm1_itemname, :lm1_quantity,
 														:lm1_uom, :lm1_whscode, :lm1_emission_method, :lm1_standard_cost, :lm1_standard_costt, :lm1_pricelist,
-														:lm1_price, :lm1_total, :lm1_comment)";
+														:lm1_price, :lm1_total, :lm1_comment, :lm1_acct_in, :lm1_acct_invproc, :business)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
@@ -138,7 +141,10 @@ class MaterialList extends REST_Controller {
 					':lm1_pricelist' =>is_numeric($detail['lm1_pricelist'])?$detail['lm1_pricelist']:NULL,
 					':lm1_price' => is_numeric($detail['lm1_price'])?$detail['lm1_price']:NULL,
 					':lm1_total' => is_numeric($detail['lm1_total'])?$detail['lm1_total']:NULL,
-					':lm1_comment' =>isset($detail['lm1_comment'])?$detail['lm1_comment']:NULL
+					':lm1_comment' =>isset($detail['lm1_comment'])?$detail['lm1_comment']:NULL,
+					':lm1_acct_in' => is_numeric($detail['lm1_acct_in'])?$detail['lm1_acct_in']:0,
+					':lm1_acct_invproc' =>  is_numeric($detail['lm1_acct_invproc'])?$detail['lm1_acct_invproc']:0,
+					':business' => $Data['business']
 				));
 
 
@@ -178,6 +184,175 @@ class MaterialList extends REST_Controller {
 		$this->response($respuesta);
 	}
 
+	// ACTUALIZA LA LISTA DE MATERIALES
+	public function updateMaterialList_post(){
+
+		$Data = $this->post();
+
+
+		if(!isset($Data['detail']) || !isset($Data['rlm_id'])){
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' =>'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$ContenidoDetalle = json_decode($Data['detail'], true);
+
+
+		if(!is_array($ContenidoDetalle)){
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'No se encontro el detalle de la lista'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+		}
+
+		// SE VALIDA QUE EL DOCUMENTO TENGA CONTENIDO
+		if(!intval(count($ContenidoDetalle)) > 0 ){
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'Documento sin detalle'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+		}
+		//
+
+		//Obtener Carpeta Principal del Proyecto
+		$sqlMainFolder = " SELECT * FROM params";
+		$resMainFolder = $this->pedeo->queryTable($sqlMainFolder, array());
+
+
+		//
+		$this->pedeo->trans_begin();
+
+		if(!isset($resMainFolder[0])){
+				$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' =>'No se encontro la caperta principal del proyecto'
+				);
+
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+		}
+		//
+
+		$sqlUpdate = "UPDATE prlm SET rlm_item_code = :rlm_item_code, rlm_quantity = :rlm_quantity, rlm_bom_type = :rlm_bom_type, rlm_whscode = :rlm_whscode,
+					rlm_pricelist = :rlm_pricelist, rlm_nom_dist = :rlm_nom_dist, rlm_project = :rlm_project, rlm_comment = :rlm_comment, rlm_costoprod = :rlm_costoprod,
+					rlm_total = :rlm_total, rlm_createat = :rlm_createat, rlm_createby = :rlm_createby, rlm_item_name = :rlm_item_name, rlm_doctype = :rlm_doctype, 
+					business = :business WHERE rlm_id = :rlm_id";
+				
+
+		$resUpdate = $this->pedeo->updateRow(	$sqlUpdate, array(
+			':rlm_item_code' => isset($Data['rlm_item_code'])?$Data['rlm_item_code']:NULL,
+			':rlm_quantity' => is_numeric($Data['rlm_quantity'])?$Data['rlm_quantity']:0,
+			':rlm_bom_type' => is_numeric($Data['rlm_bom_type'])?$Data['rlm_bom_type']:NULL,
+			':rlm_whscode' => isset($Data['rlm_whscode'])?$Data['rlm_whscode']:NULL,
+			':rlm_pricelist' => is_numeric($Data['rlm_pricelist'])?$Data['rlm_pricelist']:0,
+			':rlm_nom_dist' => isset($Data['rlm_nom_dist'])?$Data['rlm_nom_dist']:NULL,
+			':rlm_project' => isset($Data['rlm_project'])?$Data['rlm_project']:NULL,
+			':rlm_comment' => isset($Data['rlm_comment'])?$Data['rlm_comment']:NULL,
+			':rlm_costoprod' => is_numeric($Data['rlm_costoprod'])?$Data['rlm_costoprod']:0,
+			':rlm_total' => is_numeric($Data['rlm_total'])?$Data['rlm_total']:0,
+			':rlm_createat' => $this->generic->validateDate($Data['rlm_createat'])?$Data['rlm_createat']:NULL,
+			':rlm_createby' => isset($Data['rlm_createby'])?$Data['rlm_createby']:NULL,
+			':rlm_item_name' => isset($Data['rlm_item_name'])?$Data['rlm_item_name']:NULL,
+			':rlm_doctype' => isset($Data['rlm_doctype'])?$Data['rlm_doctype']:NULL,
+			':business' => $Data['business'],
+			':rlm_id' => $Data['rlm_id']
+
+		));
+
+		if( is_numeric($resUpdate) && $resUpdate == 1 ){
+
+			 
+
+			// SE BORRA EL DETALLE ACTUAL
+			$this->pedeo->queryTable("DELETE FROM rlm1 WHERE lm1_iddoc = :lm1_iddoc",array(":lm1_iddoc" => $Data['rlm_id']));
+
+			foreach ($ContenidoDetalle as $key => $detail) {
+				
+
+				$sqlInsertDetail = "INSERT INTO public.rlm1(lm1_iddoc, lm1_linenum, lm1_type, lm1_itemcode, lm1_itemname, lm1_quantity,
+					 									lm1_uom, lm1_whscode, lm1_emission_method, lm1_standard_cost, lm1_standard_costt, lm1_pricelist,
+														lm1_price, lm1_total, lm1_comment, lm1_acct_in, lm1_acct_invproc, business)VALUES(:lm1_iddoc, :lm1_linenum, :lm1_type, :lm1_itemcode, :lm1_itemname, :lm1_quantity,
+														:lm1_uom, :lm1_whscode, :lm1_emission_method, :lm1_standard_cost, :lm1_standard_costt, :lm1_pricelist,
+														:lm1_price, :lm1_total, :lm1_comment, :lm1_acct_in, :lm1_acct_invproc, :business)";
+
+				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
+
+					':lm1_iddoc' => $Data['rlm_id'],
+					':lm1_linenum' => is_numeric($detail['lm1_linenum'])?$detail['lm1_linenum']:0,
+					':lm1_type' => is_numeric($detail['lm1_type'])?$detail['lm1_type']:0,
+					':lm1_itemcode' => isset($detail['lm1_itemcode'])?$detail['lm1_itemcode']:NULL,
+					':lm1_itemname' => isset($detail['lm1_itemname'])?$detail['lm1_itemname']:NULL,
+					':lm1_quantity' => is_numeric($detail['lm1_quantity'])?$detail['lm1_quantity']:NULL,
+					':lm1_uom' => isset($detail['lm1_uom'])?$detail['lm1_uom']:NULL,
+					':lm1_whscode' =>  isset($detail['lm1_whscode'])?$detail['lm1_whscode']:NULL,
+					':lm1_emission_method' => is_numeric($detail['lm1_emission_method'])?$detail['lm1_emission_method']:NULL,
+					':lm1_standard_cost' => is_numeric($detail['lm1_standard_cost'])?$detail['lm1_standard_cost']:NULL,
+					':lm1_standard_costt' => is_numeric($detail['lm1_standard_costt'])?$detail['lm1_standard_costt']:NULL,
+					':lm1_pricelist' =>is_numeric($detail['lm1_pricelist'])?$detail['lm1_pricelist']:NULL,
+					':lm1_price' => is_numeric($detail['lm1_price'])?$detail['lm1_price']:NULL,
+					':lm1_total' => is_numeric($detail['lm1_total'])?$detail['lm1_total']:NULL,
+					':lm1_comment' =>isset($detail['lm1_comment'])?$detail['lm1_comment']:NULL,
+					':lm1_acct_in' => is_numeric($detail['lm1_acct_in'])?$detail['lm1_acct_in']:0,
+					':lm1_acct_invproc' =>  is_numeric($detail['lm1_acct_invproc'])?$detail['lm1_acct_invproc']:0,
+					':business' => $Data['business']
+				));
+
+
+				if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
+
+				}else{
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resInsertDetail,
+						'mensaje'	=> 'No se pudo registrar la lista'
+					);
+
+					return  $this->response($respuesta);
+				}
+			}
+
+			$this->pedeo->trans_commit();
+
+			$respuesta = array(
+				'error' => false,
+				'data' => $resInsertDetail,
+				'mensaje' =>'Lista registrada con exito'
+			);
+
+		}else{
+
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error'   => true,
+				'data'    => $resUpdate,
+				'mensaje'	=> 'No se pudo actualizar la lista de materiales'
+			);
+		}
+		$this->response($respuesta);
+	}
 
 
 	//OBTENER LISTA DE MATERIALES POR ID
@@ -240,7 +415,10 @@ class MaterialList extends REST_Controller {
 					return;
 				}
 
-				$sqlSelect = "SELECT * FROM rlm1 WHERE lm1_iddoc =:lm1_iddoc";
+				$sqlSelect = "SELECT rlm1.*, dmpl.dmlp_name_list  
+							FROM rlm1 
+							left join dmpl on rlm1.lm1_pricelist  =  dmpl.dmlp_id 
+							WHERE lm1_iddoc = :lm1_iddoc";
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect, array(":lm1_iddoc" => $Data['lm1_iddoc']));
 
@@ -271,7 +449,11 @@ class MaterialList extends REST_Controller {
 
 
 
-		$sqlSelect = " SELECT * FROM prlm WHERE business = :business";
+		$sqlSelect = "SELECT prlm.*, dmum.dmu_nameum  
+					FROM prlm
+					INNER JOIN dmar ON prlm.rlm_item_code = dmar.dma_item_code
+					INNER JOIN dmum ON dmar.dma_uom_sale = dmum.dmu_id  
+					WHERE prlm.business = :business";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business']));
 

@@ -39,7 +39,6 @@ class PurchaseInvBO extends REST_Controller
 		$TasaLocSys = 0;
 		$MONEDALOCAL = "";
 		$MONEDASYS = "";
-	
 		if (!isset($Data['business']) OR
 			!isset($Data['branch'])) {
 
@@ -234,11 +233,23 @@ class PurchaseInvBO extends REST_Controller
 
 			return;
 		}
+		// VERIFICAR FECHA DE VENCIMIENTO
+		if($Data['cfc_duedate'] < $Data['cfc_docdate']){
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'La fecha de vencimiento ('.$Data['cfc_duedate'].') no puede ser inferior a la fecha del documento ('.$Data['cfc_docdate'].')'
+			);
 
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 		$sqlInsert = "INSERT INTO dcfc(cfc_series, cfc_docnum, cfc_docdate, cfc_duedate, cfc_duedev, cfc_pricelist, cfc_cardcode,
                       cfc_cardname, cfc_currency, cfc_contacid, cfc_slpcode, cfc_empid, cfc_comment, cfc_doctotal, cfc_baseamnt, cfc_taxtotal,
                       cfc_discprofit, cfc_discount, cfc_createat, cfc_baseentry, cfc_basetype, cfc_doctype, cfc_idadd, cfc_adress, cfc_paytype,
-                      cfc_createby,cfc_totalret,cfc_totalretiva,cfc_correl, cfc_tax_control_num, business, branch,cfc_bankable,cfc_internal_comments,cfc_correl2)
+                      cfc_createby,cfc_totalret,cfc_totalretiva,cfc_correl, cfc_tax_control_num, business, branch,cfc_bankable,cfc_internal_comments,cfc_correl2,
+					  cfc_taxtotal_ad)
 					  VALUES(:cfc_series, :cfc_docnum, :cfc_docdate, :cfc_duedate, :cfc_duedev, :cfc_pricelist, :cfc_cardcode, :cfc_cardname,
                       :cfc_currency, :cfc_contacid, :cfc_slpcode, :cfc_empid, :cfc_comment, :cfc_doctotal, :cfc_baseamnt, :cfc_taxtotal, :cfc_discprofit, :cfc_discount,
                       :cfc_createat, :cfc_baseentry, :cfc_basetype, :cfc_doctype, :cfc_idadd, :cfc_adress, :cfc_paytype,:cfc_createby,:cfc_totalret,:cfc_totalretiva,
@@ -288,7 +299,7 @@ class PurchaseInvBO extends REST_Controller
 			':branch' => $Data['branch'],
 			':cfc_bankable' => is_numeric($Data['cfc_bankable']) ? $Data['cfc_bankable'] : 0,
 			':cfc_internal_comments' => isset($Data['cfc_internal_comments']) ? $Data['cfc_internal_comments'] : NULL,
-			':cfc_correl2' => isset($Data['cfc_correl2']) ? $Data['cfc_correl2'] : NULL,
+			':cfc_correl2' => isset($Data['cfc_correl2']) ? $Data['cfc_correl2'] : NULL
 		));
 
 		if (is_numeric($resInsert) && $resInsert > 0) {
@@ -577,10 +588,11 @@ class PurchaseInvBO extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO cfc1(fc1_docentry,fc1_itemcode, fc1_itemname, fc1_quantity, fc1_uom, fc1_whscode,
                                     fc1_price, fc1_vat, fc1_vatsum, fc1_discount, fc1_linetotal, fc1_costcode, fc1_ubusiness, fc1_project,
                                     fc1_acctcode, fc1_basetype, fc1_doctype, fc1_avprice, fc1_inventory, fc1_acciva, fc1_linenum, fc1_codimp, 
-									fc1_ubication,fc1_baseline,ote_code,fc1_tax_base)VALUES(:fc1_docentry,:fc1_itemcode, :fc1_itemname, :fc1_quantity,
+									fc1_ubication,fc1_baseline,ote_code,fc1_tax_base,deducible)
+									VALUES(:fc1_docentry,:fc1_itemcode, :fc1_itemname, :fc1_quantity,
                                     :fc1_uom, :fc1_whscode,:fc1_price, :fc1_vat, :fc1_vatsum, :fc1_discount, :fc1_linetotal, :fc1_costcode, :fc1_ubusiness, :fc1_project,
                                     :fc1_acctcode, :fc1_basetype, :fc1_doctype, :fc1_avprice, :fc1_inventory, :fc1_acciva, :fc1_linenum,:fc1_codimp, 
-									:fc1_ubication,:fc1_baseline,:ote_code,:fc1_tax_base)";
+									:fc1_ubication,:fc1_baseline,:ote_code,:fc1_tax_base,:deducible)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':fc1_docentry' => $resInsert,
@@ -608,7 +620,10 @@ class PurchaseInvBO extends REST_Controller
 					':fc1_ubication'  => isset($detail['fc1_ubication']) ? $detail['fc1_ubication'] : NULL,
 					':fc1_baseline' => is_numeric($detail['fc1_baseline']) ? $detail['fc1_baseline'] : 0,
 					':ote_code'  => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
-					':fc1_tax_base' => is_numeric($detail['fc1_tax_base']) ? $detail['fc1_tax_base'] : 0
+					':fc1_tax_base' => is_numeric($detail['fc1_tax_base']) ? $detail['fc1_tax_base'] : 0,
+					':deducible' => isset($detail['deducible']) ? $detail['deducible'] : NULL
+
+				
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -751,6 +766,10 @@ class PurchaseInvBO extends REST_Controller
 									$DetalleRetencion->crt_totalrt  = $value['crt_totalrt'];
 									$DetalleRetencion->crt_codret   = $value['crt_typert'];
 									$DetalleRetencion->crt_baseln 	= $value['crt_basert'];
+
+									$DetalleRetencion->ac1_prc_code = $detail['fc1_costcode'];
+									$DetalleRetencion->ac1_uncode = $detail['fc1_ubusiness'];
+									$DetalleRetencion->ac1_prj_code = $detail['fc1_project'];
 
 
 									$llaveRetencion = $DetalleRetencion->crt_typert . $DetalleRetencion->crt_profitrt;
@@ -937,6 +956,7 @@ class PurchaseInvBO extends REST_Controller
 							
 							
 							$CostoArticuloMv = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+							// $CostoArticuloMv = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
 							$CantidadMBI = 0;
 
 							if (isset($resCostoMomentoRegistro[0])) {
@@ -1147,6 +1167,7 @@ class PurchaseInvBO extends REST_Controller
 										$CantidadNueva = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 										//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
 										$CostoNuevo = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+										// $CostoNuevo = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
 										//
 										$CantidadTotal = ($CantidadActual + $CantidadNueva);
 										$CantidadTotalItemSolo = ($CantidadItem + $CantidadNueva);
@@ -1194,7 +1215,7 @@ class PurchaseInvBO extends REST_Controller
 															AND business = :business";
 										
 										$resAlmacenMasivo = $this->pedeo->updateRow($sqlAlmacenMasivo, array(
-											':bdi_avgprice' => $CostoNuevo,
+											':bdi_avgprice' => $NuevoCostoPonderado,
 											':bdi_itemcode' => $detail['fc1_itemcode'],
 											':bdi_whscode'  => $detail['fc1_whscode'],
 											':business' 	=> $Data['business']
@@ -1254,6 +1275,7 @@ class PurchaseInvBO extends REST_Controller
 										$CantidadNueva = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 										//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
 										$CostoNuevo = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+										// $CostoNuevo = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
 										//
 										$CantidadTotal = ($CantidadActual + $CantidadNueva);
 
@@ -1364,6 +1386,7 @@ class PurchaseInvBO extends REST_Controller
 									if ($CantidadPorAlmacen > 0) {
 										//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
 										$CostoNuevo = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+										// $CostoNuevo = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
 										//
 										$CantidadItem = 0;
 										$CantidadActual = $CantidadPorAlmacen;
@@ -1397,7 +1420,7 @@ class PurchaseInvBO extends REST_Controller
 
 													':bdi_itemcode' => $detail['fc1_itemcode'],
 													':bdi_whscode'  => $detail['fc1_whscode'],
-													':bdi_quantity' => ($detail['fc1_quantity'] * $CANTUOMPURCHASE),
+													':bdi_quantity' => $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 													':bdi_avgprice' => $NuevoCostoPonderado,
 													':bdi_lote' 	=> $detail['ote_code'],
 													':bdi_ubication' => $detail['fc1_ubication'],
@@ -1412,7 +1435,7 @@ class PurchaseInvBO extends REST_Controller
 
 													':bdi_itemcode' => $detail['fc1_itemcode'],
 													':bdi_whscode'  => $detail['fc1_whscode'],
-													':bdi_quantity' => ($detail['fc1_quantity'] * $CANTUOMPURCHASE),
+													':bdi_quantity' => $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 													':bdi_avgprice' => $NuevoCostoPonderado,
 													':bdi_ubication' => $detail['fc1_ubication'],
 													':business' => $Data['business']
@@ -1431,7 +1454,7 @@ class PurchaseInvBO extends REST_Controller
 
 													':bdi_itemcode' => $detail['fc1_itemcode'],
 													':bdi_whscode'  => $detail['fc1_whscode'],
-													':bdi_quantity' => ($detail['fc1_quantity'] * $CANTUOMPURCHASE),
+													':bdi_quantity' => $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 													':bdi_avgprice' => $NuevoCostoPonderado,
 													':bdi_lote' 	=> $detail['ote_code'],
 													':business'		=> $Data['business']
@@ -1445,7 +1468,7 @@ class PurchaseInvBO extends REST_Controller
 
 													':bdi_itemcode' => $detail['fc1_itemcode'],
 													':bdi_whscode'  => $detail['fc1_whscode'],
-													':bdi_quantity' => ($detail['fc1_quantity'] * $CANTUOMPURCHASE),
+													':bdi_quantity' => $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE),
 													':bdi_avgprice' => $NuevoCostoPonderado,
 													':business' 	=> $Data['business']
 												));
@@ -1544,6 +1567,7 @@ class PurchaseInvBO extends REST_Controller
 									} else {
 										//SE CALCULA EL PRECIO SEGUN LA CONVERSION DE UNIDADES
 										$CostoNuevo = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+										// $CostoNuevo = ( ( $detail['fc1_price'] / $CANTUOMPURCHASE ) * $CANTUOMSALE );
 										//
 
 										if (trim($Data['cfc_currency']) != $MONEDALOCAL) {
@@ -1855,7 +1879,8 @@ class PurchaseInvBO extends REST_Controller
 				}
 				//
 				
-			
+				$descUnit = ( $detail['fc1_discount'] / $detail['fc1_quantity'] );
+
 				$DetalleAsientoIngreso->ac1_account = is_numeric($detail['fc1_acctcode']) ? $detail['fc1_acctcode'] : 0;
 				$DetalleAsientoIngreso->ac1_prc_code = isset($detail['fc1_costcode']) ? $detail['fc1_costcode'] : NULL;
 				$DetalleAsientoIngreso->ac1_uncode = isset($detail['fc1_ubusiness']) ? $detail['fc1_ubusiness'] : NULL;
@@ -1863,10 +1888,11 @@ class PurchaseInvBO extends REST_Controller
 				$DetalleAsientoIngreso->fc1_linetotal = is_numeric($detail['fc1_linetotal']) ? $detail['fc1_linetotal'] : 0;
 				$DetalleAsientoIngreso->fc1_vat = is_numeric($detail['fc1_vat']) ? $detail['fc1_vat'] : 0;
 				$DetalleAsientoIngreso->fc1_vatsum = is_numeric($detail['fc1_vatsum']) ? $detail['fc1_vatsum'] : 0;
-				$DetalleAsientoIngreso->fc1_price = is_numeric( $detail['fc1_price'] ) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fc1_price'], $detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) : 0;
+				$DetalleAsientoIngreso->fc1_price = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+				// $DetalleAsientoIngreso->fc1_price = is_numeric( $detail['fc1_price'] ) ? ( $detail['fc1_price'] - $descUnit ) : 0;
 				$DetalleAsientoIngreso->fc1_itemcode = isset($detail['fc1_itemcode']) ? $detail['fc1_itemcode'] : NULL;
-				$DetalleAsientoIngreso->fc1_quantity = is_numeric($detail['fc1_quantity']) ? ($detail['fc1_quantity'] * $CANTUOMPURCHASE) : 0;
-				$DetalleAsientoIngreso->cantidad = is_numeric($detail['fc1_quantity']) ? $detail['fc1_quantity']  : 0;
+				$DetalleAsientoIngreso->fc1_quantity = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
+				$DetalleAsientoIngreso->cantidad = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 				$DetalleAsientoIngreso->ec1_whscode = isset($detail['fc1_whscode']) ? $detail['fc1_whscode'] : NULL;
 
 
@@ -1878,10 +1904,11 @@ class PurchaseInvBO extends REST_Controller
 				$DetalleAsientoIva->fc1_linetotal = is_numeric($detail['fc1_linetotal']) ? $detail['fc1_linetotal'] : 0;
 				$DetalleAsientoIva->fc1_vat = is_numeric($detail['fc1_vat']) ? $detail['fc1_vat'] : 0;
 				$DetalleAsientoIva->fc1_vatsum = is_numeric($detail['fc1_vatsum']) ? $detail['fc1_vatsum'] : 0;
-				$DetalleAsientoIva->fc1_price =  is_numeric( $detail['fc1_price'] ) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fc1_price'], $detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) : 0;
+				$DetalleAsientoIva->fc1_price =  (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+				// $DetalleAsientoIva->fc1_price = is_numeric( $detail['fc1_price'] ) ? ( $detail['fc1_price'] - $descUnit ) : 0;
 				$DetalleAsientoIva->fc1_itemcode = isset($detail['fc1_itemcode']) ? $detail['fc1_itemcode'] : NULL;
-				$DetalleAsientoIva->fc1_quantity = is_numeric($detail['fc1_quantity']) ? ($detail['fc1_quantity'] * $CANTUOMPURCHASE) : 0;
-				$DetalleAsientoIva->cantidad = is_numeric($detail['fc1_quantity']) ? $detail['fc1_quantity']  : 0;
+				$DetalleAsientoIva->fc1_quantity = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
+				$DetalleAsientoIva->cantidad = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 				$DetalleAsientoIva->fc1_cuentaIva = is_numeric($detail['fc1_cuentaIva']) ? $detail['fc1_cuentaIva'] : NULL;
 				$DetalleAsientoIva->ec1_whscode = isset($detail['fc1_whscode']) ? $detail['fc1_whscode'] : NULL;
 				$DetalleAsientoIva->codimp = isset($detail['fc1_codimp']) ? $detail['fc1_codimp'] : NULL;
@@ -1919,10 +1946,11 @@ class PurchaseInvBO extends REST_Controller
 					$DetalleCostoInventario->fc1_linetotal = is_numeric($detail['fc1_linetotal']) ? $detail['fc1_linetotal'] : 0;
 					$DetalleCostoInventario->fc1_vat = is_numeric($detail['fc1_vat']) ? $detail['fc1_vat'] : 0;
 					$DetalleCostoInventario->fc1_vatsum = is_numeric($detail['fc1_vatsum']) ? $detail['fc1_vatsum'] : 0;
-					$DetalleCostoInventario->fc1_price =  is_numeric( $detail['fc1_price'] ) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fc1_price'], $detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) : 0;
+					$DetalleCostoInventario->fc1_price =  (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+					// $DetalleCostoInventario->fc1_price = is_numeric( $detail['fc1_price'] ) ? ( $detail['fc1_price'] - $descUnit ) : 0;
 					$DetalleCostoInventario->fc1_itemcode = isset($detail['fc1_itemcode']) ? $detail['fc1_itemcode'] : NULL;
-					$DetalleCostoInventario->fc1_quantity = is_numeric($detail['fc1_quantity']) ? ($detail['fc1_quantity'] * $CANTUOMPURCHASE) : 0;
-					$DetalleCostoInventario->cantidad = is_numeric($detail['fc1_quantity']) ? $detail['fc1_quantity']  : 0;
+					$DetalleCostoInventario->fc1_quantity = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
+					$DetalleCostoInventario->cantidad = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 					$DetalleCostoInventario->ec1_whscode = isset($detail['fc1_whscode']) ? $detail['fc1_whscode'] : NULL;
 					$DetalleCostoInventario->fc1_inventory = $ManejaInvetario;
 
@@ -1934,10 +1962,11 @@ class PurchaseInvBO extends REST_Controller
 					$DetalleCostoCosto->fc1_linetotal = is_numeric($detail['fc1_linetotal']) ? $detail['fc1_linetotal'] : 0;
 					$DetalleCostoCosto->fc1_vat = is_numeric($detail['fc1_vat']) ? $detail['fc1_vat'] : 0;
 					$DetalleCostoCosto->fc1_vatsum = is_numeric($detail['fc1_vatsum']) ? $detail['fc1_vatsum'] : 0;
-					$DetalleCostoCosto->fc1_price =  is_numeric( $detail['fc1_price'] ) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fc1_price'], $detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) : 0;
+					$DetalleCostoCosto->fc1_price =  (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+					// $DetalleCostoCosto->fc1_price = is_numeric( $detail['fc1_price'] ) ? ( $detail['fc1_price'] - $descUnit ) : 0;
 					$DetalleCostoCosto->fc1_itemcode = isset($detail['fc1_itemcode']) ? $detail['fc1_itemcode'] : NULL;
-					$DetalleCostoCosto->fc1_quantity = is_numeric($detail['fc1_quantity']) ? ($detail['fc1_quantity'] * $CANTUOMPURCHASE) : 0;
-					$DetalleCostoCosto->cantidad = is_numeric($detail['fc1_quantity']) ? $detail['fc1_quantity']  : 0;
+					$DetalleCostoCosto->fc1_quantity = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
+					$DetalleCostoCosto->cantidad = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 					$DetalleCostoCosto->ec1_whscode = isset($detail['fc1_whscode']) ? $detail['fc1_whscode'] : NULL;
 					$DetalleCostoCosto->fc1_inventory = $ManejaInvetario;
 				} else {
@@ -1947,11 +1976,12 @@ class PurchaseInvBO extends REST_Controller
 					$DetalleItemNoInventariable->ac1_prj_code = isset($detail['fc1_project']) ? $detail['fc1_project'] : NULL;
 					$DetalleItemNoInventariable->nc1_linetotal = is_numeric($detail['fc1_linetotal']) ? $detail['fc1_linetotal'] : 0;
 					$DetalleItemNoInventariable->nc1_vat = is_numeric($detail['fc1_vat']) ? $detail['fc1_vat'] : 0;
-					$DetalleItemNoInventariable->nc1_vatsum = is_numeric($detail['fc1_vatsum']) ? $detail['fc1_vatsum'] : 0;
-					$DetalleItemNoInventariable->nc1_price =  is_numeric( $detail['fc1_price'] ) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['fc1_price'], $detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) : 0;
+					$DetalleItemNoInventariable->fc1_vatsum = is_numeric($detail['fc1_vatsum']) ? $detail['fc1_vatsum'] : 0;
+					$DetalleItemNoInventariable->fc1_price =  (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['fc1_price'],$detail['fc1_vat'],$detail['fc1_discount'],$detail['fc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+					// $DetalleItemNoInventariable->fc1_price = is_numeric( $detail['fc1_price'] ) ? ( $detail['fc1_price'] - $descUnit ) : 0;
 					$DetalleItemNoInventariable->nc1_itemcode = isset($detail['fc1_itemcode']) ? $detail['fc1_itemcode'] : NULL;
-					$DetalleItemNoInventariable->nc1_quantity = is_numeric($detail['fc1_quantity']) ? ($detail['fc1_quantity'] * $CANTUOMPURCHASE) : 0;
-					$DetalleItemNoInventariable->cantidad = is_numeric($detail['fc1_quantity']) ? $detail['fc1_quantity']  : 0;
+					$DetalleItemNoInventariable->nc1_quantity = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
+					$DetalleItemNoInventariable->cantidad = $this->generic->getCantInv($detail['fc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 					$DetalleItemNoInventariable->ec1_whscode = isset($detail['fc1_whscode']) ? $detail['fc1_whscode'] : NULL;
 				}
 
@@ -1973,7 +2003,7 @@ class PurchaseInvBO extends REST_Controller
 				}
 
 				$llave = $DetalleAsientoIngreso->ac1_uncode . $DetalleAsientoIngreso->ac1_prc_code . $DetalleAsientoIngreso->ac1_prj_code . $DetalleAsientoIngreso->ac1_account;
-				$llaveIva = $DetalleAsientoIva->fc1_vat;
+				$llaveIva = $DetalleAsientoIva->fc1_cuentaIva;
 
 
 
@@ -2111,6 +2141,10 @@ class PurchaseInvBO extends REST_Controller
 				$LineTotal = 0;
 				$Vat = 0;
 
+				$prc_code = '';
+				$uncode   = '';
+				$prj_code = '';
+
 				foreach ($posicion as $key => $value) {
 					$granTotalIva = $granTotalIva + $value->fc1_vatsum;
 					$Vat = $value->fc1_vat;
@@ -2118,6 +2152,10 @@ class PurchaseInvBO extends REST_Controller
 					$LineTotal = ($LineTotal + $value->fc1_linetotal);
 				
 					$CodigoImp = $value->codimp;
+
+					$prc_code = $value->ac1_prc_code;
+					$uncode   = $value->ac1_uncode;
+					$prj_code = $value->ac1_prj_code;
 				}
 				// EN BASE A FACTOR DE CONVERSION CASO BOLIVIA
 				if ($FactorC) {
@@ -2144,7 +2182,33 @@ class PurchaseInvBO extends REST_Controller
 
 				$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 				$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($granTotalIva, $DECI_MALES), $value->fc1_cuentaIva, 1, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
 
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+
+				$BUDGET = $this->account->validateBudgetAmount( $value->fc1_cuentaIva, $Data['cfc_docdate'], $prc_code, $uncode, $prj_code, round($granTotalIva, $DECI_MALES), 1, $Data['business'] );
+				if (isset($BUDGET['error']) && $BUDGET['error'] == true) {
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BUDGET,
+						'mensaje' => $BUDGET['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -2168,9 +2232,9 @@ class PurchaseInvBO extends REST_Controller
 					':ac1_ref1' => "",
 					':ac1_ref2' => "",
 					':ac1_ref3' => "",
-					':ac1_prc_code' => NULL,
-					':ac1_uncode' => NULL,
-					':ac1_prj_code' => NULL,
+					':ac1_prc_code' => $prc_code,
+					':ac1_uncode' => $uncode,
+					':ac1_prj_code' => $prj_code,
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
@@ -2229,6 +2293,11 @@ class PurchaseInvBO extends REST_Controller
 					$cdito = 0;
 					$MontoSysDB = 0;
 					$MontoSysCR = 0;
+
+					$prc_code = '';
+					$uncode   = '';
+					$prj_code = '';
+
 					foreach ($posicion as $key => $value) {
 
 						// SE ACEPTAN SOLO LOS ARTICULOS QUE SON INVENTARIABLES
@@ -2237,8 +2306,12 @@ class PurchaseInvBO extends REST_Controller
 
 							$sinDatos++;
 							$cuentaInventario = $value->ac1_account;
-							$grantotalCostoInventario = ($grantotalCostoInventario + ($value->fc1_price * $value->cantidad) );
+							$grantotalCostoInventario = ($grantotalCostoInventario + ( ( $value->fc1_price * $value->cantidad ) ) );
 							$grantotalCostoInventario = $grantotalCostoInventario + $value->descuento;
+
+							$prc_code = $value->ac1_prc_code;
+							$uncode   = $value->ac1_uncode;
+							$prj_code = $value->ac1_prj_code;
 						}
 					}
 					// SE VALIDA QUE EXISTA UN ARTICULO INVENTARIABLE
@@ -2312,6 +2385,59 @@ class PurchaseInvBO extends REST_Controller
 
 
 						$AC1LINE = $AC1LINE + 1;
+						// SE AGREGA AL BALANCE
+						if ( $dbito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaInventario, 1, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+							if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+								$this->pedeo->trans_rollback();
+		
+								$respuesta = array(
+									'error' => true,
+									'data' => $BALANCE,
+									'mensaje' => $BALANCE['mensaje']
+								);
+		
+								return $this->response($respuesta);
+							}
+							$BUDGET = $this->account->validateBudgetAmount( $cuentaInventario, $Data['cfc_docdate'], $prc_code, $uncode, $prj_code, round($dbito, $DECI_MALES), 1, $Data['business'] );
+							if (isset($BUDGET['error']) && $BUDGET['error'] == true) {
+								$this->pedeo->trans_rollback();
+			
+								$respuesta = array(
+									'error' => true,
+									'data' => $BUDGET,
+									'mensaje' => $BUDGET['mensaje']
+								);
+			
+								return $this->response($respuesta);
+							}
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaInventario, 2, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+							if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+								$this->pedeo->trans_rollback();
+		
+								$respuesta = array(
+									'error' => true,
+									'data' => $BALANCE,
+									'mensaje' => $BALANCE['mensaje']
+								);
+		
+								return $this->response($respuesta);
+							}
+							$BUDGET = $this->account->validateBudgetAmount( $cuentaInventario, $Data['cfc_docdate'], $prc_code, $uncode, $prj_code, round($cdito, $DECI_MALES), 2, $Data['business'] );
+							if (isset($BUDGET['error']) && $BUDGET['error'] == true) {
+								$this->pedeo->trans_rollback();
+			
+								$respuesta = array(
+									'error' => true,
+									'data' => $BUDGET,
+									'mensaje' => $BUDGET['mensaje']
+								);
+			
+								return $this->response($respuesta);
+							}
+						}
+						//
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -2335,13 +2461,13 @@ class PurchaseInvBO extends REST_Controller
 							':ac1_ref1' => "",
 							':ac1_ref2' => "",
 							':ac1_ref3' => "",
-							':ac1_prc_code' => NULL,
-							':ac1_uncode' => NULL,
-							':ac1_prj_code' => NULL,
+							':ac1_prc_code' => $prc_code,
+							':ac1_uncode' => $uncode ,
+							':ac1_prj_code' => $prj_code,
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -2417,6 +2543,10 @@ class PurchaseInvBO extends REST_Controller
 					$cdito = 0;
 					$MontoSysDB = 0;
 					$MontoSysCR = 0;
+
+					$prc_code = '';
+					$uncode   = '';
+					$prj_code = '';
 					foreach ($posicion as $key => $value) {
 
 						// SE ACEPTAN SOLO LOS ARTICULOS QUE SON INVENTARIABLES
@@ -2430,9 +2560,12 @@ class PurchaseInvBO extends REST_Controller
 							} else {
 								$cuentaInventario = $rescuentainventario[0]['pge_bridge_inv_purch'];
 							}
-
-							$grantotalCostoInventario = ($grantotalCostoInventario + ($value->fc1_price * $value->cantidad) );
+							$grantotalCostoInventario = ($grantotalCostoInventario + ( ( $value->fc1_price * $value->cantidad ) ) );
 							$grantotalCostoInventario = $grantotalCostoInventario + $value->descuento;
+
+							$prc_code = $value->ac1_prc_code;
+							$uncode   = $value->ac1_uncode;
+							$prj_code = $value->ac1_prj_code;
 						}
 					}
 					// SE VALIDA QUE EXISTA UN ARTICULO INVENTARIABLE
@@ -2506,6 +2639,59 @@ class PurchaseInvBO extends REST_Controller
 						$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 						$AC1LINE = $AC1LINE + 1;
+						// SE AGREGA AL BALANCE
+						if ( $dbito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaInventario, 1, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+							if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+								$this->pedeo->trans_rollback();
+		
+								$respuesta = array(
+									'error' => true,
+									'data' => $BALANCE,
+									'mensaje' => $BALANCE['mensaje']
+								);
+		
+								return $this->response($respuesta);
+							}
+							$BUDGET = $this->account->validateBudgetAmount( $cuentaInventario, $Data['cfc_docdate'], $prc_code, $uncode, $prj_code, round($dbito, $DECI_MALES), 1, $Data['business'] );
+							if (isset($BUDGET['error']) && $BUDGET['error'] == true) {
+								$this->pedeo->trans_rollback();
+			
+								$respuesta = array(
+									'error' => true,
+									'data' => $BUDGET,
+									'mensaje' => $BUDGET['mensaje']
+								);
+			
+								return $this->response($respuesta);
+							}
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaInventario, 2, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+							if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+								$this->pedeo->trans_rollback();
+		
+								$respuesta = array(
+									'error' => true,
+									'data' => $BALANCE,
+									'mensaje' => $BALANCE['mensaje']
+								);
+		
+								return $this->response($respuesta);
+							}
+							$BUDGET = $this->account->validateBudgetAmount( $cuentaInventario, $Data['cfc_docdate'], $prc_code, $uncode, $prj_code, round($cdito, $DECI_MALES), 2, $Data['business'] );
+							if (isset($BUDGET['error']) && $BUDGET['error'] == true) {
+								$this->pedeo->trans_rollback();
+			
+								$respuesta = array(
+									'error' => true,
+									'data' => $BUDGET,
+									'mensaje' => $BUDGET['mensaje']
+								);
+			
+								return $this->response($respuesta);
+							}
+						}
+						//
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -2529,13 +2715,13 @@ class PurchaseInvBO extends REST_Controller
 							':ac1_ref1' => "",
 							':ac1_ref2' => "",
 							':ac1_ref3' => "",
-							':ac1_prc_code' => NULL,
-							':ac1_uncode' => NULL,
-							':ac1_prj_code' => NULL,
+							':ac1_prc_code' => $prc_code,
+							':ac1_uncode' => $uncode,
+							':ac1_prj_code' => $prj_code,
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -2590,13 +2776,22 @@ class PurchaseInvBO extends REST_Controller
 				$MontoSysCR = 0;
 				$sinDatos = 0;
 
+				$prc_code = '';
+				$uncode   = '';
+				$prj_code = '';
+
+
 				foreach ($posicion as $key => $value) {
 
 
 					$sinDatos++;
 					$CuentaItemNoInventariable = $value->ac1_account;
-					$grantotalItemNoInventariable = ($grantotalItemNoInventariable + ($value->nc1_price * $value->cantidad));
+					$grantotalItemNoInventariable = ($grantotalItemNoInventariable + ( ( $value->fc1_price * $value->cantidad ) ) );
 					$grantotalItemNoInventariable = $grantotalItemNoInventariable + $value->descuento;
+
+					$prc_code = $value->ac1_prc_code;
+					$uncode   = $value->ac1_uncode;
+					$prj_code = $value->ac1_prj_code;
 				}
 
 
@@ -2619,6 +2814,32 @@ class PurchaseInvBO extends REST_Controller
 
 
 				$AC1LINE = $AC1LINE + 1;
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $CuentaItemNoInventariable, 1, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				$BUDGET = $this->account->validateBudgetAmount( $CuentaItemNoInventariable, $Data['cfc_docdate'], $prc_code, $uncode, $prj_code, round($dbito, $DECI_MALES), 1, $Data['business'] );
+				if (isset($BUDGET['error']) && $BUDGET['error'] == true) {
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BUDGET,
+						'mensaje' => $BUDGET['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -2642,13 +2863,13 @@ class PurchaseInvBO extends REST_Controller
 					':ac1_ref1' => "",
 					':ac1_ref2' => "",
 					':ac1_ref3' => "",
-					':ac1_prc_code' => NULL,
-					':ac1_uncode' => NULL,
-					':ac1_prj_code' => NULL,
+					':ac1_prc_code' => $prc_code,
+					':ac1_uncode' => $uncode,
+					':ac1_prj_code' => $prj_code,
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -2731,6 +2952,32 @@ class PurchaseInvBO extends REST_Controller
 
 
 				$AC1LINE = $AC1LINE + 1;
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($TotalDoc, $DECI_MALES), $cuentaCxP, 2, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				$BUDGET = $this->account->validateBudgetAmount( $cuentaCxP, $Data['cfc_docdate'], '', '', '', round($TotalDoc, $DECI_MALES), 2, $Data['business'] );
+				if (isset($BUDGET['error']) && $BUDGET['error'] == true) {
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BUDGET,
+						'mensaje' => $BUDGET['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -2752,7 +2999,7 @@ class PurchaseInvBO extends REST_Controller
 					':ac1_accountvs' => 1,
 					':ac1_doctype' => 18,
 					':ac1_ref1' => "",
-					':ac1_ref2' => "",
+					':ac1_ref2' => $Data['cfc_tax_control_num'],
 					':ac1_ref3' => "",
 					':ac1_prc_code' => NULL,
 					':ac1_uncode' => NULL,
@@ -2760,7 +3007,7 @@ class PurchaseInvBO extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -2829,6 +3076,10 @@ class PurchaseInvBO extends REST_Controller
 				$Basert = 0;
 				$Profitrt = 0;
 				$CodRet = "";
+
+				$prc_code = '';
+				$uncode   = '';
+				$prj_code = '';
 				foreach ($posicion as $key => $value) {
 
 					$sqlcuentaretencion = "SELECT mrt_acctcode, mrt_code FROM dmrt WHERE mrt_id = :mrt_id";
@@ -2843,6 +3094,10 @@ class PurchaseInvBO extends REST_Controller
 						$Profitrt =  $value->crt_profitrt;
 						$CodRet = $rescuentaretencion[0]['mrt_code'];
 						$BaseLineaRet = $BaseLineaRet + $value->crt_baseln;
+
+						$prc_code = $value->ac1_prc_code;
+						$uncode   = $value->ac1_uncode;
+						$prj_code = $value->ac1_prj_code;
 					} else {
 
 						$this->pedeo->trans_rollback();
@@ -2879,6 +3134,32 @@ class PurchaseInvBO extends REST_Controller
 				$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 				$AC1LINE = $AC1LINE + 1;
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($totalRetencion, $DECI_MALES), $cuenta, 2, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				$BUDGET = $this->account->validateBudgetAmount( $cuenta, $Data['cfc_docdate'], $prc_code, $uncode, $prj_code, round($totalRetencion, $DECI_MALES), 2, $Data['business'] );
+				if (isset($BUDGET['error']) && $BUDGET['error'] == true) {
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BUDGET,
+						'mensaje' => $BUDGET['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -2902,13 +3183,13 @@ class PurchaseInvBO extends REST_Controller
 					':ac1_ref1' => "",
 					':ac1_ref2' => "",
 					':ac1_ref3' => "",
-					':ac1_prc_code' => NULL,
-					':ac1_uncode' => NULL,
-					':ac1_prj_code' => NULL,
+					':ac1_prc_code' => $prc_code,
+					':ac1_uncode' => $uncode,
+					':ac1_prj_code' => $prj_code,
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -3015,6 +3296,32 @@ class PurchaseInvBO extends REST_Controller
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 					$AC1LINE = $AC1LINE + 1;
+					// SE AGREGA AL BALANCE
+					$BALANCE = $this->account->addBalance($periodo['data'], round($totalDescuento, $DECI_MALES), $cuentadescuento, 2, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					$BUDGET = $this->account->validateBudgetAmount( $cuentadescuento, $Data['cfc_docdate'], '', '', '', round($totalDescuento, $DECI_MALES), 2, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					//
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 	
 						':ac1_trans_id' => $resInsertAsiento,
@@ -3044,7 +3351,7 @@ class PurchaseInvBO extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -3152,6 +3459,33 @@ class PurchaseInvBO extends REST_Controller
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 					$AC1LINE = $AC1LINE + 1;
+					// SE AGREGA AL BALANCE
+					$BALANCE = $this->account->addBalance($periodo['data'], round($totalIvaDescuento, $DECI_MALES), $cuentaivadescuento, 2, $Data['cfc_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+
+					$BUDGET = $this->account->validateBudgetAmount( $cuentaivadescuento, $Data['cfc_docdate'], '', '', '', round($totalIvaDescuento, $DECI_MALES), 2, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					//
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 	
 						':ac1_trans_id' => $resInsertAsiento,
@@ -3181,7 +3515,7 @@ class PurchaseInvBO extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -3281,7 +3615,7 @@ class PurchaseInvBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['cfc_createby']) ? $Data['cfc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($debito, $DECI_MALES),
@@ -3342,6 +3676,7 @@ class PurchaseInvBO extends REST_Controller
 			// $sqlserial = "select * from tmsn order by msn_id desc";
 			// $ressqlserial = $this->pedeo->queryTable($sqlserial, array());
 			// print_r(json_encode($ressqlserial));
+			// print_r($this->pedeo->queryTable("select * from mpc1 where pc1_mpcid = 6"));
 			// exit;
 
 			//SE VALIDA LA CONTABILIDAD CREADA
@@ -3369,136 +3704,237 @@ class PurchaseInvBO extends REST_Controller
 
 
 			// VALIDANDO ESTADOS DE DOCUMENTOS
-
+			$cerrarDoc = true;
 			if ($Data['cfc_basetype'] == 12) {
 
 
-				$sqlEstado1 = "SELECT
-							count(t1.po1_itemcode) item,
-							sum(t1.po1_quantity) cantidad
-						from dcpo t0
-						inner join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
-						where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
-
-
-				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
-					':cpo_docentry' => $Data['cfc_baseentry'],
-					':cpo_doctype' => $Data['cfc_basetype']
-				));
-
-
-				$sqlEstado2 = "SELECT
-								coalesce(count(distinct t3.fc1_itemcode),0) item,
-								coalesce(sum(t3.fc1_quantity),0) cantidad
+				$sqlCantidadDocOrg = "SELECT
+								po1_itemcode,					
+								sum(t1.po1_quantity) cantidad
 							from dcpo t0
-							left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
-							left join dcfc t2 on t0.cpo_docentry = t2.cfc_baseentry
-							left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.po1_itemcode = t3.fc1_itemcode
-							where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype";
-				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
+							inner join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
+							where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype
+							group by po1_itemcode";
+
+
+				$resCantidadDocOrg = $this->pedeo->queryTable($sqlCantidadDocOrg, array(
 					':cpo_docentry' => $Data['cfc_baseentry'],
 					':cpo_doctype' => $Data['cfc_basetype']
 				));
 
-				$item_ord = $resEstado1[0]['item'];
-				$item_fact = $resEstado2[0]['item'];
-				$cantidad_ord = $resEstado1[0]['cantidad'];
-				$cantidad_fact = $resEstado2[0]['cantidad'];
+				if ( isset($resCantidadDocOrg[0]) ) {
 
-				if ($item_ord == $item_fact  &&  $item_fact == $cantidad_fact) {
+					$ItemCantOrg = $resCantidadDocOrg; // OBTIENE EL DETALLE DEL DOCUEMENTO ORIGINAL
 
-					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-										VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+					// REVISANDO OTROS DOCUMENTOS
+					foreach ( $resCantidadDocOrg as $key => $linea ) {
 
-					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+						$sqlFact = "SELECT
+										fc1_itemcode,
+										coalesce(sum(t3.fc1_quantity),0) cantidad
+									from dcpo t0
+									left join cpo1 t1 on t0.cpo_docentry = t1.po1_docentry
+									left join dcfc t2 on t0.cpo_docentry = t2.cfc_baseentry
+									left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.po1_itemcode = t3.fc1_itemcode
+									where t0.cpo_docentry = :cpo_docentry and t0.cpo_doctype = :cpo_doctype
+									and fc1_itemcode = :fc1_itemcode
+									group by fc1_itemcode";
 
+						$resFact = $this->pedeo->queryTable($sqlFact, array(
+							':cpo_docentry' => $Data['cfc_baseentry'],
+							':cpo_doctype' => $Data['cfc_basetype'],
+							':fc1_itemcode' => $linea['po1_itemcode']
+						));
 
-						':bed_docentry' => $Data['cfc_baseentry'],
-						':bed_doctype' => $Data['cfc_basetype'],
-						':bed_status' => 3, //ESTADO CERRADO
-						':bed_createby' => $Data['cfc_createby'],
-						':bed_date' => date('Y-m-d'),
-						':bed_baseentry' => $resInsert,
-						':bed_basetype' => $Data['cfc_doctype']
-					));
+						if ( isset($resFact[0])) {
 
+							foreach ( $resFact as $key => $detalle ) {
 
-					if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
-					} else {
+								foreach ( $ItemCantOrg as $key => $value ) {
+									if ($detalle['fc1_itemcode'] == $value['po1_itemcode']) {
 
-						$this->pedeo->trans_rollback();
-
-						$respuesta = array(
-							'error'   => true,
-							'data' => $resInsertEstado,
-							'mensaje'	=> 'No se pudo registrar la factura de compra'
-						);
-
-
-						$this->response($respuesta);
-
-						return;
+										$ItemCantOrg[$key]['cantidad'] = ( $ItemCantOrg[$key]['cantidad'] - $detalle['cantidad'] );
+									}
+								}
+							}
+						}
 					}
+
+					foreach ($ItemCantOrg as $key => $item) {
+
+						if ( $item['cantidad'] > 0 ) {
+							$cerrarDoc = false;
+						}
+						
+					}
+					
+					if ( $cerrarDoc ) {
+
+						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+											VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+						$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+							':bed_docentry' => $Data['cfc_baseentry'],
+							':bed_doctype' => $Data['cfc_basetype'],
+							':bed_status' => 3, //ESTADO CERRADO
+							':bed_createby' => $Data['cfc_createby'],
+							':bed_date' => date('Y-m-d'),
+							':bed_baseentry' => $resInsert,
+							':bed_basetype' => $Data['cfc_doctype']
+						));
+
+
+						if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+						} else {
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resInsertEstado,
+								'mensaje'	=> 'No se pudo registrar la factura de compra'
+							);
+
+
+							$this->response($respuesta);
+
+							return;
+						}
+					}
+
+				} else {
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resCantidadDocOrg,
+						'mensaje'	=> 'No se pudo evaluar el cierre del documento'
+					);
+
+					return $this->response($respuesta);
 				}
+
+
+				
+
 			} else if ($Data['cfc_basetype'] == 13) {
 
-				$sqlEstado1 = "SELECT
-									count(t1.ec1_itemcode) item,
+				$sqlCantidadDocOrg = "SELECT
+									ec1_itemcode,
 									coalesce(sum(t1.ec1_quantity),0) cantidad
 								from dcec t0
 								inner join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-								where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
+								where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype
+								group by ec1_itemcode";
 
-				$resEstado1 = $this->pedeo->queryTable($sqlEstado1, array(
+				$resCantidadDocOrg = $this->pedeo->queryTable($sqlCantidadDocOrg, array(
 					':cec_docentry' => $Data['cfc_baseentry'],
 					':cec_doctype' => $Data['cfc_basetype']
 				));
 
-				$sqlDev = "SELECT
-								count(t3.dc1_itemcode) item,
-								coalesce(sum(t3.dc1_quantity),0) cantidad
-							from dcec t0
-							left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
-							left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
-							left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
-							where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
 
-				$resDev = $this->pedeo->queryTable($sqlDev, array(
-					':cec_docentry' => $Data['cfc_baseentry'],
-					':cec_doctype' => $Data['cfc_basetype']
-				));
+				if ( isset($resCantidadDocOrg[0]) ) {
 
-				$resta_cantidad = abs($resEstado1[0]['cantidad'] - $resDev[0]['cantidad']);
-				$resta_item = abs($resEstado1[0]['item'] - $resDev[0]['item']);
+					$ItemCantOrg = $resCantidadDocOrg; // OBTIENE EL DETALLE DEL DOCUEMENTO ORIGINAL
 
-				$sqlEstado2 = "SELECT
-									coalesce(count(distinct t3.fc1_itemcode),0) item,
+					// REVISANDO OTROS DOCUMENTOS
+					foreach ( $resCantidadDocOrg as $key => $linea ) {
+
+						// BUSCANDO EN DOCUMENTOS REALIZADOS PREVIAMENTE
+
+						// CASO PARA DEVOLUCION DE COMPRAS 
+						$sqlDev = "SELECT
+									dc1_itemcode,
+									coalesce(sum(t3.dc1_quantity),0) cantidad
+								from dcec t0
+								left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
+								left join dcdc t2 on t0.cec_docentry = t2.cdc_baseentry and t0.cec_doctype = t2.cdc_basetype
+								left join cdc1 t3 on t2.cdc_docentry = t3.dc1_docentry and t1.ec1_itemcode = t3.dc1_itemcode
+								where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype
+								and dc1_itemcode = :dc1_itemcode
+								group by dc1_itemcode";
+						
+						$resDev = $this->pedeo->queryTable($sqlDev, array(
+							':cec_docentry' => $Data['cfc_baseentry'],
+							':cec_doctype'  => $Data['cfc_basetype'],
+							':dc1_itemcode' => $linea['ec1_itemcode']
+						));
+
+						if ( isset($resDev[0])) {
+
+							foreach ( $resDev as $key => $detalle ) {
+
+								foreach ( $ItemCantOrg as $key => $value ) {
+									if ($detalle['dc1_itemcode'] == $value['ec1_itemcode']) {
+
+										$ItemCantOrg[$key]['cantidad'] = ( $ItemCantOrg[$key]['cantidad'] - $detalle['cantidad'] );
+									}
+								}
+								
+							}
+
+						}
+						//
+						// CASO PARA FACTURA DE COMPRAS
+						$sqlFact = "SELECT
+									fc1_itemcode,
 									coalesce(sum(t3.fc1_quantity),0) cantidad
 								from dcec t0
 								left join cec1 t1 on t0.cec_docentry = t1.ec1_docentry
 								left join dcfc t2 on t0.cec_docentry = t2.cfc_baseentry and t0.cec_doctype = t2.cfc_basetype
 								left join cfc1 t3 on t2.cfc_docentry = t3.fc1_docentry and t1.ec1_itemcode = t3.fc1_itemcode
-								where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype";
-				$resEstado2 = $this->pedeo->queryTable($sqlEstado2, array(
-					':cec_docentry' => $Data['cfc_baseentry'],
-					':cec_doctype' => $Data['cfc_basetype']
-				));
+								where t0.cec_docentry = :cec_docentry and t0.cec_doctype = :cec_doctype
+								and fc1_itemcode = :fc1_itemcode
+								group by fc1_itemcode";
 
-				if (is_numeric($resta_item) && $resta_item == 0) {
-					$item_del = abs($resEstado1[0]['item']);
-				} else {
-					$item_del = abs($resta_item);
+						$resFact = $this->pedeo->queryTable($sqlFact, array(
+							':cec_docentry' => $Data['cfc_baseentry'],
+							':cec_doctype'  => $Data['cfc_basetype'],
+							':fc1_itemcode' => $linea['ec1_itemcode']
+						));
+
+						if ( isset($resFact[0])) {
+
+							foreach ( $resFact as $key => $detalle ) {
+
+								foreach ( $ItemCantOrg as $key => $value ) {
+									if ($detalle['fc1_itemcode'] == $value['ec1_itemcode']) {
+
+										$ItemCantOrg[$key]['cantidad'] = ( $ItemCantOrg[$key]['cantidad'] - $detalle['cantidad'] );
+									}
+								}
+								
+							}
+
+						}
+					}
+
+					
+					foreach ($ItemCantOrg as $key => $item) {
+
+						if ( $item['cantidad'] > 0 ) {
+							$cerrarDoc = false;
+						}
+						
+					}
+
+				}else{
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resCantidadDocOrg,
+						'mensaje'	=> 'No se pudo evaluar el cierre del documento'
+					);
+
+					return $this->response($respuesta);
+					
 				}
-				// $item_del = $resta_item;
-				$item_fact = abs($resEstado2[0]['item']);
 
-				$cantidad_del = abs($resta_cantidad);
-				$cantidad_fact = abs($resEstado2[0]['cantidad']);
-
-				
-
-
-				if ($item_del == $item_fact && $cantidad_del == $cantidad_fact) {
+				if ( $cerrarDoc ) {
 					
 
 						$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
@@ -3530,7 +3966,6 @@ class PurchaseInvBO extends REST_Controller
 					}
 				}
 			}
-			// print_r("validacion");exit();die();
 			// Si todo sale bien despues de insertar el detalle de la factura de compras
 			// se confirma la trasaccion  para que los cambios apliquen permanentemente
 			// en la base de datos y se confirma la operacion exitosa.
@@ -3539,7 +3974,7 @@ class PurchaseInvBO extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data' => $resInsert,
-				'mensaje' => 'Factura de compras registrada con exito'
+				'mensaje' => 'Factura de compras #'.$DocNumVerificado.' registrada con exito'
 			);
 		} else {
 			// Se devuelven los cambios realizados en la transaccion

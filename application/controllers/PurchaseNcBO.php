@@ -101,6 +101,7 @@ class PurchaseNcBO extends REST_Controller
 		$AC1LINE = 1;
 		$TotalAcuRentencion = 0;
 		$CANTUOMPURCHASE = 0; //CANTIDAD EN UNIDAD DE MEDIDA
+		$CANTUOMSALE = 0;
 
 		//
 		$DetalleAsientoDescuento = new stdClass();
@@ -232,7 +233,17 @@ class PurchaseNcBO extends REST_Controller
 			return;
 		}
 		//FIN DE PROCESO DE TASA
-		
+		if($Data['cnc_duedate'] < $Data['cnc_docdate']){
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'La fecha de vencimiento ('.$Data['cnc_duedate'].') no puede ser inferior a la fecha del documento ('.$Data['cnc_docdate'].')'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 		$sqlInsert = "INSERT INTO dcnc(cnc_series, cnc_docnum, cnc_docdate, cnc_duedate, cnc_duedev, cnc_pricelist, cnc_cardcode,
                       cnc_cardname, cnc_currency, cnc_contacid, cnc_slpcode, cnc_empid, cnc_comment, cnc_doctotal, cnc_baseamnt, cnc_taxtotal,
                       cnc_discprofit, cnc_discount, cnc_createat, cnc_baseentry, cnc_basetype, cnc_doctype, cnc_idadd, cnc_adress, cnc_paytype,
@@ -549,6 +560,7 @@ class PurchaseNcBO extends REST_Controller
 			foreach ($ContenidoDetalle as $key => $detail) {
 
 				$CANTUOMPURCHASE = $this->generic->getUomPurchase($detail['nc1_itemcode']);
+				$CANTUOMSALE = $this->generic->getUomSale($detail['nc1_itemcode']);
 
 				if ($CANTUOMPURCHASE == 0) {
 
@@ -568,10 +580,10 @@ class PurchaseNcBO extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO cnc1(nc1_docentry,nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
                                     nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
                                     nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_acciva,nc1_linenum,nc1_codimp, 
-									nc1_ubication,nc1_baseline,ote_code,nc1_tax_base)VALUES(:nc1_docentry,:nc1_itemcode, :nc1_itemname, :nc1_quantity,
+									nc1_ubication,nc1_baseline,ote_code,nc1_tax_base,deducible)VALUES(:nc1_docentry,:nc1_itemcode, :nc1_itemname, :nc1_quantity,
                                     :nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
                                     :nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_acciva, :nc1_linenum,:nc1_codimp, 
-									:nc1_ubication,:nc1_baseline,:ote_code,:nc1_tax_base)";
+									:nc1_ubication,:nc1_baseline,:ote_code,:nc1_tax_base,:deducible)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':nc1_docentry' => $resInsert,
@@ -599,7 +611,8 @@ class PurchaseNcBO extends REST_Controller
 					':nc1_ubication'  => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL,
 					':nc1_baseline' => is_numeric($detail['nc1_baseline']) ? $detail['nc1_baseline'] : 0,
 					':ote_code'  => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
-					':nc1_tax_base' => is_numeric($detail['nc1_tax_base']) ? $detail['nc1_tax_base'] : 0
+					':nc1_tax_base' => is_numeric($detail['nc1_tax_base']) ? $detail['nc1_tax_base'] : 0,
+					':deducible' => isset($detail['deducible']) ? $detail['deducible'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -664,6 +677,10 @@ class PurchaseNcBO extends REST_Controller
 									$DetalleRetencion->crt_totalrt  = $value['crt_totalrt'];
 									$DetalleRetencion->crt_codret   = $value['crt_typert'];
 									$DetalleRetencion->crt_baseln 	= $value['crt_basert'];
+
+									$DetalleRetencion->ac1_prc_code = $detail['nc1_costcode'];
+									$DetalleRetencion->ac1_uncode = $detail['nc1_ubusiness'];
+									$DetalleRetencion->ac1_prj_code = $detail['nc1_project'];
 
 
 									$llaveRetencion = $DetalleRetencion->crt_typert . $DetalleRetencion->crt_profitrt;
@@ -859,7 +876,7 @@ class PurchaseNcBO extends REST_Controller
 							$sqlInserMovimiento = $this->pedeo->insertRow($sqlInserMovimiento, array(
 
 								':bmi_itemcode' => isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL,
-								':bmi_quantity' => is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $Data['invtype']) : 0,
+								':bmi_quantity' => ($this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE) * $Data['invtype']),
 								':bmi_whscode'  => isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL,
 								':bmi_createat' => $this->validateDate($Data['cnc_createat']) ? $Data['cnc_createat'] : NULL,
 								':bmi_createby' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
@@ -999,7 +1016,9 @@ class PurchaseNcBO extends REST_Controller
 							if ($resCostoCantidad[0]['bdi_quantity'] > 0) {
 
 								$CantidadActual = $resCostoCantidad[0]['bdi_quantity'];
-								$CantidadNueva = ($detail['nc1_quantity'] * $CANTUOMPURCHASE);
+
+								
+								$CantidadNueva = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 
 
 								$CantidadTotal = ($CantidadActual - $CantidadNueva);
@@ -1169,6 +1188,7 @@ class PurchaseNcBO extends REST_Controller
 				//
 				
 
+				$descUnit = ( $detail['nc1_discount'] / $detail['nc1_quantity'] );
 
 				$DetalleAsientoIngreso->ac1_account = is_numeric($detail['nc1_acctcode']) ? $detail['nc1_acctcode'] : 0;
 				$DetalleAsientoIngreso->ac1_prc_code = isset($detail['nc1_costcode']) ? $detail['nc1_costcode'] : NULL;
@@ -1177,11 +1197,12 @@ class PurchaseNcBO extends REST_Controller
 				$DetalleAsientoIngreso->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 				$DetalleAsientoIngreso->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 				$DetalleAsientoIngreso->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-				$DetalleAsientoIngreso->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+				$DetalleAsientoIngreso->nc1_price = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['nc1_price'],$detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+				// $DetalleAsientoIngreso->nc1_price = is_numeric( $detail['nc1_price'] ) ? ( $detail['nc1_price'] - $descUnit ) : 0;
 				$DetalleAsientoIngreso->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
-				$DetalleAsientoIngreso->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $CANTUOMPURCHASE) : 0;
+				$DetalleAsientoIngreso->nc1_quantity = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 				$DetalleAsientoIngreso->em1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
-				$DetalleAsientoIngreso->cantidad = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity']  : 0;
+				$DetalleAsientoIngreso->cantidad = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 
 
 
@@ -1192,13 +1213,14 @@ class PurchaseNcBO extends REST_Controller
 				$DetalleAsientoIva->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 				$DetalleAsientoIva->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 				$DetalleAsientoIva->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-				$DetalleAsientoIva->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+				$DetalleAsientoIva->nc1_price = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['nc1_price'],$detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+				// $DetalleAsientoIva->nc1_price = is_numeric( $detail['nc1_price'] ) ? ( $detail['nc1_price'] - $descUnit ) : 0;
 				$DetalleAsientoIva->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
-				$DetalleAsientoIva->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $CANTUOMPURCHASE) : 0;
+				$DetalleAsientoIva->nc1_quantity = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 				$DetalleAsientoIva->nc1_cuentaIva = is_numeric($detail['nc1_cuentaIva']) ? $detail['nc1_cuentaIva'] : NULL;
 				$DetalleAsientoIva->em1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
 				$DetalleAsientoIva->codimp = isset($detail['nc1_codimp']) ? $detail['nc1_codimp'] : NULL;
-				$DetalleAsientoIva->cantidad = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity']  : 0;
+				$DetalleAsientoIva->cantidad = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 
 			
 
@@ -1214,12 +1236,13 @@ class PurchaseNcBO extends REST_Controller
 						$DetalleCostoInventario->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 						$DetalleCostoInventario->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 						$DetalleCostoInventario->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-						$DetalleCostoInventario->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+						$DetalleCostoInventario->nc1_price =  (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['nc1_price'],$detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+						// $DetalleCostoInventario->nc1_price = is_numeric( $detail['nc1_price'] ) ? ( $detail['nc1_price'] - $descUnit ) : 0;
 						$DetalleCostoInventario->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
-						$DetalleCostoInventario->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $CANTUOMPURCHASE) : 0;
+						$DetalleCostoInventario->nc1_quantity = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 						$DetalleCostoInventario->em1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
 						$DetalleCostoInventario->ac1_inventory = $ManejaInvetario;
-						$DetalleCostoInventario->cantidad = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity']  : 0;
+						$DetalleCostoInventario->cantidad = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 
 
 						$DetalleCostoCosto->ac1_account =  is_numeric($detail['nc1_acctcode']) ? $detail['nc1_acctcode'] : 0;
@@ -1229,12 +1252,13 @@ class PurchaseNcBO extends REST_Controller
 						$DetalleCostoCosto->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 						$DetalleCostoCosto->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 						$DetalleCostoCosto->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-						$DetalleCostoCosto->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+						$DetalleCostoCosto->nc1_price =  (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['nc1_price'],$detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+						// $DetalleCostoCosto->nc1_price = is_numeric( $detail['nc1_price'] ) ? ( $detail['nc1_price'] - $descUnit ) : 0;
 						$DetalleCostoCosto->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
-						$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $CANTUOMPURCHASE) : 0;
+						$DetalleCostoCosto->nc1_quantity = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 						$DetalleCostoCosto->em1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
 						$DetalleCostoCosto->ac1_inventory = $ManejaInvetario;
-						$DetalleCostoCosto->cantidad = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity']  : 0;
+						$DetalleCostoCosto->cantidad = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 
 					} else {
 						$DetalleItemNoInventariable->ac1_account =  is_numeric($detail['nc1_acctcode']) ? $detail['nc1_acctcode'] : 0;
@@ -1244,11 +1268,12 @@ class PurchaseNcBO extends REST_Controller
 						$DetalleItemNoInventariable->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 						$DetalleItemNoInventariable->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 						$DetalleItemNoInventariable->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-						$DetalleItemNoInventariable->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+						$DetalleItemNoInventariable->nc1_price = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['nc1_price'],$detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+						// $DetalleItemNoInventariable->nc1_price = is_numeric( $detail['nc1_price'] ) ? ( $detail['nc1_price'] - $descUnit ) : 0;
 						$DetalleItemNoInventariable->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
-						$DetalleItemNoInventariable->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $CANTUOMPURCHASE) : 0;
+						$DetalleItemNoInventariable->nc1_quantity = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 						$DetalleItemNoInventariable->em1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
-						$DetalleItemNoInventariable->cantidad = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity']  : 0;
+						$DetalleItemNoInventariable->cantidad = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 					}
 				} else {
 
@@ -1260,12 +1285,13 @@ class PurchaseNcBO extends REST_Controller
 						$DetalleCostoCosto->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 						$DetalleCostoCosto->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 						$DetalleCostoCosto->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-						$DetalleCostoCosto->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+						$DetalleCostoCosto->nc1_price = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['nc1_price'],$detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+						// $DetalleCostoCosto->nc1_price = is_numeric( $detail['nc1_price'] ) ? ( $detail['nc1_price'] - $descUnit ) : 0;
 						$DetalleCostoCosto->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
-						$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $CANTUOMPURCHASE) : 0;
+						$DetalleCostoCosto->nc1_quantity = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 						$DetalleCostoCosto->em1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
 						$DetalleCostoCosto->ac1_inventory = $ManejaInvetario;
-						$DetalleCostoCosto->cantidad = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity']  : 0;
+						$DetalleCostoCosto->cantidad = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 					} else {
 						$DetalleItemNoInventariable->ac1_account =  is_numeric($detail['nc1_acctcode']) ? $detail['nc1_acctcode'] : 0;
 						$DetalleItemNoInventariable->ac1_prc_code = isset($detail['nc1_costcode']) ? $detail['nc1_costcode'] : NULL;
@@ -1274,11 +1300,12 @@ class PurchaseNcBO extends REST_Controller
 						$DetalleItemNoInventariable->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 						$DetalleItemNoInventariable->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 						$DetalleItemNoInventariable->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-						$DetalleItemNoInventariable->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+						$DetalleItemNoInventariable->nc1_price = (( $this->costobo->validateCost( $ManejaTasa,$MontoTasa,$detail['nc1_price'],$detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) / $CANTUOMPURCHASE ) * $CANTUOMSALE );
+						// $DetalleItemNoInventariable->nc1_price = is_numeric( $detail['nc1_price'] ) ? ( $detail['nc1_price'] - $descUnit ) : 0;
 						$DetalleItemNoInventariable->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
-						$DetalleItemNoInventariable->nc1_quantity = is_numeric($detail['nc1_quantity']) ? ($detail['nc1_quantity'] * $CANTUOMPURCHASE) : 0;
+						$DetalleItemNoInventariable->nc1_quantity = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 						$DetalleItemNoInventariable->em1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
-						$DetalleItemNoInventariable->cantidad = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity']  : 0;
+						$DetalleItemNoInventariable->cantidad = $this->generic->getCantInv($detail['nc1_quantity'], $CANTUOMPURCHASE, $CANTUOMSALE);
 					}
 				}
 
@@ -1292,7 +1319,7 @@ class PurchaseNcBO extends REST_Controller
 				$DetalleAsientoIva->codigoCuenta = $codigoCuenta;
 
 				$llave = $DetalleAsientoIngreso->ac1_uncode . $DetalleAsientoIngreso->ac1_prc_code . $DetalleAsientoIngreso->ac1_prj_code . $DetalleAsientoIngreso->ac1_account;
-				$llaveIva = $DetalleAsientoIva->nc1_vat;
+				$llaveIva = $DetalleAsientoIva->nc1_cuentaIva;
 
 
 				if ($exc_inv == 1) {
@@ -1502,13 +1529,21 @@ class PurchaseNcBO extends REST_Controller
 				$LineTotal = 0;
 				$Vat = 0;
 
+				$prc_code = '';
+				$uncode   = '';
+				$prj_code = '';
+
 				foreach ($posicion as $key => $value) {
 					$granTotalIva = $granTotalIva + $value->nc1_vatsum;
 					$Vat = $value->nc1_vat;
-					// if( $Vat > 0 ){
+				
 					$LineTotal = ($LineTotal + $value->nc1_linetotal);
-					// }
+			
 					$CodigoImp = $value->codimp;
+
+					$prc_code = $value->ac1_prc_code;
+					$uncode   = $value->ac1_uncode;
+					$prj_code = $value->ac1_prj_code;
 				}
 
 				// EN BASE A FACTOR DE CONVERSION CASO BOLIVIA
@@ -1535,7 +1570,32 @@ class PurchaseNcBO extends REST_Controller
 
 				$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 				$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($granTotalIva, $DECI_MALES), $value->nc1_cuentaIva, 2, $Data['cnc_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
 
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				$BUDGET = $this->account->validateBudgetAmount( $value->nc1_cuentaIva, $Data['cnc_docdate'], $prc_code, $uncode, $prj_code, round($granTotalIva, $DECI_MALES), 2, $Data['business'] );
+				if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BUDGET,
+						'mensaje' => $BUDGET['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1559,13 +1619,13 @@ class PurchaseNcBO extends REST_Controller
 					':ac1_ref1' => "",
 					':ac1_ref2' => "",
 					':ac1_ref3' => "",
-					':ac1_prc_code' => NULL,
-					':ac1_uncode' => NULL,
-					':ac1_prj_code' => NULL,
+					':ac1_prc_code' => $prc_code,
+					':ac1_uncode' => $uncode,
+					':ac1_prj_code' => $prj_code,
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -1618,13 +1678,21 @@ class PurchaseNcBO extends REST_Controller
 					$MontoSysCR = 0;
 					$sinDatos = 0;
 
+					$prc_code = '';
+					$uncode   = '';
+					$prj_code = '';
+
 					foreach ($posicion as $key => $value) {
 
 						if ($value->ac1_inventory == 1 || $value->ac1_inventory  == '1') {
 							$sinDatos++;
 							$cuentaInventario = $value->ac1_account;
-							$grantotalCostoInventario = ($grantotalCostoInventario + ($value->nc1_price * $value->cantidad) );
+							$grantotalCostoInventario = ($grantotalCostoInventario + ( ( $value->nc1_price * $value->cantidad ) ) );
 							$grantotalCostoInventario = $grantotalCostoInventario + $value->descuento;
+
+							$prc_code = $value->ac1_prc_code;
+							$uncode   = $value->ac1_uncode;
+							$prj_code = $value->ac1_prj_code;
 						}
 					}
 
@@ -1647,6 +1715,32 @@ class PurchaseNcBO extends REST_Controller
 					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 					$AC1LINE = $AC1LINE + 1;
+					// SE AGREGA AL BALANCE
+					$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaInventario, 2, $Data['cnc_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					$BUDGET = $this->account->validateBudgetAmount( $cuentaInventario, $Data['cnc_docdate'], $prc_code, $uncode, $prj_code, round($cdito, $DECI_MALES), 2, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+	
+						return $this->response($respuesta);
+					}
+					//
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 						':ac1_trans_id' => $resInsertAsiento,
@@ -1670,13 +1764,13 @@ class PurchaseNcBO extends REST_Controller
 						':ac1_ref1' => "",
 						':ac1_ref2' => "",
 						':ac1_ref3' => "",
-						':ac1_prc_code' => NULL,
-						':ac1_uncode' => NULL,
-						':ac1_prj_code' => NULL,
+						':ac1_prc_code' => $prc_code,
+						':ac1_uncode' => $uncode ,
+						':ac1_prj_code' => $prj_code,
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -1730,13 +1824,22 @@ class PurchaseNcBO extends REST_Controller
 					$MontoSysCR = 0;
 					$sinDatos = 0;
 
+					$prc_code = '';
+					$uncode   = '';
+					$prj_code = '';
+
 					foreach ($posicion as $key => $value) {
 
 						if ($value->ac1_inventory == 1 || $value->ac1_inventory  == '1') {
 							$sinDatos++;
 							$cuentaInventario = $value->ac1_account;
-							$grantotalCostoInventario = ($grantotalCostoInventario + ($value->nc1_price * $value->cantidad) );
+							$grantotalCostoInventario = ($grantotalCostoInventario + ( ( $value->nc1_price * $value->cantidad ) ) );
 							$grantotalCostoInventario = $grantotalCostoInventario + $value->descuento;
+
+
+							$prc_code = $value->ac1_prc_code;
+							$uncode   = $value->ac1_uncode;
+							$prj_code = $value->ac1_prj_code;
 
 						}
 					}
@@ -1758,6 +1861,32 @@ class PurchaseNcBO extends REST_Controller
 					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 					$AC1LINE = $AC1LINE + 1;
+					// SE AGREGA AL BALANCE
+					$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaInventario, 2, $Data['cnc_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					$BUDGET = $this->account->validateBudgetAmount( $cuentaInventario, $Data['cnc_docdate'], $prc_code, $uncode, $prj_code, round($cdito, $DECI_MALES), 2, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+	
+						return $this->response($respuesta);
+					}
+					//
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 						':ac1_trans_id' => $resInsertAsiento,
@@ -1781,13 +1910,13 @@ class PurchaseNcBO extends REST_Controller
 						':ac1_ref1' => "",
 						':ac1_ref2' => "",
 						':ac1_ref3' => "",
-						':ac1_prc_code' => NULL,
-						':ac1_uncode' => NULL,
-						':ac1_prj_code' => NULL,
+						':ac1_prc_code' => $prc_code,
+						':ac1_uncode' => $uncode,
+						':ac1_prj_code' => $prj_code,
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -1838,14 +1967,21 @@ class PurchaseNcBO extends REST_Controller
 				$MontoSysCR = 0;
 				$sinDatos = 0;
 
+				$prc_code = '';
+				$uncode   = '';
+				$prj_code = '';
+
 				foreach ($posicion as $key => $value) {
 
 
 					$sinDatos++;
 					$CuentaItemNoInventariable = $value->ac1_account;
-					
-					$grantotalItemNoInventariable = ($grantotalItemNoInventariable + ($value->nc1_price * $value->cantidad));
+					$grantotalItemNoInventariable = ($grantotalItemNoInventariable + ( ( $value->nc1_price * $value->cantidad ) ) );
 					$grantotalItemNoInventariable = $grantotalItemNoInventariable + $value->descuento;
+
+					$prc_code = $value->ac1_prc_code;
+					$uncode   = $value->ac1_uncode;
+					$prj_code = $value->ac1_prj_code;
 				}
 
 
@@ -1867,6 +2003,32 @@ class PurchaseNcBO extends REST_Controller
 				$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 				$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 				$AC1LINE = $AC1LINE + 1;
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $CuentaItemNoInventariable, 2, $Data['cnc_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				$BUDGET = $this->account->validateBudgetAmount( $CuentaItemNoInventariable, $Data['cnc_docdate'], $prc_code, $uncode, $prj_code, round($cdito, $DECI_MALES), 2, $Data['business'] );
+				if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BUDGET,
+						'mensaje' => $BUDGET['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -1890,13 +2052,13 @@ class PurchaseNcBO extends REST_Controller
 					':ac1_ref1' => "",
 					':ac1_ref2' => "",
 					':ac1_ref3' => "",
-					':ac1_prc_code' => NULL,
-					':ac1_uncode' => NULL,
-					':ac1_prj_code' => NULL,
+					':ac1_prc_code' => $prc_code,
+					':ac1_uncode' => $uncode,
+					':ac1_prj_code' => $prj_code,
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -1968,6 +2130,10 @@ class PurchaseNcBO extends REST_Controller
 					$MontoSysDB = 0;
 					$MontoSysCR = 0;
 					$cuentaInventario = "";
+
+					$prc_code = '';
+					$uncode   = '';
+					$prj_code = '';
 					foreach ($posicion as $key => $value) {
 
 						if ($value->ac1_inventory == 1 || $value->ac1_inventory  == '1') {
@@ -1979,8 +2145,12 @@ class PurchaseNcBO extends REST_Controller
 							} else {
 								$cuentaInventario = $rescuentainventario[0]['pge_bridge_inv_purch'];
 							}
-							$grantotalCostoInventario = ($grantotalCostoInventario + ($value->nc1_price * $value->cantidad) );
+							$grantotalCostoInventario = ($grantotalCostoInventario + ( ( $value->nc1_price * $value->cantidad ) ) );
 							$grantotalCostoInventario = $grantotalCostoInventario + $value->descuento;
+
+							$prc_code = $value->ac1_prc_code;
+							$uncode   = $value->ac1_uncode;
+							$prj_code = $value->ac1_prj_code;
 
 						}
 					}
@@ -2005,6 +2175,32 @@ class PurchaseNcBO extends REST_Controller
 						$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 						$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 						$AC1LINE = $AC1LINE + 1;
+						// SE AGREGA AL BALANCE
+						$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaInventario, 2, $Data['cnc_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+
+							return $this->response($respuesta);
+						}
+						$BUDGET = $this->account->validateBudgetAmount( $cuentaInventario, $Data['cnc_docdate'], $prc_code, $uncode, $prj_code, round($cdito, $DECI_MALES), 2, $Data['business'] );
+						if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+							$this->pedeo->trans_rollback();
+		
+							$respuesta = array(
+								'error' => true,
+								'data' => $BUDGET,
+								'mensaje' => $BUDGET['mensaje']
+							);
+		
+							return $this->response($respuesta);
+						}
+						//
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -2028,13 +2224,13 @@ class PurchaseNcBO extends REST_Controller
 							':ac1_ref1' => "",
 							':ac1_ref2' => "",
 							':ac1_ref3' => "",
-							':ac1_prc_code' => $value->ac1_prc_code,
-							':ac1_uncode' => $value->ac1_uncode,
-							':ac1_prj_code' => $value->ac1_prj_code,
+							':ac1_prc_code' => $prc_code,
+							':ac1_uncode' => $uncode,
+							':ac1_prj_code' => $prj_code,
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -2117,14 +2313,43 @@ class PurchaseNcBO extends REST_Controller
 
 				$AC1LINE = $AC1LINE + 1;
 
-
+				$refFiscal = "";
 				if ($Data['cnc_basetype'] == 15) {
 					$TotalDoc2 = $TotalDoc;
+					$purchase = $this->pedeo->queryTable("SELECT cfc_tax_control_num FROM dcfc where cfc_docentry = :cfc_docentry and cfc_doctype = :cfc_doctype", array(":cfc_docentry" => $Data['cnc_baseentry'], ":cfc_doctype" => $Data['cnc_basetype']));
+					if(isset($purchase[0])){
+						$refFiscal = $purchase[0]['cfc_tax_control_num'];
+					}
 				} else {
 					$TotalDoc2 = 0;
 				}
 
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($TotalDoc, $DECI_MALES), $cuentaCxP, 1, $Data['cnc_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
 
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				$BUDGET = $this->account->validateBudgetAmount( $cuentaCxP, $Data['cnc_docdate'], '', '', '', round($TotalDoc, $DECI_MALES), 1, $Data['business'] );
+				if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BUDGET,
+						'mensaje' => $BUDGET['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -2146,7 +2371,7 @@ class PurchaseNcBO extends REST_Controller
 					':ac1_accountvs' => 1,
 					':ac1_doctype' => 18,
 					':ac1_ref1' => "",
-					':ac1_ref2' => "",
+					':ac1_ref2' => $refFiscal,
 					':ac1_ref3' => "",
 					':ac1_prc_code' => NULL,
 					':ac1_uncode' => NULL,
@@ -2154,7 +2379,7 @@ class PurchaseNcBO extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => round($TotalDoc, $DECI_MALES),
@@ -2270,6 +2495,32 @@ class PurchaseNcBO extends REST_Controller
 				$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 				$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 				$AC1LINE = $AC1LINE + 1;
+				// SE AGREGA AL BALANCE
+				$BALANCE = $this->account->addBalance($periodo['data'], round($totalRetencion, $DECI_MALES), $cuenta, 1, $Data['cnc_docdate'], $Data['business'], $Data['branch']);
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				$BUDGET = $this->account->validateBudgetAmount( $cuenta, $Data['cnc_docdate'], '', '', '', round($totalRetencion, $DECI_MALES), 1, $Data['business'] );
+				if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BUDGET,
+						'mensaje' => $BUDGET['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}
+				//
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -2299,7 +2550,7 @@ class PurchaseNcBO extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -2403,6 +2654,32 @@ class PurchaseNcBO extends REST_Controller
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 					$AC1LINE = $AC1LINE + 1;
+					// SE AGREGA AL BALANCE
+					$BALANCE = $this->account->addBalance($periodo['data'], round($totalDescuento, $DECI_MALES), $cuentadescuento, 1, $Data['cnc_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					$BUDGET = $this->account->validateBudgetAmount( $cuentadescuento, $Data['cnc_docdate'], '', '', '', round($totalDescuento, $DECI_MALES), 1, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+	
+						return $this->response($respuesta);
+					}
+					//
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 	
 						':ac1_trans_id' => $resInsertAsiento,
@@ -2432,7 +2709,7 @@ class PurchaseNcBO extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -2540,6 +2817,32 @@ class PurchaseNcBO extends REST_Controller
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
 					$AC1LINE = $AC1LINE + 1;
+					// SE AGREGA AL BALANCE
+					$BALANCE = $this->account->addBalance($periodo['data'], round($totalIvaDescuento, $DECI_MALES), $cuentaivadescuento, 1, $Data['cnc_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					$BUDGET = $this->account->validateBudgetAmount( $cuentaivadescuento, $Data['cnc_docdate'], '', '', '', round($totalIvaDescuento, $DECI_MALES), 1, $Data['business'] );
+					if (isset($BUDGET['error']) && $BUDGET['error'] == true){
+						$this->pedeo->trans_rollback();
+	
+						$respuesta = array(
+							'error' => true,
+							'data' => $BUDGET,
+							'mensaje' => $BUDGET['mensaje']
+						);
+	
+						return $this->response($respuesta);
+					}
+					//
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 	
 						':ac1_trans_id' => $resInsertAsiento,
@@ -2569,7 +2872,7 @@ class PurchaseNcBO extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -2670,7 +2973,7 @@ class PurchaseNcBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['cnc_createby']) ? $Data['cnc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -2801,6 +3104,59 @@ class PurchaseNcBO extends REST_Controller
 				));
 
 				if (is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1) {
+					// SE VALIDA QUE EL VALOR NO SEA MAYOR QUE EL DOCUMENTO
+					//  Y QUE NO ESTA POR DEBAJO DEL DOCUMENTO
+
+					$valorF = $this->pedeo->queryTable("SELECT * FROM dcfc WHERE cfc_docentry = :cfc_docentry AND cfc_doctype = :cfc_doctype", array(
+						':cfc_docentry' => $Data['cnc_baseentry'],
+						':cfc_doctype'  => $Data['cnc_basetype']
+					));
+
+					if ( isset($valorF[0]) ) {
+
+						if ( $valorF[0]['cfc_paytoday'] > $valorF[0]['cfc_doctotal'] ) {
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resUpdateFactPay,
+								'mensaje'	=> 'El monto aplicado supera el monto total de la factura ID # '.$Data['cnc_baseentry']
+							);
+
+							return $this->response($respuesta);
+
+						}
+
+
+						
+						if ( $valorF[0]['cfc_paytoday'] < 0 ) {
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resUpdateFactPay,
+								'mensaje'	=> 'No es posible bajar el valor total del documento factura ID # '.$Data['vnc_baseentry']
+							);
+
+							return $this->response($respuesta);
+
+						}
+
+					}else{
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data' => $resUpdateFactPay,
+							'mensaje'	=> 'No se pudo verificar el valor aplicado por la nota credito a la factura ID # '.$Data['cnc_baseentry']
+						);
+
+						return $this->response($respuesta);
+
+					}
 				} else {
 					$this->pedeo->trans_rollback();
 
@@ -2998,7 +3354,7 @@ class PurchaseNcBO extends REST_Controller
 			$respuesta = array(
 				'error' => false,
 				'data' => $resInsert,
-				'mensaje' => 'Nota credito registrada con exito'
+				'mensaje' => 'Nota credito #'.$DocNumVerificado.' registrada con exito'
 			);
 		} else {
 			// Se devuelven los cambios realizados en la transaccion
@@ -3203,7 +3559,9 @@ class PurchaseNcBO extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dcnc', 'cnc', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+		$sqlSelect = self::getColumn('dcnc', 'cnc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -3469,7 +3827,7 @@ class PurchaseNcBO extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentduplicate->getDuplicateDt($Data['nc1_docentry'],'dcnc','cnc1','cnc','nc1');
+			$copy = $this->documentduplicate->getDuplicateDt($Data['nc1_docentry'],'dcnc','cnc1','cnc','nc1','deducible');
 
 			if (isset($copy[0])) {
 

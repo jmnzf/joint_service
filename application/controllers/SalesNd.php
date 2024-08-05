@@ -27,6 +27,7 @@ class SalesNd extends REST_Controller
 		$this->load->library('DocumentNumbering');
 		$this->load->library('Tasa');
 		$this->load->library('DocumentDuplicate');
+		$this->load->library('account');
 	}
 
 	//CREAR NUEVA Nota debito de clientes
@@ -61,22 +62,27 @@ class SalesNd extends REST_Controller
 			
 			$DetalleAsientoIngreso = new stdClass(); // Cada objeto de las linea del detalle consolidado
 			$DetalleAsientoIva = new stdClass();
+			$DetalleAsientoImpMulti = new stdClass();
 			$DetalleCostoInventario = new stdClass();
 			$DetalleCostoCosto = new stdClass();
 			$DetalleConsolidadoIngreso = []; // Array Final con los datos del asiento solo ingreso
 			$DetalleConsolidadoCostoInventario = [];
 			$DetalleConsolidadoCostoCosto = [];
 			$DetalleConsolidadoIva = []; // Array Final con los datos del asiento segun el iva
+			$DetalleConsolidadoImpMulti = [];
 			$inArrayIngreso = array(); // Array para mantener el indice de las llaves para ingreso
 			$inArrayIva = array(); // Array para mantener el indice de las llaves para iva
+			$inArrayImpMulti = array();
 			$inArrayCostoInventario = array();
 			$inArrayCostoCosto = array();
 			$llave = ""; // la comnbinacion entre la cuenta contable,proyecto, unidad de negocio y centro de costo
 			$llaveIva = ""; //segun tipo de iva
+			$llaveImpMulti = "";
 			$llaveCostoInventario = "";
 			$llaveCostoCosto = "";
 			$posicion = 0; // contiene la posicion con que se creara en el array DetalleConsolidado
 			$posicionIva = 0;
+			$posicionImpMulti = 0;
 			$posicionCostoInventario = 0;
 			$posicionCostoCosto = 0;
 			$codigoCuenta = ""; //para saber la naturaleza
@@ -202,15 +208,25 @@ class SalesNd extends REST_Controller
 				return;
 			}
 			//FIN DE PROCESO DE TASA
-
+			if($Data['vnd_duedate'] < $Data['vnd_docdate']){
+				$respuesta = array(
+					'error' => true,
+					'data' => [],
+					'mensaje' => 'La fecha de vencimiento ('.$Data['vnd_duedate'].') no puede ser inferior a la fecha del documento ('.$Data['vnd_docdate'].')'
+				);
+	
+				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+	
+				return;
+			}
 
 			$sqlInsert = "INSERT INTO dvnd(vnd_series, vnd_docnum, vnd_docdate, vnd_duedate, vnd_duedev, vnd_pricelist, vnd_cardcode,
 					                      vnd_cardname, vnd_currency, vnd_contacid, vnd_slpcode, vnd_empid, vnd_comment, vnd_doctotal, vnd_baseamnt, vnd_taxtotal,
 					                      vnd_discprofit, vnd_discount, vnd_createat, vnd_baseentry, vnd_basetype, vnd_doctype, vnd_idadd, vnd_adress, vnd_paytype,
-					                      vnd_createby,business,branch,vnd_internal_comments)VALUES(:vnd_series, :vnd_docnum, :vnd_docdate, :vnd_duedate, :vnd_duedev, :vnd_pricelist, :vnd_cardcode, :vnd_cardname,
+					                      vnd_createby,business,branch,vnd_internal_comments,vnd_taxtotal_ad)VALUES(:vnd_series, :vnd_docnum, :vnd_docdate, :vnd_duedate, :vnd_duedev, :vnd_pricelist, :vnd_cardcode, :vnd_cardname,
 					                      :vnd_currency, :vnd_contacid, :vnd_slpcode, :vnd_empid, :vnd_comment, :vnd_doctotal, :vnd_baseamnt, :vnd_taxtotal, :vnd_discprofit, :vnd_discount,
 					                      :vnd_createat, :vnd_baseentry, :vnd_basetype, :vnd_doctype, :vnd_idadd, :vnd_adress, :vnd_paytype,:vnd_createby,
-										  :business,:branch,:vnd_internal_comments)";
+										  :business,:branch,:vnd_internal_comments,:vnd_taxtotal_ad)";
 
 
 			// Se Inicia la transaccion,
@@ -252,7 +268,8 @@ class SalesNd extends REST_Controller
 				':vnd_createby' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL,
 				':business' => isset($Data['business']) ? $Data['business'] : NULL,
 				':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
-				':vnd_internal_comments' => isset($Data['vnd_internal_comments']) ? $Data['vnd_internal_comments'] : NULL
+				':vnd_internal_comments' => isset($Data['vnd_internal_comments']) ? $Data['vnd_internal_comments'] : NULL,
+				':vnd_taxtotal_ad' => is_numeric($Data['vnd_taxtotal_ad']) ? $Data['vnd_taxtotal_ad'] : 0
 			));
 
 			if (is_numeric($resInsert) && $resInsert > 0) {
@@ -260,7 +277,7 @@ class SalesNd extends REST_Controller
 				// Se actualiza la serie de la numeracion del documento
 
 				$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
-																								 WHERE pgs_id = :pgs_id";
+										WHERE pgs_id = :pgs_id";
 				$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
 					':pgs_nextnum' => $DocNumVerificado,
 					':pgs_id'      => $Data['vnd_series']
@@ -517,10 +534,12 @@ class SalesNd extends REST_Controller
 
 					$sqlInsertDetail = "INSERT INTO vnd1(nd1_docentry, nd1_itemcode, nd1_itemname, nd1_quantity, nd1_uom, nd1_whscode,
 										nd1_price, nd1_vat, nd1_vatsum, nd1_discount, nd1_linetotal, nd1_costcode, nd1_ubusiness, nd1_project,
-										nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory,nd1_ubication,nd1_baseline,ote_code,detalle_modular)
+										nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory,nd1_ubication,nd1_baseline,ote_code,detalle_modular,
+										detalle_anuncio,imponible,nd1_clean_quantity,nd1_acciva,nd1_codimp,nd1_vat_ad,nd1_vatsum_ad,nd1_accimp_ad,nd1_codimp_ad)
 										VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,:nd1_uom, :nd1_whscode,:nd1_price, 
 										:nd1_vat, :nd1_vatsum, :nd1_discount, :nd1_linetotal, :nd1_costcode, :nd1_ubusiness, :nd1_project,
-										:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory,:nd1_ubication,:nd1_baseline,:ote_code,:detalle_modular)";
+										:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory,:nd1_ubication,:nd1_baseline,:ote_code,:detalle_modular,:detalle_anuncio,:imponible,
+										:nd1_clean_quantity,:nd1_acciva,:nd1_codimp,:nd1_vat_ad,:nd1_vatsum_ad,:nd1_accimp_ad,:nd1_codimp_ad)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':nd1_docentry' => $resInsert,
@@ -545,7 +564,18 @@ class SalesNd extends REST_Controller
 						':nd1_ubication' => is_numeric($detail['nd1_ubication']) ? $detail['nd1_ubication'] : NULL,
 						':nd1_baseline' => isset($detail['nd1_baseline']) && is_numeric($detail['nd1_baseline']) ? $detail['nd1_baseline'] : 0,
 						':ote_code' => is_numeric($detail['ote_code']) ? $detail['ote_code'] : NULL,
-						':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL
+						':detalle_modular' => isset($detail['detalle_modular']) && is_string($detail['detalle_modular']) ? json_encode(json_decode($detail['detalle_modular'],true)) : NULL,
+						':detalle_anuncio' => isset($detail['detalle_anuncio']) && is_string($detail['detalle_anuncio']) ? json_encode(json_decode($detail['detalle_anuncio'],true)) : NULL,
+						':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL,
+						':nd1_clean_quantity'  => isset($detail['nd1_clean_quantity']) && is_numeric($detail['nd1_clean_quantity']) ? $detail['nd1_clean_quantity'] : NULL,
+						
+						':nd1_acciva' => is_numeric($detail['nd1_acciva']) ? $detail['nd1_acciva'] : 0,
+						':nd1_codimp'  => isset($detail['nd1_codimp']) ? $detail['nd1_codimp'] : NULL,
+					
+						':nd1_vat_ad' => is_numeric($detail['nd1_vat']) ? $detail['nd1_vat'] : 0,
+						':nd1_vatsum_ad' => is_numeric($detail['nd1_vatsum']) ? $detail['nd1_vatsum'] : 0,
+						':nd1_accimp_ad' => is_numeric($detail['nd1_acciva']) ? $detail['nd1_acciva'] : 0,
+						':nd1_codimp_ad'  => isset($detail['nd1_codimp']) ? $detail['nd1_codimp'] : NULL,
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -709,7 +739,7 @@ class SalesNd extends REST_Controller
 						$DetalleAsientoIva = new stdClass();
 						$DetalleCostoInventario = new stdClass();
 						$DetalleCostoCosto = new stdClass();
-
+						$DetalleAsientoImpMulti = new stdClass();
 
 						$DetalleAsientoIngreso->ac1_account = is_numeric($detail['nd1_acctcode']) ? $detail['nd1_acctcode'] : 0;
 						$DetalleAsientoIngreso->ac1_prc_code = isset($detail['nd1_costcode']) ? $detail['nd1_costcode'] : NULL;
@@ -741,6 +771,25 @@ class SalesNd extends REST_Controller
 						$DetalleAsientoIva->nd1_fixrate = is_numeric($detail['nd1_fixrate']) ? $detail['nd1_fixrate'] : 0;
 						$DetalleAsientoIva->codimp = isset($detail['nd1_codimp']) ? $detail['nd1_codimp'] : NULL;
 
+						if ( is_numeric($detail['nd1_vatsum_ad']) && $detail['nd1_vatsum_ad'] > 0 ) {
+							$DetalleAsientoImpMulti->ac1_account = is_numeric($detail['nd1_accimp_ad']) ? $detail['nd1_accimp_ad'] : 0;
+							$DetalleAsientoImpMulti->ac1_prc_code = isset($detail['nd1_costcode']) ? $detail['nd1_costcode'] : NULL;
+							$DetalleAsientoImpMulti->ac1_uncode = isset($detail['nd1_ubusiness']) ? $detail['nd1_ubusiness'] : NULL;
+							$DetalleAsientoImpMulti->ac1_prj_code = isset($detail['nd1_project']) ? $detail['nd1_project'] : NULL;
+							$DetalleAsientoImpMulti->nd1_linetotal = is_numeric($detail['nd1_linetotal']) ? $detail['nd1_linetotal'] : 0;
+							$DetalleAsientoImpMulti->nd1_vat = is_numeric($detail['nd1_vat_ad']) ? $detail['nd1_vat_ad'] : 0;
+							$DetalleAsientoImpMulti->nd1_vatsum = is_numeric($detail['nd1_vatsum_ad']) ? $detail['nd1_vatsum_ad'] : 0;
+							$DetalleAsientoImpMulti->nd1_price = is_numeric($detail['nd1_price']) ? $detail['nd1_price'] : 0;
+							$DetalleAsientoImpMulti->nd1_itemcode = isset($detail['nd1_itemcode']) ? $detail['nd1_itemcode'] : NULL;
+							$DetalleAsientoImpMulti->nd1_quantity = is_numeric($detail['nd1_quantity']) ? $detail['nd1_quantity'] : 0;
+							$DetalleAsientoImpMulti->nd1_cuentaIva = is_numeric($detail['nd1_accimp_ad']) ? $detail['nd1_accimp_ad'] : NULL;
+							$DetalleAsientoImpMulti->nd1_whscode = isset($detail['nd1_whscode']) ? $detail['nd1_whscode'] : NULL;
+							$DetalleAsientoImpMulti->nd1_fixrate = is_numeric($detail['nd1_fixrate']) ? $detail['nd1_fixrate'] : 0;
+							$DetalleAsientoImpMulti->codimp = isset($detail['nd1_codimp_ad']) ? $detail['nd1_codimp_ad'] : NULL;
+	
+						}
+					
+
 						$codigoCuenta = substr($DetalleAsientoIngreso->ac1_account, 0, 1);
 
 						$DetalleAsientoIngreso->codigoCuenta = $codigoCuenta;
@@ -750,9 +799,40 @@ class SalesNd extends REST_Controller
 
 
 						$llave = $DetalleAsientoIngreso->ac1_uncode . $DetalleAsientoIngreso->ac1_prc_code . $DetalleAsientoIngreso->ac1_prj_code . $DetalleAsientoIngreso->ac1_account;
-						$llaveIva = $DetalleAsientoIva->nd1_vat;
+						$llaveIva = $DetalleAsientoIva->nd1_cuentaIva;
 						// $llaveCostoInventario = $DetalleCostoInventario->ac1_account;
 						// $llaveCostoCosto = $DetalleCostoCosto->ac1_account;
+
+						// IMPUESTO MULTIPLE
+						if ( is_numeric($detail['nd1_vatsum_ad']) && $detail['nd1_vatsum_ad'] > 0 ) {
+
+							$llaveImpMulti = $DetalleAsientoImpMulti->nd1_cuentaIva;
+						}
+
+						// IMPUESTO MULTIPLE
+						if ( is_numeric($detail['nd1_vatsum_ad']) && $detail['nd1_vatsum_ad'] > 0 ) {
+
+							if (in_array($llaveImpMulti, $inArrayImpMulti)) {
+
+								$posicionImpMulti = $this->buscarPosicion($llaveImpMulti, $inArrayImpMulti);
+							} else {
+			
+								array_push($inArrayImpMulti, $llaveImpMulti);
+								$posicionImpMulti = $this->buscarPosicion($llaveImpMulti, $inArrayImpMulti);
+							}
+
+
+							if (isset($DetalleConsolidadoImpMulti[$posicionImpMulti])) {
+
+								if (!is_array($DetalleConsolidadoImpMulti[$posicionImpMulti])) {
+									$DetalleConsolidadoImpMulti[$posicionImpMulti] = array();
+								}
+							} else {
+								$DetalleConsolidadoImpMulti[$posicionImpMulti] = array();
+							}
+
+							array_push($DetalleConsolidadoImpMulti[$posicionImpMulti], $DetalleAsientoImpMulti);
+						}
 
 
 						if (in_array($llave, $inArrayIngreso)) {
@@ -924,6 +1004,27 @@ class SalesNd extends REST_Controller
 					$TOTALCXCSYS = ($TOTALCXCSYS + ($MontoSysDB + $MontoSysCR));
 
 
+					// SE AGREGA AL BALANCE
+					if ( $debito > 0 ){
+						$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['vnd_docdate'], $Data['business'], $Data['branch']);
+					}else{
+						$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['vnd_docdate'], $Data['business'], $Data['branch']);
+					}
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					//
+
+
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 						':ac1_trans_id' => $resInsertAsiento,
@@ -953,7 +1054,7 @@ class SalesNd extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => round($debito, $DECI_MALES),
@@ -1047,6 +1148,24 @@ class SalesNd extends REST_Controller
 					$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva);
 					$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysDB);
 
+					// SE AGREGA AL BALANCE
+					
+					$BALANCE = $this->account->addBalance($periodo['data'], round($granTotalIva, $DECI_MALES), $value->nd1_cuentaIva, 2, $Data['vnd_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+					//
+					
+
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 						':ac1_trans_id' => $resInsertAsiento,
@@ -1076,7 +1195,149 @@ class SalesNd extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
+						':ac1_close' => 0,
+						':ac1_cord' => 0,
+						':ac1_ven_debit' => 0,
+						':ac1_ven_credit' => round($granTotalIva, $DECI_MALES),
+						':ac1_fiscal_acct' => 0,
+						':ac1_taxid' => $CodigoImp,
+						':ac1_isrti' => $Vat,
+						':ac1_basert' => 0,
+						':ac1_mmcode' => 0,
+						':ac1_legal_num' => isset($Data['vnd_cardcode']) ? $Data['vnd_cardcode'] : NULL,
+						':ac1_codref' => 1,
+						':ac1_line'   => $AC1LINE,
+						':ac1_base_tax' => round($LineTotal, $DECI_MALES),
+						':business' => $Data['business'],
+						':branch' => $Data['branch'],
+						':ac1_codret' => NULL
+					));
+
+
+
+					if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
+						// Se verifica que el detalle no de error insertando //
+					} else {
+
+						// si falla algun insert del detalle de la Nota debito de clientes se devuelven los cambios realizados por la transaccion,
+						// se retorna el error y se detiene la ejecucion del codigo restante.
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error'   => true,
+							'data'	  => $resDetalleAsiento,
+							'mensaje'	=> 'No se pudo registrar la Nota debito de clientes'
+						);
+
+						$this->response($respuesta);
+
+						return;
+					}
+				}
+
+				//FIN Procedimiento para llenar Impuestos
+
+				//Procedimiento para llenar Impuestos
+
+				$granTotalIva = 0;
+
+				foreach ($DetalleConsolidadoImpMulti as $key => $posicion) {
+					$granTotalIva = 0;
+					$granTotalIva2 = 0;
+					$granTotalIvaOriginal = 0;
+					$MontoSysCR = 0;
+					$CodigoImp = 0;
+					$LineTotal = 0;
+					$Vat = 0;
+
+					foreach ($posicion as $key => $value) {
+						$granTotalIva = round($granTotalIva + $value->nd1_vatsum, $DECI_MALES);
+
+						$v1 = ($value->nd1_linetotal + ($value->nd1_quantity * $value->nd1_fixrate));
+						$granTotalIva2 = round($granTotalIva2 + ($v1 * ($value->nd1_vat / 100)), $DECI_MALES);
+
+						$LineTotal = ($LineTotal + $value->nd1_linetotal);
+						$CodigoImp = $value->codimp;
+						$Vat = $value->nd1_vat;
+					}
+
+					$granTotalIvaOriginal = $granTotalIva;
+
+
+
+					if (trim($Data['vnd_currency']) != $MONEDALOCAL) {
+						$granTotalIva = ($granTotalIva * $TasaDocLoc);
+						$LineTotal = ($LineTotal * $TasaDocLoc);
+					}
+
+
+
+					$TIva = $granTotalIva2;
+
+					if (trim($Data['vnd_currency']) != $MONEDASYS) {
+						// $TIva = (($TIva * $TasaFija) / 100) + $TIva;
+						$MontoSysDB = ($TIva / $TasaLocSys);
+					} else {
+						$MontoSysDB = $granTotalIvaOriginal;
+					}
+
+
+					$SumaDebitosSYS = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
+					$AC1LINE = $AC1LINE + 1;
+
+
+					$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva);
+					$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysDB);
+
+					// SE AGREGA AL BALANCE
+					
+					$BALANCE = $this->account->addBalance($periodo['data'], round($granTotalIva, $DECI_MALES), $value->nd1_cuentaIva, 2, $Data['vnd_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+					//
+					
+
+					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
+
+						':ac1_trans_id' => $resInsertAsiento,
+						':ac1_account' => $value->nd1_cuentaIva,
+						':ac1_debit' => 0,
+						':ac1_credit' => round($granTotalIva, $DECI_MALES),
+						':ac1_debit_sys' => 0,
+						':ac1_credit_sys' => round($MontoSysDB, $DECI_MALES),
+						':ac1_currex' => 0,
+						':ac1_doc_date' => $this->validateDate($Data['vnd_docdate']) ? $Data['vnd_docdate'] : NULL,
+						':ac1_doc_duedate' => $this->validateDate($Data['vnd_duedate']) ? $Data['vnd_duedate'] : NULL,
+						':ac1_debit_import' => 0,
+						':ac1_credit_import' => 0,
+						':ac1_debit_importsys' => 0,
+						':ac1_credit_importsys' => 0,
+						':ac1_font_key' => $resInsert,
+						':ac1_font_line' => 1,
+						':ac1_font_type' => is_numeric($Data['vnd_doctype']) ? $Data['vnd_doctype'] : 0,
+						':ac1_accountvs' => 1,
+						':ac1_doctype' => 18,
+						':ac1_ref1' => "",
+						':ac1_ref2' => "",
+						':ac1_ref3' => "",
+						':ac1_prc_code' => NULL,
+						':ac1_uncode' => NULL,
+						':ac1_prj_code' => NULL,
+						':ac1_rescon_date' => NULL,
+						':ac1_recon_total' => 0,
+						':ac1_made_user' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -1266,6 +1527,26 @@ class SalesNd extends REST_Controller
 					}
 
 
+					// SE AGREGA AL BALANCE
+					if ( $debitoo > 0 ){
+						$BALANCE = $this->account->addBalance($periodo['data'], round($debitoo, $DECI_MALES), $cuentaCxC, 1, $Data['vnd_docdate'], $Data['business'], $Data['branch']);
+					}else{
+						$BALANCE = $this->account->addBalance($periodo['data'], round($creditoo, $DECI_MALES), $cuentaCxC, 2, $Data['vnd_docdate'], $Data['business'], $Data['branch']);
+					}
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+					//
+
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 						':ac1_trans_id' => $resInsertAsiento,
@@ -1295,7 +1576,7 @@ class SalesNd extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => round($debitoo, $DECI_MALES),
@@ -1412,6 +1693,24 @@ class SalesNd extends REST_Controller
 					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
+					// SE AGREGA AL BALANCE
+			
+					$BALANCE = $this->account->addBalance($periodo['data'], round($totalRetencion, $DECI_MALES), $cuenta, 1, $Data['vnd_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+
+					//
+
 					$AC1LINE = $AC1LINE + 1;
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1442,7 +1741,7 @@ class SalesNd extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['vnd_createby']) ? $Data['vnd_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -1522,7 +1821,7 @@ class SalesNd extends REST_Controller
 				$respuesta = array(
 					'error' => false,
 					'data' => $resInsert,
-					'mensaje' => 'Nota debito de clientes registrada con exito'
+					'mensaje' => 'Nota debito de clientes #'.$DocNumVerificado.' registrada con exito'
 				);
 			} else {
 				// Se devuelven los cambios realizados en la transaccion
@@ -1652,10 +1951,10 @@ class SalesNd extends REST_Controller
 			foreach ($ContenidoDetalle as $key => $detail) {
 
 				$sqlInsertDetail = "INSERT INTO vnd1(nd1_docentry, nd1_itemcode, nd1_itemname, nd1_quantity, nd1_uom, nd1_whscode,
-																			nd1_price, nd1_vat, nd1_vatsum, nd1_discount, nd1_linetotal, nd1_costcode, nd1_ubusiness, nd1_project,
-																			nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory, nd1_acciva,nd1_ubication)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
-																			:nd1_uom, :nd1_whscode,:nd1_price, :nd1_vat, :nd1_vatsum, :nd1_discount, :nd1_linetotal, :nd1_costcode, :nd1_ubusiness, :nd1_project,
-																			:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory, :nd1_acciva,:nd1_ubication)";
+							nd1_price, nd1_vat, nd1_vatsum, nd1_discount, nd1_linetotal, nd1_costcode, nd1_ubusiness, nd1_project,
+							nd1_acctcode, nd1_basetype, nd1_doctype, nd1_avprice, nd1_inventory, nd1_acciva,nd1_ubication,nd1_clean_quantity)VALUES(:nd1_docentry, :nd1_itemcode, :nd1_itemname, :nd1_quantity,
+							:nd1_uom, :nd1_whscode,:nd1_price, :nd1_vat, :nd1_vatsum, :nd1_discount, :nd1_linetotal, :nd1_costcode, :nd1_ubusiness, :nd1_project,
+							:nd1_acctcode, :nd1_basetype, :nd1_doctype, :nd1_avprice, :nd1_inventory, :nd1_acciva,:nd1_ubication,:nd1_clean_quantity)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':nd1_docentry' => $Data['vnd_docentry'],
@@ -1678,7 +1977,8 @@ class SalesNd extends REST_Controller
 					':nd1_avprice' => is_numeric($detail['nd1_avprice']) ? $detail['nd1_avprice'] : 0,
 					':nd1_inventory' => is_numeric($detail['nd1_inventory']) ? $detail['nd1_inventory'] : NULL,
 					':nd1_acciva' => is_numeric($detail['nd1_cuentaIva']) ? $detail['nd1_cuentaIva'] : NULL,
-					':nd1_ubication' => isset($detail['nd1_ubication']) ? $detail['nd1_ubication'] : NULL
+					':nd1_ubication' => isset($detail['nd1_ubication']) ? $detail['nd1_ubication'] : NULL,
+					':nd1_clean_quantity' => isset($detail['nd1_clean_quantity']) && is_numeric($detail['nd1_clean_quantity']) ? $detail['nd1_clean_quantity'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1744,7 +2044,9 @@ class SalesNd extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvnd', 'vnd', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+		$sqlSelect = self::getColumn('dvnd', 'vnd', $campos, '', $DECI_MALES, $Data['business'], $Data['branch']);
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 		if (isset($resSelect[0])) {
@@ -1772,7 +2074,7 @@ class SalesNd extends REST_Controller
 	{
 
 		$Data = $this->get();
-
+		$DECI_MALES =  $this->generic->getDecimals();
 		if (!isset($Data['vnd_docentry'])) {
 
 			$respuesta = array(
@@ -1786,7 +2088,9 @@ class SalesNd extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM dvnd WHERE vnd_docentry =:vnd_docentry";
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+		$sqlSelect = self::getColumn('dvnd', 'vnd', $campos, '', $DECI_MALES, $Data['business'], $Data['branch'],0,0,0," AND vnd_docentry = :vnd_docentry");
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":vnd_docentry" => $Data['vnd_docentry']));
 
@@ -2202,7 +2506,7 @@ class SalesNd extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentduplicate->getDuplicateDt($Data['nd1_docentry'],'dvnd','vnd1','vnd','nd1','detalle_modular::jsonb');
+			$copy = $this->documentduplicate->getDuplicateDt($Data['nd1_docentry'],'dvnd','vnd1','vnd','nd1','detalle_modular::jsonb,imponible,clean_quantity');
 
 			if (isset($copy[0])) {
 

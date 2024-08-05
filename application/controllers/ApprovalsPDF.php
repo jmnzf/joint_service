@@ -77,7 +77,7 @@ class ApprovalsPDF extends REST_Controller {
 	          return;
 				}
 
-				$sqlcotizacion = "SELECT
+				$sqlcotizacion = "SELECT distinct on(t2.dms_card_code)
 													t8.estado,
                           case when substring(t0.pap_cardcode,0,3) not like 'J%' then t9.mev_names else TRIM(CONCAT(T0.PAP_CARDNAME,' ',T2.DMS_CARD_LAST_NAME)) end cliente,
                           --CONCAT(T0.PAP_CARDNAME,' ',T2.DMS_CARD_LAST_NAME) Cliente,
@@ -112,8 +112,8 @@ class ApprovalsPDF extends REST_Controller {
 												FROM DPAP t0
 												INNER JOIN PAP1 T1 ON t0.PAP_docentry = t1.AP1_docentry
 												LEFT JOIN DMSN T2 ON t0.PAP_cardcode = t2.dms_card_code
-												LEFT JOIN DMSD T3 ON T0.PAP_ADRESS = CAST(T3.DMD_ID AS VARCHAR)
-												LEFT JOIN DMSC T4 ON T0.PAP_CONTACID = CAST(T4.DMC_ID AS VARCHAR)
+												LEFT JOIN DMSD T3 ON T0.PAP_ADRESS = CAST(T3.DMD_ID AS VARCHAR) AND T3.dmd_ppal = 1
+												LEFT JOIN DMSC T4 ON T0.PAP_CONTACID = CAST(T4.DMC_ID AS VARCHAR) AND T4.dmc_ppal = 1
 												LEFT JOIN DMEV T5 ON T0.PAP_SLPCODE = T5.MEV_ID
 												LEFT JOIN PGDN T6 ON T0.PAP_DOCTYPE = T6.PGS_ID_DOC_TYPE AND T0.PAP_SERIES = T6.PGS_ID
 												LEFT JOIN PGEC T7 ON T0.PAP_CURRENCY = T7.PGM_SYMBOL

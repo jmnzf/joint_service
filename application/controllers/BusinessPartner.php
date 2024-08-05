@@ -73,15 +73,42 @@ class BusinessPartner extends REST_Controller
 
     $this->pedeo->trans_begin();
 
+    // VALIDAR CODIGO POS
+    if ( isset($Data['dms_poscode']) && !empty($Data['dms_poscode']) ){
+
+      $sqlPOS = "SELECT * FROM dmsn WHERE dms_poscode =:dms_poscode AND dms_card_type =:dms_card_type";
+
+      $ressqlPOS = $this->pedeo->queryTable($sqlPOS, array(
+        ':dms_poscode' => $Data['dms_poscode'],
+        ':dms_card_type' => '1'
+      ));
+  
+      if (isset($ressqlPOS[0])){
+  
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' => 'Existe otro cliente con el codigo POS: '.$Data['dms_poscode']
+        );
+  
+        return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+      }
+      //
+    }
+    //
+
+
 
     $sqlInsert = "INSERT INTO dmsn(dms_card_code, dms_card_name, dms_card_type, dms_short_name, dms_phone1, dms_phone2,
                     dms_cel, dms_email, dms_inv_mail, dms_group_num, dms_web_site, dms_sip_code, dms_agent, dms_pay_type,
                     dms_limit_cred, dms_inter, dms_price_list, dms_acct_sn, dms_acct_asn, dms_card_last_name, dms_enabled,
-										dms_rtype,dms_classtype,dms_tax_regime, dms_reg_merc, dms_id_type,dv)
+										dms_rtype,dms_classtype,dms_tax_regime, dms_reg_merc, dms_id_type, dv, dms_poscode, dms_taxregimecode,
+                    dms_fiscalresponsabilitycode,dms_paymentmethod)
 	                  VALUES (:dms_card_code, :dms_card_name, :dms_card_type, :dms_short_name, :dms_phone1, :dms_phone2,
                     :dms_cel, :dms_email, :dms_inv_mail, :dms_group_num, :dms_web_site, :dms_sip_code, :dms_agent, :dms_pay_type,
                     :dms_limit_cred, :dms_inter, :dms_price_list, :dms_acct_sn, :dms_acct_asn, :dms_card_last_name, :dms_enabled,
-										:dms_rtype,:dms_classtype,:dms_tax_regime, :dms_reg_merc, :dms_id_type,:dv)";
+										:dms_rtype,:dms_classtype,:dms_tax_regime, :dms_reg_merc, :dms_id_type, :dv, :dms_poscode,:dms_taxregimecode,
+                    :dms_fiscalresponsabilitycode,:dms_paymentmethod)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -111,9 +138,14 @@ class BusinessPartner extends REST_Controller
       ':dms_reg_merc' => isset($Data['dms_reg_merc']) ? $Data['dms_reg_merc'] : NULL,
       ':dms_tax_regime' => isset($Data['dms_tax_regime']) ? $Data['dms_tax_regime'] : NULL,
       ':dms_id_type' => is_numeric($Data['dms_id_type']) ? $Data['dms_id_type'] : 0,
-      ':dv' => $this->dv->calcularDigitoV($Data['dms_card_code'])
+      ':dv' => $this->dv->calcularDigitoV($Data['dms_card_code']),
+      ':dms_poscode' => isset($Data['dms_poscode']) ? $Data['dms_poscode'] : NULL,
 
+      ':dms_taxregimecode' => isset($Data['dms_taxregimecode']) ? $Data['dms_taxregimecode'] : NULL,
+      ':dms_fiscalresponsabilitycode' => isset($Data['dms_fiscalresponsabilitycode']) ? $Data['dms_fiscalresponsabilitycode'] : NULL,
+      ':dms_paymentmethod' => isset($Data['dms_paymentmethod']) ? $Data['dms_paymentmethod'] : NULL
 
+      
 
     ));
 
@@ -249,13 +281,43 @@ class BusinessPartner extends REST_Controller
       return;
     }
 
+    // VALIDAR CODIGO POS
+    if ( isset($Data['dms_poscode']) && !empty($Data['dms_poscode']) ){
+
+      $sqlPOS = "SELECT * FROM dmsn WHERE dms_poscode =:dms_poscode AND dms_card_code !=:dms_card_code AND dms_card_type =:dms_card_type";
+
+      $ressqlPOS = $this->pedeo->queryTable($sqlPOS, array(
+        ':dms_poscode' => $Data['dms_poscode'],
+        ':dms_card_code' => $Data['dms_card_code'],
+        ':dms_card_type' => '1'
+      ));
+  
+      if (isset($ressqlPOS[0])){
+  
+        $respuesta = array(
+          'error' => true,
+          'data'  => array(),
+          'mensaje' => 'Existe otro cliente con el codigo POS: '.$Data['dms_poscode']
+        );
+  
+        return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+      }
+      //
+    }
+    //
+  
+
     $sqlUpdate = "UPDATE dmsn SET dms_enabled = :dms_enabled, dms_card_name = :dms_card_name, dms_card_type = :dms_card_type,
                     dms_short_name = :dms_short_name, dms_phone1 = :dms_phone1, dms_phone2 = :dms_phone2, dms_cel = :dms_cel,
                     dms_email = :dms_email, dms_inv_mail = :dms_inv_mail, dms_group_num = :dms_group_num, dms_web_site = :dms_web_site,
                     dms_sip_code = :dms_sip_code, dms_agent = :dms_agent, dms_pay_type = :dms_pay_type, dms_limit_cred = :dms_limit_cred,
                     dms_inter = :dms_inter, dms_price_list = :dms_price_list, dms_acct_sn = :dms_acct_sn, dms_acct_asn = :dms_acct_asn , dms_card_last_name = :dms_card_last_name,
 									  dms_rtype = :dms_rtype, dms_classtype = :dms_classtype, dms_tax_regime = :dms_tax_regime, dms_reg_merc =:dms_reg_merc,
-                    dms_id_type = :dms_id_type   WHERE dms_id = :dms_id";
+                    dms_id_type = :dms_id_type, dms_poscode =:dms_poscode,   
+                    dms_taxregimecode = :dms_taxregimecode, 
+                    dms_fiscalresponsabilitycode = :dms_fiscalresponsabilitycode,
+                    dms_paymentmethod = :dms_paymentmethod
+                    WHERE dms_id = :dms_id";
 
     $this->pedeo->trans_begin();
 
@@ -285,7 +347,12 @@ class BusinessPartner extends REST_Controller
       ':dms_classtype' => isset($Data['dms_classtype']) ? $Data['dms_classtype'] : NULL,
       ':dms_reg_merc' => isset($Data['dms_reg_merc']) ? $Data['dms_reg_merc'] : NULL,
       ':dms_tax_regime' => isset($Data['dms_tax_regime']) ? $Data['dms_tax_regime'] : NULL,
-      ':dms_id_type' => is_numeric($Data['dms_id_type']) ? $Data['dms_id_type'] : 0
+      ':dms_id_type' => is_numeric($Data['dms_id_type']) ? $Data['dms_id_type'] : 0,
+      ':dms_poscode' => isset($Data['dms_poscode']) ? $Data['dms_poscode'] : NULL,
+
+      ':dms_taxregimecode' => isset($Data['dms_taxregimecode']) ? $Data['dms_taxregimecode'] : NULL,
+      ':dms_fiscalresponsabilitycode' => isset($Data['dms_fiscalresponsabilitycode']) ? $Data['dms_fiscalresponsabilitycode'] : NULL,
+      ':dms_paymentmethod' => isset($Data['dms_paymentmethod']) ? $Data['dms_paymentmethod'] : NULL
     ));
 
     if (is_numeric($resUpdate) && $resUpdate == 1) {
@@ -313,6 +380,8 @@ class BusinessPartner extends REST_Controller
             return;
           }
         }
+      }else{
+        $this->pedeo->queryTable('DELETE FROM rtsn WHERE tsn_cardcode = :tsn_cardcode AND  tsn_type = :tsn_type', array(':tsn_cardcode' => $Data['dms_card_code'], ':tsn_type' => $Data['dms_card_type']));
       }
       //FIN DEL PROCEDIMIENTO PARA AGREGAR LAS RETENCIONES
 
@@ -818,12 +887,12 @@ class BusinessPartner extends REST_Controller
   }
 
    // Obtener Socios de negocio con filtros
-   public function getFilterBusinessPartner_post()
-   {
+  public function getFilterBusinessPartner_post()
+  {
 
-     $Data = $this->post();
+    $Data = $this->post();
 
-     $filtro = "";
+    $filtro = "";
 
 
 
@@ -842,15 +911,22 @@ class BusinessPartner extends REST_Controller
     if (isset($Data['slt_state_num']) && is_numeric($Data['slt_state_num'])){
       $filtro .= " AND dmsn.dms_enabled = ".$Data['slt_state_num'];
     }
+
+
  
-    $sqlSelect = "SELECT concat(dms_card_name, ' ', dms_card_last_name) AS nombreyapellido, dmsn.*, mpf_name, mgs_acct, mgs_acctp, dmlp_name_list, a.mev_names as vendedor, b.mev_names as propietario
-    FROM dmsn
-    LEFT JOIN dmpf on mpf_id::text = dms_pay_type
-    LEFT JOIN dmgs  on mgs_id::text = dms_group_num
-    LEFT JOIN dmpl on dmlp_id = dms_price_list
-    LEFT JOIN dmev a on a.mev_id = dms_sip_code
-    LEFT JOIN dmev b on b.mev_id = dms_agent
-    WHERE 1 = 1 ".$filtro;
+    $sqlSelect = "SELECT concat(dms_card_name, ' ', dms_card_last_name) AS nombreyapellido, dmsn.*,
+                mpf_name, mgs_acct, mgs_acctp, dmlp_name_list, a.mev_names as vendedor, b.mev_names as propietario,dmgs.mgs_name as name_group,
+                ttre.tre_name as regimen_fiscal ,tprf.prf_name as respon_fiscal, tmdp.mdp_name as medio_pago 
+                FROM dmsn
+                LEFT JOIN dmpf on mpf_id::text = dms_pay_type
+                LEFT JOIN dmgs  on mgs_id::text = dms_group_num
+                LEFT JOIN dmpl on dmlp_id = dms_price_list
+                LEFT JOIN dmev a on a.mev_id = dms_sip_code
+                LEFT JOIN dmev b on b.mev_id = dms_agent
+                LEFT JOIN ttre on ttre.tre_code = dmsn.dms_taxregimecode 
+                LEFT JOIN tprf on tprf.prf_code = dmsn.dms_fiscalresponsabilitycode 
+                LEFT JOIN tmdp on tmdp.mdp_id  = dmsn.dms_paymentmethod
+                WHERE 1 = 1 ".$filtro;
 
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -872,7 +948,7 @@ class BusinessPartner extends REST_Controller
     }
 
      $this->response($respuesta);
-   }
+  }
 
   //Crear nuevo socio de negocio
   public function createCompleteBusinessPartner_post()
@@ -921,6 +997,25 @@ class BusinessPartner extends REST_Controller
     }
 
 
+    $sql = "SELECT * FROM dmsn WHERE dms_poscode=:dms_poscode AND dms_card_code !=:dms_card_code AND dms_card_type =:dms_card_type";
+
+    $resSql = $this->pedeo->queryTable($sql, array(
+      ':dms_poscode' => $Data['dms_poscode'],
+      ':dms_card_code' => $Data['dms_card_code'],
+      ':dms_card_type' => '1'
+    ));
+
+    if (isset($resSql[0])){
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'Existe otro cliente con esa referencia'
+      );
+
+      return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+    }
+
 
     $this->pedeo->trans_begin();
 
@@ -928,11 +1023,11 @@ class BusinessPartner extends REST_Controller
     $sqlInsert = "INSERT INTO dmsn(dms_card_code, dms_card_name, dms_card_type, dms_short_name, dms_phone1, dms_phone2,
                   dms_cel, dms_email, dms_inv_mail, dms_group_num, dms_web_site, dms_sip_code, dms_agent, dms_pay_type,
                   dms_limit_cred, dms_inter, dms_price_list, dms_acct_sn, dms_acct_asn, dms_card_last_name, dms_enabled,
-                  dms_rtype,dms_classtype)
+                  dms_rtype,dms_classtype,dms_poscode,dms_paymentmethod,dms_id_type,dv)
                   VALUES (:dms_card_code, :dms_card_name, :dms_card_type, :dms_short_name, :dms_phone1, :dms_phone2,
                   :dms_cel, :dms_email, :dms_inv_mail, :dms_group_num, :dms_web_site, :dms_sip_code, :dms_agent, :dms_pay_type,
                   :dms_limit_cred, :dms_inter, :dms_price_list, :dms_acct_sn, :dms_acct_asn, :dms_card_last_name, :dms_enabled,
-                  :dms_rtype,:dms_classtype)";
+                  :dms_rtype,:dms_classtype,:dms_poscode,:dms_paymentmethod,:dms_id_type,:dv)";
 
     $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
@@ -958,10 +1053,11 @@ class BusinessPartner extends REST_Controller
       ':dms_card_last_name' => isset($Data['dms_card_last_name']) ? $Data['dms_card_last_name'] : NULL,
       ':dms_enabled' => isset($Data['dms_enabled']) ? $Data['dms_enabled'] : NULL,
       ':dms_rtype' => isset($Data['dms_rtype']) ? $Data['dms_rtype'] : NULL,
-      ':dms_classtype' => isset($Data['dms_classtype']) ? $Data['dms_classtype'] : NULL
-
-
-
+      ':dms_classtype' => isset($Data['dms_classtype']) ? $Data['dms_classtype'] : NULL,
+      ':dms_poscode' => isset($Data['dms_poscode']) ? $Data['dms_poscode'] : NULL,
+      ':dms_paymentmethod' => isset($Data['dms_paymentmethod']) && is_numeric($Data['dms_paymentmethod']) ? $Data['dms_paymentmethod'] : NULL,
+      ':dms_id_type' => is_numeric($Data['dms_id_type']) ? $Data['dms_id_type'] : 0,
+      ':dv' => $this->dv->calcularDigitoV($Data['dms_card_code'])
     ));
 
     if (is_numeric($resInsert) && $resInsert > 0) {
@@ -1071,6 +1167,7 @@ class BusinessPartner extends REST_Controller
   }
 
   //FUNCION PARA OBTENER SALDO DEL SN CLIENTE/PROVEEDOR
+  // NO SE USA
   public function getBalance_get()
   {
     //DECLARR VARIABLES
@@ -1160,6 +1257,7 @@ class BusinessPartner extends REST_Controller
       $sql = str_replace("{table_e}","dcnd",$sql);
       $sql = str_replace("{prefijo}","cnd",$sql);
     }
+    print_r($sql);exit;
     //RESULTADO DE LA CONSULTA
     $resSql = $this->pedeo->queryTable($sql,array(
       ':cardcode' => $Data['cardcode'],
@@ -1278,4 +1376,726 @@ class BusinessPartner extends REST_Controller
 
     $this->response($respuesta);
   }
+
+
+  // OBTENER EL SALDO DE LA CARTERA
+  // PARA LOS SOCIOS DE NEGOCIO
+  public function getBalanceW_post() {
+
+    $Data = $this->post();
+
+    if ( !isset($Data['business']) OR !isset($Data['cardcode']) OR !isset($Data['currency']) OR !isset($Data['order']) OR !isset($Data['cardtype'])) {
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'Faltan parametros para procesar la información'
+      );
+
+      return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+    }
+
+
+    if ( $Data['cardtype'] == 1 ) {
+
+      $sql = "select sum(saldo_venc)as total_saldo from (SELECT distinct
+              mac1.ac1_font_key,
+              mac1.ac1_legal_num as codigo_proveedor,
+              mac1.ac1_account as cuenta,
+              CURRENT_DATE - dvf_duedate dias_atrasado,
+              dvfv.dvf_comment,
+              dvfv.dvf_currency,
+              mac1.ac1_font_key as dvf_docentry,
+              dvfv.dvf_docnum,
+              dvfv.dvf_docdate as fecha_doc,
+              dvfv.dvf_duedate as fecha_ven,
+              dvf_docnum as id_origen,
+              mac1.ac1_font_type as numtype,
+              mdt_docname as tipo,
+              case
+              when mac1.ac1_font_type = 5 OR mac1.ac1_font_type = 34  then get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,mac1.ac1_debit, get_localcur())
+              else get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,mac1.ac1_credit, get_localcur())
+              end	 as total_doc,
+              get_dynamic_conversion(:currency,get_localcur(),dvf_docdate,(mac1.ac1_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+              '' retencion,
+              get_tax_currency(dvfv.dvf_currency, dvfv.dvf_docdate) as tasa_dia,
+              ac1_line_num,
+              ac1_cord
+              from  mac1
+              inner join dacc
+              on mac1.ac1_account = dacc.acc_code
+              and acc_businessp = '1'
+              inner join dmdt
+              on mac1.ac1_font_type = dmdt.mdt_doctype
+              inner join dvfv
+              on dvfv.dvf_doctype = mac1.ac1_font_type
+              and dvfv.dvf_docentry = mac1.ac1_font_key
+              where mac1.ac1_legal_num = :cardcode
+              and mac1.business = :business
+              and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+              -- primer q
+              union all
+              select distinct
+              mac1.ac1_font_key,
+              mac1.ac1_legal_num as codigo_proveedor,
+              mac1.ac1_account as cuenta,
+              CURRENT_DATE - gbpr.bpr_docdate as dias_atrasado,
+              gbpr.bpr_comments as bpr_comment,
+              gbpr.bpr_currency,
+              mac1.ac1_font_key as dvf_docentry,
+              gbpr.bpr_docnum,
+              gbpr.bpr_docdate as fecha_doc,
+              gbpr.bpr_docdate as fecha_ven,
+              gbpr.bpr_docnum as id_origen,
+              mac1.ac1_font_type as numtype,
+              mdt_docname as tipo,
+              case
+                when mac1.ac1_font_type = 5 OR mac1.ac1_font_type = 34 then get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,mac1.ac1_debit, get_localcur())
+                else get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,mac1.ac1_credit, get_localcur())
+              end	 as total_doc,
+              get_dynamic_conversion(:currency,get_localcur(),bpr_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+              '' retencion,
+              get_tax_currency(gbpr.bpr_currency,gbpr.bpr_docdate) as tasa_dia,
+              ac1_line_num,
+              ac1_cord
+              from  mac1
+              inner join dacc
+              on mac1.ac1_account = dacc.acc_code
+              and acc_businessp = '1'
+              inner join dmdt
+              on mac1.ac1_font_type = dmdt.mdt_doctype
+              inner join gbpr
+              on gbpr.bpr_doctype = mac1.ac1_font_type
+              and gbpr.bpr_docentry = mac1.ac1_font_key
+              where mac1.ac1_legal_num = :cardcode
+              and mac1.business = :business
+              and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+              -- 2 query
+              union all
+              select distinct
+              mac1.ac1_font_key,
+              mac1.ac1_legal_num as codigo_proveedor,
+              mac1.ac1_account as cuenta,
+              CURRENT_DATE - dvnc.vnc_docdate as dias_atrasado,
+              dvnc.vnc_comment as bpr_comment,
+              dvnc.vnc_currency,
+              mac1.ac1_font_key as dvf_docentry,
+              dvnc.vnc_docnum,
+              dvnc.vnc_docdate as fecha_doc,
+              dvnc.vnc_duedate as fecha_ven,
+              dvnc.vnc_docnum as id_origen,
+              mac1.ac1_font_type as numtype,
+              mdt_docname as tipo,
+              case
+                when mac1.ac1_font_type = 5 OR mac1.ac1_font_type = 34 then get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,mac1.ac1_debit, get_localcur())
+                else get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,mac1.ac1_credit, get_localcur())
+              end	 as total_doc,
+              get_dynamic_conversion(:currency,get_localcur(),vnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+              '' retencion,
+              get_tax_currency(dvnc.vnc_currency, dvnc.vnc_docdate) as tasa_dia,
+              ac1_line_num,
+              ac1_cord
+              from  mac1
+              inner join dacc
+              on mac1.ac1_account = dacc.acc_code
+              and acc_businessp = '1'
+              inner join dmdt
+              on mac1.ac1_font_type = dmdt.mdt_doctype
+              inner join dvnc
+              on dvnc.vnc_doctype = mac1.ac1_font_type
+              and dvnc.vnc_docentry = mac1.ac1_font_key
+              where mac1.ac1_legal_num = :cardcode
+              and mac1.business = :business
+              and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+              -- 3 query
+              union all
+              select distinct
+              mac1.ac1_font_key,
+              mac1.ac1_legal_num as codigo_proveedor,
+              mac1.ac1_account as cuenta,
+              CURRENT_DATE - dvnd.vnd_docdate as dias_atrasado,
+              dvnd.vnd_comment as bpr_comment,
+              dvnd.vnd_currency,
+              mac1.ac1_font_key as dvf_docentry,
+              dvnd.vnd_docnum,
+              dvnd.vnd_docdate as fecha_doc,
+              dvnd.vnd_duedate as fecha_ven,
+              dvnd.vnd_docnum as id_origen,
+              mac1.ac1_font_type as numtype,
+              mdt_docname as tipo,
+              case
+                when mac1.ac1_font_type = 5 OR mac1.ac1_font_type = 34 then get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,mac1.ac1_debit, get_localcur())
+                else get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,mac1.ac1_credit, get_localcur())
+              end	 as total_doc,
+              get_dynamic_conversion(:currency,get_localcur(),vnd_docdate,(mac1.ac1_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+              '' retencion,
+              get_tax_currency(dvnd.vnd_currency, dvnd.vnd_docdate) as tasa_dia,
+              ac1_line_num,
+              ac1_cord
+              from  mac1
+              inner join dacc
+              on mac1.ac1_account = dacc.acc_code
+              and acc_businessp = '1'
+              inner join dmdt
+              on mac1.ac1_font_type = dmdt.mdt_doctype
+              inner join dvnd
+              on dvnd.vnd_doctype = mac1.ac1_font_type
+              and dvnd.vnd_docentry = mac1.ac1_font_key
+              where mac1.ac1_legal_num = :cardcode
+              and mac1.business = :business
+              and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+              --ASIENTOS MANUALES
+              union all
+              select distinct
+              mac1.ac1_font_key,
+              case
+                when ac1_card_type = '1' then concat('C',mac1.ac1_legal_num)
+                when ac1_card_type = '2' then concat('P',mac1.ac1_legal_num)
+              end as codigoproveedor,
+              mac1.ac1_account as cuenta,
+              CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
+              tmac.mac_comments,
+              tmac.mac_currency,
+              0 as dvf_docentry,
+              0 as docnum,
+              tmac.mac_doc_date as fecha_doc,
+              tmac.mac_doc_duedate as fecha_ven,
+              0 as id_origen,
+              18 as numtype,
+              mdt_docname as tipo,
+              case
+                when mac1.ac1_cord = 0 then get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_debit, get_localcur())
+                when mac1.ac1_cord = 1 then get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_credit, get_localcur())
+              end	 as total_doc,
+              get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+              '' retencion,
+              get_tax_currency(tmac.mac_currency, tmac.mac_doc_date) as tasa_dia,
+              ac1_line_num,
+              ac1_cord
+              from  mac1
+              inner join dacc
+              on mac1.ac1_account = dacc.acc_code
+              and acc_businessp = '1'
+              inner join dmdt
+              on mac1.ac1_font_type = dmdt.mdt_doctype
+              inner join tmac
+              on tmac.mac_trans_id = mac1.ac1_font_key
+              and tmac.mac_doctype = mac1.ac1_font_type
+              inner join dmsn
+              on mac1.ac1_card_type = dmsn.dms_card_type
+              and mac1.ac1_legal_num = dmsn.dms_card_code
+              where mac1.ac1_legal_num = :cardcode
+              and mac1.business = :business
+              and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+              -- RECIBOS DE CAJA DISTRIBUCION
+              union all
+              select distinct
+              mac1.ac1_font_key,
+              mac1.ac1_legal_num as codigo_proveedor,
+              mac1.ac1_account as cuenta,
+              CURRENT_DATE - dvrc.vrc_docdate as dias_atrasado,
+              dvrc.vrc_comment as bpr_comment,
+              dvrc.vrc_currency,
+              mac1.ac1_font_key as dvf_docentry,
+              dvrc.vrc_docnum,
+              dvrc.vrc_docdate as fecha_doc,
+              dvrc.vrc_duedate as fecha_ven,
+              dvrc.vrc_docnum as id_origen,
+              mac1.ac1_font_type as numtype,
+              case 
+                when mac1.ac1_font_type = 47 AND mac1.ac1_credit = 0 then  mdt_docname 
+                when mac1.ac1_font_type = 47 AND mac1.ac1_debit = 0 then 'Anticipo Cliente (Pasanaku)'
+              end as tipo,
+              case
+                      when mac1.ac1_font_type = 47 and ac1_debit > 0 then get_dynamic_conversion(:currency, get_localcur(),vrc_docdate,mac1.ac1_debit ,get_localcur())
+                      else get_dynamic_conversion(:currency, get_localcur(),vrc_docdate,mac1.ac1_credit ,get_localcur())
+                end	 as total_doc,
+              get_dynamic_conversion(:currency,get_localcur(),vrc_docdate,(mac1.ac1_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+              '' retencion,
+              get_tax_currency(dvrc.vrc_currency, dvrc.vrc_docdate) as tasa_dia,
+              ac1_line_num,
+              ac1_cord
+              from  mac1
+              inner join dacc
+              on mac1.ac1_account = dacc.acc_code
+              and acc_businessp = '1'
+              inner join dmdt
+              on mac1.ac1_font_type = dmdt.mdt_doctype
+              inner join dvrc
+              on dvrc.vrc_doctype = mac1.ac1_font_type
+              and dvrc.vrc_docentry = mac1.ac1_font_key
+              where mac1.ac1_legal_num = :cardcode
+              and mac1.business = :business
+              and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+              {INCLUDE_ORDER}) as total";
+
+          $complemento = " -- PEDIDO DE VENTAS
+                          union all
+                          select 
+                          dvov.vov_docentry as ac1_font_key,
+                          dvov.vov_cardcode as codigo_proveedor,
+                          0 as cuenta,
+                          CURRENT_DATE - dvov.vov_duedate as dias_atrasado,
+                          dvov.vov_comment,
+                          dvov.vov_currency,
+                          dvov.vov_docentry as dvf_docentry,
+                          dvov.vov_docnum,
+                          dvov.vov_docdate as fecha_doc,
+                          dvov.vov_duedate as fecha_ven,
+                          vov_docnum as id_origen,
+                          dvov.vov_doctype  as numtype,
+                          mdt_docname as tipo,
+                          vov_doctotal as total_doc,
+                          vov_doctotal as saldo_venc,
+                          '' retencion,
+                          get_tax_currency(dvov.vov_currency, dvov.vov_docdate) as tasa_dia,
+                          0 as ac1_line_num,
+                          0 as ac1_cord
+                          from  dvov
+                          inner join dmdt on dvov.vov_doctype  = dmdt.mdt_doctype 
+                          inner join responsestatus on vov_doctype = responsestatus.tipo  and vov_docentry = responsestatus.id 
+                          where dvov.vov_cardcode  = :cardcode
+                          and dvov.business = :business
+                          and responsestatus.estado = 'Abierto'";
+
+          if ( $Data['order'] == 1 ) {
+            $sql = str_replace('{INCLUDE_ORDER}', $complemento, $sql);
+          }else{
+            $sql = str_replace('{INCLUDE_ORDER}', '', $sql);
+          }
+
+          $resSql = $this->pedeo->queryTable($sql, array(":cardcode" => $Data['cardcode'], ":business" => $Data['business'], ":currency" => $Data['currency'] ));
+
+          if ( isset($resSql[0])){
+            $respuesta = array(
+              'error' => false,
+              'data' => $resSql,
+              'mensaje' => 'OK'
+            );
+          }else{
+            $respuesta = array(
+              'error' => false,
+              'data' => $resSql,
+              'mensaje' => 'Busqueda sin resultados'
+            );
+          }
+
+    }else if ($Data['cardtype'] == 2){
+
+
+      $sql = "select sum ( saldo_venc ) as total_saldo from (SELECT distinct
+        mac1.ac1_font_key,
+        mac1.ac1_legal_num as codigo_proveedor,
+        mac1.ac1_account as cuenta,
+        CURRENT_DATE - cfc_duedate dias_atrasado,
+        dcfc.cfc_comment,
+        dcfc.cfc_currency,
+        mac1.ac1_font_key as dvf_docentry,
+        dcfc.cfc_docnum,
+        dcfc.cfc_docdate as fecha_doc,
+        dcfc.cfc_duedate as fecha_ven,
+        cfc_docnum as id_origen,
+        mac1.ac1_font_type as numtype,
+        mdt_docname as tipo,
+        case
+        when mac1.ac1_font_type = 15 OR mac1.ac1_font_type = 46 then get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,mac1.ac1_credit, get_localcur())
+        else get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,mac1.ac1_debit, get_localcur())
+        end	 as total_doc,
+        get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_credit) , get_localcur()) as saldo_venc,
+        '' retencion,
+        get_tax_currency(dcfc.cfc_currency,dcfc.cfc_docdate) as tasa_dia,
+        ac1_line_num,
+        ac1_cord
+        from  mac1
+        inner join dacc
+        on mac1.ac1_account = dacc.acc_code
+        and acc_businessp = '1'
+        inner join dmdt
+        on mac1.ac1_font_type = dmdt.mdt_doctype
+        inner join dcfc
+        on dcfc.cfc_doctype = mac1.ac1_font_type
+        and dcfc.cfc_docentry = mac1.ac1_font_key
+        where mac1.ac1_legal_num = :cardcode
+        and mac1.business = :business
+        and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
+        --PAGO EFECTUADO
+        union all
+        select distinct
+        mac1.ac1_font_key,
+        mac1.ac1_legal_num as codigo_proveedor,
+        mac1.ac1_account as cuenta,
+        CURRENT_DATE - gbpe.bpe_docdate as dias_atrasado,
+        gbpe.bpe_comments as bpr_comment,
+        gbpe.bpe_currency,
+        mac1.ac1_font_key as dvf_docentry,
+        gbpe.bpe_docnum,
+        gbpe.bpe_docdate as fecha_doc,
+        gbpe.bpe_docdate as fecha_ven,
+        gbpe.bpe_docnum as id_origen,
+        mac1.ac1_font_type as numtype,
+        mdt_docname as tipo,
+        case
+        when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency,get_localcur(),bpe_docdate,mac1.ac1_debit, get_localcur())
+        else get_dynamic_conversion(:currency,get_localcur(),bpe_docdate,mac1.ac1_debit, get_localcur())
+        end	 as total_doc,
+        get_dynamic_conversion(:currency,get_localcur(),bpe_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) , get_localcur()) as saldo_venc,
+        '' retencion,
+        get_tax_currency(gbpe.bpe_currency,gbpe.bpe_docdate) as tasa_dia,
+        ac1_line_num,
+        ac1_cord
+        from  mac1
+        inner join dacc
+        on mac1.ac1_account = dacc.acc_code
+        and acc_businessp = '1'
+        inner join dmdt
+        on mac1.ac1_font_type = dmdt.mdt_doctype
+        inner join gbpe
+        on gbpe.bpe_doctype = mac1.ac1_font_type
+        and gbpe.bpe_docentry = mac1.ac1_font_key
+        where mac1.ac1_legal_num = :cardcode
+        and mac1.business = :business
+        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+        --NOTA CREDITO
+        union all
+        select distinct
+        mac1.ac1_font_key,
+        mac1.ac1_legal_num as codigo_proveedor,
+        mac1.ac1_account as cuenta,
+        CURRENT_DATE - dcnc.cnc_docdate as dias_atrasado,
+        dcnc.cnc_comment as bpr_comment,
+        dcnc.cnc_currency,
+        mac1.ac1_font_key as dvf_docentry,
+        dcnc.cnc_docnum,
+        dcnc.cnc_docdate as fecha_doc,
+        dcnc.cnc_duedate as fecha_ven,
+        dcnc.cnc_docnum as id_origen,
+        mac1.ac1_font_type as numtype,
+        mdt_docname as tipo,
+        case
+        when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency,get_localcur(),cnc_docdate,mac1.ac1_debit, get_localcur())
+        else get_dynamic_conversion(:currency,get_localcur(),cnc_docdate,mac1.ac1_debit, get_localcur())
+        end	 as total_doc,
+        get_dynamic_conversion(:currency,get_localcur(),cnc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit) , get_localcur()) as saldo_venc,
+        '' retencion,
+        get_tax_currency(dcnc.cnc_currency,dcnc.cnc_docdate ) as tasa_dia,
+        ac1_line_num,
+        ac1_cord
+        from  mac1
+        inner join dacc
+        on mac1.ac1_account = dacc.acc_code
+        and acc_businessp = '1'
+        inner join dmdt
+        on mac1.ac1_font_type = dmdt.mdt_doctype
+        inner join dcnc
+        on dcnc.cnc_doctype = mac1.ac1_font_type
+        and dcnc.cnc_docentry = mac1.ac1_font_key
+        where mac1.ac1_legal_num = :cardcode
+        and mac1.business = :business
+        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+        --NOTA DEBITO
+        union all
+        select distinct
+        mac1.ac1_font_key,
+        mac1.ac1_legal_num as codigo_proveedor,
+        mac1.ac1_account as cuenta,
+        CURRENT_DATE - dcnd.cnd_docdate as dias_atrasado,
+        dcnd.cnd_comment as bpr_comment,
+        dcnd.cnd_currency,
+        mac1.ac1_font_key as dvf_docentry,
+        dcnd.cnd_docnum,
+        dcnd.cnd_docdate as fecha_doc,
+        dcnd.cnd_duedate as fecha_ven,
+        dcnd.cnd_docnum as id_origen,
+        mac1.ac1_font_type as numtype,
+        mdt_docname as tipo,
+        case
+        when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency,get_localcur(),cnd_docdate,mac1.ac1_debit, get_localcur())
+        else get_dynamic_conversion(:currency,get_localcur(),cnd_docdate,mac1.ac1_credit, get_localcur())
+        end	 as total_doc,
+        get_dynamic_conversion(:currency,get_localcur(),cnd_docdate,(mac1.ac1_ven_credit) - (mac1.ac1_debit), get_localcur()) as saldo_venc,
+        '' retencion,
+        get_tax_currency(dcnd.cnd_currency, dcnd.cnd_docdate) as tasa_dia,
+        ac1_line_num,
+        ac1_cord
+        from  mac1
+        inner join dacc
+        on mac1.ac1_account = dacc.acc_code
+        and acc_businessp = '1'
+        inner join dmdt
+        on mac1.ac1_font_type = dmdt.mdt_doctype
+        inner join dcnd
+        on dcnd.cnd_doctype = mac1.ac1_font_type
+        and dcnd.cnd_docentry = mac1.ac1_font_key
+        where mac1.ac1_legal_num = :cardcode
+        and mac1.business = :business
+        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+        --ASIENTOS MANUALES
+        union all
+        select distinct
+        mac1.ac1_font_key,
+        case
+          when ac1_card_type = '1' then mac1.ac1_legal_num
+          when ac1_card_type = '2' then mac1.ac1_legal_num
+        end as codigoproveedor,
+        mac1.ac1_account as cuenta,
+        CURRENT_DATE - tmac.mac_doc_duedate dias_atrasado,
+        tmac.mac_comments,
+        tmac.mac_currency,
+        0 as dvf_docentry,
+        0 as docnum,
+        tmac.mac_doc_date as fecha_doc,
+        tmac.mac_doc_duedate as fecha_ven,
+        0 as id_origen,
+        18 as numtype,
+        mdt_docname as tipo,
+        case
+          when mac1.ac1_cord = 0 then get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_debit, get_localcur())
+          when mac1.ac1_cord = 1 then get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,mac1.ac1_credit, get_localcur())
+        end	 as total_doc,
+        get_dynamic_conversion(:currency,get_localcur(),mac_doc_date,(mac1.ac1_ven_debit) - (mac1.ac1_ven_credit), get_localcur()) as saldo_venc,
+        '' retencion,
+        get_tax_currency(tmac.mac_currency, tmac.mac_doc_date) as tasa_dia,
+        ac1_line_num,
+        ac1_cord
+        from  mac1
+        inner join dacc
+        on mac1.ac1_account = dacc.acc_code
+        and acc_businessp = '1'
+        inner join dmdt
+        on mac1.ac1_font_type = dmdt.mdt_doctype
+        inner join tmac
+        on tmac.mac_trans_id = mac1.ac1_font_key
+        and tmac.mac_doctype = mac1.ac1_font_type
+        inner join dmsn
+        on mac1.ac1_card_type = dmsn.dms_card_type
+        and mac1.ac1_legal_num = dmsn.dms_card_code
+        where mac1.ac1_legal_num = :cardcode
+        and mac1.business = :business
+        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+        --SOLICITUD DE ANTICIPO DE COMPRAS
+        UNION ALL
+        SELECT  
+        dcsa.csa_docentry as ac1_font_key,
+        dcsa.csa_cardcode as codigo_proveedor,
+        get_acctp(:cardcode,2) as cuenta,
+        CURRENT_DATE - dcsa.csa_duedate as dias_atrasado,
+        dcsa.csa_comment as bpr_comment,
+        dcsa.csa_currency,
+        csa1.sa1_docentry as dvf_docentry,
+        dcsa.csa_docnum ,
+        dcsa.csa_docdate as fecha_doc,
+        dcsa.csa_duedate as fecha_ven,
+        dcsa.csa_docnum as id_origen,
+        dcsa.csa_doctype as numtype,
+        mdt_docname as tipo,
+        get_dynamic_conversion(:currency,dcsa.csa_currency,dcsa.csa_docdate,dcsa.csa_anticipate_total, get_localcur()) as total_doc,
+        get_dynamic_conversion(:currency,dcsa.csa_currency,dcsa.csa_docdate,(dcsa.csa_anticipate_total) - (dcsa.csa_paytoday) , get_localcur()) as saldo_venc,
+        '' retencion,
+        get_tax_currency(dcsa.csa_currency,dcsa.csa_docdate) as tasa_dia,
+        sa1_linenum,
+        0 as ac1_cord
+        from dcsa
+        inner join csa1 on dcsa.csa_docentry = csa1.sa1_docentry
+        inner join dmdt on dmdt.mdt_doctype = dcsa.csa_doctype
+        where csa_cardcode = :cardcode
+        and dcsa.business = :business
+        AND abs(get_dynamic_conversion(:currency,dcsa.csa_currency,dcsa.csa_docdate,(dcsa.csa_anticipate_total) - (dcsa.csa_paytoday) , get_localcur()  )) > 0 
+        {INCLUDE_ORDER} ) as saldo";
+
+        $complemento = " -- ORDENES DE COMPRA 
+                          UNION ALL
+                          SELECT  
+                          dcpo.cpo_docentry as ac1_font_key,
+                          dcpo.cpo_cardcode as codigo_proveedor,
+                          get_acctp(:cardcode,2) as cuenta,
+                          CURRENT_DATE - dcpo.cpo_duedate as dias_atrasado,
+                          dcpo.cpo_comment as bpr_comment,
+                          dcpo.cpo_currency,
+                          dcpo.cpo_docentry as dvf_docentry,
+                          dcpo.cpo_docnum ,
+                          dcpo.cpo_docdate as fecha_doc,
+                          dcpo.cpo_duedate as fecha_ven,
+                          dcpo.cpo_docnum as id_origen,
+                          dcpo.cpo_doctype as numtype,
+                          mdt_docname as tipo,
+                          dcpo.cpo_doctotal as total_doc,
+                          dcpo.cpo_doctotal *-1 as saldo_venc,
+                          '' retencion,
+                          get_tax_currency(dcpo.cpo_currency,dcpo.cpo_docdate) as tasa_dia,
+                          0 as sa1_linenum,
+                          0 as ac1_cord
+                          from dcpo
+                          inner join dmdt on dmdt.mdt_doctype = dcpo.cpo_doctype
+                          inner join responsestatus  on dcpo.cpo_doctype = responsestatus.tipo and dcpo.cpo_docentry = responsestatus.id 
+                          where cpo_cardcode = :cardcode
+                          and dcpo.business = :business
+                          and responsestatus.estado = 'Abierto'";
+
+
+        if ( $Data['order'] == 1 ) {
+          $sql = str_replace('{INCLUDE_ORDER}', $complemento, $sql);
+        }else{
+          $sql = str_replace('{INCLUDE_ORDER}', '', $sql);
+        }
+
+
+        $resSql = $this->pedeo->queryTable($sql, array(":cardcode" => $Data['cardcode'], ":business" => $Data['business'], ":currency" => $Data['currency'] ));
+
+        if ( isset($resSql[0])){
+          $respuesta = array(
+            'error' => false,
+            'data' => $resSql,
+            'mensaje' => 'OK'
+          );
+        }else{
+          $respuesta = array(
+            'error' => false,
+            'data' => $resSql,
+            'mensaje' => 'Busqueda sin resultados'
+          );
+        }
+    
+    }
+
+
+    $this->response($respuesta);
+
+  }
+
+  // Obtener Socio de negocio por Id
+  public function getBusinessPartnerByCardCode_get()
+  {
+
+    $Data = $this->get();
+
+    if (!isset($Data['dms_card_code']) OR !isset($Data['dms_card_type'])) {
+
+      $respuesta = array(
+        'error' => true,
+        'data'  => array(),
+        'mensaje' => 'La informacion enviada no es valida'
+      );
+
+      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+      return;
+    }
+
+    $sqlSelect = " SELECT * FROM dmsn WHERE dms_card_code = :dms_card_code AND dms_card_type = :dms_card_type";
+
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dms_card_type' => $Data['dms_card_type'], "dms_card_code" => $Data['dms_card_code']));
+
+    if (isset($resSelect[0])) {
+
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => ''
+      );
+    } else {
+
+      $respuesta = array(
+        'error'   => true,
+        'data' => array(),
+        'mensaje'  => 'busqueda sin resultados'
+      );
+    }
+
+    $this->response($respuesta);
+  }
+  
+  // Socios de negocio paginados
+  public function getBusinessPPaginate_post() {
+
+
+    $request = $this->post();
+
+    $statusCodes = ["0","1"];
+
+    $variableSql = 'WHERE 1=1';
+
+		if (isset($request['dms_card_code']) && !empty($request['dms_card_code'])) {
+
+			$variableSql .= " AND dms_card_code LIKE '%" . $request['dms_card_code'] . "%'";
+		}
+
+		if (isset($request['dms_card_name']) &&  !empty($request['dms_card_name'])) {
+
+			$variableSql .= " AND dms_card_name LIKE '%" . $request['dms_card_name'] . "%'";
+		}   
+
+    /**filtros del datatable */
+    if(isset($request['slt_group_num']) &&  !empty($request['slt_group_num'])){
+      $variableSql .= " AND dms_group_num = '".$request['slt_group_num']."'" ;
+    }
+    
+    if(isset($request['slt_sales_num']) &&  !empty($request['slt_sales_num'])){
+      $variableSql .= " AND dms_sip_code = ".$request['slt_sales_num'] ;
+    }
+
+    if(isset($request['slt_owner_num']) &&  !empty($request['slt_owner_num'])){
+      $variableSql .= " AND dms_agent = ".$request['slt_owner_num'] ;
+    }
+
+    if(isset($request['slt_state_num']) && in_array($request['slt_state_num'],$statusCodes)){
+        $variableSql .= " AND dms_enabled = ".$request['slt_state_num'] ;
+       
+    }
+
+		// OBTENER NÚMERO DE REGISTROS DE LA TABLA.
+		$numRows = $this->pedeo->queryTable("SELECT get_numrows('dmsn') as numrows", []);
+
+		//COLUMNAS DEL DATATABLE
+		$columns = array(
+			'dms_card_code',
+			'UPPER(dms_card_name)',
+		);
+
+		//
+		if (!empty($request['search']['value'])) {
+			// OBTENER CONDICIONALES.
+			$variableSql .= " AND  " . self::get_Filter($columns, strtoupper($request['search']['value']));
+		}
+    
+		$sqlSelect = "SELECT dmsn.*, dms_card_name ||' '|| concat(dms_card_last_name,'') as dms_na  FROM dmsn ".$variableSql;
+		//
+		$sqlSelect .=" LIMIT ".$request['length']." OFFSET ".$request['start'];
+    
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+
+		$respuesta = array(
+			'error' => false,
+			'data'  => $resSelect,
+			'rows'  => $numRows[0]['numrows'],
+			'mensaje' => ''
+		);
+
+		$this->response($respuesta);
+
+  }
+
+  public function get_Filter($columns, $value)
+	{
+		//
+		$resultSet = "";
+		// CONDICIONAL.
+		$where = " {campo} LIKE '%" . $value . "%' OR";
+		//
+		try {
+			//
+			foreach ($columns as $column) {
+				// REEMPLAZAR CAMPO.
+				$resultSet .= str_replace('{campo}', $column, $where);
+			}
+			// REMOVER ULTIMO OR DE LA CADENA.
+			$resultSet = substr($resultSet, 0, -2);
+		} catch (Exception $e) {
+			$resultSet = $e->getMessage();
+		}
+		//
+		return $resultSet;
+	}
+
+
 }

@@ -257,7 +257,18 @@ class SalesNcBO extends REST_Controller
 			return;
 		}
 		//FIN DE PROCESO DE TASA
+		// VARIFICAR FECHA DE VENCIMIENTO
+		if($Data['vnc_duedate'] < $Data['vnc_docdate']){
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'La fecha de vencimiento ('.$Data['vnc_duedate'].') no puede ser inferior a la fecha del documento ('.$Data['vnc_docdate'].')'
+			);
 
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
 
 		$sqlInsert = "INSERT INTO dvnc(vnc_series, vnc_docnum, vnc_docdate, vnc_duedate, vnc_duedev, vnc_pricelist, vnc_cardcode,
                       vnc_cardname, vnc_currency, vnc_contacid, vnc_slpcode, vnc_empid, vnc_comment, vnc_doctotal, vnc_baseamnt, vnc_taxtotal,
@@ -314,6 +325,8 @@ class SalesNcBO extends REST_Controller
 				':business' => isset($Data['business']) ? $Data['business'] : NULL,
 				':branch' => isset($Data['branch']) ? $Data['branch'] : NULL,
 				':vnc_internal_comments' => isset($Data['vnc_internal_comments']) ? $Data['vnc_internal_comments'] : NULL
+				
+				
 			));
 
 			if (is_numeric($resInsert) && $resInsert > 0) {
@@ -582,10 +595,10 @@ class SalesNcBO extends REST_Controller
 					$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
 										nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
 										nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_exc_inv,nc1_acciva,nc1_linenum,nc1_codimp,
-										nc1_ubication,nc1_baseline,ote_code,detalle_modular,nc1_tax_base)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,:nc1_uom, :nc1_whscode,:nc1_price, 
+										nc1_ubication,nc1_baseline,ote_code,detalle_modular,nc1_tax_base,detalle_anuncio,imponible)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,:nc1_uom, :nc1_whscode,:nc1_price, 
 										:nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,:nc1_acctcode, 
 										:nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_exc_inv, :nc1_acciva,:nc1_linenum,:nc1_codimp,
-										:nc1_ubication,:nc1_baseline,:ote_code,:detalle_modular,:nc1_tax_base)";
+										:nc1_ubication,:nc1_baseline,:ote_code,:detalle_modular,:nc1_tax_base,:detalle_anuncio,:imponible)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':nc1_docentry' => $resInsert,
@@ -614,8 +627,11 @@ class SalesNcBO extends REST_Controller
 						':nc1_ubication'  => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL,
 						':nc1_baseline' => isset($detail['nc1_baseline']) && is_numeric($detail['nc1_baseline']) ? $detail['nc1_baseline'] : 0,
 						':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
-						':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode($detail['detalle_modular']) : NULL,
-						':nc1_tax_base' => is_numeric($detail['nc1_tax_base']) ? $detail['nc1_tax_base'] : 0
+						':nc1_tax_base' => is_numeric($detail['nc1_tax_base']) ? $detail['nc1_tax_base'] : 0,
+						':detalle_modular' => isset($detail['detalle_modular']) && is_string($detail['detalle_modular']) ? json_encode(json_decode($detail['detalle_modular'],true)) : NULL,
+						':detalle_anuncio' => isset($detail['detalle_anuncio']) && is_string($detail['detalle_anuncio']) ? json_encode(json_decode($detail['detalle_anuncio'],true)) : NULL,
+						':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL,
+
 					));
 
 					if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -856,7 +872,7 @@ class SalesNcBO extends REST_Controller
 							if (isset($resItemSerial[0])) {
 								$ManejaSerial = 1;
 
-								$AddSerial = $this->generic->addSerial($detail['serials'], $detail['nc1_itemcode'], $Data['vnc_doctype'], $resInsert, $DocNumVerificado, $Data['vnc_docdate'], 1, $Data['vnc_comment'], $detail['nc1_whscode'], $detail['nc1_quantity'], $Data['vnc_createby'], $Data['business']);
+								$AddSerial = $this->generic->addSerial($detail['serials'], $detail['nc1_itemcode'], $Data['vnc_doctype'], $resInsert, $DocNumVerificado, $Data['vnc_docdate'], 1, $Data['vnc_comment'], $detail['nc1_whscode'], $detail['nc1_quantity'], $Data['vnc_createby'], $resInsertDetail, $Data['business']);
 
 								if (isset($AddSerial['error']) && $AddSerial['error'] == false) {
 								} else {
@@ -1136,6 +1152,7 @@ class SalesNcBO extends REST_Controller
 	
 					}
 
+					$descUnit = ( $detail['nc1_discount'] / $detail['nc1_quantity'] );
 
 					$DetalleAsientoIngreso->ac1_account = is_numeric($detail['nc1_acctcode']) ? $detail['nc1_acctcode'] : 0;
 					$DetalleAsientoIngreso->ac1_prc_code = isset($detail['nc1_costcode']) ? $detail['nc1_costcode'] : NULL;
@@ -1144,7 +1161,8 @@ class SalesNcBO extends REST_Controller
 					$DetalleAsientoIngreso->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 					$DetalleAsientoIngreso->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 					$DetalleAsientoIngreso->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-					$DetalleAsientoIngreso->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+					// $DetalleAsientoIngreso->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+					$DetalleAsientoIngreso->nc1_price = is_numeric($detail['nc1_price']) ? ($detail['nc1_price'] - $descUnit) : 0;
 					$DetalleAsientoIngreso->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
 					$DetalleAsientoIngreso->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 					$DetalleAsientoIngreso->nc1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
@@ -1160,7 +1178,8 @@ class SalesNcBO extends REST_Controller
 					$DetalleAsientoIva->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 					$DetalleAsientoIva->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 					$DetalleAsientoIva->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-					$DetalleAsientoIva->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+					// $DetalleAsientoIva->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+					$DetalleAsientoIva->nc1_price = is_numeric($detail['nc1_price']) ? ($detail['nc1_price'] - $descUnit) : 0;
 					$DetalleAsientoIva->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
 					$DetalleAsientoIva->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 					$DetalleAsientoIva->nc1_cuentaIva = is_numeric($detail['nc1_cuentaIva']) ? $detail['nc1_cuentaIva'] : NULL;
@@ -1181,7 +1200,8 @@ class SalesNcBO extends REST_Controller
 							$DetalleCostoInventario->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 							$DetalleCostoInventario->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 							$DetalleCostoInventario->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-							$DetalleCostoInventario->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+							// $DetalleCostoInventario->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+							$DetalleCostoInventario->nc1_price = is_numeric($detail['nc1_price']) ? ($detail['nc1_price'] - $descUnit) : 0;
 							$DetalleCostoInventario->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
 							$DetalleCostoInventario->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 							$DetalleCostoInventario->nc1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
@@ -1195,7 +1215,8 @@ class SalesNcBO extends REST_Controller
 							$DetalleCostoCosto->nc1_linetotal = is_numeric($detail['nc1_linetotal']) ? $detail['nc1_linetotal'] : 0;
 							$DetalleCostoCosto->nc1_vat = is_numeric($detail['nc1_vat']) ? $detail['nc1_vat'] : 0;
 							$DetalleCostoCosto->nc1_vatsum = is_numeric($detail['nc1_vatsum']) ? $detail['nc1_vatsum'] : 0;
-							$DetalleCostoCosto->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+							// $DetalleCostoCosto->nc1_price = is_numeric($detail['nc1_price']) ? $this->costobo->validateCost( $ManejaTasa, $MontoTasa, $detail['nc1_price'], $detail['nc1_vat'],$detail['nc1_discount'],$detail['nc1_quantity'] ) : 0;
+							$DetalleCostoCosto->nc1_price = is_numeric($detail['nc1_price']) ? ($detail['nc1_price'] - $descUnit) : 0;
 							$DetalleCostoCosto->nc1_itemcode = isset($detail['nc1_itemcode']) ? $detail['nc1_itemcode'] : NULL;
 							$DetalleCostoCosto->nc1_quantity = is_numeric($detail['nc1_quantity']) ? $detail['nc1_quantity'] : 0;
 							$DetalleCostoCosto->nc1_whscode = isset($detail['nc1_whscode']) ? $detail['nc1_whscode'] : NULL;
@@ -1230,7 +1251,7 @@ class SalesNcBO extends REST_Controller
 
 
 					$llave = $DetalleAsientoIngreso->ac1_uncode . $DetalleAsientoIngreso->ac1_prc_code . $DetalleAsientoIngreso->ac1_prj_code . $DetalleAsientoIngreso->ac1_account;
-					$llaveIva = $DetalleAsientoIva->nc1_vat;
+					$llaveIva = $DetalleAsientoIva->nc1_cuentaIva;
 
 
 
@@ -1351,8 +1372,8 @@ class SalesNcBO extends REST_Controller
 						if (  $value->gift == 0 ) {
 
 
-							$granTotalIngreso = ($granTotalIngreso + ($value->nc1_price * $value->nc1_quantity));
-							$granTotalTasaFija = ($granTotalTasaFija + ($value->nc1_price * $value->nc1_quantity));
+							$granTotalIngreso = ($granTotalIngreso + ( ($value->nc1_price * $value->nc1_quantity) - $value->nc1_vatsum) );
+							$granTotalTasaFija = ($granTotalTasaFija + ( ($value->nc1_price * $value->nc1_quantity) - $value->nc1_vatsum) );
 
 							$granTotalIngreso = ($granTotalIngreso + $value->descuento);
 							$granTotalTasaFija = ($granTotalTasaFija + $value->descuento);
@@ -1361,7 +1382,24 @@ class SalesNcBO extends REST_Controller
 							$prc = $value->ac1_prc_code;
 							$unidad = $value->ac1_uncode;
 							$proyecto = $value->ac1_prj_code;
-							$cuenta = $value->ac1_account;
+							// $cuenta = $value->ac1_account;
+
+							$CUENTASINV = $this->account->getAccountItem($value->nc1_itemcode, $value->nc1_whscode);
+							if ( isset($CUENTASINV['error']) && $CUENTASINV['error'] == false ) {
+								$cuenta = $CUENTASINV['data']['acct_return'];
+							}else{
+								$this->pedeo->trans_rollback();
+	
+								$respuesta = array(
+									'error'   => true,
+									'data'	  => $CUENTASINV['mensaje'],
+									'mensaje'	=> 'No se encontro la cuenta de devolución para el item ' . $value->nc1_itemcode
+								);
+		
+								$this->response($respuesta);
+		
+								return;
+							}
 						
 						}else{
 
@@ -1486,6 +1524,27 @@ class SalesNcBO extends REST_Controller
 	
 						$TOTALCXCLOC = ($TOTALCXCLOC + ($debito + $credito));
 						$TOTALCXCSYS = ($TOTALCXCSYS + ($MontoSysDB + $MontoSysCR));
+
+						// SE AGREGA AL BALANCE
+						if ( $debito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						}
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
 	
 	
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
@@ -1517,7 +1576,7 @@ class SalesNcBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($debito, $DECI_MALES),
@@ -1644,6 +1703,24 @@ class SalesNcBO extends REST_Controller
 					$TOTALCXCLOCIVA = ($TOTALCXCLOCIVA + $granTotalIva) - $VALUE_GIFT_IVA;
 					$TOTALCXCSYSIVA = ($TOTALCXCSYSIVA + $MontoSysDB) - $VALUE_GIFT_IVA_SYS;
 
+					// SE AGREGA AL BALANCE
+				
+					$BALANCE = $this->account->addBalance($periodo['data'], round($granTotalIva, $DECI_MALES), $value->nc1_cuentaIva, 1, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+
+					//
+
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 						':ac1_trans_id' => $resInsertAsiento,
@@ -1673,7 +1750,7 @@ class SalesNcBO extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => round($granTotalIva, $DECI_MALES),
@@ -1836,6 +1913,26 @@ class SalesNcBO extends REST_Controller
 
 					$AC1LINE = $AC1LINE + 1;
 
+					// SE AGREGA AL BALANCE
+					if ( $dbito > 0 ){
+						$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaInventario, 1, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+					}else{
+						$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaInventario, 2, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+					}
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+
+					//
 
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2050,6 +2147,27 @@ class SalesNcBO extends REST_Controller
 
 						$AC1LINE = $AC1LINE + 1;
 
+						// SE AGREGA AL BALANCE
+						if ( $dbito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $cuentaCosto, 1, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $cuentaCosto, 2, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						}
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
+
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -2079,7 +2197,7 @@ class SalesNcBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -2281,55 +2399,55 @@ class SalesNcBO extends REST_Controller
 					$RetencionDescuentoSYS = 0;
 					$RetencionDescuentoLOC = 0;
 
-					if (is_array($ContenidoRentencion)) {
-						if (intval(count($ContenidoRentencion)) > 0) {
+					// if (is_array($ContenidoRentencion)) {
+					// 	if (intval(count($ContenidoRentencion)) > 0) {
 							
-							if (isset($Data['vnc_totalretiva']) && is_numeric($Data['vnc_totalretiva']) && ( $Data['vnc_totalretiva'] * -1  > 0 ) ){
+					// 		if (isset($Data['vnc_totalretiva']) && is_numeric($Data['vnc_totalretiva']) && ( $Data['vnc_totalretiva'] * -1  > 0 ) ){
 
-								if (trim($Data['vnc_currency']) != $MONEDALOCAL) {
+					// 			if (trim($Data['vnc_currency']) != $MONEDALOCAL) {
 
-									$RetencionDescuentoLOC = $RetencionDescuentoLOC + ( ( $Data['vnc_totalretiva'] * -1 ) * $TasaDocLoc);
+					// 				$RetencionDescuentoLOC = $RetencionDescuentoLOC + ( ( $Data['vnc_totalretiva'] * -1 ) * $TasaDocLoc);
 								
-								}else{
-									$RetencionDescuentoLOC = $Data['vnc_totalretiva'] * -1;
-								}
+					// 			}else{
+					// 				$RetencionDescuentoLOC = $Data['vnc_totalretiva'] * -1;
+					// 			}
 
 				
 
-								if (trim($Data['vnc_currency']) != $MONEDASYS) {
+					// 			if (trim($Data['vnc_currency']) != $MONEDASYS) {
 
-									$RetencionDescuentoSYS = $RetencionDescuentoSYS + ( ( $Data['vnc_totalretiva'] * -1 ) / $TasaLocSys );
-								} else {
+					// 				$RetencionDescuentoSYS = $RetencionDescuentoSYS + ( ( $Data['vnc_totalretiva'] * -1 ) / $TasaLocSys );
+					// 			} else {
 		
-									$RetencionDescuentoSYS = ( $Data['vnc_totalretiva'] * -1 );
-								}
+					// 				$RetencionDescuentoSYS = ( $Data['vnc_totalretiva'] * -1 );
+					// 			}
 
 		
-							}
+					// 		}
 
 
-							if (isset($Data['vnc_totalret']) && is_numeric($Data['vnc_totalret']) && ( $Data['vnc_totalret'] * -1  > 0 ) ){
+					// 		if (isset($Data['vnc_totalret']) && is_numeric($Data['vnc_totalret']) && ( $Data['vnc_totalret'] * -1  > 0 ) ){
 
-								if (trim($Data['vnc_currency']) != $MONEDALOCAL) {
+					// 			if (trim($Data['vnc_currency']) != $MONEDALOCAL) {
 
-									$RetencionDescuentoLOC = $RetencionDescuentoLOC + ( ( $Data['vnc_totalret'] * -1 ) * $TasaDocLoc);
+					// 				$RetencionDescuentoLOC = $RetencionDescuentoLOC + ( ( $Data['vnc_totalret'] * -1 ) * $TasaDocLoc);
 								
-								}else{
-									$RetencionDescuentoLOC = $RetencionDescuentoLOC + ($Data['vnc_totalret'] * -1);
-								}
+					// 			}else{
+					// 				$RetencionDescuentoLOC = $RetencionDescuentoLOC + ($Data['vnc_totalret'] * -1);
+					// 			}
 
 
-								if (trim($Data['vnc_currency']) != $MONEDASYS) {
+					// 			if (trim($Data['vnc_currency']) != $MONEDASYS) {
 
-									$RetencionDescuentoSYS = $RetencionDescuentoSYS + ( ( $Data['vnc_totalret'] * -1 ) / $TasaLocSys );
-								} else {
+					// 				$RetencionDescuentoSYS = $RetencionDescuentoSYS + ( ( $Data['vnc_totalret'] * -1 ) / $TasaLocSys );
+					// 			} else {
 		
-									$RetencionDescuentoSYS =  $Data['vnc_totalret'] * -1 ;
-								}
-							}
+					// 				$RetencionDescuentoSYS =  $Data['vnc_totalret'] * -1 ;
+					// 			}
+					// 		}
 							
-						}
-					}
+					// 	}
+					// }
 
 					if ( $debitoo > 0 || $creditoo > 0 ){
 
@@ -2365,6 +2483,28 @@ class SalesNcBO extends REST_Controller
 						if ($Data['vnc_basetype'] == 5) {
 							$ValorVenDebito = $creditoo;
 						}
+
+
+						// SE AGREGA AL BALANCE
+						if ( $debitoo > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($debitoo, $DECI_MALES), $cuentaCxC, 1, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($creditoo, $DECI_MALES), $cuentaCxC, 2, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						}
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
 	
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 	
@@ -2395,7 +2535,7 @@ class SalesNcBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($ValorVenDebito, $DECI_MALES),
@@ -2510,6 +2650,24 @@ class SalesNcBO extends REST_Controller
 						$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 						$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
+						// SE AGREGA AL BALANCE
+					
+						$BALANCE = $this->account->addBalance($periodo['data'], round($totalDescuento, $DECI_MALES), $cuentadescuento, 2, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
+	
 						$AC1LINE = $AC1LINE + 1;
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 		
@@ -2540,7 +2698,7 @@ class SalesNcBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -2648,6 +2806,24 @@ class SalesNcBO extends REST_Controller
 						$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 						$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
+						// SE AGREGA AL BALANCE
+
+						$BALANCE = $this->account->addBalance($periodo['data'], round($totalIvaDescuento, $DECI_MALES), $cuentaivadescuento, 2, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
+
 						$AC1LINE = $AC1LINE + 1;
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 		
@@ -2678,7 +2854,7 @@ class SalesNcBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -2796,6 +2972,27 @@ class SalesNcBO extends REST_Controller
 							$MontoSysDB = $Data['vnc_igtf'];
 						}
 
+						// SE AGREGA AL BALANCE
+						if ( $dbito > 0 ){
+							$BALANCE = $this->account->addBalance($periodo['data'], round($dbito, $DECI_MALES), $resCuentaIGTF[0]['imm_acctcode'], 1, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						}else{
+							$BALANCE = $this->account->addBalance($periodo['data'], round($cdito, $DECI_MALES), $resCuentaIGTF[0]['imm_acctcode'], 2, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+						}
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+						//
+
 						$AC1LINE = $AC1LINE + 1;
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2826,7 +3023,7 @@ class SalesNcBO extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => round($dbito, $DECI_MALES),
@@ -2939,6 +3136,23 @@ class SalesNcBO extends REST_Controller
 					$SumaCreditosSYS = ($SumaCreditosSYS + round($MontoSysCR, $DECI_MALES));
 					$SumaDebitosSYS  = ($SumaDebitosSYS + round($MontoSysDB, $DECI_MALES));
 
+					// SE AGREGA AL BALANCE
+				
+					$BALANCE = $this->account->addBalance($periodo['data'], round($totalRetencion, $DECI_MALES), $cuenta, 2, $Data['vnc_docdate'], $Data['business'], $Data['branch']);
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}
+					//
+
 					$AC1LINE = $AC1LINE + 1;
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -2969,7 +3183,7 @@ class SalesNcBO extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => 0,
@@ -3112,7 +3326,7 @@ class SalesNcBO extends REST_Controller
 				// 				':ac1_rescon_date' => NULL,
 				// 				':ac1_recon_total' => 0,
 				// 				':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-				// 				':ac1_accperiod' => 1,
+				// 				':ac1_accperiod' => $periodo['data'],
 				// 				':ac1_close' => 0,
 				// 				':ac1_cord' => 0,
 				// 				':ac1_ven_debit' => 0,
@@ -3223,6 +3437,62 @@ class SalesNcBO extends REST_Controller
 					));
 					
 					if (is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1) {
+
+						
+						// SE VALIDA QUE EL VALOR NO SEA MAYOR QUE EL DOCUMENTO
+						//  Y QUE NO ESTA POR DEBAJO DEL DOCUMENTO
+
+						$valorF = $this->pedeo->queryTable("SELECT * FROM dvfv WHERE dvf_docentry = :dvf_docentry AND dvf_doctype = :dvf_doctype", array(
+							':dvf_docentry' => $Data['vnc_baseentry'],
+							':dvf_doctype'  => $Data['vnc_basetype']
+						));
+
+						if ( isset($valorF[0]) ) {
+
+							if ( $valorF[0]['dvf_paytoday'] > $valorF[0]['dvf_doctotal'] ) {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resUpdateFactPay,
+									'mensaje'	=> 'El monto aplicado supera el monto total de la factura ID # '.$Data['vnc_baseentry']
+								);
+	
+								return $this->response($respuesta);
+	
+							}
+
+
+							
+							if ( $valorF[0]['dvf_paytoday'] < 0 ) {
+
+								$this->pedeo->trans_rollback();
+
+								$respuesta = array(
+									'error'   => true,
+									'data' => $resUpdateFactPay,
+									'mensaje'	=> 'No es posible bajar el valor total del documento factura ID # '.$Data['vnc_baseentry']
+								);
+	
+								return $this->response($respuesta);
+	
+							}
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data' => $resUpdateFactPay,
+								'mensaje'	=> 'No se pudo verificar el valor aplicado por la nota credito a la factura ID # '.$Data['vnc_baseentry']
+							);
+
+							return $this->response($respuesta);
+
+						}
+
 
 					} else {
 
@@ -3457,7 +3727,7 @@ class SalesNcBO extends REST_Controller
 									':ac1_rescon_date' => NULL,
 									':ac1_recon_total' => 0,
 									':ac1_made_user' => isset($Data['vnc_createby']) ? $Data['vnc_createby'] : NULL,
-									':ac1_accperiod' => 1,
+									':ac1_accperiod' => $periodo['data'],
 									':ac1_close' => 0,
 									':ac1_cord' => 0,
 									':ac1_ven_debit' => 0,
@@ -3560,7 +3830,7 @@ class SalesNcBO extends REST_Controller
 				$respuesta = array(
 					'error' => false,
 					'data' => $resInsert,
-					'mensaje' => 'Nota crédito de clientes registrada con exito'
+					'mensaje' => 'Nota crédito de clientes #'.$DocNumVerificado.' registrada con exito'
 				);
 			} else {
 				// Se devuelven los cambios realizados en la transaccion
@@ -3780,7 +4050,9 @@ class SalesNcBO extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-		$sqlSelect = self::getColumn('dvnc', 'vnc', '', '', $DECI_MALES, $Data['business'], $Data['branch']);
+		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel";
+
+		$sqlSelect = self::getColumn('dvnc', 'vnc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch']);
 
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
@@ -4085,7 +4357,7 @@ class SalesNcBO extends REST_Controller
 			return;
 		}
 
-			$copy = $this->documentduplicate->getDuplicateDt($Data['nc1_docentry'],'dvnc','vnc1','vnc','nc1','detalle_modular::jsonb');
+			$copy = $this->documentduplicate->getDuplicateDt($Data['nc1_docentry'],'dvnc','vnc1','vnc','nc1','detalle_modular::jsonb,imponible');
 
 			if (isset($copy[0])) {
 

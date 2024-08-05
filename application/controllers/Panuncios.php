@@ -338,10 +338,16 @@ class Panuncios extends REST_Controller
 	{
 
 		$Data = $this->get();
-
-		$sqlSelect = "SELECT epe_id,epe_name,epe_docdate,epe_duedate,
-					 epe_createby, epe_typecode, case when epe_status = 1 then 'Activo' else 'Vencido' end as epe_status 
+		if(isset($Data['validated']) && $Data['validated'] == 1){
+			$sqlSelect = "SELECT epe_id,epe_name,epe_docdate,epe_duedate,
+					 epe_createby, epe_typecode, case when epe_status = 1 then 'Activo' else 'Inactivo' end as epe_status ,epe_status as status
+					 FROM aepe WHERE epe_typecode = :epe_typecode and aepe.epe_status = 1 and aepe.epe_duedate >= current_date";
+		}else{
+			$sqlSelect = "SELECT epe_id,epe_name,epe_docdate,epe_duedate,
+					 epe_createby, epe_typecode, case when epe_status = 1 then 'Activo' else 'Inactivo' end as epe_status ,epe_status as status
 					 FROM aepe WHERE epe_typecode = :epe_typecode";
+		}
+		
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':epe_typecode' => $Data['rtp_typeid']));
 
@@ -446,5 +452,40 @@ class Panuncios extends REST_Controller
 		$this->response($respuesta);
 	}
 
-	
+	public function update_post()
+	{
+		$Data = $this->post();
+
+		if(!isset($Data['epe_id'])){
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'Información enviada invalida'
+			);
+
+			$this->response($respuesta);
+			return;
+		}
+
+		$update = "UPDATE aepe SET epe_status = :epe_status WHERE epe_id = :epe_id";
+		$resUpdate = $this->pedeo->updateRow($update,array(
+			':epe_id' => $Data['epe_id'],
+			':epe_status' => $Data['epe_status']
+		));
+
+		if(is_numeric($resUpdate) && $resUpdate > 0){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resUpdate,
+				'mensaje' => 'Actualización realizada con exito'
+			);
+		}else{
+			$respuesta = array(
+				'error' => true,
+				'data' => $resUpdate,
+				'mensaje' => 'No se puedo realizar la actualización'
+			);
+		}
+		$this->response($respuesta);
+	}
 }

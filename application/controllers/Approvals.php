@@ -222,12 +222,6 @@ class Approvals extends REST_Controller
 				t0.pap_createby,
 				t0.pap_origen AS origin,
 				T0.pap_CURRENCY,
-				CASE
-				WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
-				THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
-				ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
-				END direccion,
-				concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
 				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_baseamnt,'999,999,999,999.00'))) base ,
 				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_DISCOUNT,'999,999,999,999.00'))) descuento,
 				CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
@@ -242,10 +236,6 @@ class Approvals extends REST_Controller
 				INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id AND t0.pap_doctype = t1.tipo
 				INNER JOIN dmev t2 ON t0.pap_slpcode = t2.mev_id
 				INNER JOIN dmdt t3 ON t0.pap_doctype = t3.mdt_doctype
-				LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
-				LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
-				LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
-				LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
 				LEFT JOIN dmdt t8 ON pap_origen = t8.mdt_doctype
 				left join tbad t11 ON  t11.bad_origen = t0.pap_origen AND t11.bad_docentry = t0.pap_docentry
 				INNER JOIN tmau t9 ON t9.mau_docentry = ANY(SELECT json_array_elements_text(t0.pap_model)::integer)
@@ -253,51 +243,7 @@ class Approvals extends REST_Controller
 				WHERE t0.pap_createby = :pgu_code_user
 				AND estado <> 'Cerrado'
 				AND t0.business = :business";
-		// $sqlSelect = "SELECT distinct
-        //     t3.mdt_docname,
-        //     t8.mdt_docname as origen,
-        //     t0.pap_docentry,
-        //     t0.pap_doctype,
-        //     t0.pap_docnum,
-        //     t0.pap_docdate,
-        //     t0.pap_duedate,
-        //  	t0.pap_cardname,
-        //     t0.pap_comment,
-        //     t0.pap_createby,
-        //     t0.pap_origen AS origin,
-        //     T0.pap_CURRENCY,
-        //     CASE
-        //     WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
-        //     THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
-        //     ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
-        //     END direccion,
-        //     concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
-        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_baseamnt,'999,999,999,999.00'))) base ,
-        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_DISCOUNT,'999,999,999,999.00'))) descuento,
-        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
-        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(pap_TAXTOTAl,'999,999,999,999.00'))) iva,
-        //     CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
-		// 	case
-        //         when  t1.estado in('Aprobado','Rechazado','Pendiente Aprobación') then estado
-        //     end estado,
-        //     t2.mev_names as pap_slpcode,
-        //     t0.pap_createby
-        //     FROM dpap t0
-        //     INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id AND t0.pap_doctype = t1.tipo
-        //     INNER JOIN dmev t2 ON t0.pap_slpcode = t2.mev_id
-        //     INNER JOIN dmdt t3 ON t0.pap_doctype = t3.mdt_doctype
-        //     LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
-        //     LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
-        //     LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
-        //     LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
-        //     LEFT JOIN dmdt t8 ON pap_origen = t8.mdt_doctype
-		// 	left join tbad t11 ON  t11.bad_origen = t0.pap_origen AND t11.bad_docentry = t0.pap_docentry
-        //     inner join tmau t9 ON t9.mau_docentry = t0.pap_model
-        //     inner join pgus t10 ON t10.pgu_code_user = t0.pap_createby
-        //     left join tmau t12 ON t0.pap_model = t12.mau_docentry
-        //     WHERE t0.pap_createby = :pgu_code_user 
-		// 	AND estado <> 'Cerrado'
-		// 	AND t0.business = :business";
+		
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':pgu_code_user' => $Data['code_user'], ':business' => $Data['business']));
 		// print_r($sqlSelect);exit();die();
@@ -376,7 +322,7 @@ class Approvals extends REST_Controller
 				LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
 				LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
 				LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
-				LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
+				LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE and t7.dmd_ppal = 1
 				LEFT JOIN dmdt t8 ON pap_origen = t8.mdt_doctype
 				INNER JOIN tmau t12 ON t12.mau_docentry = ANY(SELECT json_array_elements_text(t0.pap_model)::integer)
 				LEFT JOIN tbad t11 ON  t11.bad_origen = t0.pap_origen and t11.bad_docentry = t0.pap_docentry and t11.bad_docentry_model = t12.mau_docentry 
@@ -390,55 +336,6 @@ class Approvals extends REST_Controller
 				select bad_id from tbad where bad_docentry_model = t12.mau_docentry and bad_doctype = t11.bad_doctype and bad_docentry = t11.bad_doctype and bad_createby = :pap_createby)";
 	
 	
-		// $sqlSelect = "SELECT distinct  on (pap_docentry)
-		// 						    t3.mdt_docname,
-		// 						    t8.mdt_docname as origen,
-		// 						    t0.pap_docentry,
-		// 						    t0.pap_doctype,
-		// 						    t0.pap_docnum,
-		// 						    t0.pap_docdate,
-		// 						    t0.pap_duedate,
-		// 						    t0.pap_cardname,
-		// 						    t0.pap_comment,
-		// 						    t0.pap_createby,
-		// 						    t0.pap_origen AS origin,
-		// 						    T0.pap_CURRENCY,
-		// 						    CASE
-		// 						    WHEN COALESCE(TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY)),'') = ''
-		// 						    THEN TRIM(CONCAT(T7.DMD_ADRESS,' ',T7.DMD_CITY))
-		// 						    ELSE TRIM(CONCAT(T5.DMD_ADRESS,' ',T5.DMD_CITY))
-		// 						    END direccion,
-		// 						    concat(t6.dmc_name,' ',t6.dmc_last_name) contacto,
-		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_baseamnt,'999,999,999,999.00'))) base ,
-		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_DISCOUNT,'999,999,999,999.00'))) descuento,
-		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_doctotal,'999,999,999,999.00'))) as pap_doctotal,
-		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR(t0.pap_TAXTOTAl,'999,999,999,999.00'))) iva,
-		// 						    CONCAT(T0.pap_CURRENCY,' ',TRIM(TO_CHAR((T0.pap_baseamnt - T0.pap_DISCOUNT),'999,999,999,999.00'))) subtotal,
-		// 						    case
-		// 						        when lower(statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry)) in('aprobado por mi','rechazado por mi')
-		// 						        then statusapprovals(:pap_createby,t0.pap_doctype,t0.pap_docentry)
-		// 						        else 'Pendiente Aprobación'
-		// 						end estado,
-		// 						    t2.mev_names as pap_slpcode
-		// 						    FROM dpap t0
-		// 							INNER JOIN responsestatus t1 ON t0.pap_docentry = t1.id and t0.pap_doctype = t1.tipo
-		// 						    left  join dmev t2 on t0.pap_slpcode = t2.mev_id
-		// 						    left JOIN dmdt t3 on t0.pap_doctype = t3.mdt_doctype
-		// 						    LEFT JOIN DMSN T4 ON t0.pap_cardcode = t4.dms_card_code
-		// 						    LEFT JOIN DMSD T5 ON T0.pap_ADRESS = CAST(T5.DMD_ID AS VARCHAR)
-		// 						    LEFT JOIN DMSC T6 ON T0.pap_CONTACID = CAST(T6.DMC_ID AS VARCHAR)
-		// 						    LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE
-		// 						    LEFT JOIN dmdt t8 on pap_origen = t8.mdt_doctype
-		// 						    left join tbad t11 on  t11.bad_origen = t0.pap_origen and t11.bad_docentry = t0.pap_docentry
-		// 						    left join tmau t12 on t0.pap_model = t12.mau_docentry
-		// 						    WHERE t0.pap_model IN(
-		// 						    SELECT tmau.mau_docentry
-		// 						    FROM tmau
-		// 						    INNER JOIN pgus
-		// 						    ON pgu_code_user = :pap_createby
-		// 						    AND pgu_id_usuario = any(regexp_split_to_array(mau_approvers,',')::int[]))
-		// 							and estado not in ('Cerrado','Aprobado','Rechazado')  and  process  = 'ApprovalProcess'
-		// 							and t0.business = :business and t0.branch = :branch";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 			':pap_createby' => $Data['code_user'],
@@ -591,7 +488,7 @@ class Approvals extends REST_Controller
 
 			return;
 		}
-		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1','detalle_modular::jsonb,fechaentrega,tax_base');
+		$copy = $this->documentcopy->Copy($Data['ap1_docentry'],'dpap','pap1','pap','ap1','detalle_modular::jsonb,fechaentrega,tax_base,clean_quantity');
 
 
 		if (isset($copy[0])) {
@@ -669,8 +566,7 @@ class Approvals extends REST_Controller
 						FROM dpap t1
 						left join tbad t2
 						on t2.bad_docentry = t1.pap_docentry and t2.bad_origen = t1.pap_origen
-						WHERE t2.bad_estado = 1
-						AND t1.pap_doctype = :pap_doctype
+						WHERE t1.pap_doctype = :pap_doctype
 						AND t1.pap_docentry = :pap_docentry
 						AND t1.pap_origen = :pap_origen
 						GROUP BY t2.bad_estado";
@@ -712,7 +608,7 @@ class Approvals extends REST_Controller
 					//SE INSERTA EL ESTADO DEL DOCUMENTO
 
 					$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 					$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 

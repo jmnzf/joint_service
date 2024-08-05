@@ -23,6 +23,7 @@ class AccountReconciliations extends REST_Controller
         $this->load->library('pedeo', [$this->pdo]);
         $this->load->library('generic');
         $this->load->library('DocumentNumbering');
+        $this->load->library('account');
 
     }
 
@@ -51,11 +52,11 @@ class AccountReconciliations extends REST_Controller
         $sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
 													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
 													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line)VALUES (:ac1_trans_id, :ac1_account,
+													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_line, business, branch)VALUES (:ac1_trans_id, :ac1_account,
 													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
 													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
 													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line)";
+													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_line, :business, :branch)";
 
         if (!isset($Data['detail'])) {
 
@@ -216,8 +217,8 @@ class AccountReconciliations extends REST_Controller
 
         $this->pedeo->trans_begin();
 
-        $sqlInsert = "INSERT INTO dcrc(crc_docnum, crc_docdate, crc_series, crc_cardcode, crc_currency, crc_comment, crc_doctype, crc_createby, crc_cardtype1, crc_cardcode2, crc_cardtype2)
-	                  VALUES (:crc_docnum, :crc_docdate, :crc_series, :crc_cardcode, :crc_currency, :crc_comment, :crc_doctype, :crc_createby, :crc_cardtype1,:crc_cardcode2, :crc_cardtype2)";
+        $sqlInsert = "INSERT INTO dcrc(crc_docnum, crc_docdate, crc_series, crc_cardcode, crc_currency, crc_comment, crc_doctype, crc_createby, crc_cardtype1, crc_cardcode2, crc_cardtype2, business, branch)
+	                  VALUES (:crc_docnum, :crc_docdate, :crc_series, :crc_cardcode, :crc_currency, :crc_comment, :crc_doctype, :crc_createby, :crc_cardtype1,:crc_cardcode2, :crc_cardtype2, :business, :branch)";
 
 
 		$s1 = "";
@@ -247,7 +248,7 @@ class AccountReconciliations extends REST_Controller
 					$ct1 = $Data['crc_cardtype'][$i];
 				}else if ($i == 1){
 					$s2 = $Data['crc_cardcode'][$i];
-					$ct3 = $Data['crc_cardtype'][$i];
+					$ct2 = $Data['crc_cardtype'][$i];
 				}
 				
 			}
@@ -265,7 +266,9 @@ class AccountReconciliations extends REST_Controller
             ':crc_createby' => isset($Data['crc_createby']) ? $Data['crc_createby'] : null,
 			'crc_cardtype1' => $ct1,
 			'crc_cardcode2' => $s2,
-			'crc_cardtype2' => $ct2
+			'crc_cardtype2' => $ct2,
+            ':business' => $Data['business'],
+            ':branch' => $Data['branch'],
 
         ));
 
@@ -332,8 +335,8 @@ class AccountReconciliations extends REST_Controller
 
             //SE AGREGA ASIENTO CONTABLE
 
-            $sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user,mac_accperiod)
-                                 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user,:mac_accperiod)";
+            $sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user,mac_accperiod, business, branch)
+                                 VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user,:mac_accperiod, :business, :branch)";
 
             $resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
 
@@ -365,6 +368,8 @@ class AccountReconciliations extends REST_Controller
                 ':mac_update_date' => date("Y-m-d"),
                 ':mac_update_user' => isset($Data['crc_createby']) ? $Data['crc_createby'] : null,
                 ':mac_accperiod' => $periodo['data'],
+                ':business' => $Data['business'],
+                ':branch' => $Data['branch'],
             ));
 
             if (is_numeric($resInsertAsiento) && $resInsertAsiento > 0) {
@@ -389,8 +394,8 @@ class AccountReconciliations extends REST_Controller
             //INICIA PROCESO PARA INSERTAR EL DETALLE DE LA RECONCILIACION
             foreach ($ContenidoDetalle as $key => $detail) {
 
-                $sqlInsertDetail = "INSERT INTO crc1(rc1_docentry, rc1_baseentry, rc1_basetype, rc1_docnum, rc1_docdate, rc1_docduedev, rc1_doctotal, rc1_valapply, rc1_acctcode, rc1_cardcode, rc1_cardtype)
-	                                    VALUES (:rc1_docentry, :rc1_baseentry, :rc1_basetype, :rc1_docnum, :rc1_docdate, :rc1_docduedev, :rc1_doctotal, :rc1_valapply, :rc1_acctcode, :rc1_cardcode, :rc1_cardtype)";
+                $sqlInsertDetail = "INSERT INTO crc1(rc1_docentry, rc1_baseentry, rc1_basetype, rc1_docnum, rc1_docdate, rc1_docduedev, rc1_doctotal, rc1_valapply, rc1_acctcode, rc1_cardcode, rc1_cardtype, rc1_line_num)
+	                            VALUES (:rc1_docentry, :rc1_baseentry, :rc1_basetype, :rc1_docnum, :rc1_docdate, :rc1_docduedev, :rc1_doctotal, :rc1_valapply, :rc1_acctcode, :rc1_cardcode, :rc1_cardtype, :rc1_line_num)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
@@ -405,20 +410,22 @@ class AccountReconciliations extends REST_Controller
                     ':rc1_acctcode' => is_numeric($detail['rc1_acctcode']) ? $detail['rc1_acctcode'] : 0,
                     ':rc1_cardcode' => isset($detail['rc1_cardcode']) ? $detail['rc1_cardcode'] : null,
 					':rc1_cardtype' => isset($detail['rc1_cardtype']) ? $detail['rc1_cardtype'] : null,
+                    ':rc1_line_num' => isset($detail['ac1_line_num']) && is_numeric($detail['ac1_line_num']) ? $detail['ac1_line_num'] : 0
                 ));
 
                 $VrlPagoDetalleNormal = 0;
                 $Equiv = 0;
-
+                $EsAnticipoDoc = 0;
                 //VERIFICANDO DOCUMENTOS
                 if ($detail['rc1_doctype'] == 15 || $detail['rc1_doctype'] == 16 || $detail['rc1_doctype'] == 17
                     || $detail['rc1_doctype'] == 19 || $detail['rc1_doctype'] == 18 || $detail['rc1_doctype'] == 20
-                    || $detail['rc1_doctype'] == 5 || $detail['rc1_doctype'] == 6 || $detail['rc1_doctype'] == 7 || $detail['rc1_doctype'] == 34) {
+                    || $detail['rc1_doctype'] == 5 || $detail['rc1_doctype'] == 6 || $detail['rc1_doctype'] == 7 
+                    || $detail['rc1_doctype'] == 34 || $detail['rc1_doctype'] == 46 || $detail['rc1_doctype'] == 47) {
 
                     $pf = "";
                     $tb = "";
 
-                    if ($detail['rc1_doctype'] == 15) {
+                    if ($detail['rc1_doctype'] == 15 || $detail['rc1_doctype'] == 46) {
                         $pf = "cfc";
                         $tb = "dcfc";
                         $OP = 2;
@@ -454,6 +461,42 @@ class AccountReconciliations extends REST_Controller
 
                         $OP = $detail['ac1_cord'];
 
+                    }else if($detail['rc1_doctype'] == 47){
+                        $OP = 1;
+                        $sqlPsnk = "SELECT 
+										CASE 
+											WHEN ac1_credit > 0 THEN 1
+											ELSE 0
+										END AS op	
+										FROM mac1 
+										WHERE ac1_line_num = :ac1_line_num";
+                        $resPsnk = $this->pedeo->queryTable($sqlPsnk, array(
+                            ':ac1_line_num' => $detail['ac1_line_num']
+                        ));
+                        
+                        if (isset($resPsnk[0])){
+
+                            if ( $resPsnk[0]['op'] == 1 ){
+                                $pf = "";
+                                $tb  = "";
+                                $EsAnticipoDoc = 1;
+                            }else{
+                                $pf = "vrc";
+                                $tb  = "dvrc";
+                                $EsAnticipoDoc = 0;
+                            }
+
+                        }else{
+                            $this->pedeo->trans_rollback();
+
+                            $respuesta = array(
+                                'error'   => true,
+                                'data'	  => $resPsnk,
+                                'mensaje'	=> 'No se pudo validar el tipo de operación para el tipo de documento 47'
+                            );
+            
+                            return $this->response($respuesta);
+                        }
                     }
 
                     $resVlrPay = $this->generic->validateBalance($detail['rc1_docentry'], $detail['rc1_doctype'], $tb, $pf, $detail['rc1_valapply'], $Data['crc_currency'], $Data['crc_docdate'], $OP, isset($detail['ac1_line_num']) ? $detail['ac1_line_num'] : 0);
@@ -793,12 +836,126 @@ class AccountReconciliations extends REST_Controller
                         }
                     }
 
+                    // PAYTODAY
+                    if ($detail['rc1_doctype'] == 47) {
+                        // se actualiza la factura de distribucion
+
+                        if ($EsAnticipoDoc == 0){
+
+                            $sqlUpdateFactPay = "UPDATE  dvrc  SET vrc_paytoday = COALESCE(vrc_paytoday,0)+:vrc_paytoday WHERE vrc_docentry = :vrc_docentry and vrc_doctype = :vrc_doctype";
+
+                            $resUpdateFactPay = $this->pedeo->updateRow($sqlUpdateFactPay, array(
+    
+                                ':vrc_paytoday' => round($VlrTotalOpc, $DECI_MALES),
+                                ':vrc_docentry' => $detail['rc1_docentry'],
+                                ':vrc_doctype' => $detail['rc1_doctype'],
+    
+                            ));
+    
+                            if (is_numeric($resUpdateFactPay) && $resUpdateFactPay == 1) {
+    
+                            } else {
+                                $this->pedeo->trans_rollback();
+    
+                                $respuesta = array(
+                                    'error' => true,
+                                    'data' => $resUpdateFactPay,
+                                    'mensaje' => 'No se pudo actualizar el valor del pago en la factura ' . $detail['rc1_docentry'],
+                                );
+    
+                                $this->response($respuesta);
+    
+                                return;
+                            }
+                        }
+
+                         //ASIENTO
+
+
+                        $slqUpdateVenDebit = "";
+
+                        if ($EsAnticipoDoc == 0){
+                            $slqUpdateVenDebit = "UPDATE mac1
+                            SET ac1_ven_credit = ac1_ven_credit + :ac1_ven
+                            WHERE ac1_line_num = :ac1_line_num";
+                        }else{
+                            $slqUpdateVenDebit = "UPDATE mac1
+                            SET ac1_ven_debit = ac1_ven_debit + :ac1_ven
+                            WHERE ac1_line_num = :ac1_line_num";
+                        }
+
+
+                        $resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
+
+                             ':ac1_ven' => round($VlrTotalOpc, $DECI_MALES),
+                             ':ac1_line_num' => $detail['ac1_line_num'],
+
+                        ));
+
+                        if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
+
+                        } else {
+
+                            $this->pedeo->trans_rollback();
+
+                            $respuesta = array(
+                                 'error' => true,
+                                 'data' => $resUpdateVenDebit,
+                                 'mensaje' => 'No se pudo actualizar el valor del pago en la factura ' . $detail['rc1_docentry'],
+                            );
+
+                            $this->response($respuesta);
+
+                            return;
+                        }
+
+                        //VERIFICAR PARA CERRAR DOCUMENTO
+
+                        if ($EsAnticipoDoc == 0){
+                            $resEstado = $this->generic->validateBalanceAndClose($detail['rc1_docentry'], $detail['rc1_doctype'], 'dvrc', 'vrc');
+
+                            if (isset($resEstado['error']) && $resEstado['error'] === true) {
+                                $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+                                                VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+    
+                                $resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+    
+                                    ':bed_docentry' => $detail['rc1_docentry'],
+                                    ':bed_doctype' => $detail['rc1_doctype'],
+                                    ':bed_status' => 3, //ESTADO CERRADO
+                                    ':bed_createby' => $Data['crc_createby'],
+                                    ':bed_date' => date('Y-m-d'),
+                                    ':bed_baseentry' => $resInsert,
+                                    ':bed_basetype' => $Data['crc_doctype'],
+                                ));
+    
+                                if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+    
+                                } else {
+    
+                                    $this->pedeo->trans_rollback();
+    
+                                    $respuesta = array(
+                                        'error' => true,
+                                        'data' => $resInsertEstado,
+                                        'mensaje' => 'No se pudo registrar el pago',
+                                    );
+    
+                                    $this->response($respuesta);
+    
+                                    return;
+                                }
+    
+                            }
+                        }
+                    }
+
                     //ASIENTO DEL ANTICIPO CLIENTE
                     if ($detail['rc1_doctype'] == 20) {
 
                         $slqUpdateVenDebit = "UPDATE mac1
-																						SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
-																						WHERE ac1_line_num = :ac1_line_num";
+                                            SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+                                            WHERE ac1_line_num = :ac1_line_num";
                         $resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
                             ':ac1_ven_debit' => round($VlrTotalOpc, $DECI_MALES),
@@ -828,7 +985,7 @@ class AccountReconciliations extends REST_Controller
                     //EMPIEZA ESPACIO PARA COMPRAS
                     //ACTUALIZAR VALOR PAGADO DE LA FACTURA DE COMPRA
 
-                    if ($detail['rc1_doctype'] == 15) {
+                    if ($detail['rc1_doctype'] == 15 || $detail['rc1_doctype'] == 46) {
 
                         $sqlUpdateFactPay = "UPDATE  dcfc  SET cfc_paytoday = COALESCE(cfc_paytoday,0)+:cfc_paytoday WHERE cfc_docentry = :cfc_docentry and cfc_doctype = :cfc_doctype";
 
@@ -953,8 +1110,8 @@ class AccountReconciliations extends REST_Controller
 
                         //ASIENTO
                         $slqUpdateVenDebit = "UPDATE mac1
-																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
-																						WHERE ac1_line_num = :ac1_line_num";
+                                            SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+                                            WHERE ac1_line_num = :ac1_line_num";
 
                         $resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
@@ -1114,7 +1271,7 @@ class AccountReconciliations extends REST_Controller
                     }
 
                     //MOVIMIENTO DE DOCUMENTOS
-                    if ($detail['rc1_doctype'] == 5 || $detail['rc1_doctype'] == 34 || $detail['rc1_doctype'] == 6 || $detail['rc1_doctype'] == 7 || $detail['rc1_doctype'] == 15 || $detail['rc1_doctype'] == 16 || $detail['rc1_doctype'] == 17 || $detail['rc1_doctype'] == 19 || $detail['rc1_doctype'] == 20) {
+                    if ($detail['rc1_doctype'] == 5 || $detail['rc1_doctype'] == 34 || $detail['rc1_doctype'] == 6 || $detail['rc1_doctype'] == 7 || $detail['rc1_doctype'] == 15 || $detail['rc1_doctype'] == 16 || $detail['rc1_doctype'] == 17 || $detail['rc1_doctype'] == 19 || $detail['rc1_doctype'] == 20 || $detail['rc1_doctype'] == 46) {
                         //SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
                         if (isset($detail['rc1_docentry']) && is_numeric($detail['rc1_docentry']) && isset($detail['rc1_doctype']) && is_numeric($detail['rc1_doctype'])) {
 
@@ -1230,6 +1387,7 @@ class AccountReconciliations extends REST_Controller
                 $DetalleAsiento->cord = isset($detail['ac1_cord']) ? $detail['ac1_cord'] : null;
                 $DetalleAsiento->vlrpaiddesc = $VlrTotalOpc;
                 $DetalleAsiento->tasaoriginaldoc = $TasaOrg;
+                $DetalleAsiento->anticipodoc = $EsAnticipoDoc;
 				
 
                 // $llaveDetalleAsiento = $DetalleAsiento->tipodoc.$DetalleAsiento->tasaoriginaldoc;
@@ -1274,6 +1432,7 @@ class AccountReconciliations extends REST_Controller
                 $ac1cord = null;
                 $tasadoc = 0;
 				$cardcode = "";
+                $anticipodoc = 0;
 
                 foreach ($posicion as $key => $value) {
 
@@ -1284,6 +1443,7 @@ class AccountReconciliations extends REST_Controller
                     $ac1cord = $value->cord;
                     $tasadoc = $value->tasaoriginaldoc;
 					$cardcode = $value->tercero;
+                    $anticipodoc = $value->anticipodoc;
                 }
 
                 $debito = 0;
@@ -1292,7 +1452,7 @@ class AccountReconciliations extends REST_Controller
                 $MontoSysCR = 0;
                 $TotalPagoOriginal = $TotalPago;
 
-                if ($doctype == 5 || $doctype == 34 || $doctype == 7 || $doctype == 19 || $doctype == 16) {
+                if ($doctype == 5 || $doctype == 34 || $doctype == 7 || $doctype == 19 || $doctype == 16 || $doctype == 47 && $anticipodoc == 0) {
 
                     $credito = $TotalPago;
 
@@ -1306,7 +1466,7 @@ class AccountReconciliations extends REST_Controller
 
                     }
 
-                } else if ($doctype == 6 || $doctype == 20 || $doctype == 15 || $doctype == 17) {
+                } else if ($doctype == 6 || $doctype == 20 || $doctype == 15 || $doctype == 17 || $doctype == 47 && $anticipodoc == 1) {
 
                     $debito = $TotalPago;
 
@@ -1348,6 +1508,26 @@ class AccountReconciliations extends REST_Controller
                         }
                     }
                 }
+
+                // SE AGREGA AL BALANCE
+                if ( $debito > 0 ){
+                    $BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['crc_docdate'], $Data['business'], $Data['branch']);
+                }else{
+                    $BALANCE =  $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['crc_docdate'], $Data['business'], $Data['branch']);
+                }
+                if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+                    $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                        'error' => true,
+                        'data' => $BALANCE,
+                        'mensaje' => $BALANCE['mensaje']
+                    );
+
+                    return $this->response($respuesta);
+                }	
+                //
 
                 $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1391,6 +1571,8 @@ class AccountReconciliations extends REST_Controller
                     ':ac1_legal_num' => $cardcode,
                     ':ac1_codref' => 1,
                     ':ac1_line' => $ACCLINE,
+                    ':business' => $Data['business'],
+                    ':branch' => $Data['branch'],
                 ));
 
                 $ACCLINE = $ACCLINE + 1;
@@ -1470,6 +1652,23 @@ class AccountReconciliations extends REST_Controller
                         $debito = $VlrDiffP;
                         $MontoSysDB = ($debito / $TasaLocSys);
 
+                        // SE AGREGA AL BALANCE
+                      
+                        $BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuentaD, 1, $Data['crc_docdate'], $Data['business'], $Data['branch']);
+                        if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+                        //
+
                         $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
                             ':ac1_trans_id' => $resInsertAsiento,
@@ -1499,7 +1698,7 @@ class AccountReconciliations extends REST_Controller
                             ':ac1_rescon_date' => null,
                             ':ac1_recon_total' => 0,
                             ':ac1_made_user' => 0,
-                            ':ac1_accperiod' => 1,
+                            ':ac1_accperiod' => $periodo['data'],
                             ':ac1_close' => 0,
                             ':ac1_cord' => 0,
                             ':ac1_ven_debit' => 0,
@@ -1512,6 +1711,8 @@ class AccountReconciliations extends REST_Controller
                             ':ac1_legal_num' => null,
                             ':ac1_codref' => 1,
                             ':ac1_line' => 1,
+                            ':business' => $Data['business'],
+                            ':branch' => $Data['branch'],
                         ));
 
                         if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1545,6 +1746,23 @@ class AccountReconciliations extends REST_Controller
                         $credito = $VlrDiffN;
                         $MontoSysCR = ($credito / $TasaLocSys);
 
+                        // SE AGREGA AL BALANCE
+                      
+                        $BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuentaD, 2, $Data['crc_docdate'], $Data['business'], $Data['branch']);
+                        if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+                        //
+
                         $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
                             ':ac1_trans_id' => $resInsertAsiento,
@@ -1574,7 +1792,7 @@ class AccountReconciliations extends REST_Controller
                             ':ac1_rescon_date' => null,
                             ':ac1_recon_total' => 0,
                             ':ac1_made_user' => 0,
-                            ':ac1_accperiod' => 1,
+                            ':ac1_accperiod' => $periodo['data'],
                             ':ac1_close' => 0,
                             ':ac1_cord' => 0,
                             ':ac1_ven_debit' => 0,
@@ -1587,6 +1805,8 @@ class AccountReconciliations extends REST_Controller
                             ':ac1_legal_num' => null,
                             ':ac1_codref' => 1,
                             ':ac1_line' => 1,
+                            ':business' => $Data['business'],
+                            ':branch' => $Data['branch'],
                         ));
 
                         if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1631,6 +1851,24 @@ class AccountReconciliations extends REST_Controller
                         $credito = $VlrDiffP;
                         $MontoSysCR = ($credito / $TasaLocSys);
 
+                        
+                        // SE AGREGA AL BALANCE
+                      
+                        $BALANCE = $this->account->addBalance($periodo['data'], round($VlrDiffP, $DECI_MALES), $cuentaD, 2, $Data['crc_docdate'], $Data['business'], $Data['branch']);
+                        if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+                        //
+
                         $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
                             ':ac1_trans_id' => $resInsertAsiento,
@@ -1660,7 +1898,7 @@ class AccountReconciliations extends REST_Controller
                             ':ac1_rescon_date' => null,
                             ':ac1_recon_total' => 0,
                             ':ac1_made_user' => 0,
-                            ':ac1_accperiod' => 1,
+                            ':ac1_accperiod' => $periodo['data'],
                             ':ac1_close' => 0,
                             ':ac1_cord' => 0,
                             ':ac1_ven_debit' => 0,
@@ -1673,6 +1911,8 @@ class AccountReconciliations extends REST_Controller
                             ':ac1_legal_num' => null,
                             ':ac1_codref' => 1,
                             ':ac1_line' => 1,
+                            ':business' => $Data['business'],
+                            ':branch' => $Data['branch'],
                         ));
 
                         if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1700,6 +1940,24 @@ class AccountReconciliations extends REST_Controller
                         $cuentaD = $CuentaDiferenciaCambio['pge_acc_dcn'];
                         $debito = $VlrDiffN;
                         $MontoSysDB = ($debito / $TasaLocSys);
+
+                        // SE AGREGA AL BALANCE
+
+                        $BALANCE = $this->account->addBalance($periodo['data'], round($VlrDiffN, $DECI_MALES), $cuentaD, 1, $Data['crc_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+
+                        //
 
                         $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1730,7 +1988,7 @@ class AccountReconciliations extends REST_Controller
                             ':ac1_rescon_date' => null,
                             ':ac1_recon_total' => 0,
                             ':ac1_made_user' => 0,
-                            ':ac1_accperiod' => 1,
+                            ':ac1_accperiod' => $periodo['data'],
                             ':ac1_close' => 0,
                             ':ac1_cord' => 0,
                             ':ac1_ven_debit' => 0,
@@ -1743,6 +2001,8 @@ class AccountReconciliations extends REST_Controller
                             ':ac1_legal_num' => null,
                             ':ac1_codref' => 1,
                             ':ac1_line' => 1,
+                            ':business' => $Data['business'],
+                            ':branch' => $Data['branch'],
                         ));
 
                         if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1842,7 +2102,7 @@ class AccountReconciliations extends REST_Controller
                     ':ac1_rescon_date' => null,
                     ':ac1_recon_total' => 0,
                     ':ac1_made_user' => isset($Data['crc_createby']) ? $Data['crc_createby'] : null,
-                    ':ac1_accperiod' => 1,
+                    ':ac1_accperiod' => $periodo['data'],
                     ':ac1_close' => 0,
                     ':ac1_cord' => 0,
                     ':ac1_ven_debit' => 0,
@@ -1855,6 +2115,8 @@ class AccountReconciliations extends REST_Controller
                     ':ac1_legal_num' => null,
                     ':ac1_codref' => 1,
                     ':ac1_line' => 1,
+                    ':business' => $Data['business'],
+                    ':branch' => $Data['branch'],
                 ));
 
                 if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1908,6 +2170,26 @@ class AccountReconciliations extends REST_Controller
                     $lcredito = 0;
                 }
 
+                // SE AGREGA AL BALANCE
+                if ( $ldebito > 0 ){
+                    $BALANCE =  $this->account->addBalance($periodo['data'], round($ldebito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 1, $Data['crc_docdate'], $Data['business'], $Data['branch']);
+                }else{
+                    $BALANCE =  $this->account->addBalance($periodo['data'], round($lcredito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 2, $Data['crc_docdate'], $Data['business'], $Data['branch']);
+                }
+                if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+                    $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                        'error' => true,
+                        'data' => $BALANCE,
+                        'mensaje' => $BALANCE['mensaje']
+                    );
+
+                    return $this->response($respuesta);
+                }	
+                //
+
                 $resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
                     ':ac1_trans_id' => $resInsertAsiento,
@@ -1937,7 +2219,7 @@ class AccountReconciliations extends REST_Controller
                     ':ac1_rescon_date' => null,
                     ':ac1_recon_total' => 0,
                     ':ac1_made_user' => isset($Data['crc_createby']) ? $Data['crc_createby'] : null,
-                    ':ac1_accperiod' => 1,
+                    ':ac1_accperiod' => $periodo['data'],
                     ':ac1_close' => 0,
                     ':ac1_cord' => 0,
                     ':ac1_ven_debit' => 0,
@@ -1950,6 +2232,8 @@ class AccountReconciliations extends REST_Controller
                     ':ac1_legal_num' => null,
                     ':ac1_codref' => 1,
                     ':ac1_line' => 1,
+                    ':business' => $Data['business'],
+                    ':branch' => $Data['branch'],
                 ));
 
                 if (is_numeric($resDetalleAsiento) && $resDetalleAsiento > 0) {
@@ -1972,13 +2256,14 @@ class AccountReconciliations extends REST_Controller
             }
             //
 
-            // $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num";
-            // $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
-            // print_r(json_encode($ressqlmac1));
-            // exit;
+			// Esto es para validar el resultado de la contabilidad
+			// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
+			// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+			// print_r(json_encode($ressqlmac1));
+			// exit;
 
             //SE VALIDA LA CONTABILIDAD CREADA
-            $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+            $validateCont = $this->generic->validateAccountingAccent2($resInsertAsiento);
 
             if (isset($validateCont['error']) && $validateCont['error'] == false) {
 
@@ -2024,12 +2309,12 @@ class AccountReconciliations extends REST_Controller
     {
 
         $sqlSelect = "SELECT DISTINCT dcrc.*, tded.ded_description, tded.ded_id
-											FROM dcrc
-											INNER JOIN tbed
-											ON dcrc.crc_docentry = tbed.bed_docentry
-											AND dcrc.crc_doctype = tbed.bed_doctype
-											INNER JOIN tded
-											ON tbed.bed_status  = tded.ded_id";
+                    FROM dcrc
+                    INNER JOIN responsestatus
+                    ON dcrc.crc_docentry = responsestatus.id
+                    AND dcrc.crc_doctype = responsestatus.tipo
+                    INNER JOIN tded
+                    ON trim(estado)  = trim(tded.ded_description)";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
@@ -2052,6 +2337,40 @@ class AccountReconciliations extends REST_Controller
 
         $this->response($respuesta);
     }
+
+    //OBTENER RECONCILIACION DETALLE
+    public function getAccountReconciliationsById_get()
+    {
+
+        $Data = $this->get();
+
+        $sqlSelect = "SELECT crc1.*, mdt_docname
+                    FROM crc1 
+                    INNER JOIN dmdt ON rc1_basetype = mdt_id
+                    WHERE rc1_docentry = :rc1_docentry";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(":rc1_docentry" => $Data['rc1_docentry']));
+
+        if (isset($resSelect[0])) {
+
+            $respuesta = array(
+                'error' => false,
+                'data' => $resSelect,
+                'mensaje' => '');
+
+        } else {
+
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'busqueda sin resultados',
+            );
+
+        }
+
+        $this->response($respuesta);
+    }
+
 
     private function buscarPosicion($llave, $inArray)
     {

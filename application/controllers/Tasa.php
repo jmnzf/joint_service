@@ -26,7 +26,10 @@ class Tasa extends REST_Controller {
 	public function createTasa_post(){
 
         $Data = $this->post();
-        if(empty($Data)){
+
+       
+
+        if( !isset($Data['tsa_curro']) && !isset($Data['tsa_currd']) && !isset($Data['tsa_date']) ){
           $Data = $_POST;
         }
 

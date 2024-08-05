@@ -3,6 +3,8 @@
 defined('BASEPATH') or exit('No direct script access allowed');
 
 require_once(APPPATH . '/libraries/REST_Controller.php');
+
+use PhpOffice\PhpSpreadsheet\Calculation\TextData\Replace;
 use Restserver\libraries\REST_Controller;
 
 class bulkPayments extends REST_Controller
@@ -23,6 +25,8 @@ class bulkPayments extends REST_Controller
         $this->load->library('pedeo', [$this->pdo]);
         $this->load->library('generic');
         $this->load->library('DocumentNumbering');
+		$this->load->library('account');
+		$this->load->helper('download');
 
     }
 
@@ -89,10 +93,10 @@ class bulkPayments extends REST_Controller
         cfc_docnum as numerodocumento,
         mac1.ac1_font_type as numtype,
         mdt_docname as tipo,
-        case
-        when mac1.ac1_font_type = 15 then get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,mac1.ac1_credit, get_localcur())
-        else get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,mac1.ac1_debit, get_localcur())
-        end	 as totalfactura,
+		case
+		when mac1.ac1_font_type = 15 OR mac1.ac1_font_type = 46 then get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,mac1.ac1_credit, get_localcur())
+		else get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,mac1.ac1_debit, get_localcur())
+		end	 as totalfactura,
         get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,(mac1.ac1_ven_debit) - (mac1.ac1_credit) , get_localcur()) as saldo,
         '' retencion,
         get_tax_currency(dcfc.cfc_currency,dcfc.cfc_docdate) as tasa_dia,
@@ -263,7 +267,7 @@ class bulkPayments extends REST_Controller
         and mac1.ac1_legal_num = dmsn.dms_card_code
         where 1 = 1 {{tmac_where}}
         and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
-        --FACTURA ANTICIPADA DE COMPRAS
+        --SOLICITUD DE ANTICIPO DE COMPRAS
         UNION ALL
         SELECT  
         dcsa.csa_docentry as ac1_font_key,
@@ -289,7 +293,8 @@ class bulkPayments extends REST_Controller
         from dcsa
         inner join csa1 on dcsa.csa_docentry = csa1.sa1_docentry
         inner join dmdt on dmdt.mdt_doctype = dcsa.csa_doctype
-        where 1 =1 {{dcsa_where}}";
+        where 1 = 1 {{dcsa_where}}
+		and ABS( get_dynamic_conversion(:currency,get_localcur(),dcsa.csa_docdate,(dcsa.csa_anticipate_total) - (dcsa.csa_paytoday) , get_localcur()) ) > 0";
 
         foreach ($config as $key => $value) {
             $where = "";
@@ -307,12 +312,18 @@ class bulkPayments extends REST_Controller
                     $where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND {$value['table']}.{$value['prefix']}_cardcode in ({$Data['doc_cardcode']})" : "";
                     $where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
                     break;
-                    case 'dcsa':
-                    $dateField = ($Data['doc_filter'] == 1) ? "_docdate" : "_taxdate";
+                case 'dcsa':
+                    $dateField = ($Data['doc_filter'] == 1) ? "_docdate" : "_duedate";
                     $where = "AND {$value['table']}.{$value['prefix']}{$dateField} BETWEEN '{$Data['doc_startdate']}'AND '{$Data['doc_enddate']}'";
                     $where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND {$value['table']}.{$value['prefix']}_cardcode in ({$Data['doc_cardcode']})" : "";
                     $where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
                     break;
+				case 'gbpe':
+					$dateField = ($Data['doc_filter'] == 1) ? "_docdate" : "_docdate";
+					$where = "AND {$value['table']}.{$value['prefix']}{$dateField} BETWEEN '{$Data['doc_startdate']}'AND '{$Data['doc_enddate']}'";
+					$where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND {$value['table']}.{$value['prefix']}_cardcode in ({$Data['doc_cardcode']})" : "";
+					$where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
+					break;
                 default:
                     $dateField = ($Data['doc_filter'] == 1) ? "_docdate" : "_duedate";
                     $where = "AND {$value['table']}.{$value['prefix']}{$dateField} BETWEEN '{$Data['doc_startdate']}'AND '{$Data['doc_enddate']}'";
@@ -326,7 +337,7 @@ class bulkPayments extends REST_Controller
 
         $fecha = $Data['doc_enddate'] ?? date("Y-m-d");
         $sqlSelect = str_replace('{fecha}', $fecha, $sqlSelect);
-
+		// print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(":currency" => $Data['doc_currency'], ":business" => $Data['business'], ":branch"=> $Data['branch']));
         if (isset($resSelect[0])) {
 
@@ -375,13 +386,13 @@ class bulkPayments extends REST_Controller
 
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
-													ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
-													ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
-													ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, business, branch)VALUES (:ac1_trans_id, :ac1_account,
-													:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
-													:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
-													:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
-													:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :business, :branch)";
+							ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype,
+							ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord,
+							ac1_ven_debit,ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, business, branch)VALUES (:ac1_trans_id, :ac1_account,
+							:ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys,
+							:ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode,
+							:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
+							:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :business, :branch)";
 
 
 
@@ -558,10 +569,10 @@ class bulkPayments extends REST_Controller
 		$sqlInsert = "INSERT INTO
                             	tspm (spm_cardcode,spm_doctype,spm_cardname,spm_address,spm_perscontact,spm_series,spm_docnum,spm_docdate,spm_taxdate,spm_ref,spm_transid,
                                     spm_comments,spm_memo,spm_acctransfer,spm_datetransfer,spm_reftransfer,spm_doctotal,spm_vlrpaid,spm_project,spm_createby,
-                                    spm_createat,spm_payment,spm_currency, business, branch)
+                                    spm_createat,spm_payment,spm_currency,spm_originbank, business, branch)
                       VALUES (:spm_cardcode,:spm_doctype,:spm_cardname,:spm_address,:spm_perscontact,:spm_series,:spm_docnum,:spm_docdate,:spm_taxdate,:spm_ref,:spm_transid,
                               :spm_comments,:spm_memo,:spm_acctransfer,:spm_datetransfer,:spm_reftransfer,:spm_doctotal,:spm_vlrpaid,:spm_project,:spm_createby,
-                              :spm_createat,:spm_payment,:spm_currency, :business, :branch)";
+                              :spm_createat,:spm_payment,:spm_currency, :spm_originbank, :business, :branch)";
 
 
 		// Se Inicia la transaccion,
@@ -596,6 +607,7 @@ class bulkPayments extends REST_Controller
 			':spm_createat' => $this->validateDate($Data['spm_createat']) ? $Data['spm_createat'] : NULL,
 			':spm_payment' => isset($Data['spm_payment']) ? $Data['spm_payment'] : NULL,
 			':spm_currency' => isset($Data['spm_currency']) ? $Data['spm_currency'] : NULL,
+			':spm_originbank' => isset($Data['spm_originbank']) ? $Data['spm_originbank'] : null,
 			':business' => $Data['business'], 
 			':branch' => $Data['branch']
 		));
@@ -629,10 +641,47 @@ class bulkPayments extends REST_Controller
 
 			// FIN PROCESO PARA ACTUALIZAR NUMERACION
 
+			//SE INSERTA EL ESTADO DEL DOCUMENTO
+
+			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+				':bed_docentry' => $resInsert,
+				':bed_doctype' => $Data['spm_doctype'],
+				':bed_status' => 3, //ESTADO CERRADO
+				':bed_createby' => $Data['spm_createby'],
+				':bed_date' => date('Y-m-d'),
+				':bed_baseentry' => NULL,
+				':bed_basetype' => NULL
+			));
+
+
+			if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+			} else {
+
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => $resInsertEstado,
+				'mensaje'	=> 'No se pudo registrar el pago'
+			);
+
+
+				$this->response($respuesta);
+
+				return;
+			}
+
+			//FIN PROCESO ESTADO DEL DOCUMENTO
+
 			//Se agregan los asientos contables*/*******
 
-			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch)
-								VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch)";
+			$sqlInsertAsiento = "INSERT INTO tmac(mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_made_usuer, mac_update_date, mac_update_user, business, branch, mac_accperiod)
+								VALUES (:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_made_usuer, :mac_update_date, :mac_update_user, :business, :branch, :mac_accperiod)";
 
 
 			$resInsertAsiento = $this->pedeo->insertRow($sqlInsertAsiento, array(
@@ -665,7 +714,8 @@ class bulkPayments extends REST_Controller
 				':mac_update_date' => date("Y-m-d"),
 				':mac_update_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
 				':business' => $Data['business'], 
-				':branch' => $Data['branch']
+				':branch' => $Data['branch'],
+				':mac_accperiod' => $periodo['data'],
 			));
 
 
@@ -701,13 +751,13 @@ class bulkPayments extends REST_Controller
 
 				if ($Data['spm_billpayment'] == '0' || $Data['spm_billpayment'] == 0) {
 					//VALIDAR EL VALOR QUE SE ESTA PAGANDO NO SEA MAYOR AL SALDO DE LA FACTURA
-					if ($detail['pm1_doctype'] == 15 || $detail['pm1_doctype'] == 16 || $detail['pm1_doctype'] == 17 || $detail['pm1_doctype'] == 19 || $detail['pm1_doctype'] == 18) {
+					if ($detail['pm1_doctype'] == 15 || $detail['pm1_doctype'] == 46 || $detail['pm1_doctype'] == 16 || $detail['pm1_doctype'] == 17 || $detail['pm1_doctype'] == 19 || $detail['pm1_doctype'] == 18 || $detail['pm1_doctype'] == 36 ) {
 
 
 						$pf = "";
 						$tb  = "";
 
-						if ($detail['pm1_doctype'] == 15) {
+						if ($detail['pm1_doctype'] == 15 || $detail['pm1_doctype'] == 46) {
 							$pf = "cfc";
 							$tb  = "dcfc";
 						} else if ($detail['pm1_doctype'] == 16) {
@@ -716,7 +766,10 @@ class bulkPayments extends REST_Controller
 						} else if ($detail['pm1_doctype'] == 17) {
 						} else if ($detail['pm1_doctype'] == 19) {
 							$pf = "bpe";
-							$tb  = "tspm";
+							$tb  = "gbpe";
+						}else if ( $detail['pm1_doctype'] == 36 ){
+							$pf = "csa";
+							$tb  = "dcsa";
 						}
 
 						$resVlrPay = $this->generic->validateBalance($detail['pm1_docentry'], $detail['pm1_doctype'], $tb, $pf, $detail['pm1_vlrpaid'], $Data['spm_currency'], $Data['spm_docdate'], 2, isset($detail['ac1_line_num']) ? $detail['ac1_line_num'] : 0);
@@ -773,9 +826,9 @@ class bulkPayments extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO
                                         	spm1 (pm1_docnum,pm1_docentry,pm1_numref,pm1_docdate,pm1_vlrtotal,pm1_vlrpaid,pm1_comments,pm1_porcdiscount,pm1_doctype,
-                                            pm1_docduedate,pm1_daysbackw,pm1_vlrdiscount,pm1_ocrcode)
+                                            pm1_docduedate,pm1_daysbackw,pm1_vlrdiscount,pm1_ocrcode,pm1_line_num,pm1_basenum, pm1_cardcode, pm1_cuenta)
                                     VALUES (:pm1_docnum,:pm1_docentry,:pm1_numref,:pm1_docdate,:pm1_vlrtotal,:pm1_vlrpaid,:pm1_comments,:pm1_porcdiscount,
-                                            :pm1_doctype,:pm1_docduedate,:pm1_daysbackw,:pm1_vlrdiscount,:pm1_ocrcode)";
+                                            :pm1_doctype,:pm1_docduedate,:pm1_daysbackw,:pm1_vlrdiscount,:pm1_ocrcode,:pm1_line_num,:pm1_basenum, :pm1_cardcode, :pm1_cuenta)";
 
 
 
@@ -792,8 +845,11 @@ class bulkPayments extends REST_Controller
 					':pm1_docduedate' => $this->validateDate($detail['pm1_docduedate']) ? $detail['pm1_docduedate'] : NULL,
 					':pm1_daysbackw' => is_numeric($detail['pm1_daysbackw']) ? $detail['pm1_daysbackw'] : 0,
 					':pm1_vlrdiscount' => is_numeric($detail['pm1_vlrdiscount']) ? $detail['pm1_vlrdiscount'] : 0,
-					':pm1_ocrcode' => isset($detail['pm1_ocrcode']) ? $detail['pm1_ocrcode'] : NULL
-					// ':pm1_ocrcode1' => isset($detail['pm1_ocrcode1'])?$detail['pm1_ocrcode1']:NULL
+					':pm1_ocrcode' => isset($detail['pm1_ocrcode']) ? $detail['pm1_ocrcode'] : NULL,
+					':pm1_line_num' => isset($detail['pm1_line_num']) ? $detail['pm1_line_num']:NULL,
+					':pm1_basenum' => is_numeric($detail['pm1_basenum']) ? $detail['pm1_basenum'] : 0,
+					':pm1_cardcode' => isset($detail['pm1_cardcode']) ? $detail['pm1_cardcode']:NULL,
+					':pm1_cuenta' => is_numeric($detail['pm1_cuenta']) ? $detail['pm1_cuenta'] : 0
 				));
 
 
@@ -805,7 +861,7 @@ class bulkPayments extends REST_Controller
 
 
 						//MOVIMIENTO DE DOCUMENTOS
-						if ($detail['pm1_doctype'] == 15 || $detail['pm1_doctype'] == 16 || $detail['pm1_doctype'] == 17) {
+						if ($detail['pm1_doctype'] == 15  || $detail['pm1_doctype'] == 46 || $detail['pm1_doctype'] == 16 || $detail['pm1_doctype'] == 17  || $detail['pm1_doctype'] == 36 ) {
 							//SE APLICA PROCEDIMIENTO MOVIMIENTO DE DOCUMENTOS
 							if (isset($detail['pm1_docentry']) && is_numeric($detail['pm1_docentry']) && isset($detail['pm1_doctype']) && is_numeric($detail['pm1_doctype'])) {
 
@@ -864,7 +920,7 @@ class bulkPayments extends REST_Controller
 
 						//ACTUALIZAR VALOR PAGADO DE LA FACTURA DE COMPRA
 
-						if ($detail['pm1_doctype'] == 15) {
+						if ($detail['pm1_doctype'] == 15 || $detail['pm1_doctype'] == 46) {
 
 
 
@@ -893,6 +949,8 @@ class bulkPayments extends REST_Controller
 								return;
 							}
 						}
+
+						
 
 
 						// SE ACTUALIZA EL VALOR DEL CAMPO PAY TODAY EN NOTA CREDITO
@@ -924,24 +982,19 @@ class bulkPayments extends REST_Controller
 								return;
 							}
 						}
+						
 
 						// ACTUALIZAR REFERENCIA DE PAGO EN ASIENTO CONTABLE DE LA FACTURA
-						if ($detail['pm1_doctype'] == 15) { // SOLO CUANDO ES UNA FACTURA
+						if ($detail['pm1_doctype'] == 15 || $detail['pm1_doctype'] == 46) { // SOLO CUANDO ES UNA FACTURA
 
 							$slqUpdateVenDebit = "UPDATE mac1
-																						SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
-																						WHERE ac1_legal_num = :ac1_legal_num
-																						AND ac1_font_key = :ac1_font_key
-																						AND ac1_font_type = :ac1_font_type
-																						AND ac1_account = :ac1_account";
+										SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+										WHERE ac1_line_num = :ac1_line_num";
 
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
 								':ac1_ven_debit'  => round($VlrTotalOpc, $DECI_MALES),
-								':ac1_legal_num'  => $detail['pm1_tercero'],
-								':ac1_font_key'   => $detail['pm1_docentry'],
-								':ac1_font_type'  => $detail['pm1_doctype'],
-								':ac1_account'    => $detail['pm1_cuenta']
+								':ac1_line_num'  => $detail['pm1_line_num'],
 
 							));
 
@@ -967,18 +1020,12 @@ class bulkPayments extends REST_Controller
 						if ($detail['pm1_doctype'] == 19) {
 
 							$slqUpdateVenDebit = "UPDATE mac1
-																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
-																						WHERE ac1_legal_num = :ac1_legal_num
-																						AND ac1_font_key = :ac1_font_key
-																						AND ac1_font_type = :ac1_font_type
-																						AND ac1_account = :ac1_account";
+											SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+											WHERE pm1_line_num = :pm1_line_num";
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
 								':ac1_ven_credit' => round($VlrTotalOpc, $DECI_MALES),
-								':ac1_legal_num'  => $detail['pm1_tercero'],
-								':ac1_font_key'   => $detail['pm1_docentry'],
-								':ac1_font_type'  => $detail['pm1_doctype'],
-								':ac1_account'    => $detail['pm1_cuenta']
+								':pm1_line_num'  => $detail['pm1_line_num']
 
 							));
 
@@ -1001,19 +1048,12 @@ class bulkPayments extends REST_Controller
 						if ($detail['pm1_doctype'] == 16) {
 
 							$slqUpdateVenDebit = "UPDATE mac1
-																						SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
-																						WHERE ac1_legal_num = :ac1_legal_num
-																						AND ac1_font_key = :ac1_font_key
-																						AND ac1_font_type = :ac1_font_type
-																						AND ac1_account = :ac1_account";
+											SET ac1_ven_credit = ac1_ven_credit + :ac1_ven_credit
+											WHERE ac1_line_num = :ac1_line_num";
 							$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
 								':ac1_ven_credit' => round($VlrTotalOpc, $DECI_MALES),
-								':ac1_legal_num'  => $detail['pm1_tercero'],
-								':ac1_font_key'   => $detail['pm1_docentry'],
-								':ac1_font_type'  => $detail['pm1_doctype'],
-								':ac1_account'    => $detail['pm1_cuenta']
-
+								':ac1_line_num'   => $detail['pm1_line_num'],
 							));
 
 							if (is_numeric($resUpdateVenDebit) && $resUpdateVenDebit == 1) {
@@ -1034,7 +1074,7 @@ class bulkPayments extends REST_Controller
 
 
 						// validar si se cierra el documento
-						if ($detail['pm1_doctype'] == 15) {
+						if ($detail['pm1_doctype'] == 15 || $detail['pm1_doctype'] == 46) {
 
 							$resEstado = $this->generic->validateBalanceAndClose($detail['pm1_docentry'], $detail['pm1_doctype'], 'dcfc', 'cfc');
 
@@ -1126,8 +1166,8 @@ class bulkPayments extends REST_Controller
 							if ($detail['ac1_cord'] == 1) {
 
 								$slqUpdateVenDebit = "UPDATE mac1
-																							SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
-																							WHERE ac1_line_num = :ac1_line_num";
+												SET ac1_ven_debit = ac1_ven_debit + :ac1_ven_debit
+												WHERE ac1_line_num = :ac1_line_num";
 
 								$resUpdateVenDebit = $this->pedeo->updateRow($slqUpdateVenDebit, array(
 
@@ -1177,8 +1217,51 @@ class bulkPayments extends REST_Controller
 							}
 						}
 						//ASIENTOS MANUALES
-                        //ACTUALIZAR VALOR PAGADO DE LA FACTURA ANTICIPADA DE COMPRA
 
+
+						// SE VALIDA CERRAR LA SOLICITUD DE ANTICIPO PROVEEDOR
+						if ($detail['pm1_doctype'] == 36) {
+
+
+							$resEstado = $this->generic->validateBalanceAndClose($detail['pm1_docentry'], $detail['pm1_doctype'], 'dcsa', 'csa');
+
+							if (isset($resEstado['error']) && $resEstado['error'] == true) {
+								$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+												VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+								$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+									':bed_docentry' => $detail['pm1_docentry'],
+									':bed_doctype' => $detail['pm1_doctype'],
+									':bed_status' => 3, //ESTADO CERRADO
+									':bed_createby' => $Data['spm_createby'],
+									':bed_date' => date('Y-m-d'),
+									':bed_baseentry' => $resInsert,
+									':bed_basetype' => $Data['spm_doctype']
+								));
+
+
+								if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+								} else {
+
+									$this->pedeo->trans_rollback();
+
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar el pago'
+									);
+
+
+									$this->response($respuesta);
+
+									return;
+								}
+							}
+						}
+						//
+                        //ACTUALIZAR VALOR PAGADO (PAY TO DAY) DE LA SOLICITUD DE ANTICIPO DE COMPRA
 						if ($detail['pm1_doctype'] == 36) {
 
 
@@ -1239,13 +1322,13 @@ class bulkPayments extends REST_Controller
 				$DetalleAsientoCuentaTercero->spm_cardcode     = isset($Data['spm_cardcode']) ? $Data['spm_cardcode'] : NULL;
 				$DetalleAsientoCuentaTercero->pm1_doctype      = is_numeric($detail['pm1_doctype']) ? $detail['pm1_doctype'] : 0;
 				$DetalleAsientoCuentaTercero->pm1_docentry     = is_numeric($detail['pm1_docentry']) ? $detail['pm1_docentry'] : 0;
-				$DetalleAsientoCuentaTercero->cuentalinea      = is_numeric($detail['pm1_cuenta']) ? $detail['pm1_cuenta'] : 0;
-				$DetalleAsientoCuentaTercero->cuentalinea      = ($DetalleAsientoCuentaTercero->cuentalinea == 0) ? $detail['pm1_accountid'] : $DetalleAsientoCuentaTercero->cuentalinea;
+				// $DetalleAsientoCuentaTercero->cuentalinea      = is_numeric($detail['pm1_cuenta']) ? $detail['pm1_cuenta'] : 0;
+				$DetalleAsientoCuentaTercero->cuentalinea      =  $detail['pm1_accountid'];
 				$DetalleAsientoCuentaTercero->cuentaNaturaleza = substr($DetalleAsientoCuentaTercero->cuentalinea, 0, 1);
 				$DetalleAsientoCuentaTercero->pm1_vlrpaid      = is_numeric($detail['pm1_vlrpaid']) ? $detail['pm1_vlrpaid'] : 0;
-				$DetalleAsientoCuentaTercero->pm1_docdate	     = $this->validateDate($detail['pm1_docdate']) ? $detail['pm1_docdate'] : NULL;
+				$DetalleAsientoCuentaTercero->pm1_docdate	   = $this->validateDate($detail['pm1_docdate']) ? $detail['pm1_docdate'] : NULL;
 				$DetalleAsientoCuentaTercero->cord	           = isset($detail['ac1_cord']) ? $detail['ac1_cord'] : NULL;
-				$DetalleAsientoCuentaTercero->vlrpaiddesc	     = $VlrTotalOpc;
+				$DetalleAsientoCuentaTercero->vlrpaiddesc	   = $VlrTotalOpc;
 				$DetalleAsientoCuentaTercero->tasaoriginaldoc  = $TasaOrg;
 
 
@@ -1384,6 +1467,26 @@ class bulkPayments extends REST_Controller
 			$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
 			$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
+			// SE AGREGA AL BALANCE
+			if ( $debito > 0 ) {
+				$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuenta, 1, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+			}else{
+				$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuenta, 2, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+			}
+			if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error' => true,
+					'data' => $BALANCE,
+					'mensaje' => $BALANCE['mensaje']
+				);
+
+				return $this->response($respuesta);
+			}	
+
+			//
 
 			$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1402,7 +1505,7 @@ class bulkPayments extends REST_Controller
 				':ac1_credit_importsys' => 0,
 				':ac1_font_key' => $resInsert,
 				':ac1_font_line' => 1,
-				':ac1_font_type' => 19,
+				':ac1_font_type' => 33,
 				':ac1_accountvs' => 1,
 				':ac1_doctype' => 18,
 				':ac1_ref1' => "",
@@ -1414,7 +1517,7 @@ class bulkPayments extends REST_Controller
 				':ac1_rescon_date' => NULL,
 				':ac1_recon_total' => 0,
 				':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
-				':ac1_accperiod' => 1,
+				':ac1_accperiod' => $periodo['data'],
 				':ac1_close' => 0,
 				':ac1_cord' => 0,
 				':ac1_ven_debit' => 0,
@@ -1687,6 +1790,26 @@ class bulkPayments extends REST_Controller
 					$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
 					$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
+					// SE AGREGA AL BALANCE
+					if ( $debito > 0 ) {
+						$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuentaLinea, 1, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+					}else{
+						$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuentaLinea, 2, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+					}
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+					//
+
 
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1705,7 +1828,7 @@ class bulkPayments extends REST_Controller
 						':ac1_credit_importsys' => 0,
 						':ac1_font_key' => $resInsert,
 						':ac1_font_line' => 1,
-						':ac1_font_type' => 19,
+						':ac1_font_type' => 33,
 						':ac1_accountvs' => 1,
 						':ac1_doctype' => 18,
 						':ac1_ref1' => "",
@@ -1717,7 +1840,7 @@ class bulkPayments extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => round($credito, $DECI_MALES),
@@ -1880,6 +2003,25 @@ class bulkPayments extends REST_Controller
 					$DFPCS = $DFPCS + round($MontoSysCR, $DECI_MALES);
 					$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
+					// SE AGREGA AL BALANCE
+					if ( $debito > 0 ) {
+						$BALANCE = $this->account->addBalance($periodo['data'], round($debito, $DECI_MALES), $cuentaLinea, 1, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+					}else{
+						$BALANCE = $this->account->addBalance($periodo['data'], round($credito, $DECI_MALES), $cuentaLinea, 2, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+					}
+					if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+						$this->pedeo->trans_rollback();
+
+						$respuesta = array(
+							'error' => true,
+							'data' => $BALANCE,
+							'mensaje' => $BALANCE['mensaje']
+						);
+
+						return $this->response($respuesta);
+					}	
+					//
 
 					$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
@@ -1898,7 +2040,7 @@ class bulkPayments extends REST_Controller
 						':ac1_credit_importsys' => 0,
 						':ac1_font_key' => $resInsert,
 						':ac1_font_line' => 1,
-						':ac1_font_type' => 19,
+						':ac1_font_type' => 33,
 						':ac1_accountvs' => 1,
 						':ac1_doctype' => 18,
 						':ac1_ref1' => "",
@@ -1910,7 +2052,7 @@ class bulkPayments extends REST_Controller
 						':ac1_rescon_date' => NULL,
 						':ac1_recon_total' => 0,
 						':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
-						':ac1_accperiod' => 1,
+						':ac1_accperiod' => $periodo['data'],
 						':ac1_close' => 0,
 						':ac1_cord' => 0,
 						':ac1_ven_debit' => round($debito, $DECI_MALES),
@@ -2008,6 +2150,24 @@ class bulkPayments extends REST_Controller
 						$DFPDS = $DFPDS + 0;
 
 
+						// SE AGREGA AL BALANCE
+						
+						$BALANCE = $this->account->addBalance($periodo['data'], round($VlrDiffP, $DECI_MALES), $cuentaLinea, 2, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+						//
+
+
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -2025,7 +2185,7 @@ class bulkPayments extends REST_Controller
 							':ac1_credit_importsys' => 0,
 							':ac1_font_key' => $resInsert,
 							':ac1_font_line' => 1,
-							':ac1_font_type' => 19,
+							':ac1_font_type' => 33,
 							':ac1_accountvs' => 1,
 							':ac1_doctype' => 18,
 							':ac1_ref1' => "",
@@ -2037,7 +2197,7 @@ class bulkPayments extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -2087,7 +2247,23 @@ class bulkPayments extends REST_Controller
 						$DFPCS = $DFPCS + 0;
 						$DFPDS = $DFPDS + round($MontoSysDB, $DECI_MALES);
 
+						// SE AGREGA AL BALANCE
 
+						$BALANCE = $this->account->addBalance($periodo['data'], round($VlrDiffN, $DECI_MALES), $cuentaD, 1, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+						if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error' => true,
+								'data' => $BALANCE,
+								'mensaje' => $BALANCE['mensaje']
+							);
+	
+							return $this->response($respuesta);
+						}	
+						//
+						
 						$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 							':ac1_trans_id' => $resInsertAsiento,
@@ -2105,7 +2281,7 @@ class bulkPayments extends REST_Controller
 							':ac1_credit_importsys' => 0,
 							':ac1_font_key' => $resInsert,
 							':ac1_font_line' => 1,
-							':ac1_font_type' => 19,
+							':ac1_font_type' => 33,
 							':ac1_accountvs' => 1,
 							':ac1_doctype' => 18,
 							':ac1_ref1' => "",
@@ -2117,7 +2293,7 @@ class bulkPayments extends REST_Controller
 							':ac1_rescon_date' => NULL,
 							':ac1_recon_total' => 0,
 							':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
-							':ac1_accperiod' => 1,
+							':ac1_accperiod' => $periodo['data'],
 							':ac1_close' => 0,
 							':ac1_cord' => 0,
 							':ac1_ven_debit' => 0,
@@ -2219,7 +2395,7 @@ class bulkPayments extends REST_Controller
 					':ac1_credit_importsys' => 0,
 					':ac1_font_key' => $resInsert,
 					':ac1_font_line' => 1,
-					':ac1_font_type' => 19,
+					':ac1_font_type' => 33,
 					':ac1_accountvs' => 1,
 					':ac1_doctype' => 18,
 					':ac1_ref1' => "",
@@ -2231,7 +2407,7 @@ class bulkPayments extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -2298,6 +2474,26 @@ class bulkPayments extends REST_Controller
 					$lcredito = 0;
 				}
 
+				// SE AGREGA AL BALANCE
+				if ( $ldebito > 0 ){
+					$BALANCE = $this->account->addBalance($periodo['data'], round($ldebito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 1, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+				}else{
+					$BALANCE = $this->account->addBalance($periodo['data'], round($lcredito, $DECI_MALES), $resCuentaDiferenciaDecimal[0]['pge_acc_ajp'], 2, $Data['spm_docdate'], $Data['business'], $Data['branch']);
+				}
+				if (isset($BALANCE['error']) && $BALANCE['error'] == true){
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $BALANCE,
+						'mensaje' => $BALANCE['mensaje']
+					);
+
+					return $this->response($respuesta);
+				}	
+				//
+
 				$resDetalleAsiento = $this->pedeo->insertRow($sqlDetalleAsiento, array(
 
 					':ac1_trans_id' => $resInsertAsiento,
@@ -2315,7 +2511,7 @@ class bulkPayments extends REST_Controller
 					':ac1_credit_importsys' => 0,
 					':ac1_font_key' => $resInsert,
 					':ac1_font_line' => 1,
-					':ac1_font_type' => 19,
+					':ac1_font_type' => 33,
 					':ac1_accountvs' => 1,
 					':ac1_doctype' => 18,
 					':ac1_ref1' => "",
@@ -2327,7 +2523,7 @@ class bulkPayments extends REST_Controller
 					':ac1_rescon_date' => NULL,
 					':ac1_recon_total' => 0,
 					':ac1_made_user' => isset($Data['spm_createby']) ? $Data['spm_createby'] : NULL,
-					':ac1_accperiod' => 1,
+					':ac1_accperiod' => $periodo['data'],
 					':ac1_close' => 0,
 					':ac1_cord' => 0,
 					':ac1_ven_debit' => 0,
@@ -2364,6 +2560,11 @@ class bulkPayments extends REST_Controller
 				}
 			}
 		
+			//Esto es para validar el resultado de la contabilidad
+			// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
+			// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
+			// print_r(json_encode($ressqlmac1));
+			// exit;
 
 
 			//SE VALIDA LA CONTABILIDAD CREADA
@@ -2387,11 +2588,6 @@ class bulkPayments extends REST_Controller
 			}
 			//
 
-			//Esto es para validar el resultado de la contabilidad
-			// $sqlmac1 = "SELECT * FROM  mac1 order by ac1_line_num desc limit 6";
-			// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array());
-			// print_r(json_encode($ressqlmac1));
-			// exit;
 
 			$this->pedeo->trans_commit();
 
@@ -2414,6 +2610,303 @@ class bulkPayments extends REST_Controller
 
 		$this->response($respuesta);
 	}
+
+	public function getBulkPayments_get()
+	{
+
+		$Data = $this->get();
+
+		$sqlSelect = "SELECT * FROM tspm";
+
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+	public function getBulkPaymentsDetail_get()
+	{
+
+		$Data = $this->get();
+
+		if (!isset($Data['pm1_docnum'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT spm1.*, mdt_docname as pm1_docname FROM spm1 inner join dmdt on pm1_doctype = dmdt.mdt_doctype where pm1_docnum = :pm1_docnum";
+
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":pm1_docnum" => $Data['pm1_docnum']));
+
+		if (isset($resSelect[0])) {
+
+			$respuesta = array(
+				'error' => false,
+				'data'  => $resSelect,
+				'mensaje' => ''
+			);
+		} else {
+
+			$respuesta = array(
+				'error'   => true,
+				'data' => array(),
+				'mensaje'	=> 'busqueda sin resultados'
+			);
+		}
+
+		$this->response($respuesta);
+	}
+
+
+	public function getFileTxt_post(){
+
+		$Data = $this->post();
+
+		if (!isset($Data['spm_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		// SE BUSCA EL DETALLE DEL PAGO MASIVO
+
+		$sqlDetalle = "SELECT * FROM spm1 WHERE pm1_docnum = :pm1_docnum";
+		$resDetalle = $this->pedeo->queryTable($sqlDetalle, array(
+			":pm1_docnum" => $Data['spm_docentry']
+		));
+
+		if (isset($resDetalle[0])) {
+
+			$ComplementoBancolombia = new \stdClass();
+            $DatosBeneficiario = new \stdClass();
+            $MONTOTOTAL = 0;
+            $DETAIL = "";
+            $HEADER = "";
+
+			foreach ($resDetalle as $key => $detail) {
+
+				// SE FORMA EL DETALLE DEL ARCHIVO PLANO
+				
+				if ( $detail['pm1_doctype'] == 15 ) {
+
+					// DATOS DEL SOCIO
+					$sqlSocio = "SELECT 
+					bti_codepab as tipo_documento,
+					dmb_trans_type as tipo_trasaccion,
+					dmb_num_acc as numero_cuenta,
+					dmb_bank as codigo_banco,
+					dms_card_code as identificacion_cliente,
+					dms_email as correo,
+					dms_cel  as celular,
+					dms_card_name as nombre_proveedor
+					FROM DMSN 
+					inner join dmsb on dmb_card_code = dms_card_code and dmb_card_type = dms_card_type and dmb_major = 1
+					inner join tbti on bti_id = dms_id_type 
+					WHERE dms_card_code = :dms_card_code AND dms_card_type = :dms_card_type";
+
+					$resSocio = $this->pedeo->queryTable($sqlSocio, array(
+						":dms_card_code" => $detail['pm1_cardcode'],
+						":dms_card_type" => '2'
+					));
+
+					if (isset($resSocio[0])) {
+
+						$MONTOPAGAR = round($detail['pm1_vlrpaid'], 2);
+					
+						$DECI = explode("," , $MONTOPAGAR);
+	
+						if ( isset($DECIMALES[1]) ){
+	
+							$MONTOPAGAR = $DECI[0];
+							$DECI  = $DECI[1];
+	
+						}else {
+							$MONTOPAGAR = $DECI[0];
+							$DECI  = "00";
+						}
+	
+						$MONTOPAGAR = str_pad($MONTOPAGAR, 15, 0, STR_PAD_LEFT);
+	
+						$MONTOPAGAR = $MONTOPAGAR.$DECI;
+	
+						$DatosBeneficiario->TipoRegistro = 6;
+						$DatosBeneficiario->NitBeneficiario = str_pad($resSocio[0]['identificacion_cliente'], 15, " ", STR_PAD_RIGHT);
+						$DatosBeneficiario->Nombre = str_pad(substr($resSocio[0]['nombre_proveedor'], 0, 30), 30, " ", STR_PAD_RIGHT); ;
+						$DatosBeneficiario->CodigoBancoDestino = str_pad($resSocio[0]['codigo_banco'], 9, 0, STR_PAD_LEFT); // FALTA EL BANCO
+						$DatosBeneficiario->NumeroCuentaBeneficiario = str_pad($resSocio[0]['numero_cuenta'], 17, " ", STR_PAD_RIGHT); // FALTA LA CUENTA DE BANCO
+						$DatosBeneficiario->IndicadorLugarPago = "S"; // FALTA EL INDICADOR DEL PAGO
+						$DatosBeneficiario->TipoTrasaccion = $resSocio[0]['tipo_trasaccion']; // FALTA EL TIPO DE TRANSACCION
+						$DatosBeneficiario->ValorTrasaccion = $MONTOPAGAR;
+						$DatosBeneficiario->FechaAplicacion = str_replace('-','', $Data['spm_applidate']);
+						$DatosBeneficiario->Referencia = str_pad($Data['spm_reference'], 21, " ", STR_PAD_RIGHT); // FALTA LA REFERENCIA
+						$DatosBeneficiario->TipoDoc = $resSocio[0]['tipo_documento']; // TIPO DE DOCUMENTO
+						$DatosBeneficiario->OficEntrega = str_pad(0, 5, '0', STR_PAD_LEFT); // OFICINA DE ENTREGA
+						$DatosBeneficiario->Fax = str_pad("", 15, " ", STR_PAD_RIGHT); // FAX
+						$DatosBeneficiario->mail = str_pad($resSocio[0]['correo'], 80, " ", STR_PAD_RIGHT); //
+	
+	
+						$DETAIL .= $DatosBeneficiario->TipoRegistro.$DatosBeneficiario->NitBeneficiario.$DatosBeneficiario->Nombre
+						.$DatosBeneficiario->CodigoBancoDestino.$DatosBeneficiario->NumeroCuentaBeneficiario.$DatosBeneficiario->IndicadorLugarPago
+						.$DatosBeneficiario->TipoTrasaccion.$DatosBeneficiario->ValorTrasaccion.$DatosBeneficiario->FechaAplicacion
+						.$DatosBeneficiario->Referencia.$DatosBeneficiario->TipoDoc.$DatosBeneficiario->OficEntrega.$DatosBeneficiario->Fax
+						.$DatosBeneficiario->mail."\n";
+	
+	
+						$MONTOTOTAL = ( $MONTOTOTAL + $detail['pm1_vlrpaid']);
+
+					}
+				}
+
+			}
+
+
+			if ($DETAIL == ""){
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'Sin datos para procesar'
+				);
+
+				return $this->response($respuesta);
+			}
+
+
+			//DATOS PARA ENCABEZADO DEL ARCHIVO TEXTO
+			$MONTOTOTAL = round( $MONTOTOTAL, 2 );
+                        
+			$DECIMALES = explode("," , $MONTOTOTAL);
+
+			if ( isset($DECIMALES[1]) ){
+
+				$MONTOTOTAL = $DECIMALES[0];
+				$DECIMALES  = $DECIMALES[1];
+
+			}else {
+				$MONTOTOTAL = $DECIMALES[0];
+				$DECIMALES  = "00";
+			}
+
+
+
+			$MONTOTOTAL  = str_pad( $MONTOTOTAL, 15, 0, STR_PAD_LEFT );
+		   
+
+			$MONTOTOTAL = $MONTOTOTAL.$DECIMALES;
+
+
+			$sqlEmpresa = "SELECT pge_id_soc, LEFT(pge_name_soc,30) as pge_name_soc FROM pgem WHERE pge_id = :pge_id";
+
+			$resEmpresa = $this->pedeo->queryTable($sqlEmpresa, array(
+
+				":pge_id" => $Data['business']
+
+			));
+
+
+			if (!isset($resEmpresa[0])){
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'No se encontraron los datos de la empresa'
+				);
+
+				return $this->response($respuesta);
+			}
+			
+
+			$sec = date('Y-m-d H:i:s');
+
+
+			$sec = str_replace(":","",$sec);
+			$sec = str_replace("-","",$sec);
+			$sec = str_replace("-","",$sec);
+			
+			$ComplementoBancolombia->TipoRegistro = 1; // EL TIPO DE REGISTRO SIEMPRE VA EN 1 VERIFICAR DE TODAS FORMAS
+			$ComplementoBancolombia->NitFondeador = $resEmpresa[0]['pge_id_soc'];
+			$ComplementoBancolombia->Nombre = substr($resEmpresa[0]['pge_name_soc'], 0, 30);
+			$ComplementoBancolombia->Aplicacion = $Data['spm_application']; // FALTA LA APLICACION
+			$ComplementoBancolombia->Filler15 = str_pad(" ", 15, " ", STR_PAD_LEFT);
+			$ComplementoBancolombia->ClaseTransaccion = $Data['spm_paytype']; // FALTA LA CLASE DE TRANSACCION
+			$ComplementoBancolombia->Descripcion = str_pad($Data['spm_reference'], 10, " ", STR_PAD_RIGHT); // FALTA DESCRIPCION DEL PAGO
+			$ComplementoBancolombia->FechaTrasicion = str_replace('-','', $Data['spm_applidate']);
+			$ComplementoBancolombia->SecuenciaEnvio = 'A1'; 
+			$ComplementoBancolombia->FechaCreacion = str_replace('-','', $Data['spm_createdate']);
+			$ComplementoBancolombia->CantidadRegistros = str_pad(count($resDetalle), 6, 0, STR_PAD_LEFT); 
+			$ComplementoBancolombia->SumatoriaDebitos = str_pad(0, 17, 0, STR_PAD_LEFT);
+			$ComplementoBancolombia->SumatoriaCreditos = $MONTOTOTAL;
+			$ComplementoBancolombia->NumeroCuentaFondeador =  str_pad($Data['spm_account'], 11, 0, STR_PAD_LEFT); // FALTA EL NUMERO DE CUENTA
+			$ComplementoBancolombia->TipoCuentaFondeador = $Data['spm_typeacc'];  // FALTA EL TIPO DE CUENTA AHORROS CORRIENTE
+			$ComplementoBancolombia->Filler149 = str_pad("", 149, " ", STR_PAD_LEFT);
+
+
+			// FORMAR ENCABEZADO DE ARCHIVO
+
+
+			$fileName = $Data['business'].'_'.date('Y-m-d').' PAB.txt';
+			$HEADER = "";
+
+			$HEADER =  $ComplementoBancolombia->TipoRegistro.str_pad($ComplementoBancolombia->NitFondeador, 15, 0, STR_PAD_LEFT)
+			.$ComplementoBancolombia->Aplicacion.$ComplementoBancolombia->Filler15.$ComplementoBancolombia->ClaseTransaccion
+			.$ComplementoBancolombia->Descripcion.$ComplementoBancolombia->FechaTrasicion.$ComplementoBancolombia->SecuenciaEnvio
+			.$ComplementoBancolombia->FechaCreacion.$ComplementoBancolombia->CantidadRegistros.$ComplementoBancolombia->SumatoriaDebitos
+			.$ComplementoBancolombia->SumatoriaCreditos.$ComplementoBancolombia->NumeroCuentaFondeador.$ComplementoBancolombia->TipoCuentaFondeador
+			.$ComplementoBancolombia->Filler149."\n";
+
+
+			$content = $HEADER.$DETAIL;
+
+
+			force_download($fileName, $content);
+
+
+
+		} else {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'Sin datos para procesar'
+			);
+		}
+
+
+		$this->response($respuesta);
+
+	}
+
 
     private function validateDate($fecha)
 	{

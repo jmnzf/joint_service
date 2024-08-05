@@ -27,8 +27,11 @@ class PartnersAccBank extends REST_Controller {
 
       $Data = $this->post();
 
+  
       if(!isset($Data['dmb_bank']) OR
          !isset($Data['dmb_bank_type']) OR
+         !isset($Data['dmb_card_type']) OR
+         !isset($Data['dmb_trans_type']) OR
          !isset($Data['dmb_num_acc']) OR
          !isset($Data['dmb_status'])){
 
@@ -43,10 +46,11 @@ class PartnersAccBank extends REST_Controller {
         return;
       }
 
-        $sqlSelect = "SELECT dmb_num_acc FROM dmsb WHERE dmb_card_code = :dmb_card_code AND dmb_num_acc = :dmb_num_acc";
+        $sqlSelect = "SELECT dmb_num_acc FROM dmsb WHERE dmb_card_code = :dmb_card_code AND dmb_card_type = :dmb_card_type AND dmb_num_acc = :dmb_num_acc";
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(
         ':dmb_card_code' => $Data['dmb_card_code'],
-			  ':dmb_num_acc'    => $Data['dmb_num_acc']
+        ':dmb_card_type' => $Data['dmb_card_type'],
+			  ':dmb_num_acc'   => $Data['dmb_num_acc']
         ));
         // print_r($resSelect);exit;die;
         if (isset($resSelect[0])) {
@@ -59,18 +63,20 @@ class PartnersAccBank extends REST_Controller {
         return;
         }
 
-      $sqlInsert = "INSERT INTO dmsb(dmb_card_code,dmb_bank, dmb_bank_type, dmb_num_acc, dmb_major, dmb_status, dmb_account)VALUES(
-        :dmb_card_code, :dmb_bank, :dmb_bank_type, :dmb_num_acc, :dmb_major, :dmb_status, :dmb_account)";
+      $sqlInsert = "INSERT INTO dmsb(dmb_card_code,dmb_bank, dmb_bank_type, dmb_num_acc, dmb_major, dmb_status, dmb_account, dmb_card_type, dmb_trans_type)VALUES(
+        :dmb_card_code, :dmb_bank, :dmb_bank_type, :dmb_num_acc, :dmb_major, :dmb_status, :dmb_account, :dmb_card_type, :dmb_trans_type)";
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
 
-             ':dmb_bank' => $Data['dmb_bank'],
-             ':dmb_bank_type' => $Data['dmb_bank_type'],
-             ':dmb_num_acc' => $Data['dmb_num_acc'],
-             ':dmb_major' => 0,
-             ':dmb_status' => $Data['dmb_status'],
-             ':dmb_card_code' => $Data['dmb_card_code'],
-             ':dmb_account' => $Data['dmb_account']
+            ':dmb_bank' => $Data['dmb_bank'],
+            ':dmb_bank_type' => $Data['dmb_bank_type'],
+            ':dmb_num_acc' => $Data['dmb_num_acc'],
+            ':dmb_major' => 0,
+            ':dmb_status' => $Data['dmb_status'],
+            ':dmb_card_code' => $Data['dmb_card_code'],
+            ':dmb_account' => $Data['dmb_account'],
+            ':dmb_card_type' => $Data['dmb_card_type'],
+            ':dmb_trans_type' => $Data['dmb_trans_type']
       ));
 
       if(is_numeric($resInsert) && $resInsert > 0){
@@ -107,6 +113,8 @@ class PartnersAccBank extends REST_Controller {
          !isset($Data['dmb_major']) OR
          !isset($Data['dmb_status']) OR
          !isset($Data['dmb_card_code']) OR
+         !isset($Data['dmb_card_type']) OR
+         !isset($Data['dmb_trans_type']) OR
          !isset($Data['dmb_id'])){
 
         $respuesta = array(
@@ -124,7 +132,8 @@ class PartnersAccBank extends REST_Controller {
       $sqlUpdate = "UPDATE dmsb
                   	SET dmb_card_code = :dmb_card_code, dmb_bank = :dmb_bank,
                     dmb_bank_type = :dmb_bank_type, dmb_num_acc = :dmb_num_acc,
-                    dmb_major = :dmb_major, dmb_status = :dmb_status, dmb_account = :dmb_account
+                    dmb_major = :dmb_major, dmb_status = :dmb_status, dmb_account = :dmb_account,
+                    dmb_card_type = :dmb_card_type, dmb_trans_type = :dmb_trans_type
                   	WHERE dmb_id = :dmb_id";
 
 
@@ -137,7 +146,9 @@ class PartnersAccBank extends REST_Controller {
         ':dmb_status' => $Data['dmb_status'],
         ':dmb_card_code' => $Data['dmb_card_code'],
         ':dmb_id' => $Data['dmb_id'],
-        ':dmb_account' => $Data['dmb_account']
+        ':dmb_account' => $Data['dmb_account'],
+        ':dmb_card_type' => $Data['dmb_card_type'],
+        ':dmb_trans_type' => $Data['dmb_trans_type']
       ));
 
       if(is_numeric($resUpdate) && $resUpdate == 1){

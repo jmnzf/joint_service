@@ -26,25 +26,21 @@ class Resource extends REST_Controller
     // METODO PARA OBTENER LISTADO DE RECURSOS
     public function getResource_get()
     {
-        $sqlSelect = "SELECT * FROM dmrp";
+        
+        $Data = $this->get();
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+        $sqlSelect ="SELECT * from dmrp WHERE dmrp.business = :business";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business']));
 
         if (isset($resSelect[0])) {
-            $sqlTopics = "SELECT rrp_idproperty from trrp where rrp_idresource = :rrp_idresource";
-            $sqlCost = "SELECT * from trrc where \"rrc_resourceId\" = :rrc_resourceId";
-            foreach ($resSelect as $key => $resource) {
-                $resTopics = $this->pedeo->queryTable($sqlTopics, array(":rrp_idresource" => $resource['mrp_id']));
-                $resCost = $this->pedeo->queryTable($sqlCost, array(":rrc_resourceId" => $resource['mrp_id']));
-                $resSelect[$key]['topics'] = $resTopics;
-                $resSelect[$key]['cost'] = $resCost;
-            }
-
+            
             $respuesta = array(
                 'error' => false,
                 'data'  => $resSelect,
                 'mensaje' => ''
             );
+
         } else {
 
             $respuesta = array(
@@ -75,9 +71,12 @@ class Resource extends REST_Controller
             return;
         }
 
-        $sqlSelect = "SELECT * FROM dmrp where mrp_id = :mrp_id";
+        $sqlSelect ="SELECT cdrs.*, dcpr.*
+                    FROM dmrp
+                    INNER JOIN dcpr ON dmrp.mrp_id = dcpr.crp_id_recurso
+                    INNER JOIN cdrs ON dcpr.crp_id_concepto = cdrs.drs_id WHERE dmrp.business = :business AND mrp_id = :mrp_id";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array(":mrp_id" => $Data['mrp_id']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(":business" => $Data['business'], ":mrp_id" => $Data['mrp_id']));
 
         if (isset($resSelect[0])) {
 
@@ -126,8 +125,8 @@ class Resource extends REST_Controller
 
             return;
         }
-        $sqlInsert = "INSERT INTO dmrp (mrp_serie,mrp_description,mrp_foringname,mrp_type,mrp_group,mrp_barcode,mrp_method,mrp_assing,mrp_relationart,mrp_um,mrp_quantity,mrp_comments) 
-        values (:mrp_serie,:mrp_description,:mrp_foringname,:mrp_type,:mrp_group,:mrp_barcode,:mrp_method,:mrp_assing,:mrp_relationart,:mrp_um,:mrp_quantity,:mrp_comments)";
+        $sqlInsert = "INSERT INTO dmrp (mrp_serie,mrp_description,mrp_foringname,mrp_type,mrp_group,mrp_barcode,mrp_method,mrp_assing,mrp_relationart,mrp_um,mrp_quantity,mrp_comments, business) 
+        values (:mrp_serie,:mrp_description,:mrp_foringname,:mrp_type,:mrp_group,:mrp_barcode,:mrp_method,:mrp_assing,:mrp_relationart,:mrp_um,:mrp_quantity,:mrp_comments, :business)";
 
         $this->pedeo->trans_begin();
 
@@ -143,25 +142,33 @@ class Resource extends REST_Controller
             ":mrp_relationart" => isset($Data['mrp_relationart']) ? $Data['mrp_relationart'] : null,
             ":mrp_um" => $Data['mrp_um'],
             ":mrp_quantity" => $Data['mrp_quantity'],
-            ":mrp_comments" => $Data['mrp_comments']
+            ":mrp_comments" => $Data['mrp_comments'],
+            ":business" => $Data['business']
         ));
 
         if (is_numeric($resInsert) && $resInsert > 0) {
 
-            $sqlInsertRelation = "INSERT INTO trrp (rrp_idresource,rrp_idproperty) VALUES(:rrp_idresource, :rrp_idproperty)";
-            foreach ($Data['topics'] as $key => $topic) {
-                $resInsertRelation = $this->pedeo->insertRow(
-                    $sqlInsertRelation,
-                    array(':rrp_idresource' => $resInsert, ':rrp_idproperty' => $topic)
+            $sqlConcepto = "INSERT INTO dcpr (crp_id_recurso,crp_id_concepto,crp_valor) VALUES(:crp_id_recurso,:crp_id_concepto,:crp_valor)";
+
+            if (isset($Data['concepto']) && is_array($Data['concepto'])) {
+
+            foreach ($Data['concepto'] as $key => $concepto) {
+
+                    $resConcepto = $this->pedeo->insertRow($sqlConcepto, array(
+                        
+                            ':crp_id_recurso' => $resInsert,
+                            ':crp_id_concepto' => $concepto['idConcepto'],
+                            ':crp_valor' => $concepto['valorConcepto']
+                        )
                 );
 
-                if (is_numeric($resInsertRelation) && $resInsertRelation > 0) {
+                if (is_numeric($resConcepto) && $resConcepto > 0) {
                 } else {
                     $this->pedeo->trans_rollback();
 
                     $respuesta = array(
                         'error' => true,
-                        'data'  => $resInsertRelation,
+                        'data'  => $resConcepto,
                         'mensaje' => 'No se pudo crear el recurso'
                     );
                     $this->response($respuesta);
@@ -169,6 +176,24 @@ class Resource extends REST_Controller
                     return;
                 }
             }
+
+            }else{
+
+                $this->pedeo->trans_rollback();
+
+                $respuesta = array(
+                    'error' => true,
+                    'data'  => [],
+                    'mensaje' => 'No se encontro el concepto del recurso'
+                );
+
+                $this->response($respuesta);
+    
+                return;
+            }
+             
+           
+         
             $this->pedeo->trans_commit();
 
             $respuesta = array(
@@ -176,6 +201,7 @@ class Resource extends REST_Controller
                 'data'  => $resInsert,
                 'mensaje' => 'Operacion exitosa'
             );
+
         } else {
             $this->pedeo->trans_rollback();
 
@@ -251,22 +277,29 @@ class Resource extends REST_Controller
 
         if (is_numeric($resUpdate) && $resUpdate == 1) {
 
-            $this->pedeo->queryTable("DELETE FROM trrp WHERE rrp_idresource = :rrp_idresource", array($Data['mrp_id']));
+            $this->pedeo->queryTable("DELETE FROM dcpr WHERE crp_id_recurso = :crp_id_recurso", array($Data['mrp_id']));
 
-            $sqlInsertRelation = "INSERT INTO trrp (rrp_idresource,rrp_idproperty) VALUES(:rrp_idresource, :rrp_idproperty)";
-            foreach ($Data['topics'] as $key => $topic) {
-                $resInsertRelation = $this->pedeo->insertRow(
-                    $sqlInsertRelation,
-                    array(':rrp_idresource' => $Data['mrp_id'], ':rrp_idproperty' => $topic)
+            $sqlConcepto = "INSERT INTO dcpr (crp_id_recurso,crp_id_concepto,crp_valor) VALUES(:crp_id_recurso,:crp_id_concepto,:crp_valor)";
+
+            if (isset($Data['concepto']) && is_array($Data['concepto'])) {
+
+            foreach ($Data['concepto'] as $key => $concepto) {
+
+                    $resConcepto = $this->pedeo->insertRow($sqlConcepto, array(
+                        
+                            ':crp_id_recurso'  => $Data['mrp_id'],
+                            ':crp_id_concepto' => $concepto['idConcepto'],
+                            ':crp_valor'       => $concepto['valorConcepto']
+                        )
                 );
 
-                if (is_numeric($resInsertRelation) && $resInsertRelation > 0) {
+                if (is_numeric($resConcepto) && $resConcepto > 0) {
                 } else {
                     $this->pedeo->trans_rollback();
 
                     $respuesta = array(
                         'error' => true,
-                        'data'  => $resInsertRelation,
+                        'data'  => $resConcepto,
                         'mensaje' => 'No se pudo crear el recurso'
                     );
                     $this->response($respuesta);
@@ -275,6 +308,22 @@ class Resource extends REST_Controller
                 }
             }
 
+        }else{
+
+                $this->pedeo->trans_rollback();
+
+                $respuesta = array(
+                    'error' => true,
+                    'data'  => [],
+                    'mensaje' => 'No se encontro el concepto del recurso'
+                );
+
+                $this->response($respuesta);
+    
+                return;
+            }
+
+        
             $this->pedeo->trans_commit();
 
             $respuesta = array(
@@ -309,7 +358,8 @@ class Resource extends REST_Controller
                     d.mrp_description ,
                     d.mrp_um ,
                     d.mrp_quantity ,
-                    coalesce(sum(t.rrc_cost),0) as costo
+                    coalesce(sum(t.rrc_cost),0) as costo,
+                    d.mrp_method
                 from dmrp d 
                 left join trrc t on d.mrp_id = t."rrc_resourceId" 
                 group by 

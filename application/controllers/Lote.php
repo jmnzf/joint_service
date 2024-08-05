@@ -192,6 +192,62 @@ class Lote extends REST_Controller
 		$this->response($respuesta);
 	}
 
+	// OBTENER LOS LOTES POR DIA ESPECIFICO
+	// Y ARTICULO
+	public function getLotesByDay_post() {
+
+		$Data = $this->post();
+
+		if ( !isset($Data['day']) OR !isset($Data['business']) OR !isset($Data['whscode']) OR !isset($Data['itemcode'])){
+
+			$this->response(array(
+				'error'  => true,
+				'data'   => [],
+				'mensaje' => 'La informacion enviada no es valida'
+			), REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		$sqlSelect = "SELECT bdi_itemcode, bdi_whscode, bdi_lote, bdi_quantity
+						FROM tbdi 
+						INNER JOIN lote
+						ON bdi_lote = ote_code
+						WHERE bdi_whscode = :bdi_whscode
+						AND bdi_itemcode = :bdi_itemcode
+						AND ote_date = :ote_date
+ 						AND tbdi.business = :business";
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
+
+			':bdi_whscode' => $Data['whscode'],
+			':bdi_itemcode' => $Data['itemcode'],
+			':ote_date' => $Data['day'],
+			':business' => $Data['business']
+
+		));
+
+		if ( isset($resSelect[0]) ){
+
+			$respuesta = array(
+				'error'   => false,
+				'data'	  => $resSelect,
+				'mensaje' => ''
+			);
+
+		}else{
+
+			$respuesta = array(
+				'error'     => true,
+				'data' 		=> [],
+				'mensaje'	=> 'Sin resultados en la busqueda'
+			);
+		}
+
+		$this->response($respuesta);
+
+	}
+
 
 
 	private function validateDate($fecha)
