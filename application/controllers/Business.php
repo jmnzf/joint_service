@@ -158,6 +158,28 @@ class Business extends REST_Controller
         
 
       }
+
+      $sqlInsertParams = "INSERT INTO params (url_terminos_condiciones,url_preguntas_frecuentes,url_contacto ,business) values (:url_terminos_condiciones, :url_preguntas_frecuentes,:url_contacto , :business)";
+      
+      $resInsertParams = $resInsertBranch  = $this->pedeo->insertRow($sqlInsertParams, array(
+        ":url_terminos_condiciones"=> $DataCompany['pge_url_terminos_condiciones'],
+        ":url_preguntas_frecuentes"=> $DataCompany['pge_url_preguntas_frecuentes'],
+        ":url_contacto"=> $DataCompany['pge_url_contacto'],
+        ":business"=> $resInsert,
+      ));
+
+      if(is_numeric($resInsertParams) && $resInsertParams > 0){
+
+      }else{
+        $this->pedeo->trans_rollback();
+            $respuesta = array(
+              'error'   => true,
+              'data'    => $resInsertParams,
+              'mensaje' => 'Empresa registrada con exito'
+            );
+            $this->response($respuesta);
+            return;
+      }
       $this->pedeo->trans_commit();
       $respuesta = array(
         'error'   => false,
@@ -231,7 +253,7 @@ class Business extends REST_Controller
                     pge_variable = :pge_variable, pge_gateway_account = :pge_gateway_account, pge_treasury_level = :pge_treasury_level, 
                     pge_pmpg = :pge_pmpg WHERE pge_id = :Pge_Id";
 
-
+    $this->pedeo->trans_begin();
     $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 
       ':Pge_NameSoc' => $DataCompany['Pge_NameSoc'],
@@ -274,12 +296,40 @@ class Business extends REST_Controller
 
     if (is_numeric($resUpdate) && $resUpdate == 1) {
 
+      $sqlUpdateParams = "UPDATE params set url_terminos_condiciones = :url_terminos_condiciones,
+                                            url_preguntas_frecuentes = :url_preguntas_frecuentes,
+                                            url_contacto = :url_contacto
+                                            where business = :business";
+      $resUpdateParams = $this->pedeo->updateRow($sqlUpdateParams, array(
+        ":url_terminos_condiciones"=> $DataCompany['Pge_url_terminos_condiciones'],
+        ":url_preguntas_frecuentes"=> $DataCompany['Pge_url_preguntas_frecuentes'],
+        ":url_contacto"=> $DataCompany['Pge_url_contacto'],
+        ":business"=> $DataCompany['Pge_Id']
+      ));
+
+      if (is_numeric($resUpdateParams) && $resUpdateParams == 1) {
+
+      }else{
+        $this->pedeo->trans_rollback();
+        $respuesta = array(
+          'error'   => true,
+          'data' => $resUpdateParams,
+          'mensaje'  => 'No se pudo actualizar la empresa'
+        );
+
+        $this->response($respuesta);
+        return;
+      }
+      
+      $this->pedeo->trans_commit();
+
       $respuesta = array(
         'error' => false,
         'data' => $resUpdate,
         'mensaje' => 'Empresa actualizada con exito'
       );
     } else {
+      $this->pedeo->trans_rollback();
 
       $respuesta = array(
         'error'   => true,
@@ -295,10 +345,12 @@ class Business extends REST_Controller
   public function getCompany_get()
   {
 
-    $sqlSelect = "SELECT pgem.*, tbti.bti_name, t1.pdm_states, t1.pdm_municipality,t1.pdm_country  
+    $sqlSelect = "SELECT pgem.*, tbti.bti_name, t1.pdm_states, t1.pdm_municipality,t1.pdm_country,
+                   t2.url_terminos_condiciones as pge_url_terminos_condiciones ,t2.url_preguntas_frecuentes as pge_url_preguntas_frecuentes, t2.url_contacto as pge_url_contacto  
                   FROM pgem
                   INNER JOIN tbti ON tbti.bti_id = pgem.pge_id_type
-                  INNER JOIN tpdm t1 ON t1.pdm_codstates = pgem.pge_state_soc AND t1.pdm_codmunicipality = pgem.pge_city_soc";
+                  INNER JOIN tpdm t1 ON t1.pdm_codstates = pgem.pge_state_soc AND t1.pdm_codmunicipality = pgem.pge_city_soc
+                  left JOIN params t2 on t2.business = pgem.pge_id";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 

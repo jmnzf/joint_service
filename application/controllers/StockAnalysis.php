@@ -146,6 +146,7 @@ class StockAnalysis extends REST_Controller {
 									to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
 									to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
 									coalesce(pdm_municipality, 'Sin direccion establecida') as ciudad,
+									{$detailPrefix}_acctcode as acctcode,
 									{$prefix}_docnum docnum,
 									{$detailPrefix}_itemname item_name,
 									{$prefix}_cardname cliente_name,
@@ -174,7 +175,7 @@ class StockAnalysis extends REST_Controller {
 									".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum
 									left join dmrt on mrt_id = crt_type" : "")."
 									where  ({$prefix}_{$Data['date_filter']} BETWEEN :dvf_docdate and  :dvf_duedate) {$conditions}
-									group by pdm_municipality,{$detailPrefix}_linenum,{$prefix}_docentry,{$prefix}_doctype,{$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_doctype,cfc_docentry,fc1_linenum,":"").(($table =="dcnc")? "cnc_docentry,nc1_linenum,cnc_doctype,":"").(($table =="dcnd")? "cnd_docentry,nd1_linenum,cnd_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
+									group by {$detailPrefix}_acctcode, pdm_municipality,{$detailPrefix}_linenum,{$prefix}_docentry,{$prefix}_doctype,{$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_doctype,cfc_docentry,fc1_linenum,":"").(($table =="dcnc")? "cnc_docentry,nc1_linenum,cnc_doctype,":"").(($table =="dcnd")? "cnd_docentry,nd1_linenum,cnd_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "");
 									break;
 						}
 
@@ -194,7 +195,6 @@ class StockAnalysis extends REST_Controller {
 					$sqlSelect =	str_replace("{MAIN}","'".$main_currency."'",$sqlSelect);
 
 				}
-				// print_r($sqlSelect);exit;
 				// unset($campos[':'.$prefix.'_currency']);
 				unset($campos[':dvf_currency']);
 				unset($campos[':symbol']);
@@ -283,6 +283,9 @@ class StockAnalysis extends REST_Controller {
           to_char(min({$prefix}_duedev),'DD-MM-YYYY') fecha_doc,
           to_char(min({$prefix}_docdate),'DD-MM-YYYY') fecha_cont,
 		  to_char(min({$prefix}_createat),'DD-MM-YYYY') created,
+		  coalesce(pdm_municipality, 'Sin direccion establecida') as ciudad,
+		  {$detailPrefix}_acctcode as acctcode,
+		  {$detailPrefix}_acctcode,
 		  {$prefix}_docnum docnum,
 		  {$detailPrefix}_itemname item_name,
 		  {$prefix}_cardname cliente_name,
@@ -306,11 +309,12 @@ class StockAnalysis extends REST_Controller {
 		  join dmsn on {$prefix}_cardcode  = dms_card_code  AND dms_card_type = '{$cardType}'
 		  join dmga on mga_id = dma_group_code
 		  left join dmsd on {$prefix}_cardcode = dmd_card_code AND dmd_ppal = 1
+		  left join tpdm on dmsd.dmd_city  = pdm_codmunicipality
 		  full join tasa on {$prefix}_currency = tasa.tsa_curro and {$prefix}_docdate = tsa_date
 		  ".(($table =='dcfc')? "left join fcrt on crt_baseentry = {$detailPrefix}_docentry and crt_linenum = {$detailPrefix}_linenum
 			left join dmrt on mrt_id = crt_type" : "")."
 		  where ({$prefix}_docdate BETWEEN :dvf_docdate and  :dvf_duedate) {$card} AND {$table}.business = :business AND {$table}.branch = :branch 
-		  group by {$prefix}_docdate,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_docentry,fc1_linenum,cfc_doctype,":"").(($table =="dcnc")? "cnc_docentry,nc1_linenum,cnc_doctype,":"").(($table =="dcnd")? "cnd_docentry,nd1_linenum,cnd_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
+		  group by {$detailPrefix}_acctcode,{$prefix}_docdate,pdm_municipality,{$detailPrefix}_itemname,{$prefix}_currency,".(($table =="dcfc")? "cfc_docentry,fc1_linenum,cfc_doctype,":"").(($table =="dcnc")? "cnc_docentry,nc1_linenum,cnc_doctype,":"").(($table =="dcnd")? "cnd_docentry,nd1_linenum,cnd_doctype,":"")."mga_name,mdt_docname,mdt_doctype,{$detailPrefix}_itemcode,{$prefix}_cardname, tsa_value,{$prefix}_docnum,{$prefix}_baseentry,{$prefix}_basetype,{$detailPrefix}_uom,{$prefix}_createby".(($table =="dvnc" )?",{$detailPrefix}_exc_inv": "")."
 		  UNION ALL
 		  ";
 		}

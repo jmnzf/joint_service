@@ -39,33 +39,34 @@ class HomeKpi extends REST_Controller {
         }
  
         // INGRESOS
-        $sqlDMA = "SELECT coalesce(ROUND(SUM(dvf_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
-                    coalesce(Round(((SUM(dvf_baseamnt) / (SELECT SUM(dvf_baseamnt) FROM dvfv WHERE business = :business  AND dvf_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2),0.00) as diff
+        $sqlDMA = "SELECT coalesce(ROUND(SUM((dvf_baseamnt - dvf_discount) / 1000000), 2), 0.00)::TEXT||' M' as monto,
+                    coalesce(Round(((SUM((dvf_baseamnt - dvf_discount) / 1000000) / (SELECT SUM((dvf_baseamnt - dvf_discount) / 1000000) FROM dvfv WHERE business = :business   AND dvf_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2),0.00) as diff
                     FROM dvfv
-                    WHERE dvf_docdate = current_date
-                    AND business = :business 
-                    
+                    WHERE dvf_docdate = current_date 
+                    AND business = :business  
+
+
                     UNION ALL
-                    
-                    SELECT coalesce(ROUND(SUM(dvf_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
-                    coalesce(round((SUM(dvf_baseamnt) / (SELECT SUM(dvf_baseamnt) FROM dvfv
-                        WHERE business = :business  AND date_trunc('month', dvf_docdate) = date_trunc('month', current_date - interval '1 month')
+
+                    SELECT coalesce(ROUND(SUM((dvf_baseamnt - dvf_discount) / 1000000),2),0.00)::TEXT||' M' as monto,
+                    coalesce(round((SUM((dvf_baseamnt - dvf_discount) / 1000000) / (SELECT SUM((dvf_baseamnt - dvf_discount) / 1000000) FROM dvfv
+                        WHERE business = :business   AND date_trunc('month', dvf_docdate) = date_trunc('month', current_date - interval '1 month')
                         AND EXTRACT(YEAR FROM dvf_docdate) = EXTRACT(YEAR FROM current_date)) -1) * 100, 2),0.00) as diff
                     FROM dvfv
                     WHERE EXTRACT(MONTH FROM dvf_docdate) = EXTRACT(MONTH FROM current_date) 
                     AND EXTRACT(YEAR FROM dvf_docdate) = EXTRACT(YEAR FROM current_date) 
-                    AND business = :business 
-                    
+                    AND business = :business  
+
                     UNION ALL
-                    
-                    SELECT coalesce(ROUND(SUM(dvf_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
-                        coalesce(round(((SUM(dvf_baseamnt) / (SELECT SUM(dvf_baseamnt) FROM dvfv
-                        WHERE business = :business  AND date_trunc('year', dvf_docdate) = date_trunc('year', current_date - interval '1 year'))) -1) * 100, 2), 100) as diff 
+
+                    SELECT coalesce(ROUND(SUM((dvf_baseamnt - dvf_discount) / 1000000),2),0.00)::TEXT||' M' as monto,
+                        coalesce(round(((SUM((dvf_baseamnt - dvf_discount) / 1000000) / (SELECT SUM((dvf_baseamnt - dvf_discount) / 1000000) FROM dvfv
+                        WHERE business = :business   AND date_trunc('year', dvf_docdate) = date_trunc('year', current_date - interval '1 year'))) -1) * 100, 2), 100) as diff 
                     FROM dvfv
                     WHERE EXTRACT(YEAR FROM dvf_docdate) = EXTRACT(YEAR FROM current_date) 
                     AND business = :business ";
         //
-        $sqlANO =   "SELECT COALESCE(ROUND(SUM(dvf_baseamnt/1000000),2), 0.00)::numeric AS monto, nombres_meses.nombre_mes
+        $sqlANO =   "SELECT COALESCE(ROUND(SUM((dvf_baseamnt - dvf_discount) / 1000000),2), 0.00)::numeric AS monto, nombres_meses.nombre_mes
                     FROM generate_series(1, EXTRACT(MONTH FROM current_date)::INT) AS meses(mes)
                     LEFT JOIN (
                         SELECT 1 AS mes_numero, 'Enero' AS nombre_mes UNION ALL
@@ -82,7 +83,7 @@ class HomeKpi extends REST_Controller {
                         SELECT 12, 'Diciembre'
                         ) AS nombres_meses ON meses.mes = nombres_meses.mes_numero
                         LEFT JOIN (
-                            SELECT EXTRACT(MONTH FROM dvf_docdate) AS mes, dvf_baseamnt
+                            SELECT EXTRACT(MONTH FROM dvf_docdate) AS mes, dvf_baseamnt, dvf_discount
                             FROM dvfv
                             WHERE business = :business
                         ) AS subconsulta ON meses.mes = subconsulta.mes
@@ -91,7 +92,7 @@ class HomeKpi extends REST_Controller {
 
 
         //
-        $sqlDM = "SELECT ROUND(SUM(dvf_baseamnt/1000000),2) AS MONTO, (EXTRACT(DAY FROM dvf_docdate)::TEXT ||'/'|| EXTRACT(MONTH FROM dvf_docdate))::TEXT AS DIA 
+        $sqlDM = "SELECT ROUND(SUM((dvf_baseamnt - dvf_discount) / 1000000),2) AS MONTO, (EXTRACT(DAY FROM dvf_docdate)::TEXT ||'/'|| EXTRACT(MONTH FROM dvf_docdate))::TEXT AS DIA 
                     FROM dvfv
                     WHERE business = :business
                     AND EXTRACT(MONTH FROM dvf_docdate) = EXTRACT(MONTH FROM current_date) 
@@ -100,16 +101,16 @@ class HomeKpi extends REST_Controller {
 
         //
         // DEVOLUCIONES
-        $sqlDMAD = "SELECT coalesce(ROUND(SUM(vnc_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
-            coalesce(Round(((SUM(vnc_baseamnt) / (SELECT SUM(vnc_baseamnt) FROM dvnc WHERE business = :business  AND vnc_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2),0.00) as diff
+        $sqlDMAD = "SELECT coalesce(ROUND(SUM((vnc_baseamnt - vnc_discount) / 1000000),2),0.00)::TEXT||' M' as monto,
+            coalesce(Round(((SUM((vnc_baseamnt - vnc_discount) / 1000000) / (SELECT SUM((vnc_baseamnt - vnc_discount) / 1000000) FROM dvnc WHERE business = :business  AND vnc_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2),0.00) as diff
             FROM dvnc
             WHERE vnc_docdate = current_date
             AND business = :business
 
             UNION ALL
 
-            SELECT coalesce(ROUND(SUM(vnc_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
-            coalesce(round((SUM(vnc_baseamnt) / (SELECT SUM(vnc_baseamnt) FROM dvnc
+            SELECT coalesce(ROUND(SUM((vnc_baseamnt - vnc_discount) / 1000000),2),0.00)::TEXT||' M' as monto,
+            coalesce(round((SUM((vnc_baseamnt - vnc_discount) / 1000000) / (SELECT SUM((vnc_baseamnt - vnc_discount) / 1000000) FROM dvnc
                 WHERE business = :business  AND date_trunc('month', vnc_docdate) = date_trunc('month', current_date - interval '1 month')
                 AND EXTRACT(YEAR FROM vnc_docdate) = EXTRACT(YEAR FROM current_date)) -1) * 100, 2),0.00) as diff
             FROM dvnc
@@ -119,14 +120,14 @@ class HomeKpi extends REST_Controller {
 
             UNION ALL
 
-            SELECT coalesce(ROUND(SUM(vnc_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
-                coalesce(round(((SUM(vnc_baseamnt) / (SELECT SUM(vnc_baseamnt) FROM dvnc
+            SELECT coalesce(ROUND(SUM((vnc_baseamnt - vnc_discount) / 1000000),2),0.00)::TEXT||' M' as monto,
+                coalesce(round(((SUM((vnc_baseamnt - vnc_discount) / 1000000) / (SELECT SUM((vnc_baseamnt - vnc_discount) / 1000000) FROM dvnc
                 WHERE business = :business  AND date_trunc('year', vnc_docdate) = date_trunc('year', current_date - interval '1 year'))) -1) * 100, 2), 100) as diff 
             FROM dvnc
             WHERE EXTRACT(YEAR FROM vnc_docdate) = EXTRACT(YEAR FROM current_date) 
             AND business = :business";
         //
-        $sqlANOD = "SELECT COALESCE(ROUND(SUM(vnc_baseamnt/1000000),2), 0.00)::numeric AS monto, nombres_meses.nombre_mes
+        $sqlANOD = "SELECT COALESCE(ROUND(SUM((vnc_baseamnt - vnc_discount) / 1000000),2), 0.00)::numeric AS monto, nombres_meses.nombre_mes
                     FROM generate_series(1, EXTRACT(MONTH FROM current_date)::INT) AS meses(mes)
                     LEFT JOIN (
                         SELECT 1 AS mes_numero, 'Enero' AS nombre_mes UNION ALL
@@ -143,14 +144,14 @@ class HomeKpi extends REST_Controller {
                         SELECT 12, 'Diciembre'
                         ) AS nombres_meses ON meses.mes = nombres_meses.mes_numero
                         LEFT JOIN (
-                            SELECT EXTRACT(MONTH FROM vnc_docdate) AS mes, vnc_baseamnt
+                            SELECT EXTRACT(MONTH FROM vnc_docdate) AS mes, vnc_baseamnt, vnc_discount
                             FROM dvnc
                             WHERE business = :business
                         ) AS subconsulta ON meses.mes = subconsulta.mes
                         GROUP BY meses.mes, nombres_meses.nombre_mes
                         ORDER BY meses.mes";
         //
-        $sqlDMD = "SELECT ROUND(SUM(vnc_baseamnt/1000000),2) AS MONTO, (EXTRACT(DAY FROM vnc_docdate)::TEXT ||'/'|| EXTRACT(MONTH FROM vnc_docdate))::TEXT AS DIA 
+        $sqlDMD = "SELECT ROUND(SUM((vnc_baseamnt - vnc_discount) / 1000000),2) AS MONTO, (EXTRACT(DAY FROM vnc_docdate)::TEXT ||'/'|| EXTRACT(MONTH FROM vnc_docdate))::TEXT AS DIA 
                     FROM dvnc
                     WHERE business = :business
                     AND EXTRACT(MONTH FROM vnc_docdate) = EXTRACT(MONTH FROM current_date) 
@@ -196,16 +197,16 @@ class HomeKpi extends REST_Controller {
             return $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
         }
 
-        $sqlDMA = "SELECT coalesce(ROUND(SUM(cfc_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
-                    coalesce(Round(((SUM(cfc_baseamnt) / (SELECT SUM(cfc_baseamnt) FROM dcfc WHERE business = :business  AND cfc_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2),0.00) as diff
+        $sqlDMA = "SELECT coalesce(ROUND(SUM((cfc_baseamnt - cfc_discount) / 1000000),2),0.00)::TEXT||' M' as monto,
+                    coalesce(Round(((SUM((cfc_baseamnt - cfc_discount) / 1000000) / (SELECT SUM((cfc_baseamnt - cfc_discount) / 1000000) FROM dcfc WHERE business = :business  AND cfc_docdate = current_date - INTERVAL '1 day')) - 1) * 100, 2),0.00) as diff
                     FROM dcfc
                     WHERE cfc_docdate = current_date
                     AND business = :business 
                     
                     UNION ALL
                     
-                    SELECT coalesce(ROUND(SUM(cfc_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
-                    coalesce(round((SUM(cfc_baseamnt) / (SELECT SUM(cfc_baseamnt) FROM dcfc
+                    SELECT coalesce(ROUND(SUM((cfc_baseamnt - cfc_discount) / 1000000),2),0.00)::TEXT||' M' as monto,
+                    coalesce(round((SUM((cfc_baseamnt - cfc_discount) / 1000000) / (SELECT SUM((cfc_baseamnt - cfc_discount) / 1000000) FROM dcfc
                         WHERE business = :business  AND date_trunc('month', cfc_docdate) = date_trunc('month', current_date - interval '1 month')
                         AND EXTRACT(YEAR FROM cfc_docdate) = EXTRACT(YEAR FROM current_date)) -1) * 100, 2),0.00) as diff
                     FROM dcfc
@@ -215,14 +216,14 @@ class HomeKpi extends REST_Controller {
                     
                     UNION ALL
                     
-                    SELECT coalesce(ROUND(SUM(cfc_baseamnt/1000000),2),0.00)::TEXT||' M' as monto,
-                        coalesce(round(((SUM(cfc_baseamnt) / (SELECT SUM(cfc_baseamnt) FROM dcfc
+                    SELECT coalesce(ROUND(SUM((cfc_baseamnt - cfc_discount) / 1000000),2),0.00)::TEXT||' M' as monto,
+                        coalesce(round(((SUM((cfc_baseamnt - cfc_discount) / 1000000) / (SELECT SUM((cfc_baseamnt - cfc_discount) / 1000000) FROM dcfc
                         WHERE business = :business  AND date_trunc('year', cfc_docdate) = date_trunc('year', current_date - interval '1 year'))) -1) * 100, 2), 100) as diff 
                     FROM dcfc
                     WHERE EXTRACT(YEAR FROM cfc_docdate) = EXTRACT(YEAR FROM current_date) 
                     AND business = :business ";
 
-        $sqlANO =   "SELECT COALESCE(ROUND(SUM(cfc_baseamnt/1000000),2), 0.00)::numeric AS monto, nombres_meses.nombre_mes
+        $sqlANO =   "SELECT COALESCE(ROUND(SUM((cfc_baseamnt - cfc_discount) / 1000000),2), 0.00)::numeric AS monto, nombres_meses.nombre_mes
                         FROM generate_series(1, EXTRACT(MONTH FROM current_date)::INT) AS meses(mes)
                         LEFT JOIN (
                           SELECT 1 AS mes_numero, 'Enero' AS nombre_mes UNION ALL
@@ -239,14 +240,14 @@ class HomeKpi extends REST_Controller {
                           SELECT 12, 'Diciembre'
                         ) AS nombres_meses ON meses.mes = nombres_meses.mes_numero
                         LEFT JOIN (
-                          SELECT EXTRACT(MONTH FROM cfc_docdate) AS mes, cfc_baseamnt
+                          SELECT EXTRACT(MONTH FROM cfc_docdate) AS mes, cfc_baseamnt, cfc_discount
                           FROM dcfc
                           WHERE business = :business
                         ) AS subconsulta ON meses.mes = subconsulta.mes
                         GROUP BY meses.mes, nombres_meses.nombre_mes
                         ORDER BY meses.mes";
 
-        $sqlDM = "SELECT ROUND(SUM(cfc_baseamnt/1000000),2) AS MONTO, (EXTRACT(DAY FROM cfc_docdate)::TEXT ||'/'|| EXTRACT(MONTH FROM cfc_docdate))::TEXT AS DIA 
+        $sqlDM = "SELECT ROUND(SUM((cfc_baseamnt - cfc_discount) / 1000000),2) AS MONTO, (EXTRACT(DAY FROM cfc_docdate)::TEXT ||'/'|| EXTRACT(MONTH FROM cfc_docdate))::TEXT AS DIA 
                     FROM dcfc
                     WHERE business = :business
                     AND EXTRACT(MONTH FROM cfc_docdate) = EXTRACT(MONTH FROM current_date) 

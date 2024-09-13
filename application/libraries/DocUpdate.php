@@ -63,4 +63,55 @@ class DocUpdate {
         return $resp;
 
 	}
+
+    public function getOldData($headerTable, $headerPrefix, $detailTable, $detailPrefix, $id, $data){
+    $sql = "SELECT {headerFields},
+                    concat('[',string_agg(json_build_object(
+					{detailFields}
+     				 )::text,','  ),']') as detail
+                    FROM {headerTable} t0
+					inner join {detailTable} t1 on t1.{detailPrefix}_docentry = t0.{headerPrefix}_docentry 
+					WHERE t0.{headerPrefix}_docentry = :docentry
+                    group by {headerFields}";   
+
+    $detail = $data['detail'];
+    $detail = json_decode($detail)[0];
+    
+    $detailstructure = $this->getDetailFields($detail);
+    
+    unset($data['detail']);
+
+    $header = $this->getHeaderFields($data);
+
+    $sql = str_replace("{headerTable}", $headerTable, $sql);    
+    $sql = str_replace("{headerPrefix}", $headerPrefix, $sql);   
+    $sql = str_replace("{detailTable}", $detailTable, $sql);        
+    $sql = str_replace("{detailPrefix}", $detailPrefix, $sql);    
+    $sql = str_replace("{headerFields}", $header, $sql);    
+    $sql = str_replace("{detailFields}", $detailstructure, $sql);
+
+    $resSqlBefore = $this->ci->pedeo($sql,array(':docentry' => $id));
+
+    return $resSqlBefore;
+}
+private function getHeaderFields($headerFields){
+    $header = [];
+    foreach ($headerFields as $key => $value) {
+        $header[] = $key;
+    } 
+
+    $header = join(",",$header);
+
+    return $header;
+}
+private function getDetailFields($detailFields){
+    $detailstructure = [];
+    foreach ($detailFields as $key => $detail) {
+        $detailstructure[] = "'".$key."',t1.".$key;
+    }
+
+    $detailstructure = join(",",$detailstructure);
+
+    return $detailstructure;
+}
 }

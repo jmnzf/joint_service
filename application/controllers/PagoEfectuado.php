@@ -104,7 +104,7 @@ class PagoEfectuado extends REST_Controller {
 			cfc_docnum as id_origen,
 			mac1.ac1_font_type as numtype,
 			mdt_docname as tipo,
-			cfc_tax_control_num as refFiscal,
+			case when mac1.ac1_ref2 is not null then mac1.ac1_ref2 else '' end as refFiscal,
 			case
 			when mac1.ac1_font_type = 15 OR mac1.ac1_font_type = 46 then get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,mac1.ac1_credit, get_localcur())
 			else get_dynamic_conversion(:currency,get_localcur(),cfc_docdate,mac1.ac1_debit, get_localcur())

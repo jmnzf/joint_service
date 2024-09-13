@@ -1362,6 +1362,7 @@ class ExitInventory extends REST_Controller
 	{
 
 		$Data = $this->get();
+		$variableSql = "";
 
 		if ( !isset($Data['business']) ) {
 
@@ -1375,6 +1376,8 @@ class ExitInventory extends REST_Controller
 
 			return;
 		}
+
+		
 
 		$sqlSelect = "SELECT
 					t0.isi_docentry,
@@ -1391,6 +1394,7 @@ class ExitInventory extends REST_Controller
 					LEFT JOIN dmev t1 on t0.isi_slpcode = t1.mev_id
 					LEFT JOIN dmdt t2 on t0.isi_doctype = t2.mdt_doctype
 					WHERE t0.business = :business";
+   
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business']));
 
@@ -1607,5 +1611,27 @@ class ExitInventory extends REST_Controller
 		} else {
 			return false;
 		}
+	}
+
+	public function get_Filter($columns, $value)
+	{
+		//
+		$resultSet = "";
+		// CONDICIONAL.
+		$where = " {campo} LIKE '%" . $value . "%' OR";
+		//
+		try {
+			//
+			foreach ($columns as $column) {
+				// REEMPLAZAR CAMPO.
+				$resultSet .= str_replace('{campo}', $column, $where);
+			}
+			// REMOVER ULTIMO OR DE LA CADENA.
+			$resultSet = substr($resultSet, 0, -2);
+		} catch (Exception $e) {
+			$resultSet = $e->getMessage();
+		}
+		//
+		return $resultSet;
 	}
 }

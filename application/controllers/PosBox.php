@@ -24,7 +24,7 @@ class PosBox extends REST_Controller {
 
 
 	// CREAR CAJA
-	public function createPosBox_post(){
+	public function createPosBox_post() {
 
 		$Data = $this->post();
 
@@ -80,32 +80,33 @@ class PosBox extends REST_Controller {
         //
 
         $sqlInsert = "INSERT INTO tbcc (bcc_description, bcc_user, bcc_createdby, bcc_createdat, bcc_acount, bcc_status, business, branch, 
-                    bcc_cccode, bcc_wscode, bcc_codimp, bcc_pricelist, bcc_series, bcc_series2, bcc_series3, bbc_project,bbc_ubusiness,
-                    bcc_series4)
+                    bcc_cccode, bcc_wscode, bcc_codimp, bcc_pricelist, bcc_series, bcc_series2, bcc_series3, bbc_project, bbc_ubusiness,
+                    bcc_series4, bcc_series5)
                     VALUES(:bcc_description, :bcc_user, :bcc_createdby, :bcc_createdat, :bcc_acount, :bcc_status, :business, :branch, 
                     :bcc_cccode, :bcc_wscode, :bcc_codimp, :bcc_pricelist, :bcc_series, :bcc_series2, :bcc_series3, :bbc_project, :bbc_ubusiness,
-                    :bcc_series4)";
+                    :bcc_series4, :bcc_series5)";
 
         $resSqlInsert = $this->pedeo->insertRow($sqlInsert, array(
             
             ':bcc_description' => $Data['bcc_description'], 
-            ':bcc_user' => $Data['bcc_user'], 
-            ':bcc_createdby' => $Data['bcc_createdby'], 
-            ':bcc_createdat' => date('Y-m-d'),
-            ':bcc_acount' => $Data['bcc_acount'], 
-            ':bcc_status' => $Data['bcc_status'],
-            ':business' => $Data['business'],
-            ':branch' => $Data['branch'],
-            ':bcc_cccode' => $Data['bcc_cccode'], 
-            ':bcc_wscode' => $Data['bcc_wscode'],
-            ':bcc_codimp' => $Data['bcc_codimp'],
-            ':bcc_pricelist' => $Data['bcc_pricelist'],
-            ':bcc_series' => $Data['bcc_series'],
-            ':bcc_series2' => $Data['bcc_series2'],
-            ':bcc_series3' => $Data['bcc_series3'],
-            ':bbc_project' => $Data['bbc_project'],
-            ':bbc_ubusiness' => $Data['bbc_ubusiness'],
-            ':bcc_series4' => $Data['bcc_series4']
+            ':bcc_user'        => $Data['bcc_user'], 
+            ':bcc_createdby'   => $Data['bcc_createdby'], 
+            ':bcc_createdat'   => date('Y-m-d'),
+            ':bcc_acount'      => $Data['bcc_acount'], 
+            ':bcc_status'      => $Data['bcc_status'],
+            ':business'        => $Data['business'],
+            ':branch'          => $Data['branch'],
+            ':bcc_cccode'      => $Data['bcc_cccode'], 
+            ':bcc_wscode'      => $Data['bcc_wscode'],
+            ':bcc_codimp'      => $Data['bcc_codimp'],
+            ':bcc_pricelist'   => $Data['bcc_pricelist'],
+            ':bcc_series'      => $Data['bcc_series'],
+            ':bcc_series2'     => $Data['bcc_series2'],
+            ':bcc_series3'     => $Data['bcc_series3'],
+            ':bbc_project'     => $Data['bbc_project'],
+            ':bbc_ubusiness'   => $Data['bbc_ubusiness'],
+            ':bcc_series4'     => $Data['bcc_series4'],
+            ':bcc_series5'     => $Data['bcc_series5']
         ));
 
         if (is_numeric($resSqlInsert) && $resSqlInsert > 0){
@@ -216,27 +217,28 @@ class PosBox extends REST_Controller {
         bcc_createdby=:bcc_createdby, bcc_createdat=:bcc_createdat, bcc_acount=:bcc_acount, 
         bcc_status=:bcc_status, bcc_cccode = :bcc_cccode, bcc_wscode = :bcc_wscode, bcc_codimp = :bcc_codimp,
         bcc_pricelist= :bcc_pricelist, bcc_series = :bcc_series, bcc_series2 = :bcc_series2, bcc_series3 = :bcc_series3,
-        bbc_project = :bbc_project, bbc_ubusiness = :bbc_ubusiness, bcc_series4 = :bcc_series4
+        bbc_project = :bbc_project, bbc_ubusiness = :bbc_ubusiness, bcc_series4 = :bcc_series4, bcc_series5 = :bcc_series5
         WHERE bcc_id =:bcc_id";
 
         $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
-            ':bcc_id' => $Data['bcc_id'],
+            ':bcc_id'          => $Data['bcc_id'],
             ':bcc_description' => $Data['bcc_description'],
-            ':bcc_user' => $Data['bcc_user'],
-            ':bcc_createdby' => $Data['bcc_createdby'],
-            ':bcc_createdat' => date('Y-m-d'),
-            ':bcc_acount' => $Data['bcc_acount'],
-            ':bcc_status' => $Data['bcc_status'],
-            ':bcc_cccode' => $Data['bcc_cccode'], 
-            ':bcc_wscode' => $Data['bcc_wscode'],
-            ':bcc_codimp' => $Data['bcc_codimp'],
-            ':bcc_pricelist' => $Data['bcc_pricelist'],
-            ':bcc_series' => $Data['bcc_series'],
-            ':bcc_series2' => $Data['bcc_series2'],
-            ':bcc_series3' => $Data['bcc_series3'],
-            ':bbc_project' => $Data['bbc_project'],
-            ':bbc_ubusiness' => $Data['bbc_ubusiness'],
-            ':bcc_series4' => $Data['bcc_series4']
+            ':bcc_user'        => $Data['bcc_user'],
+            ':bcc_createdby'   => $Data['bcc_createdby'],
+            ':bcc_createdat'   => date('Y-m-d'),
+            ':bcc_acount'      => $Data['bcc_acount'],
+            ':bcc_status'      => $Data['bcc_status'],
+            ':bcc_cccode'      => $Data['bcc_cccode'], 
+            ':bcc_wscode'      => $Data['bcc_wscode'],
+            ':bcc_codimp'      => $Data['bcc_codimp'],
+            ':bcc_pricelist'   => $Data['bcc_pricelist'],
+            ':bcc_series'      => $Data['bcc_series'],
+            ':bcc_series2'     => $Data['bcc_series2'],
+            ':bcc_series3'     => $Data['bcc_series3'],
+            ':bbc_project'     => $Data['bbc_project'],
+            ':bbc_ubusiness'   => $Data['bbc_ubusiness'],
+            ':bcc_series4'     => $Data['bcc_series4'],
+            ':bcc_series5'     => $Data['bcc_series5']
         ));
 
         if ( is_numeric( $resUpdate ) &&  $resUpdate == 1){
@@ -258,36 +260,36 @@ class PosBox extends REST_Controller {
 	}
 	//
 
-  // Lista las cajas creadas
-  public function getPosBox_get(){
+    // Lista las cajas creadas
+    public function getPosBox_get(){
 
-    $Data = $this->get();
+        $Data = $this->get();
 
-    $sqlSelect = "SELECT * FROM tbcc WHERE business = :business AND branch = :branch";
+        $sqlSelect = "SELECT * FROM tbcc WHERE business = :business AND branch = :branch";
 
-    $resSelect = $this->pedeo->queryTable($sqlSelect, array(
-        ':business' => $Data['business'],
-        ':branch' => $Data['branch']
-    ));
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+            ':business' => $Data['business'],
+            ':branch' => $Data['branch']
+        ));
 
-    if(isset($resSelect[0])){
-
-      $respuesta = array(
-        'error' => false,
-        'data'  => $resSelect,
-        'mensaje' => '');
-
-    }else{
+        if(isset($resSelect[0])){
 
         $respuesta = array(
-          'error'   => true,
-          'data' => array(),
-          'mensaje'	=> 'busqueda sin resultados'
-        );
+            'error' => false,
+            'data'  => $resSelect,
+            'mensaje' => '');
 
+        }else{
+
+            $respuesta = array(
+            'error'   => true,
+            'data' => array(),
+            'mensaje'	=> 'busqueda sin resultados'
+            );
+
+        }
+
+        $this->response($respuesta);
     }
-
-    $this->response($respuesta);
-  }
 
 }

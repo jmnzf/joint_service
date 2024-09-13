@@ -930,7 +930,9 @@ class BpContracts extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM csn1 WHERE sn1_docentry =:sn1_docentry";
+		$sqlSelect = "SELECT csn1.*,tcsn.csn_doctype  from csn1
+						left join tcsn  on sn1_docentry = csn_docentry and sn1_doctype = tcsn.csn_doctype 
+						where csn1.sn1_docentry  = :sn1_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":sn1_docentry" => $Data['sn1_docentry']));
 
@@ -964,10 +966,12 @@ class BpContracts extends REST_Controller
 		foreach ($resSelect as $key => $value) {
 			$sqlRetenciones = "SELECT crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret FROM fcrt 
 			WHERE crt_baseentry = :crt_baseentry 
+			and crt_basetype = :crt_basetype 
 			and crt_linenum = :crt_linenum";
 			$resSelectRetenciones = $this->pedeo->queryTable($sqlRetenciones, array(
 				':crt_baseentry' => $Data['sn1_docentry'],
-				':crt_linenum' => $value['sn1_linenum'],
+				':crt_basetype' => 32,
+				':crt_linenum' => $value['sn1_linenum']
 			));
 
 			$resSelect[$key]['ret'] = $resSelectRetenciones;
@@ -1068,11 +1072,13 @@ class BpContracts extends REST_Controller
 
 				$sqlRetenciones = "SELECT crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret FROM fcrt 
 				WHERE crt_baseentry = :crt_baseentry 
+				and crt_basetype = :crt_basetype
 				and crt_linenum = :crt_linenum";
 
 				$resSelectRetenciones = $this->pedeo->queryTable($sqlRetenciones, array(
 					':crt_baseentry' => $Data['sn1_docentry'],
-					':crt_linenum' => $value['sn1_linenum'],
+					':crt_basetype' => 32,
+					':crt_linenum' => $value['sn1_linenum']
 				));
 	
 				$copy[$key]['retenciones'] = $resSelectRetenciones;

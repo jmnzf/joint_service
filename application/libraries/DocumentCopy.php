@@ -373,6 +373,7 @@ class DocumentCopy {
 			$sql = str_replace("{prefijo_det}",$prefijo_det,$sql);//ASIGNAR PREFIJO DETALLE
 			$sql = str_replace("{addFields}",$addFields,$sql);//ASIGNAR CAMPOS FIELDS
 			// print_r($sql);exit;
+
 			//
 			return $this->ci->pedeo->queryTable($sql, array(':'.$prefijo_det.'_docentry' => $docentry));
 

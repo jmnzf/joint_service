@@ -76,7 +76,9 @@ class EstadoCarteraPro extENDs REST_Controller {
 
         $grupo = "";
 		if ( isset($Data['groupsn']) && $Data['groupsn'] != 0 ){
-			$grupo = " AND dmsn.dms_group_num::numeric = ".$Data['groupsn']."::numeric";
+			// $grupo = " AND dmsn.dms_group_num::numeric = ".$Data['groupsn']."::numeric";
+			$grupo = " AND dmsn.dms_group_num::numeric in (".$Data['groupsn'].")";
+
 		}
 
 		$sqlestadocuenta = "SELECT distinct dmdt.mdt_docname,

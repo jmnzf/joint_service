@@ -110,9 +110,7 @@ class AutomaticSalesInvoice extends REST_Controller
 					
 				}
 
-			} else {
 			}
-
 
 		}
         //
@@ -148,7 +146,7 @@ class AutomaticSalesInvoice extends REST_Controller
                 $adDres = $resDir[0]['dmd_adress'];
             } else { 
                 $idDir  = $element['csn_idadd'];
-                $adDres = $element['csn_adress'];
+				$adDres = $element['csn_adress'];
             }
             
             // FIN DEL PROCESO PARA CAMBIAR LA DIRECCION DE LA FACTURA A LA PRINCIPAL
@@ -213,7 +211,7 @@ class AutomaticSalesInvoice extends REST_Controller
                 $Data['detail'] = [];
 
                 foreach ($resDetail as $key => $value) {
-
+                
 
                     // VARIFICAR SI LA LINEA TIENE RETENCIONES APLICADAS
 
@@ -223,26 +221,26 @@ class AutomaticSalesInvoice extends REST_Controller
 									INNER JOIN fcrt fc ON csn1.sn1_docentry = fc.crt_baseentry 
 									AND csn1.sn1_linenum = fc.crt_linenum
                                     AND fc.crt_basetype = 32
+                                    AND sn1_enabled = 1
 									WHERE sn1_docentry = :sn1_docentry";
 	
 					$resRetencion = $this->pedeo->queryTable($sqlRetencion, array(':sn1_docentry' => $value['sn1_docentry']));
 
 					if (isset($resRetencion[0])) {
 
-                        // RETENCION DE FUENTE
-                        if ( $resRetencion[0]['crt_type'] == 1 ) {
+                        foreach ($resRetencion as $key => $ret) {
+                            // RETENCION DE FUENTE E ICA
+                            if ( $ret['crt_type'] == 1 || $ret['crt_type'] == 2 ) {
 
-                            $totalReteFuente = $totalReteFuente +  $resRetencion[0]['crt_totalrt'];
+                                $totalReteFuente = $totalReteFuente +  $ret['crt_totalrt'];
 
-                        // RETENCION DE IVA    
-                        } else if ($resRetencion[0]['crt_type'] == 3) {
+                            // RETENCION DE IVA    
+                            } else if ($ret['crt_type'] == 3) {
 
-                            $totalReteIva = $totalReteIva +  $resRetencion[0]['crt_totalrt'];
+                                $totalReteIva = $totalReteIva +  $ret['crt_totalrt'];
+                            }
                         }
-
-                     
 					}
-
                     // SE AGREGA EL DETALLE
                     array_push($Data['detail'], array(
 
@@ -284,7 +282,7 @@ class AutomaticSalesInvoice extends REST_Controller
                     $totalImpuesto = $totalImpuesto + $value['sn1_vatsum'];
                     $totalDesc = $totalDesc + (round((( ($value['sn1_price'] * $value['sn1_discount']) / 100) ), 2) * $value['sn1_quantity']);
                     $subTotal = $subTotal + ( $value['sn1_price'] * $value['sn1_quantity'] );
-
+                   
 
                 }
 
@@ -3573,8 +3571,8 @@ class AutomaticSalesInvoice extends REST_Controller
                             $RetencionDescuentoSYS = 0;
                             $RetencionDescuentoLOC = 0;
         
-                            if (is_array($ContenidoRentencion)) {
-                                if (intval(count($ContenidoRentencion)) > 0) {
+                            if (is_array($DetalleConsolidadoRetencion)) {
+                                if (intval(count($DetalleConsolidadoRetencion)) > 0) {
                                     
                                     if (isset($Data['dvf_totalretiva']) && is_numeric($Data['dvf_totalretiva']) && ( $Data['dvf_totalretiva'] * -1  > 0 ) ){
         

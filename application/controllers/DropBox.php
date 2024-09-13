@@ -140,6 +140,22 @@ class DropBox extends REST_Controller
         // 
         $insert[":type"] = $Data['type'];
       }
+
+      if (!empty($Data['docentry'])) {
+        // AGREGAR TYPE
+        $fields .= ",docentry";
+        $values .= ",:docentry";
+        // 
+        $insert[":docentry"] = $Data['docentry'];
+      }
+
+      if(isset($Data['cardtype'])){
+         // AGREGAR TYPE
+         $fields .= ",cardtype";
+         $values .= ",:cardtype";
+         // 
+         $insert[":cardtype"] = $Data['cardtype'];
+      }
       // 
       $sqlInsert = "INSERT INTO {$table} ({$fields}) VALUES ({$values})";
       // 
@@ -223,7 +239,7 @@ class DropBox extends REST_Controller
     );
     try {
       $client = new GuzzleHttp\Client();
-      $res = $client->request("POST", "https://{$key}:{$secret}@api.dropbox.com/oauth2/token", [
+      $res = $client->request("POST", "https://{$key}:{$secret}@api.dropbox.com/  /token", [
         'verify' => false,
         'form_params' => [
           'grant_type' => 'refresh_token',
@@ -330,6 +346,108 @@ class DropBox extends REST_Controller
     }
 
     $this->response($respuesta);
+  }
+
+  public function deleteFile_post(){
+    $Data = $this->post();
+
+    if(!isset($Data["table"]) or 
+       !isset($Data["id"])){
+
+    }
+
+    $token = $this->getToken();
+    $client = new GuzzleHttp\Client([
+      'base_uri' => 'https://api.dropboxapi.com/2/',
+      'headers' => [
+          'Authorization' => 'Bearer '.$token,
+          'Content-Type' => 'application/json',
+      ]
+    ]);
+
+    try {
+      $this->pedeo->trans_begin();
+      //  CONSULTA DE ARCHIVO 
+      $sqlAnnexe = "SELECT * from {table} where id = :id";
+      $sqlAnnexe = str_replace("{table}", $Data['table'], $sqlAnnexe);
+      $resSelect = $this->pedeo->queryTable($sqlAnnexe, array(':id' => $Data['id']));
+
+      if(!isset($resSelect[0])){
+        $respuesta = array(
+          'error' => true,
+          'data' => [],
+          'mensaje' => "Anexo no encontrado"
+        );
+
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+        return;
+      }
+      // BUSQUEDA DE ARCHIVO POR URL COMPARTIDA
+      $searchFileIntoDropBox = $client->post('sharing/get_shared_link_metadata', [
+        'json' => [
+            "url" => $resSelect[0]['attach'],  // URL compartida
+          ]
+        ]);
+  
+        $data = json_decode($searchFileIntoDropBox->getBody(), true);
+
+        if(isset($data['error'])){
+          $respuesta = array(
+            'error' => true,
+            'data' => [],
+            'mensaje' => "Anexo no encontrado"
+          );
+
+          $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+					return;
+
+        }
+
+        $deleteSql = "DELETE  FROM ".$Data['table']." WHERE id = :id";
+        $resDelete = $this->pedeo->deleteRow($deleteSql, [':id' => $Data['id']]);
+
+        $deleteResponse = $client->post('files/delete_v2', [
+            'json' => [
+                "path" => $data['path_lower']
+            ]
+        ]);           
+        
+       
+      $deleteResponse = json_decode($deleteResponse->getBody(), true);
+      if(isset($deleteResponse['error'])){
+
+				$this->pedeo->trans_rollback();
+        $respuesta = array(
+          'error' => true,
+          'data' => [],
+          'mensaje' => "Anexo no encontrado"
+        );
+
+        $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+        return;
+
+      }
+      $respuesta = array(
+        'error' => false,
+        'data' => [],
+        'mensaje' => "Anexo ha sido eliminado"
+      );
+      $this->pedeo->trans_commit();      
+  
+  } catch (\GuzzleHttp\Exception\RequestException $e) {
+    $respuesta = array(
+      'error' => true,
+      'data' => [],
+      'mensaje' => $e->getMessage()
+    );
+
+  }
+
+  $this->response($respuesta);
+
   }
 }
 

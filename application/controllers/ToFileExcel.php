@@ -74,7 +74,7 @@ class ToFileExcel extends REST_Controller
 
 
         $resSelect = $this->pedeo->queryTable($Data['sql'], array());
-
+        
         if ( !isset($resSelect[0]) ){
                 
             $respuesta = array( 
@@ -89,7 +89,7 @@ class ToFileExcel extends REST_Controller
 
 
         $campos = array_keys($resSelect[0]);
-
+        // print_r(json_encode($campos));exit;
   
         $spreadsheet = new Spreadsheet();
 
@@ -101,7 +101,6 @@ class ToFileExcel extends REST_Controller
             array_push($USEDCOLUMNS, $COLUMNS[$i]);
 
         }
-     
         $acc = 2; // SEGUNDA FILA YA LA PRIMERA SE RESERVA PARA LOS ENCABEZADOS
         for ($i=0; $i < count($resSelect); $i++) { 
 
@@ -113,13 +112,22 @@ class ToFileExcel extends REST_Controller
 
             $acc++;
         }
-        
-        $filename ="doc.xlsx";
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment; filename="'.$filename.'"');
-    
-        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
-        $writer->save('php://output');
+
+        try {
+            //code...
+            $filename ="doc.xlsx";
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment; filename="'.$filename.'"');
+            if (ob_get_length()) {
+                ob_end_clean(); // Limpiar cualquier buffer de salida
+            }
+            $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save('php://output');
+            exit();
+        } catch (\PhpOffice\PhpSpreadsheet\Writer\Exception $e) {
+            echo 'Error al generar el archivo Excel: ', $e->getMessage();
+        }
+       
 
     }
  

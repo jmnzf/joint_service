@@ -302,7 +302,8 @@ class SalesNc extends REST_Controller
 				$Data['vnc_baseentry'] = $newData['pap_baseentry'];
 			}
 		}
-		
+
+
 		// FIN PROCESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
 		
 
@@ -2599,8 +2600,8 @@ class SalesNc extends REST_Controller
 					$RetencionDescuentoSYS = 0;
 					$RetencionDescuentoLOC = 0;
 
-					if (is_array($ContenidoRentencion)) {
-						if (intval(count($ContenidoRentencion)) > 0) {
+					if (is_array($DetalleConsolidadoRetencion)) {
+						if (intval(count($DetalleConsolidadoRetencion)) > 0) {
 							
 							if (isset($Data['vnc_totalretiva']) && is_numeric($Data['vnc_totalretiva']) && ( $Data['vnc_totalretiva'] * -1  > 0 ) ){
 
@@ -3649,7 +3650,6 @@ class SalesNc extends REST_Controller
 
 				// FIN DE OPERACIONES VITALES
 
-
 				// $sqlmac1 = "SELECT * FROM  mac1 WHERE ac1_trans_id = :ac1_trans_id";
 				// $ressqlmac1 = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
 				// print_r(json_encode($ressqlmac1));
@@ -3916,7 +3916,7 @@ class SalesNc extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 
-
+		
 		$campos = ",T4.dms_phone1, T4.dms_phone2, T4.dms_cel, T0.vnc_cufe";
 
 		$sqlSelect = self::getColumn('dvnc', 'vnc', $campos, '', $DECI_MALES, $Data['business'], $Data['branch']);

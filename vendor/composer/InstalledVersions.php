@@ -64,6 +64,15 @@ private static $installed = array (
       ),
       'reference' => '0a0fa9780f5d4e507415a065172d26a98d02047b',
     ),
+    'graham-campbell/result-type' => 
+    array (
+      'pretty_version' => 'v1.1.3',
+      'version' => '1.1.3.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '3ba905c11371512af9d9bdd27d99b782216b6945',
+    ),
     'mikey179/vfsstream' => 
     array (
       'pretty_version' => 'v1.1.0',
@@ -108,6 +117,15 @@ private static $installed = array (
       array (
       ),
       'reference' => '3219c6ee25c9ea71e3d9bbaf39c67c9ebd499419',
+    ),
+    'phpoption/phpoption' => 
+    array (
+      'pretty_version' => '1.9.3',
+      'version' => '1.9.3.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'e3fac8b24f56113f7cb96af14958c0dd16330f54',
     ),
     'phpspec/prophecy' => 
     array (
@@ -289,6 +307,24 @@ private static $installed = array (
       ),
       'reference' => 'ea208ce43cbb04af6867b4fdddb1bdbf84cc28cb',
     ),
+    'symfony/polyfill-mbstring' => 
+    array (
+      'pretty_version' => 'v1.30.0',
+      'version' => '1.30.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => 'fd22ab50000ef01661e2a31d850ebaa297f8e03c',
+    ),
+    'symfony/polyfill-php80' => 
+    array (
+      'pretty_version' => 'v1.30.0',
+      'version' => '1.30.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '77fa7995ac1b21ab60769b7323d600a991a90433',
+    ),
     'symfony/yaml' => 
     array (
       'pretty_version' => 'v4.4.45',
@@ -297,6 +333,15 @@ private static $installed = array (
       array (
       ),
       'reference' => 'aeccc4dc52a9e634f1d1eebeb21eacfdcff1053d',
+    ),
+    'vlucas/phpdotenv' => 
+    array (
+      'pretty_version' => 'v5.5.0',
+      'version' => '5.5.0.0',
+      'aliases' => 
+      array (
+      ),
+      'reference' => '1a7ea2afc49c3ee6d87061f5a233e3a035d0eae7',
     ),
     'webmozart/assert' => 
     array (

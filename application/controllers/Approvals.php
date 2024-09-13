@@ -589,11 +589,11 @@ class Approvals extends REST_Controller
 					$valorEstado = 4; // APROBADO
 
 
-				} else if ($rechazados == $aprobadores or $rechazados > $aprobadores) {
+				} else if ($rechazados == $requeridas or $rechazados > $aprobadores) {
 
 					$valorEstado = 6; // RECHAZADO
 
-				} else if (($aprobados + $rechazados) == $aprobadores or ($aprobados + $rechazados) > $aprobadores) {
+				} else if (($aprobados + $rechazados) == $requeridas or ($aprobados + $rechazados) > $aprobadores) {
 
 					$valorEstado = 6; // RECHAZADO
 
@@ -648,7 +648,6 @@ class Approvals extends REST_Controller
 					//FIN PROCESO ESTADO DEL DOCUMENTO
 				}
 			}
-
 
 			$this->pedeo->trans_commit();
 

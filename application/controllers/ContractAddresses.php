@@ -52,8 +52,7 @@
 				!isset($Data['dsc_doctype']) OR
                 !isset($Data['dsc_rutas']) OR
                 !isset($Data['dsc_lat']) OR
-                !isset($Data['dsc_lng']) OR
-				!isset($Data['dias'])
+                !isset($Data['dsc_lng'])
             ){
 
 				$this->response(array(
@@ -66,7 +65,7 @@
 			}
 			
 
-			$ComplementoDias = $Data['dias'];
+			$ComplementoDias = (isset($Data['dias']) AND !empty($Data['dias']))? $Data['dias']: [];
 
 			$this->pedeo->trans_begin();
 

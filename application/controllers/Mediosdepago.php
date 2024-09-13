@@ -39,12 +39,13 @@ class Mediosdepago extends REST_Controller {
         }
         
         
-        $resInsert = $this->pedeo->insertRow('INSERT INTO tmdp(mdp_name, mdp_status, mdp_account, mdp_local, mdp_multiple)VALUES(:mdp_name, :mdp_status, :mdp_account, :mdp_local, :mdp_multiple)', array(
+        $resInsert = $this->pedeo->insertRow('INSERT INTO tmdp(mdp_name, mdp_status, mdp_account, mdp_local, mdp_multiple, mdp_fe_reference)VALUES(:mdp_name, :mdp_status, :mdp_account, :mdp_local, :mdp_multiple, :mdp_fe_reference)', array(
             ':mdp_name'     => $Data['mdp_name'], 
             ':mdp_status'   => $Data['mdp_status'],
             ':mdp_account'  => $Data['mdp_account'],
             ':mdp_local'    => $Data['mdp_local'],
             ':mdp_multiple' => $Data['mdp_multiple'],
+            ':mdp_fe_reference' => $Data['mdp_fe_reference'] ?: ""
         ));
 
         if ( is_numeric($resInsert) && $resInsert > 0) { 
@@ -95,12 +96,13 @@ class Mediosdepago extends REST_Controller {
             return $this->response($respuesta);
         }
 
-        $resUpdate = $this->pedeo->updateRow('UPDATE tmdp SET mdp_name = :mdp_name , mdp_status = :mdp_status, mdp_account = :mdp_account, mdp_local = :mdp_local, mdp_multiple =:mdp_multiple WHERE mdp_id = :mdp_id', array(
+        $resUpdate = $this->pedeo->updateRow('UPDATE tmdp SET mdp_name = :mdp_name , mdp_status = :mdp_status, mdp_account = :mdp_account, mdp_local = :mdp_local, mdp_multiple =:mdp_multiple, mdp_fe_reference = :mdp_fe_reference WHERE mdp_id = :mdp_id', array(
             ':mdp_name'    => $Data['mdp_name'], 
             ':mdp_status'  => $Data['mdp_status'], 
             ':mdp_account' => $Data['mdp_account'],
             ':mdp_local'   => $Data['mdp_local'],
             ':mdp_multiple' => $Data['mdp_multiple'],
+            ':mdp_fe_reference' => $Data['mdp_fe_reference'] ?: "",
             ':mdp_id'      => $Data['mdp_id']
         ));
 

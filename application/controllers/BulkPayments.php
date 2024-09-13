@@ -2740,7 +2740,7 @@ class bulkPayments extends REST_Controller
 						":dms_card_code" => $detail['pm1_cardcode'],
 						":dms_card_type" => '2'
 					));
-
+			
 					if (isset($resSocio[0])) {
 
 						$MONTOPAGAR = round($detail['pm1_vlrpaid'], 2);

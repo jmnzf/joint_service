@@ -1289,7 +1289,10 @@ class BusinessPartner extends REST_Controller
       'mensaje' => 'No se encontraron datos en la busqueda'
     );
 
-    if(!isset($Data['dma_card_code']) && empty($Data['dma_card_code'])){
+    if(!isset($Data['dma_card_code']) &&
+        empty($Data['dma_card_code']) &&
+        !isset($Data['dma_card_cardtype']) &&
+        empty($Data['dma_card_cardtype'])){
       $respuesta = array(
         'error' => true,
         'data' => [],
@@ -1297,9 +1300,10 @@ class BusinessPartner extends REST_Controller
       );
     }
 
-    $sql = "SELECT code AS cardcode, attach,description FROM dmsa WHERE code = :cardcode";
+    $sql = "SELECT code AS cardcode, attach,description, id FROM dmsa WHERE code = :cardcode and cardtype = :cardtype";
     $resSql = $this->pedeo->queryTable($sql,array(
-      ':cardcode' => $Data['dma_card_code']
+      ':cardcode' => $Data['dma_card_code'],
+      ':cardtype' => $Data['dma_card_type']
     ));
 
     if(isset($resSql[0])){

@@ -10,7 +10,7 @@ class BalancePYG extends REST_Controller {
 
 	private $pdo;
 
-	public function __construct(){
+	public function __construct() {
 
 		header("Access-Control-Allow-Methods: PUT, GET, POST, DELETE, OPTIONS");
 		header("Access-Control-Allow-Headers: Content-Type, Content-Length, Accept-Encoding");
@@ -40,32 +40,92 @@ class BalancePYG extends REST_Controller {
                 ":type" => 3
         );
 
+        $sqlSelect = "";
+        $sqlOrg = "SELECT acc_sup, 
+                    acc_type, 
+                    acc_level, 
+                    acc_code,
+                    acc_name,
+                    coalesce(sum(cdoc.doc_debit), 0) as debito,
+                    coalesce(sum(cdoc.doc_credit), 0) as credito,
+                    coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0) as saldo
+                    FROM dacc 
+                    LEFT JOIN cdoc ON cdoc.doc_account = dacc.acc_code 
+                    WHERE acc_type <= :type
+                    AND acc_level <= :level
+                    AND cdoc.doc_date BETWEEN :from_date AND :to_date
+                    GROUP BY acc_type, acc_code, acc_name, acc_sup, acc_level
+                    HAVING abs(coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0)) > 0 OR acc_type = 3
+                    ORDER BY acc_code::text ASC";
 
 
+        if ( isset($Data['inicial']) && !empty($Data['inicial'])){
 
-        $sqlSelect = "SELECT acc_sup, 
-                acc_type, 
-                acc_level, 
-                acc_code,
-                acc_name,
-                coalesce(sum(cdoc.doc_debit), 0) as debito,
-                coalesce(sum(cdoc.doc_credit), 0) as credito,
-                coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0) as saldo
-                FROM dacc 
-                LEFT JOIN cdoc ON cdoc.doc_account = dacc.acc_code 
-                WHERE acc_type <= :type
-                AND acc_level <= :level
-                AND cdoc.doc_date BETWEEN :from_date AND :to_date
-                GROUP BY acc_type, acc_code, acc_name, acc_sup, acc_level
-                HAVING abs(coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0)) > 0 OR acc_type = 3
-                ORDER BY acc_code::text ASC";
+            $fecha = $Data['bpyg_from_date']; // Supongamos que esta es la fecha recibida desde el servicio
 
-     
+            $dateTime = new DateTime($fecha);
+            $dateTime->modify('-1 day');
+
+            $fechaModificada = $dateTime->format('Y-m-d');
+
+
+            $sqlSelect = "SELECT acc_sup, 
+                        acc_type, 
+                        acc_level, 
+                        acc_code,
+                        acc_name,
+                        coalesce(sum(cdoc.doc_debit), 0) as debito,
+                        coalesce(sum(cdoc.doc_credit), 0) as credito,
+                        coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0) as saldo,
+                        case 
+                            when acumulado.saldo_acumulado is not null then coalesce((sum(cdoc.doc_debit - cdoc.doc_credit) + acumulado.saldo_acumulado),0) 
+                            else coalesce(sum(cdoc.doc_debit - cdoc.doc_credit),0) 
+                        end as saldo_total,
+                        coalesce(acumulado.saldo_acumulado, 0) as saldo_acumulado,
+                        coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0) as saldo_actual
+                        FROM dacc 
+                        LEFT JOIN cdoc ON cdoc.doc_account = dacc.acc_code 
+                        left join (select doc_account, coalesce(sum(doc_debit - doc_credit),0) as saldo_acumulado from cdoc 
+                        where doc_account in( 
+                        select acc_code
+                        from dacc 
+                        where acc_type between 1 and 3)
+                        and doc_date between '1900-01-01' and  '".$fechaModificada."' 
+                        group by doc_account) as acumulado on cdoc.doc_account = acumulado.doc_account
+                        WHERE acc_type <= :type
+                        AND acc_level <= :level
+                        AND cdoc.doc_date BETWEEN :from_date AND :to_date 
+                        GROUP BY acc_type, acc_code, acc_name, acc_sup, acc_level, acumulado.saldo_acumulado
+                        HAVING abs(coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0)) > 0 OR acc_type = 3
+                        ORDER BY acc_code::text asc";
+
+        } else {
+
+
+            $sqlSelect = "SELECT acc_sup, 
+                    acc_type, 
+                    acc_level, 
+                    acc_code,
+                    acc_name,
+                    coalesce(sum(cdoc.doc_debit), 0) as debito,
+                    coalesce(sum(cdoc.doc_credit), 0) as credito,
+                    coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0) as saldo
+                    FROM dacc 
+                    LEFT JOIN cdoc ON cdoc.doc_account = dacc.acc_code 
+                    WHERE acc_type <= :type
+                    AND acc_level <= :level
+                    AND cdoc.doc_date BETWEEN :from_date AND :to_date
+                    GROUP BY acc_type, acc_code, acc_name, acc_sup, acc_level
+                    HAVING abs(coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0)) > 0 OR acc_type = 3
+                    ORDER BY acc_code::text ASC";
+        }
+
+
         // print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, $array);
 
 
-        $sqlArrastre = str_replace('WHERE acc_type <= :type','WHERE acc_type >= :type',$sqlSelect);
+        $sqlArrastre = str_replace('WHERE acc_type <= :type','WHERE acc_type between :type and 7',$sqlOrg);
         $sqlArrastre = str_replace('OR acc_type = 3','',$sqlArrastre);
 
         $resArrastreEjercicio = $this->pedeo->queryTable($sqlArrastre, array(":level" => $Data['bpyg_level'], ":from_date" => $Data['bpyg_from_date'], ":to_date" => $Data['bpyg_to_date'], ":type" => 4));
@@ -128,7 +188,7 @@ class BalancePYG extends REST_Controller {
                 coalesce(sum(cdoc.doc_debit - cdoc.doc_credit), 0) as saldo
                 FROM dacc 
                 LEFT JOIN cdoc ON cdoc.doc_account = dacc.acc_code 
-                WHERE acc_type >= :type
+                WHERE acc_type between :type and 7
                 AND acc_level <= :level
                 AND cdoc.doc_date BETWEEN :from_date AND :to_date
                 AND cdoc.business = :business

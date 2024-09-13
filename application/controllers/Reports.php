@@ -1513,6 +1513,9 @@ class Reports extends REST_Controller {
 	public function AccountBalance_post(){
 
 		$Data = $this->post();
+
+		$PARAMS =  $this->generic->getParams();
+
 		$decimalsystem = $this->generic->getDecimals();
 		$decimals = str_pad(0, $decimalsystem, "0", STR_PAD_LEFT);
 		$fields = array();
@@ -1528,9 +1531,9 @@ class Reports extends REST_Controller {
 			$ac = $Data['lac_ac'];
 		}
 
-		if( isset( $Data['lac_sn'] )  && !empty($Data['lac_sn']) ){
-			$sn = $Data['lac_sn'];
-		}
+		// if( isset( $Data['lac_sn'] )  && !empty($Data['lac_sn']) ){
+		// 	$sn = $Data['lac_sn'];
+		// }
 
 		if( isset( $Data['lac_yr'] )  && !empty($Data['lac_yr']) ){
 			$yr = $Data['lac_yr'];
@@ -1542,17 +1545,17 @@ class Reports extends REST_Controller {
 		}
 		
 
-		if( isset( $Data['lac_sn'] )  && !empty($Data['lac_sn']) ){
+		// if( isset( $Data['lac_sn'] )  && !empty($Data['lac_sn']) ){
 
-			$inner = "inner join mac1 on ac1_account = acc_code";
-			$sql .= " AND ac1_legal_num in ({$Data['lac_sn']})";
-		}
+		// 	$inner = "inner join mac1 on ac1_account = acc_code";
+		// 	$sql .= " AND ac1_legal_num in ({$Data['lac_sn']})";
+		// }
 
 		if(isset( $Data['lac_family']) && !empty($Data['lac_family'])){
 			$sql .= " AND acc_type in ({$Data['lac_family']})";
 		}
 
-		$sql .= ' AND dacc.acc_level = 6';
+		$sql .= ' AND dacc.acc_level = '.$PARAMS['acc_level'];
 
 
 		$sqlSelect="SELECT distinct acc_code as codigocuenta,
@@ -1573,6 +1576,7 @@ class Reports extends REST_Controller {
 				from dacc {$inner} ".$sql;
 
 		$sqlSelect = str_replace("{format}", "999,999,999,999.".$decimals, $sqlSelect);
+
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, $fields);
 

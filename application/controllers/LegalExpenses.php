@@ -178,7 +178,7 @@ class LegalExpenses extends REST_Controller {
 			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 				':bed_docentry' => $resInsert,
 				':bed_doctype' => 37,
-				':bed_status' => 1, //ESTADO CERRADO
+				':bed_status' => 1, //ESTADO ABIERTO
 				':bed_createby' => $Data['blg_createby'],
 				':bed_date' => date('Y-m-d'),
 				':bed_baseentry' => NULL,
@@ -594,7 +594,6 @@ class LegalExpenses extends REST_Controller {
 
 		$this->response($respuesta);
     }
-
 
 	// CONTABILIZAR LEGALIZACIÓN
 	public function setAccounting_post() {
@@ -1573,7 +1572,561 @@ class LegalExpenses extends REST_Controller {
 
 	}
 
+	public function cancelLegalExpense_post() {
 
+		$Data = $this->post();
+
+		$DECI_MALES = $this->generic->getDecimals();
+
+		if( !isset($Data['business']) OR
+			!isset($Data['branch']) OR
+			!isset($Data['fecha']) OR
+			!isset($Data['comments']) OR
+			!isset($Data['createby']) OR
+			!isset($Data['series']) OR
+			!isset($Data['docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data' => [],
+				'mensaje' => 'La información enviada no es valida'
+			);
+
+			return $this->response($respuesta,REST_Controller::HTTP_BAD_REQUEST);
+			
+		}
+
+		// BUSCANDO EL DETALLE DE LA CONTABILIDAD ACTUAL CREADA
+		// EN EL ASIENTO CONTABLE
+		$sqlmac = "SELECT * FROM mac1 where ac1_font_key  = :keey and ac1_font_type = :typee";
+        $resMac = $this->pedeo->queryTable($sqlmac, array(
+            ':keey'  => $Data['docentry'],
+            ':typee' => 37
+        ));
+
+        if (!isset($resMac[0])) {
+
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'No se encontro el id de la transacción',
+            );
+
+            return $this->response($respuesta);  
+        }
+
+		// BUSCANDO CABECERA ASIENTO ACTUAL
+		$sqlAsiento = "SELECT * FROM tmac WHERE mac_trans_id = :mac_trans_id ";
+		$resAsiento = $this->pedeo->queryTable($sqlAsiento, array(
+			":mac_trans_id" => $resMac[0]['ac1_trans_id']
+		));
+
+		if (!isset($resAsiento[0])) {
+
+            $respuesta = array(
+                'error' => true,
+                'data' => array(),
+                'mensaje' => 'No se encontro el id de la transacción en la cabecera de la contabilidad',
+            );
+
+            return $this->response($respuesta);  
+        }
+
+
+
+		//VALIDANDO PERIODO CONTABLE
+		$periodo = $this->generic->ValidatePeriod($Data['fecha'], $Data['fecha'], $Data['fecha'], 0);
+
+		if (isset($periodo['error']) && $periodo['error'] == false) {
+		} else {
+			$respuesta = array(
+				'error'   => true,
+				'data'    => [],
+				'mensaje' => isset($periodo['mensaje']) ? $periodo['mensaje'] : 'no se pudo validar el periodo contable'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+		//PERIODO CONTABLE
+
+		// BUSCANDO LA NUMERACION DEL DOCUMENTO
+		// PARA CREAR ASIENTO NUEVO 
+		$DocNumVerificado = $this->documentnumbering->NumberDoc($resAsiento[0]['mac_serie'],$resAsiento[0]['mac_doc_date'],$resAsiento[0]['mac_doc_duedate']);
+
+		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
+	
+		}else if ($DocNumVerificado['error']){
+	
+			$respuesta = array(
+				'error'   => true,
+				'data'    => $DocNumVerificado,
+				'mensaje' => isset($periodo['mensaje']) ? $periodo['mensaje'] : 'no se pudo validar el periodo contable'
+			);
+	
+			return $this->response($respuesta);
+		}
+		//
+
+
+		//BUSCANDO LA NUMERACION DEL DOCUMENTO ANULACION
+		$DocNumVerificado2 = $this->documentnumbering->NumberDoc($Data['series'],$Data['fecha'],$Data['fecha']);
+
+		if (isset($DocNumVerificado2) && is_numeric($DocNumVerificado2) && $DocNumVerificado2 > 0){
+	
+		}else if ($DocNumVerificado2['error']){
+
+			$respuesta = array(
+				'error'   => true,
+				'data'    => $DocNumVerificado2,
+				'mensaje' => isset($periodo['mensaje']) ? $periodo['mensaje'] : 'no se pudo validar el periodo contable'
+			);
+	
+			return $this->response($respuesta);
+		}
+		//
+
+		$this->pedeo->trans_begin();
+
+		//
+
+		$sqlInsertAnulacion = "INSERT INTO tban(ban_docnum,ban_docdate,ban_comment,ban_createat,ban_baseentry,ban_basetype,ban_doctype,ban_series,ban_createby,ban_currency,business,branch)
+							VALUES(:ban_docnum,:ban_docdate,:ban_comment,:ban_createat,:ban_baseentry,:ban_basetype,:ban_doctype,:ban_series,:ban_createby,:ban_currency,:business,:branch)";
+
+		$resInsertAnulacion = $this->pedeo->insertRow($sqlInsertAnulacion, array(
+
+			':ban_docnum' => $DocNumVerificado2,
+			':ban_docdate' => $Data['fecha'],
+			':ban_comment' => $Data['comments'],
+			':ban_createat' => date('Y-m-d'),
+			':ban_baseentry' => NULL,
+			':ban_basetype' => NULL,
+			':ban_doctype' => 50,
+			':ban_series' => $Data['series'],
+			':ban_createby' => $Data['createby'],
+			':ban_currency' => $resAsiento[0]['mac_currency'],
+			':business' => $Data['business'],
+			':branch' => $Data['branch']
+
+		));
+
+		if ( is_numeric($resInsertAnulacion) && $resInsertAnulacion > 0 ) {
+
+		} else {
+
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+					'error'   => true,
+					'data'    => $resInsertAnulacion,
+					'mensaje' => 'No se pudo crear la anulación'
+				);
+
+			return $this->response($respuesta);
+		}
+
+
+		$sqlInsertHeader = "INSERT INTO tmac( mac_doc_num, mac_status, mac_base_type, mac_base_entry, mac_doc_date, mac_doc_duedate, mac_legal_date, mac_ref1, mac_ref2, mac_ref3, mac_loc_total, mac_fc_total, mac_sys_total, mac_trans_dode, mac_beline_nume, mac_vat_date, mac_serie, mac_number, mac_bammntsys, mac_bammnt, mac_wtsum, mac_vatsum, mac_comments, mac_create_date, mac_update_date, mac_series, mac_made_usuer, mac_update_user, mac_currency, mac_doctype, business, branch, mac_accperiod)
+							VALUES(:mac_doc_num, :mac_status, :mac_base_type, :mac_base_entry, :mac_doc_date, :mac_doc_duedate, :mac_legal_date, :mac_ref1, :mac_ref2, :mac_ref3, :mac_loc_total, :mac_fc_total, :mac_sys_total, :mac_trans_dode, :mac_beline_nume, :mac_vat_date, :mac_serie, :mac_number, :mac_bammntsys, :mac_bammnt, :mac_wtsum, :mac_vatsum, :mac_comments, :mac_create_date, :mac_update_date, :mac_series, :mac_made_usuer, :mac_update_user, :mac_currency, :mac_doctype, :business, :branch, :mac_accperiod)";
+					
+		$resSqlInsertHeader = $this->pedeo->insertRow($sqlInsertHeader, array(
+			'mac_doc_num' => $DocNumVerificado,
+			':mac_status' => 2, 
+			':mac_base_type' => 50, 
+			':mac_base_entry' => $resInsertAnulacion, 
+			':mac_doc_date' => $Data['fecha'], 
+			':mac_doc_duedate' => $Data['fecha'], 
+			':mac_legal_date' => $Data['fecha'], 
+			':mac_ref1' => $resAsiento[0]['mac_ref1'], 
+			':mac_ref2' => $resAsiento[0]['mac_ref2'], 
+			':mac_ref3' => $resAsiento[0]['mac_ref3'], 
+			':mac_loc_total' => $resAsiento[0]['mac_loc_total'], 
+			':mac_fc_total' => $resAsiento[0]['mac_fc_total'], 
+			':mac_sys_total' => $resAsiento[0]['mac_sys_total'], 
+			':mac_trans_dode' => $resAsiento[0]['mac_trans_dode'], 
+			':mac_beline_nume' => $resAsiento[0]['mac_beline_nume'], 
+			':mac_vat_date' => $resAsiento[0]['mac_vat_date'], 
+			':mac_serie' => $resAsiento[0]['mac_serie'], 
+			':mac_number' => $resAsiento[0]['mac_number'], 
+			':mac_bammntsys' => $resAsiento[0]['mac_bammntsys'], 
+			':mac_bammnt' => $resAsiento[0]['mac_bammnt'], 
+			':mac_wtsum' => $resAsiento[0]['mac_wtsum'], 
+			':mac_vatsum' => $resAsiento[0]['mac_vatsum'], 
+			':mac_comments' => $Data['comments'], 
+			':mac_create_date' => date('Y-m-d'), 
+			':mac_update_date' => $resAsiento[0]['mac_update_date'], 
+			':mac_series' => $resAsiento[0]['mac_series'], 
+			':mac_made_usuer' => $resAsiento[0]['mac_made_usuer'], 
+			':mac_update_user' => $resAsiento[0]['mac_update_user'], 
+			':mac_currency' => $resAsiento[0]['mac_currency'], 
+			':mac_doctype' => $resAsiento[0]['mac_doctype'], 
+			':business' => $resAsiento[0]['business'], 
+			':branch' => $resAsiento[0]['branch'], 
+			':mac_accperiod' => $periodo['data']
+		));
+
+		if ( is_numeric($resSqlInsertHeader) && $resSqlInsertHeader > 0 ){
+
+			// Se actualiza la serie de la numeracion del documento
+
+			$sqlActualizarNumeracion  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+			WHERE pgs_id = :pgs_id";
+
+			$resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
+				':pgs_nextnum' => $DocNumVerificado,
+				':pgs_id'      => $resAsiento[0]['mac_serie']
+			));
+
+			if (is_numeric($resActualizarNumeracion) && $resActualizarNumeracion == 1) {
+
+			} else {
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data'    => $resActualizarNumeracion,
+					'mensaje'	=> 'No se pudo actualizar la numeración'
+				);
+
+				return $this->response($respuesta);
+			}
+
+			// Fin de la actualizacion de la numeracion del documento
+
+			// Se actualiza la serie de la numeracion del documento anulación
+
+			$sqlActualizarNumeracion2  = "UPDATE pgdn SET pgs_nextnum = :pgs_nextnum
+			WHERE pgs_id = :pgs_id";
+
+			$resActualizarNumeracion2 = $this->pedeo->updateRow($sqlActualizarNumeracion2, array(
+				':pgs_nextnum' => $DocNumVerificado2,
+				':pgs_id'      => $Data['series']
+			));
+
+			if (is_numeric($resActualizarNumeracion2) && $resActualizarNumeracion2 == 1) {
+
+			} else {
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data'    => $resActualizarNumeracion2,
+					'mensaje'	=> 'No se pudo crear el asiento'
+				);
+
+				return $this->response($respuesta);
+			}
+			// Fin de la actualizacion de la numeracion del documento
+
+			// SE VOLTEAN LAS LINEAS EN EL ASIENTO NUEVO
+			foreach ($resMac as $key => $detalle) {
+
+				$sqlInsertDetalle = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate, ac1_debit_import, ac1_credit_import, ac1_debit_importsys, ac1_credit_importsys, ac1_font_key, ac1_font_line, ac1_font_type, ac1_accountvs, ac1_doctype, ac1_ref1, ac1_ref2, ac1_ref3, ac1_prc_code, ac1_uncode, ac1_prj_code, ac1_rescon_date, ac1_recon_total, ac1_made_user, ac1_accperiod, ac1_close, ac1_cord, ac1_ven_debit, ac1_ven_credit, ac1_fiscal_acct, ac1_taxid, ac1_isrti, ac1_basert, ac1_mmcode, ac1_legal_num, ac1_codref, ac1_card_type, business, branch, ac1_codret, ac1_base_tax)
+									 VALUES (:ac1_trans_id, :ac1_account, :ac1_debit, :ac1_credit, :ac1_debit_sys, :ac1_credit_sys, :ac1_currex, :ac1_doc_date, :ac1_doc_duedate, :ac1_debit_import, :ac1_credit_import, :ac1_debit_importsys, :ac1_credit_importsys, :ac1_font_key, :ac1_font_line, :ac1_font_type, :ac1_accountvs, :ac1_doctype, :ac1_ref1, :ac1_ref2, :ac1_ref3, :ac1_prc_code, :ac1_uncode, :ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct, :ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :ac1_card_type, :business, :branch, :ac1_codret, :ac1_base_tax)";
+				
+				$debito = 0;
+				$credito = 0;
+
+				$debitosys = 0;
+				$creditosys= 0;
+
+				$vendebito = 0;
+				$vencredito = 0;
+
+				$oldVen = 0;
+
+				if ( $detalle['ac1_debit'] > 0 ){
+				
+					$debito = 0;
+					$credito = $detalle['ac1_debit'];
+
+					$oldVen = $detalle['ac1_debit'];
+					
+				}
+
+				if ( $detalle['ac1_credit'] > 0 ){
+				
+					$debito = $detalle['ac1_credit'];;
+					$credito = 0;
+					
+					$oldVen = $detalle['ac1_credit'];
+				}
+
+				if ( $detalle['ac1_debit_sys'] > 0 ){
+				
+					$debitosys = 0;
+					$creditosys = $detalle['ac1_debit_sys'];
+					
+				}
+
+				if ( $detalle['ac1_credit_sys'] > 0 ){
+				
+					$debitosys = $detalle['ac1_credit_sys'];
+					$creditosys = 0;
+					
+				}
+
+				$resInsertDetalle = $this->pedeo->insertRow($sqlInsertDetalle, array(
+
+					':ac1_trans_id' => $resSqlInsertHeader,
+					':ac1_account' => $detalle['ac1_account'], 
+					':ac1_debit' => $debito, 
+					':ac1_credit' => $credito, 
+					':ac1_debit_sys' => $debitosys, 
+					':ac1_credit_sys' => $creditosys, 
+					':ac1_currex' => $detalle['ac1_currex'], 
+					':ac1_doc_date' => $Data['fecha'], 
+					':ac1_doc_duedate' => $Data['fecha'], 
+					':ac1_debit_import' => $detalle['ac1_debit_import'], 
+					':ac1_credit_import' => $detalle['ac1_credit_import'], 
+					':ac1_debit_importsys' => $detalle['ac1_debit_importsys'], 
+					':ac1_credit_importsys' => $detalle['ac1_credit_importsys'], 
+					':ac1_font_key' => $resSqlInsertHeader,
+					':ac1_font_line' => $detalle['ac1_font_line'], 
+					':ac1_font_type' => 18,
+					':ac1_accountvs' => $detalle['ac1_accountvs'], 
+					':ac1_doctype' => $detalle['ac1_doctype'],
+					':ac1_ref1' => $detalle['ac1_ref1'], 
+					':ac1_ref2' => $detalle['ac1_ref2'], 
+					':ac1_ref3' => $detalle['ac1_ref3'], 
+					':ac1_prc_code' => $detalle['ac1_prc_code'], 
+					':ac1_uncode' => $detalle['ac1_uncode'], 
+					':ac1_prj_code' => $detalle['ac1_prj_code'], 
+					':ac1_rescon_date' => $detalle['ac1_rescon_date'],
+					':ac1_recon_total' => $detalle['ac1_recon_total'], 
+					':ac1_made_user' => $detalle['ac1_made_user'], 
+					':ac1_accperiod' => $periodo['data'],
+					':ac1_close' => $detalle['ac1_close'], 
+					':ac1_cord' => $detalle['ac1_cord'], 
+					':ac1_ven_debit' => 0, 
+					':ac1_ven_credit' => 0, 
+					':ac1_fiscal_acct' => $detalle['ac1_fiscal_acct'], 
+					':ac1_taxid' => $detalle['ac1_taxid'], 
+					':ac1_isrti' => $detalle['ac1_isrti'],
+					':ac1_basert' => $detalle['ac1_basert'],
+					':ac1_mmcode' => $detalle['ac1_mmcode'],
+					':ac1_legal_num' => $detalle['ac1_legal_num'], 
+					':ac1_codref' => $detalle['ac1_codref'], 
+					':ac1_card_type' => $detalle['ac1_card_type'], 
+					':business' => $detalle['business'],
+					':branch'   => $detalle['branch'], 
+					':ac1_codret' => $detalle['ac1_codret'], 
+					':ac1_base_tax' => $detalle['ac1_base_tax'] 
+				));
+
+				if (is_numeric($resInsertDetalle) && $resInsertDetalle > 0 ) {
+
+				
+				}else{
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $resInsertDetalle,
+						'mensaje' => 'Error al insertar la copia del detalle del asiento'
+					);
+
+					return $this->response($respuesta);
+				}
+
+
+				// ACTUALIZAR VEN DEBIT Y CREDIT DEL ASIENTO VIEJO
+
+				$sqlUpdate = "UPDATE mac1 SET ac1_ven_debit = :ac1_ven_debit, ac1_ven_credit = :ac1_ven_credit WHERE ac1_line_num = :ac1_line_num";
+
+				$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
+					':ac1_ven_credit' => 0,
+					':ac1_ven_debit'  => 0,
+					':ac1_line_num'   => $detalle['ac1_line_num']
+
+				));
+
+
+				if (is_numeric($resUpdate) && $resUpdate == 1 ) {
+
+				
+				} else { 
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error' => true,
+						'data' => $resUpdate,
+						'mensaje' => 'Error al actualizar el asiento viejo'
+					);
+
+					return $this->response($respuesta);
+				}
+			}
+			//
+
+			// SE CAMBIA DE LA CABECERA DEL ASIENTO VIEJO
+			// EL ESTADO SE ESTABLECE EN 2 PARA IDENTIFICAR QUE ESTA ANULADO
+			$update = $this->pedeo->updateRow("UPDATE tmac SET mac_status = :mac_status WHERE mac_trans_id = :mac_trans_id", array(":mac_status" => 2, ":mac_trans_id" => $resMac[0]['ac1_trans_id'] ));
+
+			if ( is_numeric($update) && $update == 1 ){
+
+			}else{
+
+				$respuesta = array(
+					'error' => true,
+					'data' => $update,
+					'mensaje' => 'No se pudo cambiar el estado del documento'
+				);
+
+				return $this->response($respuesta);
+			}
+			//
+
+			// SE CAMBIA EL ESTADO DE LA LEGALIZACION DE GASTOS
+			// SE INSERTA EN TBED CON ESTA 1 PARA QUE SE VUELVA ABRIR
+			// EL DOCUMENTO
+
+			$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+			VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+			$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+
+
+				':bed_docentry' => $Data['docentry'],
+				':bed_doctype' => 37,
+				':bed_status' => 1, //ESTADO ABIERTO
+				':bed_createby' => $Data['createby'],
+				':bed_date' => date('Y-m-d'),
+				':bed_baseentry' => $resInsertAnulacion,
+				':bed_basetype' => 50
+			));
+
+
+			if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+			} else {
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => $resInsertEstado,
+					'mensaje'	=> 'No se pudo cambiar el estado de la legalizacion'
+				);
+
+				return $this->response($respuesta);
+				
+			}
+
+			// SE DECREMENTA LA CAJA DEL USUARIO CON LA CANTIDAD
+			// ANULADA EN LA LEGALIZACION
+			$resLg = $this->pedeo->queryTable("SELECT blg_lineacct, blg_doctotal FROM tblg WHERE blg_doctype = :blg_doctype AND blg_docentry = :blg_docentry", array(":blg_doctype" => 37, ":blg_docentry" => $Data['docentry']));
+
+			if (!isset($resLg[0])){
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => $resLg,
+					'mensaje'	=> 'No se encontro la legalización'
+				);
+
+				return $this->response($respuesta);
+			}
+
+			$updateVenCredito = $this->pedeo->updateRow("UPDATE mac1 set ac1_ven_credit = ac1_ven_credit - :valor WHERE ac1_line_num = :ac1_line_num", array(":valor" => $resLg[0]['blg_doctotal'], ":ac1_line_num" => $resLg[0]['blg_lineacct']));
+
+			if (is_numeric($updateVenCredito) && $updateVenCredito == 1) {
+
+			}else{
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => $updateVenCredito,
+					'mensaje'	=> 'No se pudo actualizar el valor total'
+				);
+
+				return $this->response($respuesta);
+			}
+
+			//
+
+			// SE VERIFICA QUE LOS  VALORES ESTEN ACORDE
+			$macValores = $this->pedeo->queryTable("SELECT * FROM mac1 WHERE ac1_line_num = :ac1_line_num", array(":ac1_line_num" => $resLg[0]['blg_lineacct']));
+
+			if (!isset($macValores[0])) {
+
+				$this->pedeo->trans_rollback();
+
+				$respuesta = array(
+					'error'   => true,
+					'data' => $macValores,
+					'mensaje'	=> 'No se encontro el detalle en la contabilidad'
+				);
+
+				return $this->response($respuesta);
+			} else {
+
+				if ( $macValores[0]['ac1_ven_credit'] < 0 ) {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $macValores,
+						'mensaje'	=> 'No se puede hacer la anulación, monto aplicado en negativo'
+					);
+
+					return $this->response($respuesta);
+
+				}
+
+
+				if ( $macValores[0]['ac1_ven_credit'] >  $macValores[0]['ac1_debit']) {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $macValores,
+						'mensaje'	=> 'No se puede hacer la anulación, monto aplicado supera total del documento actual'
+					);
+
+					return $this->response($respuesta);
+				}
+
+			}
+
+			// FIN DEL PROCESO
+
+		} else {
+
+			$this->pedeo->trans_rollback();
+
+			$respuesta = array(
+				'error' => true,
+				'data' => $resSqlInsertHeader,
+				'mensaje' => 'Error al insertar la copia del asiento'
+			);
+
+			return $this->response($respuesta);
+		}
+
+
+		$this->pedeo->trans_commit();
+
+		$respuesta = array(
+			'error'   => false,
+			'data'    => [],
+			'mensaje' => 'Documento anulado con exito'
+		);
+
+
+		$this->response($respuesta);
+		
+	}
 
 	private function buscarPosicion($llave, $inArray)
 	{

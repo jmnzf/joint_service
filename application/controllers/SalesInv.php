@@ -4169,8 +4169,8 @@ class SalesInv extends REST_Controller
 					$RetencionDescuentoSYS = 0;
 					$RetencionDescuentoLOC = 0;
 
-					if (is_array($ContenidoRentencion)) {
-						if (intval(count($ContenidoRentencion)) > 0) {
+					if (is_array($DetalleConsolidadoRetencion)) {
+						if (intval(count($DetalleConsolidadoRetencion)) > 0) {
 							
 							if (isset($Data['dvf_totalretiva']) && is_numeric($Data['dvf_totalretiva']) && ( $Data['dvf_totalretiva'] * -1  > 0 ) ){
 
@@ -4965,91 +4965,106 @@ class SalesInv extends REST_Controller
 
 				if ( $Data['dvf_basetype'] == 47 ) {
 
-					$FacturasCreditos = $Data['dvf_baseentry'];
+					if ( isset($Data['ff']) && !empty($Data['ff']) && isset($Data['fi']) && !empty($Data['fi']) ){
 
-					if ( is_array($FacturasCreditos) && count($FacturasCreditos) > 0 ) {
+						$RangoFacturas = $this->pedeo->queryTable("SELECT vrc_docentry 
+																from dvrc
+																INNER JOIN responsestatus  ON vrc_docentry = responsestatus.id AND vrc_doctype = responsestatus.tipo  
+																where vrc_docdate between :fi and :ff
+																and vrc_cardcode = :cardcode
+																and responsestatus.estado = 'Abierto'", array(
 
 
-						foreach ($FacturasCreditos as $key => $factura) {
-							
-							$sqlInserTFCP = "INSERT INTO tfcp(fcp_docentry,fcp_doctype,fcp_baseentry,fcp_basetype)VALUES(:fcp_docentry,:fcp_doctype,:fcp_baseentry,:fcp_basetype)";
-							$resInsertTFCP = $this->pedeo->insertRow($sqlInserTFCP, array(
+																	":fi"       => $Data['fi'],
+																	":fi"       => $Data['ff'],
+																	":cardcode" => $Data['dvf_cardcode']
+
+										));
+
+						if ( isset($RangoFacturas[0]) ) {
+
+
+							foreach ($RangoFacturas as $key => $factura) {
 								
-								':fcp_docentry'  => $resInsert,
-								':fcp_doctype'   => $Data['dvf_doctype'],
-								':fcp_baseentry' => $factura,
-								':fcp_basetype'  => 47
-							));
-
-
-							if (is_numeric($resInsertTFCP) && $resInsertTFCP > 0) {
-							} else {
-
-								$this->pedeo->trans_rollback();
-
-								$respuesta = array(
-									'error'     => true,
-									'data' 		=> $resInsertTFCP,
-									'mensaje'	=> 'No se pudo registrar la factura de ventas'
-								);
-
-								return $this->response($respuesta);
-								
-							}
-
-
-
-							$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-											VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
-
-							$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
-
-
-								':bed_docentry'  => $factura,
-								':bed_doctype'   => 47,
-								':bed_status'    => 3, //ESTADO CERRADO
-								':bed_createby'  => $Data['dvf_createby'],
-								':bed_date'      => date('Y-m-d'),
-								':bed_baseentry' => $resInsert,
-								':bed_basetype'  => $Data['dvf_doctype']
-							));
-
-
-							if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
-							} else {
-
-								$this->pedeo->trans_rollback();
-
-								$respuesta = array(
-									'error'   => true,
-									'data' => $resInsertEstado,
-									'mensaje'	=> 'No se pudo registrar la factura de ventas'
-								);
-
-								return $this->response($respuesta);
-								
-							}
-						}
-
+								$sqlInserTFCP = "INSERT INTO tfcp(fcp_docentry,fcp_doctype,fcp_baseentry,fcp_basetype)VALUES(:fcp_docentry,:fcp_doctype,:fcp_baseentry,:fcp_basetype)";
+								$resInsertTFCP = $this->pedeo->insertRow($sqlInserTFCP, array(
+									
+									':fcp_docentry'  => $resInsert,
+									':fcp_doctype'   => $Data['dvf_doctype'],
+									':fcp_baseentry' => $factura['vrc_docentry'],
+									':fcp_basetype'  => 47
+								));
 	
-
-
-					} else {
-
-						$this->pedeo->trans_rollback();
+	
+								if (is_numeric($resInsertTFCP) && $resInsertTFCP > 0) {
+								} else {
+	
+									$this->pedeo->trans_rollback();
+	
+									$respuesta = array(
+										'error'     => true,
+										'data' 		=> $resInsertTFCP,
+										'mensaje'	=> 'No se pudo registrar la factura de ventas'
+									);
+	
+									return $this->response($respuesta);
+									
+								}
+	
+	
+	
+								$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+												VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+	
+								$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
+	
+	
+									':bed_docentry'  => $factura['vrc_docentry'],
+									':bed_doctype'   => 47,
+									':bed_status'    => 3, //ESTADO CERRADO
+									':bed_createby'  => $Data['dvf_createby'],
+									':bed_date'      => date('Y-m-d'),
+									':bed_baseentry' => $resInsert,
+									':bed_basetype'  => $Data['dvf_doctype']
+								));
+	
+	
+								if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
+								} else {
+	
+									$this->pedeo->trans_rollback();
+	
+									$respuesta = array(
+										'error'   => true,
+										'data' => $resInsertEstado,
+										'mensaje'	=> 'No se pudo registrar la factura de ventas'
+									);
+	
+									return $this->response($respuesta);
+									
+								}
+							}
 		
-						$respuesta = array(
-							'error'   => true,
-							'data'	  => [],
-							'mensaje' => 'No se pudo registrar la factura de ventas, no se encontro el detalle de las facturas POS'
-						);
-		
-						return $this->response($respuesta);
+			
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'     => true,
+								'data' 		=> $RangoFacturas,
+								'mensaje'	=> 'No se encontraron las facturas en el rango seleccionado'
+							);
+
+							return $this->response($respuesta);
+
+						}
+						
 					}
+
+			
 				}
-
 				//
-
 
 				// FIN DE OPERACIONES VITALES
 

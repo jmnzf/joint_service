@@ -120,8 +120,8 @@ class DocumentNumbering extends REST_Controller {
           return;
       }
 
-      $sqlInsert = "INSERT INTO pgdn(pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, pgs_is_due, pgs_doc_date,  pgs_doc_due_date, pgs_enabled, pgs_nextnum, pgs_doctype, pgs_mpfn, pgs_mde, business, branch,pgs_doc_pre)
-                    VALUES(:Pgs_IdDocType,  :Pgs_NumName,  :Pgs_FirstNum,  :Pgs_LastNum,  :Pgs_PrefNum,  :Pgs_Cancel,  :Pgs_IsDue,  :Pgs_DocDate,  :Pgs_DocDueDate,  :Pgs_Enabled, :pgs_nextnum, :pgs_doctype, :pgs_mpfn, :pgs_mde, :business, :branch,:pgs_doc_pre)";
+      $sqlInsert = "INSERT INTO pgdn(pgs_id_doc_type, pgs_num_name, pgs_first_num, pgs_last_num, pgs_pref_num, pgs_cancel, pgs_is_due, pgs_doc_date,  pgs_doc_due_date, pgs_enabled, pgs_nextnum, pgs_doctype, pgs_mpfn, pgs_mde, business, branch,pgs_doc_pre, pgs_enable_fe)
+                    VALUES(:Pgs_IdDocType,  :Pgs_NumName,  :Pgs_FirstNum,  :Pgs_LastNum,  :Pgs_PrefNum,  :Pgs_Cancel,  :Pgs_IsDue,  :Pgs_DocDate,  :Pgs_DocDueDate,  :Pgs_Enabled, :pgs_nextnum, :pgs_doctype, :pgs_mpfn, :pgs_mde, :business, :branch,:pgs_doc_pre, :pgs_enable_fe)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -143,6 +143,7 @@ class DocumentNumbering extends REST_Controller {
             ':business'       => $Data['business'],
             ':branch'         => $Data['branch'],
 						':pgs_doc_pre'    => $Data['pgs_doc_pre'],
+						':pgs_enable_fe'    => $Data['pgs_enable_fe']
 
       ));
 
@@ -255,7 +256,8 @@ class DocumentNumbering extends REST_Controller {
         "pgs_mde"=>intval($Data['pgs_mde']),
         "business"=>intval($Data['business']),
         "branch"=>intval($Data['branch']),
-        "pgs_doc_pre"=>intval($Data['pgs_doc_pre'])
+        "pgs_doc_pre"=>intval($Data['pgs_doc_pre']),
+        "pgs_enable_fe"=>intval($Data['pgs_enable_fe'])
       );
 
       $jsonNewData = json_encode($nuevosDatos);
@@ -283,7 +285,7 @@ class DocumentNumbering extends REST_Controller {
       $sqlUpdate = "UPDATE pgdn SET pgs_id_doc_type = :Pgs_IdDocType, pgs_num_name = :Pgs_NumName, pgs_first_num = :Pgs_FirstNum,
                     pgs_last_num = :Pgs_LastNum, pgs_pref_num = :Pgs_PrefNum, pgs_cancel = :Pgs_Cancel, pgs_is_due = :Pgs_IsDue,
                     pgs_doc_date = :Pgs_DocDate, pgs_doc_due_date = :Pgs_DocDueDate, pgs_enabled = :Pgs_Enabled, pgs_doctype = :pgs_doctype,
-										pgs_mpfn = :pgs_mpfn, pgs_mde = :pgs_mde, pgs_doc_pre = :pgs_doc_pre, pgs_nextnum = :pgs_nextnum
+										pgs_mpfn = :pgs_mpfn, pgs_mde = :pgs_mde, pgs_doc_pre = :pgs_doc_pre,pgs_enable_fe = :pgs_enable_fe, pgs_nextnum = :pgs_nextnum
                     WHERE pgs_id = :Pgs_Id";
 
 
@@ -303,6 +305,7 @@ class DocumentNumbering extends REST_Controller {
 						':pgs_doctype'		=> $Data['pgs_id_doc_type'],
 						':pgs_mpfn'       => $Data['pgs_mpfn'],
 						':pgs_doc_pre'    => $Data['pgs_doc_pre'],
+						':pgs_enable_fe'    => $Data['pgs_enable_fe'],
 						':pgs_mde'        => is_numeric($Data['pgs_mde']) ? $Data['pgs_mde'] : NULL,
             ':pgs_nextnum'    => $Data['pgs_nextnum'] - 1
 
@@ -349,7 +352,7 @@ class DocumentNumbering extends REST_Controller {
         }
         // $sqlSelect = " SELECT * FROM pgdn";
         $sqlSelect = "SELECT pgs_id, pgs_id_doc_type, pgs_doc_pre, pgs_num_name, to_char(pgs_first_num, '999G999G999G999G999G999') as pgs_first_num, to_char(pgs_last_num, '999G999G999G999G999G999') as pgs_last_num, pgs_pref_num, pgs_cancel,
-        pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, to_char(pgs_nextnum +1, '999G999G999G999G999G999') as ultimo_numero, pgs_mpfn, pgs_mde, dmdt.mdt_docname as pgs_docname
+        pgs_is_due, pgs_doc_date, pgs_doc_due_date, pgs_enabled, to_char(pgs_nextnum +1, '999G999G999G999G999G999') as ultimo_numero, pgs_mpfn, pgs_mde, dmdt.mdt_docname as pgs_docname, pgs_enable_fe
         FROM pgdn inner join dmdt on pgdn.pgs_id_doc_type = dmdt.mdt_doctype  WHERE pgdn.business = :business AND pgdn.branch = :branch";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(':business' => $Data['business'], ':branch' => $Data['branch']));
@@ -522,7 +525,8 @@ class DocumentNumbering extends REST_Controller {
             CASE WHEN coalesce(pgs_doc_due_date,'1999-01-01') > current_date THEN 1 ELSE 0 END AS valid_date,
             pgs_doc_pre,
             pgs_doc_date,
-            pgs_doc_due_date
+            pgs_doc_due_date,
+            pgs_enable_fe
           FROM pgdn
           WHERE pgs_id_doc_type = :doctype AND business = :business AND branch = :branch
           and (extract(month from pgs_doc_date) <= extract(month from current_date) or extract(month from pgs_doc_due_date) >= extract(month from current_date))

@@ -417,7 +417,7 @@ class DocumentMarketing {
 											<td style="text-align: center; padding-left: 10px; padding-right: 10px;padding-top: 10px;border-bottom: dotted">'.$value['descripcion'].'</td>
 											<td style="border-bottom: dotted;padding-top: 10px;">'.$value['monedadocumento']." ".number_format($value['vrunit'], $DECI_MALES, ',', '.').'</td>
 											<td style="border-bottom: dotted;padding-top: 10px;">'.$value['cantidad'].'</td>
-											<td style="border-bottom: dotted;padding-top: 10px;">'.$value['monedadocumento']." ".number_format($value['prcdes'], $DECI_MALES, ',', '.').'</td>
+											<td style="border-bottom: dotted;padding-top: 10px;">'.$value['prcdes'].'% </td>
 											<td style="border-bottom: dotted;padding-top: 10px;">'.$value['monedadocumento']." ".number_format($value['ivap'], $DECI_MALES, ',', '.').'</td>
 											<td style="border-bottom: dotted;padding-top: 10px;">'.$value['monedadocumento']." ".number_format($value['valortotall'], $DECI_MALES, ',', '.').'</td>';
 				 $totaldetalle = $totaldetalle.'<tr style="margin-bottom: 50px;">'.$detalle.'</tr>';

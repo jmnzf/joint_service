@@ -1440,8 +1440,8 @@ class SalesNd extends REST_Controller
 					$RetencionDescuentoSYS = 0;
 					$RetencionDescuentoLOC = 0;
 
-					if (is_array($ContenidoRentencion)) {
-						if (intval(count($ContenidoRentencion)) > 0) {
+					if (is_array($DetalleConsolidadoRetencion)) {
+						if (intval(count($DetalleConsolidadoRetencion)) > 0) {
 							
 							if (isset($Data['vnd_totalretiva']) && is_numeric($Data['vnd_totalretiva']) && ( $Data['vnd_totalretiva'] * -1  > 0 ) ){
 

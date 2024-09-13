@@ -2339,6 +2339,7 @@ abstract class REST_Controller extends \CI_Controller {
             t0.{prefix}_empid,
             t6.dmc_email as email_contact,
           	t2.mev_names as {prefix}_slpcode ,
+            concat(us.pgu_name_user, ' ', us.pgu_lname_user) as username,
             coalesce(t4.dms_phone1,t2.mev_phone) as telefono,
             coalesce(t4.dms_email,t2.mev_mail) as correo
             {fields}
@@ -2351,6 +2352,7 @@ abstract class REST_Controller extends \CI_Controller {
             LEFT JOIN DMSC T6 ON T0.{prefix}_cardcode = t6.dmc_card_code and t0.{prefix}_contacid::text = t6.dmc_id::text
             LEFT JOIN DMSD T7 ON T4.DMS_CARD_CODE = T7.DMD_CARD_CODE AND t0.{prefix}_idadd::text = t7.dmd_id::text    
             LEFT JOIN dmdt t8 on {prefix}_origen = t8.mdt_doctype {innerjoin}
+            LEFT JOIN pgus us on t0.{prefix}_createby = us.pgu_code_user
             WHERE t0.business = {business}
             AND t0.branch = {branch}
             {where}

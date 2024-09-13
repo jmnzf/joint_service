@@ -602,6 +602,117 @@ class CashClosings extends REST_Controller {
 
     }
 
+    // DEVUELVE LA INFORMACION DEL CIERRE PARA IMPRIMIR EL RECIBO DE CIERRE NUEVAMENTE
+    public function getInfoCierre_post() {
+
+        $Data = $this->post();
+
+        $resInfoCierre = $this->pedeo->queryTable("SELECT * FROM tbco WHERE bco_id = :bco_id", array(":bco_id" => $Data['bco_id']));
+
+
+        if (isset($resInfoCierre[0])) {
+
+            $resAperturaPrevia = $this->pedeo->queryTable("SELECT * FROM tbco where bco_id < :bco_id and bco_boxid = :bco_boxid and bco_status = :bco_status order by bco_id desc limit 1", array(
+                ':bco_id'     => $Data['bco_id'],
+                ':bco_boxid'  => $resInfoCierre[0]['bco_boxid'],
+                ':bco_status' => 1
+            ));
+
+            if (isset($resAperturaPrevia[0])) {
+
+                $sqlSelect2 = "SELECT sum(vrc_total_c),mdp_name
+                            FROM dvrc
+                            inner join tmdp on vrc_paymentmethod = mdp_id
+                            inner join responsestatus on dvrc.vrc_docentry = responsestatus.id and dvrc.vrc_doctype = responsestatus.tipo 
+                            where mdp_local = 0
+                            and tmdp.mdp_multiple = 0
+                            and responsestatus.estado = 'Cerrado'
+                            and vrc_createat  >= :fecha
+                            and vrc_createat  <  :fecha2
+                            and dvrc.vrc_createby = :vrc_createby
+                            and dvrc.business = :business
+                            and dvrc.branch = :branch
+                            group by mdp_id,mdp_name
+                            union all
+                            SELECT sum(vmpp.mpp_valor), mdp_name
+                            FROM dvrc
+                            inner join vmpp on vrc_docentry = mpp_docentry
+                            inner join tmdp on vmpp.mpp_medio::int = tmdp.mdp_id
+                            inner join responsestatus on dvrc.vrc_docentry = responsestatus.id and dvrc.vrc_doctype = responsestatus.tipo 
+                            where mdp_local = 0
+                            and responsestatus.estado = 'Cerrado'
+                            and vrc_createat  >= :fecha
+                            and vrc_createat  <  :fecha2
+                            and dvrc.vrc_createby = :vrc_createby
+                            and dvrc.business = :business
+                            and dvrc.branch = :branch
+                            group by mdp_id,mdp_name";
+
+                
+                $resUser = $this->pedeo->queryTable("SELECT * FROM tbcc WHERE bcc_id = :bcc_id", array(":bcc_id" => $resInfoCierre[0]['bco_boxid']));
+
+                if (!isset($resUser[0])) {
+
+
+                    $respuesta = array(
+                        'error'   => true,
+                        'data' => array(),
+                        'mensaje'	=> 'Falta el usuario de la caja'
+                    );
+
+                    return $this->response($respuesta);
+
+                }
+
+                $fecha1 = $resAperturaPrevia[0]['bco_date'].' '.$resAperturaPrevia[0]['bco_time'];
+                $fecha2 = $resInfoCierre[0]['bco_date'].' '.$resInfoCierre[0]['bco_time'];
+
+                
+                $resOtrosMedios = $this->pedeo->queryTable($sqlSelect2, array(
+                    ':fecha'        => $fecha1,
+                    ':business'     => $Data['business'],
+                    ':branch'       => $Data['branch'],
+                    ':fecha2'       => $fecha2,
+                    ':vrc_createby' => $resUser[0]['bcc_user']
+                ));
+
+
+             
+
+                $respuesta = array(
+
+                    'error'   => false,
+                    'data'    => array("efectivo" => $resInfoCierre[0]['bco_total'], 'otros_medios' => $resOtrosMedios, 'usuario_caja' => $resUser),
+                    'mensaje' => ''
+                );
+
+            
+
+
+            } else {
+
+                $respuesta = array(
+                    'error' => true,
+                    'data'  => $resAperturaPrevia,
+                    'mensaje' => 'No se encontro la información de la apertura anterior al cierre'
+                );
+            }
+
+        } else {
+
+            $respuesta = array(
+                'error' => true,
+                'data'  => $resInfoCierre,
+                'mensaje' => 'No se encontro la información del cierre'
+            );
+        }
+
+        $this->response($respuesta);
+
+     
+
+    }
+
 
 	
 }

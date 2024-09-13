@@ -2060,6 +2060,7 @@ class InventoryEntry extends REST_Controller
 	{
 
 		$Data = $this->get();
+		$variableSql = "";
 
 		if (!isset($Data['business']) OR !isset($Data['branch'])) {
 
@@ -2263,5 +2264,27 @@ class InventoryEntry extends REST_Controller
 		} else {
 			return false;
 		}
+	}
+
+	public function get_Filter($columns, $value)
+	{
+		//
+		$resultSet = "";
+		// CONDICIONAL.
+		$where = " {campo} LIKE '%" . $value . "%' OR";
+		//
+		try {
+			//
+			foreach ($columns as $column) {
+				// REEMPLAZAR CAMPO.
+				$resultSet .= str_replace('{campo}', $column, $where);
+			}
+			// REMOVER ULTIMO OR DE LA CADENA.
+			$resultSet = substr($resultSet, 0, -2);
+		} catch (Exception $e) {
+			$resultSet = $e->getMessage();
+		}
+		//
+		return $resultSet;
 	}
 }

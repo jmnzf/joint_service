@@ -330,6 +330,9 @@ class AccountingAccounts extends REST_Controller {
 
   // OBTENER CUENTAS CONTABLES
   public function getAccountingAccounts_get(){
+        $variableSql = "";
+        $Data = $this->get();
+        // print_r($Data);exit;
         $sqlSelect = "SELECT
 														    acc_id,
 														    cast(acc_code as varchar) ,
@@ -356,26 +359,43 @@ class AccountingAccounts extends REST_Controller {
                                 from dacc
                                 LEFT JOIN tcdc
                                 ON tcdc.cdc_id = dacc.acc_concept
+                                where 1 = 1 {{like}}
 														    order by cast(acc_code as varchar)";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+        $columns = array(
+          "acc_code",
+          "acc_name");
 
-        if(isset($resSelect[0])){
+          if (isset($Data['search']['value']) && !empty($Data['search']['value'])) {
+            // OBTENER CONDICIONALES.
+            $variableSql .= " AND  " . self::get_Filter($columns, strtoupper($Data['search']['value']));
+          }
+          // NUMERO DE REGISTROS EN LA TABLA
+		      $numRows = $this->pedeo->queryTable("SELECT get_numrows('dacc') as numrows", []);
+          
+          $sqlSelect = str_replace("{{like}}", $variableSql, $sqlSelect);
+          $sqlSelect.= " LIMIT ".$Data['length']." OFFSET ".$Data['start'];
 
-          $respuesta = array(
-            'error' => false,
-            'data'  => $resSelect,
-            'mensaje' => '');
+          // print_r($sqlSelect);exit;
+          $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
-        }else{
+          if(isset($resSelect[0])){
 
             $respuesta = array(
-              'error'   => true,
-              'data' => array(),
-              'mensaje'	=> 'busqueda sin resultados'
-            );
+              'error' => false,
+              'rows'  => $numRows[0]['numrows'],
+              'data'  => $resSelect,
+              'mensaje' => '');
 
-        }
+          }else{
+
+              $respuesta = array(
+                'error'   => true,
+                'data' => array(),
+                'mensaje'	=> 'busqueda sin resultados'
+              );
+
+          }
 
          $this->response($respuesta);
   }
@@ -441,6 +461,28 @@ class AccountingAccounts extends REST_Controller {
 
     }
   }
+
+  public function get_Filter($columns, $value)
+	{
+		//
+		$resultSet = "";
+		// CONDICIONAL.
+		$where = " {campo}::text LIKE '%" . $value . "%' OR";
+		//
+		try {
+			//
+			foreach ($columns as $column) {
+				// REEMPLAZAR CAMPO.
+				$resultSet .= str_replace('{campo}', $column, $where);
+			}
+			// REMOVER ULTIMO OR DE LA CADENA.
+			$resultSet = substr($resultSet, 0, -2);
+		} catch (Exception $e) {
+			$resultSet = $e->getMessage();
+		}
+		//
+		return $resultSet;
+	}
 
 
 

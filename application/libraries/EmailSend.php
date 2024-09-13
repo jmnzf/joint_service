@@ -56,7 +56,50 @@ class EmailSend {
             );
         } else {
             $respuesta = array(
+                'error' => true,
+                'data' => $this->ci->email->print_debugger(),
+                'mensaje' => 'Error al enviar el correo electrónico:'
+            );
+        }
+        
+        return $respuesta;
+
+    }
+
+    public function send2($to,$attach = "",$subject = "",$message = ""){
+        // Configuración del correo electrónico
+        $config['protocol'] = 'smtp';
+        $config['smtp_host'] = "mail.webtic.co";
+        $config['smtp_port'] = '465';
+        $config['smtp_crypto'] = 'ssl';
+        $config['smtp_user'] = "no-reply@webtic.co";
+        $config['smtp_pass'] = "Web2019*";
+        $config['charset'] = 'UTF-8';
+        $config['mailtype'] = 'html';
+        $config['newline'] = "\r\n";
+        $config['crlf'] = "\r\n";
+        $config['max_size'] = 4048; // Tamaño máximo en kilobytes (2MB)
+        $config['wordwrap']  = TRUE;
+        $this->ci->email->initialize($config);
+        $this->ci->email->from("no-reply@webtic.co", "no-reply");
+        $this->ci->email->to($to);
+        $this->ci->email->attach($attach);
+        // $cid = $this->ci->email->attachment_cid($attach);
+
+
+        $this->ci->email->subject($subject);
+        $this->ci->email->message($message);
+
+        if ($this->ci->email->send()) {
+
+            $respuesta = array(
                 'error' => false,
+                'data' => $to,
+                'mensaje' => 'Correo electrónico enviado correctamente'
+            );
+        } else {
+            $respuesta = array(
+                'error' => true,
                 'data' => $this->ci->email->print_debugger(),
                 'mensaje' => 'Error al enviar el correo electrónico:'
             );

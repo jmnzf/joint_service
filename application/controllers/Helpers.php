@@ -509,74 +509,87 @@ class Helpers extends REST_Controller {
 
   public function getRutaGestion_post(){
 
-    $sqlSelect = "SELECT distinct on (csn_docnum,bdg_dia)
-                  csn_docnum AS \"NumOrden\",
-                  csn_cardcode AS \"CodigoCliente\",
-                  csn_cardname AS \"NombreCliente\",
-                  (json_array_elements(dsc_rutas::json)->>'geo_id')::int AS \"CodigoRuta\",
-                  (json_array_elements(dsc_rutas::json)->>'geo_nombre')::text AS \"NombreRuta\",
-                  csn1.sn1_itemcode AS \"CodigoServ\",
-                  dmar.dma_item_name AS \"NomServicio\",
-                  csn_cleantotal AS \"CantidadServ\",
-                  dmsn.dms_cel AS \"TelContacto\",
-                  dmsn.dms_email AS \"E_Mail\",
-                  csn_comment AS \"Comentarios\",
-                  csn_adress AS \"DireccionUbicacion\",
-                  csn_comment AS \"DirUB\",
-                  coalesce(bdg_dia,'7') AS \"U_WT_Dia_Ruta\",
-                  '0' AS \"U_WT_BODEGA\",
-                  '0' AS \"dia_ruta\",
-                  '0' AS \"codigo_serial\",
-                  csn_contacid AS \"Contacto\",
-                  coalesce(bdg_dia,'7') AS \"dia_semana\",
-                  coalesce(dbg_id,0) as dbg_id,
-                  csn_docentry,
-                  csn_weeklytoilets as aseos_semanales
-              FROM tcsn 
-              INNER JOIN responsestatus ON tcsn.csn_docentry = responsestatus.id AND tcsn.csn_doctype = responsestatus.tipo 
-              INNER JOIN csn1 ON csn_docentry = sn1_docentry
-              INNER JOIN dmar ON sn1_itemcode = dma_item_code AND dma_clean = 1
-              INNER JOIN dmsn ON TRIM(tcsn.csn_cardcode) = TRIM(dmsn.dms_card_code) AND dmsn.dms_card_type = '1'
-              INNER JOIN tdsc ON dsc_docentry = csn_docentry AND csn_doctype = 32 
-              LEFT JOIN tbdg ON csn_docentry = bdg_docentry AND csn_doctype = 32
-              WHERE responsestatus.estado = 'Abierto'
-              GROUP BY csn_docnum, csn_cardcode, csn_cardname, sn1_itemcode, dma_item_name,
-              dms_cel, dms_email, csn_comment, csn_adress, csn_contacid, bdg_dia,(json_array_elements(dsc_rutas::json)->>'geo_id')::int,
-              (json_array_elements(dsc_rutas::json)->>'geo_nombre')::text,dbg_id,csn_docentry";
-
-    // $sqlSelect = "SELECT distinct on (csn_docnum)
-    //           csn_docnum as \"NumOrden\",
-    //           csn_cardcode as \"CodigoCliente\",
-    //           csn_cardname as \"NombreCliente\",
-    //           (json_array_elements(dsc_rutas)->>'geo_id')::int as \"CodigoRuta\",
-    //           (json_array_elements(dsc_rutas)->>'geo_nombre')::text as \"NombreRuta\",
-    //           csn1.sn1_itemcode as \"CodigoServ\",
-    //           dmar.dma_item_name as \"NomServicio\",
-    //           sum(sn1_clean_quantity) as \"CantidadServ\",
-    //           dmsn.dms_cel as \"TelContacto\",
-    //           dmsn.dms_email as \"E_Mail\",
-    //           csn_comment as \"Comentarios\",
-    //           csn_adress as \"DireccionUbicacion\",
-    //           csn_comment as \"DirUB\",
-    //           bdg_dia as U_WT_Dia_Ruta,
-    //           '0' as \"U_WT_BODEGA\",
-    //           '0' as \"dia_ruta\",
-    //           '0' as \"codigo_serial\",
-    //           csn_contacid as \"Contacto\",
-    //           bdg_dia as \"dia_semana\"
+    // $sqlSelect = "SELECT distinct on (csn_docnum,bdg_dia)
+    //               csn_docnum AS \"NumOrden\",
+    //               csn_cardcode AS \"CodigoCliente\",
+    //               csn_cardname AS \"NombreCliente\",
+    //               (json_array_elements(dsc_rutas::json)->>'geo_id')::int AS \"CodigoRuta\",
+    //               (json_array_elements(dsc_rutas::json)->>'geo_nombre')::text AS \"NombreRuta\",
+    //               csn1.sn1_itemcode AS \"CodigoServ\",
+    //               dmar.dma_item_name AS \"NomServicio\",
+    //               csn_cleantotal AS \"CantidadServ\",
+    //               dmsn.dms_cel AS \"TelContacto\",
+    //               dmsn.dms_email AS \"E_Mail\",
+    //               csn_comment AS \"Comentarios\",
+    //               csn_adress AS \"DireccionUbicacion\",
+    //               csn_comment AS \"DirUB\",
+    //               coalesce(bdg_dia,'7') AS \"U_WT_Dia_Ruta\",
+    //               '0' AS \"U_WT_BODEGA\",
+    //               '0' AS \"dia_ruta\",
+    //               '0' AS \"codigo_serial\",
+    //               csn_contacid AS \"Contacto\",
+    //               coalesce(bdg_dia,'7') AS \"dia_semana\",
+    //               coalesce(dbg_id,0) as dbg_id,
+    //               csn_docentry,
+    //               csn_weeklytoilets as aseos_semanales,
+    //               case when string_agg(dmsc.dmc_email,';') is not null then string_agg(dmsc.dmc_email,';') else dms_email end as \"emailContact\"
     //           FROM tcsn 
-    //           inner join responsestatus on tcsn.csn_docentry = responsestatus.id and  tcsn.csn_doctype = responsestatus.tipo 
-    //           inner join csn1 on csn_docentry = sn1_docentry
-    //           inner join dmar on sn1_itemcode = dma_item_code and dma_clean = 1
-    //           inner join dmsn on trim(tcsn.csn_cardcode)  = trim(dmsn.dms_card_code) and dmsn.dms_card_type = '1'
-    //           inner join tdsc on dsc_docentry = csn_docentry and csn_doctype = 32 
-    //           inner join tbdg on csn_docentry = bdg_docentry and csn_doctype  = 32
-    //           where responsestatus.estado = 'Abierto'
-    //           and EXTRACT(DOW FROM CURRENT_DATE) = bdg_dia::int 
-    //           group by csn_docnum,csn_cardcode,csn_cardname,(json_array_elements(dsc_rutas)->>'geo_id')::int,(json_array_elements(dsc_rutas)->>'geo_nombre')::text,sn1_itemcode,dma_item_name,
-    //           dms_cel,dms_email,csn_comment,csn_adress,csn_comment,csn_contacid,bdg_dia";
+    //           INNER JOIN responsestatus ON tcsn.csn_docentry = responsestatus.id AND tcsn.csn_doctype = responsestatus.tipo 
+    //           INNER JOIN csn1 ON csn_docentry = sn1_docentry
+    //           INNER JOIN dmar ON sn1_itemcode = dma_item_code AND dma_clean = 1
+    //           INNER JOIN dmsn ON TRIM(tcsn.csn_cardcode) = TRIM(dmsn.dms_card_code) AND dmsn.dms_card_type = '1'
+    //           INNER JOIN tdsc ON dsc_docentry = csn_docentry AND csn_doctype = 32 
+    //           LEFT JOIN tbdg ON csn_docentry = bdg_docentry AND csn_doctype = 32
+    //           left join dmsc on dmsc.dmc_card_code  = dmsn.dms_card_code and dmsc.dmc_uso = 'RECURRENTE' and dmsc.dmc_status = '1'
+    //           WHERE responsestatus.estado = 'Abierto'
+    //           GROUP BY csn_docnum, csn_cardcode, csn_cardname, sn1_itemcode, dma_item_name,
+    //           dms_cel, dms_email, csn_comment, csn_adress, csn_contacid, bdg_dia,(json_array_elements(dsc_rutas::json)->>'geo_id')::int,
+    //           (json_array_elements(dsc_rutas::json)->>'geo_nombre')::text,dbg_id,csn_docentry";
+
+    $sqlSelect = " SELECT distinct on (csn_docnum,bdg_dia)
+                csn_docnum AS \"NumOrden\",
+                csn_cardcode AS \"CodigoCliente\",
+                csn_cardname AS \"NombreCliente\",
+                rutas.codigoruta AS \"CodigoRuta\",
+                rutas.nombreruta as \"NombreRuta\",
+                csn1.sn1_itemcode AS \"CodigoServ\",
+                dmar.dma_item_name AS \"NomServicio\",
+                csn_cleantotal AS \"CantidadServ\",
+                dmsn.dms_cel AS \"TelContacto\",
+                dmsn.dms_email AS \"E_Mail\",
+                csn_comment AS \"Comentarios\",
+                csn_adress AS \"DireccionUbicacion\",
+                csn_comment AS \"DirUB\",
+                coalesce(bdg_dia,'7') AS \"U_WT_Dia_Ruta\",
+                '0' AS \"U_WT_BODEGA\",
+                '0' AS \"dia_ruta\",
+                '0' AS \"codigo_serial\",
+                csn_contacid AS \"Contacto\",
+                coalesce(bdg_dia,'7') AS \"dia_semana\",
+                coalesce(dbg_id,0) as dbg_id,
+                csn_docentry,
+                csn_weeklytoilets as aseos_semanales,
+                case when string_agg(dmsc.dmc_email,';') is not null then string_agg(dmsc.dmc_email,';') else dms_email end as \"emailContact\"
+            FROM tcsn 
+            INNER JOIN responsestatus ON tcsn.csn_docentry = responsestatus.id AND tcsn.csn_doctype = responsestatus.tipo 
+            INNER JOIN csn1 ON csn_docentry = sn1_docentry
+            INNER JOIN dmar ON sn1_itemcode = dma_item_code AND dma_clean = 1
+            INNER JOIN dmsn ON TRIM(tcsn.csn_cardcode) = TRIM(dmsn.dms_card_code) AND dmsn.dms_card_type = '1'
+            INNER JOIN tdsc ON dsc_docentry = csn_docentry AND csn_doctype = 32 
+            LEFT JOIN tbdg ON csn_docentry = bdg_docentry AND csn_doctype = 32
+            LEFT JOIN dmsc on dmsc.dmc_card_code  = dmsn.dms_card_code and dmsc.dmc_uso = 'RECURRENTE' and dmsc.dmc_status = '1'
+            LEFT JOIN LATERAL (
+                SELECT 
+                    (json_array_elements(dsc_rutas::json)->>'geo_id')::int AS codigoruta,
+                    (json_array_elements(dsc_rutas::json)->>'geo_nombre')::text AS nombreruta
+            ) AS rutas ON true
+            WHERE responsestatus.estado = 'Abierto'
+            GROUP BY csn_docnum, csn_cardcode, csn_cardname, sn1_itemcode, dma_item_name,
+                dms_cel, dms_email, csn_comment, csn_adress, csn_contacid, bdg_dia, 
+                rutas.codigoruta, rutas.nombreruta, dbg_id, csn_docentry";
 
     $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
 
     if ( isset($resSelect[0]) ) {
 
@@ -933,6 +946,73 @@ class Helpers extends REST_Controller {
 
     $this->response($respuesta);
   
+  }
+
+  
+  public function getCompanyData_get() {
+
+    $sqlSelect = "SELECT pge_logo,
+                  t2.url_terminos_condiciones as pge_url_terminos_condiciones ,
+                  t2.url_preguntas_frecuentes as pge_url_preguntas_frecuentes, 
+                  t2.url_contacto as pge_url_contacto 
+                  FROM pgem p
+                  left JOIN params t2 on t2.business = p.pge_id where pge_branch = true";
+    
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array());
+
+
+    if ( isset($resSelect[0]) ) {
+
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
+
+    } else {
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje'	=> 'busqueda sin resultados'
+        );
+    }
+
+    $this->response($respuesta);
+  
+  }
+
+  public function getFormRules_post(){
+    $Data = $this->post();
+
+    $sqlSelect = "SELECT 
+                  concat('[',string_agg(json_build_object(
+                      'doc'||substring(column_name from 4) , json_build_object('maxlength', character_maximum_length)      
+                      )::text,','  ),']') as rules
+                FROM 
+                    information_schema.columns 
+                WHERE 
+                table_name = :table and character_maximum_length  > 0";
+
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(":table" => $Data['table']));
+
+    if ( isset($resSelect[0]) ) {
+
+      // print_r(json_decode($resSelect[0]['rules'],true));exit;
+
+      $respuesta = array(
+        'error' => false,
+        'data'  => json_decode($resSelect[0]['rules'],true),
+        'mensaje' => '');
+
+    } else {
+        $respuesta = array(
+          'error'   => true,
+          'data' => array(),
+          'mensaje'	=> 'busqueda sin resultados'
+        );
+    }
+
+    $this->response($respuesta);
+    
   }
 
 

@@ -312,6 +312,14 @@ switch (ENVIRONMENT)
 
 	define('VIEWPATH', $view_folder.DIRECTORY_SEPARATOR);
 
+
+	// CARGAR VARIABLES DE ENTORNO
+	require_once __DIR__ . '/vendor/autoload.php'; // Asegúrate de que Composer esté cargado
+
+	$dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
+	$dotenv->load(); // Cargar variables de entorno del archivo .env
+
+
 /*
  * --------------------------------------------------------------------
  * LOAD THE BOOTSTRAP FILE

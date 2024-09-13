@@ -127,11 +127,31 @@ class CashOperation extends REST_Controller {
 
 
         $fechaAc = null;
+        $resUser = [];
 
         if ( isset($resSelect[0]) ) {
 
             $fechaAc = $resSelect[0]['bco_date'].' '.$resSelect[0]['bco_time'];
+
+            // $fechaAc = $resSelect[0]['bco_date'].' 08:00:00';
+
+            $resUser = $this->pedeo->queryTable("SELECT bcc_user FROM tbcc WHERE bcc_id = :bcc_id", array(":bcc_id" => $resSelect[0]['bco_boxid']));
+
+            if (!isset($resUser[0])) {
+
+
+                $respuesta = array(
+                    'error'   => true,
+                    'data' => array(),
+                    'mensaje'	=> 'Falta el usuario de la caja'
+                );
+
+                return $this->response($respuesta);
+
+            }
         }
+
+       
 
         $sqlSelect2 = "SELECT sum(vrc_total_c),mdp_name
                         FROM dvrc
@@ -141,6 +161,8 @@ class CashOperation extends REST_Controller {
                         and tmdp.mdp_multiple = 0
                         and responsestatus.estado = 'Cerrado'
                         and vrc_createat  >= :fecha
+                        and vrc_docdate = :fecha2
+                        and dvrc.vrc_createby = :vrc_createby
                         and dvrc.business = :business
                         and dvrc.branch = :branch
                         group by mdp_id,mdp_name
@@ -153,14 +175,18 @@ class CashOperation extends REST_Controller {
                         where mdp_local = 0
                         and responsestatus.estado = 'Cerrado'
                         and vrc_createat  >= :fecha
+                        and vrc_docdate = :fecha2
+                        and dvrc.vrc_createby = :vrc_createby
                         and dvrc.business = :business
                         and dvrc.branch = :branch
                         group by mdp_id,mdp_name";
 
         $resSelect2 = $this->pedeo->queryTable($sqlSelect2, array(
-            ':fecha'    => $fechaAc,
-            ':business' => $Data['business'],
-            ':branch'   => $Data['branch']
+            ':fecha'        => $fechaAc,
+            ':business'     => $Data['business'],
+            ':branch'       => $Data['branch'],
+            ':fecha2'       => $Data['bco_fechac'],
+            ':vrc_createby' => $resUser[0]['bcc_user']
         ));
 
         if(isset($resSelect[0])){
@@ -385,13 +411,20 @@ class CashOperation extends REST_Controller {
 
         $this->pedeo->trans_begin();
 
+        $hora = '23:00:00';
+
+        if ( date('Y-m-d') == $Data['bco_fechac'] ) {
+
+            $hora = date('H:i:s');
+        }
+
         $sqlInsert = "INSERT INTO tbco(bco_boxid, bco_date, bco_time, bco_status, bco_amount, business, branch, bco_total, bco_bank, bco_createdat, bco_doctype, bco_series, bco_currency, bco_account, bco_docnum)VALUES(:bco_boxid, :bco_date, :bco_time, :bco_status, :bco_amount, :business, :branch, :bco_total, :bco_bank, :bco_createdat, :bco_doctype, :bco_series, :bco_currency, :bco_account, :bco_docnum)";
 
         $resSqlInsert = $this->pedeo->insertRow($sqlInsert, array (
             
             ':bco_boxid' => $Data['bco_boxid'], 
             ':bco_date' => $Data['bco_fechac'], 
-            ':bco_time' => date('H:i:s'), 
+            ':bco_time' => $hora, 
             ':bco_status' => 0, 
             ':bco_amount' => $Data['bco_amount'], 
             ':business' => $Data['business'], 
@@ -859,6 +892,30 @@ class CashOperation extends REST_Controller {
 			return;
 		}
 		//
+        $FacturaComsumidor = 0;
+        // VERIFICAR EL TIPO DE FACTURA SEGUN EL MEDIO DE PAGO
+        if ( !isset($Data['vrc_cardcode2']) || empty($Data['vrc_cardcode2']) || $Data['vrc_cardcode2'] == 'undefined' &&
+          !isset($Data['vrc_cardname2']) || empty($Data['vrc_cardname2']) || $Data['vrc_cardname2'] == 'undefined' ) {
+            $FacturaComsumidor = 0;
+        }else{
+            $FacturaComsumidor = 1;
+        }
+        //
+        // VERIFICAR QUE NO SE HAGA UNA FACTURA DE CONSUMIDOR CON EL MEDIO DE PAGO CONTADO
+        if ( isset($Data['paytype_days']) && $Data['paytype_days'] == 0 && $FacturaComsumidor == 1 ) {
+
+            $respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'No se puede generar una factura con la relación consumidor y pagador, si la forma de pago es Contado'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+
+        }
+
         // VERIFICAR ESTADO DE LA CAJA
         $fechaActual = date('Y-m-d');
         $sqlCaja = "SELECT * FROM tbcc WHERE bcc_user = :bcc_user";
@@ -875,6 +932,7 @@ class CashOperation extends REST_Controller {
                             AND coalesce(bco_doctype, 0) between 0 and 48 
                             AND coalesce(estado, 'Abierto') <> 'Anulado'
                             ORDER BY bco_id DESC LIMIT 1";
+
             $resEstadoCaja = $this->pedeo->queryTable($sqlEstadoCaja, array(
                 ':bco_boxid' => $resCaja[0]['bcc_id']
             ));
@@ -918,7 +976,8 @@ class CashOperation extends REST_Controller {
                 return $this->response($respuesta);
             }
 
-        }else{
+        } else {
+
             $respuesta = array(
 				'error' => true,
 				'data'  => array(),
@@ -931,7 +990,7 @@ class CashOperation extends REST_Controller {
         // FIN VALIDACION ESTADO DE CAJA
 
         // SE VERIFICA SI EL RECIBO ES A CREDITO
-        if ( isset($Data['paytype_days']) && $Data['paytype_days'] > 0 ) {
+        if ( isset($Data['paytype_days']) && $Data['paytype_days'] > 0 && $FacturaComsumidor == 1 ) {
 
             if ( isset($resCaja[0]['bcc_series4']) && is_numeric($resCaja[0]['bcc_series4']) && $resCaja[0]['bcc_series4'] > 0 ) {
 
@@ -954,9 +1013,9 @@ class CashOperation extends REST_Controller {
         // BUSCANDO LA NUMERACION DEL DOCUMENTO
 		$DocNumVerificado = $this->documentnumbering->NumberDoc($Data['vrc_series'],$Data['vrc_docdate'],$Data['vrc_duedate']);
 		
-		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
+		if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0) {
 
-		}else if ($DocNumVerificado['error']){
+		} else if ($DocNumVerificado['error']) {
 
 			return $this->response($DocNumVerificado, REST_Controller::HTTP_BAD_REQUEST);
 		}
@@ -1820,7 +1879,7 @@ class CashOperation extends REST_Controller {
                     return $this->response($respuesta);
                 }
 
-                if ($ManejaInvetario == 1){
+                if ($ManejaInvetario == 1) {
 
                     $DetalleCostoInventarioDev->ccosto   = isset($detail['rc1_costcode']) ? $detail['rc1_costcode'] : NULL;
                     $DetalleCostoInventarioDev->itemcode = isset($detail['rc1_itemcode']) ? $detail['rc1_itemcode'] : NULL;
@@ -2001,20 +2060,21 @@ class CashOperation extends REST_Controller {
         // SE VALIDA SE ES NECESARIO HACER UNA COPIA DE FACTURA DE VENTAS
         if ( $PARA_MTRS['factura_de_pos'] == 1) {
 
-            // SI EL RECIBO ES CONTADO
-            if (isset($Data['paytype_days']) && $Data['paytype_days'] == 0 ) { 
+
+            // SOLO SI EL RECIBO POS NO VIENE DE UN CONSUMIDOR
+            if ( $FacturaComsumidor == 0 ) {
 
                 $sqlInsertFv = "INSERT INTO dvfv(dvf_series, dvf_docnum, dvf_docdate, dvf_duedate, dvf_duedev, dvf_pricelist, dvf_cardcode,
-						dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
-						dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
-						dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,
-						dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed,dvf_igtfcode,business,branch,dvf_totalret,dvf_totalretiva,
-						dvf_bankable,dvf_internal_comments,dvf_taxtotal_ad, dvf_paytoday)
-						VALUES(:dvf_series, :dvf_docnum, :dvf_docdate, :dvf_duedate, :dvf_duedev, :dvf_pricelist, :dvf_cardcode, :dvf_cardname,
-						:dvf_currency, :dvf_contacid, :dvf_slpcode, :dvf_empid, :dvf_comment, :dvf_doctotal, :dvf_baseamnt, :dvf_taxtotal, :dvf_discprofit, :dvf_discount,
-						:dvf_createat, :dvf_baseentry, :dvf_basetype, :dvf_doctype, :dvf_idadd, :dvf_adress, :dvf_paytype, :dvf_createby,:dvf_correl,:dvf_transport,:dvf_sub_transport,:dvf_ci,:dvf_t_vehiculo,
-						:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfapplyed,
-						:dvf_igtfcode,:business,:branch,:dvf_totalret,:dvf_totalretiva,:dvf_bankable,:dvf_internal_comments,:dvf_taxtotal_ad, :dvf_paytoday)";
+                dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
+                dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
+                dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,
+                dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed,dvf_igtfcode,business,branch,dvf_totalret,dvf_totalretiva,
+                dvf_bankable,dvf_internal_comments,dvf_taxtotal_ad, dvf_paytoday)
+                VALUES(:dvf_series, :dvf_docnum, :dvf_docdate, :dvf_duedate, :dvf_duedev, :dvf_pricelist, :dvf_cardcode, :dvf_cardname,
+                :dvf_currency, :dvf_contacid, :dvf_slpcode, :dvf_empid, :dvf_comment, :dvf_doctotal, :dvf_baseamnt, :dvf_taxtotal, :dvf_discprofit, :dvf_discount,
+                :dvf_createat, :dvf_baseentry, :dvf_basetype, :dvf_doctype, :dvf_idadd, :dvf_adress, :dvf_paytype, :dvf_createby,:dvf_correl,:dvf_transport,:dvf_sub_transport,:dvf_ci,:dvf_t_vehiculo,
+                :dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfapplyed,
+                :dvf_igtfcode,:business,:branch,:dvf_totalret,:dvf_totalretiva,:dvf_bankable,:dvf_internal_comments,:dvf_taxtotal_ad, :dvf_paytoday)";
 
                 $resInsertFv = $this->pedeo->insertRow($sqlInsertFv, array(
                     ':dvf_docnum' => $DocNumVerificado,
@@ -2030,9 +2090,9 @@ class CashOperation extends REST_Controller {
                     ':dvf_slpcode' => is_numeric($Data['vrc_slpcode']) ? $Data['vrc_slpcode'] : 0,
                     ':dvf_empid' => is_numeric($Data['vrc_empid']) ? $Data['vrc_empid'] : 0,
                     ':dvf_comment' => isset($Data['vrc_comment']) ? $Data['vrc_comment'] : NULL,
- 
+
                     ':dvf_doctotal'   => is_numeric($Data['vrc_total_c']) ? $Data['vrc_total_c'] : 0,
-                    ':dvf_baseamnt'   => $totalLineTotal,
+                    ':dvf_baseamnt'   => ($totalLineTotal - $totalVatSum),
                     ':dvf_taxtotal'   => $totalVatSum,
                     ':dvf_discprofit' => 0,
                     ':dvf_discount'   => 0,
@@ -2076,14 +2136,14 @@ class CashOperation extends REST_Controller {
                     foreach ($ContenidoDetalle as $key => $detail) {
 
                         $sqlInsertDetailFv = "INSERT INTO vfv1(fv1_docentry, fv1_itemcode, fv1_itemname, fv1_quantity, fv1_uom, fv1_whscode,
-										fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
-										fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate, fv1_codimp,fv1_ubication,
-										fv1_linenum,fv1_baseline,ote_code,fv1_gift,detalle_modular,fv1_tax_base,detalle_anuncio,imponible,fv1_clean_quantity,
-										fv1_vat_ad,fv1_vatsum_ad,fv1_accimp_ad,fv1_codimp_ad)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
-										:fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,:fv1_acctcode, :fv1_basetype, 
-										:fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate, :fv1_codimp,:fv1_ubication,:fv1_linenum,
-										:fv1_baseline,:ote_code,:fv1_gift,:detalle_modular,:fv1_tax_base,:detalle_anuncio,:imponible,:fv1_clean_quantity,
-										:fv1_vat_ad,:fv1_vatsum_ad,:fv1_accimp_ad,:fv1_codimp_ad)";
+                                        fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
+                                        fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate, fv1_codimp,fv1_ubication,
+                                        fv1_linenum,fv1_baseline,ote_code,fv1_gift,detalle_modular,fv1_tax_base,detalle_anuncio,imponible,fv1_clean_quantity,
+                                        fv1_vat_ad,fv1_vatsum_ad,fv1_accimp_ad,fv1_codimp_ad)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
+                                        :fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,:fv1_acctcode, :fv1_basetype, 
+                                        :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate, :fv1_codimp,:fv1_ubication,:fv1_linenum,
+                                        :fv1_baseline,:ote_code,:fv1_gift,:detalle_modular,:fv1_tax_base,:detalle_anuncio,:imponible,:fv1_clean_quantity,
+                                        :fv1_vat_ad,:fv1_vatsum_ad,:fv1_accimp_ad,:fv1_codimp_ad)";
 
                         $resInsertDetailFv = $this->pedeo->insertRow($sqlInsertDetailFv, array(
                             ':fv1_docentry' => $resInsertFv,
@@ -2155,37 +2215,46 @@ class CashOperation extends REST_Controller {
 
 
                 // SE INSERTA EL ESTADO DE LA FACTURA
-                // CERRADA POR DEFECTO
+                // SEGUN EL MEDIO DE PAGO
+                // ABIERTA SI A CREDITO
+                // CERRADA SI ES CONTADO
+                $EstadoFactura = 0;
+                if (isset($Data['paytype_days']) && $Data['paytype_days'] == 0 ) { 
+                    $EstadoFactura = 3;
+
+                } else {
+                    $EstadoFactura = 1;
+                }
                 $sqlInsertEstadoFv = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-								VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+                                VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
-				$resInsertEstadoFv = $this->pedeo->insertRow($sqlInsertEstadoFv, array(
-					':bed_docentry' => $resInsertFv,
-					':bed_doctype' => 5,
-					':bed_status' => 3, //ESTADO CERRADO
-					':bed_createby' => $Data['vrc_createby'],
-					':bed_date' => date('Y-m-d'),
-					':bed_baseentry' => NULL,
-					':bed_basetype' => NULL
-				));
-
-
-				if (is_numeric($resInsertEstadoFv) && $resInsertEstadoFv > 0) {
-				} else {
-
-					$this->pedeo->trans_rollback();
-
-					$respuesta = array(
-						'error'   => true,
-						'data' => $resInsertEstadoFv,
-						'mensaje'	=> 'No se pudo registrar la Factura'
-					);
+                $resInsertEstadoFv = $this->pedeo->insertRow($sqlInsertEstadoFv, array(
+                    ':bed_docentry' => $resInsertFv,
+                    ':bed_doctype' => 5,
+                    ':bed_status' => $EstadoFactura, //ESTADO
+                    ':bed_createby' => $Data['vrc_createby'],
+                    ':bed_date' => date('Y-m-d'),
+                    ':bed_baseentry' => NULL,
+                    ':bed_basetype' => NULL
+                ));
 
 
-					$this->response($respuesta);
+                if (is_numeric($resInsertEstadoFv) && $resInsertEstadoFv > 0) {
+                } else {
 
-					return;
-				}
+                    $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                        'error'   => true,
+                        'data' => $resInsertEstadoFv,
+                        'mensaje'	=> 'No se pudo registrar la Factura'
+                    );
+
+
+                    $this->response($respuesta);
+
+                    return;
+                }
                 //
                 // SE HACE EL MOVIMIENTO DE DOCUMENTO
                 // RECIBO DE CAJA
@@ -2265,11 +2334,8 @@ class CashOperation extends REST_Controller {
 
                     return;
                 }
-
                 //
-
-            }
-
+            }           
         }
         //
         
@@ -2314,7 +2380,7 @@ class CashOperation extends REST_Controller {
         }
 
         // ASIENTO DE IVA 
-        if (isset($Data['paytype_days']) && $Data['paytype_days'] == 0 ) {
+        if ( $FacturaComsumidor == 0) {
             if ( $Data['vrc_monto_v'] > 0 ) {
 
                 // IMPUESTO
@@ -2548,7 +2614,7 @@ class CashOperation extends REST_Controller {
         }
         //
         // ASIENTO DE INGRESO
-        if (isset($Data['paytype_days']) && $Data['paytype_days'] == 0 ) {
+        if ( $FacturaComsumidor == 0 ) {
             if ( $Data['vrc_monto_v'] > 0 ) {
 
                 foreach ($DetalleConsolidadoIngresoVenta as $key => $posicion) {
@@ -3003,7 +3069,7 @@ class CashOperation extends REST_Controller {
         }
         //
         // ASIENTO COSTO VENTA
-        if (isset($Data['paytype_days']) && $Data['paytype_days'] == 0 ) {
+        if ( $FacturaComsumidor == 0 ) {
             foreach ($DetalleConsolidadoCostoCosto as $key => $posicion) {
                 $dbito = 0;
                 $cdito = 0;
@@ -3340,7 +3406,7 @@ class CashOperation extends REST_Controller {
         }
 
         // ASIENTO COSTO VENTA CREDITO
-        if (isset($Data['paytype_days']) && $Data['paytype_days'] > 0 ) {
+        if ( $FacturaComsumidor == 1 ) {
             foreach ($DetalleConsolidadoCostoInventario as $key => $posicion) {
                 $dbito = 0;
                 $cdito = 0;
@@ -3851,7 +3917,7 @@ class CashOperation extends REST_Controller {
         }
         //
         // ASIENTO CUENTA POR COBRAR DEBITO
-        if (isset($Data['paytype_days']) && $Data['paytype_days'] == 0 ) {
+        if ( $FacturaComsumidor == 0 ) {
             if ( $Data['vrc_total_c'] > 0 ){
 
                 $sqlcuentaCxC = "SELECT  f1.dms_card_code, f2.mgs_acct FROM dmsn AS f1
@@ -4061,8 +4127,8 @@ class CashOperation extends REST_Controller {
                         ':ac1_accperiod' => $periodo['data'],
                         ':ac1_close' => 0,
                         ':ac1_cord' => 0,
-                        ':ac1_ven_debit' => round($cdito, $DECI_MALES),
-                        ':ac1_ven_credit' => round($cdito, $DECI_MALES),
+                        ':ac1_ven_debit' => 0,
+                        ':ac1_ven_credit' => 0,
                         ':ac1_fiscal_acct' => 0,
                         ':ac1_taxid' => 0,
                         ':ac1_isrti' => 0,
@@ -4669,7 +4735,7 @@ class CashOperation extends REST_Controller {
         //
 
 
-        if ( !$soloServicio ) {
+        if ( !$soloServicio && $FacturaComsumidor == 0 ) {
 
             //SE VALIDA LA CONTABILIDAD CREADA
             $validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
@@ -4832,7 +4898,7 @@ class CashOperation extends REST_Controller {
 
         } else {
 
-            if (isset($Data['paytype_days']) && $Data['paytype_days'] > 0 ) {
+            if ( isset($Data['paytype_days']) && $Data['paytype_days'] > 0 && $FacturaComsumidor == 1 ) {
 
                 $resDell = $this->pedeo->deleteRow( "DELETE FROM tmac WHERE mac_trans_id = :mac_trans_id", array( ":mac_trans_id" => $resInsertAsiento ) );
 
@@ -4852,6 +4918,38 @@ class CashOperation extends REST_Controller {
                     return $this->response($respuesta);
 
                 }
+
+            } else {
+
+                //SE VALIDA LA CONTABILIDAD CREADA
+                $validateCont2 = $this->generic->validateAccountingAccent2($resInsertAsiento);
+
+
+
+                if (isset($validateCont2['error']) && $validateCont2['error'] == false) {
+
+                } else {
+
+                    $ressqlmac1 = [];
+                    $sqlmac1 = "SELECT acc_name, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys FROM  mac1 inner join dacc on ac1_account = acc_code WHERE ac1_trans_id = :ac1_trans_id";
+                    $ressqlmac1['contabilidad'] = $this->pedeo->queryTable($sqlmac1, array(':ac1_trans_id' => $resInsertAsiento ));
+
+                    $this->pedeo->trans_rollback();
+
+                    $respuesta = array(
+                        'error'   => true,
+                        'data' 	  => $ressqlmac1,
+                        'mensaje' => $validateCont2['mensaje'],
+                        
+                    );
+
+                    $this->response($respuesta);
+
+                    return;
+                }
+                //
+
+
             }
            
         }
@@ -5016,6 +5114,15 @@ class CashOperation extends REST_Controller {
         ));
 
         if ( isset($resDoc[0]) ) {
+
+            $FacturaComsumidor = 0;
+            // VERIFICAR EL TIPO DE FACTURA SEGUN EL MEDIO DE PAGO
+            if ( !isset($resDoc[0]['vrc_cardcode2']) || empty($resDoc[0]['vrc_cardcode2']) || $resDoc[0]['vrc_cardcode2'] == 'undefined' &&
+              !isset($resDoc[0]['vrc_cardname2']) || empty($resDoc[0]['vrc_cardname2']) || $resDoc[0]['vrc_cardname2'] == 'undefined' ) {
+                $FacturaComsumidor = 0;
+            }else{
+                $FacturaComsumidor = 1;
+            }
 
             //VALIDANDO PERIODO CONTABLE
             $periodo = $this->generic->ValidatePeriod($resDoc[0]['vrc_duedev'], $resDoc[0]['vrc_docdate'], $resDoc[0]['vrc_duedate'], 1);
@@ -5471,35 +5578,45 @@ class CashOperation extends REST_Controller {
                     //
                 }
 
-
-
-
-
                 // VERIFICAR SI EL RECIBO ES A CREDITO
                 $formaPago = $this->pedeo->queryTable("SELECT * FROM dmpf WHERE mpf_id = :mpf_id ", array( ":mpf_id" => $resDoc[0]['vrc_paytype'] ));
 
                 if ( isset($formaPago[0]) ) {
 
-                    if ( $formaPago[0]['mpf_days'] == 0 ) {
+                    if ( $FacturaComsumidor == 0 ) {
                         // BUSCO LA NUMERACON PARA NOTA CREDITO
-                        $numeracionNotaCredito = $this->pedeo->queryTable("SELECT pgs_id FROM pgdn WHERE pgs_doctype = :pgs_doctype AND business = :business AND branch = :branch AND pgs_enabled = :pgs_enabled", 
-                                                                array(":pgs_doctype" => 6, ":business" => $Data['business'], ":branch" => $Data['branch'], ":pgs_enabled" => 1));
+                        // PRIMERO BUSCO CUAL ES LA SERIE QUE TIENE LA CAJA DEL USUARIO DEL RECIBO
+                        $resSeriesCaja = $this->pedeo->queryTable("SELECT bcc_series5 FROM tbcc WHERE bcc_user = :bcc_user AND bcc_status = :bcc_status", array(":bcc_user" => $resDoc[0]['vrc_createby'], ":bcc_status" => 1));
 
-                        if (!isset($numeracionNotaCredito[0])) {
+                        if (!isset($resSeriesCaja[0]) || isset($resSeriesCaja[1])) {
 
                             $this->pedeo->trans_rollback();
             
                             $respuesta = array(
                                 'error'   => true,
-                                'data'	  => $resUpdateVenDebitCredit,
+                                'data'	  => $resSeriesCaja,
+                                'mensaje' => 'No es posible seleccionar la numeración correcta para aplicar la nota credito'
+                            );
+                
+                            return $this->response($respuesta);
+                        }
+                        
+
+                        if ( empty($resSeriesCaja[0]['bcc_series5']) ) {
+
+                            $this->pedeo->trans_rollback();
+            
+                            $respuesta = array(
+                                'error'   => true,
+                                'data'	  => $resSeriesCaja,
                                 'mensaje' => 'No se encontro la numeración para nota credito'
                             );
                 
                             return $this->response($respuesta);
                         }
                         // BUSCANDO LA NUMERACION DEL DOCUMENTO
-                        $DocNumVerificado = $this->documentnumbering->NumberDoc($numeracionNotaCredito[0]['pgs_id'], $resDoc[0]['vrc_docdate'], $resDoc[0]['vrc_duedate']);
-                            
+                        $DocNumVerificado = $this->documentnumbering->NumberDoc($resSeriesCaja[0]['bcc_series5'], $resDoc[0]['vrc_docdate'], $resDoc[0]['vrc_duedate']);
+
                         if (isset($DocNumVerificado) && is_numeric($DocNumVerificado) && $DocNumVerificado > 0){
 
                         }else if ($DocNumVerificado['error']){
@@ -5518,7 +5635,7 @@ class CashOperation extends REST_Controller {
 
                         $resInsertNc = $this->pedeo->insertRow($sqlInsertNc, array(
                             ':vnc_docnum' => $DocNumVerificado,
-                            ':vnc_series' => $numeracionNotaCredito[0]['pgs_id'],
+                            ':vnc_series' => $resSeriesCaja[0]['bcc_series5'],
                             ':vnc_docdate' => date('Y-m-d'),
                             ':vnc_duedate' => date('Y-m-d'),
                             ':vnc_duedev' => date('Y-m-d'),
@@ -5531,7 +5648,7 @@ class CashOperation extends REST_Controller {
                             ':vnc_empid' => is_numeric($resDoc[0]['vrc_empid']) ? $resDoc[0]['vrc_empid'] : 0,
                             ':vnc_comment' => isset($resDoc[0]['vrc_comment']) ? $resDoc[0]['vrc_comment'] : NULL,
                             ':vnc_doctotal' => is_numeric($resDoc[0]['vrc_total_c']) ? $resDoc[0]['vrc_total_c'] : 0,
-                            ':vnc_baseamnt' => $totalLineTotal,
+                            ':vnc_baseamnt' => ($totalLineTotal - $totalVatSum),
                             ':vnc_taxtotal' => $totalVatSum,
                             ':vnc_discprofit' => is_numeric($resDoc[0]['vrc_discprofit']) ? $resDoc[0]['vrc_discprofit'] : 0,
                             ':vnc_discount' => is_numeric($resDoc[0]['vrc_discount']) ? $resDoc[0]['vrc_discount'] : 0,
@@ -5561,7 +5678,7 @@ class CashOperation extends REST_Controller {
 
                             $resActualizarNumeracion = $this->pedeo->updateRow($sqlActualizarNumeracion, array(
                                 ':pgs_nextnum' => $DocNumVerificado,
-                                ':pgs_id'      => $numeracionNotaCredito[0]['pgs_id']
+                                ':pgs_id'      => $resSeriesCaja[0]['bcc_series5']
                             ));
 
 
@@ -5581,7 +5698,6 @@ class CashOperation extends REST_Controller {
                             // Fin de la actualizacion de la numeracion del documento
 
                             //SE INSERTA EL ESTADO DEL DOCUMENTO
-
                             $sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
                             VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
@@ -5601,19 +5717,64 @@ class CashOperation extends REST_Controller {
                             if (is_numeric($resInsertEstado) && $resInsertEstado > 0) {
                             } else {
 
-                            $this->pedeo->trans_rollback();
+                                $this->pedeo->trans_rollback();
 
-                            $respuesta = array(
-                            'error'   => true,
-                            'data' => $resInsertEstado,
-                            'mensaje'	=> 'No se pudo registrar la nota credito de ventas'
-                            );
+                                $respuesta = array(
+                                    'error'   => true,
+                                    'data' => $resInsertEstado,
+                                    'mensaje'	=> 'No se pudo registrar la nota credito de ventas'
+                                );
 
 
-                            return $this->response($respuesta);
+                                return $this->response($respuesta);
                             }
-
                             //FIN PROCESO ESTADO DEL DOCUMENTO
+
+
+                            // SE INSERTA EL ESTADO DE LA FACTURA SI APLICA
+
+                            $resFacturaCC = $this->pedeo->queryTable("SELECT * FROM dvfv WHERE dvf_docnum = :dvf_docnum and dvf_series  = :dvf_series", array(
+
+                                ':dvf_docnum' => $resDoc[0]['vrc_docnum'],
+                                ':dvf_series' => $resDoc[0]['vrc_series']
+                            ));
+
+                            if ( isset($resFacturaCC[0]) ) {
+
+                                $sqlInsertEstado2 = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+                                VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+    
+                                $resInsertEstado2 = $this->pedeo->insertRow($sqlInsertEstado2, array(
+    
+                                    ':bed_docentry'  => $resFacturaCC[0]['dvf_docentry'],
+                                    ':bed_doctype'   => 5,
+                                    ':bed_status'    => 3, //ESTADO CERRADO
+                                    ':bed_createby'  => $resDoc[0]['vrc_createby'],
+                                    ':bed_date'      => date('Y-m-d'),
+                                    ':bed_baseentry' => $resInsertEstado,
+                                    ':bed_basetype'  => 6
+                                ));
+    
+    
+                                if (is_numeric($resInsertEstado2) && $resInsertEstado2 > 0) {
+                                } else {
+    
+                                    $this->pedeo->trans_rollback();
+    
+                                    $respuesta = array(
+                                        'error'   => true,
+                                        'data' => $resInsertEstado2,
+                                        'mensaje'	=> 'No se pudo registrar la nota credito de ventas'
+                                    );
+    
+    
+                                    return $this->response($respuesta);
+                                }
+
+                            }
+                            
+                            // FIN ESTADO FACTURA
+                            
 
                             foreach ($ContenidoDetalle as $key => $detail) {
 
@@ -5755,32 +5916,59 @@ class CashOperation extends REST_Controller {
 
         $Data = $this->get();
 
-        $sqlSelect = " SELECT  
-        vrc_docdate,
-        vrc_docnum,
-        vrc_cardname,
-        vrc_cardcode,
-        vrc_docentry,
-        vrc_currency,
-        vrc_monto_dv,
-        concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_total_c,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_total_c,
-        vrc_createby,
-        concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_monto_dv,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_monto_dv,
-        concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_monto_v,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_monto_v,
-        concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_monto_a,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_monto_a,
-        concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_pasanaku,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_pasanaku,
-        concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_total_d,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_total_d,
-        estado,
-        mdp_name,
-        vrc1.*
+        $sqlSelect = "SELECT  
+        rc1_uom,
+        rc1_itemcode,
+        rc1_itemname,
+        sum(rc1_quantity) as rc1_quantity,
+        rc1_price,
+        rc1_vat,
+        (sum(rc1_quantity) * rc1_price) as rc1_linetotal,
+        round((((sum(rc1_quantity) * rc1_price) * rc1_vat) / 100)::numeric, get_decimals()) as rc1_vatsum,
+        0 as rc1_discount,
+        rc1_whscode,
+        rc1_costcode,
+        rc1_ubusiness,
+        rc1_project,
+        rc1_codimp,
+        rc1_acciva,
+        (SELECT acct_in FROM obtener_cuenta_seguncontabilidad(dma_accounting, rc1_whscode, rc1_itemcode) ) as rc1_acctcode
         FROM dvrc
-        inner join vrc1 on vrc_docentry = rc1_docentry
-        left join tmdp on mdp_id = vrc_paymentmethod
-        INNER JOIN responsestatus  ON vrc_docentry = responsestatus.id and vrc_doctype = responsestatus.tipo
-        WHERE dvrc.vrc_cardcode = :vrc_cardcode
+        INNER JOIN vrc1 ON vrc_docentry = rc1_docentry
+        INNER JOIN responsestatus  ON vrc_docentry = responsestatus.id AND vrc_doctype = responsestatus.tipo
+        INNER JOIN dmar ON dma_item_code = rc1_itemcode
         AND responsestatus.estado = :estado
         AND dvrc.business = :business
-        AND dvrc.vrc_docdate between :fi and :ff";
+        AND dvrc.vrc_cardcode = :vrc_cardcode
+        AND dvrc.vrc_docdate BETWEEN :fi AND :ff
+        GROUP BY rc1_itemcode, rc1_itemname, rc1_price, rc1_vat, rc1_whscode,rc1_costcode,rc1_ubusiness,rc1_project,rc1_codimp,rc1_acciva,rc1_uom,dma_accounting";
+
+        // $sqlSelect = " SELECT  
+        // vrc_docdate,
+        // vrc_docnum,
+        // vrc_cardname,
+        // vrc_cardcode,
+        // vrc_docentry,
+        // vrc_currency,
+        // vrc_monto_dv,
+        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_total_c,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_total_c,
+        // vrc_createby,
+        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_monto_dv,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_monto_dv,
+        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_monto_v,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_monto_v,
+        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_monto_a,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_monto_a,
+        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_pasanaku,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_pasanaku,
+        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_total_d,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_total_d,
+        // estado,
+        // mdp_name,
+        // vrc1.*
+        // FROM dvrc
+        // inner join vrc1 on vrc_docentry = rc1_docentry
+        // left join tmdp on mdp_id = vrc_paymentmethod
+        // INNER JOIN responsestatus  ON vrc_docentry = responsestatus.id and vrc_doctype = responsestatus.tipo
+        // WHERE dvrc.vrc_cardcode = :vrc_cardcode
+        // AND responsestatus.estado = :estado
+        // AND dvrc.business = :business
+        // AND dvrc.vrc_docdate between :fi and :ff";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(
             ":vrc_cardcode" => $Data['dms_card_code'],
