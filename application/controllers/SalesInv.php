@@ -5733,9 +5733,9 @@ class SalesInv extends REST_Controller
 		
 
 		if($Data['docnum'] == 5){
-			$sqlSelect = self::getColumn('dvfv', 'dvf', ',dvf_correl,dvf_response_dian,dvf_cufe,T4.dms_phone1, T4.dms_phone2, T4.dms_cel', '', $DECI_MALES, $Data['business'], $Data['branch'],5);
+			$sqlSelect = self::getColumn('dvfv', 'dvf', ',dvf_correl,dvf_response_dian,dvf_cufe,T4.dms_phone1, T4.dms_phone2, T4.dms_cel, coalesce(t0.dvf_totalret, 0) as dvf_totalret, coalesce(dvf_totalretiva) as dvf_totalretiva', '', $DECI_MALES, $Data['business'], $Data['branch'],5);
 		}else if($Data['docnum'] == 34){
-			$sqlSelect = self::getColumn('dvfv', 'dvf', ',dvf_correl,dvf_response_dian,dvf_cufe,T4.dms_phone1, T4.dms_phone2, T4.dms_cel', '', $DECI_MALES, $Data['business'], $Data['branch'],34);
+			$sqlSelect = self::getColumn('dvfv', 'dvf', ',dvf_correl,dvf_response_dian,dvf_cufe,T4.dms_phone1, T4.dms_phone2, T4.dms_cel,coalesce(t0.dvf_totalret, 0) as dvf_totalret, coalesce(dvf_totalretiva) as dvf_totalretiva', '', $DECI_MALES, $Data['business'], $Data['branch'],34);
 		}
 		
 

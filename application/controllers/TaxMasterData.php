@@ -303,5 +303,129 @@ class TaxMasterData extends REST_Controller {
     $this->response($respuesta);
   }
 
+  public function getDevolucionesCompras_get(){
+
+    $Data = $this->get();
+  
+  
+    $sqlSelect = "SELECT 
+              dcnc.cnc_docnum as \"Documento\",
+              dcnc.cnc_cardcode as \"Identificacion\",
+              dcnc.cnc_cardname as \"Nombre\",
+              coalesce(sum( case when data.impuesto > 0 then base end  ), 0) as \"Gastograbado\",
+              coalesce(sum( case when data.impuesto = 0 then base end  ), 0) as \"Gastonograbado\",
+              sum(data.impuesto) as \"Gastoimpuesto\",
+              coalesce(pdm_municipality, 'Sin direccion establecida') as \"Ciudad\"
+              from (
+              select 
+              nc1_docentry,
+              case 
+                when nc1_discount = 0 then ( nc1_price * nc1_quantity )
+                when nc1_discount > 0 and nc1_discount <= 100 then ((nc1_price - ( nc1_price * nc1_discount / 100 )) * nc1_quantity)
+                else  nc1_price * nc1_quantity
+              end as base,
+              case 
+                when nc1_discount = 0 and nc1_vat > 0 then ( nc1_price * nc1_quantity ) * nc1_vat / 100
+                when nc1_discount > 0 and nc1_discount <= 100 and nc1_vat > 0 then ((nc1_price - ( nc1_price * nc1_discount / 100 )) * nc1_quantity) * nc1_vat / 100
+                when nc1_discount > 100 and nc1_vat > 0 then (nc1_price * nc1_quantity) * nc1_vat / 100
+                else 0 
+              end as impuesto 
+              from cnc1) as data 
+              inner join dcnc on data.nc1_docentry = dcnc.cnc_docentry 
+              left join dmsd on  cnc_cardcode = dmd_card_code and dmd_ppal = 1
+              left join tpdm on dmsd.dmd_city  = pdm_codmunicipality
+              where cnc_docdate between :fi and :ff
+              group by data.nc1_docentry, cnc_docnum, cnc_cardcode, cnc_cardname,pdm_municipality";
+  
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+  
+      ':fi' => isset($Data['fi']) && !empty($Data['fi']) ? $Data['fi'] : null,
+      ':ff' => isset($Data['ff']) && !empty($Data['ff']) ? $Data['ff'] : null
+  
+    ));
+  
+    if(isset($resSelect[0])){
+  
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
+  
+    }else{
+  
+        $respuesta = array(
+          'error'   => true,
+          'data' => $resSelect,
+          'mensaje'	=> 'busqueda sin resultados'
+        );
+  
+    }
+  
+    $this->response($respuesta);
+  }
+
+
+  public function getGastos_get(){
+
+    $Data = $this->get();
+  
+  
+    $sqlSelect = "SELECT 
+              dcfc.cfc_docnum as \"Documento\",
+              dcfc.cfc_cardcode as \"Identificacion\",
+              dcfc.cfc_cardname as \"Nombre\",
+              coalesce(sum( case when data.impuesto > 0 then base end  ), 0) as \"Ingresograbado\",
+              coalesce(sum( case when data.impuesto = 0 then base end  ), 0) as \"Ingresonograbado\",
+              sum(data.impuesto) as \"Impuesto\",
+              coalesce(pdm_municipality, 'Sin direccion establecida') as \"Ciudad\"
+              from (
+              select 
+              fc1_docentry,
+              case 
+                when fc1_discount = 0 then ( fc1_price * fc1_quantity )
+                when fc1_discount > 0 and fc1_discount <= 100 then ((fc1_price - ( fc1_price * fc1_discount / 100 )) * fc1_quantity)
+                else  fc1_price * fc1_quantity
+              end as base,
+              case 
+                when fc1_discount = 0 and fc1_vat > 0 then ( fc1_price * fc1_quantity ) * fc1_vat / 100
+                when fc1_discount > 0 and fc1_discount <= 100 and fc1_vat > 0 then ((fc1_price - ( fc1_price * fc1_discount / 100 )) * fc1_quantity) * fc1_vat / 100
+                when fc1_discount > 100 and fc1_vat > 0 then (fc1_price * fc1_quantity) * fc1_vat / 100
+                else 0 
+              end as impuesto 
+              from cfc1) as data 
+              inner join dcfc on data.fc1_docentry = dcfc.cfc_docentry 
+              left join dmsd on  cfc_cardcode = dmd_card_code and dmd_ppal = 1
+              left join tpdm on dmsd.dmd_city  = pdm_codmunicipality
+              where cfc_docdate between :fi and :ff
+              group by data.fc1_docentry, cfc_docnum, cfc_cardcode, cfc_cardname,pdm_municipality";
+  
+    $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+  
+      ':fi' => isset($Data['fi']) && !empty($Data['fi']) ? $Data['fi'] : null,
+      ':ff' => isset($Data['ff']) && !empty($Data['ff']) ? $Data['ff'] : null
+  
+    ));
+  
+    if(isset($resSelect[0])){
+  
+      $respuesta = array(
+        'error' => false,
+        'data'  => $resSelect,
+        'mensaje' => '');
+  
+    }else{
+  
+        $respuesta = array(
+          'error'   => true,
+          'data' => $resSelect,
+          'mensaje'	=> 'busqueda sin resultados'
+        );
+  
+    }
+  
+    $this->response($respuesta);
+  }
+
+
 
 }

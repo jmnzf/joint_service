@@ -1,0 +1,9 @@
+{
+    "require": {
+        "mpdf/mpdf": "^8.0",
+        "luecano/numero-a-letras": "^2.0",
+        "phpoffice/phpspreadsheet": "^1.23",
+        "guzzlehttp/guzzle": "^7.5",
+        "dnetix/redirection": "^2.1"
+    }
+}
