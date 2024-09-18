@@ -427,7 +427,7 @@ class Pagination extends REST_Controller
 		//
 		$resultSet = "";
 		// CONDICIONAL.
-		$where = " {campo} LIKE '%" . $value . "%' OR";
+		$where = " {campo}::text LIKE '%" . $value . "%' OR";
 		//
 		try {
 			//
