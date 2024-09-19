@@ -333,6 +333,7 @@ class TaxMasterData extends REST_Controller {
               from cnc1) as data 
               inner join dcnc on data.nc1_docentry = dcnc.cnc_docentry 
               left join dmsd on  cnc_cardcode = dmd_card_code and dmd_ppal = 1
+              inner join dmsn on cnc_cardcode = dms_card_code and dms_card_type = '2'
               left join tpdm on dmsd.dmd_city  = pdm_codmunicipality
               where cnc_docdate between :fi and :ff
               group by data.nc1_docentry, cnc_docnum, cnc_cardcode, cnc_cardname,pdm_municipality";
@@ -395,6 +396,7 @@ class TaxMasterData extends REST_Controller {
               from cfc1) as data 
               inner join dcfc on data.fc1_docentry = dcfc.cfc_docentry 
               left join dmsd on  cfc_cardcode = dmd_card_code and dmd_ppal = 1
+              inner join dmsn on cfc_cardcode = dms_card_code and dms_card_type = '2'
               left join tpdm on dmsd.dmd_city  = pdm_codmunicipality
               where cfc_docdate between :fi and :ff
               group by data.fc1_docentry, cfc_docnum, cfc_cardcode, cfc_cardname,pdm_municipality";
