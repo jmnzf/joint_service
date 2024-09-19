@@ -248,8 +248,7 @@ class PurchaseInvBO extends REST_Controller
 		$sqlInsert = "INSERT INTO dcfc(cfc_series, cfc_docnum, cfc_docdate, cfc_duedate, cfc_duedev, cfc_pricelist, cfc_cardcode,
                       cfc_cardname, cfc_currency, cfc_contacid, cfc_slpcode, cfc_empid, cfc_comment, cfc_doctotal, cfc_baseamnt, cfc_taxtotal,
                       cfc_discprofit, cfc_discount, cfc_createat, cfc_baseentry, cfc_basetype, cfc_doctype, cfc_idadd, cfc_adress, cfc_paytype,
-                      cfc_createby,cfc_totalret,cfc_totalretiva,cfc_correl, cfc_tax_control_num, business, branch,cfc_bankable,cfc_internal_comments,cfc_correl2,
-					  cfc_taxtotal_ad)
+                      cfc_createby,cfc_totalret,cfc_totalretiva,cfc_correl, cfc_tax_control_num, business, branch,cfc_bankable,cfc_internal_comments,cfc_correl2)
 					  VALUES(:cfc_series, :cfc_docnum, :cfc_docdate, :cfc_duedate, :cfc_duedev, :cfc_pricelist, :cfc_cardcode, :cfc_cardname,
                       :cfc_currency, :cfc_contacid, :cfc_slpcode, :cfc_empid, :cfc_comment, :cfc_doctotal, :cfc_baseamnt, :cfc_taxtotal, :cfc_discprofit, :cfc_discount,
                       :cfc_createat, :cfc_baseentry, :cfc_basetype, :cfc_doctype, :cfc_idadd, :cfc_adress, :cfc_paytype,:cfc_createby,:cfc_totalret,:cfc_totalretiva,
