@@ -5957,6 +5957,72 @@ class CashOperation extends REST_Controller {
         $this->response($respuesta);
     }
 
+    public function getCashOperationDetail_post(){
+        $Data = $this->post();
+
+        if(!isset($Data['vrc_cardcode']) OR
+            !isset($Data['fi']) OR 
+            !isset($Data['ff'])){
+
+                $this->response(array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' =>'La informacion enviada no es valida'
+				), REST_Controller::HTTP_BAD_REQUEST);
+
+				return;
+        }
+
+        $sqlSelect = "SELECT
+		rc1_itemcode,
+		rc1_itemname,
+		rc1_quantity,
+		rc1_price,
+		rc1_vatsum,
+		rc1_linetotal,
+		rc1_whscode
+        FROM dvrc
+        INNER JOIN vrc1 ON vrc_docentry = rc1_docentry
+        INNER JOIN responsestatus  ON vrc_docentry = responsestatus.id AND vrc_doctype = responsestatus.tipo
+        AND responsestatus.estado = :estado
+        AND dvrc.business = :business
+        AND dvrc.vrc_cardcode = :vrc_cardcode
+        AND dvrc.vrc_docdate BETWEEN :fi AND :ff";
+
+        $resSelect = $this->pedeo->queryTable($sqlSelect, array(
+            ":vrc_cardcode" => $Data['vrc_cardcode'],
+            ":estado"       => "Abierto",
+            ":business"     => $Data['business'],
+            ":fi"     => $Data['fi'],
+            ":ff"     => $Data['ff']
+        ));
+
+        $sqlSelect = str_replace(":vrc_cardcode", "'".$Data['vrc_cardcode']."'", $sqlSelect);
+        $sqlSelect = str_replace(":estado", "'Abierto'", $sqlSelect);
+        $sqlSelect = str_replace(":business", $Data['business'], $sqlSelect);
+        $sqlSelect = str_replace(":fi", "'".$Data['fi']."'", $sqlSelect);
+        $sqlSelect = str_replace(":ff", "'".$Data['ff']."'", $sqlSelect);
+
+			$respuesta = array(
+
+				'error' => false,
+				'data'  => ['sql' => $sqlSelect, 'equivalence' => array(
+					'rc1_itemcode' => 'Codigo' ,          
+                    'rc1_itemname' => 'descripción' ,    
+                    'rc1_quantity' => 'Cantidad'  ,   
+                    'rc1_price' => 'Precio'   , 
+                    'rc1_vatsum'          =>   'Impuesto',                                                     
+                    'rc1_linetotal' => 'Total'  ,
+                    'Almacen' => 'rc1_whscode'     
+
+				)],
+				'mensaje' =>''
+			);
+
+        return $this->response($respuesta);
+
+    }
+
     private function buscarPosicion($llave, $inArray)
 	{
 		$res = 0;
