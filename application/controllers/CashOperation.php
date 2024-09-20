@@ -5917,58 +5917,16 @@ class CashOperation extends REST_Controller {
         $Data = $this->get();
 
         $sqlSelect = "SELECT  
-        rc1_uom,
-        rc1_itemcode,
-        rc1_itemname,
-        sum(rc1_quantity) as rc1_quantity,
-        rc1_price,
-        rc1_vat,
-        (sum(rc1_quantity) * rc1_price) as rc1_linetotal,
-        round((((sum(rc1_quantity) * rc1_price) * rc1_vat) / 100)::numeric, get_decimals()) as rc1_vatsum,
-        0 as rc1_discount,
-        rc1_whscode,
-        rc1_costcode,
-        rc1_ubusiness,
-        rc1_project,
-        rc1_codimp,
-        rc1_acciva,
-        (SELECT acct_in FROM obtener_cuenta_seguncontabilidad(dma_accounting, rc1_whscode, rc1_itemcode) ) as rc1_acctcode
+            round(sum(rc1_price * rc1_quantity)::numeric, get_decimals()) as base,
+            sum(rc1_vatsum) as impuesto,
+            sum(rc1_linetotal) as total
         FROM dvrc
         INNER JOIN vrc1 ON vrc_docentry = rc1_docentry
         INNER JOIN responsestatus  ON vrc_docentry = responsestatus.id AND vrc_doctype = responsestatus.tipo
-        INNER JOIN dmar ON dma_item_code = rc1_itemcode
         AND responsestatus.estado = :estado
         AND dvrc.business = :business
         AND dvrc.vrc_cardcode = :vrc_cardcode
-        AND dvrc.vrc_docdate BETWEEN :fi AND :ff
-        GROUP BY rc1_itemcode, rc1_itemname, rc1_price, rc1_vat, rc1_whscode,rc1_costcode,rc1_ubusiness,rc1_project,rc1_codimp,rc1_acciva,rc1_uom,dma_accounting";
-
-        // $sqlSelect = " SELECT  
-        // vrc_docdate,
-        // vrc_docnum,
-        // vrc_cardname,
-        // vrc_cardcode,
-        // vrc_docentry,
-        // vrc_currency,
-        // vrc_monto_dv,
-        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_total_c,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_total_c,
-        // vrc_createby,
-        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_monto_dv,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_monto_dv,
-        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_monto_v,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_monto_v,
-        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_monto_a,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_monto_a,
-        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_pasanaku,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_pasanaku,
-        // concat(vrc_currency,to_char(round(get_dynamic_conversion(vrc_currency,vrc_currency,vrc_docdate,vrc_total_d,get_localcur()), get_decimals()), '999,999,999,999.00' )) vrc_total_d,
-        // estado,
-        // mdp_name,
-        // vrc1.*
-        // FROM dvrc
-        // inner join vrc1 on vrc_docentry = rc1_docentry
-        // left join tmdp on mdp_id = vrc_paymentmethod
-        // INNER JOIN responsestatus  ON vrc_docentry = responsestatus.id and vrc_doctype = responsestatus.tipo
-        // WHERE dvrc.vrc_cardcode = :vrc_cardcode
-        // AND responsestatus.estado = :estado
-        // AND dvrc.business = :business
-        // AND dvrc.vrc_docdate between :fi and :ff";
+        AND dvrc.vrc_docdate BETWEEN :fi AND :ff";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(
             ":vrc_cardcode" => $Data['dms_card_code'],
