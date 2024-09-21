@@ -81,7 +81,7 @@ class bulkPayments extends REST_Controller
         $sqlSelect = "SELECT distinct
         mac1.ac1_font_key,
         mac1.ac1_legal_num as codigocliente,
-        dcfc.cfc_cardcode as nombrecliente,
+        dcfc.cfc_cardname as nombrecliente,
         mac1.ac1_account as cuenta,
         CURRENT_DATE - cfc_duedate dias,
         dcfc.cfc_comment,
@@ -118,7 +118,7 @@ class bulkPayments extends REST_Controller
         select distinct
         mac1.ac1_font_key,
         mac1.ac1_legal_num as codigocliente,
-        gbpe.bpe_cardcode as nombrecliente,
+        gbpe.bpe_cardname as nombrecliente,
         mac1.ac1_account as cuenta,
         CURRENT_DATE - gbpe.bpe_docdate as dias,
         gbpe.bpe_comments as bpr_comment,
