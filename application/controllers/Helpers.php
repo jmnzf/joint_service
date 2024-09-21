@@ -981,7 +981,20 @@ class Helpers extends REST_Controller {
   }
 
   public function getFormRules_post(){
+    
     $Data = $this->post();
+
+    if(!isset($Data['table'])){
+      $respuesta = array(
+        'error' => true,
+        'data' => array(),
+        'mensaje' => 'Informacion enviada no valida',
+      );
+
+      $this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+      return;
+    }
 
     $sqlSelect = "SELECT 
                   concat('[',string_agg(json_build_object(
@@ -995,9 +1008,6 @@ class Helpers extends REST_Controller {
     $resSelect = $this->pedeo->queryTable($sqlSelect, array(":table" => $Data['table']));
 
     if ( isset($resSelect[0]) ) {
-
-      // print_r(json_decode($resSelect[0]['rules'],true));exit;
-
       $respuesta = array(
         'error' => false,
         'data'  => json_decode($resSelect[0]['rules'],true),
