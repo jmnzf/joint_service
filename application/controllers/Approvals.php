@@ -448,11 +448,29 @@ class Approvals extends REST_Controller
 			return;
 		}
 
-		$sqlSelect = " SELECT * FROM pap1 WHERE ap1_docentry = :ap1_docentry";
+		$sqlSelect = " SELECT p.*,pap_baseentry,pap_basetype, pap_docentry , pap_doctype 
+						from dpap d 
+						inner join pap1 p on d.pap_docentry = p.ap1_docentry 
+						where p.ap1_docentry = :ap1_docentry";
 
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(":ap1_docentry" => $Data['ap1_docentry']));
 
 		if (isset($resSelect[0])) {
+
+
+			foreach ($resSelect as $key => $value) {
+				$sqlRetenciones = "SELECT crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret FROM fcrt 
+				WHERE crt_baseentry = :crt_baseentry 
+				and crt_basetype = :crt_basetype 
+				and crt_linenum = :crt_linenum";
+				$resSelectRetenciones = $this->pedeo->queryTable($sqlRetenciones, array(
+					':crt_baseentry' => $value['pap_baseentry'],
+					':crt_basetype' => $value['pap_basetype'],
+					':crt_linenum' => $value['ap1_linenum']
+				));
+	
+				$resSelect[$key]['ret'] = $resSelectRetenciones;
+			}			
 
 			$respuesta = array(
 				'error' => false,
@@ -492,6 +510,32 @@ class Approvals extends REST_Controller
 
 
 		if (isset($copy[0])) {
+
+			$sqlEnc = "SELECT pap_baseentry,pap_basetype, pap_docentry , pap_doctype 
+			from dpap 
+			where pap_docentry = :pap_docentry";
+
+			$resEnc = $this->pedeo->queryTable($sqlEnc, array(':pap_docentry' => $Data['ap1_docentry']));
+
+			if(isset($resEnc[0])){
+
+				foreach ($copy as $key => $value) {
+					$sqlRetenciones = "SELECT crt_baseentry, crt_basetype, crt_typert, crt_basert, crt_profitrt, crt_totalrt, crt_base, crt_type, crt_linenum, crt_codret FROM fcrt 
+					WHERE crt_baseentry = :crt_baseentry 
+					and crt_basetype = :crt_basetype 
+					and crt_linenum = :crt_linenum";
+					$resSelectRetenciones = $this->pedeo->queryTable($sqlRetenciones, array(
+						':crt_baseentry' => $resEnc[0]['pap_baseentry'],
+						':crt_basetype' => $resEnc[0]['pap_basetype'],
+						':crt_linenum' => $value['ap1_linenum']
+					));
+		
+					$copy[$key]['ret'] = $resSelectRetenciones;
+				}
+
+			}else{
+				$copy[0]['ret'] = [];
+			}
 
 			$respuesta = array(
 				'error' => false,
