@@ -530,11 +530,11 @@ class Approvals extends REST_Controller
 						':crt_linenum' => $value['ap1_linenum']
 					));
 		
-					$copy[$key]['ret'] = $resSelectRetenciones;
+					$copy[$key]['retenciones'] = $resSelectRetenciones;
 				}
 
 			}else{
-				$copy[0]['ret'] = [];
+				$copy[0]['retenciones'] = [];
 			}
 
 			$respuesta = array(
