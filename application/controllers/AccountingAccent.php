@@ -2292,9 +2292,11 @@ class AccountingAccent extends REST_Controller
 	// LLENAR BALANCE DIARIO
 	public function addBalanceDaily_post() {
 
-		$sqlSelect = "SELECT * FROM mac1 where sync = 0 LIMIT 1000";
+		$sqlSelect = "SELECT * FROM mac1 where (sync = 0 or sync is null) LIMIT 2000";
 
 		$ron_ID = 0;
+
+		$PARAMS =  $this->generic->getParams();
 
 		$respuesta = array(
 			"error" => false,
@@ -2399,7 +2401,18 @@ class AccountingAccent extends REST_Controller
 
 			$resDoc = $this->pedeo->queryTable($sqlDoc, $arra);
 
-			$sqlNivel = "SELECT acc_l1, acc_l2, acc_l3, acc_l4, acc_l5 FROM dacc WHERE acc_code = :acc_code";
+			$sqlNivel = "";
+
+			if ( $PARAMS['country'] == 'BO' ) {
+
+				$sqlNivel = "SELECT acc_l1, acc_l2, acc_l3, acc_l4, acc_l5, acc_l6 FROM dacc WHERE acc_code = :acc_code";
+
+			} else if ( $PARAMS['country'] == 'CO' ) {
+
+				$sqlNivel = "SELECT acc_l1, acc_l2, acc_l3, acc_l4, acc_l5 FROM dacc WHERE acc_code = :acc_code";
+			} 
+
+			
 
 			$resNivel = $this->pedeo->queryTable($sqlNivel, array(":acc_code" => $cuenta['ac1_account']));
 
@@ -2413,13 +2426,26 @@ class AccountingAccent extends REST_Controller
 
 				$niveles = [];
 
-				array_push($niveles, $resNivel[0]['acc_l1']);
-				array_push($niveles, $resNivel[0]['acc_l2']);
-				array_push($niveles, $resNivel[0]['acc_l3']);
-				array_push($niveles, $resNivel[0]['acc_l4']);
-				array_push($niveles, $resNivel[0]['acc_l5']);
-				// array_push($niveles, $resNivel[0]['acc_l6']);
 
+				if ( $PARAMS['country'] == 'BO' ) {
+
+					array_push($niveles, $resNivel[0]['acc_l1']);
+					array_push($niveles, $resNivel[0]['acc_l2']);
+					array_push($niveles, $resNivel[0]['acc_l3']);
+					array_push($niveles, $resNivel[0]['acc_l4']);
+					array_push($niveles, $resNivel[0]['acc_l5']);
+					array_push($niveles, $resNivel[0]['acc_l6']);
+	
+				} else if ( $PARAMS['country'] == 'CO' ) {
+
+					array_push($niveles, $resNivel[0]['acc_l1']);
+					array_push($niveles, $resNivel[0]['acc_l2']);
+					array_push($niveles, $resNivel[0]['acc_l3']);
+					array_push($niveles, $resNivel[0]['acc_l4']);
+					array_push($niveles, $resNivel[0]['acc_l5']);
+				}
+
+				
 				for ($i=0; $i < count($niveles); $i++) { 
 
 
