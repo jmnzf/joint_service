@@ -5413,7 +5413,7 @@ class SalesInv extends REST_Controller
 				// exit;
 
 				//SE VALIDA LA CONTABILIDAD CREADA
-				$validateCont = $this->generic->validateAccountingAccent($resInsertAsiento);
+				$validateCont = $this->generic->validateAccountingAccent2($resInsertAsiento);
 			
 				
 
