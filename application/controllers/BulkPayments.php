@@ -3318,20 +3318,23 @@ class bulkPayments extends REST_Controller
 						
 
 						$MONTOPAGAR = str_pad($MONTOPAGAR, 10, 0, STR_PAD_LEFT);
-	
+						$nombreBeneficiario = substr($resSocio[0]['nombre_proveedor'], 0, 18);
+						$nombreBeneficiario =  preg_replace("/[^a-zA-Z0-9\s]/", "", $nombreBeneficiario);
+						$referencia = preg_replace("/[^a-zA-Z0-9\s]/", "", $Data['spm_reference']);
+
 						$DatosBeneficiario->TipoRegistro = 6;
 						$DatosBeneficiario->NitBeneficiario = str_pad($resSocio[0]['identificacion_cliente'], 15, 0, STR_PAD_LEFT);
-						$DatosBeneficiario->Nombre = str_pad(substr($resSocio[0]['nombre_proveedor'], 0, 18), 18, " ", STR_PAD_RIGHT);
+						$DatosBeneficiario->Nombre = str_pad($nombreBeneficiario, 18, " ", STR_PAD_RIGHT);
 						$DatosBeneficiario->CodigoBancoDestino = str_pad($resSocio[0]['codigo_banco'], 9, 0, STR_PAD_LEFT); // FALTA EL BANCO
 						$DatosBeneficiario->NumeroCuentaBeneficiario = str_pad($resSocio[0]['numero_cuenta'], 17, 0, STR_PAD_LEFT); // FALTA LA CUENTA DE BANCO
 						$DatosBeneficiario->IndicadorLugarPago = "S"; // FALTA EL INDICADOR DEL PAGO
 						$DatosBeneficiario->TipoTrasaccion = $resSocio[0]['tipo_trasaccion']; // FALTA EL TIPO DE TRANSACCION
 						$DatosBeneficiario->ValorTrasaccion = $MONTOPAGAR;
 						$DatosBeneficiario->FechaAplicacion = str_replace('-','', $Data['spm_applidate']);
-						$DatosBeneficiario->Referencia = str_pad($Data['spm_reference'], 12, " ", STR_PAD_RIGHT); // FALTA LA REFERENCIA
+						$DatosBeneficiario->Referencia = str_pad($referencia, 12, " ", STR_PAD_RIGHT); // FALTA LA REFERENCIA
 						$DatosBeneficiario->TipoDoc = $resSocio[0]['tipo_documento']; // TIPO DE DOCUMENTO
 						$DatosBeneficiario->OficEntrega = str_pad(0, 5, '0', STR_PAD_LEFT); // OFICINA DE ENTREGA
-						$DatosBeneficiario->Concepto = str_pad($Data['spm_reference'], 9, " ", STR_PAD_RIGHT); // FALTA LA REFERENCIA
+						$DatosBeneficiario->Concepto = str_pad($referencia, 9, " ", STR_PAD_RIGHT); // FALTA LA REFERENCIA
 
 						// $DatosBeneficiario->Fax = str_pad("", 15, " ", STR_PAD_RIGHT); // FAX
 						// $DatosBeneficiario->mail = str_pad($resSocio[0]['correo'], 80, " ", STR_PAD_RIGHT); //
@@ -3413,12 +3416,14 @@ class bulkPayments extends REST_Controller
 			$sec = str_replace(":","",$sec);
 			$sec = str_replace("-","",$sec);
 			$sec = str_replace("-","",$sec);
+
+			$ref = preg_replace("/[^a-zA-Z0-9\s]/", "", $$Data['spm_reference']);
 			
 			$ComplementoBancolombia->TipoRegistro = 1; // EL TIPO DE REGISTRO SIEMPRE VA EN 1 VERIFICAR DE TODAS FORMAS
 			$ComplementoBancolombia->NitFondeador = $resEmpresa[0]['pge_id_soc'];
 			$ComplementoBancolombia->Nombre = str_pad($resEmpresa[0]['pge_name_soc'],16,' ',STR_PAD_RIGHT);
 			$ComplementoBancolombia->ClaseTransaccion =  $Data['spm_paytype']; // FALTA LA CLASE DE TRANSACCION
-			$ComplementoBancolombia->Descripcion = str_pad($Data['spm_reference'], 10, " ", STR_PAD_RIGHT); // FALTA DESCRIPCION DEL PAGO
+			$ComplementoBancolombia->Descripcion = str_pad($ref, 10, " ", STR_PAD_RIGHT); // FALTA DESCRIPCION DEL PAGO
 			$ComplementoBancolombia->FechaTrasision = str_replace('-','', (new DateTime($Data['spm_applidate']))->format('y-m-d')); 
 			$ComplementoBancolombia->SecuenciaEnvio = 'A'; 
 			$ComplementoBancolombia->FechaCreacion =  str_replace('-','', (new DateTime($Data['spm_createdate']))->format('y-m-d'));
