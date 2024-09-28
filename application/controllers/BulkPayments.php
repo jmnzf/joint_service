@@ -3417,7 +3417,7 @@ class bulkPayments extends REST_Controller
 			$sec = str_replace("-","",$sec);
 			$sec = str_replace("-","",$sec);
 
-			$ref = preg_replace("/[^a-zA-Z0-9\s]/", "", $$Data['spm_reference']);
+			$ref = preg_replace("/[^a-zA-Z0-9\s]/", "", $Data['spm_reference']);
 			
 			$ComplementoBancolombia->TipoRegistro = 1; // EL TIPO DE REGISTRO SIEMPRE VA EN 1 VERIFICAR DE TODAS FORMAS
 			$ComplementoBancolombia->NitFondeador = $resEmpresa[0]['pge_id_soc'];
