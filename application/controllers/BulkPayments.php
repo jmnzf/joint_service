@@ -3240,6 +3240,235 @@ class bulkPayments extends REST_Controller
 
 	}
 
+	public function getFileTxtSAP_post(){
+
+		$Data = $this->post();
+
+		if (!isset($Data['spm_docentry'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+		// SE BUSCA EL DETALLE DEL PAGO MASIVO
+
+		$sqlDetalle = "SELECT * FROM spm1 WHERE pm1_docnum = :pm1_docnum";
+		$resDetalle = $this->pedeo->queryTable($sqlDetalle, array(
+			":pm1_docnum" => $Data['spm_docentry']
+		));
+		
+		if (isset($resDetalle[0])) {
+
+			$ComplementoBancolombia = new \stdClass();
+            $DatosBeneficiario = new \stdClass();
+            $MONTOTOTAL = 0;
+            $DETAIL = "";
+            $HEADER = "";
+
+			foreach ($resDetalle as $key => $detail) {
+
+				// SE FORMA EL DETALLE DEL ARCHIVO PLANO
+				
+				if ( $detail['pm1_doctype'] == 15 ) {	
+
+					// DATOS DEL SOCIO
+					$sqlSocio = "SELECT 
+					bti_codepab as tipo_documento,
+					dmb_trans_type as tipo_trasaccion,
+					dmb_num_acc as numero_cuenta,
+					dmb_bank as codigo_banco,
+					dms_card_code as identificacion_cliente,
+					dms_email as correo,
+					dms_cel  as celular,
+					dms_card_name as nombre_proveedor
+					FROM DMSN 
+					inner join dmsb on dmb_card_code = dms_card_code and dmb_card_type = dms_card_type and dmb_major = 1
+					inner join tbti on bti_id = dms_id_type 
+					WHERE dms_card_code = :dms_card_code AND dms_card_type = :dms_card_type";
+
+					$resSocio = $this->pedeo->queryTable($sqlSocio, array(
+						":dms_card_code" => $detail['pm1_cardcode'],
+						":dms_card_type" => '2'
+					));
+			
+					if (isset($resSocio[0])) {
+
+						$MONTOPAGAR = round($detail['pm1_vlrpaid']);
+					
+						$DECI = explode("," , $MONTOPAGAR);
+	
+						if ( isset($DECIMALES[1]) ){
+	
+							$MONTOPAGAR = $DECI[0];
+							$DECI  = $DECI[1];
+	
+						}else {
+							$MONTOPAGAR = $DECI[0];
+							$DECI  = "00";
+						}
+
+						$MONTOPAGAR = str_replace('.','',$MONTOPAGAR);				
+						
+
+						$MONTOPAGAR = str_pad($MONTOPAGAR, 10, 0, STR_PAD_LEFT);
+	
+						$DatosBeneficiario->TipoRegistro = 6;
+						$DatosBeneficiario->NitBeneficiario = str_pad($resSocio[0]['identificacion_cliente'], 15, 0, STR_PAD_LEFT);
+						$DatosBeneficiario->Nombre = str_pad(substr($resSocio[0]['nombre_proveedor'], 0, 18), 18, " ", STR_PAD_RIGHT);
+						$DatosBeneficiario->CodigoBancoDestino = str_pad($resSocio[0]['codigo_banco'], 9, 0, STR_PAD_LEFT); // FALTA EL BANCO
+						$DatosBeneficiario->NumeroCuentaBeneficiario = str_pad($resSocio[0]['numero_cuenta'], 17, 0, STR_PAD_LEFT); // FALTA LA CUENTA DE BANCO
+						$DatosBeneficiario->IndicadorLugarPago = "S"; // FALTA EL INDICADOR DEL PAGO
+						$DatosBeneficiario->TipoTrasaccion = $resSocio[0]['tipo_trasaccion']; // FALTA EL TIPO DE TRANSACCION
+						$DatosBeneficiario->ValorTrasaccion = $MONTOPAGAR;
+						$DatosBeneficiario->FechaAplicacion = str_replace('-','', $Data['spm_applidate']);
+						$DatosBeneficiario->Referencia = str_pad($Data['spm_reference'], 12, " ", STR_PAD_RIGHT); // FALTA LA REFERENCIA
+						$DatosBeneficiario->TipoDoc = $resSocio[0]['tipo_documento']; // TIPO DE DOCUMENTO
+						$DatosBeneficiario->OficEntrega = str_pad(0, 5, '0', STR_PAD_LEFT); // OFICINA DE ENTREGA
+						$DatosBeneficiario->Concepto = str_pad($Data['spm_reference'], 9, " ", STR_PAD_RIGHT); // FALTA LA REFERENCIA
+
+						// $DatosBeneficiario->Fax = str_pad("", 15, " ", STR_PAD_RIGHT); // FAX
+						// $DatosBeneficiario->mail = str_pad($resSocio[0]['correo'], 80, " ", STR_PAD_RIGHT); //
+	
+	
+						$DETAIL .= $DatosBeneficiario->TipoRegistro
+						.$DatosBeneficiario->NitBeneficiario
+						.$DatosBeneficiario->Nombre
+						.$DatosBeneficiario->CodigoBancoDestino
+						.$DatosBeneficiario->NumeroCuentaBeneficiario
+						.$DatosBeneficiario->IndicadorLugarPago
+						.$DatosBeneficiario->TipoTrasaccion
+						.$DatosBeneficiario->ValorTrasaccion
+						.$DatosBeneficiario->Concepto
+						.$DatosBeneficiario->Referencia.
+						"\n";
+	
+	
+						$MONTOTOTAL = ( $MONTOTOTAL + $detail['pm1_vlrpaid']);
+
+					}
+				}
+
+			}
+
+
+			if ($DETAIL == ""){
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'Sin datos para procesar'
+				);
+
+				return $this->response($respuesta);
+			}
+
+
+			//DATOS PARA ENCABEZADO DEL ARCHIVO TEXTO
+			$MONTOTOTAL = round( $MONTOTOTAL );
+                        
+			$DECIMALES = explode("," , $MONTOTOTAL);
+
+			if ( isset($DECIMALES[1]) ){
+
+				$MONTOTOTAL = $DECIMALES[0];
+				$DECIMALES  = $DECIMALES[1];
+
+			}else {
+				$MONTOTOTAL = $DECIMALES[0];
+				$DECIMALES  = "00";
+			}
+		   
+			$MONTOTOTAL  = str_pad( $MONTOTOTAL, 12, 0, STR_PAD_LEFT );
+
+			$sqlEmpresa = "SELECT pge_id_soc, LEFT(pge_name_soc,30) as pge_name_soc FROM pgem WHERE pge_id = :pge_id";
+
+			$resEmpresa = $this->pedeo->queryTable($sqlEmpresa, array(
+
+				":pge_id" => $Data['business']
+
+			));
+
+
+			if (!isset($resEmpresa[0])){
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => 'No se encontraron los datos de la empresa'
+				);
+
+				return $this->response($respuesta);
+			}
+			
+
+			$sec = date('Y-m-d H:i:s');
+
+
+			$sec = str_replace(":","",$sec);
+			$sec = str_replace("-","",$sec);
+			$sec = str_replace("-","",$sec);
+			
+			$ComplementoBancolombia->TipoRegistro = 1; // EL TIPO DE REGISTRO SIEMPRE VA EN 1 VERIFICAR DE TODAS FORMAS
+			$ComplementoBancolombia->NitFondeador = $resEmpresa[0]['pge_id_soc'];
+			$ComplementoBancolombia->Nombre = str_pad($resEmpresa[0]['pge_name_soc'],16,' ',STR_PAD_RIGHT);
+			$ComplementoBancolombia->ClaseTransaccion =  $Data['spm_paytype']; // FALTA LA CLASE DE TRANSACCION
+			$ComplementoBancolombia->Descripcion = str_pad($Data['spm_reference'], 10, " ", STR_PAD_RIGHT); // FALTA DESCRIPCION DEL PAGO
+			$ComplementoBancolombia->FechaTrasision = str_replace('-','', (new DateTime($Data['spm_applidate']))->format('y-m-d')); 
+			$ComplementoBancolombia->SecuenciaEnvio = 'A'; 
+			$ComplementoBancolombia->FechaCreacion =  str_replace('-','', (new DateTime($Data['spm_createdate']))->format('y-m-d'));
+			$ComplementoBancolombia->CantidadRegistros = str_pad(count($resDetalle), 6, 0, STR_PAD_LEFT); 
+			$ComplementoBancolombia->SumatoriaDebitos = str_pad(0, 12, 0, STR_PAD_RIGHT);
+			$ComplementoBancolombia->SumatoriaCreditos = $MONTOTOTAL;
+			$ComplementoBancolombia->NumeroCuentaFondeador =  str_pad($Data['spm_account'], 11, 0, STR_PAD_LEFT); // FALTA EL NUMERO DE CUENTA
+			$ComplementoBancolombia->TipoCuentaFondeador = $Data['spm_typeacc'];  // FALTA EL TIPO DE CUENTA AHORROS CORRIENTE
+
+			// FORMAR ENCABEZADO DE ARCHIVO
+
+			$fileName = $Data['business'].'_'.date('Y-m-d').' SAP.txt';
+			$HEADER = "";
+
+			$HEADER = $ComplementoBancolombia->TipoRegistro.str_pad($ComplementoBancolombia->NitFondeador, 10, 0, STR_PAD_LEFT)
+			.$ComplementoBancolombia->Nombre
+			.$ComplementoBancolombia->ClaseTransaccion
+			.$ComplementoBancolombia->Descripcion
+			.$ComplementoBancolombia->FechaCreacion
+			.$ComplementoBancolombia->SecuenciaEnvio
+			.$ComplementoBancolombia->FechaTrasision
+			.$ComplementoBancolombia->CantidadRegistros
+			.$ComplementoBancolombia->SumatoriaDebitos	
+			.$ComplementoBancolombia->SumatoriaCreditos
+			.$ComplementoBancolombia->NumeroCuentaFondeador
+			.$ComplementoBancolombia->TipoCuentaFondeador
+			."\n";
+
+
+			$content = $HEADER.$DETAIL;
+
+
+			force_download($fileName, $content);
+
+
+
+		} else {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'Sin datos para procesar'
+			);
+		}
+
+
+		$this->response($respuesta);
+
+	}
+
 
     private function validateDate($fecha)
 	{
