@@ -3263,7 +3263,7 @@ class bulkPayments extends REST_Controller
 		$resDetalle = $this->pedeo->queryTable($sqlDetalle, array(
 			":pm1_docnum" => $Data['spm_docentry']
 		));
-
+		
 		if (isset($resDetalle[0])) {
 
 			$ComplementoBancolombia = new \stdClass();
@@ -3300,7 +3300,7 @@ class bulkPayments extends REST_Controller
 			
 					if (isset($resSocio[0])) {
 
-						$MONTOPAGAR = round($detail['pm1_vlrpaid'], 2);
+						$MONTOPAGAR = round($detail['pm1_vlrpaid']);
 					
 						$DECI = explode("," , $MONTOPAGAR);
 	
@@ -3316,8 +3316,6 @@ class bulkPayments extends REST_Controller
 
 						$MONTOPAGAR = str_replace('.','',$MONTOPAGAR);				
 						
-	
-						$MONTOPAGAR = $MONTOPAGAR.$DECI;
 
 						$MONTOPAGAR = str_pad($MONTOPAGAR, 10, 0, STR_PAD_LEFT);
 	
@@ -3373,7 +3371,7 @@ class bulkPayments extends REST_Controller
 
 
 			//DATOS PARA ENCABEZADO DEL ARCHIVO TEXTO
-			$MONTOTOTAL = round( $MONTOTOTAL, 2 );
+			$MONTOTOTAL = round( $MONTOTOTAL );
                         
 			$DECIMALES = explode("," , $MONTOTOTAL);
 
@@ -3386,14 +3384,8 @@ class bulkPayments extends REST_Controller
 				$MONTOTOTAL = $DECIMALES[0];
 				$DECIMALES  = "00";
 			}
-
-
-
-			$MONTOTOTAL  = str_pad( $MONTOTOTAL, 15, 0, STR_PAD_LEFT );
 		   
-
-			$MONTOTOTAL = $MONTOTOTAL.$DECIMALES;
-			$MONTOTOTAL = str_replace('.','',$MONTOTOTAL);
+			$MONTOTOTAL  = str_pad( $MONTOTOTAL, 12, 0, STR_PAD_LEFT );
 
 			$sqlEmpresa = "SELECT pge_id_soc, LEFT(pge_name_soc,30) as pge_name_soc FROM pgem WHERE pge_id = :pge_id";
 
@@ -3425,34 +3417,21 @@ class bulkPayments extends REST_Controller
 			$ComplementoBancolombia->TipoRegistro = 1; // EL TIPO DE REGISTRO SIEMPRE VA EN 1 VERIFICAR DE TODAS FORMAS
 			$ComplementoBancolombia->NitFondeador = $resEmpresa[0]['pge_id_soc'];
 			$ComplementoBancolombia->Nombre = str_pad($resEmpresa[0]['pge_name_soc'],16,' ',STR_PAD_RIGHT);
-			$ComplementoBancolombia->Aplicacion = $Data['spm_application']; // FALTA LA APLICACION
-			$ComplementoBancolombia->Filler15 = str_pad(" ", 15, " ", STR_PAD_LEFT);
 			$ComplementoBancolombia->ClaseTransaccion =  $Data['spm_paytype']; // FALTA LA CLASE DE TRANSACCION
 			$ComplementoBancolombia->Descripcion = str_pad($Data['spm_reference'], 10, " ", STR_PAD_RIGHT); // FALTA DESCRIPCION DEL PAGO
 			$ComplementoBancolombia->FechaTrasision = str_replace('-','', (new DateTime($Data['spm_applidate']))->format('y-m-d')); 
-			$ComplementoBancolombia->SecuenciaEnvio = 'A1'; 
+			$ComplementoBancolombia->SecuenciaEnvio = 'A'; 
 			$ComplementoBancolombia->FechaCreacion =  str_replace('-','', (new DateTime($Data['spm_createdate']))->format('y-m-d'));
 			$ComplementoBancolombia->CantidadRegistros = str_pad(count($resDetalle), 6, 0, STR_PAD_LEFT); 
-			$ComplementoBancolombia->SumatoriaDebitos = str_pad(0, 16, 0, STR_PAD_RIGHT);
+			$ComplementoBancolombia->SumatoriaDebitos = str_pad(0, 12, 0, STR_PAD_RIGHT);
 			$ComplementoBancolombia->SumatoriaCreditos = $MONTOTOTAL;
 			$ComplementoBancolombia->NumeroCuentaFondeador =  str_pad($Data['spm_account'], 11, 0, STR_PAD_LEFT); // FALTA EL NUMERO DE CUENTA
 			$ComplementoBancolombia->TipoCuentaFondeador = $Data['spm_typeacc'];  // FALTA EL TIPO DE CUENTA AHORROS CORRIENTE
-			$ComplementoBancolombia->Filler149 = str_pad("", 149, " ", STR_PAD_LEFT);
-			
-
 
 			// FORMAR ENCABEZADO DE ARCHIVO
 
-
-			$fileName = $Data['business'].'_'.date('Y-m-d').' PAB.txt';
+			$fileName = $Data['business'].'_'.date('Y-m-d').' SAP.txt';
 			$HEADER = "";
-
-			// $HEADER =  $ComplementoBancolombia->TipoRegistro.str_pad($ComplementoBancolombia->NitFondeador, 10, 0, STR_PAD_LEFT)
-			// .$ComplementoBancolombia->Aplicacion.$ComplementoBancolombia->Filler15.$ComplementoBancolombia->ClaseTransaccion
-			// .$ComplementoBancolombia->Descripcion.$ComplementoBancolombia->FechaCreacion.$ComplementoBancolombia->SecuenciaEnvio
-			// .$ComplementoBancolombia->FechaTrasision.$ComplementoBancolombia->CantidadRegistros.$ComplementoBancolombia->SumatoriaDebitos
-			// .$ComplementoBancolombia->SumatoriaCreditos.$ComplementoBancolombia->NumeroCuentaFondeador.$ComplementoBancolombia->TipoCuentaFondeador
-			// .$ComplementoBancolombia->Filler149."\n";
 
 			$HEADER = $ComplementoBancolombia->TipoRegistro.str_pad($ComplementoBancolombia->NitFondeador, 10, 0, STR_PAD_LEFT)
 			.$ComplementoBancolombia->Nombre
@@ -3462,7 +3441,7 @@ class bulkPayments extends REST_Controller
 			.$ComplementoBancolombia->SecuenciaEnvio
 			.$ComplementoBancolombia->FechaTrasision
 			.$ComplementoBancolombia->CantidadRegistros
-			.$ComplementoBancolombia->SumatoriaDebitos
+			.$ComplementoBancolombia->SumatoriaDebitos	
 			.$ComplementoBancolombia->SumatoriaCreditos
 			.$ComplementoBancolombia->NumeroCuentaFondeador
 			.$ComplementoBancolombia->TipoCuentaFondeador
