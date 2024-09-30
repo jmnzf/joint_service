@@ -6247,6 +6247,80 @@ class SalesInv extends REST_Controller
 		$this->response($respuesta);
 	}
 
+	public function getDetailFromCashOperation_post(){
+		$Data = $this->post();
+
+		if (!isset($Data['fi']) AND !isset($Data['ff'])) {
+
+			$respuesta = array(
+				'error' => true,
+				'data'  => array(),
+				'mensaje' => 'La informacion enviada no es valida'
+			);
+
+			$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
+
+			return;
+		}
+
+
+
+		$sqlSelect = "SELECT rc1_itemcode,
+						rc1_itemname,
+						rc1_quantity,
+						rc1_price,
+						rc1_vatsum,
+						rc1_linetotal,
+						rc1_whscode, 
+						dmar.dma_series_code
+					FROM dvrc
+					inner join vrc1 on dvrc.vrc_docentry = vrc1.rc1_docentry 
+					INNER JOIN dmar ON vrc1.rc1_itemcode = dmar.dma_item_code
+					WHERE vrc_docdate between :fi and :ff";
+
+		
+		if(isset($Data['format']) AND $Data['format'] == "EXCEL"){
+			$sqlSelect = str_replace(":fi","'".$Data['fi']."'",$sqlSelect);
+			$sqlSelect = str_replace(":ff","'".$Data['ff']."'",$sqlSelect);
+
+			$respuesta = array(
+
+				'error' => false,
+				'data'  => ['sql' => $sqlSelect, 'equivalence' => array(
+					'rc1_itemcode' => 'Codigo' ,          
+					'rc1_itemname' => 'descripción' ,    
+					'rc1_quantity' => 'Cantidad'  ,   
+					'rc1_price' => 'Precio'   , 
+					'rc1_vatsum'          =>   'Impuesto',                                                     
+					'rc1_linetotal' => 'Total'  ,
+					'rc1_whscode' => 'Almacen'     
+
+				)],
+				'mensaje' =>''
+			);
+
+			return $this->response($respuesta);
+		}
+
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':fi' => $Data['fi'], ':ff' => $Data['ff']));
+
+		if(isset($resSelect[0])){
+			$respuesta = array(
+				'error' => false,
+				'data' => $resSelect,
+				'mensaje' => ''
+			);
+		}else{
+			$respuesta = array(
+				'error' => true,
+				'data' => array(),
+				'mensaje' => 'Comentarios actualizados correctamente.'
+			);
+		}
+
+		$this->response($respuesta);
+}
+
 
 
 }
