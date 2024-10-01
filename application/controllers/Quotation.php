@@ -277,7 +277,7 @@ class Quotation extends REST_Controller
 
 				':bed_docentry' => $resInsert,
 				':bed_doctype' => $Data['dvc_doctype'],
-				':bed_status' => 1, //ESTADO CERRADO
+				':bed_status' => 1, //ESTADO ABIERTO
 				':bed_createby' => $Data['dvc_createby'],
 				':bed_date' => date('Y-m-d'),
 				':bed_baseentry' => NULL,
