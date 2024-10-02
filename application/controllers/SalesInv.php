@@ -6276,12 +6276,13 @@ class SalesInv extends REST_Controller
 					FROM dvrc
 					inner join vrc1 on dvrc.vrc_docentry = vrc1.rc1_docentry 
 					INNER JOIN dmar ON vrc1.rc1_itemcode = dmar.dma_item_code
-					WHERE vrc_docdate between :fi and :ff";
+					WHERE vrc_cardcode = :vrc_cardcode and vrc_docdate between :fi and :ff";
 
 		
 		if(isset($Data['format']) AND $Data['format'] == "EXCEL"){
 			$sqlSelect = str_replace(":fi","'".$Data['fi']."'",$sqlSelect);
 			$sqlSelect = str_replace(":ff","'".$Data['ff']."'",$sqlSelect);
+			$sqlSelect = str_replace(":vrc_cardcode","'".$Data['cardcode']."'",$sqlSelect);
 
 			$respuesta = array(
 
@@ -6302,7 +6303,7 @@ class SalesInv extends REST_Controller
 			return $this->response($respuesta);
 		}
 
-		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':fi' => $Data['fi'], ':ff' => $Data['ff']));
+		$resSelect = $this->pedeo->queryTable($sqlSelect, array(':fi' => $Data['fi'], ':ff' => $Data['ff'], ':vrc_cardcode' => $Data['cardcode']));
 
 		if(isset($resSelect[0])){
 			$respuesta = array(
@@ -6314,7 +6315,7 @@ class SalesInv extends REST_Controller
 			$respuesta = array(
 				'error' => true,
 				'data' => array(),
-				'mensaje' => 'Comentarios actualizados correctamente.'
+				'mensaje' => 'busqueda sin resultados'
 			);
 		}
 
