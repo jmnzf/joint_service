@@ -178,7 +178,8 @@ class PartnersAccBank extends REST_Controller {
 
         $Data = $this->get();
 
-        if(!isset($Data['dmb_card_code'])){
+        if(!isset($Data['dmb_card_code']) AND
+          !isset($Data['dmb_card_type'])){
 
           $respuesta = array(
             'error' => true,
@@ -197,9 +198,13 @@ class PartnersAccBank extends REST_Controller {
                       ON natc.atc_code = dmsb.dmb_bank_type
                       INNER JOIN dmbk
                       ON dmbk.mbk_code = dmsb.dmb_bank
-                      WHERE dmb_card_code = :dmb_card_code;";
+                      WHERE dmb_card_code = :dmb_card_code and dmb_card_type = :dmb_card_type";
 
-        $resSelect = $this->pedeo->queryTable($sqlSelect, array(':dmb_card_code' => $Data['dmb_card_code']));
+        $resSelect = $this->pedeo->queryTable($sqlSelect,
+         array(
+          ':dmb_card_code' => $Data['dmb_card_code'],
+          ':dmb_card_type' => $Data['dmb_card_type']
+        ));
         if(isset($resSelect[0])){
 
           $respuesta = array(
