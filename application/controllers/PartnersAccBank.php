@@ -192,12 +192,12 @@ class PartnersAccBank extends REST_Controller {
           return;
         }
 
-        $sqlSelect = "SELECT natc.atc_name AS acc_type_name, dmbk.mbk_name AS bank_name, dmsb.* 
+        $sqlSelect = "SELECT DISTINCT natc.atc_name AS acc_type_name, dmbk.mbk_name AS bank_name, dmsb.* 
                       FROM dmsb 
                       INNER JOIN natc
                       ON natc.atc_code = dmsb.dmb_bank_type
                       INNER JOIN dmbk
-                      ON dmbk.mbk_code = dmsb.dmb_bank
+                      ON dmbk.mbk_code = dmsb.dmb_bank and dmbk.mbk_status = 1
                       WHERE dmb_card_code = :dmb_card_code and dmb_card_type = :dmb_card_type";
 
         $resSelect = $this->pedeo->queryTable($sqlSelect,
