@@ -45,13 +45,11 @@ class Traceability extends REST_Controller {
                     FROM tbmd
                     INNER JOIN dmdt ON tbmd.bmd_doctype = dmdt.mdt_doctype
                     INNER JOIN responsestatus t1 ON tbmd.bmd_docentry = t1.id and tbmd.bmd_doctype = t1.tipo
-                    WHERE concat(bmd_tdi, bmd_ndi) IN (SELECT distinct concat(tb1.bmd_tdi, tb1.bmd_ndi) FROM tbmd as tb1
+                    inner join (SELECT distinct concat(tb1.bmd_tdi, tb1.bmd_ndi) as con, tb1.bmd_id as id, tb1.bmd_cardtype as cardtype FROM tbmd as tb1
                     WHERE tb1.bmd_doctype  = :bmd_doctype
-                    AND tb1.bmd_docentry = :bmd_docentry) 
-                    AND tbmd.bmd_cardtype = (SELECT bmd_cardtype
-                    FROM tbmd tb2
-                    WHERE tb2.bmd_docentry = :bmd_docentry
-                    AND tb2.bmd_doctype = :bmd_doctype)
+                    AND tb1.bmd_docentry = :bmd_docentry) as regs
+                    on concat(bmd_tdi, bmd_ndi) = regs.con
+                    where bmd_id >= regs.id and bmd_cardtype = regs.cardtype
                     ORDER BY tbmd.bmd_id ASC";
 
       $resSelect = $this->pedeo->queryTable($sqlSelect, array(
