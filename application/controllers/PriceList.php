@@ -1089,7 +1089,7 @@ class PriceList extends REST_Controller
 		$variableSql = "";
 		if (!empty($Data['search']['value'])) {
 			// OBTENER CONDICIONALES.
-			$variableSql .= " AND  " . self::get_Filter($columns, strtoupper($Data['search']['value']));
+			$variableSql .= " AND  (" . self::get_Filter($columns, strtoupper($Data['search']['value'])).")";
 		}
 
 		$sqlSelect = "SELECT DISTINCT dmlp_id, dmlp_name_list,
