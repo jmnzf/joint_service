@@ -51,31 +51,31 @@ class bulkPayments extends REST_Controller
                 "prefix" => "cfc",
                 "rpltarget" => "dcfc_where"
             ],
-            [
-                "table" => "gbpe",
-                "prefix" => "bpe",
-                "rpltarget" => "gbpe_where"
-            ],
-            [
-                "table" => "dcnc",
-                "prefix" => "cnc",
-                "rpltarget" => "dcnc_where"
-            ],
-            [
-                "table" => "dcnd",
-                "prefix" => "cnd",
-                "rpltarget" => "dcnd_where"
-            ],
+            // [
+            //     "table" => "gbpe",
+            //     "prefix" => "bpe",
+            //     "rpltarget" => "gbpe_where"
+            // ],
+            // [
+            //     "table" => "dcnc",
+            //     "prefix" => "cnc",
+            //     "rpltarget" => "dcnc_where"
+            // ],
+            // [
+            //     "table" => "dcnd",
+            //     "prefix" => "cnd",
+            //     "rpltarget" => "dcnd_where"
+            // ],
             [
                 "table" => "dcsa",
                 "prefix" => "csa",
                 "rpltarget" => "dcsa_where"
             ],
-            [
-                "table" => "tmac",
-                "prefix" => "mac",
-                "rpltarget" => "tmac_where"
-            ]
+            // [
+            //     "table" => "tmac",
+            //     "prefix" => "mac",
+            //     "rpltarget" => "tmac_where"
+            // ]
         );
 
         $sqlSelect = "SELECT distinct
@@ -101,7 +101,8 @@ class bulkPayments extends REST_Controller
         '' retencion,
         get_tax_currency(dcfc.cfc_currency,dcfc.cfc_docdate) as tasa_dia,
         ac1_line_num,
-        ac1_cord
+        ac1_cord,
+		trim(cfc_tax_control_num) as numref
         from  mac1
         inner join dacc
         on mac1.ac1_account = dacc.acc_code
@@ -113,6 +114,7 @@ class bulkPayments extends REST_Controller
         and dcfc.cfc_docentry = mac1.ac1_font_key
         where 1 = 1 {{dcfc_where}}
         and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
+		/*
         --PAGO EFECTUADO
         union all
         select distinct
@@ -266,7 +268,7 @@ class bulkPayments extends REST_Controller
         on mac1.ac1_card_type = dmsn.dms_card_type
         and mac1.ac1_legal_num = dmsn.dms_card_code
         where 1 = 1 {{tmac_where}}
-        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0*/
         --SOLICITUD DE ANTICIPO DE COMPRAS
         UNION ALL
         SELECT  
@@ -289,7 +291,8 @@ class bulkPayments extends REST_Controller
         '' retencion,
         get_tax_currency(dcsa.csa_currency,dcsa.csa_docdate) as tasa_dia,
         sa1_linenum,
-        0 as ac1_cord
+        0 as ac1_cord,
+		'' as numref
         from dcsa
         inner join csa1 on dcsa.csa_docentry = csa1.sa1_docentry
         inner join dmdt on dmdt.mdt_doctype = dcsa.csa_doctype
@@ -339,7 +342,8 @@ class bulkPayments extends REST_Controller
         $sqlSelect = str_replace('{fecha}', $fecha, $sqlSelect);
 		// print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, array(":currency" => $Data['doc_currency'], ":business" => $Data['business'], ":branch"=> $Data['branch']));
-        if (isset($resSelect[0])) {
+        // print_r($resSelect);exit;
+		if (isset($resSelect[0])) {
 
             $respuesta = array(
                 'error' => false,

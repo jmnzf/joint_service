@@ -1087,9 +1087,9 @@ class PriceList extends REST_Controller
 			"mpl1.pl1_id"
 		);
 		$variableSql = "";
-		if (!empty($request['search']['value'])) {
+		if (!empty($Data['search']['value'])) {
 			// OBTENER CONDICIONALES.
-			$variableSql .= " AND  " . self::get_Filter($columns, strtoupper($request['search']['value']));
+			$variableSql .= " AND  (" . self::get_Filter($columns, strtoupper($Data['search']['value'])).")";
 		}
 
 		$sqlSelect = "SELECT DISTINCT dmlp_id, dmlp_name_list,
@@ -1108,7 +1108,8 @@ class PriceList extends REST_Controller
 											':business' => $Data['business']
 										]);	
 		
-		
+		$sqlSelect.= $variableSql;
+
 		$sqlSelect .=" ORDER BY ".$columns[$Data['order'][0]['column']]." ".$Data['order'][0]['dir']." LIMIT ".$Data['length']." OFFSET ".$Data['start'];
 
 		//print_r($sqlSelect);exit;
@@ -1270,7 +1271,7 @@ class PriceList extends REST_Controller
 		//
 		$resultSet = "";
 		// CONDICIONAL.
-		$where = " {campo} LIKE '%" . $value . "%' OR";
+		$where = " {campo}::text LIKE '%" . $value . "%' OR";
 		//
 		try {
 			//
