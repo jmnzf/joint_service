@@ -370,6 +370,11 @@ class bulkPayments extends REST_Controller
 
 		$DECI_MALES =  $this->generic->getDecimals();
 		$Data = $this->post();
+		$Data['spm_createat'] = date('Y-m-d');
+		$Data['spm_docdate'] = date('Y-m-d');
+		$Data['spm_duedate'] = date('Y-m-d');
+		$Data['spm_taxdate'] = date('Y-m-d');
+		$Data['spm_datetransfer'] = date('Y-m-d');
 		$Data2 = $Data;
 		$DocNumVerificado = 0;
 		$DetalleAsientoCuentaTercero = new stdClass();

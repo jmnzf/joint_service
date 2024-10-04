@@ -1079,12 +1079,8 @@ class PriceList extends REST_Controller
 			return;
 		}
 		$columns = array(
-			"dmpl.dmlp_id",
-			"dmpl.dmlp_name_list",
-			"dmar.dma_item_code",
-			"dmar.dma_item_name",
-			"mpl1.pl1_price",
-			"mpl1.pl1_id"
+			"dma_item_code",
+			"dma_item_name"
 		);
 		$variableSql = "";
 		if (!empty($Data['search']['value'])) {
@@ -1092,31 +1088,28 @@ class PriceList extends REST_Controller
 			$variableSql .= " AND  (" . self::get_Filter($columns, strtoupper($Data['search']['value'])).")";
 		}
 
-		$sqlSelect = "SELECT DISTINCT dmlp_id, dmlp_name_list,
-										dma_item_code, dma_item_name,
-										pl1_price,pl1_id
-										FROM dmpl
-										INNER JOIN mpl1
-										ON dmpl.dmlp_id = mpl1.pl1_id_price_list
-										INNER JOIN dmar
-										ON trim(mpl1.pl1_item_code) =  trim(dma_item_code)
-										WHERE dmlp_id = :dmlp_id
-										AND dmpl.business = :business ";
+		$sqlSelect = "SELECT DISTINCT pl1_id_price_list as dmlp_id,
+						dma_item_code, dma_item_name,
+						pl1_price,pl1_id
+						FROM mpl1
+						INNER JOIN dmar
+						ON trim(mpl1.pl1_item_code) =  trim(dma_item_code)
+						WHERE pl1_id_price_list =:dmlp_id";
 		// OBTENER NÚMERO DE REGISTROS DE LA TABLA.
-		$numRows = $this->pedeo->queryTable($sqlSelect.$variableSql, [
-											':dmlp_id'  => $Data['dmlp_id'],
-											':business' => $Data['business']
+
+		$sqlSelect.= $variableSql;
+		$numRows = $this->pedeo->queryTable($sqlSelect, [
+											':dmlp_id'  => $Data['dmlp_id']
 										]);	
 		
 		$sqlSelect.= $variableSql;
 
 		$sqlSelect .=" ORDER BY ".$columns[$Data['order'][0]['column']]." ".$Data['order'][0]['dir']." LIMIT ".$Data['length']." OFFSET ".$Data['start'];
 
-		//print_r($sqlSelect);exit;
+		// print_r($sqlSelect);exit;
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array(
 
-			':dmlp_id'  => $Data['dmlp_id'],
-			':business' => $Data['business']
+			':dmlp_id'  => $Data['dmlp_id']
 		));
 
 		if (isset($resSelect[0])) {
