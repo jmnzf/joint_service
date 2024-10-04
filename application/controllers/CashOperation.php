@@ -6013,7 +6013,7 @@ class CashOperation extends REST_Controller {
                     'rc1_price' => 'Precio'   , 
                     'rc1_vatsum'          =>   'Impuesto',                                                     
                     'rc1_linetotal' => 'Total'  ,
-                    'Almacen' => 'rc1_whscode'     
+                    'rc1_whscode' => 'Alamcen'     
 
 				)],
 				'mensaje' =>''

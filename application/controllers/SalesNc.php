@@ -112,6 +112,7 @@ class SalesNc extends REST_Controller
 		$DetalleConsolidadoRetencion = [];
 		$llaveRetencion = "";
 		$posicionRetencion = 0;
+		$documentoPreeliminar = [];
 
 		// Se globaliza la variable sqlDetalleAsiento
 		$sqlDetalleAsiento = "INSERT INTO mac1(ac1_trans_id, ac1_account, ac1_debit, ac1_credit, ac1_debit_sys, ac1_credit_sys, ac1_currex, ac1_doc_date, ac1_doc_duedate,
@@ -274,6 +275,8 @@ class SalesNc extends REST_Controller
 				return $this->response($aprobacion);
 			}
 		}else{
+
+
 			$sqlDocAprobado = "SELECT * FROM dpap where pap_docentry = :pap_docentry and pap_doctype = :pap_doctype";
 			$resDocAprobado  = $this->pedeo->queryTable($sqlDocAprobado, array(
 
@@ -292,15 +295,10 @@ class SalesNc extends REST_Controller
 				$this->response($respuesta, REST_Controller::HTTP_BAD_REQUEST);
 	
 				return;
+			}else{
+				$documentoPreeliminar = $resDocAprobado[0];
 			}
-			$newData = $resDocAprobado[0];
 
-			$docstoValidate = [5,34];
-
-			if(in_array($newData['pap_basetype'],$docstoValidate)){
-				$Data['vnc_basetype'] = $newData['pap_basetype'];
-				$Data['vnc_baseentry'] = $newData['pap_baseentry'];
-			}
 		}
 
 
@@ -403,6 +401,45 @@ class SalesNc extends REST_Controller
 					return $this->response($respuesta);
 				}
 				// Fin de la actualizacion de la numeracion del documento
+
+				// se cierra documento preeliminar y se reemplaza el valor de baseentry y basetype cuando el tipo de documento es una factura
+				$sqlInsertEstadoPreeliminar = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
+				VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+
+				$resInsertEstadoPreeliminar = $this->pedeo->insertRow($sqlInsertEstadoPreeliminar, array(
+
+
+					':bed_docentry' => $Data['vnc_baseentry'],
+					':bed_doctype' => $Data['vnc_basetype'],
+					':bed_status' => 3, //ESTADO CERRADO
+					':bed_createby' => $Data['vnc_createby'],
+					':bed_date' => date('Y-m-d'),
+					':bed_baseentry' => $resInsert,
+					':bed_basetype' => $Data['vnc_doctype']
+				));
+
+
+				if (is_numeric($resInsertEstadoPreeliminar) && $resInsertEstadoPreeliminar > 0) {
+					$docstoValidate = [5,34];
+
+					if(in_array($documentoPreeliminar['pap_basetype'],$docstoValidate)){
+						$Data['vnc_basetype'] = $documentoPreeliminar['pap_basetype'];
+						$Data['vnc_baseentry'] = $documentoPreeliminar['pap_baseentry'];
+					}
+				} else {
+
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resInsertEstado,
+						'mensaje'	=> 'No se pudo registrar la orden de compras',
+						'proceso' => 'Insertar estado documento'
+					);
+
+
+					return $this->response($respuesta);
+				}
 
 				//SE INSERTA EL ESTADO DEL DOCUMENTO
 
