@@ -3252,6 +3252,7 @@ class bulkPayments extends REST_Controller
 	public function getFileTxtSAP_post(){
 
 		$Data = $this->post();
+		$errors = "";
 
 		if (!isset($Data['spm_docentry'])) {
 
@@ -3272,6 +3273,7 @@ class bulkPayments extends REST_Controller
 		$resDetalle = $this->pedeo->queryTable($sqlDetalle, array(
 			":pm1_docnum" => $Data['spm_docentry']
 		));
+
 		
 		if (isset($resDetalle[0])) {
 
@@ -3280,12 +3282,14 @@ class bulkPayments extends REST_Controller
             $MONTOTOTAL = 0;
             $DETAIL = "";
             $HEADER = "";
+			
 
 			foreach ($resDetalle as $key => $detail) {
 
 				// SE FORMA EL DETALLE DEL ARCHIVO PLANO
 				
-				if ( $detail['pm1_doctype'] == 15 ) {	
+				if (in_array($detail['pm1_doctype'], [15,36])) {	
+					
 
 					// DATOS DEL SOCIO
 					$sqlSocio = "SELECT 
@@ -3296,10 +3300,11 @@ class bulkPayments extends REST_Controller
 					dms_card_code as identificacion_cliente,
 					dms_email as correo,
 					dms_cel  as celular,
-					dms_card_name as nombre_proveedor
+					dms_card_name as nombre_proveedor,
+					dmb_major as principal
 					FROM DMSN 
-					inner join dmsb on dmb_card_code = dms_card_code and dmb_card_type = dms_card_type and dmb_major = 1
-					inner join tbti on bti_id = dms_id_type 
+					left join dmsb on dmb_card_code = dms_card_code and dmb_card_type = dms_card_type and dmb_major = 1
+					left join tbti on bti_id = dms_id_type 
 					WHERE dms_card_code = :dms_card_code AND dms_card_type = :dms_card_type";
 
 					$resSocio = $this->pedeo->queryTable($sqlSocio, array(
@@ -3360,14 +3365,19 @@ class bulkPayments extends REST_Controller
 						.$DatosBeneficiario->Concepto
 						.$DatosBeneficiario->Referencia.
 						"\n";
-	
+						$errors .= $this->getErrors($resSocio[0]['nombre_proveedor'], 
+						$resSocio, 
+						["tipo_documento", "tipo_trasaccion",
+						"numero_cuenta","codigo_banco", "principal"])."\n";
 	
 						$MONTOTOTAL = ( $MONTOTOTAL + $detail['pm1_vlrpaid']);
 
+						
 					}
 				}
 
 			}
+
 
 
 			if ($DETAIL == ""){
@@ -3379,6 +3389,18 @@ class bulkPayments extends REST_Controller
 				);
 
 				return $this->response($respuesta);
+			}
+
+			if(!empty($errors)){
+
+				$respuesta = array(
+					'error' => true,
+					'data'  => array(),
+					'mensaje' => $errors
+				);
+
+				return $this->response($respuesta);
+			
 			}
 
 
@@ -3504,5 +3526,32 @@ class bulkPayments extends REST_Controller
 		}
 
 		return $res;
+	}
+
+	private function getErrors($cardname, $data, $fields){
+		$error = "";
+		$title = "";
+		foreach ($data[0] as $key => $sn) {
+			
+			if(in_array($key,$fields)){
+				
+				if(empty($resSocio[$key])){
+					
+					$error.= " ".str_replace('_', ' ', $key)."\n";
+
+					if($key == "principal"){
+						$error = str_replace("principal","Marcar cuenta como princial", $error);
+					}
+				}
+			}
+		}
+
+		if(!empty($error)){
+			$title = "El tercero {$cardname} requiere tener los siguientes campos parametrizados: \n";
+		}
+
+		$error = $title.$error;
+
+		return $error;
 	}
 }
