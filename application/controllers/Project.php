@@ -62,7 +62,7 @@ class Project extends REST_Controller {
       }
 
       $sqlInsert = "INSERT INTO dmpj(dpj_pj_code, dpj_pj_name, dpj_pj_date_ini, dpj_pj_end_date,business,dpj_enabled)
-                    VALUES (:dpj_pj_code, :dpj_pj_name, :dpj_pj_date_ini, :dpj_pj_end_date,:business, dpj_enabled)";
+                    VALUES (:dpj_pj_code, :dpj_pj_name, :dpj_pj_date_ini, :dpj_pj_end_date,:business, :dpj_enabled)";
 
 
       $resInsert = $this->pedeo->insertRow($sqlInsert, array(
