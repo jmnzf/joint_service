@@ -3365,10 +3365,13 @@ class bulkPayments extends REST_Controller
 						.$DatosBeneficiario->Concepto
 						.$DatosBeneficiario->Referencia.
 						"\n";
-						$errors .= $this->getErrors($resSocio[0]['nombre_proveedor'], 
-						$resSocio, 
-						["tipo_documento", "tipo_trasaccion",
-						"numero_cuenta","codigo_banco", "principal"])."\n";
+
+						if (!str_contains($errors, $resSocio[0]['nombre_proveedor'])) {
+							$errors .= $this->getErrors($resSocio[0]['nombre_proveedor'], 
+							$resSocio, 
+							["tipo_documento", "tipo_trasaccion",
+							"numero_cuenta","codigo_banco", "principal"])."\n";
+						}						
 	
 						$MONTOTOTAL = ( $MONTOTOTAL + $detail['pm1_vlrpaid']);
 
@@ -3535,12 +3538,12 @@ class bulkPayments extends REST_Controller
 			
 			if(in_array($key,$fields)){
 				
-				if(empty($resSocio[$key])){
+				if(empty($data[0][$key])){
 					
 					$error.= " ".str_replace('_', ' ', $key)."\n";
 
 					if($key == "principal"){
-						$error = str_replace("principal","Marcar cuenta como princial", $error);
+						$error = str_replace("principal","Marcar cuenta como principal", $error);
 					}
 				}
 			}
@@ -3548,9 +3551,12 @@ class bulkPayments extends REST_Controller
 
 		if(!empty($error)){
 			$title = "El tercero {$cardname} requiere tener los siguientes campos parametrizados: \n";
+			
 		}
 
 		$error = $title.$error;
+
+		$error = str_replace('trasaccion', 'transacción', $key);
 
 		return $error;
 	}
