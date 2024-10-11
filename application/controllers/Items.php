@@ -36,7 +36,7 @@ class Items extends REST_Controller
 		$cantidad1 = 0;
 		$cantidad2 = 0;
 		if(isset($Data['dma_item_inv']) && $Data['dma_item_inv'] == "0"){
-			$unidad = 1;
+			$unidad = 8;
 			$cantidad1 = 1;
 			$cantidad2 = 1;
 		}
