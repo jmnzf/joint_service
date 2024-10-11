@@ -327,12 +327,13 @@ class SalesInvBO extends REST_Controller
 						dvf_cardname, dvf_currency, dvf_contacid, dvf_slpcode, dvf_empid, dvf_comment, dvf_doctotal, dvf_baseamnt, dvf_taxtotal,
 						dvf_discprofit, dvf_discount, dvf_createat, dvf_baseentry, dvf_basetype, dvf_doctype, dvf_idadd, dvf_adress, dvf_paytype,
 						dvf_createby, dvf_correl,dvf_transport,dvf_sub_transport,dvf_ci,dvf_t_vehiculo,dvf_guia,dvf_placa,dvf_precinto,dvf_placav,
-						dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed,dvf_igtfcode,business,branch,dvf_totalret,dvf_totalretiva,dvf_bankable,dvf_internal_comments)
+						dvf_modelv,dvf_driverv,dvf_driverid,dvf_igtf,dvf_taxigtf,dvf_igtfapplyed,dvf_igtfcode,business,branch,dvf_totalret,dvf_totalretiva,dvf_bankable,dvf_internal_comments,dvf_doctype_sector,
+						dvf_payment_method)
 						VALUES(:dvf_series, :dvf_docnum, :dvf_docdate, :dvf_duedate, :dvf_duedev, :dvf_pricelist, :dvf_cardcode, :dvf_cardname,
 						:dvf_currency, :dvf_contacid, :dvf_slpcode, :dvf_empid, :dvf_comment, :dvf_doctotal, :dvf_baseamnt, :dvf_taxtotal, :dvf_discprofit, :dvf_discount,
 						:dvf_createat, :dvf_baseentry, :dvf_basetype, :dvf_doctype, :dvf_idadd, :dvf_adress, :dvf_paytype, :dvf_createby,:dvf_correl,:dvf_transport,:dvf_sub_transport,:dvf_ci,:dvf_t_vehiculo,
 						:dvf_guia,:dvf_placa,:dvf_precinto,:dvf_placav,:dvf_modelv,:dvf_driverv,:dvf_driverid,:dvf_igtf,:dvf_taxigtf,:dvf_igtfapplyed,
-						:dvf_igtfcode,:business,:branch,:dvf_totalret,:dvf_totalretiva,:dvf_bankable,:dvf_internal_comments)";
+						:dvf_igtfcode,:business,:branch,:dvf_totalret,:dvf_totalretiva,:dvf_bankable,:dvf_internal_comments,:dvf_doctype_sector,:dvf_payment_method)";
 
 
 		// Se Inicia la transaccion,
@@ -394,7 +395,9 @@ class SalesInvBO extends REST_Controller
 				':dvf_totalret' => isset($Data['dvf_totalret']) && is_numeric($Data['dvf_totalret']) ? $Data['dvf_totalret'] : 0,
 				':dvf_totalretiva' => isset($Data['dvf_totalretiva']) && is_numeric($Data['dvf_totalretiva']) ? $Data['dvf_totalretiva'] : 0,
 				':dvf_bankable' => is_numeric($Data['dvf_bankable']) ? $Data['dvf_bankable'] : 0,
-				':dvf_internal_comments'  => isset($Data['dvf_internal_comments']) ? $Data['dvf_internal_comments'] : NULL
+				':dvf_internal_comments'  => isset($Data['dvf_internal_comments']) ? $Data['dvf_internal_comments'] : NULL,
+				':dvf_doctype_sector' => isset($Data['dvf_doctype_sector']) && is_numeric($Data['dvf_doctype_sector']) ? $Data['dvf_doctype_sector'] : NULL,
+				':dvf_payment_method' => isset($Data['dvf_payment_method']) && is_numeric($Data['dvf_payment_method']) ? $Data['dvf_payment_method'] : NULL
 			));
 
 			if (is_numeric($resInsert) && $resInsert > 0) {

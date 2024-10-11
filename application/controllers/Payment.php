@@ -138,7 +138,7 @@ class Payment extends REST_Controller
                 'mobile'  => '+57'.$resTercero[0]['dms_cel']
             ],
             'expiration' => date('c', strtotime('+15 minutes')),
-            'returnUrl'  => 'https://joint.jointerp.com/?c=PayMasive&a=Index&ref=' . $reference,
+            'returnUrl'  => 'https://'.$PARAMS['main_folder'].'.jointerp.com/?c=PayMasive&a=Index&ref=' . $reference,
             'ipAddress'  => self::getClientIP(),
             'userAgent'  => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36',
         ];
@@ -425,7 +425,9 @@ class Payment extends REST_Controller
                     $Array[':bpp_payer_idnumber'] = $payerInfo['document'] ?: 'N/A';    
                     $Array[':bpp_payer_phone'] = $payerInfo['mobile'] ?: 'N/A';
                     $Array[':bpp_payer_idType'] = $payerInfo['documentType'] ?: 'N/A';
-                    $Array[':bpp_payer_name'] = isset($payerInfo['name']) ? "{$payerInfo['name']} {$payerInfo['surname']}" : 'N/A';
+                    $nombre = isset($payerInfo['name']) ? $payerInfo['name'] : '-';
+                    $surname = isset($payerInfo['surname']) ? $payerInfo['name'] : '';
+                    $Array[':bpp_payer_name'] = isset($payerInfo['name']) ? $nombre.' '.$surname : 'N/A';
                 }
                 
 
