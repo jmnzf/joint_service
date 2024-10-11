@@ -2,3 +2,4 @@ vendor/
 application/asset/vendor/
 application/config/database.php
 application/libraries/
+.env
