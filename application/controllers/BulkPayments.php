@@ -71,11 +71,11 @@ class bulkPayments extends REST_Controller
                 "prefix" => "csa",
                 "rpltarget" => "dcsa_where"
             ],
-            // [
-            //     "table" => "tmac",
-            //     "prefix" => "mac",
-            //     "rpltarget" => "tmac_where"
-            // ]
+            [
+                "table" => "tmac",
+                "prefix" => "mac",
+                "rpltarget" => "tmac_where"
+            ]
         );
 
         $sqlSelect = "SELECT distinct
@@ -225,7 +225,7 @@ class bulkPayments extends REST_Controller
         on dcnd.cnd_doctype = mac1.ac1_font_type
         and dcnd.cnd_docentry = mac1.ac1_font_key
         where 1 = 1 {{dcnd_where}}
-        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
+        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0*/
         --ASIENTOS MANUALES
         union all
         select distinct
@@ -254,7 +254,8 @@ class bulkPayments extends REST_Controller
         '' retencion,
         get_tax_currency(tmac.mac_currency, tmac.mac_doc_date) as tasa_dia,
         ac1_line_num,
-        ac1_cord
+        ac1_cord,
+		'' as numref
         from  mac1
         inner join dacc
         on mac1.ac1_account = dacc.acc_code
@@ -268,7 +269,7 @@ class bulkPayments extends REST_Controller
         on mac1.ac1_card_type = dmsn.dms_card_type
         and mac1.ac1_legal_num = dmsn.dms_card_code
         where 1 = 1 {{tmac_where}}
-        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0*/
+        and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
         --SOLICITUD DE ANTICIPO DE COMPRAS
         UNION ALL
         SELECT  
