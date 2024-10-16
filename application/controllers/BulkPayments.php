@@ -3253,6 +3253,7 @@ class bulkPayments extends REST_Controller
 
 		$Data = $this->post();
 		$errors = "";
+		$provee = [];
 
 		if (!isset($Data['spm_docentry'])) {
 
@@ -3366,12 +3367,20 @@ class bulkPayments extends REST_Controller
 						.$DatosBeneficiario->Referencia.
 						"\n";
 
-						if (!str_contains($errors, $resSocio[0]['nombre_proveedor'])) {
-							$errors .= $this->getErrors($resSocio[0]['nombre_proveedor'], 
-							$resSocio, 
-							["tipo_documento", "tipo_trasaccion",
-							"numero_cuenta","codigo_banco", "principal"])."\n";
-						}						
+
+						// SE VALIDA SI YA SE EVALUO EL PROVEEDOR
+						if (!in_array($resSocio[0]['identificacion_cliente'], $provee)) {
+
+							array_push($provee, $resSocio[0]['identificacion_cliente']);
+
+							if ( empty($resSocio[0]['tipo_documento']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " le falta el tipo de documento. \n \r"; }
+							if ( empty($resSocio[0]['tipo_trasaccion']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " le falta el tipo de transacción en las datos de la cuenta de banco. \n \r"; }
+							if ( empty($resSocio[0]['numero_cuenta']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " le falta el numero de la cuenta de banco. \n \r"; }
+							if ( empty($resSocio[0]['codigo_banco']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " le falta el codigo de banco. \n \r"; }
+							if ( empty($resSocio[0]['principal']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " se le debe marcar la cuenta de banco principal. \n \r"; }
+							
+						} 
+						
 	
 						$MONTOTOTAL = ( $MONTOTOTAL + $detail['pm1_vlrpaid']);
 
@@ -3529,35 +3538,5 @@ class bulkPayments extends REST_Controller
 		}
 
 		return $res;
-	}
-
-	private function getErrors($cardname, $data, $fields){
-		$error = "";
-		$title = "";
-		foreach ($data[0] as $key => $sn) {
-			
-			if(in_array($key,$fields)){
-				
-				if(empty($data[0][$key])){
-					
-					$error.= " ".str_replace('_', ' ', $key)."\n";
-
-					if($key == "principal"){
-						$error = str_replace("principal","Marcar cuenta como principal", $error);
-					}
-				}
-			}
-		}
-
-		if(!empty($error)){
-			$title = "El tercero {$cardname} requiere tener los siguientes campos parametrizados: \n";
-			
-		}
-
-		$error = $title.$error;
-
-		$error = str_replace('trasaccion', 'transacción', $key);
-
-		return $error;
 	}
 }
