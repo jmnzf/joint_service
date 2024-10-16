@@ -188,7 +188,7 @@ class User extends REST_Controller
 		$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
 			':Pgu_Pass' => password_hash($DataUser['Pgu_Pass'], PASSWORD_DEFAULT),
 			':Pgu_IdUsuario' => $DataUser['Pgu_IdUsuario'],
-			':pgu_pass_change' => 1,
+			':pgu_pass_change' => $DataUser['pgu_pass_change'],
 			':pgu_datechangepassword' => date('Y-m-d')
 
 		));

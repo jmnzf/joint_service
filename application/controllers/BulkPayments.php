@@ -3369,15 +3369,24 @@ class bulkPayments extends REST_Controller
 
 
 						// SE VALIDA SI YA SE EVALUO EL PROVEEDOR
+						$title = "";
+						$body = "";
 						if (!in_array($resSocio[0]['identificacion_cliente'], $provee)) {
 
 							array_push($provee, $resSocio[0]['identificacion_cliente']);
 
-							if ( empty($resSocio[0]['tipo_documento']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " le falta el tipo de documento. \n \r"; }
-							if ( empty($resSocio[0]['tipo_trasaccion']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " le falta el tipo de transacción en las datos de la cuenta de banco. \n \r"; }
-							if ( empty($resSocio[0]['numero_cuenta']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " le falta el numero de la cuenta de banco. \n \r"; }
-							if ( empty($resSocio[0]['codigo_banco']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " le falta el codigo de banco. \n \r"; }
-							if ( empty($resSocio[0]['principal']) ){ $errors .= " Al proveedor: ". $resSocio[0]['identificacion_cliente']." ".$resSocio[0]['nombre_proveedor']. " se le debe marcar la cuenta de banco principal. \n \r"; }
+							if ( empty($resSocio[0]['tipo_documento']) ){ $body .= "<li>Tipo de documento. </li>"; }
+							if ( empty($resSocio[0]['tipo_trasaccion']) ){ $body .= "<li>Tipo de transacción en los datos de la cuenta de banco. </li>"; }
+							if ( empty($resSocio[0]['numero_cuenta']) ){ $body .= "<li>Numero de la cuenta de banco. </li>"; }
+							if ( empty($resSocio[0]['codigo_banco']) ){ $body .= "<li>Codigo de banco. </li>"; }
+							if ( empty($resSocio[0]['principal']) ){ $body .= "<li>Se debe marcar la cuenta de banco como principal. </li>"; }
+							
+							if( !empty($body)){
+								$title = "Nit: <b style='color:red;'>{$resSocio[0]['identificacion_cliente']}</b> <br> 
+										Proveedor:<b style='color:red;'> {$resSocio[0]['nombre_proveedor']}</b><br>";
+								
+								$errors .= "<p style='text-align:left;'>".$title."Información no parametrizada :<br><ul style='text-align: left; list-style-position: outside;'>".$body."</ul></p><br>";
+							}
 							
 						} 
 						
