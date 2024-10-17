@@ -187,6 +187,8 @@ $config['auth_override_class_method']['Payment']['getPayment'] = 'none';
 $config['auth_override_class_method']['Payment']['sendMail'] = 'none';
 $config['auth_override_class_method']['Helpers']['getCompanyData'] = 'none';
 $config['auth_override_class_method']['PaymentsReceived']['automaticPayment'] = 'none';
+$config['auth_override_class_method']['WpWooCommerce']['createInvoice'] = 'none';
+$config['auth_override_class_method']['WpWooCommerce']['getPedido'] = 'none';
 // ---Uncomment list line for the wildard unit test
 // $config['auth_override_class_method']['wildcard_test_cases']['*'] = 'basic';
 
