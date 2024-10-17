@@ -2616,12 +2616,12 @@ class PaymentsMade extends REST_Controller
 		WHERE pe1_docnum = :pe1_docnum
 		-- ASIENTO MANUAL
 		union all 
-		SELECT bpe1.*, dmdt.mdt_docname, tmac.mac_doc_num  as docnumoriginal
+		SELECT bpe1.*, dmdt.mdt_docname, mac1.ac1_trans_id  as docnumoriginal
 		FROM bpe1 
 		INNER JOIN dmdt 
 		ON dmdt.mdt_doctype = bpe1.pe1_doctype
-		inner join tmac 
-		on bpe1.pe1_docentry = tmac.mac_trans_id  and bpe1.pe1_doctype = tmac.mac_doctype 
+		inner join mac1 
+		on bpe1.pe1_line_num  = ac1_line_num
 		WHERE pe1_docnum = :pe1_docnum
 		-- SOLICITUD DE ANTICIPOS
 		union all 
