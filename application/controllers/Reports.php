@@ -873,11 +873,13 @@ class Reports extends REST_Controller {
 					when coalesce(t0.ac1_font_type,0) = 20 then (SELECT row_to_json(gbpr.*) FROM gbpr WHERE t0.ac1_font_key = gbpr.bpr_docentry and t0.ac1_font_type = gbpr.bpr_doctype)
 					when coalesce(t0.ac1_font_type,0) = 22 then (SELECT row_to_json(dcrc.*) FROM dcrc WHERE t0.ac1_font_key = dcrc.crc_docentry and t0.ac1_font_type = dcrc.crc_doctype)
 					end extras,
-					COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*
+					COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*,
+					dmsn.dms_card_name as cardname
 					FROM mac1 t0
 					INNER JOIN dacc t4 on t0.ac1_account = t4.acc_code
 					INNER JOIN dmdt t16 on coalesce(t0.ac1_font_type,0) = t16.mdt_doctype
 					inner join tmac  on t0.ac1_trans_id = tmac.mac_trans_id 
+					inner join dmsn on t0.ac1_legal_num = dmsn.dms_card_code
 					WHERE 1=1 ".$where;
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect,array());
@@ -892,7 +894,7 @@ class Reports extends REST_Controller {
 						// ELIMINAR DATA DEL ARRAY
 						unset($data['extras']);
 						// VALIDAR SI ES UNARRAY
-						if (is_array($json)) {
+						if (is_array($json)) {	
 							// OBJETO
 							$newObj = [];
 							// RECORRER JSON
@@ -921,7 +923,7 @@ class Reports extends REST_Controller {
 							if (!isset($newObj['mac_cardcode']) OR !isset($newObj['mac_cardname'])) {
 								// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
 								$newObj['mac_cardcode'] = $data['ac1_legal_num'];
-								$newObj['mac_cardname'] = $data['ac1_legal_num'];
+								$newObj['mac_cardname'] = $data['cardname'];
 							}
 							if (!isset($newObj['mac_comment'])) {
 								// RENOMBRAR EL CAMPO Y SASIGNAR VALOR.
