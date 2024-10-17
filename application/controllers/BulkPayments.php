@@ -404,8 +404,6 @@ class bulkPayments extends REST_Controller
 							:ac1_prj_code, :ac1_rescon_date, :ac1_recon_total, :ac1_made_user, :ac1_accperiod, :ac1_close, :ac1_cord, :ac1_ven_debit, :ac1_ven_credit, :ac1_fiscal_acct,
 							:ac1_taxid, :ac1_isrti, :ac1_basert, :ac1_mmcode, :ac1_legal_num, :ac1_codref, :business, :branch)";
 
-
-
 		if (!isset($Data['detail']) OR !isset($Data['business']) OR !isset($Data['branch'])) {
 
 			$respuesta = array(
@@ -745,7 +743,8 @@ class bulkPayments extends REST_Controller
 					'pe1_vlrdiscount' => is_numeric($detail['pm1_vlrdiscount']) ? $detail['pm1_vlrdiscount'] : 0,
 					'pe1_ocrcode' => isset($detail['pm1_ocrcode']) ? $detail['pm1_ocrcode'] : NULL,
 					'pe1_cuenta' => is_numeric($detail['pm1_accountid']) ? $detail['pm1_accountid'] : 0,
-					'ac1_line_num' => isset($detail['pm1_line_num']) && is_numeric($detail['pm1_line_num']) ? $detail['pm1_line_num'] : 0
+					'ac1_line_num' => isset($detail['pm1_line_num']) && is_numeric($detail['pm1_line_num']) ? $detail['pm1_line_num'] : 0,
+					'ac1_cord' => isset($detail['ac1_cord']) && is_numeric($detail['ac1_cord']) ? $detail['ac1_cord'] : 0
 				));
 
 			}
