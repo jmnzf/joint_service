@@ -234,7 +234,7 @@ class bulkPayments extends REST_Controller
             when ac1_card_type = '1' then mac1.ac1_legal_num
             when ac1_card_type = '2' then mac1.ac1_legal_num
         end as codigocliente,
-       '' as nombrecliente,
+       	dmsn.dms_card_name as nombrecliente,
         mac1.ac1_account as cuenta,
         CURRENT_DATE - tmac.mac_doc_duedate dias,
         tmac.mac_comments,
@@ -243,7 +243,7 @@ class bulkPayments extends REST_Controller
         0 as docnum,
         tmac.mac_doc_date as fechadocumento,
         tmac.mac_doc_duedate as fechavencimiento,
-        0 as numerodocumento,
+        tmac.mac_trans_id as numerodocumento,
         18 as numtype,
         mdt_docname as tipo,
         case
@@ -3290,7 +3290,7 @@ class bulkPayments extends REST_Controller
 
 				// SE FORMA EL DETALLE DEL ARCHIVO PLANO
 				
-				if (in_array($detail['pm1_doctype'], [15,36])) {	
+				if (in_array($detail['pm1_doctype'], [15,18,36])) {	
 					
 
 					// DATOS DEL SOCIO
