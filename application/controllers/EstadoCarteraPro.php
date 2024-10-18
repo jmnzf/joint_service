@@ -4,6 +4,9 @@
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 date_default_timezone_set('America/Bogota');
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 require_once(APPPATH.'/asset/vendor/autoload.php');
 require_once(APPPATH.'/libraries/REST_Controller.php');
 use Restserver\libraries\REST_Controller;
@@ -37,7 +40,6 @@ class EstadoCarteraPro extENDs REST_Controller {
 
 		$formatter = new NumeroALetras();
 
-        $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','orientation' => 'L']);
 
 		//RUTA DE CARPETA EMPRESA
         $company = $this->pedeo->queryTable("SELECT main_folder company FROM PARAMS",array());
@@ -648,7 +650,7 @@ class EstadoCarteraPro extENDs REST_Controller {
 							<th><b style="font-size:9px; white-space: nowrap;">'.$monedadocumento.' '.number_format($detail_mayor_90, $DECI_MALES, ',', '.').'</b></th>
 							</tr>';
 
-				$cuerpo .= "<table width='100%'><thead>".$gCliente."<tr>".$cabecera."</tr><thead><tbody>".$totaldetalle.$detail_total."</tbody></table><br><br>";
+				$cuerpo .= "<table width='100%'><thead>".$gCliente."<tr>".$cabecera."</tr></thead><tbody>".$totaldetalle.$detail_total."</tbody></table><br><br>";
 			}
         }
 
@@ -729,6 +731,9 @@ class EstadoCarteraPro extENDs REST_Controller {
 
         $stylesheet = file_get_contents(APPPATH.'/asset/vendor/style.css');
         if(isset($contenidoestadocuenta[0])){
+            try{
+            $mpdf = new \Mpdf\Mpdf(['setAutoBottomMargin' => 'stretch','setAutoTopMargin' => 'stretch','orientation' => 'L']);
+
             $mpdf->SetHTMLHeader($header);
             $mpdf->SetHTMLFooter($footer);
             $mpdf->SetDefaultBodyCSS('background', "url('/var/www/html/".$company[0]['company']."/assets/img/W-background.png')");
@@ -738,6 +743,11 @@ class EstadoCarteraPro extENDs REST_Controller {
     
     
             $mpdf->Output('EstadoCartera_'.$contenidoestadocuenta[0]['fechacorte'].'.pdf', 'D');
+        } catch (\Mpdf\MpdfException $e) {
+            // Mostrar el mensaje de error en pantalla
+            echo 'Se ha producido un error en mPDF: ' . $e->getMessage();
+            
+        }
     
             header('Content-type: application/force-download');
             header('Content-Disposition: attachment; filename='.$filename);
