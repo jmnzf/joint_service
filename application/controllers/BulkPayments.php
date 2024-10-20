@@ -3391,7 +3391,7 @@ class bulkPayments extends REST_Controller
 						} 
 						
 	
-						$MONTOTOTAL = ( $MONTOTOTAL + $detail['pm1_vlrpaid']);
+						$MONTOTOTAL = ( $MONTOTOTAL + round($detail['pm1_vlrpaid']));
 
 						
 					}
