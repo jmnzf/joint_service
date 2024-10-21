@@ -268,7 +268,7 @@ class bulkPayments extends REST_Controller
         inner join dmsn
         on mac1.ac1_card_type = dmsn.dms_card_type
         and mac1.ac1_legal_num = dmsn.dms_card_code
-        where 1 = 1 {{tmac_where}}
+        where 1 = 1 {{tmac_where}} AND mac1.ac1_card_type = '2'
         and ABS((mac1.ac1_ven_debit) - (mac1.ac1_ven_credit)) > 0
         --SOLICITUD DE ANTICIPO DE COMPRAS
         UNION ALL
