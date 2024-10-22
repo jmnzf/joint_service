@@ -852,6 +852,7 @@ class Reports extends REST_Controller {
 				}
 
 				$sqlSelect = "SELECT
+					distinct on(ac1_line_num)
 					t0.ac1_trans_id docnum,
 					t0.ac1_trans_id numero_transaccion,
 					t16.mdt_docname origen,
