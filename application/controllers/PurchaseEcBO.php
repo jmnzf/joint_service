@@ -1898,6 +1898,33 @@ class PurchaseEcBO extends REST_Controller
 
 					array_push($DetalleConsolidadoCostoCosto[$posicionCostoCosto], $DetalleCostoCosto);
 				}
+
+				$sqlUpdateArticle = "UPDATE dmar SET dma_last_cardcode = :dma_last_cardcode,
+									 dma_last_purchase_date = :dma_last_purchase_date
+									 WHERE dma_item_code = :dma_item_code";
+
+				$resUpdateArticle = $this->pedeo->updateRow($sqlUpdateArticle, 
+									array(
+										":dma_last_cardcode" => $Data['cec_cardcode'],
+										":dma_last_purchase_date" => $Data['cec_docdate'],
+										":dma_item_code" => $detail['ec1_itemcode']
+									));
+
+				if (is_numeric($resUpdateArticle) && $resUpdateArticle == 1) {
+				}else{
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resUpdateArticle,
+						'mensaje'	=> 'No se pudo registrar la factura de compras'
+					);
+
+					$this->response($respuesta);
+
+					return;
+
+				}
 			}
 
 			//FIN PROCEDIMEINTO PARA INGRESAR EL DETALLE DE LA ENTRADA DE COMPRA
