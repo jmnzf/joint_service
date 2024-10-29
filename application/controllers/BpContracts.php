@@ -1891,8 +1891,7 @@ class BpContracts extends REST_Controller
 					FROM dmsn inner join dmgs on dmsn.dms_group_num = dmgs.mgs_id::text where dmgs.mgs_code != '99' and dmsn.dms_card_type  = '1')
 					AND responsestatus.estado = 'Abierto'
 					AND tcsn.csn_doctype = 32
-					AND dcsn.csn_typeagreement = 3
-					AND tcsn.csn_docentry = 10045";
+					AND dcsn.csn_typeagreement = 3";
 		
 		$resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
