@@ -571,6 +571,10 @@ class Items extends REST_Controller
 
 			$variableSql .= " AND t0.dma_item_name LIKE '%" . $request['nom_artic'] . "%'";
 		}
+
+		if(isset($request['is_asset']) &&  !empty($request['is_asset']) ){
+			$variableSql .= " AND t0.dma_item_asset = '1'";
+		}
 		// OBTENER NÚMERO DE REGISTROS DE LA TABLA.
 		$numRows = $this->pedeo->queryTable("select get_numrows('dmar') as numrows", []);
 		// COLUMNAS DEL DATATABLE
@@ -586,11 +590,12 @@ class Items extends REST_Controller
 			// OBTENER CONDICIONALES.
 			$variableSql .= " AND  " . self::get_Filter($columns, strtoupper($request['search']['value']));
 		}
+		
 		//
 		$sqlSelect = "SELECT t0.*, t2.mga_name FROM dmar t0 LEFT JOIN dmga t2 on t0.dma_group_code = t2.mga_id $variableSql";
 		//
 		$sqlSelect .=" ORDER BY ".$columns[$request['order'][0]['column']]." ".$request['order'][0]['dir']." LIMIT ".$request['length']." OFFSET ".$request['start'];
-
+		// print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 
