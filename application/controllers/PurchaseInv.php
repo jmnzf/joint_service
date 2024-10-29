@@ -2140,6 +2140,34 @@ class PurchaseInv extends REST_Controller
 
 					array_push($DetalleConsolidadoItemNoInventariable[$posicionItemNoInventariable], $DetalleItemNoInventariable);
 				}
+
+				$sqlUpdateArticle = "UPDATE dmar SET dma_last_cardcode = :dma_last_cardcode,
+									 dma_last_purchase_date = :dma_last_purchase_date
+									 WHERE dma_item_code = :dma_item_code";
+
+				$resUpdateArticle = $this->pedeo->updateRow($sqlUpdateArticle, 
+									array(
+										":dma_last_cardcode" => $Data['cfc_cardcode'],
+										":dma_last_purchase_date" => $Data['cfc_docdate'],
+										":dma_item_code" => $detail['fc1_itemcode']
+									));
+
+				if (is_numeric($resUpdateArticle) && $resUpdateArticle == 1) {
+				}else{
+					$this->pedeo->trans_rollback();
+
+					$respuesta = array(
+						'error'   => true,
+						'data' => $resUpdateArticle,
+						'mensaje'	=> 'No se pudo registrar la factura de compras'
+					);
+
+					$this->response($respuesta);
+
+					return;
+
+				}
+
 			}
 
 

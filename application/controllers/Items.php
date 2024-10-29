@@ -128,7 +128,8 @@ class Items extends REST_Controller
 						dma_accounting, dma_acctin, dma_acct_out, dma_acct_inv, dma_acct_stockn, dma_acct_stockp, dma_acct_redu, dma_acct_amp,
 						dma_acct_cost, dma_acct_return, dma_uom_width, dma_uom_tall, dma_uom_length, dma_uom_vol, dma_um_inventory, dma_tax_sales_code, dma_tax_purch_code,dma_acct_invproc,
 						dma_modular, dma_advertisement, dma_subscription, dma_use_tbase, dma_tasa_base, dma_type_art, dma_serial_number,deductible_spent,taxable_income,
-						dma_asset,dma_clean,dma_multipletax,dma_multipletax_purchcode,dma_multipletax_salescode,dma_item_asset)
+						dma_asset,dma_clean,dma_multipletax,dma_multipletax_purchcode,dma_multipletax_salescode,dma_item_asset, dma_last_cardcode,
+						dma_last_purchase_date, dma_wscode,dma_ubication, dma_old_code)
 						VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
 						:dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,:dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set,
 						:dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,:dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty,
@@ -137,7 +138,8 @@ class Items extends REST_Controller
 						:dma_accounting, :dma_acctin, :dma_acct_out, :dma_acct_inv, :dma_acct_stockn, :dma_acct_stockp, :dma_acct_redu, :dma_acct_amp,
 						:dma_acct_cost, :dma_acct_return, :dma_uom_width, :dma_uom_tall, :dma_uom_length, :dma_uom_vol, :dma_um_inventory, :dma_tax_sales_code, :dma_tax_purch_code,:dma_acct_invproc,
 						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base, :dma_type_art, :dma_serial_number,:deductible_spent,:taxable_income,:dma_asset,:dma_clean,
-						:dma_multipletax,:dma_multipletax_purchcode,:dma_multipletax_salescode,:dma_item_asset)";
+						:dma_multipletax,:dma_multipletax_purchcode,:dma_multipletax_salescode,:dma_item_asset, :dma_last_cardcode,
+						:dma_last_purchase_date, :dma_wscode,:dma_ubication, :dma_old_code)";
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -221,7 +223,13 @@ class Items extends REST_Controller
 				':dma_multipletax_purchcode' => isset($Data['dma_multipletax_purchcode']) ? $Data['dma_multipletax_purchcode'] : 0,
 				':dma_multipletax_salescode' => isset($Data['dma_multipletax_salescode']) ? $Data['dma_multipletax_salescode'] : 0,
 
-				':dma_item_asset' => isset($Data['dma_item_asset']) ? $Data['dma_item_asset'] : NULL
+				':dma_item_asset' => isset($Data['dma_item_asset']) ? $Data['dma_item_asset'] : NULL,
+				// 
+				':dma_last_cardcode' =>  isset($Data['dma_last_cardcode']) ? $Data['dma_last_cardcode'] : NULL,
+				':dma_last_purchase_date' =>  isset($Data['dma_last_purchase_date']) ? $Data['dma_last_purchase_date'] : NULL,
+				':dma_wscode' =>  isset($Data['dma_wscode']) ? $Data['dma_wscode'] : NULL,
+				':dma_ubication' =>  isset($Data['dma_ubication']) ? $Data['dma_ubication'] : NULL,
+				':dma_old_code' => isset($Data['dma_old_code']) ? $Data['dma_old_code'] : NULL 
 
 			));
 
@@ -351,7 +359,9 @@ class Items extends REST_Controller
 						dma_subscription = :dma_subscription, dma_use_tbase = :dma_use_tbase, dma_tasa_base = :dma_tasa_base, dma_type_art = :dma_type_art, dma_serial_number = :dma_serial_number,
 						deductible_spent = :deductible_spent,taxable_income = :taxable_income,
 						dma_asset = :dma_asset , dma_clean = :dma_clean, dma_multipletax =:dma_multipletax, dma_multipletax_purchcode =:dma_multipletax_purchcode,
-						dma_multipletax_salescode = :dma_multipletax_salescode, dma_item_asset = :dma_item_asset
+						dma_multipletax_salescode = :dma_multipletax_salescode, dma_item_asset = :dma_item_asset,
+						dma_last_cardcode = :dma_last_cardcode , dma_last_purchase_date = :dma_last_purchase_date ,
+						dma_wscode = :dma_wscode , dma_ubication = :dma_ubication ,	dma_old_code = :dma_old_code
 						WHERE dma_id = :dma_id";
 
 			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -433,7 +443,13 @@ class Items extends REST_Controller
 				':dma_multipletax_purchcode' => isset($Data['dma_multipletax_purchcode']) ? $Data['dma_multipletax_purchcode'] : 0,
 				':dma_multipletax_salescode' => isset($Data['dma_multipletax_salescode']) ? $Data['dma_multipletax_salescode'] : 0,
 
-				':dma_item_asset' => isset($Data['dma_item_asset']) ? $Data['dma_item_asset'] : NULL
+				':dma_item_asset' => isset($Data['dma_item_asset']) ? $Data['dma_item_asset'] : NULL,
+				// 
+				':dma_last_cardcode' =>  isset($Data['dma_last_cardcode']) ? $Data['dma_last_cardcode'] : NULL,
+				':dma_last_purchase_date' =>  isset($Data['dma_last_purchase_date']) ? $Data['dma_last_purchase_date'] : NULL,
+				':dma_wscode' =>  isset($Data['dma_wscode']) ? $Data['dma_wscode'] : NULL,
+				':dma_ubication' =>  isset($Data['dma_ubication']) ? $Data['dma_ubication'] : NULL,
+				':dma_old_code' => isset($Data['dma_old_code']) ? $Data['dma_old_code'] : NULL 
 
 				
 			));
@@ -555,6 +571,10 @@ class Items extends REST_Controller
 
 			$variableSql .= " AND t0.dma_item_name LIKE '%" . $request['nom_artic'] . "%'";
 		}
+
+		if(isset($request['is_asset']) &&  !empty($request['is_asset']) ){
+			$variableSql .= " AND t0.dma_item_asset = '1'";
+		}
 		// OBTENER NÚMERO DE REGISTROS DE LA TABLA.
 		$numRows = $this->pedeo->queryTable("select get_numrows('dmar') as numrows", []);
 		// COLUMNAS DEL DATATABLE
@@ -570,11 +590,12 @@ class Items extends REST_Controller
 			// OBTENER CONDICIONALES.
 			$variableSql .= " AND  " . self::get_Filter($columns, strtoupper($request['search']['value']));
 		}
+		
 		//
 		$sqlSelect = "SELECT t0.*, t2.mga_name FROM dmar t0 LEFT JOIN dmga t2 on t0.dma_group_code = t2.mga_id $variableSql";
 		//
 		$sqlSelect .=" ORDER BY ".$columns[$request['order'][0]['column']]." ".$request['order'][0]['dir']." LIMIT ".$request['length']." OFFSET ".$request['start'];
-
+		// print_r($sqlSelect);exit;
         $resSelect = $this->pedeo->queryTable($sqlSelect, array());
 
 

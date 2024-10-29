@@ -54,8 +54,8 @@ class Warehouse extends REST_Controller {
       }
 
         $sqlInsert = "INSERT INTO dmws(dws_code, dws_name, dws_ubication, dws_acctin, dws_acct_out, dws_acct_stockn, dws_acct_stockp, dws_acct_redu,
-                      dws_acct_amp, dws_acct_cost, dws_enabled, dws_acct_return, dws_acct_inv, business,dws_acct_invproc,deductible_spent,taxable_income)VALUES (:dws_code, :dws_name, :dws_ubication, :dws_acctin, :dws_acct_out,
-                      :dws_acct_stockn, :dws_acct_stockp, :dws_acct_redu, :dws_acct_amp, :dws_acct_cost, :dws_enabled, :dws_acct_return, :dws_acct_inv, :business,:dws_acct_invproc,:deductible_spent,:taxable_income)";
+                      dws_acct_amp, dws_acct_cost, dws_enabled, dws_acct_return, dws_acct_inv, business,dws_acct_invproc,deductible_spent,taxable_income, dws_af)VALUES (:dws_code, :dws_name, :dws_ubication, :dws_acctin, :dws_acct_out,
+                      :dws_acct_stockn, :dws_acct_stockp, :dws_acct_redu, :dws_acct_amp, :dws_acct_cost, :dws_enabled, :dws_acct_return, :dws_acct_inv, :business,:dws_acct_invproc,:deductible_spent,:taxable_income, :dws_af)";
 
 
         $resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -76,7 +76,8 @@ class Warehouse extends REST_Controller {
               ':dws_acct_inv' => $Data['dws_acct_inv'],
               ':dws_acct_invproc' => $Data['dws_acct_invproc'],
               ':deductible_spent' => isset($Data['deductible_spent']) ? $Data['deductible_spent'] : 0,
-              ':taxable_income' => isset($Data['taxable_income']) ? $Data['taxable_income'] : 0
+              ':taxable_income' => isset($Data['taxable_income']) ? $Data['taxable_income'] : 0,
+              ':dws_af' => $Data['dws_af']
         ));
 
         if(is_numeric($resInsert) && $resInsert > 0){
@@ -138,7 +139,7 @@ class Warehouse extends REST_Controller {
                     dws_acct_out = :dws_acct_out, dws_acct_stockn = :dws_acct_stockn, dws_acct_stockp = :dws_acct_stockp,
                     dws_acct_redu = :dws_acct_redu, dws_acct_amp = :dws_acct_amp, dws_acct_cost = :dws_acct_cost, dws_enabled = :dws_enabled,
                     dws_acct_return = :dws_acct_return, dws_acct_inv = :dws_acct_inv, business = :business,dws_acct_invproc = :dws_acct_invproc ,
-                    deductible_spent = :deductible_spent , taxable_income = :taxable_income
+                    deductible_spent = :deductible_spent , taxable_income = :taxable_income, dws_af =:dws_af
                     WHERE dws_id = :dws_id";
 
       $resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -159,7 +160,8 @@ class Warehouse extends REST_Controller {
               ':dws_id' => $Data['dws_id'],
               ':dws_acct_invproc' => $Data['dws_acct_invproc'],
               ':deductible_spent' => isset($Data['deductible_spent']) ? $Data['deductible_spent'] : 0,
-              ':taxable_income' => isset($Data['taxable_income']) ? $Data['taxable_income'] : 0
+              ':taxable_income' => isset($Data['taxable_income']) ? $Data['taxable_income'] : 0,
+              ':dws_af' => $Data['dws_af']
       ));
       if(is_numeric($resUpdate) && $resUpdate == 1){
 
