@@ -1899,6 +1899,9 @@ class BpContracts extends REST_Controller
 
 		foreach ($resSelect as $key => $value) {
 
+			$totalReteFuente = 0;
+			$totalReteIva = 0;
+			$totaDoc = 0;
 
 			if ($value['sefactura'] == 1) {
 
@@ -1938,6 +1941,63 @@ class BpContracts extends REST_Controller
 			}
 
 
+
+			if ($value['sefactura'] == 1) {
+
+				// VARIFICAR SI LA LINEA TIENE RETENCIONES APLICADAS
+
+				$sqlRetencion = "SELECT fc.crt_codret,fc.crt_typert,fc.crt_type,fc.crt_basert,fc.crt_profitrt,
+				fc.crt_base,crt_totalrt
+				FROM csn1
+				INNER JOIN fcrt fc ON csn1.sn1_docentry = fc.crt_baseentry 
+				AND csn1.sn1_linenum = fc.crt_linenum
+				AND fc.crt_basetype = 32
+				AND sn1_enabled = 1
+				WHERE sn1_docentry = :sn1_docentry";
+
+				$resRetencion = $this->pedeo->queryTable($sqlRetencion, array(':sn1_docentry' => $value['csn_docentry']));
+
+				if (isset($resRetencion[0])) {
+
+					foreach ($resRetencion as $key2 => $ret) {
+						// RETENCION DE FUENTE E ICA
+						if ( $ret['crt_type'] == 1 || $ret['crt_type'] == 2 ) {
+
+							$totalReteFuente = $totalReteFuente +  $ret['crt_totalrt'];
+
+						// RETENCION DE IVA    
+						} else if ($ret['crt_type'] == 3) {
+
+							$totalReteIva = $totalReteIva +  $ret['crt_totalrt'];
+						}
+					}
+				}
+
+				// VERIFICAR MONTO TOTAL A APLICAR
+				$resDetalle = $this->pedeo->queryTable('SELECT * FROM csn1 WHERE sn1_enabled = 1 AND sn1_docentry = :sn1_docentry', array (
+
+					':sn1_docentry' => $value['csn_docentry']
+
+				) );
+
+				if ( isset($resDetalle[0]) ) {
+
+					$resSelect[$key]['facturando'] = 'SI'; 
+
+
+					foreach ($resDetalle as $key3 => $detalleF) {
+						$totaDoc = $totaDoc + ( $detalleF['sn1_linetotal'] + $detalleF['sn1_vatsum'] );
+					}
+
+					$resSelect[$key]['csn_doctotal'] = ( ( $totaDoc - $totalReteFuente ) - $totalReteIva ) ;
+
+				} else {
+					$resSelect[$key]['facturando'] = 'NO'; 
+				}
+
+			}else{
+				$resSelect[$key]['facturando'] = 'NO'; 
+			}
 		}
 
 		if ( isset($resSelect[0]) ) {
