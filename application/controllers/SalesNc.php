@@ -421,10 +421,11 @@ class SalesNc extends REST_Controller
 
 				if (is_numeric($resInsertEstadoPreeliminar) && $resInsertEstadoPreeliminar > 0) {
 					$docstoValidate = [5,34];
-
-					if(in_array($documentoPreeliminar['pap_basetype'],$docstoValidate)){
-						$Data['vnc_basetype'] = $documentoPreeliminar['pap_basetype'];
-						$Data['vnc_baseentry'] = $documentoPreeliminar['pap_baseentry'];
+					if (isset($documentoPreeliminar[0])){
+						if(in_array($documentoPreeliminar['pap_basetype'],$docstoValidate)){
+							$Data['vnc_basetype'] = $documentoPreeliminar['pap_basetype'];
+							$Data['vnc_baseentry'] = $documentoPreeliminar['pap_baseentry'];
+						}
 					}
 				} else {
 
