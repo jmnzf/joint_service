@@ -726,7 +726,7 @@ class Payment extends REST_Controller
         $PARAMS =  $this->generic->getParams();
 
 
-        $resData = $this->pedeo->queryTable("SELECT * FROM tbpp WHERE bpp_status2 = :bpp_status2 AND bpp_try < :bpp_try", array(':bpp_status2' => 'PENDING', ':bpp_try' => 7));
+        $resData = $this->pedeo->queryTable("SELECT * FROM tbpp WHERE bpp_email = :bpp_email AND bpp_try < :bpp_try", array(':bpp_email' => 0, ':bpp_try' => 7));
 
         if ( isset($resData[0]) ) {
 
