@@ -509,43 +509,6 @@ class Helpers extends REST_Controller {
 
   public function getRutaGestion_post(){
 
-    // $sqlSelect = "SELECT distinct on (csn_docnum,bdg_dia)
-    //               csn_docnum AS \"NumOrden\",
-    //               csn_cardcode AS \"CodigoCliente\",
-    //               csn_cardname AS \"NombreCliente\",
-    //               (json_array_elements(dsc_rutas::json)->>'geo_id')::int AS \"CodigoRuta\",
-    //               (json_array_elements(dsc_rutas::json)->>'geo_nombre')::text AS \"NombreRuta\",
-    //               csn1.sn1_itemcode AS \"CodigoServ\",
-    //               dmar.dma_item_name AS \"NomServicio\",
-    //               csn_cleantotal AS \"CantidadServ\",
-    //               dmsn.dms_cel AS \"TelContacto\",
-    //               dmsn.dms_email AS \"E_Mail\",
-    //               csn_comment AS \"Comentarios\",
-    //               csn_adress AS \"DireccionUbicacion\",
-    //               csn_comment AS \"DirUB\",
-    //               coalesce(bdg_dia,'7') AS \"U_WT_Dia_Ruta\",
-    //               '0' AS \"U_WT_BODEGA\",
-    //               '0' AS \"dia_ruta\",
-    //               '0' AS \"codigo_serial\",
-    //               csn_contacid AS \"Contacto\",
-    //               coalesce(bdg_dia,'7') AS \"dia_semana\",
-    //               coalesce(dbg_id,0) as dbg_id,
-    //               csn_docentry,
-    //               csn_weeklytoilets as aseos_semanales,
-    //               case when string_agg(dmsc.dmc_email,';') is not null then string_agg(dmsc.dmc_email,';') else dms_email end as \"emailContact\"
-    //           FROM tcsn 
-    //           INNER JOIN responsestatus ON tcsn.csn_docentry = responsestatus.id AND tcsn.csn_doctype = responsestatus.tipo 
-    //           INNER JOIN csn1 ON csn_docentry = sn1_docentry
-    //           INNER JOIN dmar ON sn1_itemcode = dma_item_code AND dma_clean = 1
-    //           INNER JOIN dmsn ON TRIM(tcsn.csn_cardcode) = TRIM(dmsn.dms_card_code) AND dmsn.dms_card_type = '1'
-    //           INNER JOIN tdsc ON dsc_docentry = csn_docentry AND csn_doctype = 32 
-    //           LEFT JOIN tbdg ON csn_docentry = bdg_docentry AND csn_doctype = 32
-    //           left join dmsc on dmsc.dmc_card_code  = dmsn.dms_card_code and dmsc.dmc_uso = 'RECURRENTE' and dmsc.dmc_status = '1'
-    //           WHERE responsestatus.estado = 'Abierto'
-    //           GROUP BY csn_docnum, csn_cardcode, csn_cardname, sn1_itemcode, dma_item_name,
-    //           dms_cel, dms_email, csn_comment, csn_adress, csn_contacid, bdg_dia,(json_array_elements(dsc_rutas::json)->>'geo_id')::int,
-    //           (json_array_elements(dsc_rutas::json)->>'geo_nombre')::text,dbg_id,csn_docentry";
-
     $sqlSelect = " SELECT distinct on (csn_docnum,bdg_dia)
                 csn_docnum AS \"NumOrden\",
                 csn_cardcode AS \"CodigoCliente\",
