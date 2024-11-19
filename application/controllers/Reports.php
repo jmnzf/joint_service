@@ -877,10 +877,10 @@ class Reports extends REST_Controller {
 					COALESCE(t4.acc_name,'CUENTA PUENTE') nombre_cuenta,t0.*,
 					dmsn.dms_card_name as cardname
 					FROM mac1 t0
-					INNER JOIN dacc t4 on t0.ac1_account = t4.acc_code
+					LEFT JOIN dacc t4 on t0.ac1_account = t4.acc_code
 					INNER JOIN dmdt t16 on coalesce(t0.ac1_font_type,0) = t16.mdt_doctype
-					inner join tmac  on t0.ac1_trans_id = tmac.mac_trans_id 
-					inner join dmsn on t0.ac1_legal_num = dmsn.dms_card_code
+					INNER join tmac  on t0.ac1_trans_id = tmac.mac_trans_id 
+					LEFT join dmsn on t0.ac1_legal_num = dmsn.dms_card_code
 					WHERE 1=1 ".$where;
 
 				$resSelect = $this->pedeo->queryTable($sqlSelect,array());
