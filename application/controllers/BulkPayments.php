@@ -112,6 +112,7 @@ class bulkPayments extends REST_Controller
         inner join dcfc
         on dcfc.cfc_doctype = mac1.ac1_font_type
         and dcfc.cfc_docentry = mac1.ac1_font_key
+		inner join dmsn on dcfc.cfc_cardcode = dmsn.dms_card_code and dmsn.dms_card_type = '2'
         where 1 = 1 {{dcfc_where}}
         and ABS((mac1.ac1_ven_credit) - (mac1.ac1_ven_debit)) > 0
 		/*
@@ -297,6 +298,7 @@ class bulkPayments extends REST_Controller
         from dcsa
         inner join csa1 on dcsa.csa_docentry = csa1.sa1_docentry
         inner join dmdt on dmdt.mdt_doctype = dcsa.csa_doctype
+		left join dmsn on dcsa.csa_cardcode = dmsn.dms_card_code
         where 1 = 1 {{dcsa_where}}
 		and ABS( get_dynamic_conversion(:currency,get_localcur(),dcsa.csa_docdate,(dcsa.csa_anticipate_total) - (dcsa.csa_paytoday) , get_localcur()) ) > 0";
 
@@ -308,31 +310,36 @@ class bulkPayments extends REST_Controller
                     $dateField = ($Data['doc_filter'] == 1) ? "_doc_date" : "_doc_duedate";
                     $where = "AND {$value['table']}.{$value['prefix']}{$dateField} BETWEEN '{$Data['doc_startdate']}'AND '{$Data['doc_enddate']}'";
                     $where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND ac1_legal_num in({$Data['doc_cardcode']})" : "";
+					$where .= (isset($Data['doc_group']) && !empty($Data['doc_group'])) ? " AND dmsn.dms_group_num = '{$Data['doc_group']}'": "";
                     $where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
                     break;
                 case 'tspm':
                     $dateField = ($Data['doc_filter'] == 1) ? "_docdate" : "_taxdate";
                     $where = "AND {$value['table']}.{$value['prefix']}{$dateField} BETWEEN '{$Data['doc_startdate']}'AND '{$Data['doc_enddate']}'";
                     $where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND {$value['table']}.{$value['prefix']}_cardcode in ({$Data['doc_cardcode']})" : "";
-                    $where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
+					$where .= (isset($Data['doc_group']) && !empty($Data['doc_group'])) ? " AND dmsn.dms_group_num = '{$Data['doc_group']}'": "";
+					$where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
                     break;
                 case 'dcsa':
                     $dateField = ($Data['doc_filter'] == 1) ? "_docdate" : "_duedate";
                     $where = "AND {$value['table']}.{$value['prefix']}{$dateField} BETWEEN '{$Data['doc_startdate']}'AND '{$Data['doc_enddate']}'";
                     $where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND {$value['table']}.{$value['prefix']}_cardcode in ({$Data['doc_cardcode']})" : "";
-                    $where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
+					$where .= (isset($Data['doc_group']) && !empty($Data['doc_group'])) ? " AND dmsn.dms_group_num = '{$Data['doc_group']}'": "";
+					$where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
                     break;
 				case 'gbpe':
 					$dateField = ($Data['doc_filter'] == 1) ? "_docdate" : "_docdate";
 					$where = "AND {$value['table']}.{$value['prefix']}{$dateField} BETWEEN '{$Data['doc_startdate']}'AND '{$Data['doc_enddate']}'";
 					$where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND {$value['table']}.{$value['prefix']}_cardcode in ({$Data['doc_cardcode']})" : "";
+					$where .= (isset($Data['doc_group']) && !empty($Data['doc_group'])) ? " AND dmsn.dms_group_num = '{$Data['doc_group']}'": "";
 					$where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
 					break;
                 default:
                     $dateField = ($Data['doc_filter'] == 1) ? "_docdate" : "_duedate";
                     $where = "AND {$value['table']}.{$value['prefix']}{$dateField} BETWEEN '{$Data['doc_startdate']}'AND '{$Data['doc_enddate']}'";
                     $where .= (isset($Data['doc_cardcode']) && !empty($Data['doc_cardcode'])) ? " AND {$value['table']}.{$value['prefix']}_cardcode in ({$Data['doc_cardcode']})" : "";
-                    $where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
+					$where .= (isset($Data['doc_group']) && !empty($Data['doc_group'])) ? " AND dmsn.dms_group_num = '{$Data['doc_group']}'": "";
+					$where .= " AND {$value['table']}.business = :business AND {$value['table']}.branch = :branch";
                     break;
             }
 
