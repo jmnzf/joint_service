@@ -890,6 +890,7 @@ class Reports extends REST_Controller {
 					$newData = [];
 					// RECORRER DATOS DE LA CONSULTA.
 					foreach ($resSelect as $key => $data) {
+						
 						// VALIDATE
 						$json = json_decode($data['extras'], true);
 						// ELIMINAR DATA DEL ARRAY
@@ -938,6 +939,9 @@ class Reports extends REST_Controller {
 							 * FIN
 							 */
 							// AGREGAR NUEVO ARRAY.
+							$newData[] = array_merge($data, $newObj);
+						}else{
+							// DOC MANUAL 
 							$newData[] = array_merge($data, $newObj);
 						}
 					}
