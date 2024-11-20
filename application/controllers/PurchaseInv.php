@@ -604,11 +604,11 @@ class PurchaseInv extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO cfc1(fc1_docentry,fc1_itemcode, fc1_itemname, fc1_quantity, fc1_uom, fc1_whscode,
                                     fc1_price, fc1_vat, fc1_vatsum, fc1_discount, fc1_linetotal, fc1_costcode, fc1_ubusiness, fc1_project,
                                     fc1_acctcode, fc1_basetype, fc1_doctype, fc1_avprice, fc1_inventory, fc1_acciva, fc1_linenum, fc1_codimp, 
-									fc1_ubication,fc1_baseline,ote_code,fc1_tax_base,deducible,fc1_vat_ad,fc1_vatsum_ad,fc1_accimp_ad,fc1_codimp_ad)
+									fc1_ubication,fc1_baseline,ote_code,fc1_tax_base,deducible,fc1_vat_ad,fc1_vatsum_ad,fc1_accimp_ad,fc1_codimp_ad, fc1_codmunicipality)
 									VALUES(:fc1_docentry,:fc1_itemcode, :fc1_itemname, :fc1_quantity,:fc1_uom, :fc1_whscode,:fc1_price, :fc1_vat, 
 									:fc1_vatsum, :fc1_discount, :fc1_linetotal, :fc1_costcode, :fc1_ubusiness, :fc1_project,
                                     :fc1_acctcode, :fc1_basetype, :fc1_doctype, :fc1_avprice, :fc1_inventory, :fc1_acciva, :fc1_linenum,:fc1_codimp, 
-									:fc1_ubication,:fc1_baseline,:ote_code,:fc1_tax_base,:deducible,:fc1_vat_ad,:fc1_vatsum_ad,:fc1_accimp_ad,:fc1_codimp_ad)";
+									:fc1_ubication,:fc1_baseline,:ote_code,:fc1_tax_base,:deducible,:fc1_vat_ad,:fc1_vatsum_ad,:fc1_accimp_ad,:fc1_codimp_ad, :fc1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':fc1_docentry' => $resInsert,
@@ -642,7 +642,9 @@ class PurchaseInv extends REST_Controller
 					':fc1_vat_ad' => is_numeric($detail['fc1_vat_ad']) ? $detail['fc1_vat_ad'] : 0,
 					':fc1_vatsum_ad' => is_numeric($detail['fc1_vatsum_ad']) ? $detail['fc1_vatsum_ad'] : 0,
 					':fc1_accimp_ad'  => is_numeric($detail['fc1_accimp_ad']) ? $detail['fc1_accimp_ad'] : 0,
-					':fc1_codimp_ad'  => isset($detail['fc1_codimp_ad']) ? $detail['fc1_codimp_ad'] : NULL
+					':fc1_codimp_ad'  => isset($detail['fc1_codimp_ad']) ? $detail['fc1_codimp_ad'] : NULL,
+					':fc1_codmunicipality' => isset($detail['fc1_codmunicipality']) ? $detail['fc1_codmunicipality'] : NULL
+
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -3936,9 +3938,9 @@ class PurchaseInv extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO cfc1(fc1_docentry, fc1_itemcode, fc1_itemname, fc1_quantity, fc1_uom, fc1_whscode,
 																			fc1_price, fc1_vat, fc1_vatsum, fc1_discount, fc1_linetotal, fc1_costcode, fc1_ubusiness, fc1_project,
-																			fc1_acctcode, fc1_basetype, fc1_doctype, fc1_avprice, fc1_inventory, fc1_acciva, fc1_ubication)VALUES(:fc1_docentry, :fc1_itemcode, :fc1_itemname, :fc1_quantity,
+																			fc1_acctcode, fc1_basetype, fc1_doctype, fc1_avprice, fc1_inventory, fc1_acciva, fc1_ubication, fc1_codmunicipality)VALUES(:fc1_docentry, :fc1_itemcode, :fc1_itemname, :fc1_quantity,
 																			:fc1_uom, :fc1_whscode,:fc1_price, :fc1_vat, :fc1_vatsum, :fc1_discount, :fc1_linetotal, :fc1_costcode, :fc1_ubusiness, :fc1_project,
-																			:fc1_acctcode, :fc1_basetype, :fc1_doctype, :fc1_avprice, :fc1_inventory, :fc1_acciva, :fc1_ubication)";
+																			:fc1_acctcode, :fc1_basetype, :fc1_doctype, :fc1_avprice, :fc1_inventory, :fc1_acciva, :fc1_ubication, :fc1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':fc1_docentry' => $Data['cfc_docentry'],
@@ -3961,7 +3963,8 @@ class PurchaseInv extends REST_Controller
 					':fc1_avprice' => is_numeric($detail['fc1_avprice']) ? $detail['fc1_avprice'] : 0,
 					':fc1_inventory' => is_numeric($detail['fc1_inventory']) ? $detail['fc1_inventory'] : NULL,
 					':fc1_acciva' => is_numeric($detail['fc1_cuentaIva']) ? $detail['fc1_cuentaIva'] : 0,
-					':fc1_ubication' => ($detail['fc1_ubication']) ? $detail['fc1_ubication'] : NULL
+					':fc1_ubication' => ($detail['fc1_ubication']) ? $detail['fc1_ubication'] : NULL,
+					':fc1_codmunicipality' => isset($detail['fc1_codmunicipality']) ? $detail['fc1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

@@ -767,10 +767,11 @@ class PurchSolAntProv extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO csa1(sa1_docentry, sa1_itemcode, sa1_itemname, sa1_quantity, sa1_uom, sa1_whscode,
                 sa1_price, sa1_vat, sa1_vatsum, sa1_discount, sa1_linetotal, sa1_costcode, sa1_ubusiness, sa1_project,
                 sa1_acctcode, sa1_basetype, sa1_doctype, sa1_avprice, sa1_inventory, sa1_linenum, sa1_acciva, sa1_codimp, sa1_ubication,sa1_baseline,ote_code,
-				sa1_vat_ad,sa1_vatsum_ad,sa1_accimp_ad,sa1_codimp_ad)
+				sa1_vat_ad,sa1_vatsum_ad,sa1_accimp_ad,sa1_codimp_ad, sa1_codmunicipality)
 				VALUES(:sa1_docentry, :sa1_itemcode, :sa1_itemname, :sa1_quantity,:sa1_uom, :sa1_whscode,:sa1_price, :sa1_vat, :sa1_vatsum, 
 				:sa1_discount, :sa1_linetotal, :sa1_costcode, :sa1_ubusiness, :sa1_project,:sa1_acctcode, :sa1_basetype, :sa1_doctype, :sa1_avprice, 
-				:sa1_inventory,:sa1_linenum,:sa1_acciva, :sa1_codimp, :sa1_ubication,:sa1_baseline,:ote_code,:sa1_vat_ad,:sa1_vatsum_ad,:sa1_accimp_ad,:sa1_codimp_ad)";
+				:sa1_inventory,:sa1_linenum,:sa1_acciva, :sa1_codimp, :sa1_ubication,:sa1_baseline,:ote_code,:sa1_vat_ad,:sa1_vatsum_ad,:sa1_accimp_ad,:sa1_codimp_ad, 
+				:sa1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sa1_docentry' => $resInsert,
@@ -802,7 +803,8 @@ class PurchSolAntProv extends REST_Controller
 					':sa1_vat_ad'    => is_numeric($detail['sa1_vat_ad']) ? $detail['sa1_vat_ad'] : 0,
 					':sa1_vatsum_ad' => is_numeric($detail['sa1_vatsum_ad']) ? $detail['sa1_vatsum_ad'] : 0,
 					':sa1_accimp_ad' => is_numeric($detail['sa1_accimp_ad']) ? $detail['sa1_accimp_ad'] : NULL,
-					':sa1_codimp_ad' => isset($detail['sa1_codimp_ad']) ? $detail['sa1_codimp_ad'] : NULL
+					':sa1_codimp_ad' => isset($detail['sa1_codimp_ad']) ? $detail['sa1_codimp_ad'] : NULL,
+					':sa1_codmunicipality' => isset($detail['sa1_codmunicipality']) ? $detail['sa1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1055,9 +1057,9 @@ class PurchSolAntProv extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO csa1(sa1_docentry, sa1_itemcode, sa1_itemname, sa1_quantity, sa1_uom, sa1_whscode,
 																			sa1_price, sa1_vat, sa1_vatsum, sa1_discount, sa1_linetotal, sa1_costcode, sa1_ubusiness, sa1_project,
-																			sa1_acctcode, sa1_basetype, sa1_doctype, sa1_avprice, sa1_inventory, sa1_acciva, sa1_linenum, sa1_ubication)VALUES(:sa1_docentry, :sa1_itemcode, :sa1_itemname, :sa1_quantity,
+																			sa1_acctcode, sa1_basetype, sa1_doctype, sa1_avprice, sa1_inventory, sa1_acciva, sa1_linenum, sa1_ubication, sa1_codmunicipality)VALUES(:sa1_docentry, :sa1_itemcode, :sa1_itemname, :sa1_quantity,
 																			:sa1_uom, :sa1_whscode,:sa1_price, :sa1_vat, :sa1_vatsum, :sa1_discount, :sa1_linetotal, :sa1_costcode, :sa1_ubusiness, :sa1_project,
-																			:sa1_acctcode, :sa1_basetype, :sa1_doctype, :sa1_avprice, :sa1_inventory, :sa1_acciva,:sa1_linenum, :sa1_ubication)";
+																			:sa1_acctcode, :sa1_basetype, :sa1_doctype, :sa1_avprice, :sa1_inventory, :sa1_acciva,:sa1_linenum, :sa1_ubication, :sa1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sa1_docentry' => $Data['csa_docentry'],
@@ -1081,7 +1083,8 @@ class PurchSolAntProv extends REST_Controller
 					':sa1_inventory' => is_numeric($detail['sa1_inventory']) ? $detail['sa1_inventory'] : NULL,
 					':sa1_acciva' => is_numeric($detail['sa1_acciva']) ? $detail['sa1_acciva'] : NULL,
 					':sa1_linenum' => is_numeric($detail['sa1_linenum']) ? $detail['sa1_linenum'] : NULL,
-					':sa1_ubication' => is_numeric($detail['sa1_ubication']) ? $detail['sa1_ubication'] : NULL
+					':sa1_ubication' => is_numeric($detail['sa1_ubication']) ? $detail['sa1_ubication'] : NULL,
+					':sa1_codmunicipality' => isset($detail['sa1_codmunicipality']) ? $detail['sa1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

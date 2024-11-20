@@ -561,11 +561,11 @@ class PurchaseEc extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO cec1(ec1_docentry,ec1_itemcode, ec1_itemname, ec1_quantity, ec1_uom, ec1_whscode,
                                     ec1_price, ec1_vat, ec1_vatsum, ec1_discount, ec1_linetotal, ec1_costcode, ec1_ubusiness, ec1_project,
                                     ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_linenum, ec1_acciva, ec1_codimp, ec1_ubication,
-									ec1_baseline,ote_code,ec1_gift,ec1_tax_base,deducible,ec1_vat_ad,ec1_vatsum_ad,ec1_accimp_ad,ec1_codimp_ad)
+									ec1_baseline,ote_code,ec1_gift,ec1_tax_base,deducible,ec1_vat_ad,ec1_vatsum_ad,ec1_accimp_ad,ec1_codimp_ad, ec1_codmunicipality)
 									VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
                                     :ec1_uom, :ec1_whscode,:ec1_price, :ec1_vat, :ec1_vatsum, :ec1_discount, :ec1_linetotal, :ec1_costcode, :ec1_ubusiness, :ec1_project,
                                     :ec1_acctcode, :ec1_basetype, :ec1_doctype, :ec1_avprice, :ec1_inventory,:ec1_linenum,:ec1_acciva,:ec1_codimp, 
-									:ec1_ubication,:ec1_baseline,:ote_code,:ec1_gift,:ec1_tax_base,:deducible,:ec1_vat_ad,:ec1_vatsum_ad,:ec1_accimp_ad,:ec1_codimp_ad)";
+									:ec1_ubication,:ec1_baseline,:ote_code,:ec1_gift,:ec1_tax_base,:deducible,:ec1_vat_ad,:ec1_vatsum_ad,:ec1_accimp_ad,:ec1_codimp_ad, :ec1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ec1_docentry' => $resInsert,
@@ -600,7 +600,8 @@ class PurchaseEc extends REST_Controller
 					':ec1_vat_ad' => is_numeric($detail['ec1_vat_ad']) ? $detail['ec1_vat_ad'] : 0,
 					':ec1_vatsum_ad' => is_numeric($detail['ec1_vatsum_ad']) ? $detail['ec1_vatsum_ad'] : 0,
 					':ec1_accimp_ad' => is_numeric($detail['ec1_accimp_ad']) ? $detail['ec1_accimp_ad'] : NULL,
-					':ec1_codimp_ad' => isset($detail['ec1_codimp_ad']) ? $detail['ec1_codimp_ad'] : NULL
+					':ec1_codimp_ad' => isset($detail['ec1_codimp_ad']) ? $detail['ec1_codimp_ad'] : NULL,
+					':ec1_codmunicipality' => isset($detail['ec1_codmunicipality']) ? $detail['ec1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -2633,9 +2634,9 @@ class PurchaseEc extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO cec1(ec1_docentry, ec1_itemcode, ec1_itemname, ec1_quantity, ec1_uom, ec1_whscode,
 																			ec1_price, ec1_vat, ec1_vatsum, ec1_discount, ec1_linetotal, ec1_costcode, ec1_ubusiness, ec1_project,
-																			ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_acciva, ec1_linenum, ec1_ubication)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
+																			ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_acciva, ec1_linenum, ec1_ubication, ec1_codmunicipality)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
 																			:ec1_uom, :ec1_whscode,:ec1_price, :ec1_vat, :ec1_vatsum, :ec1_discount, :ec1_linetotal, :ec1_costcode, :ec1_ubusiness, :ec1_project,
-																			:ec1_acctcode, :ec1_basetype, :ec1_doctype, :ec1_avprice, :ec1_inventory, :ec1_acciva,:ec1_linenum, :ec1_ubication)";
+																			:ec1_acctcode, :ec1_basetype, :ec1_doctype, :ec1_avprice, :ec1_inventory, :ec1_acciva,:ec1_linenum, :ec1_ubication, :ec1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ec1_docentry' => $Data['cec_docentry'],
@@ -2659,7 +2660,8 @@ class PurchaseEc extends REST_Controller
 					':ec1_inventory' => is_numeric($detail['ec1_inventory']) ? $detail['ec1_inventory'] : NULL,
 					':ec1_acciva' => is_numeric($detail['ec1_acciva']) ? $detail['ec1_acciva'] : NULL,
 					':ec1_linenum' => is_numeric($detail['ec1_linenum']) ? $detail['ec1_linenum'] : NULL,
-					':ec1_ubication' => is_numeric($detail['ec1_ubication']) ? $detail['ec1_ubication'] : NULL
+					':ec1_ubication' => is_numeric($detail['ec1_ubication']) ? $detail['ec1_ubication'] : NULL,
+					':ec1_codmunicipality' => isset($detail['ec1_codmunicipality']) ? $detail['ec1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

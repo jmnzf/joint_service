@@ -482,10 +482,10 @@ class SalesDvBO extends REST_Controller {
           $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                               dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
                               dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codimp, dv1_ubication, 
-                              ote_code,dv1_baseline,detalle_modular,dv1_tax_base,detalle_anuncio,imponible)
+                              ote_code,dv1_baseline,detalle_modular,dv1_tax_base,detalle_anuncio,imponible, dv1_codmunicipality)
                               VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,:dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, 
                               :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,:dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, 
-                              :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp, :dv1_ubication, :ote_code,:dv1_baseline,:detalle_modular,:dv1_tax_base,:detalle_anuncio,:imponible)";
+                              :dv1_inventory, :dv1_linenum, :dv1_acciva, :dv1_codimp, :dv1_ubication, :ote_code,:dv1_baseline,:detalle_modular,:dv1_tax_base,:detalle_anuncio,:imponible, :dv1_codmunicipality)";
 
           $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail,array(
             ':dv1_docentry' => $resInsert,
@@ -516,7 +516,8 @@ class SalesDvBO extends REST_Controller {
             ':dv1_tax_base' => is_numeric($detail['dv1_tax_base']) ? $detail['dv1_tax_base'] : 0,
             ':detalle_modular' => (json_encode($detail['detalle_modular'])) ? json_encode(json_decode($detail['detalle_modular'],true)) : NULL,
 					  ':detalle_anuncio' => (json_encode($detail['detalle_anuncio'])) ? json_encode(json_decode($detail['detalle_anuncio'],true)) : NULL,
-            ':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL
+            ':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL,
+            ':dv1_codmunicipality' => isset($detail['dv1_codmunicipality']) ? $detail['dv1_codmunicipality'] : NULL
           ));
 
           if(is_numeric($resInsertDetail) && $resInsertDetail > 0){
@@ -1904,9 +1905,9 @@ class SalesDvBO extends REST_Controller {
 
         $sqlInsertDetail = "INSERT INTO vdv1(dv1_docentry, dv1_itemcode, dv1_itemname, dv1_quantity, dv1_uom, dv1_whscode,
                             dv1_price, dv1_vat, dv1_vatsum, dv1_discount, dv1_linetotal, dv1_costcode, dv1_ubusiness, dv1_project,
-                            dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
+                            dv1_acctcode, dv1_basetype, dv1_doctype, dv1_avprice, dv1_inventory, dv1_linenum, dv1_acciva, dv1_codmunicipality)VALUES(:dv1_docentry, :dv1_itemcode, :dv1_itemname, :dv1_quantity,
                             :dv1_uom, :dv1_whscode,:dv1_price, :dv1_vat, :dv1_vatsum, :dv1_discount, :dv1_linetotal, :dv1_costcode, :dv1_ubusiness, :dv1_project,
-                            :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum :dv1_acciva)";
+                            :dv1_acctcode, :dv1_basetype, :dv1_doctype, :dv1_avprice, :dv1_inventory, :dv1_linenum :dv1_acciva, :dv1_codmunicipality)";
 
         $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
           ':dv1_docentry' => $Data['vdv_docentry'],
@@ -1929,7 +1930,8 @@ class SalesDvBO extends REST_Controller {
           ':dv1_avprice' => is_numeric($detail['dv1_avprice'])?$detail['dv1_avprice']:0,
           ':dv1_inventory' => is_numeric($detail['dv1_inventory'])?$detail['dv1_inventory']:NULL,
           ':dv1_linenum' => is_numeric($detail['dv1_linenum'])?$detail['dv1_linenum']:0,
-          ':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0
+          ':dv1_acciva' => is_numeric($detail['dv1_acciva'])?$detail['dv1_acciva']:0,
+          ':dv1_codmunicipality' => isset($detail['dv1_codmunicipality']) ? $detail['dv1_codmunicipality'] : NULL
         ));
 
         if(is_numeric($resInsertDetail) && $resInsertDetail > 0){

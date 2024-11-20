@@ -519,10 +519,10 @@ class BpContracts extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO csn1(sn1_docentry, sn1_linenum,sn1_itemcode, sn1_itemname, sn1_quantity, sn1_uom, sn1_whscode,
                                     sn1_price, sn1_vat, sn1_vatsum, sn1_discount, sn1_linetotal, sn1_costcode, sn1_ubusiness, sn1_project,
                                     sn1_acctcode, sn1_basetype, sn1_doctype, sn1_avprice, sn1_inventory, sn1_acciva, sn1_codimp,sn1_ubication,detalle_modular,sn1_tax_base,
-									sn1_clean_quantity,sn1_vat_ad,sn1_vatsum_ad,sn1_accimp_ad,sn1_codimp_ad)VALUES(:sn1_docentry,:sn1_linenum, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
+									sn1_clean_quantity,sn1_vat_ad,sn1_vatsum_ad,sn1_accimp_ad,sn1_codimp_ad, sn1_codmunicipality)VALUES(:sn1_docentry,:sn1_linenum, :sn1_itemcode, :sn1_itemname, :sn1_quantity,
                                     :sn1_uom, :sn1_whscode,:sn1_price, :sn1_vat, :sn1_vatsum, :sn1_discount, :sn1_linetotal, :sn1_costcode, :sn1_ubusiness, :sn1_project,
                                     :sn1_acctcode, :sn1_basetype, :sn1_doctype, :sn1_avprice, :sn1_inventory, :sn1_acciva, :sn1_codimp,:sn1_ubication,:detalle_modular,:sn1_tax_base,
-									:sn1_clean_quantity,:sn1_vat_ad,:sn1_vatsum_ad,:sn1_accimp_ad,:sn1_codimp_ad)";
+									:sn1_clean_quantity,:sn1_vat_ad,:sn1_vatsum_ad,:sn1_accimp_ad,:sn1_codimp_ad, :sn1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':sn1_docentry' => $resInsert,
@@ -556,6 +556,7 @@ class BpContracts extends REST_Controller
 					':sn1_vatsum_ad' => is_numeric($detail['sn1_vatsum_ad']) ? $detail['sn1_vatsum_ad'] : 0,
 					':sn1_accimp_ad' => is_numeric($detail['sn1_accimp_ad']) ? $detail['sn1_accimp_ad'] : NULL,
 					':sn1_codimp_ad' => isset($detail['sn1_codimp_ad']) ? $detail['sn1_codimp_ad'] : NULL,
+					':sn1_codmunicipality' => isset($detail['sn1_codmunicipality']) ? $detail['sn1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

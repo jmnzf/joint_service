@@ -809,10 +809,10 @@ class AutomaticSalesInvoice extends REST_Controller
                             $sqlInsertDetail = "INSERT INTO vfv1(fv1_docentry, fv1_itemcode, fv1_itemname, fv1_quantity, fv1_uom, fv1_whscode,
                                                 fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
                                                 fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate, fv1_codimp,fv1_ubication,
-                                                fv1_linenum,fv1_baseline,ote_code,fv1_gift,detalle_modular,fv1_tax_base,detalle_anuncio,imponible)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
+                                                fv1_linenum,fv1_baseline,ote_code,fv1_gift,detalle_modular,fv1_tax_base,detalle_anuncio,imponible, fv1_codmunicipality )VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
                                                 :fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,:fv1_acctcode, :fv1_basetype, 
                                                 :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate, :fv1_codimp,:fv1_ubication,:fv1_linenum,
-                                                :fv1_baseline,:ote_code,:fv1_gift,:detalle_modular,:fv1_tax_base,:detalle_anuncio,:imponible)";
+                                                :fv1_baseline,:ote_code,:fv1_gift,:detalle_modular,:fv1_tax_base,:detalle_anuncio,:imponible, :fv1_codmunicipality )";
         
                             $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                                 ':fv1_docentry' => $resInsert,
@@ -846,6 +846,7 @@ class AutomaticSalesInvoice extends REST_Controller
                                 ':fv1_tax_base' =>  is_numeric($detail['fv1_tax_base']) ? $detail['fv1_tax_base'] : 0,
                                 ':detalle_anuncio' => (isset($detail['detalle_anuncio']) && !empty($detail['detalle_anuncio'])) ? json_encode($detail['detalle_anuncio']) : NULL,
                                 ':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL
+                                ':fv1_codmunicipality' => isset($detail['fv1_codmunicipality']) ? $detail['fv1_codmunicipality'] : NULL
                             ));
         
                             if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

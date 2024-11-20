@@ -645,11 +645,11 @@ class PurchOrder extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO cpo1(po1_docentry, po1_itemcode, po1_itemname, po1_quantity, po1_uom, po1_whscode,
                 po1_price, po1_vat, po1_vatsum, po1_discount, po1_linetotal, po1_costcode, po1_ubusiness, po1_project,
                 po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_linenum, po1_acciva, po1_codimp, po1_ubication,
-				po1_baseline,ote_code,po1_tax_base,deducible,po1_vat_ad,po1_vatsum_ad,po1_accimp_ad,po1_codimp_ad)
+				po1_baseline,ote_code,po1_tax_base,deducible,po1_vat_ad,po1_vatsum_ad,po1_accimp_ad,po1_codimp_ad, po1_codmunicipality)
 				VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,:po1_uom, :po1_whscode,:po1_price, :po1_vat, :po1_vatsum, 
 				:po1_discount, :po1_linetotal, :po1_costcode, :po1_ubusiness, :po1_project,:po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, 
 				:po1_inventory,:po1_linenum,:po1_acciva, :po1_codimp, :po1_ubication,:po1_baseline,:ote_code,:po1_tax_base,:deducible,
-				:po1_vat_ad,:po1_vatsum_ad,:po1_accimp_ad,:po1_codimp_ad)";
+				:po1_vat_ad,:po1_vatsum_ad,:po1_accimp_ad,:po1_codimp_ad, :po1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':po1_docentry' => $resInsert,
@@ -683,7 +683,8 @@ class PurchOrder extends REST_Controller
 					':po1_vat_ad'    => is_numeric($detail['po1_vat_ad']) ? $detail['po1_vat_ad'] : 0,
 					':po1_vatsum_ad' => is_numeric($detail['po1_vatsum_ad']) ? $detail['po1_vatsum_ad'] : 0,
 					':po1_accimp_ad' => is_numeric($detail['po1_accimp_ad']) ? $detail['po1_accimp_ad'] : NULL,
-					':po1_codimp_ad' => isset($detail['po1_codimp_ad']) ? $detail['po1_codimp_ad'] : NULL
+					':po1_codimp_ad' => isset($detail['po1_codimp_ad']) ? $detail['po1_codimp_ad'] : NULL,
+					':po1_codmunicipality' => isset($detail['po1_codmunicipality']) ? $detail['po1_codmunicipality'] : NULL
 
 				));
 
@@ -1101,9 +1102,9 @@ class PurchOrder extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO cpo1(po1_docentry, po1_itemcode, po1_itemname, po1_quantity, po1_uom, po1_whscode,
 																			po1_price, po1_vat, po1_vatsum, po1_discount, po1_linetotal, po1_costcode, po1_ubusiness, po1_project,
-																			po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_acciva, po1_linenum, po1_ubication)VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,
+																			po1_acctcode, po1_basetype, po1_doctype, po1_avprice, po1_inventory, po1_acciva, po1_linenum, po1_ubication, po1_codmunicipality)VALUES(:po1_docentry, :po1_itemcode, :po1_itemname, :po1_quantity,
 																			:po1_uom, :po1_whscode,:po1_price, :po1_vat, :po1_vatsum, :po1_discount, :po1_linetotal, :po1_costcode, :po1_ubusiness, :po1_project,
-																			:po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, :po1_inventory, :po1_acciva,:po1_linenum, :po1_ubication)";
+																			:po1_acctcode, :po1_basetype, :po1_doctype, :po1_avprice, :po1_inventory, :po1_acciva,:po1_linenum, :po1_ubication, :po1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':po1_docentry' => $Data['cpo_docentry'],
@@ -1127,7 +1128,8 @@ class PurchOrder extends REST_Controller
 					':po1_inventory' => is_numeric($detail['po1_inventory']) ? $detail['po1_inventory'] : NULL,
 					':po1_acciva' => is_numeric($detail['po1_acciva']) ? $detail['po1_acciva'] : NULL,
 					':po1_linenum' => is_numeric($detail['po1_linenum']) ? $detail['po1_linenum'] : NULL,
-					':po1_ubication' => is_numeric($detail['po1_ubication']) ? $detail['po1_ubication'] : NULL
+					':po1_ubication' => is_numeric($detail['po1_ubication']) ? $detail['po1_ubication'] : NULL,
+					':po1_codmunicipality' => isset($detail['po1_codmunicipality']) ? $detail['po1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
