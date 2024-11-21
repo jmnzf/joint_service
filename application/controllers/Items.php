@@ -2,9 +2,13 @@
 // Artículos
 defined('BASEPATH') or exit('No direct script access allowed');
 
+require_once(APPPATH.'/asset/vendor/autoload.php');
 require_once(APPPATH . '/libraries/REST_Controller.php');
 
 use Restserver\libraries\REST_Controller;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class Items extends REST_Controller
 {
@@ -1133,6 +1137,102 @@ class Items extends REST_Controller
 		}
 
 		$this->response($respuesta);
+	}
+
+	// GUARDAR PRECIOS CON ARTICULOS DE TERCEROS
+	public function setPitemsExt_post() {
+
+
+		$respuesta = array(
+			'error'   => true,
+			'data' => array(),
+			'mensaje'	=> 'Error al subir el archivo de excel'
+		);
+
+
+		// Verificar si se subió el archivo
+		if (isset($_FILES['archivo']) && $_FILES['archivo']['error'] === UPLOAD_ERR_OK) {
+			$nombreTmp = $_FILES['archivo']['tmp_name'];
+			$nombreArchivo = $_FILES['archivo']['name'];
+			$extension = pathinfo($nombreArchivo, PATHINFO_EXTENSION);
+
+			// Verificar que el archivo tenga una extensión válida
+			if (in_array($extension, ['xls', 'xlsx'])) {
+				// Procesar el archivo
+				// importarExcelABaseDeDatos($nombreTmp, $conexion);
+
+				// Cargar el archivo Excel
+				$spreadsheet = IOFactory::load($nombreTmp);
+				$sheet = $spreadsheet->getActiveSheet();
+				$datos = $sheet->toArray(null, true, true, true);
+				
+				//
+				$this->pedeo->trans_begin();
+				//
+				$this->pedeo->queryTable('truncate table tblp', array());
+				// Iterar sobre las filas del Excel
+				foreach ($datos as $key => $fila) {
+					// Omitir la primera fila si es un encabezado
+					if ($key == 1) continue;
+		
+					// Obtener los valores de las columnas
+					$codigo = $fila['A'];
+					$nombre = $fila['B'];
+					$precio = $fila['C'];
+		
+					// Validar datos antes de insertarlos
+					if (!empty($codigo) && !empty($nombre) && is_numeric($precio)) {
+						// Insertar en la tabla
+						$sql = "INSERT INTO tblp (blp_itemcode, blp_itemname, blp_price, blp_session) VALUES (:blp_itemcode, :blp_itemname, :blp_price, :blp_session)";
+						
+						$resp = $this->pedeo->insertRow($sql, array(
+							':blp_itemcode' => $codigo, 
+							':blp_itemname' => $nombre, 
+							':blp_price'  	=> $precio,  
+							':blp_session'  => isset($Data['sesion']) && !empty($Data['sesion']) ? $Data['sesion'] : 0
+						));
+
+						if (is_numeric($resp) && $resp > 0){
+
+						}else{
+
+							$this->pedeo->trans_rollback();
+
+							$respuesta = array(
+								'error'   => true,
+								'data'    => $resp,
+								'mensaje' => 'Error al insertar el item: '.$codigo
+							);
+
+							return $this->response($respuesta);
+						}
+					}
+				}
+
+				$this->pedeo->trans_commit();
+		
+				$respuesta = array(
+					'error'   => false,
+					'data'    => [],
+					'mensaje' => 'proceso finalizado con exito'
+				);
+
+				return $this->response($respuesta);
+
+			} else {
+
+				$respuesta = array(
+					'error'   => true,
+					'data'    => [],
+					'mensaje' => 'Formato de archivo no válido. Solo se aceptan archivos .xls o .xlsx'
+				);
+
+				return $this->response($respuesta);
+			}
+		} else {
+			return $this->response($respuesta);
+		}
+
 	}
 
 }
