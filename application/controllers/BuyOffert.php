@@ -855,11 +855,11 @@ class BuyOffert extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO coc1(oc1_docentry, oc1_linenum,oc1_itemcode, oc1_itemname, oc1_quantity, oc1_uom, oc1_whscode,
 									oc1_price, oc1_vat, oc1_vatsum, oc1_discount, oc1_linetotal, oc1_costcode, oc1_ubusiness, oc1_project,
 									oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva, oc1_codimp,oc1_baseline,oc1_fechaentrega,
-									ote_code,oc1_tax_base,deducible,oc1_vat_ad,oc1_vatsum_ad,oc1_accimp_ad,oc1_codimp_ad)
+									ote_code,oc1_tax_base,deducible,oc1_vat_ad,oc1_vatsum_ad,oc1_accimp_ad,oc1_codimp_ad, oc1_codmunicipality)
 									VALUES(:oc1_docentry, :oc1_linenum,:oc1_itemcode, :oc1_itemname, :oc1_quantity,
 									:oc1_uom, :oc1_whscode,:oc1_price, :oc1_vat, :oc1_vatsum, :oc1_discount, :oc1_linetotal, :oc1_costcode, :oc1_ubusiness, :oc1_project,
 									:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva, :oc1_codimp,:oc1_baseline,
-									:oc1_fechaentrega,:ote_code,:oc1_tax_base,:deducible,:oc1_vat_ad,:oc1_vatsum_ad,:oc1_accimp_ad,:oc1_codimp_ad)";
+									:oc1_fechaentrega,:ote_code,:oc1_tax_base,:deducible,:oc1_vat_ad,:oc1_vatsum_ad,:oc1_accimp_ad,:oc1_codimp_ad, :oc1_codmunicipality)";
 
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
@@ -895,7 +895,8 @@ class BuyOffert extends REST_Controller
 					':oc1_vat_ad' => is_numeric($detail['oc1_vat_ad']) ? $detail['oc1_vat_ad'] : 0,
 					':oc1_vatsum_ad' => is_numeric($detail['oc1_vatsum_ad']) ? $detail['oc1_vatsum_ad'] : 0,
 					':oc1_accimp_ad'  => is_numeric($detail['oc1_accimp_ad']) ? $detail['oc1_accimp_ad'] : 0,
-					':oc1_codimp_ad'  => isset($detail['oc1_codimp_ad']) ? $detail['oc1_codimp_ad'] : NULL
+					':oc1_codimp_ad'  => isset($detail['oc1_codimp_ad']) ? $detail['oc1_codimp_ad'] : NULL,
+					':oc1_codmunicipality' => isset($detail['oc1_codmunicipality']) ? $detail['oc1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -1219,11 +1220,11 @@ class BuyOffert extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO coc1(oc1_docentry, oc1_linenum,oc1_itemcode, oc1_itemname, oc1_quantity, oc1_uom, oc1_whscode,
 									oc1_price, oc1_vat, oc1_vatsum, oc1_discount, oc1_linetotal, oc1_costcode, oc1_ubusiness, oc1_project,
 									oc1_acctcode, oc1_basetype, oc1_doctype, oc1_avprice, oc1_inventory, oc1_acciva, oc1_codimp,oc1_baseline,oc1_fechaentrega,
-									ote_code,oc1_tax_base,deducible,oc1_vat_ad,oc1_vatsum_ad,oc1_accimp_ad,oc1_codimp_ad)
+									ote_code,oc1_tax_base,deducible,oc1_vat_ad,oc1_vatsum_ad,oc1_accimp_ad,oc1_codimp_ad, oc1_codmunicipality)
 									VALUES(:oc1_docentry, :oc1_linenum,:oc1_itemcode, :oc1_itemname, :oc1_quantity,
 									:oc1_uom, :oc1_whscode,:oc1_price, :oc1_vat, :oc1_vatsum, :oc1_discount, :oc1_linetotal, :oc1_costcode, :oc1_ubusiness, :oc1_project,
 									:oc1_acctcode, :oc1_basetype, :oc1_doctype, :oc1_avprice, :oc1_inventory, :oc1_acciva, :oc1_codimp,:oc1_baseline,
-									:oc1_fechaentrega,:ote_code,:oc1_tax_base,:deducible,:oc1_vat_ad,:oc1_vatsum_ad,:oc1_accimp_ad,:oc1_codimp_ad)";
+									:oc1_fechaentrega,:ote_code,:oc1_tax_base,:deducible,:oc1_vat_ad,:oc1_vatsum_ad,:oc1_accimp_ad,:oc1_codimp_ad, :oc1_codmunicipality)";
 
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
@@ -1259,7 +1260,8 @@ class BuyOffert extends REST_Controller
 					':oc1_vat_ad' => is_numeric($detail['oc1_vat_ad']) ? $detail['oc1_vat_ad'] : 0,
 					':oc1_vatsum_ad' => is_numeric($detail['oc1_vatsum_ad']) ? $detail['oc1_vatsum_ad'] : 0,
 					':oc1_accimp_ad'  => is_numeric($detail['oc1_accimp_ad']) ? $detail['oc1_accimp_ad'] : 0,
-					':oc1_codimp_ad'  => isset($detail['oc1_codimp_ad']) ? $detail['oc1_codimp_ad'] : NULL
+					':oc1_codimp_ad'  => isset($detail['oc1_codimp_ad']) ? $detail['oc1_codimp_ad'] : NULL,
+					':oc1_codmunicipality' => isset($detail['oc1_codmunicipality']) ? $detail['oc1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

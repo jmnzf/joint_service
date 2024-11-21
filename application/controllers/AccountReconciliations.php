@@ -394,8 +394,8 @@ class AccountReconciliations extends REST_Controller
             //INICIA PROCESO PARA INSERTAR EL DETALLE DE LA RECONCILIACION
             foreach ($ContenidoDetalle as $key => $detail) {
 
-                $sqlInsertDetail = "INSERT INTO crc1(rc1_docentry, rc1_baseentry, rc1_basetype, rc1_docnum, rc1_docdate, rc1_docduedev, rc1_doctotal, rc1_valapply, rc1_acctcode, rc1_cardcode, rc1_cardtype, rc1_line_num)
-	                            VALUES (:rc1_docentry, :rc1_baseentry, :rc1_basetype, :rc1_docnum, :rc1_docdate, :rc1_docduedev, :rc1_doctotal, :rc1_valapply, :rc1_acctcode, :rc1_cardcode, :rc1_cardtype, :rc1_line_num)";
+                $sqlInsertDetail = "INSERT INTO crc1(rc1_docentry, rc1_baseentry, rc1_basetype, rc1_docnum, rc1_docdate, rc1_docduedev, rc1_doctotal, rc1_valapply, rc1_acctcode, rc1_cardcode, rc1_cardtype, rc1_line_num, rc1_codmunicipality)
+	                            VALUES (:rc1_docentry, :rc1_baseentry, :rc1_basetype, :rc1_docnum, :rc1_docdate, :rc1_docduedev, :rc1_doctotal, :rc1_valapply, :rc1_acctcode, :rc1_cardcode, :rc1_cardtype, :rc1_line_num, :rc1_codmunicipality)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 
@@ -410,7 +410,8 @@ class AccountReconciliations extends REST_Controller
                     ':rc1_acctcode' => is_numeric($detail['rc1_acctcode']) ? $detail['rc1_acctcode'] : 0,
                     ':rc1_cardcode' => isset($detail['rc1_cardcode']) ? $detail['rc1_cardcode'] : null,
 					':rc1_cardtype' => isset($detail['rc1_cardtype']) ? $detail['rc1_cardtype'] : null,
-                    ':rc1_line_num' => isset($detail['ac1_line_num']) && is_numeric($detail['ac1_line_num']) ? $detail['ac1_line_num'] : 0
+                    ':rc1_line_num' => isset($detail['ac1_line_num']) && is_numeric($detail['ac1_line_num']) ? $detail['ac1_line_num'] : 0,
+                    ':rc1_codmunicipality' => isset($detail['rc1_codmunicipality']) ? $detail['rc1_codmunicipality'] : NULL
                 ));
 
                 $VrlPagoDetalleNormal = 0;

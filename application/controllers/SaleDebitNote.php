@@ -117,9 +117,9 @@ class SaleDebitNote extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vnd1(nd1_doc_entry, nd1_item_code, nd1_quantity, nd1_uom, nd1_whscode, nd1_price, nd1_vat, nd1_vat_sum,
                                     nd1_discount, nd1_line_total, nd1_cost_code, nd1_ubusiness, nd1_project, nd1_acct_code, nd1_base_type, nd1_doc_type,
-                                    nd1_avprice, nd1_inventory, nd1_item_name,nd1_ubication)VALUES(:nd1_doc_entry,:nd1_item_code,:nd1_quantity,:nd1_uom,:nd1_whscode,:nd1_price,:nd1_vat,
+                                    nd1_avprice, nd1_inventory, nd1_item_name,nd1_ubication, nd1_codmunicipality)VALUES(:nd1_doc_entry,:nd1_item_code,:nd1_quantity,:nd1_uom,:nd1_whscode,:nd1_price,:nd1_vat,
                                     :nd1_vat_sum,:nd1_discount,:nd1_line_total,:nd1_cost_code,:nd1_ubusiness,:nd1_project,:nd1_acct_code,:nd1_base_type,
-                                    :nd1_doc_type,:nd1_avprice,:nd1_inventory,nd1_item_name,:nd1_ubication)";
+                                    :nd1_doc_type,:nd1_avprice,:nd1_inventory,nd1_item_name,:nd1_ubication, :nd1_codmunicipality)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':nd1_doc_entry' => $resInsert,
@@ -141,7 +141,8 @@ class SaleDebitNote extends REST_Controller {
                         ':nd1_avprice' => $Data['nd1_avprice'],
                         ':nd1_inventory' => $Data['nd1_inventory'],
                         ':nd1_item_name' => $Data['nd1_item_name'],
-                        ':nd1_ubication' => isset($Data['nd1_ubication']) ? $Data['nd1_ubication'] : NULL
+                        ':nd1_ubication' => isset($Data['nd1_ubication']) ? $Data['nd1_ubication'] : NULL,
+                        ':nd1_codmunicipality' => isset($detail['fc1_codmunicipality']) ? $detail['fc1_codmunicipality'] : NULL
                 ));
           }
 
@@ -256,7 +257,7 @@ class SaleDebitNote extends REST_Controller {
 
 						foreach ($ContenidoDetalle as $key => $detail) {
 
-                $sqlInsertDetail = "INSERT INTO vev1(nd1_doc_entry, nd1_item_code, nd1_quantity, nd1_uom, nd1_whscode, nd1_price, nd1_vat, nd1_vat_sum,
+                $sqlInsertDetail = "INSERT INTO vnd1(nd1_doc_entry, nd1_item_code, nd1_quantity, nd1_uom, nd1_whscode, nd1_price, nd1_vat, nd1_vat_sum,
                                     nd1_discount, nd1_line_total, nd1_cost_code, nd1_ubusiness, nd1_project, nd1_acct_code, nd1_base_type, nd1_doc_type,
                                     nd1_avprice, nd1_inventory, nd1_item_name)VALUES(:nd1_doc_entry,:nd1_item_code,:nd1_quantity,:nd1_uom,:nd1_whscode,:nd1_price,:nd1_vat,
                                     :nd1_vat_sum,:nd1_discount,:nd1_line_total,:nd1_cost_code,:nd1_ubusiness,:nd1_project,:nd1_acct_code,:nd1_base_type,
@@ -281,7 +282,8 @@ class SaleDebitNote extends REST_Controller {
                         ':nd1_doc_type' => $Data['nd1_doc_type'],
                         ':nd1_avprice' => $Data['nd1_avprice'],
                         ':nd1_inventory' => $Data['nd1_inventory'],
-                        ':nd1_item_name' => $Data['nd1_item_name']
+                        ':nd1_item_name' => $Data['nd1_item_name'],
+                        ':nd1_codmunicipality' => isset($detail['nd1_codmunicipality']) ? $detail['nd1_codmunicipality'] : NULL
                 ));
   						}
 

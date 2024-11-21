@@ -1337,11 +1337,11 @@ class CashOperation extends REST_Controller {
             $sqlInsertDetail = "INSERT INTO vrc1(rc1_docentry, rc1_itemcode, rc1_itemname, rc1_quantity, rc1_uom, rc1_whscode, rc1_price, rc1_vat, rc1_vatsum, rc1_discount, rc1_linetotal, rc1_costcode, rc1_ubusiness,
                                 rc1_project, rc1_acctcode, rc1_basetype, rc1_doctype, rc1_avprice, rc1_inventory, rc1_linenum, rc1_acciva, rc1_codimp, business, branch, rc1_ubication, rc1_lote, rc1_baseline,
                                 ote_code, rc1_whscode_dest, rc1_ubication2, detalle_modular, rc1_baseentry, rc1_tax_base, rc1_itemdev, rc1_clean_quantity,
-                                rc1_vat_ad,rc1_vatsum_ad,rc1_accimp_ad,rc1_codimp_ad)
+                                rc1_vat_ad,rc1_vatsum_ad,rc1_accimp_ad,rc1_codimp_ad, rc1_codmunicipality)
                                 VALUES(:rc1_docentry, :rc1_itemcode, :rc1_itemname, :rc1_quantity, :rc1_uom, :rc1_whscode, :rc1_price, :rc1_vat, :rc1_vatsum, :rc1_discount, :rc1_linetotal, :rc1_costcode, :rc1_ubusiness,
                                 :rc1_project, :rc1_acctcode, :rc1_basetype, :rc1_doctype, :rc1_avprice, :rc1_inventory, :rc1_linenum, :rc1_acciva, :rc1_codimp, :business, :branch, :rc1_ubication, :rc1_lote, :rc1_baseline,
                                 :ote_code, :rc1_whscode_dest, :rc1_ubication2, :detalle_modular, :rc1_baseentry, :rc1_tax_base, :rc1_itemdev,:rc1_clean_quantity,
-                                :rc1_vat_ad,:rc1_vatsum_ad,:rc1_accimp_ad,:rc1_codimp_ad)";
+                                :rc1_vat_ad,:rc1_vatsum_ad,:rc1_accimp_ad,:rc1_codimp_ad, :rc1_codmunicipality)";
 
 
             $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
@@ -1385,7 +1385,8 @@ class CashOperation extends REST_Controller {
                 ':rc1_vat_ad'    => isset($detail['rc1_vat_ad']) && is_numeric($detail['rc1_vat_ad']) ? $detail['rc1_vat_ad'] : null, 
                 ':rc1_vatsum_ad' => isset($detail['rc1_vatsum_ad']) && is_numeric($detail['rc1_vatsum_ad']) ? $detail['rc1_vatsum_ad'] : null, 
                 ':rc1_accimp_ad' => isset($detail['rc1_accimp_ad']) && is_numeric($detail['rc1_accimp_ad']) ? $detail['rc1_accimp_ad'] : null, 
-                ':rc1_codimp_ad' => isset($detail['rc1_codimp_ad']) ? $detail['rc1_codimp_ad'] : null
+                ':rc1_codimp_ad' => isset($detail['rc1_codimp_ad']) ? $detail['rc1_codimp_ad'] : null,
+                ':rc1_codmunicipality' => isset($detail['rc1_codmunicipality']) ? $detail['rc1_codmunicipality'] : NULL
             ));
 
 
@@ -2139,11 +2140,11 @@ class CashOperation extends REST_Controller {
                                         fv1_price, fv1_vat, fv1_vatsum, fv1_discount, fv1_linetotal, fv1_costcode, fv1_ubusiness, fv1_project,
                                         fv1_acctcode, fv1_basetype, fv1_doctype, fv1_avprice, fv1_inventory, fv1_acciva, fv1_fixrate, fv1_codimp,fv1_ubication,
                                         fv1_linenum,fv1_baseline,ote_code,fv1_gift,detalle_modular,fv1_tax_base,detalle_anuncio,imponible,fv1_clean_quantity,
-                                        fv1_vat_ad,fv1_vatsum_ad,fv1_accimp_ad,fv1_codimp_ad)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
+                                        fv1_vat_ad,fv1_vatsum_ad,fv1_accimp_ad,fv1_codimp_ad, fc1_codmunicipality)VALUES(:fv1_docentry, :fv1_itemcode, :fv1_itemname, :fv1_quantity,:fv1_uom, :fv1_whscode,:fv1_price, :fv1_vat, 
                                         :fv1_vatsum, :fv1_discount, :fv1_linetotal, :fv1_costcode, :fv1_ubusiness, :fv1_project,:fv1_acctcode, :fv1_basetype, 
                                         :fv1_doctype, :fv1_avprice, :fv1_inventory, :fv1_acciva, :fv1_fixrate, :fv1_codimp,:fv1_ubication,:fv1_linenum,
                                         :fv1_baseline,:ote_code,:fv1_gift,:detalle_modular,:fv1_tax_base,:detalle_anuncio,:imponible,:fv1_clean_quantity,
-                                        :fv1_vat_ad,:fv1_vatsum_ad,:fv1_accimp_ad,:fv1_codimp_ad)";
+                                        :fv1_vat_ad,:fv1_vatsum_ad,:fv1_accimp_ad,:fv1_codimp_ad, :fc1_codmunicipality)";
 
                         $resInsertDetailFv = $this->pedeo->insertRow($sqlInsertDetailFv, array(
                             ':fv1_docentry' => $resInsertFv,
@@ -2182,7 +2183,8 @@ class CashOperation extends REST_Controller {
                             ':fv1_vat_ad' => is_numeric($detail['rc1_vat_ad']) ? $detail['rc1_vat_ad'] : 0,
                             ':fv1_vatsum_ad' => is_numeric($detail['rc1_vatsum_ad']) ? $detail['rc1_vatsum_ad'] : 0,
                             ':fv1_accimp_ad'  => is_numeric($detail['rc1_accimp_ad']) ? $detail['rc1_accimp_ad'] : 0,
-                            ':fv1_codimp_ad' => isset($detail['rc1_codimp_ad']) ? $detail['rc1_codimp_ad'] : 0
+                            ':fv1_codimp_ad' => isset($detail['rc1_codimp_ad']) ? $detail['rc1_codimp_ad'] : 0,
+                            ':fv1_codmunicipality' => isset($detail['rc1_codmunicipality']) ? $detail['rc1_codmunicipality'] : NULL
                         ));
 
                         if (is_numeric($resInsertDetailFv) && $resInsertDetailFv > 0) {
@@ -5782,11 +5784,11 @@ class CashOperation extends REST_Controller {
                                 nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
                                 nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory,nc1_acciva,nc1_linenum,nc1_codimp,
                                 nc1_ubication,nc1_baseline,ote_code,nc1_tax_base,imponible,nc1_clean_quantity,
-                                nc1_vat_ad,nc1_vatsum_ad,nc1_accimp_ad,nc1_codimp_ad)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,:nc1_uom, :nc1_whscode,:nc1_price, 
+                                nc1_vat_ad,nc1_vatsum_ad,nc1_accimp_ad,nc1_codimp_ad, nc1_codmunicipality)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,:nc1_uom, :nc1_whscode,:nc1_price, 
                                 :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,:nc1_acctcode, 
                                 :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_acciva,:nc1_linenum,:nc1_codimp,
                                 :nc1_ubication,:nc1_baseline,:ote_code,:nc1_tax_base,:imponible,:nc1_clean_quantity,
-                                :nc1_vat_ad,:nc1_vatsum_ad,:nc1_accimp_ad,:nc1_codimp_ad)";
+                                :nc1_vat_ad,:nc1_vatsum_ad,:nc1_accimp_ad,:nc1_codimp_ad, :nc1_codmunicipality)";
 
                                 $resInsertDetailNc = $this->pedeo->insertRow($sqlInsertDetailNc, array(
                                     ':nc1_docentry' => $resInsertNc,
@@ -5823,6 +5825,7 @@ class CashOperation extends REST_Controller {
                                     ':nc1_vatsum_ad' => is_numeric($detail['rc1_vatsum_ad']) ? $detail['rc1_vatsum_ad'] : 0,
                                     ':nc1_accimp_ad' => is_numeric($detail['rc1_accimp_ad']) ? $detail['rc1_accimp_ad'] : 0,
                                     ':nc1_codimp_ad'  => isset($detail['rc1_codimp_ad']) ? $detail['rc1_codimp_ad'] : NULL,
+                                    ':nc1_codmunicipality' => isset($detail['rc1_codmunicipality']) ? $detail['rc1_codmunicipality'] : NULL
                                 ));
 
                                 if (is_numeric($resInsertDetailNc) && $resInsertDetailNc > 0) {

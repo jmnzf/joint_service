@@ -565,10 +565,10 @@ class PurchaseEcBO extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO cec1(ec1_docentry,ec1_itemcode, ec1_itemname, ec1_quantity, ec1_uom, ec1_whscode,
                                     ec1_price, ec1_vat, ec1_vatsum, ec1_discount, ec1_linetotal, ec1_costcode, ec1_ubusiness, ec1_project,
                                     ec1_acctcode, ec1_basetype, ec1_doctype, ec1_avprice, ec1_inventory, ec1_linenum, ec1_acciva, ec1_codimp, ec1_ubication,
-									ec1_baseline,ote_code,ec1_gift,ec1_tax_base,deducible)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
+									ec1_baseline,ote_code,ec1_gift,ec1_tax_base,deducible, ec1_codmunicipality)VALUES(:ec1_docentry, :ec1_itemcode, :ec1_itemname, :ec1_quantity,
                                     :ec1_uom, :ec1_whscode,:ec1_price, :ec1_vat, :ec1_vatsum, :ec1_discount, :ec1_linetotal, :ec1_costcode, :ec1_ubusiness, :ec1_project,
                                     :ec1_acctcode, :ec1_basetype, :ec1_doctype, :ec1_avprice, :ec1_inventory,:ec1_linenum,:ec1_acciva,:ec1_codimp, 
-									:ec1_ubication,:ec1_baseline,:ote_code,:ec1_gift,:ec1_tax_base,:deducible)";
+									:ec1_ubication,:ec1_baseline,:ote_code,:ec1_gift,:ec1_tax_base,:deducible, :ec1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':ec1_docentry' => $resInsert,
@@ -598,7 +598,8 @@ class PurchaseEcBO extends REST_Controller
 					':ote_code' => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':ec1_gift' => is_numeric($detail['ec1_gift']) ? $detail['ec1_gift'] : 0,
 					':ec1_tax_base' => is_numeric($detail['ec1_tax_base']) ? $detail['ec1_tax_base'] : 0,
-					':deducible' => isset($detail['deducible']) ? $detail['deducible'] : NULL
+					':deducible' => isset($detail['deducible']) ? $detail['deducible'] : NULL,
+					':ec1_codmunicipality' => isset($detail['ec1_codmunicipality']) ? $detail['ec1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

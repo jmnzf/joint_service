@@ -449,8 +449,8 @@ class IntPurchaseAssistant extends REST_Controller
 
 			foreach ($ContenidoDetalle as $key => $detail) {
 
-				$sqlDetail = "INSERT INTO cci1(ci1_itemcode,ci1_itemname,ci1_whscode,ci1_quantity,ci1_actualcost,ci1_newcost,ci1_costcode,ci1_ubusiness,ci1_project, ci1_docentry, ci1_ubication, ci1_linetotal, ci1_uom) VALUES
-						(:ci1_itemcode,:ci1_itemname,:ci1_whscode,:ci1_quantity,:ci1_actualcost,:ci1_newcost,:ci1_costcode,:ci1_ubusiness,:ci1_project, :ci1_docentry , :ci1_ubication, :ci1_linetotal, :ci1_uom)";
+				$sqlDetail = "INSERT INTO cci1(ci1_itemcode,ci1_itemname,ci1_whscode,ci1_quantity,ci1_actualcost,ci1_newcost,ci1_costcode,ci1_ubusiness,ci1_project, ci1_docentry, ci1_ubication, ci1_linetotal, ci1_uom, ci1_codmunicipality) VALUES
+						(:ci1_itemcode,:ci1_itemname,:ci1_whscode,:ci1_quantity,:ci1_actualcost,:ci1_newcost,:ci1_costcode,:ci1_ubusiness,:ci1_project, :ci1_docentry , :ci1_ubication, :ci1_linetotal, :ci1_uom, :ci1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlDetail, array(
 					":ci1_itemcode" => $detail['ci1_itemcode'],
@@ -465,7 +465,8 @@ class IntPurchaseAssistant extends REST_Controller
 					":ci1_docentry" => $resInsert,
 					":ci1_ubication" => isset($detail['ci1_ubication']) ? $detail['ci1_ubication'] : NULL,
 					":ci1_linetotal" => $detail['ci1_total'],
-					":ci1_uom" => $detail['ci1_uom']
+					":ci1_uom" => $detail['ci1_uom'],
+					':ci1_codmunicipality' => isset($detail['ci1_codmunicipality']) ? $detail['ci1_codmunicipality'] : NULL
 				)
 				);
 

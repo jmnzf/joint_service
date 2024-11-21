@@ -113,30 +113,31 @@ class SalesInvoice extends REST_Controller {
 
                 $sqlInsertDetail = "INSERT INTO vfv1(fv1_doc_entry, fv1_item_code, fv1_quantity, fv1_uom, fv1_whscode, fv1_price, fv1_vat, fv1_vat_sum,
                                     fv1_discount, fv1_line_total, fv1_cost_code, fv1_ubusiness, fv1_project, fv1_acct_code, fv1_base_type, fv1_doc_type,
-                                    fv1_avprice, fv1_inventory, fv1_item_name)VALUES(:fv1_doc_entry,:fv1_item_code,:fv1_quantity,:fv1_uom,:fv1_whscode,:fv1_price,:fv1_vat,
+                                    fv1_avprice, fv1_inventory, fv1_item_name, fv1_codmunicipality)VALUES(:fv1_doc_entry,:fv1_item_code,:fv1_quantity,:fv1_uom,:fv1_whscode,:fv1_price,:fv1_vat,
                                     :fv1_vat_sum,:fv1_discount,:fv1_line_total,:fv1_cost_code,:fv1_ubusiness,:fv1_project,:fv1_acct_code,:fv1_base_type,
-                                    :fv1_doc_type,:fv1_avprice,:fv1_inventory,fv1_item_name)";
+                                    :fv1_doc_type,:fv1_avprice,:fv1_inventory,fv1_item_name, :fv1_codmunicipality)";
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':fv1_doc_entry' => $resInsert,
-                        ':fv1_item_code' => $Data['fv1_item_code'],
-                        ':fv1_quantity' => $Data['fv1_quantity'],
-                        ':fv1_uom' => $Data['fv1_uom'],
-                        ':fv1_whscode' => $Data['fv1_whscode'],
-                        ':fv1_price' => $Data['fv1_price'],
-                        ':fv1_vat' => $Data['fv1_vat'],
-                        ':fv1_vat_sum' => $Data['fv1_vat_sum'],
-                        ':fv1_discount' => $Data['fv1_discount'],
-                        ':fv1_line_total' => $Data['fv1_line_total'],
-                        ':fv1_cost_code' => $Data['fv1_cost_code'],
-                        ':fv1_ubusiness' => $Data['fv1_ubusiness'],
-                        ':fv1_project' => $Data['fv1_project'],
-                        ':fv1_acct_code' => $Data['fv1_acct_code'],
-                        ':fv1_base_type' => $Data['fv1_base_type'],
-                        ':fv1_doc_type' => $Data['fv1_doc_type'],
-                        ':fv1_avprice' => $Data['fv1_avprice'],
-                        ':fv1_inventory' => $Data['fv1_inventory'],
-                        ':fv1_item_name' => $Data['fv1_item_name']
+                        ':fv1_item_code' => $detail['fv1_item_code'],
+                        ':fv1_quantity' => $detail['fv1_quantity'],
+                        ':fv1_uom' => $detail['fv1_uom'],
+                        ':fv1_whscode' => $detail['fv1_whscode'],
+                        ':fv1_price' => $detail['fv1_price'],
+                        ':fv1_vat' => $detail['fv1_vat'],
+                        ':fv1_vat_sum' => $detail['fv1_vat_sum'],
+                        ':fv1_discount' => $detail['fv1_discount'],
+                        ':fv1_line_total' => $detail['fv1_line_total'],
+                        ':fv1_cost_code' => $detail['fv1_cost_code'],
+                        ':fv1_ubusiness' => $detail['fv1_ubusiness'],
+                        ':fv1_project' => $detail['fv1_project'],
+                        ':fv1_acct_code' => $detail['fv1_acct_code'],
+                        ':fv1_base_type' => $detail['fv1_base_type'],
+                        ':fv1_doc_type' => $detail['fv1_doc_type'],
+                        ':fv1_avprice' => $detail['fv1_avprice'],
+                        ':fv1_inventory' => $detail['fv1_inventory'],
+                        ':fv1_item_name' => $detail['fv1_item_name'],
+                        ':nd1_codmunicipality' => isset($detail['nd1_codmunicipality']) ? $detail['nd1_codmunicipality'] : NULL
                 ));
           }
 
@@ -251,7 +252,7 @@ class SalesInvoice extends REST_Controller {
 
 						foreach ($ContenidoDetalle as $key => $detail) {
 
-                $sqlInsertDetail = "INSERT INTO vev1(fv1_doc_entry, fv1_item_code, fv1_quantity, fv1_uom, fv1_whscode, fv1_price, fv1_vat, fv1_vat_sum,
+                $sqlInsertDetail = "INSERT INTO vfv1(fv1_doc_entry, fv1_item_code, fv1_quantity, fv1_uom, fv1_whscode, fv1_price, fv1_vat, fv1_vat_sum,
                                     fv1_discount, fv1_line_total, fv1_cost_code, fv1_ubusiness, fv1_project, fv1_acct_code, fv1_base_type, fv1_doc_type,
                                     fv1_avprice, fv1_inventory, fv1_item_name)VALUES(:fv1_doc_entry,:fv1_item_code,:fv1_quantity,:fv1_uom,:fv1_whscode,:fv1_price,:fv1_vat,
                                     :fv1_vat_sum,:fv1_discount,:fv1_line_total,:fv1_cost_code,:fv1_ubusiness,:fv1_project,:fv1_acct_code,:fv1_base_type,
@@ -259,24 +260,25 @@ class SalesInvoice extends REST_Controller {
 
                 $resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
                         ':fv1_doc_entry' => $resInsert,
-                        ':fv1_item_code' => $Data['fv1_item_code'],
-                        ':fv1_quantity' => $Data['fv1_quantity'],
-                        ':fv1_uom' => $Data['fv1_uom'],
-                        ':fv1_whscode' => $Data['fv1_whscode'],
-                        ':fv1_price' => $Data['fv1_price'],
-                        ':fv1_vat' => $Data['fv1_vat'],
-                        ':fv1_vat_sum' => $Data['fv1_vat_sum'],
-                        ':fv1_discount' => $Data['fv1_discount'],
-                        ':fv1_line_total' => $Data['fv1_line_total'],
-                        ':fv1_cost_code' => $Data['fv1_cost_code'],
-                        ':fv1_ubusiness' => $Data['fv1_ubusiness'],
-                        ':fv1_project' => $Data['fv1_project'],
-                        ':fv1_acct_code' => $Data['fv1_acct_code'],
-                        ':fv1_base_type' => $Data['fv1_base_type'],
-                        ':fv1_doc_type' => $Data['fv1_doc_type'],
-                        ':fv1_avprice' => $Data['fv1_avprice'],
-                        ':fv1_inventory' => $Data['fv1_inventory'],
-                        ':fv1_item_name' => $Data['fv1_item_name']
+                        ':fv1_item_code' => $detail['fv1_item_code'],
+                        ':fv1_quantity' => $detail['fv1_quantity'],
+                        ':fv1_uom' => $detail['fv1_uom'],
+                        ':fv1_whscode' => $detail['fv1_whscode'],
+                        ':fv1_price' => $detail['fv1_price'],
+                        ':fv1_vat' => $detail['fv1_vat'],
+                        ':fv1_vat_sum' => $detail['fv1_vat_sum'],
+                        ':fv1_discount' => $detail['fv1_discount'],
+                        ':fv1_line_total' => $detail['fv1_line_total'],
+                        ':fv1_cost_code' => $detail['fv1_cost_code'],
+                        ':fv1_ubusiness' => $detail['fv1_ubusiness'],
+                        ':fv1_project' => $detail['fv1_project'],
+                        ':fv1_acct_code' => $detail['fv1_acct_code'],
+                        ':fv1_base_type' => $detail['fv1_base_type'],
+                        ':fv1_doc_type' => $detail['fv1_doc_type'],
+                        ':fv1_avprice' => $detail['fv1_avprice'],
+                        ':fv1_inventory' => $detail['fv1_inventory'],
+                        ':fv1_item_name' => $detail['fv1_item_name'],
+                        ':nd1_codmunicipality' => isset($detail['nd1_codmunicipality']) ? $detail['nd1_codmunicipality'] : NULL
                 ));
   						}
 

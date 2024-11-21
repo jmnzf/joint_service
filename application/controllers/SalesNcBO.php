@@ -595,10 +595,10 @@ class SalesNcBO extends REST_Controller
 					$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
 										nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
 										nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_exc_inv,nc1_acciva,nc1_linenum,nc1_codimp,
-										nc1_ubication,nc1_baseline,ote_code,detalle_modular,nc1_tax_base,detalle_anuncio,imponible)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,:nc1_uom, :nc1_whscode,:nc1_price, 
+										nc1_ubication,nc1_baseline,ote_code,detalle_modular,nc1_tax_base,detalle_anuncio,imponible, nc1_codmunicipality)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,:nc1_uom, :nc1_whscode,:nc1_price, 
 										:nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,:nc1_acctcode, 
 										:nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_exc_inv, :nc1_acciva,:nc1_linenum,:nc1_codimp,
-										:nc1_ubication,:nc1_baseline,:ote_code,:detalle_modular,:nc1_tax_base,:detalle_anuncio,:imponible)";
+										:nc1_ubication,:nc1_baseline,:ote_code,:detalle_modular,:nc1_tax_base,:detalle_anuncio,:imponible, :nc1_codmunicipality)";
 
 					$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 						':nc1_docentry' => $resInsert,
@@ -631,6 +631,7 @@ class SalesNcBO extends REST_Controller
 						':detalle_modular' => isset($detail['detalle_modular']) && is_string($detail['detalle_modular']) ? json_encode(json_decode($detail['detalle_modular'],true)) : NULL,
 						':detalle_anuncio' => isset($detail['detalle_anuncio']) && is_string($detail['detalle_anuncio']) ? json_encode(json_decode($detail['detalle_anuncio'],true)) : NULL,
 						':imponible' => isset($detail['imponible']) ? $detail['imponible'] : NULL,
+						':nc1_codmunicipality' => isset($detail['nc1_codmunicipality']) ? $detail['nc1_codmunicipality'] : NULL
 
 					));
 
@@ -3958,9 +3959,9 @@ class SalesNcBO extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO vnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
 																			nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
-																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory,nc1_cuentaIva,nc1_ubication,ote_code)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
+																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory,nc1_cuentaIva,nc1_ubication,ote_code, nc1_codmunicipality)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
 																			:nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
-																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory,:nc1_cuentaIva,:nc1_ubication,:ote_code)";
+																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory,:nc1_cuentaIva,:nc1_ubication,:ote_code, :nc1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':nc1_docentry' => $Data['vnc_docentry'],
@@ -3985,6 +3986,7 @@ class SalesNcBO extends REST_Controller
 					':nc1_acciva' => is_numeric($detail['nc1_cuentaIva']) ? $detail['nc1_cuentaIva'] : 0,
 					':nc1_ubication' => is_numeric($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL,
 					':ote_code' => is_numeric($detail['ote_code']) ? $detail['ote_code'] : NULL,
+					':nc1_codmunicipality' => isset($detail['nc1_codmunicipality']) ? $detail['nc1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

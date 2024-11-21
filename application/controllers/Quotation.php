@@ -517,11 +517,11 @@ class Quotation extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry,vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
                                     vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
                                     vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_linenum, vc1_acciva, vc1_codimp, vc1_ubication, 
-									ote_code,vc1_baseline,detalle_modular,vc1_tax_base,detalle_anuncio,imponible,vc1_clean_quantity,vc1_vat_ad,vc1_vatsum_ad,vc1_accimp_ad,vc1_codimp_ad)
+									ote_code,vc1_baseline,detalle_modular,vc1_tax_base,detalle_anuncio,imponible,vc1_clean_quantity,vc1_vat_ad,vc1_vatsum_ad,vc1_accimp_ad,vc1_codimp_ad, vc1_codmunicipality)
 									VALUES(:vc1_docentry,:vc1_itemcode, :vc1_itemname, :vc1_quantity,:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, 
 									:vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory,
 									:vc1_linenum,:vc1_acciva,:vc1_codimp, :vc1_ubication, :ote_code,:vc1_baseline,:detalle_modular,:vc1_tax_base,:detalle_anuncio,:imponible,
-									:vc1_clean_quantity, :vc1_vat_ad, :vc1_vatsum_ad, :vc1_accimp_ad, :vc1_codimp_ad)";
+									:vc1_clean_quantity, :vc1_vat_ad, :vc1_vatsum_ad, :vc1_accimp_ad, :vc1_codimp_ad, :vc1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':vc1_docentry' => $resInsert,
@@ -558,7 +558,8 @@ class Quotation extends REST_Controller
 					':vc1_vat_ad' => is_numeric($detail['vc1_vat_ad']) ? $detail['vc1_vat_ad'] : 0,
 					':vc1_vatsum_ad' => is_numeric($detail['vc1_vatsum_ad']) ? $detail['vc1_vatsum_ad'] : 0,
 					':vc1_accimp_ad' => is_numeric($detail['vc1_accimp_ad']) ? $detail['vc1_accimp_ad'] : NULL,
-					':vc1_codimp_ad' => isset($detail['vc1_codimp_ad']) ? $detail['vc1_codimp_ad'] : NULL
+					':vc1_codimp_ad' => isset($detail['vc1_codimp_ad']) ? $detail['vc1_codimp_ad'] : NULL,
+					':vc1_codmunicipality' => isset($detail['vc1_codmunicipality']) ? $detail['vc1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -784,11 +785,11 @@ class Quotation extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO vct1(vc1_docentry,vc1_itemcode, vc1_itemname, vc1_quantity, vc1_uom, vc1_whscode,
                                     vc1_price, vc1_vat, vc1_vatsum, vc1_discount, vc1_linetotal, vc1_costcode, vc1_ubusiness, vc1_project,
                                     vc1_acctcode, vc1_basetype, vc1_doctype, vc1_avprice, vc1_inventory, vc1_linenum, vc1_acciva, vc1_codimp, vc1_ubication, 
-									ote_code,vc1_baseline,detalle_modular,vc1_tax_base,detalle_anuncio,imponible,vc1_clean_quantity,vc1_vat_ad,vc1_vatsum_ad,vc1_accimp_ad,vc1_codimp_ad)
+									ote_code,vc1_baseline,detalle_modular,vc1_tax_base,detalle_anuncio,imponible,vc1_clean_quantity,vc1_vat_ad,vc1_vatsum_ad,vc1_accimp_ad,vc1_codimp_ad, vc1_codmunicipality)
 									VALUES(:vc1_docentry,:vc1_itemcode, :vc1_itemname, :vc1_quantity,:vc1_uom, :vc1_whscode,:vc1_price, :vc1_vat, :vc1_vatsum, :vc1_discount, 
 									:vc1_linetotal, :vc1_costcode, :vc1_ubusiness, :vc1_project,:vc1_acctcode, :vc1_basetype, :vc1_doctype, :vc1_avprice, :vc1_inventory,
 									:vc1_linenum,:vc1_acciva,:vc1_codimp, :vc1_ubication, :ote_code,:vc1_baseline,:detalle_modular,:vc1_tax_base,:detalle_anuncio,:imponible,
-									:vc1_clean_quantity, :vc1_vat_ad, :vc1_vatsum_ad, :vc1_accimp_ad, :vc1_codimp_ad)";
+									:vc1_clean_quantity, :vc1_vat_ad, :vc1_vatsum_ad, :vc1_accimp_ad, :vc1_codimp_ad, :vc1_codmunicipality)";
 
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
@@ -826,7 +827,8 @@ class Quotation extends REST_Controller
 					':vc1_vat_ad' => is_numeric($detail['vc1_vat_ad']) ? $detail['vc1_vat_ad'] : 0,
 					':vc1_vatsum_ad' => is_numeric($detail['vc1_vatsum_ad']) ? $detail['vc1_vatsum_ad'] : 0,
 					':vc1_accimp_ad' => is_numeric($detail['vc1_accimp_ad']) ? $detail['vc1_accimp_ad'] : NULL,
-					':vc1_codimp_ad' => isset($detail['vc1_codimp_ad']) ? $detail['vc1_codimp_ad'] : NULL
+					':vc1_codimp_ad' => isset($detail['vc1_codimp_ad']) ? $detail['vc1_codimp_ad'] : NULL,
+					':vc1_codmunicipality' => isset($detail['vc1_codmunicipality']) ? $detail['vc1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

@@ -580,10 +580,10 @@ class PurchaseNcBO extends REST_Controller
 				$sqlInsertDetail = "INSERT INTO cnc1(nc1_docentry,nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
                                     nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
                                     nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_acciva,nc1_linenum,nc1_codimp, 
-									nc1_ubication,nc1_baseline,ote_code,nc1_tax_base,deducible)VALUES(:nc1_docentry,:nc1_itemcode, :nc1_itemname, :nc1_quantity,
+									nc1_ubication,nc1_baseline,ote_code,nc1_tax_base,deducible, nc1_codmunicipality)VALUES(:nc1_docentry,:nc1_itemcode, :nc1_itemname, :nc1_quantity,
                                     :nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
                                     :nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_acciva, :nc1_linenum,:nc1_codimp, 
-									:nc1_ubication,:nc1_baseline,:ote_code,:nc1_tax_base,:deducible)";
+									:nc1_ubication,:nc1_baseline,:ote_code,:nc1_tax_base,:deducible, :nc1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':nc1_docentry' => $resInsert,
@@ -612,7 +612,8 @@ class PurchaseNcBO extends REST_Controller
 					':nc1_baseline' => is_numeric($detail['nc1_baseline']) ? $detail['nc1_baseline'] : 0,
 					':ote_code'  => isset($detail['ote_code']) ? $detail['ote_code'] : NULL,
 					':nc1_tax_base' => is_numeric($detail['nc1_tax_base']) ? $detail['nc1_tax_base'] : 0,
-					':deducible' => isset($detail['deducible']) ? $detail['deducible'] : NULL
+					':deducible' => isset($detail['deducible']) ? $detail['deducible'] : NULL,
+					':nc1_codmunicipality' => isset($detail['nc1_codmunicipality']) ? $detail['nc1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {
@@ -3467,9 +3468,9 @@ class PurchaseNcBO extends REST_Controller
 
 				$sqlInsertDetail = "INSERT INTO cnc1(nc1_docentry, nc1_itemcode, nc1_itemname, nc1_quantity, nc1_uom, nc1_whscode,
 																			nc1_price, nc1_vat, nc1_vatsum, nc1_discount, nc1_linetotal, nc1_costcode, nc1_ubusiness, nc1_project,
-																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_acciva, nc1_ubication)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
+																			nc1_acctcode, nc1_basetype, nc1_doctype, nc1_avprice, nc1_inventory, nc1_acciva, nc1_ubication, nc1_codmunicipality)VALUES(:nc1_docentry, :nc1_itemcode, :nc1_itemname, :nc1_quantity,
 																			:nc1_uom, :nc1_whscode,:nc1_price, :nc1_vat, :nc1_vatsum, :nc1_discount, :nc1_linetotal, :nc1_costcode, :nc1_ubusiness, :nc1_project,
-																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_acciva, :nc1_ubication)";
+																			:nc1_acctcode, :nc1_basetype, :nc1_doctype, :nc1_avprice, :nc1_inventory, :nc1_acciva, :nc1_ubication, :nc1_codmunicipality)";
 
 				$resInsertDetail = $this->pedeo->insertRow($sqlInsertDetail, array(
 					':nc1_docentry' => $Data['cnc_docentry'],
@@ -3492,7 +3493,8 @@ class PurchaseNcBO extends REST_Controller
 					':nc1_avprice' => is_numeric($detail['nc1_avprice']) ? $detail['nc1_avprice'] : 0,
 					':nc1_inventory' => is_numeric($detail['nc1_inventory']) ? $detail['nc1_inventory'] : NULL,
 					':nc1_acciva' => is_numeric($detail['nc1_cuentaIva']) ? $detail['nc1_cuentaIva'] : 0,
-					':nc1_ubication' => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL
+					':nc1_ubication' => isset($detail['nc1_ubication']) ? $detail['nc1_ubication'] : NULL,
+					':nc1_codmunicipality' => isset($detail['nc1_codmunicipality']) ? $detail['nc1_codmunicipality'] : NULL
 				));
 
 				if (is_numeric($resInsertDetail) && $resInsertDetail > 0) {

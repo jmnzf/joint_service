@@ -129,7 +129,7 @@ class Items extends REST_Controller
 						dma_acct_cost, dma_acct_return, dma_uom_width, dma_uom_tall, dma_uom_length, dma_uom_vol, dma_um_inventory, dma_tax_sales_code, dma_tax_purch_code,dma_acct_invproc,
 						dma_modular, dma_advertisement, dma_subscription, dma_use_tbase, dma_tasa_base, dma_type_art, dma_serial_number,deductible_spent,taxable_income,
 						dma_asset,dma_clean,dma_multipletax,dma_multipletax_purchcode,dma_multipletax_salescode,dma_item_asset, dma_last_cardcode,
-						dma_last_purchase_date, dma_wscode,dma_ubication, dma_old_code)
+						dma_last_purchase_date, dma_wscode,dma_ubication, dma_old_code , dma_act_ec_siat, dma_itemcode_siat)
 						VALUES(:dma_item_code,:dma_item_name, :dma_generic_name, :dma_item_purch,
 						:dma_item_inv, :dma_item_sales, :dma_group_code, :dma_attach,:dma_enabled, :dma_firm_code, :dma_series_code, :dma_sup_set,
 						:dma_sku_sup, :dma_uom_purch, :dma_uom_pqty, :dma_uom_pemb,:dma_uom_pembqty, :dma_tax_purch, :dma_price_list, :dma_price, :dma_uom_sale, :dma_uom_sqty,
@@ -139,7 +139,7 @@ class Items extends REST_Controller
 						:dma_acct_cost, :dma_acct_return, :dma_uom_width, :dma_uom_tall, :dma_uom_length, :dma_uom_vol, :dma_um_inventory, :dma_tax_sales_code, :dma_tax_purch_code,:dma_acct_invproc,
 						:dma_modular, :dma_advertisement, :dma_subscription, :dma_use_tbase, :dma_tasa_base, :dma_type_art, :dma_serial_number,:deductible_spent,:taxable_income,:dma_asset,:dma_clean,
 						:dma_multipletax,:dma_multipletax_purchcode,:dma_multipletax_salescode,:dma_item_asset, :dma_last_cardcode,
-						:dma_last_purchase_date, :dma_wscode,:dma_ubication, :dma_old_code)";
+						:dma_last_purchase_date, :dma_wscode,:dma_ubication, :dma_old_code , :dma_act_ec_siat, :dma_itemcode_siat)";
 
 
 			$resInsert = $this->pedeo->insertRow($sqlInsert, array(
@@ -225,12 +225,14 @@ class Items extends REST_Controller
 
 				':dma_item_asset' => isset($Data['dma_item_asset']) ? $Data['dma_item_asset'] : NULL,
 				// 
-				':dma_last_cardcode' =>  isset($Data['dma_last_cardcode']) ? $Data['dma_last_cardcode'] : NULL,
-				':dma_last_purchase_date' =>  isset($Data['dma_last_purchase_date']) ? $Data['dma_last_purchase_date'] : NULL,
-				':dma_wscode' =>  isset($Data['dma_wscode']) ? $Data['dma_wscode'] : NULL,
-				':dma_ubication' =>  isset($Data['dma_ubication']) ? $Data['dma_ubication'] : NULL,
-				':dma_old_code' => isset($Data['dma_old_code']) ? $Data['dma_old_code'] : NULL 
-
+				':dma_last_cardcode' =>  (isset($Data['dma_last_cardcode'])) ? $Data['dma_last_cardcode'] : NULL,
+				':dma_last_purchase_date' =>  (isset($Data['dma_last_purchase_date']) && !empty($Data['dma_last_purchase_date'])) ? $Data['dma_last_purchase_date'] : NULL,
+				':dma_wscode' =>  (isset($Data['dma_wscode']) && !empty($Data['dma_wscode']) )? $Data['dma_wscode'] : NULL,
+				':dma_ubication' =>  (isset($Data['dma_ubication']) && !empty($Data['dma_ubication'])) ? $Data['dma_ubication'] : NULL,
+				':dma_old_code' => (isset($Data['dma_old_code']) && !empty($Data['dma_old_code'])) ? $Data['dma_old_code'] : NULL ,
+				// 
+				':dma_act_ec_siat' =>  (isset($Data['dma_act_ec_siat']) && !empty($Data['dma_act_ec_siat'])) ? $Data['dma_ubication'] : NULL,
+				':dma_itemcode_siat' => (isset($Data['dma_itemcode_siat']) && !empty($Data['dma_itemcode_siat'])) ? $Data['dma_old_code'] : NULL 
 			));
 
 
@@ -361,7 +363,8 @@ class Items extends REST_Controller
 						dma_asset = :dma_asset , dma_clean = :dma_clean, dma_multipletax =:dma_multipletax, dma_multipletax_purchcode =:dma_multipletax_purchcode,
 						dma_multipletax_salescode = :dma_multipletax_salescode, dma_item_asset = :dma_item_asset,
 						dma_last_cardcode = :dma_last_cardcode , dma_last_purchase_date = :dma_last_purchase_date ,
-						dma_wscode = :dma_wscode , dma_ubication = :dma_ubication ,	dma_old_code = :dma_old_code
+						dma_wscode = :dma_wscode , dma_ubication = :dma_ubication ,	dma_old_code = :dma_old_code,
+						dma_act_ec_siat = :dma_act_ec_siat, dma_itemcode_siat = :dma_itemcode_siat
 						WHERE dma_id = :dma_id";
 
 			$resUpdate = $this->pedeo->updateRow($sqlUpdate, array(
@@ -445,13 +448,14 @@ class Items extends REST_Controller
 
 				':dma_item_asset' => isset($Data['dma_item_asset']) ? $Data['dma_item_asset'] : NULL,
 				// 
-				':dma_last_cardcode' =>  isset($Data['dma_last_cardcode']) ? $Data['dma_last_cardcode'] : NULL,
-				':dma_last_purchase_date' =>  isset($Data['dma_last_purchase_date']) ? $Data['dma_last_purchase_date'] : NULL,
-				':dma_wscode' =>  isset($Data['dma_wscode']) ? $Data['dma_wscode'] : NULL,
-				':dma_ubication' =>  isset($Data['dma_ubication']) ? $Data['dma_ubication'] : NULL,
-				':dma_old_code' => isset($Data['dma_old_code']) ? $Data['dma_old_code'] : NULL 
-
-				
+				':dma_last_cardcode' =>  (isset($Data['dma_last_cardcode'])) ? $Data['dma_last_cardcode'] : NULL,
+				':dma_last_purchase_date' =>  (isset($Data['dma_last_purchase_date']) && !empty($Data['dma_last_purchase_date'])) ? $Data['dma_last_purchase_date'] : NULL,
+				':dma_wscode' =>  (isset($Data['dma_wscode']) && !empty($Data['dma_wscode']) )? $Data['dma_wscode'] : NULL,
+				':dma_ubication' =>  (isset($Data['dma_ubication']) && !empty($Data['dma_ubication'])) ? $Data['dma_ubication'] : NULL,
+				':dma_old_code' => (isset($Data['dma_old_code']) && !empty($Data['dma_old_code'])) ? $Data['dma_old_code'] : NULL ,
+				// 
+				':dma_act_ec_siat' =>  (isset($Data['dma_act_ec_siat']) && !empty($Data['dma_act_ec_siat'])) ? $Data['dma_ubication'] : NULL,
+				':dma_itemcode_siat' => (isset($Data['dma_itemcode_siat']) && !empty($Data['dma_itemcode_siat'])) ? $Data['dma_old_code'] : NULL 
 			));
 
 			if (is_numeric($resUpdate) && $resUpdate == 1) {
