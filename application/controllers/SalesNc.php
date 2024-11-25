@@ -296,12 +296,10 @@ class SalesNc extends REST_Controller
 	
 				return;
 			}else{
-				$documentoPreeliminar = $resDocAprobado[0];
+				$documentoPreeliminar = $resDocAprobado;
 			}
 
 		}
-
-
 		// FIN PROCESO DE VERIFICAR SI EL DOCUMENTO A CREAR NO  VIENE DE UN PROCESO DE APROBACION Y NO ESTE APROBADO
 		
 
@@ -418,13 +416,13 @@ class SalesNc extends REST_Controller
 					':bed_basetype' => $Data['vnc_doctype']
 				));
 
-
+				
 				if (is_numeric($resInsertEstadoPreeliminar) && $resInsertEstadoPreeliminar > 0) {
 					$docstoValidate = [5,34];
-					if (isset($documentoPreeliminar[0])){
-						if(in_array($documentoPreeliminar['pap_basetype'],$docstoValidate)){
-							$Data['vnc_basetype'] = $documentoPreeliminar['pap_basetype'];
-							$Data['vnc_baseentry'] = $documentoPreeliminar['pap_baseentry'];
+					if (isset($documentoPreeliminar[0])) {
+						if(in_array($documentoPreeliminar[0]['pap_basetype'],$docstoValidate)){
+							$Data['vnc_basetype'] = $documentoPreeliminar[0]['pap_basetype'];
+							$Data['vnc_baseentry'] = $documentoPreeliminar[0]['pap_baseentry'];
 						}
 					}
 				} else {
@@ -434,18 +432,17 @@ class SalesNc extends REST_Controller
 					$respuesta = array(
 						'error'   => true,
 						'data' => $resInsertEstado,
-						'mensaje'	=> 'No se pudo registrar la orden de compras',
+						'mensaje'	=> 'No se pudo registrar la factura',
 						'proceso' => 'Insertar estado documento'
 					);
 
 
 					return $this->response($respuesta);
 				}
-
 				//SE INSERTA EL ESTADO DEL DOCUMENTO
 
 				$sqlInsertEstado = "INSERT INTO tbed(bed_docentry, bed_doctype, bed_status, bed_createby, bed_date, bed_baseentry, bed_basetype)
-																VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
+									VALUES (:bed_docentry, :bed_doctype, :bed_status, :bed_createby, :bed_date, :bed_baseentry, :bed_basetype)";
 
 				$resInsertEstado = $this->pedeo->insertRow($sqlInsertEstado, array(
 
