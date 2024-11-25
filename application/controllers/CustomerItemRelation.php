@@ -207,18 +207,20 @@ class CustomerItemRelation extends REST_Controller
         $Data = $this->post();
 
         $array = [];
-        $sqlSelect = 'SELECT * FROM trat where 1= 1';
+        $sqlSelect = "SELECT t.*, (t.rat_cardcode || ' - ' || d.mpe_cardname) as cardname_extern from trat t 
+        left join dmpe as d on t.rat_cardcode  = d.mpe_cardcode 
+        where 1= 1";
 
         if(isset($Data['rat_itemcode']) && !empty($Data['rat_itemcode'])) {
-            $sqlSelect .= " AND rat_item_code = :rat_item_code"; 
+            $sqlSelect .= " AND t.rat_item_code = :rat_item_code"; 
             $array[':rat_itemcode'] = $Data['rat_itemcode'];
         }
         if(isset($Data['rat_relationed_item_code']) && !empty($Data['rat_relationed_item_code'])) {
-            $sqlSelect .= " AND rat_relationed_item_code = :rat_relationed_item_code";
+            $sqlSelect .= " AND t.rat_relationed_item_code = :rat_relationed_item_code";
             $array[':rat_relationed_item_code'] = $Data['rat_relationed_item_code'];
         }
         if(isset($Data['rat_cardcode']) && !empty($Data['rat_cardcode'])){ 
-            $sqlSelect .= " AND rat_cardcode = :rat_cardcode"; 
+            $sqlSelect .= " AND t.rat_cardcode = :rat_cardcode"; 
             $array[':rat_cardcode'] = $Data['rat_cardcode'];
         }
         // print_r($sqlSelect);exit;
