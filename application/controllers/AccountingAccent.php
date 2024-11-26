@@ -495,7 +495,8 @@ class AccountingAccent extends REST_Controller
 					':business' => $Data['business'],
 					':branch'   => $Data['branch'],
 					':ac1_codret' => isset($detail['ac1_codret']) && !empty($detail['ac1_codret']) ? $detail['ac1_codret'] : NULL,
-					':ac1_base_tax' => isset($detail['ac1_base_tax']) && !empty($detail['ac1_base_tax']) ? $detail['ac1_base_tax'] : NULL	
+					':ac1_base_tax' => isset($detail['ac1_base_tax']) && !empty($detail['ac1_base_tax']) ? $detail['ac1_base_tax'] : NULL	,
+					':ac1_codmunicipality' => isset($detail['ac1_codmunicipality']) ? $detail['ac1_codmunicipality'] : NULL	
 				));
 
 
@@ -641,8 +642,8 @@ class AccountingAccent extends REST_Controller
 					':business' => $Data['business'],
 					':branch'   => $Data['branch'],
 					':ac1_codret' => isset($detail['ac1_codret']) && !empty($detail['ac1_codret']) ? $detail['ac1_codret'] : NULL,
-					':ac1_base_tax' => isset($detail['ac1_base_tax']) && !empty($detail['ac1_base_tax']) ? $detail['ac1_base_tax'] : NULL	
-
+					':ac1_base_tax' => isset($detail['ac1_base_tax']) && !empty($detail['ac1_base_tax']) ? $detail['ac1_base_tax'] : NULL	,
+					':ac1_codmunicipality' => isset($detail['ac1_codmunicipality']) ? $detail['ac1_codmunicipality'] : NULL	
 				));
 
 
